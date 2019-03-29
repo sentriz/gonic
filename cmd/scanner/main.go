@@ -48,7 +48,7 @@ var (
 type lastAlbum struct {
 	coverModTime time.Time // 1st needed for cover insertion
 	coverPath    string    // 2rd needed for cover insertion
-	id           string    // 3nd needed for cover insertion
+	id           uint      // 3nd needed for cover insertion
 }
 
 func (l *lastAlbum) isEmpty() bool {
@@ -69,7 +69,7 @@ func isCover(filename string) bool {
 func readTags(fullPath string) (tag.Metadata, error) {
 	trackData, err := os.Open(fullPath)
 	if err != nil {
-		return nil, fmt.Errorf("when tags from disk: %v\n", err)
+		return nil, fmt.Errorf("when tags from disk: %v", err)
 	}
 	defer trackData.Close()
 	tags, err := tag.ReadFrom(trackData)
@@ -94,7 +94,7 @@ func handleFolderCompletion(fullPath string, info *godirwalk.Dirent) error {
 	}
 	image, err := ioutil.ReadFile(cLastAlbum.coverPath)
 	if err != nil {
-		return fmt.Errorf("when reading cover: %v\n", err)
+		return fmt.Errorf("when reading cover: %v", err)
 	}
 	cover.Image = image
 	cover.AlbumID = cLastAlbum.id
@@ -103,13 +103,13 @@ func handleFolderCompletion(fullPath string, info *godirwalk.Dirent) error {
 	return nil
 }
 
-func processFile(fullPath string, info *godirwalk.Dirent) error {
+func handleFile(fullPath string, info *godirwalk.Dirent) error {
 	if info.IsDir() {
 		return nil
 	}
 	stat, err := os.Stat(fullPath)
 	if err != nil {
-		return fmt.Errorf("when stating file: %v\n", err)
+		return fmt.Errorf("when stating file: %v", err)
 	}
 	modTime := stat.ModTime()
 	_, filename := path.Split(fullPath)
@@ -126,12 +126,13 @@ func processFile(fullPath string, info *godirwalk.Dirent) error {
 		Path: fullPath,
 	}
 	err = tx.Where(track).First(&track).Error
-	if !gorm.IsRecordNotFoundError(err) && !modTime.After(track.UpdatedAt) {
+	if !gorm.IsRecordNotFoundError(err) &&
+		!modTime.After(track.UpdatedAt) {
 		return nil
 	}
 	tags, err := readTags(fullPath)
 	if err != nil {
-		return fmt.Errorf("when reading tags: %v\n", err)
+		return fmt.Errorf("when reading tags: %v", err)
 	}
 	trackNumber, totalTracks := tags.Track()
 	discNumber, TotalDiscs := tags.Disc()
@@ -184,10 +185,16 @@ func main() {
 		&model.Track{},
 		&model.Cover{},
 	)
+	// 🤫🤫🤫
+	orm.Exec(`
+		INSERT INTO sqlite_sequence(name, seq)
+		SELECT 'albums', 500000
+		WHERE NOT EXISTS (SELECT * FROM sqlite_sequence)
+	`)
 	startTime := time.Now()
 	tx = orm.Begin()
 	err := godirwalk.Walk(os.Args[1], &godirwalk.Options{
-		Callback:             processFile,
+		Callback:             handleFile,
 		PostChildrenCallback: handleFolderCompletion,
 		Unsorted:             true,
 	})

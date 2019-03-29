@@ -4,7 +4,7 @@ package model
 type Cover struct {
 	Base
 	Album   Album
-	AlbumID string
+	AlbumID uint
 	Image   []byte
-	Path    string
+	Path    string `gorm:"not null;unique_index"`
 }

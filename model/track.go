@@ -4,9 +4,9 @@ package model
 type Track struct {
 	Base
 	Album       Album
-	AlbumID     string
+	AlbumID     uint
 	Artist      Artist
-	ArtistID    string
+	ArtistID    uint
 	Bitrate     int
 	Codec       string
 	DiscNumber  int
@@ -16,5 +16,5 @@ type Track struct {
 	TotalTracks int
 	TrackNumber int
 	Year        int
-	Path        string `gorm:"not null;unique"`
+	Path        string `gorm:"not null;unique_index"`
 }

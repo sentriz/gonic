@@ -2,9 +2,9 @@ package model
 
 // Album represents the albums table
 type Album struct {
-	BaseWithUUID
+	Base
 	Artist   Artist
-	ArtistID string
-	Title    string
+	ArtistID uint
+	Title    string `gorm:"not null;index"`
 	Tracks   []Track
 }

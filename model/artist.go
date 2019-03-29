@@ -2,7 +2,7 @@ package model
 
 // Artist represents the artists table
 type Artist struct {
-	BaseWithUUID
+	Base
 	Albums []Album
-	Name   string `gorm:"unique;n"`
+	Name   string `gorm:"not null;unique_index"`
 }
