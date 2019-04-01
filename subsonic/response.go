@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	apiVersion = "1.10.0"
+	apiVersion = "1.16.1"
 	xmlns      = "http://subsonic.org/restapi"
 )
 
@@ -15,7 +15,7 @@ type Response struct {
 	XMLName        xml.Name     `xml:"subsonic-response" json:"-"`
 	Status         string       `xml:"status,attr"       json:"status"`
 	Version        string       `xml:"version,attr"      json:"version"`
-	XMLNS          string       `xml:"xmlns,attr"        json:"xmlns"`
+	XMLNS          string       `xml:"xmlns,attr"        json:"-"`
 	Error          *Error       `xml:"error"             json:"error,omitempty"`
 	AlbumList2     *[]*Album    `xml:"albumList2>album"  json:"album,omitempty"`
 	Album          *Album       `xml:"album"             json:"album,omitempty"`

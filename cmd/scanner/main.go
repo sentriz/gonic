@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/sentriz/gonic/db"
-	"github.com/sentriz/gonic/model"
 
 	"github.com/dhowden/tag"
 	"github.com/jinzhu/gorm"
@@ -84,7 +83,7 @@ func handleFolderCompletion(fullPath string, info *godirwalk.Dirent) error {
 	if cLastAlbum.isEmpty() {
 		return nil
 	}
-	cover := model.Cover{
+	cover := db.Cover{
 		Path: cLastAlbum.coverPath,
 	}
 	err := tx.Where(cover).First(&cover).Error
@@ -122,7 +121,7 @@ func handleFile(fullPath string, info *godirwalk.Dirent) error {
 		return nil
 	}
 	// set track basics
-	track := model.Track{
+	track := db.Track{
 		Path: fullPath,
 	}
 	err = tx.Where(track).First(&track).Error
@@ -131,6 +130,8 @@ func handleFile(fullPath string, info *godirwalk.Dirent) error {
 		return nil
 	}
 	tags, err := readTags(fullPath)
+	fmt.Println(tags.Raw())
+	os.Exit(0)
 	if err != nil {
 		return fmt.Errorf("when reading tags: %v", err)
 	}
@@ -138,13 +139,13 @@ func handleFile(fullPath string, info *godirwalk.Dirent) error {
 	discNumber, TotalDiscs := tags.Disc()
 	track.Path = fullPath
 	track.Title = tags.Title()
-	track.DiscNumber = discNumber
-	track.TotalDiscs = TotalDiscs
-	track.TotalTracks = totalTracks
-	track.TrackNumber = trackNumber
-	track.Year = tags.Year()
-	// set artist
-	artist := model.Artist{
+	track.DiscNumber = uint(discNumber)
+	track.TotalDiscs = uint(TotalDiscs)
+	track.TotalTracks = uint(totalTracks)
+	track.TrackNumber = uint(trackNumber)
+	track.Year = uint(tags.Year())
+	// set artist {
+	artist := db.Artist{
 		Name: tags.AlbumArtist(),
 	}
 	err = tx.Where(artist).First(&artist).Error
@@ -154,7 +155,7 @@ func handleFile(fullPath string, info *godirwalk.Dirent) error {
 	}
 	track.ArtistID = artist.ID
 	// set album
-	album := model.Album{
+	album := db.Album{
 		ArtistID: artist.ID,
 		Title:    tags.Album(),
 	}
@@ -180,16 +181,22 @@ func main() {
 	orm = db.New()
 	orm.SetLogger(log.New(os.Stdout, "gorm ", 0))
 	orm.AutoMigrate(
-		&model.Album{},
-		&model.Artist{},
-		&model.Track{},
-		&model.Cover{},
+		&db.Album{},
+		&db.Artist{},
+		&db.Track{},
+		&db.Cover{},
+		&db.User{},
 	)
 	// 🤫🤫🤫
 	orm.Exec(`
 		INSERT INTO sqlite_sequence(name, seq)
 		SELECT 'albums', 500000
 		WHERE NOT EXISTS (SELECT * FROM sqlite_sequence)
+	`)
+	orm.Exec(`
+		INSERT INTO users(username, password)
+		SELECT 'admin', 'admin'
+		WHERE NOT EXISTS (SELECT * FROM users)
 	`)
 	startTime := time.Now()
 	tx = orm.Begin()

@@ -1,4 +1,4 @@
-package model
+package db
 
 import (
 	"time"
@@ -13,16 +13,20 @@ type CrudBase struct {
 	DeletedAt *time.Time `sql:"index"`
 }
 
+type IDBase struct {
+	ID uint `gorm:"primary_key"`
+}
+
 // Base is the base model with an auto incrementing primary key
 type Base struct {
+	IDBase
 	CrudBase
-	ID uint `gorm:"primary_key"`
 }
 
 // BaseWithUUID is the base model with an UUIDv4 primary key
 type BaseWithUUID struct {
+	IDBase
 	CrudBase
-	ID string `gorm:"primary_key"`
 }
 
 // BeforeCreate is called by GORM to set the UUID primary key
