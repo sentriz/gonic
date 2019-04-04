@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/sentriz/gonic/db"
+	"github.com/sentriz/gonic/tags"
 
-	"github.com/dhowden/tag"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/karrick/godirwalk"
@@ -65,15 +65,10 @@ func isCover(filename string) bool {
 	return ok
 }
 
-func readTags(fullPath string) (tag.Metadata, error) {
-	trackData, err := os.Open(fullPath)
+func readTags(fullPath string) (tags.Metadata, error) {
+	tags, err := tags.Read(fullPath)
 	if err != nil {
 		return nil, fmt.Errorf("when tags from disk: %v", err)
-	}
-	defer trackData.Close()
-	tags, err := tag.ReadFrom(trackData)
-	if err != nil {
-		return nil, err
 	}
 	return tags, nil
 }
@@ -130,19 +125,15 @@ func handleFile(fullPath string, info *godirwalk.Dirent) error {
 		return nil
 	}
 	tags, err := readTags(fullPath)
-	fmt.Println(tags.Raw())
-	os.Exit(0)
 	if err != nil {
 		return fmt.Errorf("when reading tags: %v", err)
 	}
-	trackNumber, totalTracks := tags.Track()
-	discNumber, TotalDiscs := tags.Disc()
 	track.Path = fullPath
 	track.Title = tags.Title()
-	track.DiscNumber = uint(discNumber)
-	track.TotalDiscs = uint(TotalDiscs)
-	track.TotalTracks = uint(totalTracks)
-	track.TrackNumber = uint(trackNumber)
+	track.DiscNumber = uint(tags.Disc())
+	track.TotalDiscs = uint(tags.TotalDiscs())
+	track.TrackNumber = uint(tags.Track())
+	track.TotalTracks = uint(tags.TotalTracks())
 	track.Year = uint(tags.Year())
 	// set artist {
 	artist := db.Artist{

@@ -44,7 +44,9 @@ func (c *Controller) CheckParameters(next http.HandlerFunc) http.HandlerFunc {
 			if param != "" {
 				continue
 			}
-			respondError(w, r, 10, fmt.Sprintf("please provide a `%s` parameter", req))
+			respondError(w, r,
+				10, fmt.Sprintf("please provide a `%s` parameter", req),
+			)
 			return
 		}
 		username := r.URL.Query().Get("u")
@@ -54,7 +56,9 @@ func (c *Controller) CheckParameters(next http.HandlerFunc) http.HandlerFunc {
 		passwordAuth := token == "" && salt == ""
 		tokenAuth := password == ""
 		if tokenAuth == passwordAuth {
-			respondError(w, r, 10, "please provide parameters `t` and `s`, or just `p`")
+			respondError(w, r,
+				10, "please provide parameters `t` and `s`, or just `p`",
+			)
 			return
 		}
 		user := db.User{

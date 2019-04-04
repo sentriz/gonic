@@ -34,9 +34,9 @@ func respondRaw(w http.ResponseWriter, r *http.Request, code int, sub *subsonic.
 			log.Printf("could not marshall to json: %v\n", err)
 		}
 		callback := r.URL.Query().Get("callback")
-		w.Write([]byte(fmt.Sprintf("%s(", callback)))
+		w.Write([]byte(fmt.Sprintf(`%s({"subsonic-response":`, callback)))
 		w.Write(data)
-		w.Write([]byte(");"))
+		w.Write([]byte("});"))
 	default:
 		w.Header().Set("Content-Type", "application/xml")
 		data, err := xml.Marshal(sub)
