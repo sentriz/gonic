@@ -32,6 +32,8 @@ type Track struct {
 	TotalTracks uint
 	TrackNumber uint
 	Year        uint
+	Suffix      string
+	ContentType string
 	Path        string `gorm:"not null;unique_index"`
 }
 

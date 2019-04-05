@@ -32,7 +32,7 @@ func checkCredentialsOldWay(password, givenPassword string) bool {
 
 func (c *Controller) LogConnection(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("connection from %s", r.RemoteAddr)
+		log.Printf("connection from `%s` for `%s`", r.RemoteAddr, r.URL)
 		next.ServeHTTP(w, r)
 	}
 }

@@ -40,6 +40,7 @@ func main() {
 	mux.HandleFunc("/rest/getIndexes.view", withWare(cont.GetIndexes))
 	mux.HandleFunc("/rest/getMusicDirectory.view", withWare(cont.GetMusicDirectory))
 	mux.HandleFunc("/rest/getCoverArt.view", withWare(cont.GetCoverArt))
+	mux.HandleFunc("/rest/stream.view", withWare(cont.Stream))
 	mux.HandleFunc("/rest/getMusicFolders.view", withWare(cont.GetMusicFolders))
 	mux.HandleFunc("/rest/getPlaylists.view", withWare(cont.GetPlaylists))
 	mux.HandleFunc("/rest/getGenres.view", withWare(cont.GetGenres))

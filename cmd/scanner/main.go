@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/sentriz/gonic/db"
-	"github.com/sentriz/gonic/tags"
 
+	"github.com/dhowden/tag"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/karrick/godirwalk"
@@ -22,11 +22,12 @@ var (
 	orm             *gorm.DB
 	tx              *gorm.DB
 	cLastAlbum      = &lastAlbum{}
-	audioExtensions = map[string]bool{
-		".mp3":  true,
-		".flac": true,
-		".aac":  true,
-		".m4a":  true,
+	audioExtensions = map[string]string{
+		"mp3":  "audio/mpeg",
+		"flac": "audio/x-flac",
+		"aac":  "audio/x-aac",
+		"m4a":  "audio/m4a",
+		"ogg":  "audio/ogg",
 	}
 	coverFilenames = map[string]bool{
 		"cover.png":   true,
@@ -54,21 +55,20 @@ func (l *lastAlbum) isEmpty() bool {
 	return l.coverPath == ""
 }
 
-func isAudio(filename string) bool {
-	ext := strings.ToLower(filepath.Ext(filename))
-	_, ok := audioExtensions[ext]
-	return ok
-}
-
 func isCover(filename string) bool {
 	_, ok := coverFilenames[strings.ToLower(filename)]
 	return ok
 }
 
-func readTags(fullPath string) (tags.Metadata, error) {
-	tags, err := tags.Read(fullPath)
+func readTags(fullPath string) (tag.Metadata, error) {
+	trackData, err := os.Open(fullPath)
 	if err != nil {
 		return nil, fmt.Errorf("when tags from disk: %v", err)
+	}
+	defer trackData.Close()
+	tags, err := tag.ReadFrom(trackData)
+	if err != nil {
+		return nil, err
 	}
 	return tags, nil
 }
@@ -112,7 +112,11 @@ func handleFile(fullPath string, info *godirwalk.Dirent) error {
 		cLastAlbum.coverPath = fullPath   // 2nd needed for cover insertion
 		return nil
 	}
-	if !isAudio(filename) {
+	longExt := filepath.Ext(filename)
+	extension := strings.ToLower(longExt[1:])
+	// check if us audio and save mime type for later
+	mime, ok := audioExtensions[extension]
+	if !ok {
 		return nil
 	}
 	// set track basics
@@ -128,13 +132,17 @@ func handleFile(fullPath string, info *godirwalk.Dirent) error {
 	if err != nil {
 		return fmt.Errorf("when reading tags: %v", err)
 	}
+	trackNumber, totalTracks := tags.Track()
+	discNumber, TotalDiscs := tags.Disc()
 	track.Path = fullPath
 	track.Title = tags.Title()
-	track.DiscNumber = uint(tags.Disc())
-	track.TotalDiscs = uint(tags.TotalDiscs())
-	track.TrackNumber = uint(tags.Track())
-	track.TotalTracks = uint(tags.TotalTracks())
+	track.DiscNumber = uint(discNumber)
+	track.TotalDiscs = uint(TotalDiscs)
+	track.TotalTracks = uint(totalTracks)
+	track.TrackNumber = uint(trackNumber)
 	track.Year = uint(tags.Year())
+	track.Suffix = extension
+	track.ContentType = mime
 	// set artist {
 	artist := db.Artist{
 		Name: tags.AlbumArtist(),

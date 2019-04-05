@@ -90,7 +90,7 @@ type Child struct {
 	Size        uint     `xml:"size,attr,omitempty"        json:"size,omitempty"`
 	ContentType string   `xml:"contentType,attr,omitempty" json:"contentType,omitempty"`
 	Suffix      string   `xml:"suffix,attr,omitempty"      json:"suffix,omitempty"`
-	Duration    uint     `xml:"duration,attr,omitempty"    json:"duration,omitempty"`
+	Duration    uint     `xml:"duration,attr,omitempty"    json:"duration"`
 	BitRate     uint     `xml:"bitRate,attr,omitempty"     json:"bitrate,omitempty"`
 	Path        string   `xml:"path,attr,omitempty"        json:"path,omitempty"`
 }

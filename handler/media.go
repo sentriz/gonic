@@ -2,7 +2,9 @@ package handler
 
 import (
 	"fmt"
+	"io"
 	"net/http"
+	"os"
 	"strconv"
 	"unicode"
 
@@ -89,16 +91,19 @@ func browseAlbum(c *gorm.DB, album *db.Album) *subsonic.Directory {
 	dir.Children = make([]subsonic.Child, len(tracks))
 	for i, track := range tracks {
 		dir.Children[i] = subsonic.Child{
-			ID:       track.ID,
-			Title:    track.Title,
-			Parent:   album.ID,
-			Artist:   artist.Name,
-			ArtistID: artist.ID,
-			Album:    album.Title,
-			AlbumID:  album.ID,
-			IsDir:    false,
-			Path:     track.Path,
-			CoverArt: cover.ID,
+			ID:          track.ID,
+			Title:       track.Title,
+			Parent:      album.ID,
+			Artist:      artist.Name,
+			ArtistID:    artist.ID,
+			Album:       album.Title,
+			AlbumID:     album.ID,
+			IsDir:       false,
+			Path:        track.Path,
+			CoverArt:    cover.ID,
+			ContentType: track.ContentType,
+			Suffix:      track.Suffix,
+			Duration:    0,
 		}
 	}
 	return &dir
@@ -141,6 +146,32 @@ func (c *Controller) GetCoverArt(w http.ResponseWriter, req *http.Request) {
 	var cover db.Cover
 	c.DB.First(&cover, id)
 	w.Write(cover.Image)
+}
+
+func (c *Controller) Stream(w http.ResponseWriter, req *http.Request) {
+	idStr := req.URL.Query().Get("id")
+	if idStr == "" {
+		respondError(w, req, 10, "please provide an `id` parameter")
+		return
+	}
+	id, _ := strconv.Atoi(idStr)
+	var track db.Track
+	c.DB.First(&track, id)
+	if track.Path == "" {
+		respondError(w, req, 70, fmt.Sprintf("media with id `%d` was not found", id))
+		return
+	}
+	file, err := os.Open(track.Path)
+	if err != nil {
+		respondError(w, req, 0, fmt.Sprintf("error while streaming media: %v", err))
+		return
+	}
+	stat, _ := file.Stat()
+	size := strconv.FormatInt(stat.Size(), 10)
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Length", size)
+	file.Seek(0, 0)
+	io.Copy(w, file)
 }
 
 func (c *Controller) GetMusicFolders(w http.ResponseWriter, req *http.Request) {}
