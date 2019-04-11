@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	apiVersion = "1.16.1"
+	apiVersion = "1.9.0"
 	xmlns      = "http://subsonic.org/restapi"
 )
 
@@ -25,6 +25,7 @@ type Response struct {
 	Artist         *Artist      `xml:"artist"            json:"artist,omitempty"`
 	MusicDirectory *Directory   `xml:"directory"         json:"directory,omitempty"`
 	RandomSongs    *RandomSongs `xml:"randomSongs"       json:"randomSongs,omitempty"`
+	Licence        *Licence     `xml:"license"           json:"license,omitempty"`
 }
 
 type Error struct {

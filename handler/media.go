@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -167,14 +166,17 @@ func (c *Controller) Stream(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	stat, _ := file.Stat()
-	size := strconv.FormatInt(stat.Size(), 10)
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Header().Set("Content-Length", size)
-	file.Seek(0, 0)
-	io.Copy(w, file)
+	http.ServeContent(w, req, track.Path, stat.ModTime(), file)
 }
 
-func (c *Controller) GetMusicFolders(w http.ResponseWriter, req *http.Request) {}
-func (c *Controller) GetPlaylists(w http.ResponseWriter, req *http.Request)    {}
-func (c *Controller) GetGenres(w http.ResponseWriter, req *http.Request)       {}
-func (c *Controller) GetPodcasts(w http.ResponseWriter, req *http.Request)     {}
+func (c *Controller) GetLicence(w http.ResponseWriter, req *http.Request) {
+	sub := subsonic.NewResponse()
+	sub.Licence = &subsonic.Licence{
+		Valid: true,
+	}
+	respond(w, req, sub)
+}
+
+func (c *Controller) NotFound(w http.ResponseWriter, req *http.Request) {
+	respondError(w, req, 0, "unknown route")
+}

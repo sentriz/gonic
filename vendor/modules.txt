@@ -1,3 +1,5 @@
+# github.com/dhowden/tag v0.0.0-20181104225729-a9f04c2798ca
+github.com/dhowden/tag
 # github.com/jinzhu/gorm v1.9.2
 github.com/jinzhu/gorm
 github.com/jinzhu/gorm/dialects/sqlite

@@ -94,3 +94,8 @@ type Child struct {
 	BitRate     uint     `xml:"bitRate,attr,omitempty"     json:"bitrate,omitempty"`
 	Path        string   `xml:"path,attr,omitempty"        json:"path,omitempty"`
 }
+
+type Licence struct {
+	XMLName xml.Name `xml:"license"              json:"-"`
+	Valid   bool     `xml:"valid,attr,omitempty" json:"valid,omitempty"`
+}

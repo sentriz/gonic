@@ -188,13 +188,13 @@ func Read(filename string) (Metadata, error) {
 	)
 	probe, err := command.Output()
 	if err != nil {
-		return nil, fmt.Errorf("when running ffprobe with `%s`: %v\n",
+		return nil, fmt.Errorf("when running ffprobe with `%s`: %v",
 			filename, err)
 	}
 	var data probeData
 	err = json.Unmarshal(probe, &data)
 	if err != nil {
-		return nil, fmt.Errorf("when unmarshalling: %v\n", err)
+		return nil, fmt.Errorf("when unmarshalling: %v", err)
 	}
 	track := Track{
 		format: data.Format,

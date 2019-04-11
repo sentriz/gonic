@@ -36,15 +36,19 @@ func main() {
 		cont.CheckParameters,
 	)
 	mux := http.NewServeMux()
+	mux.HandleFunc("/rest/ping", withWare(cont.Ping))
 	mux.HandleFunc("/rest/ping.view", withWare(cont.Ping))
-	mux.HandleFunc("/rest/getIndexes.view", withWare(cont.GetIndexes))
-	mux.HandleFunc("/rest/getMusicDirectory.view", withWare(cont.GetMusicDirectory))
-	mux.HandleFunc("/rest/getCoverArt.view", withWare(cont.GetCoverArt))
+	mux.HandleFunc("/rest/stream", withWare(cont.Stream))
 	mux.HandleFunc("/rest/stream.view", withWare(cont.Stream))
-	mux.HandleFunc("/rest/getMusicFolders.view", withWare(cont.GetMusicFolders))
-	mux.HandleFunc("/rest/getPlaylists.view", withWare(cont.GetPlaylists))
-	mux.HandleFunc("/rest/getGenres.view", withWare(cont.GetGenres))
-	mux.HandleFunc("/rest/getPodcasts.view", withWare(cont.GetPodcasts))
+	mux.HandleFunc("/rest/getMusicDirectory", withWare(cont.GetMusicDirectory))
+	mux.HandleFunc("/rest/getMusicDirectory.view", withWare(cont.GetMusicDirectory))
+	mux.HandleFunc("/rest/getCoverArt", withWare(cont.GetCoverArt))
+	mux.HandleFunc("/rest/getCoverArt.view", withWare(cont.GetCoverArt))
+	mux.HandleFunc("/rest/getIndexes", withWare(cont.GetIndexes))
+	mux.HandleFunc("/rest/getIndexes.view", withWare(cont.GetIndexes))
+	mux.HandleFunc("/rest/getLicense", withWare(cont.GetLicence))
+	mux.HandleFunc("/rest/getLicense.view", withWare(cont.GetLicence))
+	mux.HandleFunc("/", withWare(cont.NotFound))
 	server := &http.Server{
 		Addr:         address,
 		Handler:      mux,

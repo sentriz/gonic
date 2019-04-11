@@ -27,6 +27,7 @@ func respondRaw(w http.ResponseWriter, r *http.Request, code int, sub *subsonic.
 		w.Write([]byte(`{"subsonic-response":`))
 		w.Write(data)
 		w.Write([]byte("}"))
+		fmt.Println("THE JSON", string(data))
 	case "jsonp":
 		w.Header().Set("Content-Type", "application/javascript")
 		data, err := json.Marshal(sub)
@@ -37,6 +38,7 @@ func respondRaw(w http.ResponseWriter, r *http.Request, code int, sub *subsonic.
 		w.Write([]byte(fmt.Sprintf(`%s({"subsonic-response":`, callback)))
 		w.Write(data)
 		w.Write([]byte("});"))
+		fmt.Println("THE JSONP", string(data))
 	default:
 		w.Header().Set("Content-Type", "application/xml")
 		data, err := xml.Marshal(sub)
@@ -44,6 +46,7 @@ func respondRaw(w http.ResponseWriter, r *http.Request, code int, sub *subsonic.
 			log.Printf("could not marshall to xml: %v\n", err)
 		}
 		w.Write(data)
+		fmt.Println("THE XML", string(data))
 	}
 }
 
