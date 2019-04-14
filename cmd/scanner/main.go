@@ -81,7 +81,7 @@ func handleFolderCompletion(fullPath string, info *godirwalk.Dirent) error {
 	cover := db.Cover{
 		Path: cLastAlbum.coverPath,
 	}
-	err := tx.Where(cover).First(&cover).Error
+	err := tx.Where(cover).First(&cover).Error // TODO: swap
 	if !gorm.IsRecordNotFoundError(err) &&
 		!cLastAlbum.coverModTime.After(cover.UpdatedAt) {
 		return nil
@@ -123,7 +123,7 @@ func handleFile(fullPath string, info *godirwalk.Dirent) error {
 	track := db.Track{
 		Path: fullPath,
 	}
-	err = tx.Where(track).First(&track).Error
+	err = tx.Where(track).First(&track).Error // TODO: swap
 	if !gorm.IsRecordNotFoundError(err) &&
 		!modTime.After(track.UpdatedAt) {
 		return nil
@@ -136,6 +136,7 @@ func handleFile(fullPath string, info *godirwalk.Dirent) error {
 	discNumber, TotalDiscs := tags.Disc()
 	track.Path = fullPath
 	track.Title = tags.Title()
+	track.Artist = tags.Artist()
 	track.DiscNumber = uint(discNumber)
 	track.TotalDiscs = uint(TotalDiscs)
 	track.TotalTracks = uint(totalTracks)
@@ -143,25 +144,26 @@ func handleFile(fullPath string, info *godirwalk.Dirent) error {
 	track.Year = uint(tags.Year())
 	track.Suffix = extension
 	track.ContentType = mime
-	// set artist {
-	artist := db.Artist{
+	track.Size = uint(stat.Size())
+	// set album artist {
+	albumArtist := db.AlbumArtist{
 		Name: tags.AlbumArtist(),
 	}
-	err = tx.Where(artist).First(&artist).Error
+	err = tx.Where(albumArtist).First(&albumArtist).Error
 	if gorm.IsRecordNotFoundError(err) {
-		artist.Name = tags.AlbumArtist()
-		tx.Save(&artist)
+		albumArtist.Name = tags.AlbumArtist()
+		tx.Save(&albumArtist)
 	}
-	track.ArtistID = artist.ID
+	track.AlbumArtistID = albumArtist.ID
 	// set album
 	album := db.Album{
-		ArtistID: artist.ID,
-		Title:    tags.Album(),
+		AlbumArtistID: albumArtist.ID,
+		Title:         tags.Album(),
 	}
 	err = tx.Where(album).First(&album).Error
 	if gorm.IsRecordNotFoundError(err) {
 		album.Title = tags.Album()
-		album.ArtistID = artist.ID
+		album.AlbumArtistID = albumArtist.ID
 		tx.Save(&album)
 	}
 	track.AlbumID = album.ID
@@ -181,7 +183,7 @@ func main() {
 	orm.SetLogger(log.New(os.Stdout, "gorm ", 0))
 	orm.AutoMigrate(
 		&db.Album{},
-		&db.Artist{},
+		&db.AlbumArtist{},
 		&db.Track{},
 		&db.Cover{},
 		&db.User{},

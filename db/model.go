@@ -3,14 +3,14 @@ package db
 // Album represents the albums table
 type Album struct {
 	Base
-	Artist   Artist
-	ArtistID uint
-	Title    string `gorm:"not null;index"`
-	Tracks   []Track
+	AlbumArtist   AlbumArtist
+	AlbumArtistID uint
+	Title         string `gorm:"not null;index"`
+	Tracks        []Track
 }
 
-// Artist represents the artists table
-type Artist struct {
+// AlbumArtist represents the AlbumArtists table
+type AlbumArtist struct {
 	Base
 	Albums []Album
 	Name   string `gorm:"not null;unique_index"`
@@ -19,29 +19,31 @@ type Artist struct {
 // Track represents the tracks table
 type Track struct {
 	Base
-	Album       Album
-	AlbumID     uint
-	Artist      Artist
-	ArtistID    uint
-	Bitrate     uint
-	Codec       string
-	DiscNumber  uint
-	Duration    uint
-	Title       string
-	TotalDiscs  uint
-	TotalTracks uint
-	TrackNumber uint
-	Year        uint
-	Suffix      string
-	ContentType string
-	Path        string `gorm:"not null;unique_index"`
+	Album         Album
+	AlbumID       uint
+	AlbumArtist   AlbumArtist
+	AlbumArtistID uint
+	Artist        string
+	Bitrate       uint
+	Codec         string
+	DiscNumber    uint
+	Duration      uint
+	Title         string
+	TotalDiscs    uint
+	TotalTracks   uint
+	TrackNumber   uint
+	Year          uint
+	Suffix        string
+	ContentType   string
+	Size          uint
+	Path          string `gorm:"not null;unique_index"`
 }
 
 // Cover represents the covers table
 type Cover struct {
-	Base
+	CrudBase
+	AlbumID uint `gorm:"primary_key;auto_increment:false"`
 	Album   Album
-	AlbumID uint
 	Image   []byte
 	Path    string `gorm:"not null;unique_index"`
 }

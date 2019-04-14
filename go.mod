@@ -13,8 +13,9 @@ require (
 	github.com/karrick/godirwalk v1.8.0
 	github.com/lib/pq v1.0.0 // indirect
 	github.com/mattn/go-sqlite3 v1.10.0 // indirect
+	github.com/mozillazg/go-unidecode v0.1.1
 	github.com/myesui/uuid v1.0.0 // indirect
 	github.com/twinj/uuid v1.0.0
-	golang.org/x/crypto v0.0.0-20190320223903-b7391e95e576 // indirect
+	golang.org/x/crypto v0.0.0-20190411191339-88737f569e3a // indirect
 	google.golang.org/appengine v1.5.0 // indirect
 )

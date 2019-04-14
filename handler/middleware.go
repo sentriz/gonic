@@ -15,14 +15,14 @@ var requiredParameters = []string{
 	"u", "v", "c",
 }
 
-func checkCredentialsNewWay(password, token, salt string) bool {
+func checkCredentialsToken(password, token, salt string) bool {
 	toHash := fmt.Sprintf("%s%s", password, salt)
 	hash := md5.Sum([]byte(toHash))
 	expToken := hex.EncodeToString(hash[:])
 	return token == expToken
 }
 
-func checkCredentialsOldWay(password, givenPassword string) bool {
+func checkCredentialsBasic(password, givenPassword string) bool {
 	if givenPassword[:4] == "enc:" {
 		bytes, _ := hex.DecodeString(givenPassword[4:])
 		givenPassword = string(bytes)
@@ -71,9 +71,9 @@ func (c *Controller) CheckParameters(next http.HandlerFunc) http.HandlerFunc {
 		}
 		var credsOk bool
 		if tokenAuth {
-			credsOk = checkCredentialsNewWay(user.Password, token, salt)
+			credsOk = checkCredentialsToken(user.Password, token, salt)
 		} else {
-			credsOk = checkCredentialsOldWay(user.Password, password)
+			credsOk = checkCredentialsBasic(user.Password, password)
 		}
 		if !credsOk {
 			respondError(w, r, 40, "invalid password")
