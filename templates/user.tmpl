@@ -1,0 +1,8 @@
+{{ define "title" }}home{{ end }}
+
+{{ define "content" }}
+    <div class="light right">
+        <span>welcome <u>{{ .Username }}</u> &#124; <a href="/admin/logout">logout</a></span>
+    </div>
+    {{ template "user" . }}
+{{ end }}

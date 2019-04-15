@@ -194,11 +194,14 @@ func main() {
 		SELECT 'albums', 500000
 		WHERE NOT EXISTS (SELECT * FROM sqlite_sequence)
 	`)
-	orm.Exec(`
-		INSERT INTO users(username, password)
-		SELECT 'admin', 'admin'
-		WHERE NOT EXISTS (SELECT * FROM users)
-	`)
+	orm.FirstOrCreate(&db.User{}, db.User{
+		Name:     "admin",
+		Password: "admin",
+	})
+	orm.FirstOrCreate(&db.User{}, db.User{
+		Name:     "senan",
+		Password: "password",
+	})
 	startTime := time.Now()
 	tx = orm.Begin()
 	err := godirwalk.Walk(os.Args[1], &godirwalk.Options{

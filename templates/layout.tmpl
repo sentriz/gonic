@@ -1,0 +1,30 @@
+{{ define "layout" }}
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>{{ template "title" }}</title>
+        <link rel="stylesheet" href="/admin/static/stylesheets/awsm.css">
+        <link rel="stylesheet" href="/admin/static/stylesheets/main.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <div>
+            <div id="header">
+                <img src="/admin/static/images/gonic.png">
+            </div>
+            <div id="content">
+                {{ if .Flashes }}
+                <div id="flashes">
+                    <p><b>warning:</b> {{ index .Flashes 0 }}</p>
+                </div>
+                {{ end }}
+                {{ template "content" . }}
+            </div>
+        </div>
+        <div id="footer" class="padded">
+            <p>senan kelly, 2019 &#124; <a href="https://github.com/sentriz/gonic">github</a></p>
+        </div>
+    </body>
+</html>
+{{ end }}

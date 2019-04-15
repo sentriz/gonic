@@ -4,16 +4,55 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
+	"path/filepath"
 	"strconv"
 
-	"github.com/jinzhu/gorm"
+	"github.com/gorilla/sessions"
+	"github.com/sentriz/gonic/db"
 	"github.com/sentriz/gonic/subsonic"
+
+	"github.com/jinzhu/gorm"
+	"github.com/wader/gormstore"
 )
 
+var (
+	templates = make(map[string]*template.Template)
+)
+
+func init() {
+	templates["login"] = template.Must(template.ParseFiles(
+		filepath.Join("templates", "layout.tmpl"),
+		filepath.Join("templates", "admin", "login.tmpl"),
+	))
+	templates["home"] = template.Must(template.ParseFiles(
+		filepath.Join("templates", "layout.tmpl"),
+		filepath.Join("templates", "user.tmpl"),
+		filepath.Join("templates", "admin", "home.tmpl"),
+	))
+	templates["create_user"] = template.Must(template.ParseFiles(
+		filepath.Join("templates", "layout.tmpl"),
+		filepath.Join("templates", "user.tmpl"),
+		filepath.Join("templates", "admin", "create_user.tmpl"),
+	))
+}
+
 type Controller struct {
-	DB *gorm.DB
+	DB        *gorm.DB
+	SStore    *gormstore.Store
+	Templates map[string]*template.Template
+}
+
+type templateData struct {
+	Flashes     []interface{}
+	UserID      uint
+	Username    string
+	ArtistCount uint
+	AlbumCount  uint
+	TrackCount  uint
+	Users       []*db.User
 }
 
 func getStrParam(r *http.Request, key string) string {
@@ -40,7 +79,8 @@ func getIntParamOr(r *http.Request, key string, or int) int {
 	return val
 }
 
-func respondRaw(w http.ResponseWriter, r *http.Request, code int, sub *subsonic.Response) {
+func respondRaw(w http.ResponseWriter, r *http.Request,
+	code int, sub *subsonic.Response) {
 	res := subsonic.MetaResponse{
 		Response: sub,
 	}
@@ -73,12 +113,26 @@ func respondRaw(w http.ResponseWriter, r *http.Request, code int, sub *subsonic.
 	}
 }
 
-func respond(w http.ResponseWriter, r *http.Request, sub *subsonic.Response) {
+func respond(w http.ResponseWriter, r *http.Request,
+	sub *subsonic.Response) {
 	respondRaw(w, r, http.StatusOK, sub)
 }
 
-func respondError(w http.ResponseWriter, r *http.Request, code uint64, message string) {
+func respondError(w http.ResponseWriter, r *http.Request,
+	code uint64, message string) {
 	respondRaw(w, r, http.StatusBadRequest, subsonic.NewError(
 		code, message,
 	))
+}
+
+func renderTemplate(w http.ResponseWriter, r *http.Request,
+	s *sessions.Session, name string, data *templateData) {
+	flashes := s.Flashes()
+	s.Save(r, w)
+	data.Flashes = flashes
+	err := templates[name].ExecuteTemplate(w, "layout", data)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("500 when executing: %v", err), 500)
+		return
+	}
 }

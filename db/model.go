@@ -50,7 +50,7 @@ type Cover struct {
 
 // User represents the users table
 type User struct {
-	IDBase
-	Username string `gorm:"not null;unique_index"`
+	Base
+	Name     string `gorm:"not null;unique_index"`
 	Password string
 }

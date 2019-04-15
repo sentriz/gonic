@@ -62,7 +62,7 @@ func (c *Controller) CheckParameters(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		user := db.User{
-			Username: username,
+			Name: username,
 		}
 		err := c.DB.Where(user).First(&user).Error
 		if gorm.IsRecordNotFoundError(err) {

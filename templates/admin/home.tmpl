@@ -1,0 +1,34 @@
+{{ define "title" }}home{{ end }}
+
+{{ define "user" }}
+<div class="padded box mono">
+    <div>
+        <span><u>stats</u></span>
+    </div>
+    <div class="right">
+        <span class="pre">artists: {{ printf "%7v" .ArtistCount }}</span><br/>
+        <span class="pre">albums: {{ printf "%7v" .AlbumCount }}</span><br/>
+        <span class="pre">tracks: {{ printf "%7v" .TrackCount }}</span>
+    </div>
+</div>
+<div class="padded box mono">
+    <div>
+        <span><u>last.fm</u></span>
+    </div>
+    <div class="right">
+        <span class="pre">unlinked</span><br/>
+    </div>
+</div>
+<div class="padded box mono">
+    <div>
+        <span><u>users</u></span>
+    </div>
+    <div class="right">
+    {{ range $user := .Users }}
+        <span class="pre">{{ $user.Name }} <span class="light">created</span> <u>{{ $user.CreatedAt.Format "Jan 02, 2006" }}</u> <a href="/admin/change_password">change password</a></span><br/>
+    {{ end }}
+    <br>  
+    <a href="/admin/create_user" class="button">create new</a>
+    </div>
+</div>
+{{ end }}

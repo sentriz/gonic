@@ -9,6 +9,11 @@ import (
 	"github.com/sentriz/gonic/handler"
 
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"github.com/wader/gormstore"
+)
+
+var (
+	dbCon = db.New()
 )
 
 type middleware func(next http.HandlerFunc) http.HandlerFunc
@@ -25,17 +30,15 @@ func newChain(wares ...middleware) middleware {
 	}
 }
 
-func main() {
-	address := ":5000"
+func setSubsonicRoutes(mux *http.ServeMux) {
 	cont := handler.Controller{
-		DB: db.New(),
+		DB: dbCon,
 	}
 	withWare := newChain(
 		cont.LogConnection,
 		cont.EnableCORS,
 		cont.CheckParameters,
 	)
-	mux := http.NewServeMux()
 	mux.HandleFunc("/rest/ping", withWare(cont.Ping))
 	mux.HandleFunc("/rest/ping.view", withWare(cont.Ping))
 	mux.HandleFunc("/rest/stream", withWare(cont.Stream))
@@ -56,11 +59,31 @@ func main() {
 	mux.HandleFunc("/rest/getAlbumList2.view", withWare(cont.GetAlbumList))
 	mux.HandleFunc("/rest/getLicense", withWare(cont.GetLicence))
 	mux.HandleFunc("/rest/getLicense.view", withWare(cont.GetLicence))
-	mux.HandleFunc("/", withWare(cont.NotFound))
-	// mux.HandleFunc("/rest/getMusicDirectory", withWare(cont.GetMusicDirectory))
-	// mux.HandleFunc("/rest/getMusicDirectory.view", withWare(cont.GetMusicDirectory))
-	// mux.HandleFunc("/rest/getIndexes", withWare(cont.GetIndexes))
-	// mux.HandleFunc("/rest/getIndexes.view", withWare(cont.GetIndexes))
+}
+
+func setAdminRoutes(mux *http.ServeMux) {
+	cont := handler.Controller{
+		DB:     dbCon,
+		SStore: gormstore.New(dbCon, []byte("saynothinboys")),
+	}
+	withWare := newChain(
+		cont.LogConnection,
+		cont.EnableCORS,
+	)
+	server := http.FileServer(http.Dir("static"))
+	mux.Handle("/admin/static/", http.StripPrefix("/admin/static/", server))
+	mux.HandleFunc("/admin/login", withWare(cont.ServeLogin))
+	mux.HandleFunc("/admin/authenticate", withWare(cont.ServeAuthenticate))
+	mux.HandleFunc("/admin/home", withWare(cont.ServeHome))
+	mux.HandleFunc("/admin/create_user", withWare(cont.ServeCreateUser))
+	mux.HandleFunc("/admin/logout", withWare(cont.ServeLogout))
+}
+
+func main() {
+	address := ":5000"
+	mux := http.NewServeMux()
+	setSubsonicRoutes(mux)
+	setAdminRoutes(mux)
 	server := &http.Server{
 		Addr:         address,
 		Handler:      mux,
