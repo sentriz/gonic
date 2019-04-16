@@ -1,0 +1,15 @@
+{{ define "title" }}home{{ end }}
+
+{{ define "user" }}
+<div class="padded box mono">
+    <div class="box-title">
+        <span><u>create new user</u></span>
+    </div>
+    <form id="login-form" action="/admin/create_user_do" method="post">
+        <input type="text" id="username" name="username" placeholder="username">
+        <input type="password" id="password_one" name="password_one" placeholder="password">
+        <input type="password" id="password_two" name="password_two" placeholder="verify password">
+        <input type="submit" value="create">
+    </form>
+</div>
+{{ end }}

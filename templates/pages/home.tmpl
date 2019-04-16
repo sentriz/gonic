@@ -2,7 +2,7 @@
 
 {{ define "user" }}
 <div class="padded box mono">
-    <div>
+    <div class="box-title">
         <span><u>stats</u></span>
     </div>
     <div class="right">
@@ -12,20 +12,20 @@
     </div>
 </div>
 <div class="padded box mono">
-    <div>
-        <span><u>last.fm</u></span>
+    <div class="box-title">
+        <span><u>last fm</u></span>
     </div>
     <div class="right">
         <span class="pre">unlinked</span><br/>
     </div>
 </div>
 <div class="padded box mono">
-    <div>
+    <div class="box-title">
         <span><u>users</u></span>
     </div>
     <div class="right">
-    {{ range $user := .Users }}
-        <span class="pre">{{ $user.Name }} <span class="light">created</span> <u>{{ $user.CreatedAt.Format "Jan 02, 2006" }}</u> <a href="/admin/change_password">change password</a></span><br/>
+    {{ range $user := .AllUsers }}
+        <span class="pre">{{ $user.Name }} <span class="light">created</span> <u>{{ $user.CreatedAt.Format "Jan 02, 2006" }}</u> <a href="/admin/change_password?user={{ $user.Name }}">change password</a></span><br/>
     {{ end }}
     <br>  
     <a href="/admin/create_user" class="button">create new</a>

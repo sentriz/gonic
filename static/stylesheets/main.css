@@ -1,3 +1,16 @@
+/* reset from awsm */
+form input[type], form select, form textarea {
+    margin-bottom: 0;
+}
+
+/* reset from awsm */
+form {
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: 0;
+}
+
+/* reset from awsm */
 div {
     margin: 0;
     padding: 0;
@@ -12,12 +25,13 @@ body {
     justify-content: space-between;
 }
 
-form {
-    max-width: unset;
+
+form input[type=password], form input[type=text] {
+  margin-bottom: 0.25rem;
 }
 
 #content > * {
-    margin: 1rem 0;
+    margin: 2rem 0;
 }
 
 .right {
@@ -40,13 +54,15 @@ form {
     background-color: #0000000a;
 }
 
+.box-title {
+    margin-bottom: 0.5rem;
+}
+
 .padded {
     padding: 1rem;
 }
 
 #header {
-    /* background-color: #fdc71b08; */
-    background-image: linear-gradient(white, #fdad1b0d);
     border-bottom: 1px solid;
     padding-top: 3rem;
 }
@@ -63,7 +79,7 @@ form {
 }
 
 #flashes {
-    background-color: #fd1b1b29;
+    background-color: #fd1b1b1c;
 }
 
 #login-form {

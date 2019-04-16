@@ -25,17 +25,22 @@ var (
 func init() {
 	templates["login"] = template.Must(template.ParseFiles(
 		filepath.Join("templates", "layout.tmpl"),
-		filepath.Join("templates", "admin", "login.tmpl"),
+		filepath.Join("templates", "pages", "login.tmpl"),
 	))
 	templates["home"] = template.Must(template.ParseFiles(
 		filepath.Join("templates", "layout.tmpl"),
 		filepath.Join("templates", "user.tmpl"),
-		filepath.Join("templates", "admin", "home.tmpl"),
+		filepath.Join("templates", "pages", "home.tmpl"),
 	))
 	templates["create_user"] = template.Must(template.ParseFiles(
 		filepath.Join("templates", "layout.tmpl"),
 		filepath.Join("templates", "user.tmpl"),
-		filepath.Join("templates", "admin", "create_user.tmpl"),
+		filepath.Join("templates", "pages", "create_user.tmpl"),
+	))
+	templates["change_password"] = template.Must(template.ParseFiles(
+		filepath.Join("templates", "layout.tmpl"),
+		filepath.Join("templates", "user.tmpl"),
+		filepath.Join("templates", "pages", "change_password.tmpl"),
 	))
 }
 
@@ -46,13 +51,13 @@ type Controller struct {
 }
 
 type templateData struct {
-	Flashes     []interface{}
-	UserID      uint
-	Username    string
-	ArtistCount uint
-	AlbumCount  uint
-	TrackCount  uint
-	Users       []*db.User
+	Flashes      []interface{}
+	User         *db.User
+	SelectedUser *db.User
+	AllUsers     []*db.User
+	ArtistCount  uint
+	AlbumCount   uint
+	TrackCount   uint
 }
 
 func getStrParam(r *http.Request, key string) string {
@@ -127,9 +132,15 @@ func respondError(w http.ResponseWriter, r *http.Request,
 
 func renderTemplate(w http.ResponseWriter, r *http.Request,
 	s *sessions.Session, name string, data *templateData) {
-	flashes := s.Flashes()
+	// take the flashes from the session and add to template
+	data.Flashes = s.Flashes()
 	s.Save(r, w)
-	data.Flashes = flashes
+	// take the user gob from the session (if we're logged in and
+	// it's there) cast to a user and add to the template
+	userIntf := s.Values["user"]
+	if userIntf != nil {
+		data.User = s.Values["user"].(*db.User)
+	}
 	err := templates[name].ExecuteTemplate(w, "layout", data)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("500 when executing: %v", err), 500)

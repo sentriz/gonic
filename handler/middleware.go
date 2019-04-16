@@ -30,14 +30,14 @@ func checkCredentialsBasic(password, givenPassword string) bool {
 	return password == givenPassword
 }
 
-func (c *Controller) LogConnection(next http.HandlerFunc) http.HandlerFunc {
+func (c *Controller) WithLogging(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("connection from `%s` for `%s`", r.RemoteAddr, r.URL)
 		next.ServeHTTP(w, r)
 	}
 }
 
-func (c *Controller) CheckParameters(next http.HandlerFunc) http.HandlerFunc {
+func (c *Controller) WithValidSubsonicArgs(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		for _, req := range requiredParameters {
 			param := r.URL.Query().Get(req)
@@ -83,7 +83,7 @@ func (c *Controller) CheckParameters(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func (c *Controller) EnableCORS(next http.HandlerFunc) http.HandlerFunc {
+func (c *Controller) WithCORS(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods",
@@ -93,6 +93,20 @@ func (c *Controller) EnableCORS(next http.HandlerFunc) http.HandlerFunc {
 			"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization",
 		)
 		if r.Method == "OPTIONS" {
+			return
+		}
+		next.ServeHTTP(w, r)
+	}
+}
+
+func (c *Controller) WithValidSession(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		session, _ := c.SStore.Get(r, "gonic")
+		user, _ := session.Values["user"]
+		if user == nil {
+			session.AddFlash("you are not authenticated")
+			session.Save(r, w)
+			http.Redirect(w, r, "/admin/login", 303)
 			return
 		}
 		next.ServeHTTP(w, r)

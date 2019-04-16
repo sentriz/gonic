@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/gob"
 	"log"
 	"net/http"
 	"time"
@@ -35,9 +36,9 @@ func setSubsonicRoutes(mux *http.ServeMux) {
 		DB: dbCon,
 	}
 	withWare := newChain(
-		cont.LogConnection,
-		cont.EnableCORS,
-		cont.CheckParameters,
+		cont.WithLogging,
+		cont.WithCORS,
+		cont.WithValidSubsonicArgs,
 	)
 	mux.HandleFunc("/rest/ping", withWare(cont.Ping))
 	mux.HandleFunc("/rest/ping.view", withWare(cont.Ping))
@@ -66,20 +67,30 @@ func setAdminRoutes(mux *http.ServeMux) {
 		DB:     dbCon,
 		SStore: gormstore.New(dbCon, []byte("saynothinboys")),
 	}
-	withWare := newChain(
-		cont.LogConnection,
-		cont.EnableCORS,
+	withBaseWare := newChain(
+		cont.WithLogging,
+	)
+	withAuthWare := newChain(
+		withBaseWare,
+		cont.WithValidSession,
 	)
 	server := http.FileServer(http.Dir("static"))
 	mux.Handle("/admin/static/", http.StripPrefix("/admin/static/", server))
-	mux.HandleFunc("/admin/login", withWare(cont.ServeLogin))
-	mux.HandleFunc("/admin/authenticate", withWare(cont.ServeAuthenticate))
-	mux.HandleFunc("/admin/home", withWare(cont.ServeHome))
-	mux.HandleFunc("/admin/create_user", withWare(cont.ServeCreateUser))
-	mux.HandleFunc("/admin/logout", withWare(cont.ServeLogout))
+	mux.HandleFunc("/admin/login", withBaseWare(cont.ServeLogin))
+	mux.HandleFunc("/admin/login_do", withBaseWare(cont.ServeLoginDo))
+	mux.HandleFunc("/admin/logout", withAuthWare(cont.ServeLogout))
+	mux.HandleFunc("/admin/home", withAuthWare(cont.ServeHome))
+	mux.HandleFunc("/admin/change_password", withAuthWare(cont.ServeChangePassword))
+	mux.HandleFunc("/admin/change_password_do", withBaseWare(cont.ServeChangePasswordDo))
+	mux.HandleFunc("/admin/create_user", withAuthWare(cont.ServeCreateUser))
+	mux.HandleFunc("/admin/create_user_do", withBaseWare(cont.ServeCreateUserDo))
 }
 
 func main() {
+	// init stuff. needed to store the current user in
+	// the gorilla session
+	gob.Register(&db.User{})
+	// setup the subsonic and admin routes
 	address := ":5000"
 	mux := http.NewServeMux()
 	setSubsonicRoutes(mux)
