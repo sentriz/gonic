@@ -3,9 +3,9 @@
 {{ define "content" }}
 <div class="padded box mono">
     <div class="box-title">
-        <span><u>please login</u></span>
+        <u>please login</u>
     </div>
-    <form id="login-form" action="/admin/login_do" method="post">
+    <form action="/admin/login_do" method="post">
         <input type="text" id="username" name="username" placeholder="username">
         <input type="password" id="password" name="password" placeholder="password">
         <input type="submit" value="login">

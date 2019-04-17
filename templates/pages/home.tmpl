@@ -3,7 +3,7 @@
 {{ define "user" }}
 <div class="padded box mono">
     <div class="box-title">
-        <span><u>stats</u></span>
+        <u>stats</u>
     </div>
     <div class="right">
         <span class="pre">artists: {{ printf "%7v" .ArtistCount }}</span><br/>
@@ -13,32 +13,32 @@
 </div>
 <div class="padded box mono">
     <div class="box-title">
-        <span><u>last fm</u></span>
+        <u>last.fm</u>
     </div>
     <div class="right">
-        <span class="pre">unlinked</span><br/>
+        <a href="/admin/update_lastfm_api_key">update last.fm api key</a><br/>
+        <a href="https://www.last.fm/api/auth/?api_key={{ .CurrentLastFMAPIKey }}&cb={{ .RequestRoot }}/admin/link_lastfm_callback">link account</a><br/>
     </div>
 </div>
 <div class="padded box mono">
     {{ if .User.IsAdmin }}
     {{/* admin panel to manage all users */}}
     <div class="box-title">
-        <span><u>users</u></span>
+        <u>users</u>
     </div>
     <div class="right">
     {{ range $user := .AllUsers }}
-        <span class="pre">{{ $user.Name }} <span class="light">created</span> <u>{{ $user.CreatedAt.Format "Jan 02, 2006" }}</u> <a href="/admin/change_password?user={{ $user.Name }}">change password</a></span><br/>
+        {{ $user.Name }} <span class="light">created</span> <u>{{ $user.CreatedAt.Format "Jan 02, 2006" }}</u> <a href="/admin/change_password?user={{ $user.Name }}">change password</a><br/>
     {{ end }}
-    <br>  
     <a href="/admin/create_user" class="button">create new</a>
     </div>
     {{ else }}
     {{/* user panel to manage themselves */}}
     <div class="box-title">
-        <span><u>your account</u></span>
+        <u>your account</u>
     </div>
     <div class="right">
-    <a href="/admin/change_own_password" class="button">change password</a>
+        <a href="/admin/change_own_password" class="button">change password</a>
     </div>
     {{ end }}
 </div>

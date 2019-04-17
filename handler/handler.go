@@ -47,6 +47,11 @@ func init() {
 		filepath.Join("templates", "user.tmpl"),
 		filepath.Join("templates", "pages", "create_user.tmpl"),
 	))
+	templates["update_lastfm_api_key"] = template.Must(template.ParseFiles(
+		filepath.Join("templates", "layout.tmpl"),
+		filepath.Join("templates", "user.tmpl"),
+		filepath.Join("templates", "pages", "update_lastfm_api_key.tmpl"),
+	))
 }
 
 type Controller struct {
@@ -55,13 +60,16 @@ type Controller struct {
 }
 
 type templateData struct {
-	Flashes      []interface{}
-	User         *db.User
-	SelectedUser *db.User
-	AllUsers     []*db.User
-	ArtistCount  uint
-	AlbumCount   uint
-	TrackCount   uint
+	Flashes                []interface{}
+	User                   *db.User
+	SelectedUser           *db.User
+	AllUsers               []*db.User
+	ArtistCount            uint
+	AlbumCount             uint
+	TrackCount             uint
+	CurrentLastFMAPIKey    string
+	CurrentLastFMAPISecret string
+	RequestRoot            string
 }
 
 func getStrParam(r *http.Request, key string) string {
@@ -145,6 +153,11 @@ func renderTemplate(w http.ResponseWriter, r *http.Request,
 	user, ok := session.Values["user"].(*db.User)
 	if ok {
 		data.User = user
+	}
+	if r.URL.Host == "" {
+		data.RequestRoot = "http://localhost"
+	} else {
+		data.RequestRoot = fmt.Sprintf("%s://%s", r.URL.Scheme, r.URL.Host)
 	}
 	err := templates[name].ExecuteTemplate(w, "layout", data)
 	if err != nil {

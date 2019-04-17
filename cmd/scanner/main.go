@@ -187,6 +187,7 @@ func main() {
 		&db.Track{},
 		&db.Cover{},
 		&db.User{},
+		&db.Setting{},
 	)
 	// 🤫🤫🤫
 	orm.Exec(`

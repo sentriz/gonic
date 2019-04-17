@@ -8,6 +8,9 @@ form {
     max-width: 400px;
     margin-left: auto;
     margin-right: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
 }
 
 /* reset from awsm */
@@ -28,6 +31,10 @@ body {
 
 form input[type=password], form input[type=text] {
   margin-bottom: 0.25rem;
+}
+
+form input[type=submit] {
+    width: 8rem;
 }
 
 #content > * {
@@ -81,12 +88,3 @@ form input[type=password], form input[type=text] {
     background-color: #fd1b1b1c;
 }
 
-#login-form {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-}
-
-#login-form input[type=submit] {
-    width: 8rem;
-}

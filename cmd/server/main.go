@@ -87,10 +87,13 @@ func setAdminRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/admin/home", withUserWare(cont.ServeHome))
 	mux.HandleFunc("/admin/change_own_password", withUserWare(cont.ServeChangeOwnPassword))
 	mux.HandleFunc("/admin/change_own_password_do", withUserWare(cont.ServeChangeOwnPasswordDo))
+	mux.HandleFunc("/admin/link_lastfm_callback", withUserWare(cont.ServeLinkLastFMCallback))
 	mux.HandleFunc("/admin/change_password", withAdminWare(cont.ServeChangePassword))
 	mux.HandleFunc("/admin/change_password_do", withAdminWare(cont.ServeChangePasswordDo))
 	mux.HandleFunc("/admin/create_user", withAdminWare(cont.ServeCreateUser))
 	mux.HandleFunc("/admin/create_user_do", withAdminWare(cont.ServeCreateUserDo))
+	mux.HandleFunc("/admin/update_lastfm_api_key", withAdminWare(cont.ServeUpdateLastFMAPIKey))
+	mux.HandleFunc("/admin/update_lastfm_api_key_do", withAdminWare(cont.ServeUpdateLastFMAPIKeyDo))
 }
 
 func main() {

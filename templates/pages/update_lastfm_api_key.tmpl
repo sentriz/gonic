@@ -1,0 +1,18 @@
+{{ define "title" }}home{{ end }}
+
+{{ define "user" }}
+<div class="padded box mono">
+    <div class="box-title">
+        <u>updating last.fm api key</u>
+    </div>
+    <div class="right">
+        <span class="light">current key</span> <i>{{ if .CurrentLastFMAPIKey }}{{ .CurrentLastFMAPIKey }}{{ else }}not set{{ end }}</i><br/>
+        <span class="light">current secret</span> <i>{{ if .CurrentLastFMAPISecret }}{{ .CurrentLastFMAPISecret }}{{ else }}not set{{ end }}</i>
+    </div>
+    <form action="/admin/update_lastfm_api_key_do" method="post">
+        <input type="text" id="api_key" name="api_key" placeholder="new key">
+        <input type="text" id="secret" name="secret" placeholder="new secret">
+        <input type="submit" value="update">
+    </form>
+</div>
+{{ end }}

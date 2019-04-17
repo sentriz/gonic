@@ -18,3 +18,10 @@ func ValidatePasswords(pOne, pTwo string) error {
 	}
 	return nil
 }
+
+func ValidateAPIKey(apiKey, secret string) error {
+	if apiKey == "" || secret == "" {
+		return fmt.Errorf("please enter both the api key and secret")
+	}
+	return nil
+}

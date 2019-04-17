@@ -55,3 +55,10 @@ type User struct {
 	Password string
 	IsAdmin  bool
 }
+
+// Setting represents the settings table
+type Setting struct {
+	CrudBase
+	Key   string `gorm:"primary_key;auto_increment:false"`
+	Value string
+}
