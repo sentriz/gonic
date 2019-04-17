@@ -20,6 +20,8 @@
     </div>
 </div>
 <div class="padded box mono">
+    {{ if .User.IsAdmin }}
+    {{/* admin panel to manage all users */}}
     <div class="box-title">
         <span><u>users</u></span>
     </div>
@@ -30,5 +32,14 @@
     <br>  
     <a href="/admin/create_user" class="button">create new</a>
     </div>
+    {{ else }}
+    {{/* user panel to manage themselves */}}
+    <div class="box-title">
+        <span><u>your account</u></span>
+    </div>
+    <div class="right">
+    <a href="/admin/change_own_password" class="button">change password</a>
+    </div>
+    {{ end }}
 </div>
 {{ end }}

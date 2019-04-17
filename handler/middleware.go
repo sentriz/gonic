@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
 	"log"
 	"net/http"
 
+	"github.com/gorilla/sessions"
 	"github.com/jinzhu/gorm"
 	"github.com/sentriz/gonic/db"
 )
@@ -99,12 +101,37 @@ func (c *Controller) WithCORS(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func (c *Controller) WithValidSession(next http.HandlerFunc) http.HandlerFunc {
+func (c *Controller) WithSession(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, _ := c.SStore.Get(r, "gonic")
-		user, _ := session.Values["user"]
-		if user == nil {
+		withSession := context.WithValue(r.Context(), "session", session)
+		next.ServeHTTP(w, r.WithContext(withSession))
+	}
+}
+
+func (c *Controller) WithUserSession(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// session exists at this point
+		session := r.Context().Value("session").(*sessions.Session)
+		_, ok := session.Values["user"]
+		if !ok {
 			session.AddFlash("you are not authenticated")
+			session.Save(r, w)
+			http.Redirect(w, r, "/admin/login", 303)
+			return
+		}
+		withSession := context.WithValue(r.Context(), "session", session)
+		next.ServeHTTP(w, r.WithContext(withSession))
+	}
+}
+
+func (c *Controller) WithAdminSession(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// session and user exist at this point
+		session := r.Context().Value("session").(*sessions.Session)
+		user := session.Values["user"].(*db.User)
+		if !user.IsAdmin {
+			session.AddFlash("you are not an admin")
 			session.Save(r, w)
 			http.Redirect(w, r, "/admin/login", 303)
 			return

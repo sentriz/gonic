@@ -53,4 +53,5 @@ type User struct {
 	Base
 	Name     string `gorm:"not null;unique_index"`
 	Password string
+	IsAdmin  bool
 }

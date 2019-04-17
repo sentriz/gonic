@@ -4,17 +4,18 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gorilla/sessions"
 	"github.com/jinzhu/gorm"
 	"github.com/sentriz/gonic/db"
+	"github.com/sentriz/gonic/handler/utilities"
 )
 
 func (c *Controller) ServeLogin(w http.ResponseWriter, r *http.Request) {
-	session, _ := c.SStore.Get(r, "gonic")
-	renderTemplate(w, r, session, "login", &templateData{})
+	renderTemplate(w, r, "login", nil)
 }
 
 func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
-	session, _ := c.SStore.Get(r, "gonic")
+	session := r.Context().Value("session").(*sessions.Session)
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 	if username == "" || password == "" {
@@ -37,24 +38,43 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) ServeLogout(w http.ResponseWriter, r *http.Request) {
-	session, _ := c.SStore.Get(r, "gonic")
+	session := r.Context().Value("session").(*sessions.Session)
 	delete(session.Values, "user")
 	session.Save(r, w)
 	http.Redirect(w, r, "/admin/login", 303)
 }
 
 func (c *Controller) ServeHome(w http.ResponseWriter, r *http.Request) {
-	session, _ := c.SStore.Get(r, "gonic")
 	var data templateData
 	c.DB.Table("album_artists").Count(&data.ArtistCount)
 	c.DB.Table("albums").Count(&data.AlbumCount)
 	c.DB.Table("tracks").Count(&data.TrackCount)
 	c.DB.Find(&data.AllUsers)
-	renderTemplate(w, r, session, "home", &data)
+	renderTemplate(w, r, "home", &data)
+}
+
+func (c *Controller) ServeChangeOwnPassword(w http.ResponseWriter, r *http.Request) {
+	renderTemplate(w, r, "change_own_password", nil)
+}
+
+func (c *Controller) ServeChangeOwnPasswordDo(w http.ResponseWriter, r *http.Request) {
+	session := r.Context().Value("session").(*sessions.Session)
+	passwordOne := r.FormValue("password_one")
+	passwordTwo := r.FormValue("password_two")
+	err := utilities.ValidatePasswords(passwordOne, passwordTwo)
+	if err != nil {
+		session.AddFlash(err.Error())
+		session.Save(r, w)
+		http.Redirect(w, r, r.Header.Get("Referer"), 302)
+		return
+	}
+	user, _ := session.Values["user"].(*db.User)
+	user.Password = passwordOne
+	c.DB.Save(user)
+	http.Redirect(w, r, "/admin/home", 303)
 }
 
 func (c *Controller) ServeChangePassword(w http.ResponseWriter, r *http.Request) {
-	session, _ := c.SStore.Get(r, "gonic")
 	username := r.URL.Query().Get("user")
 	if username == "" {
 		http.Error(w, "please provide a username", 400)
@@ -68,60 +88,56 @@ func (c *Controller) ServeChangePassword(w http.ResponseWriter, r *http.Request)
 	}
 	var data templateData
 	data.SelectedUser = &user
-	renderTemplate(w, r, session, "change_password", &data)
+	renderTemplate(w, r, "change_password", &data)
 }
 
 func (c *Controller) ServeChangePasswordDo(w http.ResponseWriter, r *http.Request) {
-	session, _ := c.SStore.Get(r, "gonic")
+	session := r.Context().Value("session").(*sessions.Session)
 	username := r.URL.Query().Get("user")
 	var user db.User
 	c.DB.Where("name = ?", username).First(&user)
-	password_one := r.FormValue("password_one")
-	password_two := r.FormValue("password_two")
-	if password_one == "" || password_two == "" {
-		session.AddFlash("please provide both passwords")
+	passwordOne := r.FormValue("password_one")
+	passwordTwo := r.FormValue("password_two")
+	err := utilities.ValidatePasswords(passwordOne, passwordTwo)
+	if err != nil {
+		session.AddFlash(err.Error())
 		session.Save(r, w)
 		http.Redirect(w, r, r.Header.Get("Referer"), 302)
 		return
 	}
-	if !(password_one == password_two) {
-		session.AddFlash("the two passwords entered were not the same")
-		session.Save(r, w)
-		http.Redirect(w, r, r.Header.Get("Referer"), 302)
-		return
-	}
-	user.Password = password_one
+	user.Password = passwordOne
 	c.DB.Save(&user)
 	http.Redirect(w, r, "/admin/home", 303)
 }
 
 func (c *Controller) ServeCreateUser(w http.ResponseWriter, r *http.Request) {
-	session, _ := c.SStore.Get(r, "gonic")
-	renderTemplate(w, r, session, "create_user", &templateData{})
+	renderTemplate(w, r, "create_user", nil)
 }
 
 func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
-	session, _ := c.SStore.Get(r, "gonic")
+	session := r.Context().Value("session").(*sessions.Session)
 	username := r.FormValue("username")
-	password_one := r.FormValue("password_one")
-	password_two := r.FormValue("password_two")
-	if username == "" || password_one == "" || password_two == "" {
-		session.AddFlash("please fill out all fields")
+	err := utilities.ValidateUsername(username)
+	if err != nil {
+		session.AddFlash(err.Error())
 		session.Save(r, w)
 		http.Redirect(w, r, r.Header.Get("Referer"), 302)
 		return
 	}
-	if !(password_one == password_two) {
-		session.AddFlash("the two passwords entered were not the same")
+	passwordOne := r.FormValue("password_one")
+	passwordTwo := r.FormValue("password_two")
+	err = utilities.ValidatePasswords(passwordOne, passwordTwo)
+	if err != nil {
+		session.AddFlash(err.Error())
 		session.Save(r, w)
 		http.Redirect(w, r, r.Header.Get("Referer"), 302)
 		return
 	}
 	user := db.User{
 		Name:     username,
-		Password: password_one,
+		Password: passwordOne,
 	}
-	err := c.DB.Create(&user).Error
+	err = c.DB.Create(&user).Error
 	if err != nil {
 		session.AddFlash(fmt.Sprintf(
 			"could not create user `%s`: %v", username, err,

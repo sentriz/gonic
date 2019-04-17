@@ -2,7 +2,7 @@
 
 {{ define "content" }}
 <div class="light right">
-    <span>welcome <u>{{ .User.Name }}</u> &#124; <a href="/admin/logout">logout</a></span>
+    <span>welcome <u>{{ .User.Name }}</u> &#124; <a href="/admin/home">home</a> &#124; <a href="/admin/logout">logout</a></span>
 </div>
 {{ template "user" . }}
 {{ end }}

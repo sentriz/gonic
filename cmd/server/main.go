@@ -65,25 +65,32 @@ func setSubsonicRoutes(mux *http.ServeMux) {
 func setAdminRoutes(mux *http.ServeMux) {
 	cont := handler.Controller{
 		DB:     dbCon,
-		SStore: gormstore.New(dbCon, []byte("saynothinboys")),
+		SStore: gormstore.New(dbCon, []byte("saynothinboys")), // TODO: not this
 	}
-	withBaseWare := newChain(
+	withPublicWare := newChain(
 		cont.WithLogging,
+		cont.WithSession,
 	)
-	withAuthWare := newChain(
-		withBaseWare,
-		cont.WithValidSession,
+	withUserWare := newChain(
+		withPublicWare,
+		cont.WithUserSession,
+	)
+	withAdminWare := newChain(
+		withUserWare,
+		cont.WithAdminSession,
 	)
 	server := http.FileServer(http.Dir("static"))
 	mux.Handle("/admin/static/", http.StripPrefix("/admin/static/", server))
-	mux.HandleFunc("/admin/login", withBaseWare(cont.ServeLogin))
-	mux.HandleFunc("/admin/login_do", withBaseWare(cont.ServeLoginDo))
-	mux.HandleFunc("/admin/logout", withAuthWare(cont.ServeLogout))
-	mux.HandleFunc("/admin/home", withAuthWare(cont.ServeHome))
-	mux.HandleFunc("/admin/change_password", withAuthWare(cont.ServeChangePassword))
-	mux.HandleFunc("/admin/change_password_do", withBaseWare(cont.ServeChangePasswordDo))
-	mux.HandleFunc("/admin/create_user", withAuthWare(cont.ServeCreateUser))
-	mux.HandleFunc("/admin/create_user_do", withBaseWare(cont.ServeCreateUserDo))
+	mux.HandleFunc("/admin/login", withPublicWare(cont.ServeLogin))
+	mux.HandleFunc("/admin/login_do", withPublicWare(cont.ServeLoginDo))
+	mux.HandleFunc("/admin/logout", withUserWare(cont.ServeLogout))
+	mux.HandleFunc("/admin/home", withUserWare(cont.ServeHome))
+	mux.HandleFunc("/admin/change_own_password", withUserWare(cont.ServeChangeOwnPassword))
+	mux.HandleFunc("/admin/change_own_password_do", withUserWare(cont.ServeChangeOwnPasswordDo))
+	mux.HandleFunc("/admin/change_password", withAdminWare(cont.ServeChangePassword))
+	mux.HandleFunc("/admin/change_password_do", withAdminWare(cont.ServeChangePasswordDo))
+	mux.HandleFunc("/admin/create_user", withAdminWare(cont.ServeCreateUser))
+	mux.HandleFunc("/admin/create_user_do", withAdminWare(cont.ServeCreateUserDo))
 }
 
 func main() {

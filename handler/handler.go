@@ -32,22 +32,26 @@ func init() {
 		filepath.Join("templates", "user.tmpl"),
 		filepath.Join("templates", "pages", "home.tmpl"),
 	))
-	templates["create_user"] = template.Must(template.ParseFiles(
-		filepath.Join("templates", "layout.tmpl"),
-		filepath.Join("templates", "user.tmpl"),
-		filepath.Join("templates", "pages", "create_user.tmpl"),
-	))
 	templates["change_password"] = template.Must(template.ParseFiles(
 		filepath.Join("templates", "layout.tmpl"),
 		filepath.Join("templates", "user.tmpl"),
 		filepath.Join("templates", "pages", "change_password.tmpl"),
 	))
+	templates["change_own_password"] = template.Must(template.ParseFiles(
+		filepath.Join("templates", "layout.tmpl"),
+		filepath.Join("templates", "user.tmpl"),
+		filepath.Join("templates", "pages", "change_own_password.tmpl"),
+	))
+	templates["create_user"] = template.Must(template.ParseFiles(
+		filepath.Join("templates", "layout.tmpl"),
+		filepath.Join("templates", "user.tmpl"),
+		filepath.Join("templates", "pages", "create_user.tmpl"),
+	))
 }
 
 type Controller struct {
-	DB        *gorm.DB
-	SStore    *gormstore.Store
-	Templates map[string]*template.Template
+	DB     *gorm.DB
+	SStore *gormstore.Store
 }
 
 type templateData struct {
@@ -131,15 +135,16 @@ func respondError(w http.ResponseWriter, r *http.Request,
 }
 
 func renderTemplate(w http.ResponseWriter, r *http.Request,
-	s *sessions.Session, name string, data *templateData) {
-	// take the flashes from the session and add to template
-	data.Flashes = s.Flashes()
-	s.Save(r, w)
-	// take the user gob from the session (if we're logged in and
-	// it's there) cast to a user and add to the template
-	userIntf := s.Values["user"]
-	if userIntf != nil {
-		data.User = s.Values["user"].(*db.User)
+	name string, data *templateData) {
+	session := r.Context().Value("session").(*sessions.Session)
+	if data == nil {
+		data = &templateData{}
+	}
+	data.Flashes = session.Flashes()
+	session.Save(r, w)
+	user, ok := session.Values["user"].(*db.User)
+	if ok {
+		data.User = user
 	}
 	err := templates[name].ExecuteTemplate(w, "layout", data)
 	if err != nil {

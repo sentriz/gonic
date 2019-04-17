@@ -197,10 +197,11 @@ func main() {
 	orm.FirstOrCreate(&db.User{}, db.User{
 		Name:     "admin",
 		Password: "admin",
+		IsAdmin:  true,
 	})
 	orm.FirstOrCreate(&db.User{}, db.User{
-		Name:     "senan",
-		Password: "password",
+		Name:     "stephen",
+		Password: "stephen",
 	})
 	startTime := time.Now()
 	tx = orm.Begin()
