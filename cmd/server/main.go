@@ -101,7 +101,7 @@ func main() {
 	// the gorilla session
 	gob.Register(&db.User{})
 	// setup the subsonic and admin routes
-	address := ":5000"
+	address := ":6969"
 	mux := http.NewServeMux()
 	setSubsonicRoutes(mux)
 	setAdminRoutes(mux)
