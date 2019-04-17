@@ -50,6 +50,9 @@ func (c *Controller) ServeHome(w http.ResponseWriter, r *http.Request) {
 	c.DB.Table("albums").Count(&data.AlbumCount)
 	c.DB.Table("tracks").Count(&data.TrackCount)
 	c.DB.Find(&data.AllUsers)
+	var apiKey db.Setting
+	c.DB.Where("key = ?", "lastfm_api_key").First(&apiKey)
+	data.CurrentLastFMAPIKey = apiKey.Value
 	renderTemplate(w, r, "home", &data)
 }
 

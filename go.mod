@@ -2,6 +2,7 @@ module github.com/sentriz/gonic
 
 require (
 	cloud.google.com/go v0.37.1 // indirect
+	github.com/davecgh/go-spew v1.1.1
 	github.com/denisenkom/go-mssqldb v0.0.0-20190315220205-a8ed825ac853 // indirect
 	github.com/dhowden/tag v0.0.0-20181104225729-a9f04c2798ca
 	github.com/erikstmartin/go-testdb v0.0.0-20160219214506-8d10e4a1bae5 // indirect

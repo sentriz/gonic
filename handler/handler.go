@@ -142,6 +142,21 @@ func respondError(w http.ResponseWriter, r *http.Request,
 	))
 }
 
+func firstExisting(or string, strings ...string) string {
+	current := ""
+	for _, s := range strings {
+		if s == "" {
+			continue
+		}
+		current = s
+		break
+	}
+	if current == "" {
+		return or
+	}
+	return current
+}
+
 func renderTemplate(w http.ResponseWriter, r *http.Request,
 	name string, data *templateData) {
 	session := r.Context().Value("session").(*sessions.Session)
@@ -154,11 +169,18 @@ func renderTemplate(w http.ResponseWriter, r *http.Request,
 	if ok {
 		data.User = user
 	}
-	if r.URL.Host == "" {
-		data.RequestRoot = "http://localhost"
-	} else {
-		data.RequestRoot = fmt.Sprintf("%s://%s", r.URL.Scheme, r.URL.Host)
-	}
+	scheme := firstExisting(
+		"http", // fallback
+		r.Header.Get("X-Forwarded-Proto"),
+		r.Header.Get("X-Forwarded-Scheme"),
+		r.URL.Scheme,
+	)
+	host := firstExisting(
+		"localhost:7373", // fallback
+		r.Header.Get("X-Forwarded-Host"),
+		r.Host,
+	)
+	data.RequestRoot = fmt.Sprintf("%s://%s", scheme, host)
 	err := templates[name].ExecuteTemplate(w, "layout", data)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("500 when executing: %v", err), 500)
