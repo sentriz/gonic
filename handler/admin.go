@@ -101,6 +101,7 @@ func (c *Controller) ServeLinkLastFMCallback(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	fmt.Println("THE SESSION KEY", sessionKey)
+	http.Redirect(w, r, "/admin/home", 302)
 }
 
 func (c *Controller) ServeChangePassword(w http.ResponseWriter, r *http.Request) {
