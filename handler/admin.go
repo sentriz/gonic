@@ -8,6 +8,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/sentriz/gonic/db"
 	"github.com/sentriz/gonic/handler/utilities"
+	"github.com/sentriz/gonic/lastfm"
 )
 
 func (c *Controller) ServeLogin(w http.ResponseWriter, r *http.Request) {
@@ -83,7 +84,23 @@ func (c *Controller) ServeLinkLastFMCallback(w http.ResponseWriter, r *http.Requ
 		http.Error(w, "please provide a token", 400)
 		return
 	}
-	_ = token
+	var apiKey db.Setting
+	c.DB.Where("key = ?", "lastfm_api_key").First(&apiKey)
+	var secret db.Setting
+	c.DB.Where("key = ?", "lastfm_secret").First(&secret)
+	sessionKey, err := lastfm.GetSession(
+		apiKey.Value,
+		secret.Value,
+		token,
+	)
+	if err != nil {
+		session := r.Context().Value("session").(*sessions.Session)
+		session.AddFlash(err.Error())
+		session.Save(r, w)
+		http.Redirect(w, r, "/admin/home", 302)
+		return
+	}
+	fmt.Println("THE SESSION KEY", sessionKey)
 }
 
 func (c *Controller) ServeChangePassword(w http.ResponseWriter, r *http.Request) {
@@ -164,10 +181,10 @@ func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
 func (c *Controller) ServeUpdateLastFMAPIKey(w http.ResponseWriter, r *http.Request) {
 	var data templateData
 	var apiKey db.Setting
-	var secret db.Setting
 	c.DB.Where("key = ?", "lastfm_api_key").First(&apiKey)
-	c.DB.Where("key = ?", "lastfm_secret").First(&secret)
 	data.CurrentLastFMAPIKey = apiKey.Value
+	var secret db.Setting
+	c.DB.Where("key = ?", "lastfm_secret").First(&secret)
 	data.CurrentLastFMAPISecret = secret.Value
 	renderTemplate(w, r, "update_lastfm_api_key", &data)
 }

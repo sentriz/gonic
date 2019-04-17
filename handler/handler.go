@@ -12,6 +12,7 @@ import (
 
 	"github.com/gorilla/sessions"
 	"github.com/sentriz/gonic/db"
+	"github.com/sentriz/gonic/handler/utilities"
 	"github.com/sentriz/gonic/subsonic"
 
 	"github.com/jinzhu/gorm"
@@ -142,21 +143,6 @@ func respondError(w http.ResponseWriter, r *http.Request,
 	))
 }
 
-func firstExisting(or string, strings ...string) string {
-	current := ""
-	for _, s := range strings {
-		if s == "" {
-			continue
-		}
-		current = s
-		break
-	}
-	if current == "" {
-		return or
-	}
-	return current
-}
-
 func renderTemplate(w http.ResponseWriter, r *http.Request,
 	name string, data *templateData) {
 	session := r.Context().Value("session").(*sessions.Session)
@@ -169,13 +155,13 @@ func renderTemplate(w http.ResponseWriter, r *http.Request,
 	if ok {
 		data.User = user
 	}
-	scheme := firstExisting(
+	scheme := utilities.FirstExisting(
 		"http", // fallback
 		r.Header.Get("X-Forwarded-Proto"),
 		r.Header.Get("X-Forwarded-Scheme"),
 		r.URL.Scheme,
 	)
-	host := firstExisting(
+	host := utilities.FirstExisting(
 		"localhost:7373", // fallback
 		r.Header.Get("X-Forwarded-Host"),
 		r.Host,

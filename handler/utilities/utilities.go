@@ -25,3 +25,18 @@ func ValidateAPIKey(apiKey, secret string) error {
 	}
 	return nil
 }
+
+func FirstExisting(or string, strings ...string) string {
+	current := ""
+	for _, s := range strings {
+		if s == "" {
+			continue
+		}
+		current = s
+		break
+	}
+	if current == "" {
+		return or
+	}
+	return current
+}

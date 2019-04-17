@@ -28,7 +28,7 @@ func getParamSignature(params url.Values, secret string) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func GetSession(apiKey, secret, token string) (error, string) {
+func GetSession(apiKey, secret, token string) (string, error) {
 	params := url.Values{}
 	// the first 3 parameters here must be in alphabetical order
 	params.Add("api_key", apiKey)
@@ -39,17 +39,17 @@ func GetSession(apiKey, secret, token string) (error, string) {
 	req.URL.RawQuery = params.Encode()
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("error when making request to last.fm: %v", err), ""
+		return "", fmt.Errorf("error when making request to last.fm: %v", err)
 	}
 	defer resp.Body.Close()
 	decoder := xml.NewDecoder(resp.Body)
 	var lastfm LastFM
 	err = decoder.Decode(&lastfm)
 	if err != nil {
-		return fmt.Errorf("error when decoding last.fm response: %v", err), ""
+		return "", fmt.Errorf("error when decoding last.fm response: %v", err)
 	}
 	if lastfm.Error != nil {
-		return fmt.Errorf("error when parsing last.fm response: %v", lastfm.Error.Value), ""
+		return "", fmt.Errorf("error when parsing last.fm response: %v", lastfm.Error.Value)
 	}
-	return nil, lastfm.Session.Key
+	return lastfm.Session.Key, nil
 }
