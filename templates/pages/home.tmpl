@@ -16,30 +16,40 @@
         <u>last.fm</u>
     </div>
     <div class="right">
-        <a href="/admin/update_lastfm_api_key">update last.fm api key</a><br/>
-        <a href="https://www.last.fm/api/auth/?api_key={{ .CurrentLastFMAPIKey }}&cb={{ .RequestRoot }}/admin/link_lastfm_callback">link account</a><br/>
+	{{ if .User.IsAdmin }}
+            <a href="/admin/update_lastfm_api_key">update api key</a><br/>
+	{{ end }}
+	{{ if .CurrentLastFMAPIKey }}
+	    {{ if .User.LastFMSession }}
+		<span class="light">current status</span> linked
+	    {{ else }}
+		<span class="light">current status</span> unlinked <a href="https://www.last.fm/api/auth/?api_key={{ .CurrentLastFMAPIKey }}&cb={{ .RequestRoot }}/admin/link_lastfm_callback">link</a><br/>
+	    {{ end }}
+	{{ else if not .User.IsAdmin }}
+	    <span class="light">api key not set. please ask your admin to set it</span>
+	{{ end }}
     </div>
 </div>
 <div class="padded box mono">
     {{ if .User.IsAdmin }}
-    {{/* admin panel to manage all users */}}
-    <div class="box-title">
-        <u>users</u>
-    </div>
-    <div class="right">
-    {{ range $user := .AllUsers }}
-        {{ $user.Name }} <span class="light">created</span> <u>{{ $user.CreatedAt.Format "Jan 02, 2006" }}</u> <a href="/admin/change_password?user={{ $user.Name }}">change password</a><br/>
-    {{ end }}
-    <a href="/admin/create_user" class="button">create new</a>
-    </div>
+        {{/* admin panel to manage all users */}}
+        <div class="box-title">
+            <u>users</u>
+        </div>
+        <div class="right">
+        {{ range $user := .AllUsers }}
+            {{ $user.Name }} <span class="light">created</span> <u>{{ $user.CreatedAt.Format "Jan 02, 2006" }}</u> <a href="/admin/change_password?user={{ $user.Name }}">change password</a><br/>
+        {{ end }}
+        <a href="/admin/create_user" class="button">create new</a>
+        </div>
     {{ else }}
-    {{/* user panel to manage themselves */}}
-    <div class="box-title">
-        <u>your account</u>
-    </div>
-    <div class="right">
-        <a href="/admin/change_own_password" class="button">change password</a>
-    </div>
+        {{/* user panel to manage themselves */}}
+        <div class="box-title">
+            <u>your account</u>
+        </div>
+        <div class="right">
+            <a href="/admin/change_own_password" class="button">change password</a>
+        </div>
     {{ end }}
 </div>
 {{ end }}

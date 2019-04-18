@@ -51,9 +51,10 @@ type Cover struct {
 // User represents the users table
 type User struct {
 	Base
-	Name     string `gorm:"not null;unique_index"`
-	Password string
-	IsAdmin  bool
+	Name          string `gorm:"not null;unique_index"`
+	Password      string
+	LastFMSession string
+	IsAdmin       bool
 }
 
 // Setting represents the settings table

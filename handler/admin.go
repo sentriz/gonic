@@ -93,14 +93,16 @@ func (c *Controller) ServeLinkLastFMCallback(w http.ResponseWriter, r *http.Requ
 		secret.Value,
 		token,
 	)
+	session := r.Context().Value("session").(*sessions.Session)
 	if err != nil {
-		session := r.Context().Value("session").(*sessions.Session)
 		session.AddFlash(err.Error())
 		session.Save(r, w)
 		http.Redirect(w, r, "/admin/home", 302)
 		return
 	}
-	fmt.Println("THE SESSION KEY", sessionKey)
+	user, _ := session.Values["user"].(*db.User)
+	user.LastFMSession = sessionKey
+	c.DB.Save(&user)
 	http.Redirect(w, r, "/admin/home", 302)
 }
 
