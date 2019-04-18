@@ -25,15 +25,17 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, r.Header.Get("Referer"), 302)
 		return
 	}
-	var user db.User
-	c.DB.Where("name = ?", username).First(&user)
+	user := c.GetUserFromName(username)
 	if !(username == user.Name && password == user.Password) {
 		session.AddFlash("invalid username / password")
 		session.Save(r, w)
 		http.Redirect(w, r, r.Header.Get("Referer"), 302)
 		return
 	}
-	session.Values["user"] = user
+	// put the user name into the session. future endpoints after this one
+	// are wrapped with WithUserSession() which will get the name from the
+	// session and put the row into the request context.
+	session.Values["user"] = user.Name
 	session.Save(r, w)
 	http.Redirect(w, r, "/admin/home", 303)
 }
@@ -72,7 +74,7 @@ func (c *Controller) ServeChangeOwnPasswordDo(w http.ResponseWriter, r *http.Req
 		http.Redirect(w, r, r.Header.Get("Referer"), 302)
 		return
 	}
-	user, _ := session.Values["user"].(*db.User)
+	user := r.Context().Value("user").(*db.User)
 	user.Password = passwordOne
 	c.DB.Save(user)
 	http.Redirect(w, r, "/admin/home", 303)
@@ -100,7 +102,7 @@ func (c *Controller) ServeLinkLastFMCallback(w http.ResponseWriter, r *http.Requ
 		http.Redirect(w, r, "/admin/home", 302)
 		return
 	}
-	user, _ := session.Values["user"].(*db.User)
+	user := r.Context().Value("user").(*db.User)
 	user.LastFMSession = sessionKey
 	c.DB.Save(&user)
 	http.Redirect(w, r, "/admin/home", 302)
@@ -183,12 +185,8 @@ func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) ServeUpdateLastFMAPIKey(w http.ResponseWriter, r *http.Request) {
 	var data templateData
-	var apiKey db.Setting
-	c.DB.Where("key = ?", "lastfm_api_key").First(&apiKey)
-	data.CurrentLastFMAPIKey = apiKey.Value
-	var secret db.Setting
-	c.DB.Where("key = ?", "lastfm_secret").First(&secret)
-	data.CurrentLastFMAPISecret = secret.Value
+	data.CurrentLastFMAPIKey = c.GetSetting("lastfm_api_key")
+	data.CurrentLastFMAPISecret = c.GetSetting("lastfm_secret")
 	renderTemplate(w, r, "update_lastfm_api_key", &data)
 }
 
@@ -203,13 +201,7 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(w http.ResponseWriter, r *http.Re
 		http.Redirect(w, r, r.Header.Get("Referer"), 302)
 		return
 	}
-	c.DB.
-		Where(db.Setting{Key: "lastfm_api_key"}).
-		Assign(db.Setting{Value: apiKey}).
-		FirstOrCreate(&db.Setting{})
-	c.DB.
-		Where(db.Setting{Key: "lastfm_secret"}).
-		Assign(db.Setting{Value: secret}).
-		FirstOrCreate(&db.Setting{})
+	c.SetSetting("lastfm_api_key", apiKey)
+	c.SetSetting("lastfm_secret", secret)
 	http.Redirect(w, r, "/admin/home", 303)
 }

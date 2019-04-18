@@ -113,15 +113,17 @@ func (c *Controller) WithUserSession(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// session exists at this point
 		session := r.Context().Value("session").(*sessions.Session)
-		_, ok := session.Values["user"]
+		username, ok := session.Values["user"].(string)
 		if !ok {
 			session.AddFlash("you are not authenticated")
 			session.Save(r, w)
 			http.Redirect(w, r, "/admin/login", 303)
 			return
 		}
-		withSession := context.WithValue(r.Context(), "session", session)
-		next.ServeHTTP(w, r.WithContext(withSession))
+		// take username from sesion and add the user row
+		user := c.GetUserFromName(username)
+		withUser := context.WithValue(r.Context(), "user", user)
+		next.ServeHTTP(w, r.WithContext(withUser))
 	}
 }
 
@@ -129,7 +131,7 @@ func (c *Controller) WithAdminSession(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// session and user exist at this point
 		session := r.Context().Value("session").(*sessions.Session)
-		user := session.Values["user"].(*db.User)
+		user := r.Context().Value("user").(*db.User)
 		if !user.IsAdmin {
 			session.AddFlash("you are not an admin")
 			session.Save(r, w)
