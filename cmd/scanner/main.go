@@ -48,7 +48,7 @@ var (
 type lastAlbum struct {
 	coverModTime time.Time // 1st needed for cover insertion
 	coverPath    string    // 2rd needed for cover insertion
-	id           uint      // 3nd needed for cover insertion
+	id           int       // 3nd needed for cover insertion
 }
 
 func (l *lastAlbum) isEmpty() bool {
@@ -133,18 +133,18 @@ func handleFile(fullPath string, info *godirwalk.Dirent) error {
 		return fmt.Errorf("when reading tags: %v", err)
 	}
 	trackNumber, totalTracks := tags.Track()
-	discNumber, TotalDiscs := tags.Disc()
+	discNumber, totalDiscs := tags.Disc()
 	track.Path = fullPath
 	track.Title = tags.Title()
 	track.Artist = tags.Artist()
-	track.DiscNumber = uint(discNumber)
-	track.TotalDiscs = uint(TotalDiscs)
-	track.TotalTracks = uint(totalTracks)
-	track.TrackNumber = uint(trackNumber)
-	track.Year = uint(tags.Year())
+	track.DiscNumber = discNumber
+	track.TotalDiscs = totalDiscs
+	track.TotalTracks = totalTracks
+	track.TrackNumber = trackNumber
+	track.Year = tags.Year()
 	track.Suffix = extension
 	track.ContentType = mime
-	track.Size = uint(stat.Size())
+	track.Size = int(stat.Size())
 	// set album artist {
 	albumArtist := db.AlbumArtist{
 		Name: tags.AlbumArtist(),
@@ -188,6 +188,7 @@ func main() {
 		&db.Cover{},
 		&db.User{},
 		&db.Setting{},
+		&db.Play{},
 	)
 	// 🤫🤫🤫
 	orm.Exec(`

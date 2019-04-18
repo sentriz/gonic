@@ -11,11 +11,5 @@ type CrudBase struct {
 }
 
 type IDBase struct {
-	ID uint `gorm:"primary_key"`
-}
-
-// Base is the base model with an auto incrementing primary key
-type Base struct {
-	IDBase
-	CrudBase
+	ID int `gorm:"primary_key"`
 }

@@ -1,48 +1,53 @@
 package db
 
+import "time"
+
 // Album represents the albums table
 type Album struct {
-	Base
+	IDBase
+	CrudBase
 	AlbumArtist   AlbumArtist
-	AlbumArtistID uint
+	AlbumArtistID int
 	Title         string `gorm:"not null;index"`
 	Tracks        []Track
 }
 
 // AlbumArtist represents the AlbumArtists table
 type AlbumArtist struct {
-	Base
+	IDBase
+	CrudBase
 	Albums []Album
 	Name   string `gorm:"not null;unique_index"`
 }
 
 // Track represents the tracks table
 type Track struct {
-	Base
+	IDBase
+	CrudBase
 	Album         Album
-	AlbumID       uint
+	AlbumID       int
 	AlbumArtist   AlbumArtist
-	AlbumArtistID uint
+	AlbumArtistID int
 	Artist        string
-	Bitrate       uint
+	Bitrate       int
 	Codec         string
-	DiscNumber    uint
-	Duration      uint
+	DiscNumber    int
+	Duration      int
 	Title         string
-	TotalDiscs    uint
-	TotalTracks   uint
-	TrackNumber   uint
-	Year          uint
+	TotalDiscs    int
+	TotalTracks   int
+	TrackNumber   int
+	Year          int
 	Suffix        string
 	ContentType   string
-	Size          uint
+	Size          int
 	Path          string `gorm:"not null;unique_index"`
 }
 
 // Cover represents the covers table
 type Cover struct {
 	CrudBase
-	AlbumID uint `gorm:"primary_key;auto_increment:false"`
+	AlbumID int `gorm:"primary_key;auto_increment:false"`
 	Album   Album
 	Image   []byte
 	Path    string `gorm:"not null;unique_index"`
@@ -50,7 +55,8 @@ type Cover struct {
 
 // User represents the users table
 type User struct {
-	Base
+	IDBase
+	CrudBase
 	Name          string `gorm:"not null;unique_index"`
 	Password      string
 	LastFMSession string
@@ -62,4 +68,14 @@ type Setting struct {
 	CrudBase
 	Key   string `gorm:"primary_key;auto_increment:false"`
 	Value string
+}
+
+// Play represents the settings table
+type Play struct {
+	IDBase
+	User    User
+	UserID  int
+	Track   Track
+	TrackID int
+	Time    time.Time
 }

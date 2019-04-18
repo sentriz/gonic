@@ -32,7 +32,7 @@ type Response struct {
 }
 
 type Error struct {
-	Code    uint64 `xml:"code,attr"    json:"code"`
+	Code    int    `xml:"code,attr"    json:"code"`
 	Message string `xml:"message,attr" json:"message"`
 }
 
@@ -44,7 +44,7 @@ func NewResponse() *Response {
 	}
 }
 
-func NewError(code uint64, message string) *Response {
+func NewError(code int, message string) *Response {
 	return &Response{
 		Status:  "failed",
 		XMLNS:   xmlns,

@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 	"unicode"
 
 	"github.com/jinzhu/gorm"
 	"github.com/sentriz/gonic/db"
+	"github.com/sentriz/gonic/lastfm"
 	"github.com/sentriz/gonic/subsonic"
 
 	"github.com/mozillazg/go-unidecode"
@@ -207,6 +209,51 @@ func (c *Controller) GetLicence(w http.ResponseWriter, r *http.Request) {
 	sub.Licence = &subsonic.Licence{
 		Valid: true,
 	}
+	respond(w, r, sub)
+}
+
+func (c *Controller) Scrobble(w http.ResponseWriter, r *http.Request) {
+	id, err := getIntParam(r, "id")
+	if err != nil {
+		respondError(w, r, 10, "please provide an `id` parameter")
+		return
+	}
+	// fetch user to get lastfm session
+	username := getStrParam(r, "u")
+	user := c.GetUserFromName(username)
+	if user == nil {
+		respondError(w, r, 10, "could not find a user with that name")
+		return
+	}
+	if user.LastFMSession == "" {
+		respondError(w, r, 0, fmt.Sprintf("no last.fm session for this user: %v", err))
+		return
+	}
+	// fetch track for getting info to send to last.fm function
+	var track db.Track
+	c.DB.
+		Preload("Album").
+		Preload("AlbumArtist").
+		First(&track, id)
+	// get time from args or use now
+	time := getIntParamOr(r, "time", int(time.Now().Unix()))
+	// get submission, where the default is true. we will
+	// check if it's false later
+	submission := getStrParamOr(r, "submission", "true")
+	// scrobble with above info
+	err = lastfm.Scrobble(
+		c.GetSetting("lastfm_api_key"),
+		c.GetSetting("lastfm_secret"),
+		user.LastFMSession,
+		&track,
+		time,
+		submission != "false",
+	)
+	if err != nil {
+		respondError(w, r, 0, fmt.Sprintf("error when submitting: %v", err))
+		return
+	}
+	sub := subsonic.NewResponse()
 	respond(w, r, sub)
 }
 

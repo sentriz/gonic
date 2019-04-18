@@ -46,6 +46,8 @@ func setSubsonicRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/rest/stream.view", withWare(cont.Stream))
 	mux.HandleFunc("/rest/download", withWare(cont.Stream))
 	mux.HandleFunc("/rest/download.view", withWare(cont.Stream))
+	mux.HandleFunc("/rest/scrobble", withWare(cont.Scrobble))
+	mux.HandleFunc("/rest/scrobble.view", withWare(cont.Scrobble))
 	mux.HandleFunc("/rest/getCoverArt", withWare(cont.GetCoverArt))
 	mux.HandleFunc("/rest/getCoverArt.view", withWare(cont.GetCoverArt))
 	mux.HandleFunc("/rest/getArtists", withWare(cont.GetArtists))

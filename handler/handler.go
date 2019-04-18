@@ -84,9 +84,9 @@ type templateData struct {
 	User                   *db.User
 	SelectedUser           *db.User
 	AllUsers               []*db.User
-	ArtistCount            uint
-	AlbumCount             uint
-	TrackCount             uint
+	ArtistCount            int
+	AlbumCount             int
+	TrackCount             int
 	CurrentLastFMAPIKey    string
 	CurrentLastFMAPISecret string
 	RequestRoot            string
@@ -94,6 +94,14 @@ type templateData struct {
 
 func getStrParam(r *http.Request, key string) string {
 	return r.URL.Query().Get(key)
+}
+
+func getStrParamOr(r *http.Request, key, or string) string {
+	val := getStrParam(r, key)
+	if val == "" {
+		return or
+	}
+	return val
 }
 
 func getIntParam(r *http.Request, key string) (int, error) {
@@ -156,7 +164,7 @@ func respond(w http.ResponseWriter, r *http.Request,
 }
 
 func respondError(w http.ResponseWriter, r *http.Request,
-	code uint64, message string) {
+	code int, message string) {
 	respondRaw(w, r, http.StatusBadRequest, subsonic.NewError(
 		code, message,
 	))

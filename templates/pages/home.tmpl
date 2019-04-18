@@ -38,7 +38,7 @@
         </div>
         <div class="right">
         {{ range $user := .AllUsers }}
-            {{ $user.Name }} <span class="light">created</span> <u>{{ $user.CreatedAt.Format "Jan 02, 2006" }}</u> <a href="/admin/change_password?user={{ $user.Name }}">change password</a><br/>
+            <i>{{ $user.Name }}</i> <span class="light">created</span> {{ $user.CreatedAt.Format "Jan 02, 2006" }} <a href="/admin/change_password?user={{ $user.Name }}">change password</a><br/>
         {{ end }}
         <a href="/admin/create_user" class="button">create new</a>
         </div>
