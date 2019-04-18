@@ -2,9 +2,6 @@ package db
 
 import (
 	"time"
-
-	"github.com/jinzhu/gorm"
-	"github.com/twinj/uuid"
 )
 
 type CrudBase struct {
@@ -21,15 +18,4 @@ type IDBase struct {
 type Base struct {
 	IDBase
 	CrudBase
-}
-
-// BaseWithUUID is the base model with an UUIDv4 primary key
-type BaseWithUUID struct {
-	IDBase
-	CrudBase
-}
-
-// BeforeCreate is called by GORM to set the UUID primary key
-func (b *BaseWithUUID) BeforeCreate(scope *gorm.Scope) error {
-	return scope.SetColumn("ID", uuid.NewV4().String())
 }
