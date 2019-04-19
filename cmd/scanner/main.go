@@ -82,9 +82,11 @@ func handleFolderCompletion(fullPath string, info *godirwalk.Dirent) error {
 	cover := db.Cover{
 		Path: cLastAlbum.coverPath,
 	}
-	err := tx.Where(cover).First(&cover).Error // TODO: swap
+	// skip if the record exists and hasn't been modified since
+	// the last scan
+	err := tx.Where(cover).First(&cover).Error
 	if !gorm.IsRecordNotFoundError(err) &&
-		!cLastAlbum.coverModTime.After(cover.UpdatedAt) {
+		cLastAlbum.coverModTime.Before(cover.UpdatedAt) {
 		return nil
 	}
 	image, err := ioutil.ReadFile(cLastAlbum.coverPath)
@@ -128,9 +130,11 @@ func handleFile(fullPath string, info *godirwalk.Dirent) error {
 	track := db.Track{
 		Path: fullPath,
 	}
-	err = tx.Where(track).First(&track).Error // TODO: swap
+	// skip if the record exists and hasn't been modified since
+	// the last scan
+	err = tx.Where(track).First(&track).Error
 	if !gorm.IsRecordNotFoundError(err) &&
-		!modTime.After(track.UpdatedAt) {
+		modTime.Before(track.UpdatedAt) {
 		return nil
 	}
 	tags, err := readTags(fullPath)
@@ -208,7 +212,6 @@ func createDatabase() {
 
 func cleanDatabase() {
 	// delete tracks not on filesystem
-	o := time.Now()
 	var tracks []*db.Track
 	tx.Select("id, path").Find(&tracks)
 	for _, track := range tracks {
@@ -219,8 +222,6 @@ func cleanDatabase() {
 		tx.Delete(&track)
 		log.Println("removed", track.Path)
 	}
-	fmt.Println("ONE", time.Since(o))
-	o = time.Now()
 	// delete albums without tracks
 	tx.Exec(`
         DELETE FROM albums
@@ -228,8 +229,6 @@ func cleanDatabase() {
                 FROM   tracks
                 WHERE  album_id = albums.id) = 0;
 	`)
-	fmt.Println("TWO", time.Since(o))
-	o = time.Now()
 	// delete artists without tracks
 	tx.Exec(`
         DELETE FROM album_artists
@@ -237,7 +236,6 @@ func cleanDatabase() {
                 FROM   albums
                 WHERE  album_artist_id = album_artists.id) = 0;
 	`)
-	fmt.Println("THREE", time.Since(o))
 }
 
 func main() {
