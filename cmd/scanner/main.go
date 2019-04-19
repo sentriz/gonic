@@ -208,6 +208,7 @@ func createDatabase() {
 
 func cleanDatabase() {
 	// delete tracks not on filesystem
+	o := time.Now()
 	var tracks []*db.Track
 	tx.Select("id, path").Find(&tracks)
 	for _, track := range tracks {
@@ -218,6 +219,8 @@ func cleanDatabase() {
 		tx.Delete(&track)
 		log.Println("removed", track.Path)
 	}
+	fmt.Println("ONE", time.Since(o))
+	o = time.Now()
 	// delete albums without tracks
 	tx.Exec(`
         DELETE FROM albums
@@ -225,6 +228,8 @@ func cleanDatabase() {
                 FROM   tracks
                 WHERE  album_id = albums.id) = 0;
 	`)
+	fmt.Println("TWO", time.Since(o))
+	o = time.Now()
 	// delete artists without tracks
 	tx.Exec(`
         DELETE FROM album_artists
@@ -232,6 +237,7 @@ func cleanDatabase() {
                 FROM   albums
                 WHERE  album_artist_id = album_artists.id) = 0;
 	`)
+	fmt.Println("THREE", time.Since(o))
 }
 
 func main() {

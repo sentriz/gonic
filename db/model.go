@@ -7,7 +7,7 @@ type Album struct {
 	IDBase
 	CrudBase
 	AlbumArtist   AlbumArtist
-	AlbumArtistID int
+	AlbumArtistID int `gorm:"index"`
 	Title         string `gorm:"not null;index"`
 	Tracks        []Track
 }
@@ -25,7 +25,7 @@ type Track struct {
 	IDBase
 	CrudBase
 	Album         Album
-	AlbumID       int
+	AlbumID       int `gorm:"index"`
 	AlbumArtist   AlbumArtist
 	AlbumArtistID int
 	Artist        string
