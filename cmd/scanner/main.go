@@ -43,6 +43,7 @@ var (
 		"front.jpg":   true,
 		"front.jpeg":  true,
 	}
+	seenTracks = make(map[string]bool)
 )
 
 type lastAlbum struct {
@@ -119,6 +120,10 @@ func handleFile(fullPath string, info *godirwalk.Dirent) error {
 	if !ok {
 		return nil
 	}
+	// add the full path to the seen set. later used to delete
+	// tracks that are no longer on filesystem and still in the
+	// database
+	seenTracks[fullPath] = true
 	// set track basics
 	track := db.Track{
 		Path: fullPath,
@@ -175,13 +180,8 @@ func handleFile(fullPath string, info *godirwalk.Dirent) error {
 	return nil
 }
 
-func main() {
-	if len(os.Args) != 2 {
-		log.Fatalf("usage: %s <path to music>", os.Args[0])
-	}
-	orm = db.New()
-	orm.SetLogger(log.New(os.Stdout, "gorm ", 0))
-	orm.AutoMigrate(
+func createDatabase() {
+	tx.AutoMigrate(
 		&db.Album{},
 		&db.AlbumArtist{},
 		&db.Track{},
@@ -190,23 +190,59 @@ func main() {
 		&db.Setting{},
 		&db.Play{},
 	)
-	// 🤫🤫🤫
-	orm.Exec(`
-		INSERT INTO sqlite_sequence(name, seq)
-		SELECT 'albums', 500000
-		WHERE NOT EXISTS (SELECT * FROM sqlite_sequence)
+	// set starting value for `albums` table's
+	// auto increment
+	tx.Exec(`
+        INSERT INTO sqlite_sequence(name, seq)
+        SELECT 'albums', 500000
+        WHERE  NOT EXISTS (SELECT *
+                           FROM   sqlite_sequence);
 	`)
-	orm.FirstOrCreate(&db.User{}, db.User{
+	// create the first user if there is none
+	tx.FirstOrCreate(&db.User{}, db.User{
 		Name:     "admin",
 		Password: "admin",
 		IsAdmin:  true,
 	})
-	orm.FirstOrCreate(&db.User{}, db.User{
-		Name:     "stephen",
-		Password: "stephen",
-	})
-	startTime := time.Now()
+}
+
+func cleanDatabase() {
+	// delete tracks not on filesystem
+	var tracks []*db.Track
+	tx.Select("id, path").Find(&tracks)
+	for _, track := range tracks {
+		_, ok := seenTracks[track.Path]
+		if ok {
+			continue
+		}
+		tx.Delete(&track)
+		log.Println("removed", track.Path)
+	}
+	// delete albums without tracks
+	tx.Exec(`
+        DELETE FROM albums
+        WHERE  (SELECT count(id)
+                FROM   tracks
+                WHERE  album_id = albums.id) = 0;
+	`)
+	// delete artists without tracks
+	tx.Exec(`
+        DELETE FROM album_artists
+        WHERE  (SELECT count(id)
+                FROM   albums
+                WHERE  album_artist_id = album_artists.id) = 0;
+	`)
+}
+
+func main() {
+	if len(os.Args) != 2 {
+		log.Fatalf("usage: %s <path to music>", os.Args[0])
+	}
+	orm = db.New()
+	orm.SetLogger(log.New(os.Stdout, "gorm ", 0))
 	tx = orm.Begin()
+	createDatabase()
+	startTime := time.Now()
 	err := godirwalk.Walk(os.Args[1], &godirwalk.Options{
 		Callback:             handleFile,
 		PostChildrenCallback: handleFolderCompletion,
@@ -215,6 +251,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("error when walking: %v\n", err)
 	}
-	tx.Commit()
 	log.Printf("scanned in %s\n", time.Since(startTime))
+	startTime = time.Now()
+	cleanDatabase()
+	log.Printf("cleaned in %s\n", time.Since(startTime))
+	tx.Commit()
 }
