@@ -12,7 +12,6 @@ import (
 
 	"github.com/gorilla/sessions"
 	"github.com/sentriz/gonic/db"
-	"github.com/sentriz/gonic/handler/utilities"
 	"github.com/sentriz/gonic/subsonic"
 
 	"github.com/jinzhu/gorm"
@@ -182,18 +181,6 @@ func renderTemplate(w http.ResponseWriter, r *http.Request,
 	if ok {
 		data.User = user
 	}
-	scheme := utilities.FirstExisting(
-		"http", // fallback
-		r.Header.Get("X-Forwarded-Proto"),
-		r.Header.Get("X-Forwarded-Scheme"),
-		r.URL.Scheme,
-	)
-	host := utilities.FirstExisting(
-		"localhost:7373", // fallback
-		r.Header.Get("X-Forwarded-Host"),
-		r.Host,
-	)
-	data.RequestRoot = fmt.Sprintf("%s://%s", scheme, host)
 	err := templates[name].ExecuteTemplate(w, "layout", data)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("500 when executing: %v", err), 500)

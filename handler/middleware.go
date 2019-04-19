@@ -117,7 +117,7 @@ func (c *Controller) WithUserSession(next http.HandlerFunc) http.HandlerFunc {
 		if !ok {
 			session.AddFlash("you are not authenticated")
 			session.Save(r, w)
-			http.Redirect(w, r, "/admin/login", 303)
+			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 			return
 		}
 		// take username from sesion and add the user row
@@ -135,7 +135,7 @@ func (c *Controller) WithAdminSession(next http.HandlerFunc) http.HandlerFunc {
 		if !user.IsAdmin {
 			session.AddFlash("you are not an admin")
 			session.Save(r, w)
-			http.Redirect(w, r, "/admin/login", 303)
+			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 			return
 		}
 		next.ServeHTTP(w, r)

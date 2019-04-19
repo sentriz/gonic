@@ -24,7 +24,7 @@ var (
 func getParamSignature(params url.Values, secret string) string {
 	// the parameters must be in order before hashing
 	paramKeys := make([]string, 0)
-	for k, _ := range params {
+	for k := range params {
 		paramKeys = append(paramKeys, k)
 	}
 	sort.Strings(paramKeys)

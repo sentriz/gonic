@@ -18,7 +18,5 @@ github.com/mattn/go-sqlite3
 # github.com/mozillazg/go-unidecode v0.1.1
 github.com/mozillazg/go-unidecode
 github.com/mozillazg/go-unidecode/table
-# github.com/twinj/uuid v1.0.0
-github.com/twinj/uuid
 # github.com/wader/gormstore v0.0.0-20190302154359-acb787ba3755
 github.com/wader/gormstore

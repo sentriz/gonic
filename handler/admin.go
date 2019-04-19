@@ -22,14 +22,14 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 	if username == "" || password == "" {
 		session.AddFlash("please provide both a username and password")
 		session.Save(r, w)
-		http.Redirect(w, r, r.Header.Get("Referer"), 302)
+		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
 	user := c.GetUserFromName(username)
 	if !(username == user.Name && password == user.Password) {
 		session.AddFlash("invalid username / password")
 		session.Save(r, w)
-		http.Redirect(w, r, r.Header.Get("Referer"), 302)
+		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
 	// put the user name into the session. future endpoints after this one
@@ -37,14 +37,14 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 	// session and put the row into the request context.
 	session.Values["user"] = user.Name
 	session.Save(r, w)
-	http.Redirect(w, r, "/admin/home", 303)
+	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 }
 
 func (c *Controller) ServeLogout(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value("session").(*sessions.Session)
 	delete(session.Values, "user")
 	session.Save(r, w)
-	http.Redirect(w, r, "/admin/login", 303)
+	http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 }
 
 func (c *Controller) ServeHome(w http.ResponseWriter, r *http.Request) {
@@ -53,9 +53,19 @@ func (c *Controller) ServeHome(w http.ResponseWriter, r *http.Request) {
 	c.DB.Table("albums").Count(&data.AlbumCount)
 	c.DB.Table("tracks").Count(&data.TrackCount)
 	c.DB.Find(&data.AllUsers)
-	var apiKey db.Setting
-	c.DB.Where("key = ?", "lastfm_api_key").First(&apiKey)
-	data.CurrentLastFMAPIKey = apiKey.Value
+	data.CurrentLastFMAPIKey = c.GetSetting("lastfm_api_key")
+	scheme := utilities.FirstExisting(
+		"http", // fallback
+		r.Header.Get("X-Forwarded-Proto"),
+		r.Header.Get("X-Forwarded-Scheme"),
+		r.URL.Scheme,
+	)
+	host := utilities.FirstExisting(
+		"localhost:7373", // fallback
+		r.Header.Get("X-Forwarded-Host"),
+		r.Host,
+	)
+	data.RequestRoot = fmt.Sprintf("%s://%s", scheme, host)
 	renderTemplate(w, r, "home", &data)
 }
 
@@ -71,41 +81,44 @@ func (c *Controller) ServeChangeOwnPasswordDo(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		session.AddFlash(err.Error())
 		session.Save(r, w)
-		http.Redirect(w, r, r.Header.Get("Referer"), 302)
+		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
 	user := r.Context().Value("user").(*db.User)
 	user.Password = passwordOne
 	c.DB.Save(user)
-	http.Redirect(w, r, "/admin/home", 303)
+	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 }
 
-func (c *Controller) ServeLinkLastFMCallback(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) ServeLinkLastFMDo(w http.ResponseWriter, r *http.Request) {
 	token := r.URL.Query().Get("token")
 	if token == "" {
 		http.Error(w, "please provide a token", 400)
 		return
 	}
-	var apiKey db.Setting
-	c.DB.Where("key = ?", "lastfm_api_key").First(&apiKey)
-	var secret db.Setting
-	c.DB.Where("key = ?", "lastfm_secret").First(&secret)
 	sessionKey, err := lastfm.GetSession(
-		apiKey.Value,
-		secret.Value,
+		c.GetSetting("lastfm_api_key"),
+		c.GetSetting("lastfm_secret"),
 		token,
 	)
 	session := r.Context().Value("session").(*sessions.Session)
 	if err != nil {
 		session.AddFlash(err.Error())
 		session.Save(r, w)
-		http.Redirect(w, r, "/admin/home", 302)
+		http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 		return
 	}
 	user := r.Context().Value("user").(*db.User)
 	user.LastFMSession = sessionKey
 	c.DB.Save(&user)
-	http.Redirect(w, r, "/admin/home", 302)
+	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
+}
+
+func (c *Controller) ServeUnlinkLastFMDo(w http.ResponseWriter, r *http.Request) {
+	user := r.Context().Value("user").(*db.User)
+	user.LastFMSession = ""
+	c.DB.Save(&user)
+	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 }
 
 func (c *Controller) ServeChangePassword(w http.ResponseWriter, r *http.Request) {
@@ -136,12 +149,12 @@ func (c *Controller) ServeChangePasswordDo(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		session.AddFlash(err.Error())
 		session.Save(r, w)
-		http.Redirect(w, r, r.Header.Get("Referer"), 302)
+		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
 	user.Password = passwordOne
 	c.DB.Save(&user)
-	http.Redirect(w, r, "/admin/home", 303)
+	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 }
 
 func (c *Controller) ServeCreateUser(w http.ResponseWriter, r *http.Request) {
@@ -155,7 +168,7 @@ func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		session.AddFlash(err.Error())
 		session.Save(r, w)
-		http.Redirect(w, r, r.Header.Get("Referer"), 302)
+		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
 	passwordOne := r.FormValue("password_one")
@@ -164,7 +177,7 @@ func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		session.AddFlash(err.Error())
 		session.Save(r, w)
-		http.Redirect(w, r, r.Header.Get("Referer"), 302)
+		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
 	user := db.User{
@@ -177,10 +190,10 @@ func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
 			"could not create user `%s`: %v", username, err,
 		))
 		session.Save(r, w)
-		http.Redirect(w, r, r.Header.Get("Referer"), 302)
+		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
-	http.Redirect(w, r, "/admin/home", 303)
+	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 }
 
 func (c *Controller) ServeUpdateLastFMAPIKey(w http.ResponseWriter, r *http.Request) {
@@ -198,10 +211,10 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		session.AddFlash(err.Error())
 		session.Save(r, w)
-		http.Redirect(w, r, r.Header.Get("Referer"), 302)
+		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
 	c.SetSetting("lastfm_api_key", apiKey)
 	c.SetSetting("lastfm_secret", secret)
-	http.Redirect(w, r, "/admin/home", 303)
+	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 }

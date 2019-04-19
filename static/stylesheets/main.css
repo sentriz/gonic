@@ -88,3 +88,10 @@ form input[type=submit] {
     background-color: #fd1b1b1c;
 }
 
+.angry {
+    background-color: #f4433669;
+}
+
+.happy {
+    background-color: #4caf5069;
+}

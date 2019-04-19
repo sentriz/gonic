@@ -21,9 +21,9 @@
 	{{ end }}
 	{{ if .CurrentLastFMAPIKey }}
 	    {{ if .User.LastFMSession }}
-		<span class="light">current status</span> linked
+		<span class="light">current status</span> <span class="happy">linked</span> <a href="/admin/unlink_lastfm_do">unlink</a><br/>
 	    {{ else }}
-		<span class="light">current status</span> unlinked <a href="https://www.last.fm/api/auth/?api_key={{ .CurrentLastFMAPIKey }}&cb={{ .RequestRoot }}/admin/link_lastfm_callback">link</a><br/>
+		<span class="light">current status</span> <span class="angry">unlinked</span> <a href="https://www.last.fm/api/auth/?api_key={{ .CurrentLastFMAPIKey }}&cb={{ .RequestRoot }}/admin/link_lastfm_do">link</a><br/>
 	    {{ end }}
 	{{ else if not .User.IsAdmin }}
 	    <span class="light">api key not set. please ask your admin to set it</span>
