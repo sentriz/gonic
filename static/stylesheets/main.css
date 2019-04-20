@@ -28,6 +28,9 @@ body {
     justify-content: space-between;
 }
 
+a, a:visited {
+     color: #0064c1;
+}
 
 form input[type=password], form input[type=text] {
   margin-bottom: 0.25rem;
@@ -58,7 +61,9 @@ form input[type=submit] {
 }
 
 .box {
-    background-color: #0000000a;
+    background-color: #00000005;
+    border-right: 2px solid #0000000c;
+    border-bottom: 2px solid #0000000c;
 }
 
 .box-title {
@@ -69,8 +74,12 @@ form input[type=submit] {
     padding: 1rem;
 }
 
+.side-padded {
+    padding: 0 1rem;
+}
+
 #header {
-    border-bottom: 1px solid;
+    border-bottom: 1px solid grey;
     padding-top: 3rem;
 }
 
@@ -80,7 +89,6 @@ form input[type=submit] {
 }
 
 #footer {
-    border-top: 1px solid;
     text-align: right;
 }
 

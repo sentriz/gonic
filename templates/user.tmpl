@@ -1,7 +1,7 @@
 {{ define "title" }}home{{ end }}
 
 {{ define "content" }}
-<div class="light right">
+<div class="side-padded light right">
     welcome <u>{{ .User.Name }}</u> &#124; <a href="/admin/home">home</a> &#124; <a href="/admin/logout">logout</a>
 </div>
 {{ template "user" . }}
