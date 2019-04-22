@@ -1,9 +1,9 @@
-/* reset from awsm */
-form input[type], form select, form textarea {
+form input[type],
+form select,
+form textarea {
     margin-bottom: 0;
 }
 
-/* reset from awsm */
 form {
     max-width: 400px;
     margin-left: auto;
@@ -13,7 +13,15 @@ form {
     align-items: flex-end;
 }
 
-/* reset from awsm */
+form input[type=password],
+form input[type=text] {
+    margin-bottom: 0.25rem;
+}
+
+form input[type=submit] {
+    width: 8rem;
+}
+
 div {
     margin: 0;
     padding: 0;
@@ -28,21 +36,39 @@ body {
     justify-content: space-between;
 }
 
-a, a:visited {
-     color: #0064c1;
+a,
+a:visited {
+    color: #0064c1;
+    text-decoration: none;
 }
 
-form input[type=password], form input[type=text] {
-  margin-bottom: 0.25rem;
+a:hover {
+    text-decoration: underline;
 }
 
-form input[type=submit] {
-    width: 8rem;
-}
 
-#content > * {
+#content>* {
     margin: 2rem 0;
 }
+
+#header {
+    border-bottom: 1px solid grey;
+    padding-top: 3rem;
+}
+
+#header img {
+    max-width: 580px;
+    position: relative;
+}
+
+#footer {
+    text-align: right;
+}
+
+#flashes {
+    background-color: #fd1b1b1c;
+}
+
 
 .right {
     text-align: right;
@@ -78,28 +104,14 @@ form input[type=submit] {
     padding: 0 1rem;
 }
 
-#header {
-    border-bottom: 1px solid grey;
-    padding-top: 3rem;
-}
-
-#header img {
-    max-width: 580px;
-    position: relative;
-}
-
-#footer {
-    text-align: right;
-}
-
-#flashes {
-    background-color: #fd1b1b1c;
-}
-
 .angry {
     background-color: #f4433669;
 }
 
 .happy {
     background-color: #4caf5069;
+}
+
+i.mdi {
+    font-size: 14px;
 }

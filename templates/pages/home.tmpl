@@ -3,7 +3,7 @@
 {{ define "user" }}
 <div class="padded box mono">
     <div class="box-title">
-        <u>stats</u>
+        <i class="mdi mdi-chart-arc"></i> stats
     </div>
     <div class="right">
         <span class="pre">artists: {{ printf "%7v" .ArtistCount }}</span><br/>
@@ -13,39 +13,46 @@
 </div>
 <div class="padded box mono">
     <div class="box-title">
-        <u>last.fm</u>
+        <i class="mdi mdi-lastfm"></i> last.fm
     </div>
     <div class="right">
-	{{ if .User.IsAdmin }}
+        {{ if .User.IsAdmin }}
             <a href="/admin/update_lastfm_api_key">update api key</a><br/>
-	{{ end }}
-	{{ if .CurrentLastFMAPIKey }}
-	    {{ if .User.LastFMSession }}
-		<span class="light">current status</span> <span class="happy">linked</span> <a href="/admin/unlink_lastfm_do">unlink</a><br/>
-	    {{ else }}
-		<span class="light">current status</span> <span class="angry">unlinked</span> <a href="https://www.last.fm/api/auth/?api_key={{ .CurrentLastFMAPIKey }}&cb={{ .RequestRoot }}/admin/link_lastfm_do">link</a><br/>
-	    {{ end }}
-	{{ else if not .User.IsAdmin }}
-	    <span class="light">api key not set. please ask your admin to set it</span>
-	{{ end }}
+        {{ end }}
+        {{ if .CurrentLastFMAPIKey }}
+            {{ if .User.LastFMSession }}
+                <span class="light">current status</span>
+                <span class="happy">linked</span>
+                <a href="/admin/unlink_lastfm_do">unlink</a><br/>
+            {{ else }}
+                <span class="light">current status</span>
+                <span class="angry">unlinked</span>
+                <a href="https://www.last.fm/api/auth/?api_key={{ .CurrentLastFMAPIKey }}&cb={{ .RequestRoot }}/admin/link_lastfm_do">link</a><br/>
+            {{ end }}
+        {{ else if not .User.IsAdmin }}
+            <span class="light">api key not set. please ask your admin to set it</span>
+        {{ end }}
     </div>
 </div>
 <div class="padded box mono">
     {{ if .User.IsAdmin }}
         {{/* admin panel to manage all users */}}
         <div class="box-title">
-            <u>users</u>
+            <i class="mdi mdi-account-multiple"></i> users
         </div>
         <div class="right">
         {{ range $user := .AllUsers }}
-            <i>{{ $user.Name }}</i> <span class="light">created</span> {{ $user.CreatedAt.Format "Jan 02, 2006" }} <a href="/admin/change_password?user={{ $user.Name }}">change password</a><br/>
+            <i>{{ $user.Name }}</i>
+            <span class="light">created</span>
+            {{ $user.CreatedAt.Format "jan 02, 2006" }}
+            <a href="/admin/change_password?user={{ $user.Name }}">change password</a><br/>
         {{ end }}
         <a href="/admin/create_user" class="button">create new</a>
         </div>
     {{ else }}
         {{/* user panel to manage themselves */}}
         <div class="box-title">
-            <u>your account</u>
+            <i class="mdi mdi-account"></i> your account
         </div>
         <div class="right">
             <a href="/admin/change_own_password" class="button">change password</a>

@@ -4,6 +4,7 @@
     <head>
         <meta charset="utf-8">
         <title>{{ template "title" }}</title>
+        <link rel="stylesheet" href="https://cdn.materialdesignicons.com/3.6.95/css/materialdesignicons.min.css">
         <link rel="stylesheet" href="/admin/static/stylesheets/awsm.css">
         <link rel="stylesheet" href="/admin/static/stylesheets/main.css">
         <link rel="shortcut icon" href="/admin/static/images/favicon.ico" type="image/x-icon">
@@ -24,8 +25,12 @@
                 {{ template "content" . }}
             </div>
         </div>
-        <div id="footer" class="padded">
-            <p>senan kelly, 2019 &#124; <a href="https://github.com/sentriz/gonic">github</a></p>
+        <div id="footer" class="padded mono">
+            <p>
+                senan kelly, 2019
+                <span class="light">&#124;</span>
+                <a href="https://github.com/sentriz/gonic">github</a>
+            </p>
         </div>
     </body>
 </html>
