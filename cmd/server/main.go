@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gobuffalo/packr/v2"
+	"github.com/gorilla/securecookie"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/wader/gormstore"
 
@@ -83,20 +84,25 @@ func setSubsonicRoutes(mux *http.ServeMux) {
 }
 
 func setAdminRoutes(mux *http.ServeMux) {
+	cont := handler.Controller{
+		DB: dbCon,
+	}
+	sessionKey := []byte(cont.GetSetting("session_key"))
+	if len(sessionKey) == 0 {
+		sessionKey = securecookie.GenerateRandomKey(32)
+		cont.SetSetting("session_key", string(sessionKey))
+	}
+	cont.SStore = gormstore.New(dbCon, []byte(sessionKey))
 	box := packr.New("templates", "../../templates")
 	layoutT := extendFromBox(nil, box, "layout.tmpl")
 	userT := extendFromBox(layoutT, box, "user.tmpl")
-	cont := handler.Controller{
-		DB:     dbCon,
-		SStore: gormstore.New(dbCon, []byte("saynothinboys")), // TODO: not this
-		Templates: map[string]*template.Template{
-			"login":                 extendFromBox(layoutT, box, "pages/login.tmpl"),
-			"home":                  extendFromBox(userT, box, "pages/home.tmpl"),
-			"change_own_password":   extendFromBox(userT, box, "pages/change_own_password.tmpl"),
-			"change_password":       extendFromBox(userT, box, "pages/change_password.tmpl"),
-			"create_user":           extendFromBox(userT, box, "pages/create_user.tmpl"),
-			"update_lastfm_api_key": extendFromBox(userT, box, "pages/update_lastfm_api_key.tmpl"),
-		},
+	cont.Templates = map[string]*template.Template{
+		"login":                 extendFromBox(layoutT, box, "pages/login.tmpl"),
+		"home":                  extendFromBox(userT, box, "pages/home.tmpl"),
+		"change_own_password":   extendFromBox(userT, box, "pages/change_own_password.tmpl"),
+		"change_password":       extendFromBox(userT, box, "pages/change_password.tmpl"),
+		"create_user":           extendFromBox(userT, box, "pages/create_user.tmpl"),
+		"update_lastfm_api_key": extendFromBox(userT, box, "pages/update_lastfm_api_key.tmpl"),
 	}
 	withPublicWare := newChain(
 		cont.WithLogging,
