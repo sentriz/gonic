@@ -19,7 +19,7 @@
             <div id="content">
                 {{ if .Flashes }}
                 <div id="flashes" class="padded mono">
-                    <p><b>warning</b> {{ index .Flashes 0 }}</p>
+                    <i class="mdi mdi-alert-circle"></i> {{ index .Flashes 0 }}
                 </div>
                 {{ end }}
                 {{ template "content" . }}

@@ -67,8 +67,9 @@ a:hover {
 
 #flashes {
     background-color: #fd1b1b1c;
+    border-right: 2px solid #fd1b1b1c;
+    border-bottom: 2px solid #fd1b1b1c;
 }
-
 
 .right {
     text-align: right;
