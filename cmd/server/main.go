@@ -1,11 +1,12 @@
 package main
 
 import (
-	"encoding/gob"
+	"html/template"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/gobuffalo/packr"
 	"github.com/sentriz/gonic/db"
 	"github.com/sentriz/gonic/handler"
 
@@ -29,6 +30,23 @@ func newChain(wares ...middleware) middleware {
 			last(w, r)
 		}
 	}
+}
+
+func extendFromBox(tmpl *template.Template, box packr.Box, key string) *template.Template {
+	strT, err := box.MustString(key)
+	if err != nil {
+		log.Fatalf("error when reading template from box: %v", err)
+	}
+	if tmpl == nil {
+		tmpl = template.New("layout")
+	} else {
+		tmpl = template.Must(tmpl.Clone())
+	}
+	newT, err := tmpl.Parse(strT)
+	if err != nil {
+		log.Fatalf("error when parsing template template: %v", err)
+	}
+	return newT
 }
 
 func setSubsonicRoutes(mux *http.ServeMux) {
@@ -65,9 +83,20 @@ func setSubsonicRoutes(mux *http.ServeMux) {
 }
 
 func setAdminRoutes(mux *http.ServeMux) {
+	box := packr.NewBox("../../templates")
+	layoutT := extendFromBox(nil, box, "layout.tmpl")
+	userT := extendFromBox(layoutT, box, "user.tmpl")
 	cont := handler.Controller{
 		DB:     dbCon,
 		SStore: gormstore.New(dbCon, []byte("saynothinboys")), // TODO: not this
+		Templates: map[string]*template.Template{
+			"login":                 extendFromBox(layoutT, box, "pages/login.tmpl"),
+			"home":                  extendFromBox(userT, box, "pages/home.tmpl"),
+			"change_own_password":   extendFromBox(userT, box, "pages/change_own_password.tmpl"),
+			"change_password":       extendFromBox(userT, box, "pages/change_password.tmpl"),
+			"create_user":           extendFromBox(userT, box, "pages/create_user.tmpl"),
+			"update_lastfm_api_key": extendFromBox(userT, box, "pages/update_lastfm_api_key.tmpl"),
+		},
 	}
 	withPublicWare := newChain(
 		cont.WithLogging,
@@ -81,7 +110,7 @@ func setAdminRoutes(mux *http.ServeMux) {
 		withUserWare,
 		cont.WithAdminSession,
 	)
-	server := http.FileServer(http.Dir("static"))
+	server := http.FileServer(packr.NewBox("../../static"))
 	mux.Handle("/admin/static/", http.StripPrefix("/admin/static/", server))
 	mux.HandleFunc("/admin/login", withPublicWare(cont.ServeLogin))
 	mux.HandleFunc("/admin/login_do", withPublicWare(cont.ServeLoginDo))
@@ -100,10 +129,6 @@ func setAdminRoutes(mux *http.ServeMux) {
 }
 
 func main() {
-	// init stuff. needed to store the current user in
-	// the gorilla session
-	gob.Register(&db.User{})
-	// setup the subsonic and admin routes
 	address := ":6969"
 	mux := http.NewServeMux()
 	setSubsonicRoutes(mux)

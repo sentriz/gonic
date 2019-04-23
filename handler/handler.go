@@ -7,7 +7,6 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"path/filepath"
 	"strconv"
 
 	"github.com/gorilla/sessions"
@@ -18,45 +17,10 @@ import (
 	"github.com/wader/gormstore"
 )
 
-var (
-	templates = make(map[string]*template.Template)
-)
-
-func init() {
-	templates["login"] = template.Must(template.ParseFiles(
-		filepath.Join("templates", "layout.tmpl"),
-		filepath.Join("templates", "pages", "login.tmpl"),
-	))
-	templates["home"] = template.Must(template.ParseFiles(
-		filepath.Join("templates", "layout.tmpl"),
-		filepath.Join("templates", "user.tmpl"),
-		filepath.Join("templates", "pages", "home.tmpl"),
-	))
-	templates["change_password"] = template.Must(template.ParseFiles(
-		filepath.Join("templates", "layout.tmpl"),
-		filepath.Join("templates", "user.tmpl"),
-		filepath.Join("templates", "pages", "change_password.tmpl"),
-	))
-	templates["change_own_password"] = template.Must(template.ParseFiles(
-		filepath.Join("templates", "layout.tmpl"),
-		filepath.Join("templates", "user.tmpl"),
-		filepath.Join("templates", "pages", "change_own_password.tmpl"),
-	))
-	templates["create_user"] = template.Must(template.ParseFiles(
-		filepath.Join("templates", "layout.tmpl"),
-		filepath.Join("templates", "user.tmpl"),
-		filepath.Join("templates", "pages", "create_user.tmpl"),
-	))
-	templates["update_lastfm_api_key"] = template.Must(template.ParseFiles(
-		filepath.Join("templates", "layout.tmpl"),
-		filepath.Join("templates", "user.tmpl"),
-		filepath.Join("templates", "pages", "update_lastfm_api_key.tmpl"),
-	))
-}
-
 type Controller struct {
-	DB     *gorm.DB
-	SStore *gormstore.Store
+	DB        *gorm.DB
+	SStore    *gormstore.Store
+	Templates map[string]*template.Template
 }
 
 func (c *Controller) GetSetting(key string) string {
@@ -170,7 +134,7 @@ func respondError(w http.ResponseWriter, r *http.Request,
 }
 
 func renderTemplate(w http.ResponseWriter, r *http.Request,
-	name string, data *templateData) {
+	tmpl *template.Template, data *templateData) {
 	session := r.Context().Value("session").(*sessions.Session)
 	if data == nil {
 		data = &templateData{}
@@ -181,7 +145,7 @@ func renderTemplate(w http.ResponseWriter, r *http.Request,
 	if ok {
 		data.User = user
 	}
-	err := templates[name].ExecuteTemplate(w, "layout", data)
+	err := tmpl.Execute(w, data)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("500 when executing: %v", err), 500)
 		return
