@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gobuffalo/packr"
 	"github.com/sentriz/gonic/db"
 	"github.com/sentriz/gonic/handler"
 
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"github.com/gobuffalo/packr/v2"
 	"github.com/wader/gormstore"
+	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
 var (
@@ -32,8 +32,8 @@ func newChain(wares ...middleware) middleware {
 	}
 }
 
-func extendFromBox(tmpl *template.Template, box packr.Box, key string) *template.Template {
-	strT, err := box.MustString(key)
+func extendFromBox(tmpl *template.Template, box *packr.Box, key string) *template.Template {
+	strT, err := box.FindString(key)
 	if err != nil {
 		log.Fatalf("error when reading template from box: %v", err)
 	}
@@ -83,7 +83,7 @@ func setSubsonicRoutes(mux *http.ServeMux) {
 }
 
 func setAdminRoutes(mux *http.ServeMux) {
-	box := packr.NewBox("../../templates")
+	box := packr.New("templates", "../../templates")
 	layoutT := extendFromBox(nil, box, "layout.tmpl")
 	userT := extendFromBox(layoutT, box, "user.tmpl")
 	cont := handler.Controller{
@@ -110,7 +110,7 @@ func setAdminRoutes(mux *http.ServeMux) {
 		withUserWare,
 		cont.WithAdminSession,
 	)
-	server := http.FileServer(packr.NewBox("../../static"))
+	server := http.FileServer(packr.New("static", "../../static"))
 	mux.Handle("/admin/static/", http.StripPrefix("/admin/static/", server))
 	mux.HandleFunc("/admin/login", withPublicWare(cont.ServeLogin))
 	mux.HandleFunc("/admin/login_do", withPublicWare(cont.ServeLoginDo))

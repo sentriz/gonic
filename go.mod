@@ -6,7 +6,9 @@ require (
 	github.com/dhowden/tag v0.0.0-20181104225729-a9f04c2798ca
 	github.com/erikstmartin/go-testdb v0.0.0-20160219214506-8d10e4a1bae5 // indirect
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
-	github.com/gobuffalo/packr v1.25.0
+	github.com/gobuffalo/genny v0.1.1 // indirect
+	github.com/gobuffalo/gogen v0.1.1 // indirect
+	github.com/gobuffalo/packr/v2 v2.2.0
 	github.com/gofrs/uuid v3.2.0+incompatible // indirect
 	github.com/gorilla/sessions v1.1.3
 	github.com/jinzhu/gorm v1.9.2
@@ -17,6 +19,9 @@ require (
 	github.com/mattn/go-sqlite3 v1.10.0 // indirect
 	github.com/mozillazg/go-unidecode v0.1.1
 	github.com/wader/gormstore v0.0.0-20190302154359-acb787ba3755
-	golang.org/x/crypto v0.0.0-20190418165655-df01cb2cc480 // indirect
+	golang.org/x/crypto v0.0.0-20190422183909-d864b10871cd // indirect
+	golang.org/x/sync v0.0.0-20190423024810-112230192c58 // indirect
+	golang.org/x/sys v0.0.0-20190422165155-953cdadca894 // indirect
+	golang.org/x/tools v0.0.0-20190422233926-fe54fb35175b // indirect
 	google.golang.org/appengine v1.5.0 // indirect
 )
