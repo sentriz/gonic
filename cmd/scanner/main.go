@@ -10,12 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sentriz/gonic/db"
-
 	"github.com/dhowden/tag"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/karrick/godirwalk"
+
+	"github.com/sentriz/gonic/db"
 )
 
 var (

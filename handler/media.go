@@ -8,18 +8,17 @@ import (
 	"unicode"
 
 	"github.com/jinzhu/gorm"
+	"github.com/mozillazg/go-unidecode"
+
 	"github.com/sentriz/gonic/db"
 	"github.com/sentriz/gonic/lastfm"
 	"github.com/sentriz/gonic/subsonic"
-
-	"github.com/mozillazg/go-unidecode"
 )
 
 var orderExpr = map[string]interface{}{
-	"random":               gorm.Expr("random()"),
-	"newest":               "updated_at desc",
-	"alphabeticalByName":   "title",
-	"alphabeticalByArtist": "album_artist.name",
+	"random":             gorm.Expr("random()"),
+	"newest":             "updated_at desc",
+	"alphabeticalByName": "title",
 }
 
 func indexOf(s string) rune {

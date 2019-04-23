@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	baseURL = "http://ws.audioscrobbler.com/2.0/"
+	baseURL = "https://ws.audioscrobbler.com/2.0/"
 	client  = &http.Client{
 		Timeout: 10 * time.Second,
 	}

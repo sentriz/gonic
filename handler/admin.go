@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/sessions"
 	"github.com/jinzhu/gorm"
+
 	"github.com/sentriz/gonic/db"
 	"github.com/sentriz/gonic/handler/utilities"
 	"github.com/sentriz/gonic/lastfm"

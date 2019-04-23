@@ -10,6 +10,7 @@ import (
 
 	"github.com/gorilla/sessions"
 	"github.com/jinzhu/gorm"
+
 	"github.com/sentriz/gonic/db"
 )
 

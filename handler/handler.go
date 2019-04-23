@@ -10,11 +10,11 @@ import (
 	"strconv"
 
 	"github.com/gorilla/sessions"
-	"github.com/sentriz/gonic/db"
-	"github.com/sentriz/gonic/subsonic"
-
 	"github.com/jinzhu/gorm"
 	"github.com/wader/gormstore"
+
+	"github.com/sentriz/gonic/db"
+	"github.com/sentriz/gonic/subsonic"
 )
 
 type Controller struct {

@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gobuffalo/packr/v2"
+	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"github.com/wader/gormstore"
+
 	"github.com/sentriz/gonic/db"
 	"github.com/sentriz/gonic/handler"
-
-	"github.com/gobuffalo/packr/v2"
-	"github.com/wader/gormstore"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
 var (
