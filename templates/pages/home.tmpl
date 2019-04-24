@@ -20,12 +20,12 @@
             <a href="/admin/update_lastfm_api_key">update api key</a><br/>
         {{ end }}
         {{ if .CurrentLastFMAPIKey }}
+            <span class="light">current status</span>
             {{ if .User.LastFMSession }}
-                <span class="light">current status</span>
-                <span class="happy">linked</span>
+                linked
+                <span class="light">&#124;</span>
                 <a href="/admin/unlink_lastfm_do">unlink</a><br/>
             {{ else }}
-                <span class="light">current status</span>
                 <span class="angry">unlinked</span>
                 <a href="https://www.last.fm/api/auth/?api_key={{ .CurrentLastFMAPIKey }}&cb={{ .RequestRoot }}/admin/link_lastfm_do">link</a><br/>
             {{ end }}
@@ -43,9 +43,11 @@
         <div class="right">
         {{ range $user := .AllUsers }}
             <i>{{ $user.Name }}</i>
-            <span class="light">created</span>
-            {{ $user.CreatedAt.Format "jan 02, 2006" }}
-            <a href="/admin/change_password?user={{ $user.Name }}">change password</a><br/>
+            <span class="light">{{ $user.CreatedAt.Format "jan 02, 2006" }}</span>
+            <span class="light">&#124;</span>
+            <a href="/admin/change_password?user={{ $user.Name }}">change password</a>
+            <span class="light">&#124;</span>
+            <a href="/admin/delete_user?user={{ $user.Name }}">delete</a><br/>
         {{ end }}
         <a href="/admin/create_user" class="button">create new</a>
         </div>

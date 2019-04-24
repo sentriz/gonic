@@ -1,0 +1,15 @@
+{{ define "title" }}home{{ end }}
+
+{{ define "user" }}
+<div class="padded box mono">
+    <div class="box-title">
+        <i class="mdi mdi-account-remove"></i> deleting user {{ .SelectedUser.Name }}
+    </div>
+    <div class="right">
+        are you sure?
+    </div>
+    <form action="/admin/delete_user_do?user={{ .SelectedUser.Name }}" method="post">
+        <input type="submit" value="yes">
+    </form>
+</div>
+{{ end }}

@@ -158,6 +158,31 @@ func (c *Controller) ServeChangePasswordDo(w http.ResponseWriter, r *http.Reques
 	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 }
 
+func (c *Controller) ServeDeleteUser(w http.ResponseWriter, r *http.Request) {
+	username := r.URL.Query().Get("user")
+	if username == "" {
+		http.Error(w, "please provide a username", 400)
+		return
+	}
+	var user db.User
+	err := c.DB.Where("name = ?", username).First(&user).Error
+	if gorm.IsRecordNotFoundError(err) {
+		http.Error(w, "couldn't find a user with that name", 400)
+		return
+	}
+	var data templateData
+	data.SelectedUser = &user
+	renderTemplate(w, r, c.Templates["delete_user"], &data)
+}
+
+func (c *Controller) ServeDeleteUserDo(w http.ResponseWriter, r *http.Request) {
+	username := r.URL.Query().Get("user")
+	var user db.User
+	c.DB.Where("name = ?", username).First(&user)
+	c.DB.Delete(&user)
+	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
+}
+
 func (c *Controller) ServeCreateUser(w http.ResponseWriter, r *http.Request) {
 	renderTemplate(w, r, c.Templates["create_user"], nil)
 }

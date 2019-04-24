@@ -101,6 +101,7 @@ func setAdminRoutes(mux *http.ServeMux) {
 		"home":                  extendFromBox(userT, box, "pages/home.tmpl"),
 		"change_own_password":   extendFromBox(userT, box, "pages/change_own_password.tmpl"),
 		"change_password":       extendFromBox(userT, box, "pages/change_password.tmpl"),
+		"delete_user":           extendFromBox(userT, box, "pages/delete_user.tmpl"),
 		"create_user":           extendFromBox(userT, box, "pages/create_user.tmpl"),
 		"update_lastfm_api_key": extendFromBox(userT, box, "pages/update_lastfm_api_key.tmpl"),
 	}
@@ -128,6 +129,8 @@ func setAdminRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/admin/unlink_lastfm_do", withUserWare(cont.ServeUnlinkLastFMDo))
 	mux.HandleFunc("/admin/change_password", withAdminWare(cont.ServeChangePassword))
 	mux.HandleFunc("/admin/change_password_do", withAdminWare(cont.ServeChangePasswordDo))
+	mux.HandleFunc("/admin/delete_user", withAdminWare(cont.ServeDeleteUser))
+	mux.HandleFunc("/admin/delete_user_do", withAdminWare(cont.ServeDeleteUserDo))
 	mux.HandleFunc("/admin/create_user", withAdminWare(cont.ServeCreateUser))
 	mux.HandleFunc("/admin/create_user_do", withAdminWare(cont.ServeCreateUserDo))
 	mux.HandleFunc("/admin/update_lastfm_api_key", withAdminWare(cont.ServeUpdateLastFMAPIKey))
