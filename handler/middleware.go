@@ -121,7 +121,7 @@ func (c *Controller) WithUserSession(next http.HandlerFunc) http.HandlerFunc {
 			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 			return
 		}
-		// take username from sesion and add the user row
+		// take username from sesion and add the user row to the context
 		user := c.GetUserFromName(username)
 		if user.ID == 0 {
 			// the username in the client's session no longer relates to a

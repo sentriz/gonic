@@ -43,7 +43,7 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) ServeLogout(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value("session").(*sessions.Session)
-	delete(session.Values, "user")
+	session.Options.MaxAge = -1
 	session.Save(r, w)
 	http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 }
