@@ -1,15 +1,15 @@
-package utilities
+package handler
 
 import "fmt"
 
-func ValidateUsername(username string) error {
+func validateUsername(username string) error {
 	if username == "" {
 		return fmt.Errorf("please enter the username")
 	}
 	return nil
 }
 
-func ValidatePasswords(pOne, pTwo string) error {
+func validatePasswords(pOne, pTwo string) error {
 	if pOne == "" || pTwo == "" {
 		return fmt.Errorf("please enter the password twice")
 	}
@@ -19,14 +19,14 @@ func ValidatePasswords(pOne, pTwo string) error {
 	return nil
 }
 
-func ValidateAPIKey(apiKey, secret string) error {
+func validateAPIKey(apiKey, secret string) error {
 	if apiKey == "" || secret == "" {
 		return fmt.Errorf("please enter both the api key and secret")
 	}
 	return nil
 }
 
-func FirstExisting(or string, strings ...string) string {
+func firstExisting(or string, strings ...string) string {
 	current := ""
 	for _, s := range strings {
 		if s == "" {

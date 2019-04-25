@@ -1,4 +1,3 @@
-
 // func (c *Controller) GetIndexes(w http.ResponseWriter, r *http.Request) {
 // 	var artists []*db.Artist
 // 	c.DB.Find(&artists)

@@ -1,22 +1,21 @@
 package handler
 
 import (
-	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"log"
 	"net/http"
 
-	"github.com/gorilla/sessions"
 	"github.com/jinzhu/gorm"
 
 	"github.com/sentriz/gonic/db"
 )
 
-var requiredParameters = []string{
-	"u", "v", "c",
-}
+var (
+	requiredParameters = []string{
+		"u", "v", "c",
+	}
+)
 
 func checkCredentialsToken(password, token, salt string) bool {
 	toHash := fmt.Sprintf("%s%s", password, salt)
@@ -31,13 +30,6 @@ func checkCredentialsBasic(password, givenPassword string) bool {
 		givenPassword = string(bytes)
 	}
 	return password == givenPassword
-}
-
-func (c *Controller) WithLogging(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("connection from `%s` for `%s`", r.RemoteAddr, r.URL)
-		next.ServeHTTP(w, r)
-	}
 }
 
 func (c *Controller) WithValidSubsonicArgs(next http.HandlerFunc) http.HandlerFunc {
@@ -96,55 +88,6 @@ func (c *Controller) WithCORS(next http.HandlerFunc) http.HandlerFunc {
 			"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization",
 		)
 		if r.Method == "OPTIONS" {
-			return
-		}
-		next.ServeHTTP(w, r)
-	}
-}
-
-func (c *Controller) WithSession(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		session, _ := c.SStore.Get(r, "gonic")
-		withSession := context.WithValue(r.Context(), "session", session)
-		next.ServeHTTP(w, r.WithContext(withSession))
-	}
-}
-
-func (c *Controller) WithUserSession(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// session exists at this point
-		session := r.Context().Value("session").(*sessions.Session)
-		username, ok := session.Values["user"].(string)
-		if !ok {
-			session.AddFlash("you are not authenticated")
-			session.Save(r, w)
-			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
-			return
-		}
-		// take username from sesion and add the user row to the context
-		user := c.GetUserFromName(username)
-		if user.ID == 0 {
-			// the username in the client's session no longer relates to a
-			// user in the database (maybe the user was deleted)
-			session.Options.MaxAge = -1
-			session.Save(r, w)
-			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
-			return
-		}
-		withUser := context.WithValue(r.Context(), "user", user)
-		next.ServeHTTP(w, r.WithContext(withUser))
-	}
-}
-
-func (c *Controller) WithAdminSession(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// session and user exist at this point
-		session := r.Context().Value("session").(*sessions.Session)
-		user := r.Context().Value("user").(*db.User)
-		if !user.IsAdmin {
-			session.AddFlash("you are not an admin")
-			session.Save(r, w)
-			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 			return
 		}
 		next.ServeHTTP(w, r)

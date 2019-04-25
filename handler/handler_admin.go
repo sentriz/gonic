@@ -8,7 +8,6 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"github.com/sentriz/gonic/db"
-	"github.com/sentriz/gonic/handler/utilities"
 	"github.com/sentriz/gonic/lastfm"
 )
 
@@ -17,7 +16,7 @@ func (c *Controller) ServeLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value("session").(*sessions.Session)
+	session := r.Context().Value(contextSessionKey).(*sessions.Session)
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 	if username == "" || password == "" {
@@ -42,7 +41,7 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) ServeLogout(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value("session").(*sessions.Session)
+	session := r.Context().Value(contextSessionKey).(*sessions.Session)
 	session.Options.MaxAge = -1
 	session.Save(r, w)
 	http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
@@ -55,13 +54,13 @@ func (c *Controller) ServeHome(w http.ResponseWriter, r *http.Request) {
 	c.DB.Table("tracks").Count(&data.TrackCount)
 	c.DB.Find(&data.AllUsers)
 	data.CurrentLastFMAPIKey = c.GetSetting("lastfm_api_key")
-	scheme := utilities.FirstExisting(
+	scheme := firstExisting(
 		"http", // fallback
 		r.Header.Get("X-Forwarded-Proto"),
 		r.Header.Get("X-Forwarded-Scheme"),
 		r.URL.Scheme,
 	)
-	host := utilities.FirstExisting(
+	host := firstExisting(
 		"localhost:7373", // fallback
 		r.Header.Get("X-Forwarded-Host"),
 		r.Host,
@@ -75,17 +74,17 @@ func (c *Controller) ServeChangeOwnPassword(w http.ResponseWriter, r *http.Reque
 }
 
 func (c *Controller) ServeChangeOwnPasswordDo(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value("session").(*sessions.Session)
+	session := r.Context().Value(contextSessionKey).(*sessions.Session)
 	passwordOne := r.FormValue("password_one")
 	passwordTwo := r.FormValue("password_two")
-	err := utilities.ValidatePasswords(passwordOne, passwordTwo)
+	err := validatePasswords(passwordOne, passwordTwo)
 	if err != nil {
 		session.AddFlash(err.Error())
 		session.Save(r, w)
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
-	user := r.Context().Value("user").(*db.User)
+	user := r.Context().Value(contextUserKey).(*db.User)
 	user.Password = passwordOne
 	c.DB.Save(user)
 	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
@@ -102,21 +101,21 @@ func (c *Controller) ServeLinkLastFMDo(w http.ResponseWriter, r *http.Request) {
 		c.GetSetting("lastfm_secret"),
 		token,
 	)
-	session := r.Context().Value("session").(*sessions.Session)
+	session := r.Context().Value(contextSessionKey).(*sessions.Session)
 	if err != nil {
 		session.AddFlash(err.Error())
 		session.Save(r, w)
 		http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 		return
 	}
-	user := r.Context().Value("user").(*db.User)
+	user := r.Context().Value(contextUserKey).(*db.User)
 	user.LastFMSession = sessionKey
 	c.DB.Save(&user)
 	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 }
 
 func (c *Controller) ServeUnlinkLastFMDo(w http.ResponseWriter, r *http.Request) {
-	user := r.Context().Value("user").(*db.User)
+	user := r.Context().Value(contextUserKey).(*db.User)
 	user.LastFMSession = ""
 	c.DB.Save(&user)
 	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
@@ -140,13 +139,13 @@ func (c *Controller) ServeChangePassword(w http.ResponseWriter, r *http.Request)
 }
 
 func (c *Controller) ServeChangePasswordDo(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value("session").(*sessions.Session)
+	session := r.Context().Value(contextSessionKey).(*sessions.Session)
 	username := r.URL.Query().Get("user")
 	var user db.User
 	c.DB.Where("name = ?", username).First(&user)
 	passwordOne := r.FormValue("password_one")
 	passwordTwo := r.FormValue("password_two")
-	err := utilities.ValidatePasswords(passwordOne, passwordTwo)
+	err := validatePasswords(passwordOne, passwordTwo)
 	if err != nil {
 		session.AddFlash(err.Error())
 		session.Save(r, w)
@@ -188,9 +187,9 @@ func (c *Controller) ServeCreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value("session").(*sessions.Session)
+	session := r.Context().Value(contextSessionKey).(*sessions.Session)
 	username := r.FormValue("username")
-	err := utilities.ValidateUsername(username)
+	err := validateUsername(username)
 	if err != nil {
 		session.AddFlash(err.Error())
 		session.Save(r, w)
@@ -199,7 +198,7 @@ func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
 	}
 	passwordOne := r.FormValue("password_one")
 	passwordTwo := r.FormValue("password_two")
-	err = utilities.ValidatePasswords(passwordOne, passwordTwo)
+	err = validatePasswords(passwordOne, passwordTwo)
 	if err != nil {
 		session.AddFlash(err.Error())
 		session.Save(r, w)
@@ -230,10 +229,10 @@ func (c *Controller) ServeUpdateLastFMAPIKey(w http.ResponseWriter, r *http.Requ
 }
 
 func (c *Controller) ServeUpdateLastFMAPIKeyDo(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value("session").(*sessions.Session)
+	session := r.Context().Value(contextSessionKey).(*sessions.Session)
 	apiKey := r.FormValue("api_key")
 	secret := r.FormValue("secret")
-	err := utilities.ValidateAPIKey(apiKey, secret)
+	err := validateAPIKey(apiKey, secret)
 	if err != nil {
 		session.AddFlash(err.Error())
 		session.Save(r, w)
