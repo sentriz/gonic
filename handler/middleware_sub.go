@@ -5,10 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/http"
-
-	"github.com/jinzhu/gorm"
-
-	"github.com/sentriz/gonic/db"
+	"net/url"
 )
 
 var (
@@ -16,6 +13,17 @@ var (
 		"u", "v", "c",
 	}
 )
+
+func checkHasAllParams(params url.Values) error {
+	for _, req := range requiredParameters {
+		param := params.Get(req)
+		if param != "" {
+			continue
+		}
+		return fmt.Errorf("please provide a `%s` parameter", req)
+	}
+	return nil
+}
 
 func checkCredentialsToken(password, token, salt string) bool {
 	toHash := fmt.Sprintf("%s%s", password, salt)
@@ -34,33 +42,26 @@ func checkCredentialsBasic(password, givenPassword string) bool {
 
 func (c *Controller) WithValidSubsonicArgs(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		for _, req := range requiredParameters {
-			param := r.URL.Query().Get(req)
-			if param != "" {
-				continue
-			}
-			respondError(w, r,
-				10, fmt.Sprintf("please provide a `%s` parameter", req),
-			)
+		err := checkHasAllParams(r.URL.Query())
+		if err != nil {
+			respondError(w, r, 10, err.Error())
 			return
 		}
-		username := r.URL.Query().Get("u")
-		password := r.URL.Query().Get("p")
-		token := r.URL.Query().Get("t")
-		salt := r.URL.Query().Get("s")
-		passwordAuth := token == "" && salt == ""
-		tokenAuth := password == ""
+		username, password := r.URL.Query().Get("u"),
+			r.URL.Query().Get("p")
+		token, salt := r.URL.Query().Get("t"),
+			r.URL.Query().Get("s")
+		passwordAuth, tokenAuth := token == "" && salt == "",
+			password == ""
 		if tokenAuth == passwordAuth {
 			respondError(w, r,
 				10, "please provide parameters `t` and `s`, or just `p`",
 			)
 			return
 		}
-		user := db.User{
-			Name: username,
-		}
-		err := c.DB.Where(user).First(&user).Error
-		if gorm.IsRecordNotFoundError(err) {
+		user := c.GetUserFromName(username)
+		if user.ID == 0 {
+			// the user does not exist
 			respondError(w, r, 40, "invalid username")
 			return
 		}
