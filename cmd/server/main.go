@@ -92,7 +92,10 @@ func setAdminRoutes(mux *http.ServeMux) {
 		sessionKey = securecookie.GenerateRandomKey(32)
 		cont.SetSetting("session_key", string(sessionKey))
 	}
+	// create gormstore (and cleanup) for backend sessions
 	cont.SStore = gormstore.New(dbCon, []byte(sessionKey))
+	go cont.SStore.PeriodicCleanup(1*time.Hour, nil)
+	// using packr to bundle templates and static files
 	box := packr.New("templates", "../../templates")
 	layoutT := extendFromBox(nil, box, "layout.tmpl")
 	userT := extendFromBox(layoutT, box, "user.tmpl")
