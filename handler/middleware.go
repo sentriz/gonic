@@ -123,6 +123,14 @@ func (c *Controller) WithUserSession(next http.HandlerFunc) http.HandlerFunc {
 		}
 		// take username from sesion and add the user row
 		user := c.GetUserFromName(username)
+		if user.ID == 0 {
+			// the username in the client's session no longer relates to a
+			// user in the database (maybe the user was deleted)
+			session.Options.MaxAge = -1
+			session.Save(r, w)
+			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
+			return
+		}
 		withUser := context.WithValue(r.Context(), "user", user)
 		next.ServeHTTP(w, r.WithContext(withUser))
 	}
