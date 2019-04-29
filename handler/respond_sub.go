@@ -35,7 +35,7 @@ func respondRaw(w http.ResponseWriter, r *http.Request,
 		w.Write([]byte(");"))
 	default:
 		w.Header().Set("Content-Type", "application/xml")
-		data, err := xml.Marshal(res)
+		data, err := xml.MarshalIndent(res, "", "    ")
 		if err != nil {
 			log.Printf("could not marshall to xml: %v\n", err)
 		}

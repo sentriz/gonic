@@ -15,10 +15,6 @@ import (
 	"github.com/sentriz/gonic/handler"
 )
 
-var (
-	dbCon = db.New()
-)
-
 type middleware func(next http.HandlerFunc) http.HandlerFunc
 
 func newChain(wares ...middleware) middleware {
@@ -50,10 +46,7 @@ func extendFromBox(tmpl *template.Template, box *packr.Box, key string) *templat
 	return newT
 }
 
-func setSubsonicRoutes(mux *http.ServeMux) {
-	cont := handler.Controller{
-		DB: dbCon,
-	}
+func setSubsonicRoutes(cont handler.Controller, mux *http.ServeMux) {
 	withWare := newChain(
 		cont.WithLogging,
 		cont.WithCORS,
@@ -83,17 +76,14 @@ func setSubsonicRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/rest/getLicense.view", withWare(cont.GetLicence))
 }
 
-func setAdminRoutes(mux *http.ServeMux) {
-	cont := handler.Controller{
-		DB: dbCon,
-	}
+func setAdminRoutes(cont handler.Controller, mux *http.ServeMux) {
 	sessionKey := []byte(cont.GetSetting("session_key"))
 	if len(sessionKey) == 0 {
 		sessionKey = securecookie.GenerateRandomKey(32)
 		cont.SetSetting("session_key", string(sessionKey))
 	}
 	// create gormstore (and cleanup) for backend sessions
-	cont.SStore = gormstore.New(dbCon, []byte(sessionKey))
+	cont.SStore = gormstore.New(cont.DB, []byte(sessionKey))
 	go cont.SStore.PeriodicCleanup(1*time.Hour, nil)
 	// using packr to bundle templates and static files
 	box := packr.New("templates", "../../templates")
@@ -143,8 +133,11 @@ func setAdminRoutes(mux *http.ServeMux) {
 func main() {
 	address := ":6969"
 	mux := http.NewServeMux()
-	setSubsonicRoutes(mux)
-	setAdminRoutes(mux)
+	// create a new controller and pass a copy to both routes.
+	// they will add more fields to their copy if they need them
+	baseController := handler.Controller{DB: db.New()}
+	setSubsonicRoutes(baseController, mux)
+	setAdminRoutes(baseController, mux)
 	server := &http.Server{
 		Addr:         address,
 		Handler:      mux,

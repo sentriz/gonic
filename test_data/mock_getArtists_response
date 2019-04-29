@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<subsonic-response xmlns="http://subsonic.org/restapi" status="ok" version="1.9.0">
+   <albumList2 />
+   <artists>
+      <index name="A">
+         <artist id="1" name="A Certain Ratio" coverArt="0" albumCount="0" />
+         <artist id="3" name="Anikas" coverArt="0" albumCount="0" />
+      </index>
+      <index name="#">
+         <artist id="2" name="13th Floor Elevators" coverArt="0" albumCount="0" />
+      </index>
+   </artists>
+   <musicFolders />
+</subsonic-response>

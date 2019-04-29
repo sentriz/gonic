@@ -75,7 +75,7 @@ func readTags(fullPath string) (tag.Metadata, error) {
 }
 
 func handleFolderCompletion(fullPath string, info *godirwalk.Dirent) error {
-	log.Printf("processed folder `%s`\n", fullPath)
+	log.Printf("++++++ processed folder `%s`\n", fullPath)
 	if cLastAlbum.isEmpty() {
 		return nil
 	}
@@ -101,6 +101,7 @@ func handleFolderCompletion(fullPath string, info *godirwalk.Dirent) error {
 }
 
 func handleFile(fullPath string, info *godirwalk.Dirent) error {
+	fmt.Println("+++++", fullPath)
 	if info.IsDir() {
 		return nil
 	}
