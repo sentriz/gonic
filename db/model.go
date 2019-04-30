@@ -41,6 +41,7 @@ type Track struct {
 	Suffix        string
 	ContentType   string
 	Size          int
+	FolderID      int
 	Path          string `gorm:"not null;unique_index"`
 }
 
@@ -78,4 +79,14 @@ type Play struct {
 	Track   Track
 	TrackID int
 	Time    time.Time
+}
+
+// Folder represents the settings table
+type Folder struct {
+	IDBase
+	CrudBase
+	Name     string
+	Path     string  `gorm:"not null;unique_index"`
+	Parent   *Folder `gorm:"foreignkey:ParentID"`
+	ParentID int
 }

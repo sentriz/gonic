@@ -4,6 +4,7 @@ require (
 	cloud.google.com/go v0.37.1 // indirect
 	github.com/cosiner/argv v0.0.1 // indirect
 	github.com/cpuguy83/go-md2man v1.0.10 // indirect
+	github.com/davecgh/go-spew v1.1.1
 	github.com/davidrjenni/reftools v0.0.0-20190411195930-981bbac422f8 // indirect
 	github.com/denisenkom/go-mssqldb v0.0.0-20190315220205-a8ed825ac853 // indirect
 	github.com/dhowden/tag v0.0.0-20181104225729-a9f04c2798ca
@@ -33,6 +34,7 @@ require (
 	github.com/mozillazg/go-unidecode v0.1.1
 	github.com/peterh/liner v1.1.0 // indirect
 	github.com/pkg/profile v1.3.0 // indirect
+	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
 	github.com/rogpeppe/godef v1.1.1 // indirect
 	github.com/russross/blackfriday v2.0.0+incompatible // indirect
 	github.com/stretchr/objx v0.2.0 // indirect
