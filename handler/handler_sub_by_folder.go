@@ -31,9 +31,40 @@ func (c *Controller) GetIndexes(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	sub := subsonic.NewResponse()
-	sub.Artists = indexes
+	sub.Indexes = &subsonic.Indexes{
+		LastModified: 0,
+		Index:        indexes,
+	}
 	respond(w, r, sub)
 }
 
 func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
+	id, err := getIntParam(r, "id")
+	if err != nil {
+		respondError(w, r, 10, "please provide an `id` parameter")
+		return
+	}
+	var folders []*db.Folder
+	c.DB.Where("parent_id = ?", id).Find(&folders)
+	if len(folders) == 0 {
+		respondError(w, r, 40, "couldn't find any directories")
+		return
+	}
+	var cFolder db.Folder
+	c.DB.First(&cFolder, id)
+	sub := subsonic.NewResponse()
+	sub.Directory = &subsonic.Directory{
+		ID:     cFolder.ID,
+		Parent: cFolder.ParentID,
+		Name:   cFolder.Name,
+	}
+	for _, folder := range folders {
+		sub.Directory.Children = append(sub.Directory.Children, &subsonic.Child{
+			Parent: cFolder.ID,
+			ID:     folder.ID,
+			Title:  folder.Name,
+			IsDir:  true,
+		})
+	}
+	respond(w, r, sub)
 }

@@ -60,11 +60,11 @@ type Index struct {
 }
 
 type Directory struct {
-	ID       int     `xml:"id,attr"                json:"id"`
-	Parent   int     `xml:"parent,attr"            json:"parent"`
-	Name     string  `xml:"name,attr"              json:"name"`
-	Starred  string  `xml:"starred,attr,omitempty" json:"starred,omitempty"`
-	Children []Child `xml:"child"                  json:"child"`
+	ID       int      `xml:"id,attr"                json:"id"`
+	Parent   int      `xml:"parent,attr"            json:"parent"`
+	Name     string   `xml:"name,attr"              json:"name"`
+	Starred  string   `xml:"starred,attr,omitempty" json:"starred,omitempty"`
+	Children []*Child `xml:"child"                  json:"child"`
 }
 
 type Child struct {

@@ -1,3 +1,14 @@
+// this scanner tries to scan with a single unsorted walk of the music
+// directory - which means you can come across the cover of an album/folder
+// before the tracks (and therefore the album) which is an issue because
+// when inserting into the album table, we need a reference to the cover.
+// to solve this we're using godirwalk's PostChildrenCallback and some
+// globals.
+//
+// Album  -> needs a CoverID
+// Folder -> needs a CoverID
+//        -> needs a ParentID
+
 package main
 
 import (
@@ -5,8 +16,6 @@ import (
 	"log"
 	"os"
 	"path"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/dhowden/tag"
@@ -21,18 +30,13 @@ var (
 	orm *gorm.DB
 	tx  *gorm.DB
 	// seenTracks is used to keep every track we've seen so that
-	// we can later remove old tracks from the database
+	// we can remove old tracks in the clean up stage
 	seenTracks = make(map[string]bool)
 	// seenDirs is used for inserting to the folders table (for browsing
 	// by folders instead of tags) which helps us work out a folder's
 	// parent folder id
 	seenDirs = make(dirStack, 0)
 )
-
-func isCover(filename string) bool {
-	_, ok := coverFilenames[strings.ToLower(filename)]
-	return ok
-}
 
 func readTags(fullPath string) (tag.Metadata, error) {
 	trackData, err := os.Open(fullPath)
@@ -47,19 +51,33 @@ func readTags(fullPath string) (tag.Metadata, error) {
 	return tags, nil
 }
 
-// handleFolder is for browse by folders, while handleFile is for both
-func handleFolder(fullPath string, info *godirwalk.Dirent) error {
-	stat, err := os.Stat(fullPath)
-	if err != nil {
-		return fmt.Errorf("when stating folder: %v", err)
+func handleCover(fullPath string, stat os.FileInfo) error {
+	modTime := stat.ModTime()
+	cover := db.Cover{
+		Path: fullPath,
 	}
+	err := tx.Where(cover).First(&cover).Error
+	if !gorm.IsRecordNotFoundError(err) &&
+		modTime.Before(cover.UpdatedAt) {
+		return nil
+	}
+	cover.AlbumID = 0
+	cover.FolderID = seenDirs.Peek()
+	tx.Save(&cover)
+	return nil
+}
+
+// handleFolder is for browse by folders, while handleTrack is for both
+func handleFolder(fullPath string, stat os.FileInfo) error {
+	// this must be run before any tracks so that seenDirs is
+	// correct for the coming tracks
 	modTime := stat.ModTime()
 	folder := db.Folder{
 		Path: fullPath,
 	}
 	// skip if the record exists and hasn't been modified since
 	// the last scan
-	err = tx.Where(folder).First(&folder).Error
+	err := tx.Where(folder).First(&folder).Error
 	if !gorm.IsRecordNotFoundError(err) &&
 		modTime.Before(folder.UpdatedAt) {
 		// even though we don't want to update this record,
@@ -77,23 +95,7 @@ func handleFolder(fullPath string, info *godirwalk.Dirent) error {
 	return nil
 }
 
-func handleFile(fullPath string, info *godirwalk.Dirent) error {
-	stat, err := os.Stat(fullPath)
-	if err != nil {
-		return fmt.Errorf("when stating file: %v", err)
-	}
-	modTime := stat.ModTime()
-	_, filename := path.Split(fullPath)
-	if isCover(filename) {
-		return nil
-	}
-	longExt := filepath.Ext(filename)
-	extension := strings.ToLower(longExt[1:])
-	// check if us audio and save mime type for later
-	mime, ok := audioExtensions[extension]
-	if !ok {
-		return nil
-	}
+func handleTrack(fullPath string, stat os.FileInfo, mime, exten string) error {
 	// add the full path to the seen set. see the comment above
 	// seenTracks for more
 	seenTracks[fullPath] = true
@@ -101,9 +103,10 @@ func handleFile(fullPath string, info *godirwalk.Dirent) error {
 	track := db.Track{
 		Path: fullPath,
 	}
+	modTime := stat.ModTime()
 	// skip if the record exists and hasn't been modified since
 	// the last scan
-	err = tx.Where(track).First(&track).Error
+	err := tx.Where(track).First(&track).Error
 	if !gorm.IsRecordNotFoundError(err) &&
 		modTime.Before(track.UpdatedAt) {
 		return nil
@@ -122,11 +125,11 @@ func handleFile(fullPath string, info *godirwalk.Dirent) error {
 	track.TotalTracks = totalTracks
 	track.TrackNumber = trackNumber
 	track.Year = tags.Year()
-	track.Suffix = extension
+	track.Suffix = exten
 	track.ContentType = mime
 	track.Size = int(stat.Size())
 	track.FolderID = seenDirs.Peek()
-	// set album artist {
+	//
 	albumArtist := db.AlbumArtist{
 		Name: tags.AlbumArtist(),
 	}
@@ -136,7 +139,7 @@ func handleFile(fullPath string, info *godirwalk.Dirent) error {
 		tx.Save(&albumArtist)
 	}
 	track.AlbumArtistID = albumArtist.ID
-	// set album
+	//
 	album := db.Album{
 		AlbumArtistID: albumArtist.ID,
 		Title:         tags.Album(),
@@ -148,8 +151,27 @@ func handleFile(fullPath string, info *godirwalk.Dirent) error {
 		tx.Save(&album)
 	}
 	track.AlbumID = album.ID
-	// save track
+	//
 	tx.Save(&track)
+	return nil
+}
+
+func handleItem(fullPath string, info *godirwalk.Dirent) error {
+	fmt.Println(fullPath)
+	return nil
+	stat, err := os.Stat(fullPath)
+	if err != nil {
+		return fmt.Errorf("error stating: %v", err)
+	}
+	if info.IsDir() {
+		return handleFolder(fullPath, stat)
+	}
+	if isCover(fullPath) {
+		return handleCover(fullPath, stat)
+	}
+	if mime, exten, ok := isAudio(fullPath); ok {
+		return handleTrack(fullPath, stat, mime, exten)
+	}
 	return nil
 }
 
@@ -157,14 +179,6 @@ func handleFolderCompletion(fullPath string, info *godirwalk.Dirent) error {
 	seenDirs.Pop()
 	log.Printf("processed folder `%s`\n", fullPath)
 	return nil
-}
-
-func handleItem(fullPath string, info *godirwalk.Dirent) error {
-	// TODO: stat here instead of in each handler
-	if info.IsDir() {
-		return handleFolder(fullPath, info)
-	}
-	return handleFile(fullPath, info)
 }
 
 func createDatabase() {

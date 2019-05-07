@@ -47,11 +47,14 @@ type Track struct {
 
 // Cover represents the covers table
 type Cover struct {
+	IDBase
 	CrudBase
-	AlbumID int `gorm:"primary_key;auto_increment:false"`
-	Album   Album
-	Image   []byte
-	Path    string `gorm:"not null;unique_index"`
+	AlbumID  int `gorm:"index"`
+	Album    Album
+	FolderID int `gorm:"index"`
+	Folder   Folder
+	Image    []byte
+	Path     string `gorm:"not null;unique_index"`
 }
 
 // User represents the users table
