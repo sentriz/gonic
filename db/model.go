@@ -9,7 +9,14 @@ type Album struct {
 	AlbumArtist   AlbumArtist
 	AlbumArtistID int    `gorm:"index"`
 	Title         string `gorm:"not null;index"`
-	Tracks        []Track
+	// an Album having a `Path` is a little weird when browsing by tags
+	// (for the most part - the library's folder structure is treated as
+	// if it were flat), but this solves the "American Football problem"
+	// https://en.wikipedia.org/wiki/American_Football_(band)#Discography
+	Path    string `gorm:"not null;unique_index"`
+	CoverID int
+	Cover   Cover
+	Tracks  []Track
 }
 
 // AlbumArtist represents the AlbumArtists table
@@ -49,12 +56,8 @@ type Track struct {
 type Cover struct {
 	IDBase
 	CrudBase
-	AlbumID  int `gorm:"index"`
-	Album    Album
-	FolderID int `gorm:"index"`
-	Folder   Folder
-	Image    []byte
-	Path     string `gorm:"not null;unique_index"`
+	Image []byte
+	Path  string `gorm:"not null;unique_index"`
 }
 
 // User represents the users table
@@ -92,4 +95,6 @@ type Folder struct {
 	Path     string  `gorm:"not null;unique_index"`
 	Parent   *Folder `gorm:"foreignkey:ParentID"`
 	ParentID int
+	CoverID  int
+	Cover    Cover
 }

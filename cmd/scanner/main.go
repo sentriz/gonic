@@ -2,12 +2,14 @@
 // directory - which means you can come across the cover of an album/folder
 // before the tracks (and therefore the album) which is an issue because
 // when inserting into the album table, we need a reference to the cover.
-// to solve this we're using godirwalk's PostChildrenCallback and some
-// globals.
+// to solve this we're using godirwalk's PostChildrenCallback and some globals
 //
-// Album  -> needs a CoverID
-// Folder -> needs a CoverID
-//        -> needs a ParentID
+// Album  -> needs a  CoverID
+//        -> needs a  FolderID (American Football)
+// Folder -> needs a  CoverID
+//        -> needs a  ParentID
+// Track  -> needs an AlbumID
+//        -> needs a  FolderID
 
 package main
 
@@ -29,13 +31,20 @@ import (
 var (
 	orm *gorm.DB
 	tx  *gorm.DB
-	// seenTracks is used to keep every track we've seen so that
-	// we can remove old tracks in the clean up stage
-	seenTracks = make(map[string]bool)
-	// seenDirs is used for inserting to the folders table (for browsing
-	// by folders instead of tags) which helps us work out a folder's
-	// parent folder id
-	seenDirs = make(dirStack, 0)
+	// seenPaths is used to keep every path we've seen so that
+	// we can remove old tracks, folders, and covers by path when we
+	// are in the cleanDatabase stage
+	seenPaths = make(map[string]bool)
+	// currentDirStack is used for inserting to the folders (subsonic browse
+	// by folder) which helps us work out a folder's parent
+	currentDirStack = make(dirStack, 0)
+	// currentCover because we find a cover anywhere among the tracks during the
+	// walk and need a reference to it when we update folder and album records
+	// when we exit a folder
+	currentCover = db.Cover{}
+	// currentAlbum because we update this record when we exit a folder with
+	// our new reference to it's cover
+	currentAlbum = db.Album{}
 )
 
 func readTags(fullPath string) (tag.Metadata, error) {
@@ -53,62 +62,67 @@ func readTags(fullPath string) (tag.Metadata, error) {
 
 func handleCover(fullPath string, stat os.FileInfo) error {
 	modTime := stat.ModTime()
-	cover := db.Cover{
-		Path: fullPath,
-	}
-	err := tx.Where(cover).First(&cover).Error
+	err := tx.Where("path = ?", fullPath).First(&currentCover).Error
 	if !gorm.IsRecordNotFoundError(err) &&
-		modTime.Before(cover.UpdatedAt) {
+		modTime.Before(currentCover.UpdatedAt) {
 		return nil
 	}
-	cover.AlbumID = 0
-	cover.FolderID = seenDirs.Peek()
-	tx.Save(&cover)
+	currentCover = db.Cover{Path: fullPath}
+	tx.Save(&currentCover)
 	return nil
 }
 
-// handleFolder is for browse by folders, while handleTrack is for both
 func handleFolder(fullPath string, stat os.FileInfo) error {
-	// this must be run before any tracks so that seenDirs is
-	// correct for the coming tracks
 	modTime := stat.ModTime()
-	folder := db.Folder{
-		Path: fullPath,
-	}
-	// skip if the record exists and hasn't been modified since
-	// the last scan
-	err := tx.Where(folder).First(&folder).Error
+	//
+	// update folder table for browsing by folder
+	var folder db.Folder
+	err := tx.Where("path = ?", fullPath).First(&folder).Error
 	if !gorm.IsRecordNotFoundError(err) &&
 		modTime.Before(folder.UpdatedAt) {
-		// even though we don't want to update this record,
-		// add it to seenDirs now that we have the id
-		seenDirs.Push(folder.ID)
+		// we found the record but it hasn't changed
+		currentDirStack.Push(&folder)
 		return nil
 	}
 	_, folderName := path.Split(fullPath)
-	folder.ParentID = seenDirs.Peek()
+	folder.Path = fullPath
+	folder.ParentID = currentDirStack.PeekID()
 	folder.Name = folderName
-	// save the record with new parent id, then add the new
-	// current id to seenDirs
 	tx.Save(&folder)
-	seenDirs.Push(folder.ID)
+	currentDirStack.Push(&folder)
+	//
+	// update album table (the currentAlbum record will be updated when
+	// we exit this folder)
+	err = tx.Where("path = ?", fullPath).First(&currentAlbum).Error
+	if gorm.IsRecordNotFoundError(err) {
+		currentAlbum = db.Album{Path: fullPath}
+		tx.Save(&currentAlbum)
+	}
+	return nil
+}
+
+func handleFolderCompletion(fullPath string, info *godirwalk.Dirent) error {
+	if currentCover.ID != 0 {
+		currentDir := currentDirStack.Peek()
+		currentDir.CoverID = currentCover.ID
+		tx.Save(currentDir)
+		currentAlbum.CoverID = currentCover.ID
+	}
+	tx.Save(&currentAlbum)
+	currentCover = db.Cover{}
+	currentDirStack.Pop()
+	log.Printf("processed folder `%s`\n", fullPath)
 	return nil
 }
 
 func handleTrack(fullPath string, stat os.FileInfo, mime, exten string) error {
-	// add the full path to the seen set. see the comment above
-	// seenTracks for more
-	seenTracks[fullPath] = true
 	// set track basics
-	track := db.Track{
-		Path: fullPath,
-	}
+	var track db.Track
 	modTime := stat.ModTime()
-	// skip if the record exists and hasn't been modified since
-	// the last scan
-	err := tx.Where(track).First(&track).Error
+	err := tx.Where("path = ?", fullPath).First(&track).Error
 	if !gorm.IsRecordNotFoundError(err) &&
 		modTime.Before(track.UpdatedAt) {
+		// we found the record but it hasn't changed
 		return nil
 	}
 	tags, err := readTags(fullPath)
@@ -128,37 +142,28 @@ func handleTrack(fullPath string, stat os.FileInfo, mime, exten string) error {
 	track.Suffix = exten
 	track.ContentType = mime
 	track.Size = int(stat.Size())
-	track.FolderID = seenDirs.Peek()
-	//
-	albumArtist := db.AlbumArtist{
-		Name: tags.AlbumArtist(),
-	}
-	err = tx.Where(albumArtist).First(&albumArtist).Error
+	track.FolderID = currentDirStack.PeekID()
+	// set album artist basics
+	var albumArtist db.AlbumArtist
+	err = tx.Where("name = ?", tags.AlbumArtist()).
+		First(&albumArtist).
+		Error
 	if gorm.IsRecordNotFoundError(err) {
 		albumArtist.Name = tags.AlbumArtist()
 		tx.Save(&albumArtist)
 	}
 	track.AlbumArtistID = albumArtist.ID
-	//
-	album := db.Album{
-		AlbumArtistID: albumArtist.ID,
-		Title:         tags.Album(),
-	}
-	err = tx.Where(album).First(&album).Error
-	if gorm.IsRecordNotFoundError(err) {
-		album.Title = tags.Album()
-		album.AlbumArtistID = albumArtist.ID
-		tx.Save(&album)
-	}
-	track.AlbumID = album.ID
-	//
+	track.AlbumID = currentAlbum.ID
 	tx.Save(&track)
+	// update the current album's metadata - it will be
+	// inserted when we exit the folder
+	currentAlbum.AlbumArtistID = albumArtist.ID
+	currentAlbum.Title = tags.Album()
 	return nil
 }
 
 func handleItem(fullPath string, info *godirwalk.Dirent) error {
-	fmt.Println(fullPath)
-	return nil
+	seenPaths[fullPath] = true
 	stat, err := os.Stat(fullPath)
 	if err != nil {
 		return fmt.Errorf("error stating: %v", err)
@@ -173,67 +178,6 @@ func handleItem(fullPath string, info *godirwalk.Dirent) error {
 		return handleTrack(fullPath, stat, mime, exten)
 	}
 	return nil
-}
-
-func handleFolderCompletion(fullPath string, info *godirwalk.Dirent) error {
-	seenDirs.Pop()
-	log.Printf("processed folder `%s`\n", fullPath)
-	return nil
-}
-
-func createDatabase() {
-	tx.AutoMigrate(
-		&db.Album{},
-		&db.AlbumArtist{},
-		&db.Track{},
-		&db.Cover{},
-		&db.User{},
-		&db.Setting{},
-		&db.Play{},
-		&db.Folder{},
-	)
-	// set starting value for `albums` table's
-	// auto increment
-	tx.Exec(`
-        INSERT INTO sqlite_sequence(name, seq)
-        SELECT 'albums', 500000
-        WHERE  NOT EXISTS (SELECT *
-                           FROM   sqlite_sequence);
-	`)
-	// create the first user if there is none
-	tx.FirstOrCreate(&db.User{}, db.User{
-		Name:     "admin",
-		Password: "admin",
-		IsAdmin:  true,
-	})
-}
-
-func cleanDatabase() {
-	// delete tracks not on filesystem
-	var tracks []*db.Track
-	tx.Select("id, path").Find(&tracks)
-	for _, track := range tracks {
-		_, ok := seenTracks[track.Path]
-		if ok {
-			continue
-		}
-		tx.Delete(&track)
-		log.Println("removed", track.Path)
-	}
-	// delete albums without tracks
-	tx.Exec(`
-        DELETE FROM albums
-        WHERE  (SELECT count(id)
-                FROM   tracks
-                WHERE  album_id = albums.id) = 0;
-	`)
-	// delete artists without tracks
-	tx.Exec(`
-        DELETE FROM album_artists
-        WHERE  (SELECT count(id)
-                FROM   albums
-                WHERE  album_artist_id = album_artists.id) = 0;
-	`)
 }
 
 func main() {
