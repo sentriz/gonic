@@ -15,6 +15,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path"
@@ -60,22 +61,50 @@ func readTags(fullPath string) (tag.Metadata, error) {
 	return tags, nil
 }
 
+func updateAlbum(fullPath string, albumArtistID int, title string) {
+	if currentAlbum.ID != 0 {
+		return
+	}
+	directory, _ := path.Split(fullPath)
+	// update album table (the currentAlbum record will be updated when
+	// we exit this folder)
+	err := tx.Where("path = ?", directory).First(&currentAlbum).Error
+	if !gorm.IsRecordNotFoundError(err) {
+		// we found the record
+		// TODO: think about mod time here
+		return
+	}
+	currentAlbum = db.Album{
+		Path:          directory,
+		AlbumArtistID: albumArtistID,
+		Title:         title,
+	}
+	tx.Save(&currentAlbum)
+}
+
 func handleCover(fullPath string, stat os.FileInfo) error {
 	modTime := stat.ModTime()
 	err := tx.Where("path = ?", fullPath).First(&currentCover).Error
 	if !gorm.IsRecordNotFoundError(err) &&
 		modTime.Before(currentCover.UpdatedAt) {
+		// we found the record but it hasn't changed
 		return nil
 	}
-	currentCover = db.Cover{Path: fullPath}
+	image, err := ioutil.ReadFile(fullPath)
+	if err != nil {
+		return fmt.Errorf("when reading cover: %v", err)
+	}
+	currentCover = db.Cover{
+		Path:  fullPath,
+		Image: image,
+	}
 	tx.Save(&currentCover)
 	return nil
 }
 
 func handleFolder(fullPath string, stat os.FileInfo) error {
-	modTime := stat.ModTime()
-	//
 	// update folder table for browsing by folder
+	modTime := stat.ModTime()
 	var folder db.Folder
 	err := tx.Where("path = ?", fullPath).First(&folder).Error
 	if !gorm.IsRecordNotFoundError(err) &&
@@ -90,14 +119,6 @@ func handleFolder(fullPath string, stat os.FileInfo) error {
 	folder.Name = folderName
 	tx.Save(&folder)
 	currentDirStack.Push(&folder)
-	//
-	// update album table (the currentAlbum record will be updated when
-	// we exit this folder)
-	err = tx.Where("path = ?", fullPath).First(&currentAlbum).Error
-	if gorm.IsRecordNotFoundError(err) {
-		currentAlbum = db.Album{Path: fullPath}
-		tx.Save(&currentAlbum)
-	}
 	return nil
 }
 
@@ -108,14 +129,18 @@ func handleFolderCompletion(fullPath string, info *godirwalk.Dirent) error {
 		tx.Save(currentDir)
 		currentAlbum.CoverID = currentCover.ID
 	}
-	tx.Save(&currentAlbum)
+	if currentAlbum.ID != 0 {
+		tx.Save(&currentAlbum)
+	}
 	currentCover = db.Cover{}
+	currentAlbum = db.Album{}
 	currentDirStack.Pop()
 	log.Printf("processed folder `%s`\n", fullPath)
 	return nil
 }
 
 func handleTrack(fullPath string, stat os.FileInfo, mime, exten string) error {
+	//
 	// set track basics
 	var track db.Track
 	modTime := stat.ModTime()
@@ -143,6 +168,7 @@ func handleTrack(fullPath string, stat os.FileInfo, mime, exten string) error {
 	track.ContentType = mime
 	track.Size = int(stat.Size())
 	track.FolderID = currentDirStack.PeekID()
+	//
 	// set album artist basics
 	var albumArtist db.AlbumArtist
 	err = tx.Where("name = ?", tags.AlbumArtist()).
@@ -153,16 +179,20 @@ func handleTrack(fullPath string, stat os.FileInfo, mime, exten string) error {
 		tx.Save(&albumArtist)
 	}
 	track.AlbumArtistID = albumArtist.ID
+	//
+	// set temporary album's basics - will be updated with
+	// cover after the tracks
+	// inserted when we exit the folder
+	updateAlbum(fullPath, albumArtist.ID, tags.Album())
+	//
+	// update the track with our new album and finally save
 	track.AlbumID = currentAlbum.ID
 	tx.Save(&track)
-	// update the current album's metadata - it will be
-	// inserted when we exit the folder
-	currentAlbum.AlbumArtistID = albumArtist.ID
-	currentAlbum.Title = tags.Album()
 	return nil
 }
 
 func handleItem(fullPath string, info *godirwalk.Dirent) error {
+	// seenPaths = append(seenPaths, fullPath)
 	seenPaths[fullPath] = true
 	stat, err := os.Stat(fullPath)
 	if err != nil {
