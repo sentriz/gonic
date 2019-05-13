@@ -42,10 +42,10 @@ var (
 	// currentCover because we find a cover anywhere among the tracks during the
 	// walk and need a reference to it when we update folder and album records
 	// when we exit a folder
-	currentCover = db.Cover{}
+	currentCover = &db.Cover{}
 	// currentAlbum because we update this record when we exit a folder with
 	// our new reference to it's cover
-	currentAlbum = db.Album{}
+	currentAlbum = &db.Album{}
 )
 
 func readTags(fullPath string) (tag.Metadata, error) {
@@ -68,23 +68,23 @@ func updateAlbum(fullPath string, albumArtistID int, title string) {
 	directory, _ := path.Split(fullPath)
 	// update album table (the currentAlbum record will be updated when
 	// we exit this folder)
-	err := tx.Where("path = ?", directory).First(&currentAlbum).Error
+	err := tx.Where("path = ?", directory).First(currentAlbum).Error
 	if !gorm.IsRecordNotFoundError(err) {
 		// we found the record
 		// TODO: think about mod time here
 		return
 	}
-	currentAlbum = db.Album{
+	currentAlbum = &db.Album{
 		Path:          directory,
 		AlbumArtistID: albumArtistID,
 		Title:         title,
 	}
-	tx.Save(&currentAlbum)
+	tx.Save(currentAlbum)
 }
 
 func handleCover(fullPath string, stat os.FileInfo) error {
 	modTime := stat.ModTime()
-	err := tx.Where("path = ?", fullPath).First(&currentCover).Error
+	err := tx.Where("path = ?", fullPath).First(currentCover).Error
 	if !gorm.IsRecordNotFoundError(err) &&
 		modTime.Before(currentCover.UpdatedAt) {
 		// we found the record but it hasn't changed
@@ -94,47 +94,47 @@ func handleCover(fullPath string, stat os.FileInfo) error {
 	if err != nil {
 		return fmt.Errorf("when reading cover: %v", err)
 	}
-	currentCover = db.Cover{
-		Path:  fullPath,
-		Image: image,
+	currentCover = &db.Cover{
+		Path:          fullPath,
+		Image:         image,
+		NewlyInserted: true,
 	}
-	tx.Save(&currentCover)
+	tx.Save(currentCover)
 	return nil
 }
 
 func handleFolder(fullPath string, stat os.FileInfo) error {
 	// update folder table for browsing by folder
+	folder := &db.Folder{}
+	defer currentDirStack.Push(folder)
 	modTime := stat.ModTime()
-	var folder db.Folder
-	err := tx.Where("path = ?", fullPath).First(&folder).Error
+	err := tx.Where("path = ?", fullPath).First(folder).Error
 	if !gorm.IsRecordNotFoundError(err) &&
 		modTime.Before(folder.UpdatedAt) {
 		// we found the record but it hasn't changed
-		currentDirStack.Push(&folder)
 		return nil
 	}
 	_, folderName := path.Split(fullPath)
 	folder.Path = fullPath
 	folder.ParentID = currentDirStack.PeekID()
 	folder.Name = folderName
-	tx.Save(&folder)
-	currentDirStack.Push(&folder)
+	tx.Save(folder)
 	return nil
 }
 
 func handleFolderCompletion(fullPath string, info *godirwalk.Dirent) error {
-	if currentCover.ID != 0 {
-		currentDir := currentDirStack.Peek()
+	currentDir := currentDirStack.Peek()
+	defer currentDirStack.Pop()
+	if currentCover.NewlyInserted {
 		currentDir.CoverID = currentCover.ID
 		tx.Save(currentDir)
-		currentAlbum.CoverID = currentCover.ID
 	}
 	if currentAlbum.ID != 0 {
-		tx.Save(&currentAlbum)
+		currentAlbum.CoverID = currentCover.ID
+		tx.Save(currentAlbum)
 	}
-	currentCover = db.Cover{}
-	currentAlbum = db.Album{}
-	currentDirStack.Pop()
+	currentCover = &db.Cover{}
+	currentAlbum = &db.Album{}
 	log.Printf("processed folder `%s`\n", fullPath)
 	return nil
 }
@@ -142,9 +142,9 @@ func handleFolderCompletion(fullPath string, info *godirwalk.Dirent) error {
 func handleTrack(fullPath string, stat os.FileInfo, mime, exten string) error {
 	//
 	// set track basics
-	var track db.Track
+	track := &db.Track{}
 	modTime := stat.ModTime()
-	err := tx.Where("path = ?", fullPath).First(&track).Error
+	err := tx.Where("path = ?", fullPath).First(track).Error
 	if !gorm.IsRecordNotFoundError(err) &&
 		modTime.Before(track.UpdatedAt) {
 		// we found the record but it hasn't changed
@@ -170,24 +170,23 @@ func handleTrack(fullPath string, stat os.FileInfo, mime, exten string) error {
 	track.FolderID = currentDirStack.PeekID()
 	//
 	// set album artist basics
-	var albumArtist db.AlbumArtist
+	albumArtist := &db.AlbumArtist{}
 	err = tx.Where("name = ?", tags.AlbumArtist()).
-		First(&albumArtist).
+		First(albumArtist).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
 		albumArtist.Name = tags.AlbumArtist()
-		tx.Save(&albumArtist)
+		tx.Save(albumArtist)
 	}
 	track.AlbumArtistID = albumArtist.ID
 	//
 	// set temporary album's basics - will be updated with
-	// cover after the tracks
-	// inserted when we exit the folder
+	// cover after the tracks inserted when we exit the folder
 	updateAlbum(fullPath, albumArtist.ID, tags.Album())
 	//
 	// update the track with our new album and finally save
 	track.AlbumID = currentAlbum.ID
-	tx.Save(&track)
+	tx.Save(track)
 	return nil
 }
 

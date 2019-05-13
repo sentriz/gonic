@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/sentriz/gonic/db"
@@ -12,6 +13,7 @@ func (c *Controller) GetIndexes(w http.ResponseWriter, r *http.Request) {
 	// for this, so we're going to return root directories as "artists"
 	var folders []*db.Folder
 	c.DB.Where("parent_id = ?", 1).Find(&folders)
+	fmt.Println(folders, "++++++++")
 	var indexMap = make(map[rune]*subsonic.Index)
 	var indexes []*subsonic.Index
 	for _, folder := range folders {
@@ -60,10 +62,11 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, folder := range folders {
 		sub.Directory.Children = append(sub.Directory.Children, &subsonic.Child{
-			Parent: cFolder.ID,
-			ID:     folder.ID,
-			Title:  folder.Name,
-			IsDir:  true,
+			Parent:  cFolder.ID,
+			ID:      folder.ID,
+			Title:   folder.Name,
+			IsDir:   true,
+			CoverID: folder.CoverID,
 		})
 	}
 	respond(w, r, sub)

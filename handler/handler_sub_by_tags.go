@@ -64,7 +64,7 @@ func (c *Controller) GetArtist(w http.ResponseWriter, r *http.Request) {
 			Created:  album.CreatedAt,
 			Artist:   artist.Name,
 			ArtistID: artist.ID,
-			CoverID:  album.ID,
+			CoverID:  album.CoverID,
 		})
 	}
 	respond(w, r, sub)
@@ -85,7 +85,7 @@ func (c *Controller) GetAlbum(w http.ResponseWriter, r *http.Request) {
 	sub.Album = &subsonic.Album{
 		ID:      album.ID,
 		Name:    album.Title,
-		CoverID: album.ID,
+		CoverID: album.CoverID,
 		Created: album.CreatedAt,
 		Artist:  album.AlbumArtist.Name,
 	}
@@ -103,7 +103,7 @@ func (c *Controller) GetAlbum(w http.ResponseWriter, r *http.Request) {
 			Album:       album.Title,
 			AlbumID:     album.ID,
 			ArtistID:    album.AlbumArtist.ID, // album artist
-			CoverID:     album.ID,
+			CoverID:     album.CoverID,
 			Type:        "music",
 		})
 	}
@@ -136,7 +136,7 @@ func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
 			ID:       album.ID,
 			Name:     album.Title,
 			Created:  album.CreatedAt,
-			CoverID:  album.ID,
+			CoverID:  album.CoverID,
 			Artist:   album.AlbumArtist.Name,
 			ArtistID: album.AlbumArtist.ID,
 		})

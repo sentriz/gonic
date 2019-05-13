@@ -56,8 +56,9 @@ type Track struct {
 type Cover struct {
 	IDBase
 	CrudBase
-	Image []byte
-	Path  string `gorm:"not null;unique_index"`
+	Image         []byte
+	Path          string `gorm:"not null;unique_index"`
+	NewlyInserted bool   `gorm:"-"`
 }
 
 // User represents the users table
