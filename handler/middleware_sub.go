@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -75,7 +76,8 @@ func (c *Controller) WithValidSubsonicArgs(next http.HandlerFunc) http.HandlerFu
 			respondError(w, r, 40, "invalid password")
 			return
 		}
-		next.ServeHTTP(w, r)
+		withUser := context.WithValue(r.Context(), contextUserKey, user)
+		next.ServeHTTP(w, r.WithContext(withUser))
 	}
 }
 

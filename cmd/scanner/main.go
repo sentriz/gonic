@@ -61,7 +61,7 @@ func readTags(fullPath string) (tag.Metadata, error) {
 	return tags, nil
 }
 
-func updateAlbum(fullPath string, albumArtistID int, title string) {
+func updateAlbum(fullPath string, album *db.Album) {
 	if currentAlbum.ID != 0 {
 		return
 	}
@@ -76,8 +76,9 @@ func updateAlbum(fullPath string, albumArtistID int, title string) {
 	}
 	currentAlbum = &db.Album{
 		Path:          directory,
-		AlbumArtistID: albumArtistID,
-		Title:         title,
+		Title:         album.Title,
+		AlbumArtistID: album.AlbumArtistID,
+		Year:          album.Year,
 	}
 	tx.Save(currentAlbum)
 }
@@ -182,7 +183,11 @@ func handleTrack(fullPath string, stat os.FileInfo, mime, exten string) error {
 	//
 	// set temporary album's basics - will be updated with
 	// cover after the tracks inserted when we exit the folder
-	updateAlbum(fullPath, albumArtist.ID, tags.Album())
+	updateAlbum(fullPath, &db.Album{
+		AlbumArtistID: albumArtist.ID,
+		Title:         tags.Album(),
+		Year:          tags.Year(),
+	})
 	//
 	// update the track with our new album and finally save
 	track.AlbumID = currentAlbum.ID

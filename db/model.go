@@ -16,6 +16,7 @@ type Album struct {
 	Path    string `gorm:"not null;unique_index"`
 	CoverID int
 	Cover   Cover
+	Year    int
 	Tracks  []Track
 }
 
@@ -82,10 +83,11 @@ type Setting struct {
 type Play struct {
 	IDBase
 	User    User
-	UserID  int
-	Track   Track
-	TrackID int
+	UserID  int `gorm:"not null;index"`
+	Album   Album
+	AlbumID int `gorm:"not null;index"`
 	Time    time.Time
+	Count   int
 }
 
 // Folder represents the settings table

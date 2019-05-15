@@ -30,7 +30,9 @@ func (c *Controller) Stream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var track db.Track
-	c.DB.First(&track, id)
+	c.DB.
+		Preload("Album").
+		First(&track, id)
 	if track.Path == "" {
 		respondError(w, r, 70, fmt.Sprintf("media with id `%d` was not found", id))
 		return
@@ -42,6 +44,17 @@ func (c *Controller) Stream(w http.ResponseWriter, r *http.Request) {
 	}
 	stat, _ := file.Stat()
 	http.ServeContent(w, r, track.Path, stat.ModTime(), file)
+	//
+	// after we've served the file, mark the album as played
+	user := r.Context().Value(contextUserKey).(*db.User)
+	play := db.Play{
+		AlbumID: track.Album.ID,
+		UserID:  user.ID,
+	}
+	c.DB.Where(play).First(&play)
+	play.Time = time.Now() // for getAlbumList?type=recent
+	play.Count++           // for getAlbumList?type=frequent
+	c.DB.Save(&play)
 }
 
 func (c *Controller) GetCoverArt(w http.ResponseWriter, r *http.Request) {
@@ -75,12 +88,7 @@ func (c *Controller) Scrobble(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// fetch user to get lastfm session
-	username := getStrParam(r, "u")
-	user := c.GetUserFromName(username)
-	if user == nil {
-		respondError(w, r, 10, "could not find a user with that name")
-		return
-	}
+	user := r.Context().Value(contextUserKey).(*db.User)
 	if user.LastFMSession == "" {
 		respondError(w, r, 0, fmt.Sprintf("no last.fm session for this user: %v", err))
 		return

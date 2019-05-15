@@ -10,12 +10,6 @@ import (
 	"github.com/sentriz/gonic/subsonic"
 )
 
-var orderExpr = map[string]interface{}{
-	"random":             gorm.Expr("random()"),
-	"newest":             "updated_at desc",
-	"alphabeticalByName": "title",
-}
-
 func (c *Controller) GetArtists(w http.ResponseWriter, r *http.Request) {
 	var artists []*db.AlbumArtist
 	c.DB.Find(&artists)
@@ -110,14 +104,37 @@ func (c *Controller) GetAlbum(w http.ResponseWriter, r *http.Request) {
 	respond(w, r, sub)
 }
 
-func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) GetAlbumListTwo(w http.ResponseWriter, r *http.Request) {
 	listType := getStrParam(r, "type")
 	if listType == "" {
 		respondError(w, r, 10, "please provide a `type` parameter")
 		return
 	}
-	orderType, ok := orderExpr[listType]
-	if !ok {
+	query := c.DB
+	switch listType {
+	case "alphabeticalByArtist":
+		query = query.
+			Joins("JOIN album_artists ON albums.album_artist_id=album_artists.id").
+			Order("album_artists.name")
+	case "alphabeticalByName":
+		query = query.Order("title")
+	case "byYear":
+		query = query.Order("year")
+	case "frequent":
+		user := r.Context().Value(contextUserKey).(*db.User)
+		query = query.
+			Joins("JOIN plays ON albums.id=plays.album_id AND plays.user_id=?", user.ID).
+			Order("plays.count desc")
+	case "newest":
+		query = query.Order("updated_at desc")
+	case "random":
+		query = query.Order(gorm.Expr("random()"))
+	case "recent":
+		user := r.Context().Value(contextUserKey).(*db.User)
+		query = query.
+			Joins("JOIN plays ON albums.id=plays.album_id AND plays.user_id=?", user.ID).
+			Order("plays.time desc")
+	default:
 		respondError(w, r, 10, fmt.Sprintf(
 			"unknown value `%s` for parameter 'type'", listType,
 		))
@@ -125,10 +142,9 @@ func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
 	}
 	size := getIntParamOr(r, "size", 10)
 	var albums []*db.Album
-	c.DB.
-		Preload("AlbumArtist").
-		Order(orderType).
+	query.
 		Limit(size).
+		Preload("AlbumArtist").
 		Find(&albums)
 	sub := subsonic.NewResponse()
 	for _, album := range albums {

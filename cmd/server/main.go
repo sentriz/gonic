@@ -70,8 +70,8 @@ func setSubsonicRoutes(cont handler.Controller, mux *http.ServeMux) {
 	// browse by tag
 	mux.HandleFunc("/rest/getAlbum", withWare(cont.GetAlbum))
 	mux.HandleFunc("/rest/getAlbum.view", withWare(cont.GetAlbum))
-	mux.HandleFunc("/rest/getAlbumList2", withWare(cont.GetAlbumList))
-	mux.HandleFunc("/rest/getAlbumList2.view", withWare(cont.GetAlbumList))
+	mux.HandleFunc("/rest/getAlbumList2", withWare(cont.GetAlbumListTwo))
+	mux.HandleFunc("/rest/getAlbumList2.view", withWare(cont.GetAlbumListTwo))
 	mux.HandleFunc("/rest/getArtist", withWare(cont.GetArtist))
 	mux.HandleFunc("/rest/getArtist.view", withWare(cont.GetArtist))
 	mux.HandleFunc("/rest/getArtists", withWare(cont.GetArtists))
