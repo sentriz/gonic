@@ -88,3 +88,7 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 	}
 	respond(w, r, sub)
 }
+
+// changes to this function should be reflected in in _by_tags.go's
+// getAlbumListTwo() function
+func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {}

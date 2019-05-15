@@ -81,6 +81,8 @@ func setSubsonicRoutes(cont handler.Controller, mux *http.ServeMux) {
 	mux.HandleFunc("/rest/getIndexes.view", withWare(cont.GetIndexes))
 	mux.HandleFunc("/rest/getMusicDirectory", withWare(cont.GetMusicDirectory))
 	mux.HandleFunc("/rest/getMusicDirectory.view", withWare(cont.GetMusicDirectory))
+	mux.HandleFunc("/rest/getAlbumList", withWare(cont.GetAlbumList))
+	mux.HandleFunc("/rest/getAlbumList.view", withWare(cont.GetAlbumList))
 }
 
 func setAdminRoutes(cont handler.Controller, mux *http.ServeMux) {

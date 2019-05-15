@@ -104,6 +104,8 @@ func (c *Controller) GetAlbum(w http.ResponseWriter, r *http.Request) {
 	respond(w, r, sub)
 }
 
+// changes to this function should be reflected in in _by_folder.go's
+// getAlbumList() function
 func (c *Controller) GetAlbumListTwo(w http.ResponseWriter, r *http.Request) {
 	listType := getStrParam(r, "type")
 	if listType == "" {
@@ -119,7 +121,11 @@ func (c *Controller) GetAlbumListTwo(w http.ResponseWriter, r *http.Request) {
 	case "alphabeticalByName":
 		query = query.Order("title")
 	case "byYear":
-		query = query.Order("year")
+		startYear := getIntParamOr(r, "fromYear", 1800)
+		endYear := getIntParamOr(r, "toYear", 2200)
+		query = query.
+			Where("year BETWEEN ? AND ?", startYear, endYear).
+			Order("year")
 	case "frequent":
 		user := r.Context().Value(contextUserKey).(*db.User)
 		query = query.
@@ -140,9 +146,11 @@ func (c *Controller) GetAlbumListTwo(w http.ResponseWriter, r *http.Request) {
 		))
 		return
 	}
+	offset := getIntParamOr(r, "offset", 0)
 	size := getIntParamOr(r, "size", 10)
 	var albums []*db.Album
 	query.
+		Offset(offset).
 		Limit(size).
 		Preload("AlbumArtist").
 		Find(&albums)
