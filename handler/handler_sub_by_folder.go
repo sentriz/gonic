@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/sentriz/gonic/db"
@@ -13,7 +12,6 @@ func (c *Controller) GetIndexes(w http.ResponseWriter, r *http.Request) {
 	// for this, so we're going to return root directories as "artists"
 	var folders []*db.Folder
 	c.DB.Where("parent_id = ?", 1).Find(&folders)
-	fmt.Println(folders, "++++++++")
 	var indexMap = make(map[rune]*subsonic.Index)
 	var indexes []*subsonic.Index
 	for _, folder := range folders {
@@ -46,20 +44,18 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, 10, "please provide an `id` parameter")
 		return
 	}
-	var folders []*db.Folder
-	c.DB.Where("parent_id = ?", id).Find(&folders)
-	if len(folders) == 0 {
-		respondError(w, r, 40, "couldn't find any directories")
-		return
-	}
+	sub := subsonic.NewResponse()
 	var cFolder db.Folder
 	c.DB.First(&cFolder, id)
-	sub := subsonic.NewResponse()
 	sub.Directory = &subsonic.Directory{
 		ID:     cFolder.ID,
 		Parent: cFolder.ParentID,
 		Name:   cFolder.Name,
 	}
+	var folders []*db.Folder
+	c.DB.
+		Where("parent_id = ?", id).
+		Find(&folders)
 	for _, folder := range folders {
 		sub.Directory.Children = append(sub.Directory.Children, &subsonic.Child{
 			Parent:  cFolder.ID,
@@ -67,6 +63,27 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 			Title:   folder.Name,
 			IsDir:   true,
 			CoverID: folder.CoverID,
+		})
+	}
+	var tracks []*db.Track
+	c.DB.
+		Where("folder_id = ?", id).
+		Preload("Album").
+		Find(&tracks)
+	for _, track := range tracks {
+		sub.Directory.Children = append(sub.Directory.Children, &subsonic.Child{
+			Parent:      cFolder.ID,
+			IsDir:       false,
+			Title:       track.Title,
+			Album:       track.Album.Title,
+			Artist:      track.Artist,
+			Bitrate:     track.Bitrate,
+			ContentType: track.ContentType,
+			CoverID:     cFolder.CoverID,
+			Duration:    0,
+			Path:        track.Path,
+			Size:        track.Size,
+			Track:       track.TrackNumber,
 		})
 	}
 	respond(w, r, sub)

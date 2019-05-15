@@ -29,7 +29,7 @@ type Track struct {
 	Created     time.Time `xml:"created,attr"     json:"created"`
 	Duration    int       `xml:"duration,attr"    json:"duration"`
 	Genre       string    `xml:"genre,attr"       json:"genre"`
-	BitRate     int       `xml:"bitRate,attr"     json:"bitRate"`
+	Bitrate     int       `xml:"bitRate,attr"     json:"bitRate"`
 	Size        int       `xml:"size,attr"        json:"size"`
 	Suffix      string    `xml:"suffix,attr"      json:"suffix"`
 	ContentType string    `xml:"contentType,attr" json:"contentType"`
@@ -83,8 +83,8 @@ type Child struct {
 	Size        int    `xml:"size,attr,omitempty"        json:"size,omitempty"`
 	ContentType string `xml:"contentType,attr,omitempty" json:"contentType,omitempty"`
 	Suffix      string `xml:"suffix,attr,omitempty"      json:"suffix,omitempty"`
-	Duration    int    `xml:"duration,attr,omitempty"    json:"duration"`
-	BitRate     int    `xml:"bitRate,attr,omitempty"     json:"bitrate,omitempty"`
+	Duration    int    `xml:"duration,attr,omitempty"    json:"duration,omitempty"`
+	Bitrate     int    `xml:"bitRate,attr,omitempty"     json:"bitrate,omitempty"`
 	Path        string `xml:"path,attr,omitempty"        json:"path,omitempty"`
 }
 
