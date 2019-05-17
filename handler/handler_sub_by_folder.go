@@ -1,7 +1,10 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
+
+	"github.com/jinzhu/gorm"
 
 	"github.com/sentriz/gonic/db"
 	"github.com/sentriz/gonic/subsonic"
@@ -44,20 +47,17 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, 10, "please provide an `id` parameter")
 		return
 	}
-	sub := subsonic.NewResponse()
+	childrenObj := []*subsonic.Child{}
 	var cFolder db.Folder
 	c.DB.First(&cFolder, id)
-	sub.Directory = &subsonic.Directory{
-		ID:     cFolder.ID,
-		Parent: cFolder.ParentID,
-		Name:   cFolder.Name,
-	}
+	//
+	// start looking for child folders in the current dir
 	var folders []*db.Folder
 	c.DB.
 		Where("parent_id = ?", id).
 		Find(&folders)
 	for _, folder := range folders {
-		sub.Directory.Children = append(sub.Directory.Children, &subsonic.Child{
+		childrenObj = append(childrenObj, &subsonic.Child{
 			Parent:  cFolder.ID,
 			ID:      folder.ID,
 			Title:   folder.Name,
@@ -65,30 +65,115 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 			CoverID: folder.CoverID,
 		})
 	}
+	//
+	// start looking for child tracks in the current dir
 	var tracks []*db.Track
 	c.DB.
 		Where("folder_id = ?", id).
 		Preload("Album").
+		Order("track_number").
 		Find(&tracks)
 	for _, track := range tracks {
-		sub.Directory.Children = append(sub.Directory.Children, &subsonic.Child{
-			Parent:      cFolder.ID,
-			IsDir:       false,
-			Title:       track.Title,
+		if getStrParam(r, "c") == "Jamstash" {
+			// jamstash thinks it can't play flacs
+			track.ContentType = "audio/mpeg"
+			track.Suffix = "mp3"
+		}
+		childrenObj = append(childrenObj, &subsonic.Child{
+			ID:          track.ID,
 			Album:       track.Album.Title,
 			Artist:      track.Artist,
-			Bitrate:     track.Bitrate,
 			ContentType: track.ContentType,
 			CoverID:     cFolder.CoverID,
 			Duration:    0,
+			IsDir:       false,
+			Parent:      cFolder.ID,
 			Path:        track.Path,
 			Size:        track.Size,
+			Suffix:      track.Suffix,
+			Title:       track.Title,
 			Track:       track.TrackNumber,
+			Type:        "music",
 		})
+	}
+	//
+	// respond section
+	sub := subsonic.NewResponse()
+	sub.Directory = &subsonic.Directory{
+		ID:       cFolder.ID,
+		Parent:   cFolder.ParentID,
+		Name:     cFolder.Name,
+		Children: childrenObj,
 	}
 	respond(w, r, sub)
 }
 
 // changes to this function should be reflected in in _by_tags.go's
 // getAlbumListTwo() function
-func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {}
+func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
+	listType := getStrParam(r, "type")
+	if listType == "" {
+		respondError(w, r, 10, "please provide a `type` parameter")
+		return
+	}
+	q := c.DB
+	switch listType {
+	case "alphabeticalByArtist":
+		// not sure what it meant by "artist" since we're browsing by folder
+		// - so we'll consider the parent folder's name to be the "artist"
+		q = q.Joins(`
+			JOIN folders AS parent_folders
+			ON folders.parent_id = parent_folders.id`)
+		q = q.Order("parent_folders.name")
+	case "alphabeticalByName":
+		// not sure about "name" either, so lets use the folder's name
+		q = q.Order("name")
+	case "frequent":
+		user := r.Context().Value(contextUserKey).(*db.User)
+		q = q.Joins(`
+			JOIN plays
+			ON folders.id = plays.folder_id AND plays.user_id = ?`,
+			user.ID)
+		q = q.Order("plays.count DESC")
+	case "newest":
+		q = q.Order("updated_at DESC")
+	case "random":
+		q = q.Order(gorm.Expr("random()"))
+	case "recent":
+		user := r.Context().Value(contextUserKey).(*db.User)
+		q = q.Joins(`
+			JOIN plays
+			ON folders.id = plays.folder_id AND plays.user_id = ?`,
+			user.ID)
+		q = q.Order("plays.time DESC")
+	default:
+		respondError(w, r, 10, fmt.Sprintf(
+			"unknown value `%s` for parameter 'type'", listType,
+		))
+		return
+	}
+	var folders []*db.Folder
+	q.
+		Where("folders.has_tracks = 1").
+		Offset(getIntParamOr(r, "offset", 0)).
+		Limit(getIntParamOr(r, "size", 10)).
+		Preload("Parent").
+		Find(&folders)
+	listObj := []*subsonic.Album{}
+	for _, folder := range folders {
+		listObj = append(listObj, &subsonic.Album{
+			ID:       folder.ID,
+			Title:    folder.Name,
+			Album:    folder.Name,
+			CoverID:  folder.CoverID,
+			ParentID: folder.ParentID,
+			IsDir:    true,
+			Artist:   folder.Parent.Name,
+		})
+	}
+	sub := subsonic.NewResponse()
+	sub.Albums = &subsonic.Albums{
+		List: listObj,
+	}
+	respond(w, r, sub)
+}

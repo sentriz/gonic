@@ -140,7 +140,7 @@ func setAdminRoutes(cont handler.Controller, mux *http.ServeMux) {
 }
 
 func main() {
-	address := ":6969"
+	address := "0.0.0.0:6969"
 	mux := http.NewServeMux()
 	// create a new controller and pass a copy to both routes.
 	// they will add more fields to their copy if they need them

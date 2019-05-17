@@ -14,7 +14,7 @@ func (c *Controller) GetArtists(w http.ResponseWriter, r *http.Request) {
 	var artists []*db.AlbumArtist
 	c.DB.Find(&artists)
 	var indexMap = make(map[rune]*subsonic.Index)
-	var indexes []*subsonic.Index
+	var indexes subsonic.Artists
 	for _, artist := range artists {
 		i := indexOf(artist.Name)
 		index, ok := indexMap[i]
@@ -24,7 +24,7 @@ func (c *Controller) GetArtists(w http.ResponseWriter, r *http.Request) {
 				Artists: []*subsonic.Artist{},
 			}
 			indexMap[i] = index
-			indexes = append(indexes, index)
+			indexes.List = append(indexes.List, index)
 		}
 		index.Artists = append(index.Artists, &subsonic.Artist{
 			ID:   artist.ID,
@@ -32,7 +32,7 @@ func (c *Controller) GetArtists(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	sub := subsonic.NewResponse()
-	sub.Artists = indexes
+	sub.Artists = &indexes
 	respond(w, r, sub)
 }
 
@@ -46,13 +46,9 @@ func (c *Controller) GetArtist(w http.ResponseWriter, r *http.Request) {
 	c.DB.
 		Preload("Albums").
 		First(&artist, id)
-	sub := subsonic.NewResponse()
-	sub.Artist = &subsonic.Artist{
-		ID:   artist.ID,
-		Name: artist.Name,
-	}
+	albumsObj := []*subsonic.Album{}
 	for _, album := range artist.Albums {
-		sub.Artist.Albums = append(sub.Artist.Albums, &subsonic.Album{
+		albumsObj = append(albumsObj, &subsonic.Album{
 			ID:       album.ID,
 			Name:     album.Title,
 			Created:  album.CreatedAt,
@@ -60,6 +56,12 @@ func (c *Controller) GetArtist(w http.ResponseWriter, r *http.Request) {
 			ArtistID: artist.ID,
 			CoverID:  album.CoverID,
 		})
+	}
+	sub := subsonic.NewResponse()
+	sub.Artist = &subsonic.Artist{
+		ID:     artist.ID,
+		Name:   artist.Name,
+		Albums: albumsObj,
 	}
 	respond(w, r, sub)
 }
@@ -75,16 +77,9 @@ func (c *Controller) GetAlbum(w http.ResponseWriter, r *http.Request) {
 		Preload("AlbumArtist").
 		Preload("Tracks").
 		First(&album, id)
-	sub := subsonic.NewResponse()
-	sub.Album = &subsonic.Album{
-		ID:      album.ID,
-		Name:    album.Title,
-		CoverID: album.CoverID,
-		Created: album.CreatedAt,
-		Artist:  album.AlbumArtist.Name,
-	}
+	tracksObj := []*subsonic.Track{}
 	for _, track := range album.Tracks {
-		sub.Album.Tracks = append(sub.Album.Tracks, &subsonic.Track{
+		tracksObj = append(tracksObj, &subsonic.Track{
 			ID:          track.ID,
 			Title:       track.Title,
 			Artist:      track.Artist, // track artist
@@ -101,6 +96,15 @@ func (c *Controller) GetAlbum(w http.ResponseWriter, r *http.Request) {
 			Type:        "music",
 		})
 	}
+	sub := subsonic.NewResponse()
+	sub.Album = &subsonic.Album{
+		ID:      album.ID,
+		Name:    album.Title,
+		CoverID: album.CoverID,
+		Created: album.CreatedAt,
+		Artist:  album.AlbumArtist.Name,
+		Tracks:  tracksObj,
+	}
 	respond(w, r, sub)
 }
 
@@ -112,51 +116,54 @@ func (c *Controller) GetAlbumListTwo(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, 10, "please provide a `type` parameter")
 		return
 	}
-	query := c.DB
+	q := c.DB
 	switch listType {
 	case "alphabeticalByArtist":
-		query = query.
-			Joins("JOIN album_artists ON albums.album_artist_id=album_artists.id").
-			Order("album_artists.name")
+		q = q.Joins(`
+			JOIN album_artists
+			ON albums.album_artist_id = album_artists.id`)
+		q = q.Order("album_artists.name")
 	case "alphabeticalByName":
-		query = query.Order("title")
+		q = q.Order("title")
 	case "byYear":
-		startYear := getIntParamOr(r, "fromYear", 1800)
-		endYear := getIntParamOr(r, "toYear", 2200)
-		query = query.
-			Where("year BETWEEN ? AND ?", startYear, endYear).
-			Order("year")
+		q = q.Where(
+			"year BETWEEN ? AND ?",
+			getIntParamOr(r, "fromYear", 1800),
+			getIntParamOr(r, "toYear", 2200))
+		q = q.Order("year")
 	case "frequent":
 		user := r.Context().Value(contextUserKey).(*db.User)
-		query = query.
-			Joins("JOIN plays ON albums.id=plays.album_id AND plays.user_id=?", user.ID).
-			Order("plays.count desc")
+		q = q.Joins(`
+			JOIN plays
+			ON albums.id = plays.album_id AND plays.user_id = ?`,
+			user.ID)
+		q = q.Order("plays.count DESC")
 	case "newest":
-		query = query.Order("updated_at desc")
+		q = q.Order("updated_at DESC")
 	case "random":
-		query = query.Order(gorm.Expr("random()"))
+		q = q.Order(gorm.Expr("random()"))
 	case "recent":
 		user := r.Context().Value(contextUserKey).(*db.User)
-		query = query.
-			Joins("JOIN plays ON albums.id=plays.album_id AND plays.user_id=?", user.ID).
-			Order("plays.time desc")
+		q = q.Joins(`
+			JOIN plays
+			ON albums.id = plays.album_id AND plays.user_id = ?`,
+			user.ID)
+		q = q.Order("plays.time DESC")
 	default:
 		respondError(w, r, 10, fmt.Sprintf(
 			"unknown value `%s` for parameter 'type'", listType,
 		))
 		return
 	}
-	offset := getIntParamOr(r, "offset", 0)
-	size := getIntParamOr(r, "size", 10)
 	var albums []*db.Album
-	query.
-		Offset(offset).
-		Limit(size).
+	q.
+		Offset(getIntParamOr(r, "offset", 0)).
+		Limit(getIntParamOr(r, "size", 10)).
 		Preload("AlbumArtist").
 		Find(&albums)
-	sub := subsonic.NewResponse()
+	listObj := []*subsonic.Album{}
 	for _, album := range albums {
-		sub.Albums = append(sub.Albums, &subsonic.Album{
+		listObj = append(listObj, &subsonic.Album{
 			ID:       album.ID,
 			Name:     album.Title,
 			Created:  album.CreatedAt,
@@ -164,6 +171,10 @@ func (c *Controller) GetAlbumListTwo(w http.ResponseWriter, r *http.Request) {
 			Artist:   album.AlbumArtist.Name,
 			ArtistID: album.AlbumArtist.ID,
 		})
+	}
+	sub := subsonic.NewResponse()
+	sub.AlbumsTwo = &subsonic.Albums{
+		List: listObj,
 	}
 	respond(w, r, sub)
 }

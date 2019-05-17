@@ -32,6 +32,7 @@ func (c *Controller) Stream(w http.ResponseWriter, r *http.Request) {
 	var track db.Track
 	c.DB.
 		Preload("Album").
+		Preload("Folder").
 		First(&track, id)
 	if track.Path == "" {
 		respondError(w, r, 70, fmt.Sprintf("media with id `%d` was not found", id))
@@ -48,8 +49,9 @@ func (c *Controller) Stream(w http.ResponseWriter, r *http.Request) {
 	// after we've served the file, mark the album as played
 	user := r.Context().Value(contextUserKey).(*db.User)
 	play := db.Play{
-		AlbumID: track.Album.ID,
-		UserID:  user.ID,
+		AlbumID:  track.Album.ID,
+		FolderID: track.Folder.ID,
+		UserID:   user.ID,
 	}
 	c.DB.Where(play).First(&play)
 	play.Time = time.Now() // for getAlbumList?type=recent
@@ -122,10 +124,12 @@ func (c *Controller) Scrobble(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) GetMusicFolders(w http.ResponseWriter, r *http.Request) {
-	sub := subsonic.NewResponse()
-	sub.MusicFolders = []*subsonic.MusicFolder{
+	folders := &subsonic.MusicFolders{}
+	folders.List = []*subsonic.MusicFolder{
 		{ID: 1, Name: "music"},
 	}
+	sub := subsonic.NewResponse()
+	sub.MusicFolders = folders
 	respond(w, r, sub)
 }
 

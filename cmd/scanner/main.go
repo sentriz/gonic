@@ -126,13 +126,19 @@ func handleFolder(fullPath string, stat os.FileInfo) error {
 func handleFolderCompletion(fullPath string, info *godirwalk.Dirent) error {
 	currentDir := currentDirStack.Peek()
 	defer currentDirStack.Pop()
-	if currentCover.NewlyInserted {
-		currentDir.CoverID = currentCover.ID
-		tx.Save(currentDir)
-	}
+	var dirShouldSave bool
 	if currentAlbum.ID != 0 {
 		currentAlbum.CoverID = currentCover.ID
 		tx.Save(currentAlbum)
+		currentDir.HasTracks = true
+		dirShouldSave = true
+	}
+	if currentCover.NewlyInserted {
+		currentDir.CoverID = currentCover.ID
+		dirShouldSave = true
+	}
+	if dirShouldSave {
+		tx.Save(currentDir)
 	}
 	currentCover = &db.Cover{}
 	currentAlbum = &db.Album{}

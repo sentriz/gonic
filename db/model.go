@@ -49,6 +49,7 @@ type Track struct {
 	Suffix        string
 	ContentType   string
 	Size          int
+	Folder        Folder
 	FolderID      int
 	Path          string `gorm:"not null;unique_index"`
 }
@@ -82,22 +83,25 @@ type Setting struct {
 // Play represents the settings table
 type Play struct {
 	IDBase
-	User    User
-	UserID  int `gorm:"not null;index"`
-	Album   Album
-	AlbumID int `gorm:"not null;index"`
-	Time    time.Time
-	Count   int
+	User     User
+	UserID   int `gorm:"not null;index"`
+	Album    Album
+	AlbumID  int `gorm:"not null;index"`
+	Folder   Folder
+	FolderID int `gorm:"not null;index"`
+	Time     time.Time
+	Count    int
 }
 
 // Folder represents the settings table
 type Folder struct {
 	IDBase
 	CrudBase
-	Name     string
-	Path     string  `gorm:"not null;unique_index"`
-	Parent   *Folder `gorm:"foreignkey:ParentID"`
-	ParentID int
-	CoverID  int
-	Cover    Cover
+	Name      string
+	Path      string `gorm:"not null;unique_index"`
+	Parent    *Folder
+	ParentID  int
+	CoverID   int
+	HasTracks bool `gorm:"not null;index"`
+	Cover     Cover
 }

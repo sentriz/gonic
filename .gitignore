@@ -5,3 +5,4 @@ scanner
 server
 cmd/scanner/scanner
 cmd/server/server
+_test*
