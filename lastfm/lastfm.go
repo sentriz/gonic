@@ -11,7 +11,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/sentriz/gonic/db"
+	"github.com/pkg/errors"
+
+	"github.com/sentriz/gonic/model"
 )
 
 var (
@@ -43,14 +45,14 @@ func makeRequest(method string, params url.Values) (*LastFM, error) {
 	req.URL.RawQuery = params.Encode()
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("get: %v", err)
+		return nil, errors.Wrap(err, "get")
 	}
 	defer resp.Body.Close()
 	decoder := xml.NewDecoder(resp.Body)
 	var lastfm LastFM
 	err = decoder.Decode(&lastfm)
 	if err != nil {
-		return nil, fmt.Errorf("decoding: %v", err)
+		return nil, errors.Wrap(err, "decoding")
 	}
 	if lastfm.Error != nil {
 		return nil, fmt.Errorf("parsing: %v", lastfm.Error.Value)
@@ -72,7 +74,7 @@ func GetSession(apiKey, secret, token string) (string, error) {
 }
 
 func Scrobble(apiKey, secret, session string,
-	track *db.Track, stamp int, submission bool) error {
+	track *model.Track, stamp int, submission bool) error {
 	params := url.Values{}
 	if submission {
 		params.Add("method", "track.Scrobble")

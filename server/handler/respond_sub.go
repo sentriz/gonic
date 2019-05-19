@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/sentriz/gonic/subsonic"
+	"github.com/sentriz/gonic/server/subsonic"
 )
 
 func respondRaw(w http.ResponseWriter, r *http.Request,

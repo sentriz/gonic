@@ -29,6 +29,7 @@ type Response struct {
 	Directory    *Directory    `xml:"directory"    json:"directory,omitempty"`
 	RandomTracks *RandomTracks `xml:"randomSongs"  json:"randomSongs,omitempty"`
 	MusicFolders *MusicFolders `xml:"musicFolders" json:"musicFolders,omitempty"`
+	ScanStatus   *ScanStatus   `xml:"scanStatus" json:"scanStatus,omitempty"`
 	Licence      *Licence      `xml:"license"      json:"license,omitempty"`
 }
 

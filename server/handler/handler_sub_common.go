@@ -4,14 +4,16 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"sync/atomic"
 	"time"
 	"unicode"
 
 	"github.com/rainycape/unidecode"
 
-	"github.com/sentriz/gonic/db"
 	"github.com/sentriz/gonic/lastfm"
-	"github.com/sentriz/gonic/subsonic"
+	"github.com/sentriz/gonic/model"
+	"github.com/sentriz/gonic/scanner"
+	"github.com/sentriz/gonic/server/subsonic"
 )
 
 func indexOf(s string) rune {
@@ -29,7 +31,7 @@ func (c *Controller) Stream(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, 10, "please provide an `id` parameter")
 		return
 	}
-	var track db.Track
+	var track model.Track
 	c.DB.
 		Preload("Album").
 		Preload("Folder").
@@ -47,8 +49,8 @@ func (c *Controller) Stream(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, track.Path, stat.ModTime(), file)
 	//
 	// after we've served the file, mark the album as played
-	user := r.Context().Value(contextUserKey).(*db.User)
-	play := db.Play{
+	user := r.Context().Value(contextUserKey).(*model.User)
+	play := model.Play{
 		AlbumID:  track.Album.ID,
 		FolderID: track.Folder.ID,
 		UserID:   user.ID,
@@ -65,7 +67,7 @@ func (c *Controller) GetCoverArt(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, 10, "please provide an `id` parameter")
 		return
 	}
-	var cover db.Cover
+	var cover model.Cover
 	c.DB.First(&cover, id)
 	w.Write(cover.Image)
 }
@@ -90,13 +92,13 @@ func (c *Controller) Scrobble(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// fetch user to get lastfm session
-	user := r.Context().Value(contextUserKey).(*db.User)
+	user := r.Context().Value(contextUserKey).(*model.User)
 	if user.LastFMSession == "" {
 		respondError(w, r, 0, fmt.Sprintf("no last.fm session for this user: %v", err))
 		return
 	}
 	// fetch track for getting info to send to last.fm function
-	var track db.Track
+	var track model.Track
 	c.DB.
 		Preload("Album").
 		Preload("AlbumArtist").
@@ -130,6 +132,23 @@ func (c *Controller) GetMusicFolders(w http.ResponseWriter, r *http.Request) {
 	}
 	sub := subsonic.NewResponse()
 	sub.MusicFolders = folders
+	respond(w, r, sub)
+}
+
+func (c *Controller) StartScan(w http.ResponseWriter, r *http.Request) {
+	scanC := scanner.New(c.DB, c.MusicPath)
+	go scanC.Start()
+	c.GetScanStatus(w, r)
+}
+
+func (c *Controller) GetScanStatus(w http.ResponseWriter, r *http.Request) {
+	var trackCount int
+	c.DB.Model(&model.Track{}).Count(&trackCount)
+	sub := subsonic.NewResponse()
+	sub.ScanStatus = &subsonic.ScanStatus{
+		Scanning: atomic.LoadInt32(&scanner.IsScanning) == 1,
+		Count:    trackCount,
+	}
 	respond(w, r, sub)
 }
 

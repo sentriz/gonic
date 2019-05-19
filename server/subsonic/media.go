@@ -116,3 +116,8 @@ type MusicFolder struct {
 type Licence struct {
 	Valid bool `xml:"valid,attr,omitempty" json:"valid,omitempty"`
 }
+
+type ScanStatus struct {
+	Scanning bool `xml:"scanning,attr"        json:"scanning"`
+	Count    int  `xml:"count,attr,omitempty" json:"count,omitempty"`
+}

@@ -6,12 +6,12 @@ import (
 
 	"github.com/jinzhu/gorm"
 
-	"github.com/sentriz/gonic/db"
-	"github.com/sentriz/gonic/subsonic"
+	"github.com/sentriz/gonic/model"
+	"github.com/sentriz/gonic/server/subsonic"
 )
 
 func (c *Controller) GetArtists(w http.ResponseWriter, r *http.Request) {
-	var artists []*db.AlbumArtist
+	var artists []*model.AlbumArtist
 	c.DB.Find(&artists)
 	var indexMap = make(map[rune]*subsonic.Index)
 	var indexes subsonic.Artists
@@ -42,7 +42,7 @@ func (c *Controller) GetArtist(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, 10, "please provide an `id` parameter")
 		return
 	}
-	var artist db.AlbumArtist
+	var artist model.AlbumArtist
 	c.DB.
 		Preload("Albums").
 		First(&artist, id)
@@ -72,7 +72,7 @@ func (c *Controller) GetAlbum(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, 10, "please provide an `id` parameter")
 		return
 	}
-	var album db.Album
+	var album model.Album
 	c.DB.
 		Preload("AlbumArtist").
 		Preload("Tracks").
@@ -132,7 +132,7 @@ func (c *Controller) GetAlbumListTwo(w http.ResponseWriter, r *http.Request) {
 			getIntParamOr(r, "toYear", 2200))
 		q = q.Order("year")
 	case "frequent":
-		user := r.Context().Value(contextUserKey).(*db.User)
+		user := r.Context().Value(contextUserKey).(*model.User)
 		q = q.Joins(`
 			JOIN plays
 			ON albums.id = plays.album_id AND plays.user_id = ?`,
@@ -143,7 +143,7 @@ func (c *Controller) GetAlbumListTwo(w http.ResponseWriter, r *http.Request) {
 	case "random":
 		q = q.Order(gorm.Expr("random()"))
 	case "recent":
-		user := r.Context().Value(contextUserKey).(*db.User)
+		user := r.Context().Value(contextUserKey).(*model.User)
 		q = q.Joins(`
 			JOIN plays
 			ON albums.id = plays.album_id AND plays.user_id = ?`,
@@ -155,7 +155,7 @@ func (c *Controller) GetAlbumListTwo(w http.ResponseWriter, r *http.Request) {
 		))
 		return
 	}
-	var albums []*db.Album
+	var albums []*model.Album
 	q.
 		Offset(getIntParamOr(r, "offset", 0)).
 		Limit(getIntParamOr(r, "size", 10)).

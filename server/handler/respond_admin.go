@@ -7,14 +7,14 @@ import (
 
 	"github.com/gorilla/sessions"
 
-	"github.com/sentriz/gonic/db"
+	"github.com/sentriz/gonic/model"
 )
 
 type templateData struct {
 	Flashes                []interface{}
-	User                   *db.User
-	SelectedUser           *db.User
-	AllUsers               []*db.User
+	User                   *model.User
+	SelectedUser           *model.User
+	AllUsers               []*model.User
 	ArtistCount            int
 	AlbumCount             int
 	TrackCount             int
@@ -31,7 +31,7 @@ func renderTemplate(w http.ResponseWriter, r *http.Request,
 	}
 	data.Flashes = session.Flashes()
 	session.Save(r, w)
-	user, ok := r.Context().Value(contextUserKey).(*db.User)
+	user, ok := r.Context().Value(contextUserKey).(*model.User)
 	if ok {
 		data.User = user
 	}

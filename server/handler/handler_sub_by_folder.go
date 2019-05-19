@@ -6,14 +6,14 @@ import (
 
 	"github.com/jinzhu/gorm"
 
-	"github.com/sentriz/gonic/db"
-	"github.com/sentriz/gonic/subsonic"
+	"github.com/sentriz/gonic/model"
+	"github.com/sentriz/gonic/server/subsonic"
 )
 
 func (c *Controller) GetIndexes(w http.ResponseWriter, r *http.Request) {
 	// we are browsing by folder, but the subsonic docs show sub <artist> elements
 	// for this, so we're going to return root directories as "artists"
-	var folders []*db.Folder
+	var folders []*model.Folder
 	c.DB.Where("parent_id = ?", 1).Find(&folders)
 	var indexMap = make(map[rune]*subsonic.Index)
 	var indexes []*subsonic.Index
@@ -48,11 +48,11 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	childrenObj := []*subsonic.Child{}
-	var cFolder db.Folder
+	var cFolder model.Folder
 	c.DB.First(&cFolder, id)
 	//
 	// start looking for child folders in the current dir
-	var folders []*db.Folder
+	var folders []*model.Folder
 	c.DB.
 		Where("parent_id = ?", id).
 		Find(&folders)
@@ -67,7 +67,7 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 	}
 	//
 	// start looking for child tracks in the current dir
-	var tracks []*db.Track
+	var tracks []*model.Track
 	c.DB.
 		Where("folder_id = ?", id).
 		Preload("Album").
@@ -129,7 +129,7 @@ func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
 		// not sure about "name" either, so lets use the folder's name
 		q = q.Order("name")
 	case "frequent":
-		user := r.Context().Value(contextUserKey).(*db.User)
+		user := r.Context().Value(contextUserKey).(*model.User)
 		q = q.Joins(`
 			JOIN plays
 			ON folders.id = plays.folder_id AND plays.user_id = ?`,
@@ -140,7 +140,7 @@ func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
 	case "random":
 		q = q.Order(gorm.Expr("random()"))
 	case "recent":
-		user := r.Context().Value(contextUserKey).(*db.User)
+		user := r.Context().Value(contextUserKey).(*model.User)
 		q = q.Joins(`
 			JOIN plays
 			ON folders.id = plays.folder_id AND plays.user_id = ?`,
@@ -152,7 +152,7 @@ func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
 		))
 		return
 	}
-	var folders []*db.Folder
+	var folders []*model.Folder
 	q.
 		Where("folders.has_tracks = 1").
 		Offset(getIntParamOr(r, "offset", 0)).

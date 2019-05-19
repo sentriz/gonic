@@ -7,7 +7,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/jinzhu/gorm"
 
-	"github.com/sentriz/gonic/db"
+	"github.com/sentriz/gonic/model"
 	"github.com/sentriz/gonic/lastfm"
 )
 
@@ -84,7 +84,7 @@ func (c *Controller) ServeChangeOwnPasswordDo(w http.ResponseWriter, r *http.Req
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
-	user := r.Context().Value(contextUserKey).(*db.User)
+	user := r.Context().Value(contextUserKey).(*model.User)
 	user.Password = passwordOne
 	c.DB.Save(user)
 	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
@@ -108,14 +108,14 @@ func (c *Controller) ServeLinkLastFMDo(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 		return
 	}
-	user := r.Context().Value(contextUserKey).(*db.User)
+	user := r.Context().Value(contextUserKey).(*model.User)
 	user.LastFMSession = sessionKey
 	c.DB.Save(&user)
 	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 }
 
 func (c *Controller) ServeUnlinkLastFMDo(w http.ResponseWriter, r *http.Request) {
-	user := r.Context().Value(contextUserKey).(*db.User)
+	user := r.Context().Value(contextUserKey).(*model.User)
 	user.LastFMSession = ""
 	c.DB.Save(&user)
 	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
@@ -127,7 +127,7 @@ func (c *Controller) ServeChangePassword(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "please provide a username", 400)
 		return
 	}
-	var user db.User
+	var user model.User
 	err := c.DB.Where("name = ?", username).First(&user).Error
 	if gorm.IsRecordNotFoundError(err) {
 		http.Error(w, "couldn't find a user with that name", 400)
@@ -141,7 +141,7 @@ func (c *Controller) ServeChangePassword(w http.ResponseWriter, r *http.Request)
 func (c *Controller) ServeChangePasswordDo(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(contextSessionKey).(*sessions.Session)
 	username := r.URL.Query().Get("user")
-	var user db.User
+	var user model.User
 	c.DB.Where("name = ?", username).First(&user)
 	passwordOne := r.FormValue("password_one")
 	passwordTwo := r.FormValue("password_two")
@@ -163,7 +163,7 @@ func (c *Controller) ServeDeleteUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "please provide a username", 400)
 		return
 	}
-	var user db.User
+	var user model.User
 	err := c.DB.Where("name = ?", username).First(&user).Error
 	if gorm.IsRecordNotFoundError(err) {
 		http.Error(w, "couldn't find a user with that name", 400)
@@ -176,7 +176,7 @@ func (c *Controller) ServeDeleteUser(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) ServeDeleteUserDo(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("user")
-	var user db.User
+	var user model.User
 	c.DB.Where("name = ?", username).First(&user)
 	c.DB.Delete(&user)
 	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
@@ -205,7 +205,7 @@ func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
-	user := db.User{
+	user := model.User{
 		Name:     username,
 		Password: passwordOne,
 	}

@@ -6,12 +6,12 @@ import (
 
 	"github.com/gorilla/sessions"
 
-	"github.com/sentriz/gonic/db"
+	"github.com/sentriz/gonic/model"
 )
 
 func (c *Controller) WithSession(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		session, _ := c.SStore.Get(r, "gonic")
+		session, _ := c.SessDB.Get(r, "gonic")
 		withSession := context.WithValue(r.Context(), contextSessionKey, session)
 		next.ServeHTTP(w, r.WithContext(withSession))
 	}
@@ -47,7 +47,7 @@ func (c *Controller) WithAdminSession(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// session and user exist at this point
 		session := r.Context().Value(contextSessionKey).(*sessions.Session)
-		user := r.Context().Value(contextUserKey).(*db.User)
+		user := r.Context().Value(contextUserKey).(*model.User)
 		if !user.IsAdmin {
 			session.AddFlash("you are not an admin")
 			session.Save(r, w)
