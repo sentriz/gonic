@@ -38,7 +38,7 @@ func (s *Server) setupAdmin() {
 	s.SessDB = gormstore.New(s.DB, []byte(sessionKey))
 	go s.SessDB.PeriodicCleanup(1*time.Hour, nil)
 	// using packr to bundle templates and static files
-	box := packr.New("templates", "templates")
+	box := packr.New("templates", "./templates")
 	layoutT := extendFromBox(nil, box, "layout.tmpl")
 	userT := extendFromBox(layoutT, box, "user.tmpl")
 	s.Templates = map[string]*template.Template{
@@ -62,7 +62,7 @@ func (s *Server) setupAdmin() {
 		withUserWare,
 		s.WithAdminSession,
 	)
-	server := http.FileServer(packr.New("static", "static"))
+	server := http.FileServer(packr.New("static", "./static"))
 	s.mux.Handle("/admin/static/", http.StripPrefix("/admin/static/", server))
 	s.mux.HandleFunc("/admin/login", withPublicWare(s.ServeLogin))
 	s.mux.HandleFunc("/admin/login_do", withPublicWare(s.ServeLoginDo))
