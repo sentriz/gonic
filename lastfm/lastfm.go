@@ -74,11 +74,12 @@ func GetSession(apiKey, secret, token string) (string, error) {
 }
 
 func Scrobble(apiKey, secret, session string,
-	track *model.Track, stamp int, submission bool) error {
+	track *model.Track, stampMili int, submission bool) error {
 	params := url.Values{}
 	if submission {
 		params.Add("method", "track.Scrobble")
-		params.Add("timestamp", strconv.Itoa(stamp))
+		// last.fm wants the timestamp in seconds
+		params.Add("timestamp", strconv.Itoa(stampMili / 1e3))
 	} else {
 		params.Add("method", "track.updateNowPlaying")
 	}

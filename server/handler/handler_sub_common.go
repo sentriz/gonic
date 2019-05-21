@@ -103,19 +103,16 @@ func (c *Controller) Scrobble(w http.ResponseWriter, r *http.Request) {
 		Preload("Album").
 		Preload("AlbumArtist").
 		First(&track, id)
-	// get time from args or use now
-	time := getIntParamOr(r, "time", int(time.Now().Unix()))
-	// get submission, where the default is true. we will
-	// check if it's false later
-	submission := getStrParamOr(r, "submission", "true")
 	// scrobble with above info
 	err = lastfm.Scrobble(
 		c.GetSetting("lastfm_api_key"),
 		c.GetSetting("lastfm_secret"),
 		user.LastFMSession,
 		&track,
-		time,
-		submission != "false",
+		// clients will provide time in miliseconds, so use that or
+		// instead convert UnixNano to miliseconds
+		getIntParamOr(r, "time", int(time.Now().UnixNano() / 1e6)),
+		getStrParamOr(r, "submission", "true") != "false",
 	)
 	if err != nil {
 		respondError(w, r, 0, fmt.Sprintf("error when submitting: %v", err))
