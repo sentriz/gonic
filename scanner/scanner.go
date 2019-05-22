@@ -224,27 +224,19 @@ func (s *Scanner) handleItem(fullPath string, info *godirwalk.Dirent) error {
 
 func (s *Scanner) MigrateDB() error {
 	defer logElapsed(time.Now(), "migrating database")
+	s.db.Exec("PRAGMA foreign_keys = ON")
 	s.tx = s.db.Begin()
 	defer s.tx.Commit()
 	s.tx.AutoMigrate(
-		&model.Album{},
-		&model.AlbumArtist{},
-		&model.Track{},
-		&model.Cover{},
-		&model.User{},
-		&model.Setting{},
-		&model.Play{},
-		&model.Folder{},
+		model.Album{},
+		model.AlbumArtist{},
+		model.Track{},
+		model.Cover{},
+		model.User{},
+		model.Setting{},
+		model.Play{},
+		model.Folder{},
 	)
-	// set starting value for `albums` table's
-	// auto increment
-	s.tx.Exec(`
-        INSERT INTO sqlite_sequence(name, seq)
-        SELECT 'albums', 500000
-        WHERE  NOT EXISTS (SELECT *
-                           FROM   sqlite_sequence);
-       `)
-	// create the first user if there is none
 	s.tx.FirstOrCreate(&model.User{}, model.User{
 		Name:     "admin",
 		Password: "admin",
@@ -260,6 +252,7 @@ func (s *Scanner) Start() error {
 	atomic.StoreInt32(&IsScanning, 1)
 	defer atomic.StoreInt32(&IsScanning, 0)
 	defer logElapsed(time.Now(), "scanning")
+	s.db.Exec("PRAGMA foreign_keys = ON")
 	s.tx = s.db.Begin()
 	defer s.tx.Commit()
 	//

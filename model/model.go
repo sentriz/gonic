@@ -7,14 +7,14 @@ type Album struct {
 	IDBase
 	CrudBase
 	AlbumArtist   AlbumArtist
-	AlbumArtistID int    `gorm:"index"`
+	AlbumArtistID int    `gorm:"index" sql:"type:int REFERENCES album_artists(id) ON DELETE CASCADE"`
 	Title         string `gorm:"not null;index"`
 	// an Album having a `Path` is a little weird when browsing by tags
 	// (for the most part - the library's folder structure is treated as
 	// if it were flat), but this solves the "American Football problem"
 	// https://en.wikipedia.org/wiki/American_Football_(band)#Discography
 	Path    string `gorm:"not null;unique_index"`
-	CoverID int
+	CoverID int    `sql:"type:int REFERENCES covers(id)"`
 	Cover   Cover
 	Year    int
 	Tracks  []Track
@@ -24,8 +24,8 @@ type Album struct {
 type AlbumArtist struct {
 	IDBase
 	CrudBase
-	Albums []Album
 	Name   string `gorm:"not null;unique_index"`
+	Albums []Album
 }
 
 // Track represents the tracks table
@@ -33,9 +33,9 @@ type Track struct {
 	IDBase
 	CrudBase
 	Album         Album
-	AlbumID       int `gorm:"index"`
+	AlbumID       int `gorm:"index" sql:"type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	AlbumArtist   AlbumArtist
-	AlbumArtistID int
+	AlbumArtistID int `gorm:"index" sql:"type:int REFERENCES album_artists(id) ON DELETE CASCADE"`
 	Artist        string
 	Bitrate       int
 	Codec         string
@@ -50,7 +50,7 @@ type Track struct {
 	ContentType   string
 	Size          int
 	Folder        Folder
-	FolderID      int
+	FolderID      int    `gorm:"not null;index" sql:"type:int REFERENCES folders(id) ON DELETE CASCADE"`
 	Path          string `gorm:"not null;unique_index"`
 }
 
