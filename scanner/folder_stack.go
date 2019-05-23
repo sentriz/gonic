@@ -1,16 +1,14 @@
 package scanner
 
-import (
-	"github.com/sentriz/gonic/model"
-)
+import "github.com/sentriz/gonic/model"
 
-type dirStack []*model.Folder
+type folderStack []*model.Folder
 
-func (s *dirStack) Push(v *model.Folder) {
+func (s *folderStack) Push(v *model.Folder) {
 	*s = append(*s, v)
 }
 
-func (s *dirStack) Pop() *model.Folder {
+func (s *folderStack) Pop() *model.Folder {
 	l := len(*s)
 	if l == 0 {
 		return nil
@@ -20,7 +18,7 @@ func (s *dirStack) Pop() *model.Folder {
 	return r
 }
 
-func (s *dirStack) Peek() *model.Folder {
+func (s *folderStack) Peek() *model.Folder {
 	l := len(*s)
 	if l == 0 {
 		return nil
@@ -28,7 +26,7 @@ func (s *dirStack) Peek() *model.Folder {
 	return (*s)[l-1]
 }
 
-func (s *dirStack) PeekID() int {
+func (s *folderStack) PeekID() int {
 	l := len(*s)
 	if l == 0 {
 		return 0

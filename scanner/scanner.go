@@ -34,117 +34,93 @@ var (
 )
 
 type Scanner struct {
-	db        *gorm.DB
-	tx        *gorm.DB
-	musicPath string
-	// seenPaths is used to keep every path we've seen so that
-	// we can remove old tracks, folders, and covers by path when we
-	// are in the cleanDatabase stage
-	seenPaths map[string]bool
-	// currentDirStack is used for inserting to the folders (subsonic browse
-	// by folder) which helps us work out a folder's parent
-	currentDirStack dirStack
-	// currentCover because we find a cover anywhere among the tracks during the
-	// walk and need a reference to it when we update folder and album records
-	// when we exit a folder
-	currentCover *model.Cover
-	// currentAlbum because we update this record when we exit a folder with
-	// our new reference to it's cover
-	currentAlbum *model.Album
+	db          *gorm.DB
+	tx          *gorm.DB
+	musicPath   string
+	seenPaths   map[string]bool
+	folderCount uint
+	curFolders  folderStack
+	curTracks   []*model.Track
+	curCover    *model.Cover
+	curAlbum    *model.Album
+	curAArtist  *model.AlbumArtist
 }
 
 func New(db *gorm.DB, musicPath string) *Scanner {
 	return &Scanner{
-		db:              db,
-		musicPath:       musicPath,
-		seenPaths:       make(map[string]bool),
-		currentDirStack: make(dirStack, 0),
-		currentCover:    &model.Cover{},
-		currentAlbum:    &model.Album{},
+		db:         db,
+		musicPath:  musicPath,
+		seenPaths:  make(map[string]bool),
+		curFolders: make(folderStack, 0),
 	}
-}
-
-func (s *Scanner) updateAlbum(fullPath string, album *model.Album) {
-	if s.currentAlbum.ID != 0 {
-		return
-	}
-	directory, _ := path.Split(fullPath)
-	// update album table (the currentAlbum record will be updated when
-	// we exit this folder)
-	err := s.tx.Where("path = ?", directory).First(s.currentAlbum).Error
-	if !gorm.IsRecordNotFoundError(err) {
-		// we found the record
-		// TODO: think about mod time here
-		return
-	}
-	s.currentAlbum = &model.Album{
-		Path:          directory,
-		Title:         album.Title,
-		AlbumArtistID: album.AlbumArtistID,
-		Year:          album.Year,
-	}
-	s.tx.Save(s.currentAlbum)
 }
 
 func (s *Scanner) handleCover(fullPath string, stat os.FileInfo) error {
-	modTime := stat.ModTime()
-	err := s.tx.Where("path = ?", fullPath).First(s.currentCover).Error
+	s.curCover = &model.Cover{}
+	err := s.tx.Where("path = ?", fullPath).First(s.curCover).Error
 	if !gorm.IsRecordNotFoundError(err) &&
-		modTime.Before(s.currentCover.UpdatedAt) {
+		stat.ModTime().Before(s.curCover.UpdatedAt) {
 		// we found the record but it hasn't changed
 		return nil
 	}
+	s.curCover.Path = fullPath
 	image, err := ioutil.ReadFile(fullPath)
 	if err != nil {
-		return fmt.Errorf("when reading cover: %v", err)
+		return errors.Wrap(err, "reading cover")
 	}
-	s.currentCover = &model.Cover{
-		Path:          fullPath,
-		Image:         image,
-		NewlyInserted: true,
-	}
-	s.tx.Save(s.currentCover)
+	s.curCover.Image = image
 	return nil
 }
 
 func (s *Scanner) handleFolder(fullPath string, stat os.FileInfo) error {
-	// update folder table for browsing by folder
 	folder := &model.Folder{}
-	defer s.currentDirStack.Push(folder)
-	modTime := stat.ModTime()
+	defer s.curFolders.Push(folder)
 	err := s.tx.Where("path = ?", fullPath).First(folder).Error
 	if !gorm.IsRecordNotFoundError(err) &&
-		modTime.Before(folder.UpdatedAt) {
+		stat.ModTime().Before(folder.UpdatedAt) {
 		// we found the record but it hasn't changed
 		return nil
 	}
-	_, folderName := path.Split(fullPath)
 	folder.Path = fullPath
-	folder.ParentID = s.currentDirStack.PeekID()
-	folder.Name = folderName
+	folder.Name = stat.Name()
 	s.tx.Save(folder)
 	return nil
 }
 
 func (s *Scanner) handleFolderCompletion(fullPath string, info *godirwalk.Dirent) error {
-	currentDir := s.currentDirStack.Peek()
-	defer s.currentDirStack.Pop()
-	var dirShouldSave bool
-	if s.currentAlbum.ID != 0 {
-		s.currentAlbum.CoverID = s.currentCover.ID
-		s.tx.Save(s.currentAlbum)
-		currentDir.HasTracks = true
-		dirShouldSave = true
+	// in general in this function - if a model is not nil, then it
+	// has at least been looked up. if it has a id of 0, then it is
+	// a new record and needs to be inserted
+	//
+	var newCover bool
+	if s.curCover != nil && s.curCover.ID == 0 {
+		s.tx.Save(s.curCover)
+		newCover = true
 	}
-	if s.currentCover.NewlyInserted {
-		currentDir.CoverID = s.currentCover.ID
-		dirShouldSave = true
+	if s.curAlbum != nil {
+		s.curAlbum.CoverID = s.curCover.ID
+		if newCover || s.curAlbum.ID == 0 {
+			s.tx.Save(s.curAlbum)
+		}
 	}
-	if dirShouldSave {
-		s.tx.Save(currentDir)
+	folder := s.curFolders.Pop()
+	if folder.ID == 0 || newCover {
+		folder.ParentID = s.curFolders.PeekID()
+		folder.CoverID = s.curCover.ID
+		folder.HasTracks = true
+		s.tx.Save(folder)
 	}
-	s.currentCover = &model.Cover{}
-	s.currentAlbum = &model.Album{}
+	for _, track := range s.curTracks {
+		// not checking for a nil album here because if there are
+		// tracks, then we at least lookup up the album
+		track.AlbumID = s.curAlbum.ID
+		track.FolderID = folder.ID
+		s.tx.Save(track)
+	}
+	s.curTracks = nil
+	s.curCover = nil
+	s.curAlbum = nil
+	s.curAArtist = nil
 	log.Printf("processed folder `%s`\n", fullPath)
 	return nil
 }
@@ -177,30 +153,40 @@ func (s *Scanner) handleTrack(fullPath string, stat os.FileInfo, mime, exten str
 	track.Suffix = exten
 	track.ContentType = mime
 	track.Size = int(stat.Size())
-	track.FolderID = s.currentDirStack.PeekID()
+	track.FolderID = s.curFolders.PeekID()
 	//
 	// set album artist basics
-	albumArtist := &model.AlbumArtist{}
+	s.curAArtist = &model.AlbumArtist{}
 	err = s.tx.Where("name = ?", tags.AlbumArtist()).
-		First(albumArtist).
+		First(s.curAArtist).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
-		albumArtist.Name = tags.AlbumArtist()
-		s.tx.Save(albumArtist)
+		s.curAArtist.Name = tags.AlbumArtist()
+		s.tx.Save(s.curAArtist)
 	}
-	track.AlbumArtistID = albumArtist.ID
+	track.AlbumArtistID = s.curAArtist.ID
 	//
-	// set temporary album's basics - will be updated with
-	// cover after the tracks inserted when we exit the folder
-	s.updateAlbum(fullPath, &model.Album{
-		AlbumArtistID: albumArtist.ID,
-		Title:         tags.Album(),
-		Year:          tags.Year(),
-	})
+	// set album if this is the first track in the folder
+	if len(s.curTracks) > 0 {
+		s.curTracks = append(s.curTracks, track)
+		return nil
+	}
+	s.curTracks = append(s.curTracks, track)
 	//
-	// update the track with our new album and finally save
-	track.AlbumID = s.currentAlbum.ID
-	s.tx.Save(track)
+	s.curAlbum = &model.Album{}
+	directory, _ := path.Split(fullPath)
+	err = s.tx.
+		Where("path = ?", directory).
+		First(s.curAlbum).
+		Error
+	if !gorm.IsRecordNotFoundError(err) {
+		// we found the record
+		return nil
+	}
+	s.curAlbum.Path = directory
+	s.curAlbum.Title = tags.Album()
+	s.curAlbum.Year = tags.Year()
+	s.curAlbum.AlbumArtistID = s.curAArtist.ID
 	return nil
 }
 
@@ -265,32 +251,32 @@ func (s *Scanner) Start() error {
 	if err != nil {
 		return errors.Wrap(err, "walking filesystem")
 	}
-	//
-	// start cleaning logic
-	log.Println("cleaning database")
-	var tracks []*model.Track
-	s.tx.Select("id, path").Find(&tracks)
-	for _, track := range tracks {
-		_, ok := s.seenPaths[track.Path]
-		if ok {
-			continue
-		}
-		s.tx.Delete(&track)
-		log.Println("removed", track.Path)
-	}
-	// delete albums without tracks
-	s.tx.Exec(`
-        DELETE FROM albums
-        WHERE  (SELECT count(id)
-                FROM   tracks
-                WHERE  album_id = albums.id) = 0;
-       `)
-	// delete artists without tracks
-	s.tx.Exec(`
-        DELETE FROM album_artists
-        WHERE  (SELECT count(id)
-                FROM   albums
-                WHERE  album_artist_id = album_artists.id) = 0;
-    `)
+	////
+	//// start cleaning logic
+	//log.Println("cleaning database")
+	//var tracks []*model.Track
+	//s.tx.Select("id, path").Find(&tracks)
+	//for _, track := range tracks {
+	//	_, ok := s.seenPaths[track.Path]
+	//	if ok {
+	//		continue
+	//	}
+	//	s.tx.Delete(&track)
+	//	log.Println("removed", track.Path)
+	//}
+	//// delete albums without tracks
+	//s.tx.Exec(`
+	//DELETE FROM albums
+	//WHERE  (SELECT count(id)
+	//FROM   tracks
+	//WHERE  album_id = albums.id) = 0;
+	//`)
+	//// delete artists without tracks
+	//s.tx.Exec(`
+	//DELETE FROM album_artists
+	//WHERE  (SELECT count(id)
+	//FROM   albums
+	//WHERE  album_artist_id = album_artists.id) = 0;
+	//`)
 	return nil
 }
