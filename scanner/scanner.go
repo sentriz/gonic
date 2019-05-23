@@ -25,7 +25,6 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/karrick/godirwalk"
 	"github.com/pkg/errors"
-	gormbulk "github.com/t-tiger/gorm-bulk-insert"
 
 	"github.com/sentriz/gonic/model"
 )
@@ -119,17 +118,11 @@ func (s *Scanner) handleFolderCompletion(fullPath string, info *godirwalk.Dirent
 		folder.HasTracks = len(s.curTracks) > 1
 		s.tx.Save(&folder)
 	}
-	for _, track := range s.curTracks {
-		track.AlbumID = s.curAlbum.ID
-		track.FolderID = folder.ID
-	}
-	toInsert := make([]interface{}, len(s.curTracks))
-	for i, t := range s.curTracks {
+	for _, t := range s.curTracks {
 		t.FolderID = folder.ID
 		t.AlbumID = s.curAlbum.ID
-		toInsert[i] = t
+		s.tx.Save(&t)
 	}
-	gormbulk.BulkInsert(s.tx, toInsert, 3000)
 	//
 	s.curTracks = make([]model.Track, 0)
 	s.curCover = model.Cover{}

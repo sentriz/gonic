@@ -169,8 +169,6 @@ github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0Q=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
-github.com/t-tiger/gorm-bulk-insert v0.0.0-20190401142620-ba33202b110e h1:mOgAh77WyFUaHUCziKMExurMgVJobHeEZCnwIBdActY=
-github.com/t-tiger/gorm-bulk-insert v0.0.0-20190401142620-ba33202b110e/go.mod h1:SK1RZT4TR1aMUNGtbk6YxTPgx2D/gfbxB571QGnAV+c=
 github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07/go.mod h1:kDXzergiv9cbyO7IOYJZWg1U88JhDg3PB6klq9Hg2pA=
 github.com/wader/gormstore v0.0.0-20190302154359-acb787ba3755 h1:pNaEDfvqe9W2h4D+xm5f+lnZdao3Rob6O0b8SovpGbE=
 github.com/wader/gormstore v0.0.0-20190302154359-acb787ba3755/go.mod h1:PbEnTGtqU8NGCALR62gu2+eQYO8zQDEvaMJiPaj5Hic=

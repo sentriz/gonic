@@ -26,10 +26,10 @@ func (s *folderStack) Peek() model.Folder {
 	return (*s)[l-1]
 }
 
-func (s *folderStack) PeekID() int {
+func (s *folderStack) PeekID() *int {
 	l := len(*s)
 	if l == 0 {
-		return 0
+		return nil
 	}
 	return (*s)[l-1].ID
 }
