@@ -25,6 +25,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/karrick/godirwalk"
 	"github.com/pkg/errors"
+	gormbulk "github.com/t-tiger/gorm-bulk-insert"
 
 	"github.com/sentriz/gonic/model"
 )
@@ -40,10 +41,10 @@ type Scanner struct {
 	seenPaths   map[string]bool
 	folderCount uint
 	curFolders  folderStack
-	curTracks   []*model.Track
-	curCover    *model.Cover
-	curAlbum    *model.Album
-	curAArtist  *model.AlbumArtist
+	curTracks   []model.Track
+	curCover    model.Cover
+	curAlbum    model.Album
+	curAArtist  model.AlbumArtist
 }
 
 func New(db *gorm.DB, musicPath string) *Scanner {
@@ -52,12 +53,18 @@ func New(db *gorm.DB, musicPath string) *Scanner {
 		musicPath:  musicPath,
 		seenPaths:  make(map[string]bool),
 		curFolders: make(folderStack, 0),
+		curTracks:  make([]model.Track, 0),
+		curCover:   model.Cover{},
+		curAlbum:   model.Album{},
+		curAArtist: model.AlbumArtist{},
 	}
 }
 
 func (s *Scanner) handleCover(fullPath string, stat os.FileInfo) error {
-	s.curCover = &model.Cover{}
-	err := s.tx.Where("path = ?", fullPath).First(s.curCover).Error
+	err := s.tx.
+		Where("path = ?", fullPath).
+		First(&s.curCover).
+		Error
 	if !gorm.IsRecordNotFoundError(err) &&
 		stat.ModTime().Before(s.curCover.UpdatedAt) {
 		// we found the record but it hasn't changed
@@ -69,21 +76,28 @@ func (s *Scanner) handleCover(fullPath string, stat os.FileInfo) error {
 		return errors.Wrap(err, "reading cover")
 	}
 	s.curCover.Image = image
+	s.curCover.IsNew = true
 	return nil
 }
 
 func (s *Scanner) handleFolder(fullPath string, stat os.FileInfo) error {
-	folder := &model.Folder{}
-	defer s.curFolders.Push(folder)
-	err := s.tx.Where("path = ?", fullPath).First(folder).Error
+	// TODO:
+	var folder model.Folder
+	err := s.tx.
+		Where("path = ?", fullPath).
+		First(&folder).
+		Error
 	if !gorm.IsRecordNotFoundError(err) &&
 		stat.ModTime().Before(folder.UpdatedAt) {
 		// we found the record but it hasn't changed
+		s.curFolders.Push(folder)
 		return nil
 	}
 	folder.Path = fullPath
 	folder.Name = stat.Name()
-	s.tx.Save(folder)
+	s.tx.Save(&folder)
+	folder.IsNew = true
+	s.curFolders.Push(folder)
 	return nil
 }
 
@@ -91,36 +105,37 @@ func (s *Scanner) handleFolderCompletion(fullPath string, info *godirwalk.Dirent
 	// in general in this function - if a model is not nil, then it
 	// has at least been looked up. if it has a id of 0, then it is
 	// a new record and needs to be inserted
-	//
-	var newCover bool
-	if s.curCover != nil && s.curCover.ID == 0 {
-		s.tx.Save(s.curCover)
-		newCover = true
+	if s.curCover.IsNew {
+		s.tx.Save(&s.curCover)
 	}
-	if s.curAlbum != nil {
+	if s.curAlbum.IsNew {
 		s.curAlbum.CoverID = s.curCover.ID
-		if newCover || s.curAlbum.ID == 0 {
-			s.tx.Save(s.curAlbum)
-		}
+		s.tx.Save(&s.curAlbum)
 	}
 	folder := s.curFolders.Pop()
-	if folder.ID == 0 || newCover {
+	if folder.IsNew {
 		folder.ParentID = s.curFolders.PeekID()
 		folder.CoverID = s.curCover.ID
-		folder.HasTracks = true
-		s.tx.Save(folder)
+		folder.HasTracks = len(s.curTracks) > 1
+		s.tx.Save(&folder)
 	}
 	for _, track := range s.curTracks {
-		// not checking for a nil album here because if there are
-		// tracks, then we at least lookup up the album
 		track.AlbumID = s.curAlbum.ID
 		track.FolderID = folder.ID
-		s.tx.Save(track)
 	}
-	s.curTracks = nil
-	s.curCover = nil
-	s.curAlbum = nil
-	s.curAArtist = nil
+	toInsert := make([]interface{}, len(s.curTracks))
+	for i, t := range s.curTracks {
+		t.FolderID = folder.ID
+		t.AlbumID = s.curAlbum.ID
+		toInsert[i] = t
+	}
+	gormbulk.BulkInsert(s.tx, toInsert, 3000)
+	//
+	s.curTracks = make([]model.Track, 0)
+	s.curCover = model.Cover{}
+	s.curAlbum = model.Album{}
+	s.curAArtist = model.AlbumArtist{}
+	//
 	log.Printf("processed folder `%s`\n", fullPath)
 	return nil
 }
@@ -128,9 +143,12 @@ func (s *Scanner) handleFolderCompletion(fullPath string, info *godirwalk.Dirent
 func (s *Scanner) handleTrack(fullPath string, stat os.FileInfo, mime, exten string) error {
 	//
 	// set track basics
-	track := &model.Track{}
+	track := model.Track{}
 	modTime := stat.ModTime()
-	err := s.tx.Where("path = ?", fullPath).First(track).Error
+	err := s.tx.
+		Where("path = ?", fullPath).
+		First(&track).
+		Error
 	if !gorm.IsRecordNotFoundError(err) &&
 		modTime.Before(track.UpdatedAt) {
 		// we found the record but it hasn't changed
@@ -156,13 +174,12 @@ func (s *Scanner) handleTrack(fullPath string, stat os.FileInfo, mime, exten str
 	track.FolderID = s.curFolders.PeekID()
 	//
 	// set album artist basics
-	s.curAArtist = &model.AlbumArtist{}
 	err = s.tx.Where("name = ?", tags.AlbumArtist()).
-		First(s.curAArtist).
+		First(&s.curAArtist).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
 		s.curAArtist.Name = tags.AlbumArtist()
-		s.tx.Save(s.curAArtist)
+		s.tx.Save(&s.curAArtist)
 	}
 	track.AlbumArtistID = s.curAArtist.ID
 	//
@@ -173,11 +190,10 @@ func (s *Scanner) handleTrack(fullPath string, stat os.FileInfo, mime, exten str
 	}
 	s.curTracks = append(s.curTracks, track)
 	//
-	s.curAlbum = &model.Album{}
 	directory, _ := path.Split(fullPath)
 	err = s.tx.
 		Where("path = ?", directory).
-		First(s.curAlbum).
+		First(&s.curAlbum).
 		Error
 	if !gorm.IsRecordNotFoundError(err) {
 		// we found the record
@@ -187,6 +203,7 @@ func (s *Scanner) handleTrack(fullPath string, stat os.FileInfo, mime, exten str
 	s.curAlbum.Title = tags.Album()
 	s.curAlbum.Year = tags.Year()
 	s.curAlbum.AlbumArtistID = s.curAArtist.ID
+	s.curAlbum.IsNew = true
 	return nil
 }
 

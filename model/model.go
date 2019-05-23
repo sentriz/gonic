@@ -18,6 +18,7 @@ type Album struct {
 	Cover   Cover
 	Year    int
 	Tracks  []Track
+	IsNew   bool `gorm:"-"`
 }
 
 // AlbumArtist represents the AlbumArtists table
@@ -60,6 +61,7 @@ type Cover struct {
 	CrudBase
 	Image []byte
 	Path  string `gorm:"not null;unique_index"`
+	IsNew bool   `gorm:"-"`
 }
 
 // User represents the users table
@@ -103,4 +105,5 @@ type Folder struct {
 	CoverID   int
 	HasTracks bool `gorm:"not null;index"`
 	Cover     Cover
+	IsNew     bool `gorm:"-"`
 }

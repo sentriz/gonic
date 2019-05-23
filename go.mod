@@ -21,6 +21,7 @@ require (
 	github.com/peterbourgon/ff v1.2.0
 	github.com/pkg/errors v0.8.1
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
+	github.com/t-tiger/gorm-bulk-insert v0.0.0-20190401142620-ba33202b110e
 	github.com/wader/gormstore v0.0.0-20190302154359-acb787ba3755
 	golang.org/x/crypto v0.0.0-20190422183909-d864b10871cd // indirect
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58 // indirect
