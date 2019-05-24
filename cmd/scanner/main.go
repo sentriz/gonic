@@ -37,6 +37,7 @@ func main() {
 		log.Fatalf("error opening database: %v\n", err)
 	}
 	db.SetLogger(log.New(os.Stdout, "gorm ", 0))
+	db.Exec("PRAGMA foreign_keys = ON")
 	s := scanner.New(
 		db,
 		*musicPath,

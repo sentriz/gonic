@@ -2,12 +2,10 @@ package scanner
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/dhowden/tag"
 )
@@ -61,9 +59,4 @@ func readTags(path string) (tag.Metadata, error) {
 		return nil, err
 	}
 	return tags, nil
-}
-
-func logElapsed(start time.Time, name string) {
-	elapsed := time.Since(start)
-	log.Printf("finished %s in %s\n", name, elapsed)
 }
