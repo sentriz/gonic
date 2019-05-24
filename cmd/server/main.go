@@ -53,8 +53,7 @@ func main() {
 		*listenAddr,
 	)
 	log.Printf("starting server at %s", *listenAddr)
-	err = s.ListenAndServe()
-	if err != nil {
+	if err := s.ListenAndServe(); err != nil {
 		log.Fatalf("error starting server: %v\n", err)
 	}
 }

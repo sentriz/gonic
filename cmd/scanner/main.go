@@ -42,6 +42,10 @@ func main() {
 		db,
 		*musicPath,
 	)
-	s.MigrateDB()
-	s.Start()
+	if err := s.MigrateDB(); err != nil {
+		log.Fatalf("error migrating: %v\n", err)
+	}
+	if err := s.Start(); err != nil {
+		log.Fatalf("error starting scanner: %v\n", err)
+	}
 }
