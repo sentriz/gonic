@@ -11,9 +11,9 @@ import (
 
 	"github.com/rainycape/unidecode"
 
-	"github.com/sentriz/gonic/lastfm"
 	"github.com/sentriz/gonic/model"
 	"github.com/sentriz/gonic/scanner"
+	"github.com/sentriz/gonic/server/lastfm"
 	"github.com/sentriz/gonic/server/subsonic"
 )
 

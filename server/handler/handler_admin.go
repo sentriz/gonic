@@ -8,7 +8,7 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"github.com/sentriz/gonic/model"
-	"github.com/sentriz/gonic/lastfm"
+	"github.com/sentriz/gonic/server/lastfm"
 )
 
 func (c *Controller) ServeLogin(w http.ResponseWriter, r *http.Request) {
