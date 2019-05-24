@@ -23,6 +23,41 @@ var (
 	}
 )
 
+func GetSession(apiKey, secret, token string) (string, error) {
+	params := url.Values{}
+	params.Add("method", "auth.getSession")
+	params.Add("api_key", apiKey)
+	params.Add("token", token)
+	params.Add("api_sig", getParamSignature(params, secret))
+	resp, err := makeRequest("GET", params)
+	if err != nil {
+		return "", errors.Wrap(err, "making session GET")
+	}
+	return resp.Session.Key, nil
+}
+
+func Scrobble(apiKey, secret, session string, track *model.Track,
+	stampMili int, submission bool) error {
+	params := url.Values{}
+	if submission {
+		params.Add("method", "track.Scrobble")
+		// last.fm wants the timestamp in seconds
+		params.Add("timestamp", strconv.Itoa(stampMili/1e3))
+	} else {
+		params.Add("method", "track.updateNowPlaying")
+	}
+	params.Add("api_key", apiKey)
+	params.Add("sk", session)
+	params.Add("artist", track.Artist)
+	params.Add("track", track.Title)
+	params.Add("album", track.Album.Title)
+	params.Add("albumArtist", track.AlbumArtist.Name)
+	params.Add("trackNumber", strconv.Itoa(track.TrackNumber))
+	params.Add("api_sig", getParamSignature(params, secret))
+	_, err := makeRequest("POST", params)
+	return err
+}
+
 func getParamSignature(params url.Values, secret string) string {
 	// the parameters must be in order before hashing
 	paramKeys := make([]string, 0)
@@ -58,39 +93,4 @@ func makeRequest(method string, params url.Values) (*LastFM, error) {
 		return nil, fmt.Errorf("parsing: %v", lastfm.Error.Value)
 	}
 	return &lastfm, nil
-}
-
-func GetSession(apiKey, secret, token string) (string, error) {
-	params := url.Values{}
-	params.Add("method", "auth.getSession")
-	params.Add("api_key", apiKey)
-	params.Add("token", token)
-	params.Add("api_sig", getParamSignature(params, secret))
-	resp, err := makeRequest("GET", params)
-	if err != nil {
-		return "", fmt.Errorf("error when getting session step '%v'", err)
-	}
-	return resp.Session.Key, nil
-}
-
-func Scrobble(apiKey, secret, session string,
-	track *model.Track, stampMili int, submission bool) error {
-	params := url.Values{}
-	if submission {
-		params.Add("method", "track.Scrobble")
-		// last.fm wants the timestamp in seconds
-		params.Add("timestamp", strconv.Itoa(stampMili / 1e3))
-	} else {
-		params.Add("method", "track.updateNowPlaying")
-	}
-	params.Add("api_key", apiKey)
-	params.Add("sk", session)
-	params.Add("artist", track.Artist)
-	params.Add("track", track.Title)
-	params.Add("album", track.Album.Title)
-	params.Add("albumArtist", track.AlbumArtist.Name)
-	params.Add("trackNumber", strconv.Itoa(track.TrackNumber))
-	params.Add("api_sig", getParamSignature(params, secret))
-	_, err := makeRequest("POST", params)
-	return err
 }

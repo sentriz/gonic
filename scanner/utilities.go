@@ -1,13 +1,13 @@
 package scanner
 
 import (
-	"fmt"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 
 	"github.com/dhowden/tag"
+	"github.com/pkg/errors"
 )
 
 var trackExtensions = map[string]string{
@@ -51,12 +51,12 @@ func isCover(fullPath string) bool {
 func readTags(path string) (tag.Metadata, error) {
 	trackData, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("when tags from disk: %v", err)
+		return nil, errors.Wrap(err, "reading track from disk")
 	}
 	defer trackData.Close()
 	tags, err := tag.ReadFrom(trackData)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "reading tags from track")
 	}
 	return tags, nil
 }
