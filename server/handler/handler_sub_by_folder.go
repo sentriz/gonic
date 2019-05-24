@@ -29,7 +29,7 @@ func (c *Controller) GetIndexes(w http.ResponseWriter, r *http.Request) {
 			indexes = append(indexes, index)
 		}
 		index.Artists = append(index.Artists, &subsonic.Artist{
-			ID:   folder.ID,
+			ID:   *folder.ID,
 			Name: folder.Name,
 		})
 	}
@@ -58,11 +58,11 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 		Find(&folders)
 	for _, folder := range folders {
 		childrenObj = append(childrenObj, &subsonic.Child{
-			Parent:  cFolder.ID,
-			ID:      folder.ID,
+			Parent:  *cFolder.ID,
+			ID:      *folder.ID,
 			Title:   folder.Name,
 			IsDir:   true,
-			CoverID: folder.CoverID,
+			CoverID: *folder.CoverID,
 		})
 	}
 	//
@@ -80,14 +80,14 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 			track.Suffix = "mp3"
 		}
 		childrenObj = append(childrenObj, &subsonic.Child{
-			ID:          track.ID,
+			ID:          *track.ID,
 			Album:       track.Album.Title,
 			Artist:      track.Artist,
 			ContentType: track.ContentType,
-			CoverID:     cFolder.CoverID,
+			CoverID:     *cFolder.CoverID,
 			Duration:    0,
 			IsDir:       false,
-			Parent:      cFolder.ID,
+			Parent:      *cFolder.ID,
 			Path:        track.Path,
 			Size:        track.Size,
 			Suffix:      track.Suffix,
@@ -100,8 +100,8 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 	// respond section
 	sub := subsonic.NewResponse()
 	sub.Directory = &subsonic.Directory{
-		ID:       cFolder.ID,
-		Parent:   cFolder.ParentID,
+		ID:       *cFolder.ID,
+		Parent:   *cFolder.ParentID,
 		Name:     cFolder.Name,
 		Children: childrenObj,
 	}
@@ -162,11 +162,11 @@ func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
 	listObj := []*subsonic.Album{}
 	for _, folder := range folders {
 		listObj = append(listObj, &subsonic.Album{
-			ID:       folder.ID,
+			ID:       *folder.ID,
 			Title:    folder.Name,
 			Album:    folder.Name,
-			CoverID:  folder.CoverID,
-			ParentID: folder.ParentID,
+			CoverID:  *folder.CoverID,
+			ParentID: *folder.ParentID,
 			IsDir:    true,
 			Artist:   folder.Parent.Name,
 		})

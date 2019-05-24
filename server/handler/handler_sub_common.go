@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path"
 	"sync/atomic"
 	"time"
 	"unicode"
@@ -40,13 +41,14 @@ func (c *Controller) Stream(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, 70, fmt.Sprintf("media with id `%d` was not found", id))
 		return
 	}
-	file, err := os.Open(track.Path)
+	absPath := path.Join(c.MusicPath, track.Path)
+	file, err := os.Open(absPath)
 	if err != nil {
 		respondError(w, r, 0, fmt.Sprintf("error while streaming media: %v", err))
 		return
 	}
 	stat, _ := file.Stat()
-	http.ServeContent(w, r, track.Path, stat.ModTime(), file)
+	http.ServeContent(w, r, absPath, stat.ModTime(), file)
 	//
 	// after we've served the file, mark the album as played
 	user := r.Context().Value(contextUserKey).(*model.User)
@@ -111,7 +113,7 @@ func (c *Controller) Scrobble(w http.ResponseWriter, r *http.Request) {
 		&track,
 		// clients will provide time in miliseconds, so use that or
 		// instead convert UnixNano to miliseconds
-		getIntParamOr(r, "time", int(time.Now().UnixNano() / 1e6)),
+		getIntParamOr(r, "time", int(time.Now().UnixNano()/1e6)),
 		getStrParamOr(r, "submission", "true") != "false",
 	)
 	if err != nil {

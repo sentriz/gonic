@@ -14,11 +14,11 @@ package scanner
 //        -> needs a  FolderID
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"sync/atomic"
 	"time"
 
@@ -33,24 +33,34 @@ var (
 	IsScanning int32
 )
 
+type trackItem struct {
+	mime string
+	ext  string
+}
+
+type item struct {
+	path    string
+	relPath string
+	stat    os.FileInfo
+	track   *trackItem
+}
+
 type Scanner struct {
-	db          *gorm.DB
-	tx          *gorm.DB
-	musicPath   string
-	seenPaths   map[string]bool
-	folderCount uint
-	curFolders  folderStack
-	curTracks   []model.Track
-	curCover    model.Cover
-	curAlbum    model.Album
-	curAArtist  model.AlbumArtist
+	db, tx     *gorm.DB
+	musicPath  string
+	seenTracks map[string]bool
+	curFolders folderStack
+	curTracks  []model.Track
+	curCover   model.Cover
+	curAlbum   model.Album
+	curAArtist model.AlbumArtist
 }
 
 func New(db *gorm.DB, musicPath string) *Scanner {
 	return &Scanner{
 		db:         db,
 		musicPath:  musicPath,
-		seenPaths:  make(map[string]bool),
+		seenTracks: make(map[string]bool),
 		curFolders: make(folderStack, 0),
 		curTracks:  make([]model.Track, 0),
 		curCover:   model.Cover{},
@@ -59,18 +69,18 @@ func New(db *gorm.DB, musicPath string) *Scanner {
 	}
 }
 
-func (s *Scanner) handleCover(fullPath string, stat os.FileInfo) error {
+func (s *Scanner) handleCover(it *item) error {
 	err := s.tx.
-		Where("path = ?", fullPath).
+		Where("path = ?", it.relPath).
 		First(&s.curCover).
 		Error
 	if !gorm.IsRecordNotFoundError(err) &&
-		stat.ModTime().Before(s.curCover.UpdatedAt) {
+		it.stat.ModTime().Before(s.curCover.UpdatedAt) {
 		// we found the record but it hasn't changed
 		return nil
 	}
-	s.curCover.Path = fullPath
-	image, err := ioutil.ReadFile(fullPath)
+	s.curCover.Path = it.relPath
+	image, err := ioutil.ReadFile(it.path)
 	if err != nil {
 		return errors.Wrap(err, "reading cover")
 	}
@@ -79,28 +89,94 @@ func (s *Scanner) handleCover(fullPath string, stat os.FileInfo) error {
 	return nil
 }
 
-func (s *Scanner) handleFolder(fullPath string, stat os.FileInfo) error {
+func (s *Scanner) handleFolder(it *item) error {
 	// TODO:
 	var folder model.Folder
 	err := s.tx.
-		Where("path = ?", fullPath).
+		Where("path = ?", it.relPath).
 		First(&folder).
 		Error
 	if !gorm.IsRecordNotFoundError(err) &&
-		stat.ModTime().Before(folder.UpdatedAt) {
+		it.stat.ModTime().Before(folder.UpdatedAt) {
 		// we found the record but it hasn't changed
 		s.curFolders.Push(folder)
 		return nil
 	}
-	folder.Path = fullPath
-	folder.Name = stat.Name()
+	folder.Path = it.relPath
+	folder.Name = it.stat.Name()
 	s.tx.Save(&folder)
 	folder.IsNew = true
 	s.curFolders.Push(folder)
 	return nil
 }
 
-func (s *Scanner) handleFolderCompletion(fullPath string, info *godirwalk.Dirent) error {
+func (s *Scanner) handleTrack(it *item) error {
+	//
+	// set track basics
+	track := model.Track{}
+	err := s.tx.
+		Where("path = ?", it.relPath).
+		First(&track).
+		Error
+	if !gorm.IsRecordNotFoundError(err) &&
+		it.stat.ModTime().Before(track.UpdatedAt) {
+		// we found the record but it hasn't changed
+		return nil
+	}
+	tags, err := readTags(it.path)
+	if err != nil {
+		return errors.Wrap(err, "reading tags")
+	}
+	trackNumber, totalTracks := tags.Track()
+	discNumber, totalDiscs := tags.Disc()
+	track.DiscNumber = discNumber
+	track.TotalDiscs = totalDiscs
+	track.TotalTracks = totalTracks
+	track.TrackNumber = trackNumber
+	track.Path = it.relPath
+	track.Suffix = it.track.ext
+	track.ContentType = it.track.mime
+	track.Size = int(it.stat.Size())
+	track.Title = tags.Title()
+	track.Artist = tags.Artist()
+	track.Year = tags.Year()
+	track.FolderID = s.curFolders.PeekID()
+	//
+	// set album artist basics
+	err = s.tx.Where("name = ?", tags.AlbumArtist()).
+		First(&s.curAArtist).
+		Error
+	if gorm.IsRecordNotFoundError(err) {
+		s.curAArtist.Name = tags.AlbumArtist()
+		s.tx.Save(&s.curAArtist)
+	}
+	track.AlbumArtistID = s.curAArtist.ID
+	//
+	// set album if this is the first track in the folder
+	if len(s.curTracks) > 0 {
+		s.curTracks = append(s.curTracks, track)
+		return nil
+	}
+	s.curTracks = append(s.curTracks, track)
+	//
+	directory, _ := path.Split(it.relPath)
+	err = s.tx.
+		Where("path = ?", directory).
+		First(&s.curAlbum).
+		Error
+	if !gorm.IsRecordNotFoundError(err) {
+		// we found the record
+		return nil
+	}
+	s.curAlbum.Path = directory
+	s.curAlbum.Title = tags.Album()
+	s.curAlbum.Year = tags.Year()
+	s.curAlbum.AlbumArtistID = s.curAArtist.ID
+	s.curAlbum.IsNew = true
+	return nil
+}
+
+func (s *Scanner) handleFolderCompletion(path string, info *godirwalk.Dirent) error {
 	// in general in this function - if a model is not nil, then it
 	// has at least been looked up. if it has a id of 0, then it is
 	// a new record and needs to be inserted
@@ -129,91 +205,64 @@ func (s *Scanner) handleFolderCompletion(fullPath string, info *godirwalk.Dirent
 	s.curAlbum = model.Album{}
 	s.curAArtist = model.AlbumArtist{}
 	//
-	log.Printf("processed folder `%s`\n", fullPath)
+	log.Printf("processed folder `%s`\n", path)
 	return nil
 }
 
-func (s *Scanner) handleTrack(fullPath string, stat os.FileInfo, mime, exten string) error {
-	//
-	// set track basics
-	track := model.Track{}
-	modTime := stat.ModTime()
-	err := s.tx.
-		Where("path = ?", fullPath).
-		First(&track).
-		Error
-	if !gorm.IsRecordNotFoundError(err) &&
-		modTime.Before(track.UpdatedAt) {
-		// we found the record but it hasn't changed
-		return nil
-	}
-	tags, err := readTags(fullPath)
+func (s *Scanner) handleItem(path string, info *godirwalk.Dirent) error {
+	stat, err := os.Stat(path)
 	if err != nil {
-		return fmt.Errorf("when reading tags: %v", err)
+		return errors.Wrap(err, "stating")
 	}
-	trackNumber, totalTracks := tags.Track()
-	discNumber, totalDiscs := tags.Disc()
-	track.Path = fullPath
-	track.Title = tags.Title()
-	track.Artist = tags.Artist()
-	track.DiscNumber = discNumber
-	track.TotalDiscs = totalDiscs
-	track.TotalTracks = totalTracks
-	track.TrackNumber = trackNumber
-	track.Year = tags.Year()
-	track.Suffix = exten
-	track.ContentType = mime
-	track.Size = int(stat.Size())
-	track.FolderID = s.curFolders.PeekID()
-	//
-	// set album artist basics
-	err = s.tx.Where("name = ?", tags.AlbumArtist()).
-		First(&s.curAArtist).
-		Error
-	if gorm.IsRecordNotFoundError(err) {
-		s.curAArtist.Name = tags.AlbumArtist()
-		s.tx.Save(&s.curAArtist)
-	}
-	track.AlbumArtistID = s.curAArtist.ID
-	//
-	// set album if this is the first track in the folder
-	if len(s.curTracks) > 0 {
-		s.curTracks = append(s.curTracks, track)
-		return nil
-	}
-	s.curTracks = append(s.curTracks, track)
-	//
-	directory, _ := path.Split(fullPath)
-	err = s.tx.
-		Where("path = ?", directory).
-		First(&s.curAlbum).
-		Error
-	if !gorm.IsRecordNotFoundError(err) {
-		// we found the record
-		return nil
-	}
-	s.curAlbum.Path = directory
-	s.curAlbum.Title = tags.Album()
-	s.curAlbum.Year = tags.Year()
-	s.curAlbum.AlbumArtistID = s.curAArtist.ID
-	s.curAlbum.IsNew = true
-	return nil
-}
-
-func (s *Scanner) handleItem(fullPath string, info *godirwalk.Dirent) error {
-	s.seenPaths[fullPath] = true
-	stat, err := os.Stat(fullPath)
+	relPath, err := filepath.Rel(s.musicPath, path)
 	if err != nil {
-		return fmt.Errorf("error stating: %v", err)
+		return errors.Wrap(err, "getting relative path")
+	}
+	it := &item{
+		path:    path,
+		relPath: relPath,
+		stat:    stat,
 	}
 	if info.IsDir() {
-		return s.handleFolder(fullPath, stat)
+		return s.handleFolder(it)
 	}
-	if isCover(fullPath) {
-		return s.handleCover(fullPath, stat)
+	if isCover(path) {
+		return s.handleCover(it)
 	}
-	if mime, exten, ok := isAudio(fullPath); ok {
-		return s.handleTrack(fullPath, stat, mime, exten)
+	if mime, ext, ok := isTrack(path); ok {
+		s.seenTracks[relPath] = true
+		it.track = &trackItem{mime: mime, ext: ext}
+		return s.handleTrack(it)
+	}
+	return nil
+}
+
+func (s *Scanner) startScan() error {
+	defer logElapsed(time.Now(), "scanning")
+	err := godirwalk.Walk(s.musicPath, &godirwalk.Options{
+		Callback:             s.handleItem,
+		PostChildrenCallback: s.handleFolderCompletion,
+		Unsorted:             true,
+	})
+	if err != nil {
+		return errors.Wrap(err, "walking filesystem")
+	}
+	return nil
+}
+
+func (s *Scanner) startClean() error {
+	defer logElapsed(time.Now(), "cleaning database")
+	var tracks []model.Track
+	s.tx.
+		Select("id, path").
+		Find(&tracks)
+	for _, track := range tracks {
+		_, ok := s.seenTracks[track.Path]
+		if ok {
+			continue
+		}
+		s.tx.Delete(&track)
+		log.Println("removed track", track.Path)
 	}
 	return nil
 }
@@ -247,46 +296,14 @@ func (s *Scanner) Start() error {
 	}
 	atomic.StoreInt32(&IsScanning, 1)
 	defer atomic.StoreInt32(&IsScanning, 0)
-	defer logElapsed(time.Now(), "scanning")
 	s.db.Exec("PRAGMA foreign_keys = ON")
 	s.tx = s.db.Begin()
 	defer s.tx.Commit()
-	//
-	// start scan logic
-	err := godirwalk.Walk(s.musicPath, &godirwalk.Options{
-		Callback:             s.handleItem,
-		PostChildrenCallback: s.handleFolderCompletion,
-		Unsorted:             true,
-	})
-	if err != nil {
-		return errors.Wrap(err, "walking filesystem")
+	if err := s.startScan(); err != nil {
+		return errors.Wrap(err, "start scan")
 	}
-	////
-	//// start cleaning logic
-	//log.Println("cleaning database")
-	//var tracks []*model.Track
-	//s.tx.Select("id, path").Find(&tracks)
-	//for _, track := range tracks {
-	//	_, ok := s.seenPaths[track.Path]
-	//	if ok {
-	//		continue
-	//	}
-	//	s.tx.Delete(&track)
-	//	log.Println("removed", track.Path)
-	//}
-	//// delete albums without tracks
-	//s.tx.Exec(`
-	//DELETE FROM albums
-	//WHERE  (SELECT count(id)
-	//FROM   tracks
-	//WHERE  album_id = albums.id) = 0;
-	//`)
-	//// delete artists without tracks
-	//s.tx.Exec(`
-	//DELETE FROM album_artists
-	//WHERE  (SELECT count(id)
-	//FROM   albums
-	//WHERE  album_artist_id = album_artists.id) = 0;
-	//`)
+	if err := s.startClean(); err != nil {
+		return errors.Wrap(err, "start clean")
+	}
 	return nil
 }

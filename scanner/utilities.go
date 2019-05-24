@@ -12,7 +12,7 @@ import (
 	"github.com/dhowden/tag"
 )
 
-var audioExtensions = map[string]string{
+var trackExtensions = map[string]string{
 	"mp3":  "audio/mpeg",
 	"flac": "audio/x-flac",
 	"aac":  "audio/x-aac",
@@ -20,13 +20,13 @@ var audioExtensions = map[string]string{
 	"ogg":  "audio/ogg",
 }
 
-func isAudio(fullPath string) (string, string, bool) {
-	exten := filepath.Ext(fullPath)[1:]
-	mine, ok := audioExtensions[exten]
+func isTrack(fullPath string) (string, string, bool) {
+	ext := filepath.Ext(fullPath)[1:]
+	mine, ok := trackExtensions[ext]
 	if !ok {
 		return "", "", false
 	}
-	return mine, exten, true
+	return mine, ext, true
 }
 
 var coverFilenames = map[string]bool{
@@ -50,8 +50,8 @@ func isCover(fullPath string) bool {
 	return ok
 }
 
-func readTags(fullPath string) (tag.Metadata, error) {
-	trackData, err := os.Open(fullPath)
+func readTags(path string) (tag.Metadata, error) {
+	trackData, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("when tags from disk: %v", err)
 	}

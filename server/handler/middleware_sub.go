@@ -61,7 +61,7 @@ func (c *Controller) WithValidSubsonicArgs(next http.HandlerFunc) http.HandlerFu
 			return
 		}
 		user := c.GetUserFromName(username)
-		if user.ID == 0 {
+		if *user.ID == 0 {
 			// the user does not exist
 			respondError(w, r, 40, "invalid username")
 			return

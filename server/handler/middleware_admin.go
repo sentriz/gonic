@@ -30,7 +30,7 @@ func (c *Controller) WithUserSession(next http.HandlerFunc) http.HandlerFunc {
 		}
 		// take username from sesion and add the user row to the context
 		user := c.GetUserFromName(username)
-		if user.ID == 0 {
+		if *user.ID == 0 {
 			// the username in the client's session no longer relates to a
 			// user in the database (maybe the user was deleted)
 			session.Options.MaxAge = -1

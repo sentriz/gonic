@@ -3,9 +3,15 @@ package model
 import "time"
 
 // q:  why in tarnation are all the foreign keys pointers to ints?
-//
 // a:  so they will be true sqlite null values instead of go zero
 //     values when we save a row without that value
+//
+// q:  what in tarnation are the `IsNew`s for?
+// a:  it's a bit of a hack - but we set a models IsNew to true if
+//     we just filled it in for the first time, so when it comes
+//     time to insert them (post children callback) we can check for
+//     that bool being true - since it won't be true if it was already
+//     in the db
 
 // Album represents the albums table
 type Album struct {
@@ -90,11 +96,11 @@ type Setting struct {
 type Play struct {
 	IDBase
 	User     User
-	UserID   *int `gorm:"not null;index"`
+	UserID   *int `gorm:"not null;index" sql:"type:int REFERENCES users(id) ON DELETE CASCADE"`
 	Album    Album
-	AlbumID  *int `gorm:"not null;index"`
+	AlbumID  *int `gorm:"not null;index" sql:"type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Folder   Folder
-	FolderID *int `gorm:"not null;index"`
+	FolderID *int `gorm:"not null;index" sql:"type:int REFERENCES folders(id) ON DELETE CASCADE"`
 	Time     time.Time
 	Count    int
 }
@@ -106,8 +112,8 @@ type Folder struct {
 	Name      string
 	Path      string `gorm:"not null;unique_index"`
 	Parent    *Folder
-	ParentID  *int
-	CoverID   *int
+	ParentID  *int `sql:"type:int REFERENCES folders(id) ON DELETE CASCADE"`
+	CoverID   *int `sql:"type:int REFERENCES covers(id)"`
 	HasTracks bool `gorm:"not null;index"`
 	Cover     Cover
 	IsNew     bool `gorm:"-"`
