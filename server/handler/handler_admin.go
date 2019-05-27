@@ -26,7 +26,7 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user := c.GetUserFromName(username)
-	if !(username == user.Name && password == user.Password) {
+	if user == nil || password != user.Password {
 		session.AddFlash("invalid username / password")
 		session.Save(r, w)
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)

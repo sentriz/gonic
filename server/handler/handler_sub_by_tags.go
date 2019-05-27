@@ -27,7 +27,7 @@ func (c *Controller) GetArtists(w http.ResponseWriter, r *http.Request) {
 			indexes.List = append(indexes.List, index)
 		}
 		index.Artists = append(index.Artists, &subsonic.Artist{
-			ID:   *artist.ID,
+			ID:   artist.ID,
 			Name: artist.Name,
 		})
 	}
@@ -49,17 +49,17 @@ func (c *Controller) GetArtist(w http.ResponseWriter, r *http.Request) {
 	albumsObj := []*subsonic.Album{}
 	for _, album := range artist.Albums {
 		albumsObj = append(albumsObj, &subsonic.Album{
-			ID:       *album.ID,
+			ID:       album.ID,
 			Name:     album.Title,
 			Created:  album.CreatedAt,
 			Artist:   artist.Name,
-			ArtistID: *artist.ID,
-			CoverID:  *album.CoverID,
+			ArtistID: artist.ID,
+			CoverID:  album.CoverID,
 		})
 	}
 	sub := subsonic.NewResponse()
 	sub.Artist = &subsonic.Artist{
-		ID:     *artist.ID,
+		ID:     artist.ID,
 		Name:   artist.Name,
 		Albums: albumsObj,
 	}
@@ -80,7 +80,7 @@ func (c *Controller) GetAlbum(w http.ResponseWriter, r *http.Request) {
 	tracksObj := []*subsonic.Track{}
 	for _, track := range album.Tracks {
 		tracksObj = append(tracksObj, &subsonic.Track{
-			ID:          *track.ID,
+			ID:          track.ID,
 			Title:       track.Title,
 			Artist:      track.Artist, // track artist
 			TrackNo:     track.TrackNumber,
@@ -90,17 +90,17 @@ func (c *Controller) GetAlbum(w http.ResponseWriter, r *http.Request) {
 			Created:     track.CreatedAt,
 			Size:        track.Size,
 			Album:       album.Title,
-			AlbumID:     *album.ID,
-			ArtistID:    *album.AlbumArtist.ID, // album artist
-			CoverID:     *album.CoverID,
+			AlbumID:     album.ID,
+			ArtistID:    album.AlbumArtist.ID, // album artist
+			CoverID:     album.CoverID,
 			Type:        "music",
 		})
 	}
 	sub := subsonic.NewResponse()
 	sub.Album = &subsonic.Album{
-		ID:      *album.ID,
+		ID:      album.ID,
 		Name:    album.Title,
-		CoverID: *album.CoverID,
+		CoverID: album.CoverID,
 		Created: album.CreatedAt,
 		Artist:  album.AlbumArtist.Name,
 		Tracks:  tracksObj,
@@ -164,12 +164,12 @@ func (c *Controller) GetAlbumListTwo(w http.ResponseWriter, r *http.Request) {
 	listObj := []*subsonic.Album{}
 	for _, album := range albums {
 		listObj = append(listObj, &subsonic.Album{
-			ID:       *album.ID,
+			ID:       album.ID,
 			Name:     album.Title,
 			Created:  album.CreatedAt,
-			CoverID:  *album.CoverID,
+			CoverID:  album.CoverID,
 			Artist:   album.AlbumArtist.Name,
-			ArtistID: *album.AlbumArtist.ID,
+			ArtistID: album.AlbumArtist.ID,
 		})
 	}
 	sub := subsonic.NewResponse()

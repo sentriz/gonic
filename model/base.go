@@ -10,5 +10,5 @@ type CrudBase struct {
 }
 
 type IDBase struct {
-	ID *int `gorm:"primary_key"`
+	ID int `gorm:"primary_key"`
 }
