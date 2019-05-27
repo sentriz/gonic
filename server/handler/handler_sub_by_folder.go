@@ -71,7 +71,7 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 	c.DB.
 		Where("folder_id = ?", id).
 		Preload("Album").
-		Order("track_number").
+		Order("title").
 		Find(&tracks)
 	for _, track := range tracks {
 		if getStrParam(r, "c") == "Jamstash" {
