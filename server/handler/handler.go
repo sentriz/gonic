@@ -38,6 +38,12 @@ func (c *Controller) SetSetting(key, value string) {
 
 func (c *Controller) GetUserFromName(name string) *model.User {
 	var user model.User
-	c.DB.Where("name = ?", name).First(&user)
+	err := c.DB.
+		Where("name = ?", name).
+		First(&user).
+		Error
+	if gorm.IsRecordNotFoundError(err) {
+		return nil
+	}
 	return &user
 }

@@ -2,10 +2,6 @@ package model
 
 import "time"
 
-// q:  why in tarnation are all the foreign keys pointers to ints?
-// a:  so they will be true sqlite null values instead of go zero
-//     values when we save a row without that value
-//
 // q:  what in tarnation are the `IsNew`s for?
 // a:  it's a bit of a hack - but we set a models IsNew to true if
 //     we just filled it in for the first time, so when it comes
@@ -18,14 +14,14 @@ type Album struct {
 	IDBase
 	CrudBase
 	AlbumArtist   AlbumArtist
-	AlbumArtistID *int   `gorm:"index" sql:"type:int REFERENCES album_artists(id) ON DELETE CASCADE"`
-	Title         string `gorm:"not null;index"`
+	AlbumArtistID int    `gorm:"index" sql:"default: null; type:int REFERENCES album_artists(id) ON DELETE CASCADE"`
+	Title         string `gorm:"not null; index"`
 	// an Album having a `Path` is a little weird when browsing by tags
 	// (for the most part - the library's folder structure is treated as
 	// if it were flat), but this solves the "American Football problem"
 	// https://en.wikipedia.org/wiki/American_Football_(band)#Discography
-	Path    string `gorm:"not null;unique_index"`
-	CoverID *int   `sql:"type:int REFERENCES covers(id)"`
+	Path    string `gorm:"not null; unique_index"`
+	CoverID int    `sql:"default: null; type:int REFERENCES covers(id)"`
 	Cover   Cover
 	Year    int
 	Tracks  []Track
@@ -36,7 +32,7 @@ type Album struct {
 type AlbumArtist struct {
 	IDBase
 	CrudBase
-	Name   string `gorm:"not null;unique_index"`
+	Name   string `gorm:"not null; unique_index"`
 	Albums []Album
 }
 
@@ -45,9 +41,9 @@ type Track struct {
 	IDBase
 	CrudBase
 	Album         Album
-	AlbumID       *int `gorm:"index" sql:"type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	AlbumID       int `gorm:"index" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	AlbumArtist   AlbumArtist
-	AlbumArtistID *int `gorm:"index" sql:"type:int REFERENCES album_artists(id) ON DELETE CASCADE"`
+	AlbumArtistID int `gorm:"index" sql:"default: null; type:int REFERENCES album_artists(id) ON DELETE CASCADE"`
 	Artist        string
 	Bitrate       int
 	Codec         string
@@ -62,8 +58,8 @@ type Track struct {
 	ContentType   string
 	Size          int
 	Folder        Folder
-	FolderID      *int   `gorm:"not null;index" sql:"type:int REFERENCES folders(id) ON DELETE CASCADE"`
-	Path          string `gorm:"not null;unique_index"`
+	FolderID      int    `gorm:"not null; index" sql:"default: null; type:int REFERENCES folders(id) ON DELETE CASCADE"`
+	Path          string `gorm:"not null; unique_index"`
 }
 
 // Cover represents the covers table
@@ -71,7 +67,7 @@ type Cover struct {
 	IDBase
 	CrudBase
 	Image []byte
-	Path  string `gorm:"not null;unique_index"`
+	Path  string `gorm:"not null; unique_index"`
 	IsNew bool   `gorm:"-"`
 }
 
@@ -79,7 +75,7 @@ type Cover struct {
 type User struct {
 	IDBase
 	CrudBase
-	Name          string `gorm:"not null;unique_index"`
+	Name          string `gorm:"not null; unique_index"`
 	Password      string
 	LastFMSession string
 	IsAdmin       bool
@@ -88,7 +84,7 @@ type User struct {
 // Setting represents the settings table
 type Setting struct {
 	CrudBase
-	Key   string `gorm:"primary_key;auto_increment:false"`
+	Key   string `gorm:"primary_key; auto_increment:false"`
 	Value string
 }
 
@@ -96,11 +92,11 @@ type Setting struct {
 type Play struct {
 	IDBase
 	User     User
-	UserID   *int `gorm:"not null;index" sql:"type:int REFERENCES users(id) ON DELETE CASCADE"`
+	UserID   int `gorm:"not null; index" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
 	Album    Album
-	AlbumID  *int `gorm:"not null;index" sql:"type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	AlbumID  int `gorm:"not null; index" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Folder   Folder
-	FolderID *int `gorm:"not null;index" sql:"type:int REFERENCES folders(id) ON DELETE CASCADE"`
+	FolderID int `gorm:"not null; index" sql:"default: null; type:int REFERENCES folders(id) ON DELETE CASCADE"`
 	Time     time.Time
 	Count    int
 }
@@ -110,11 +106,11 @@ type Folder struct {
 	IDBase
 	CrudBase
 	Name      string
-	Path      string `gorm:"not null;unique_index"`
+	Path      string `gorm:"not null; unique_index"`
 	Parent    *Folder
-	ParentID  *int `sql:"type:int REFERENCES folders(id) ON DELETE CASCADE"`
-	CoverID   *int `sql:"type:int REFERENCES covers(id)"`
-	HasTracks bool `gorm:"not null;index"`
+	ParentID  int  `sql:"default: null; type:int REFERENCES folders(id) ON DELETE CASCADE"`
+	CoverID   int  `sql:"default: null; type:int REFERENCES covers(id)"`
+	HasTracks bool `gorm:"not null; index"`
 	Cover     Cover
 	IsNew     bool `gorm:"-"`
 }
