@@ -75,7 +75,9 @@ func (c *Controller) GetAlbum(w http.ResponseWriter, r *http.Request) {
 	var album model.Album
 	c.DB.
 		Preload("AlbumArtist").
-		Preload("Tracks").
+		Preload("Tracks", func(db *gorm.DB) *gorm.DB {
+            return db.Order("tracks.track_number")
+        }).
 		First(&album, id)
 	tracksObj := []*subsonic.Track{}
 	for _, track := range album.Tracks {
