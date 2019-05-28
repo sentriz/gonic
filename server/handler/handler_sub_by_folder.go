@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/jinzhu/gorm"
@@ -126,9 +125,8 @@ func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
 			user.ID)
 		q = q.Order("plays.time DESC")
 	default:
-		respondError(w, r, 10, fmt.Sprintf(
-			"unknown value `%s` for parameter 'type'", listType,
-		))
+		respondError(w, r, 10,
+			"unknown value `%s` for parameter 'type'", listType)
 		return
 	}
 	var folders []model.Folder
