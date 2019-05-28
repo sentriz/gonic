@@ -55,14 +55,13 @@ func (c *Controller) WithValidSubsonicArgs(next http.HandlerFunc) http.HandlerFu
 		passwordAuth, tokenAuth := token == "" && salt == "",
 			password == ""
 		if tokenAuth == passwordAuth {
-			respondError(w, r,
-				10, "please provide parameters `t` and `s`, or just `p`",
-			)
+			respondError(w, r, 10,
+				"please provide parameters `t` and `s`, or just `p`")
 			return
 		}
 		user := c.GetUserFromName(username)
 		if user == nil {
-			respondError(w, r, 40, "invalid username")
+			respondError(w, r, 40, "invalid username `%s`", username)
 			return
 		}
 		var credsOk bool

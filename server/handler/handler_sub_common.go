@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 	"path"
@@ -38,13 +37,13 @@ func (c *Controller) Stream(w http.ResponseWriter, r *http.Request) {
 		Preload("Folder").
 		First(&track, id)
 	if track.Path == "" {
-		respondError(w, r, 70, fmt.Sprintf("media with id `%d` was not found", id))
+		respondError(w, r, 70, "media with id `%d` was not found", id)
 		return
 	}
 	absPath := path.Join(c.MusicPath, track.Path)
 	file, err := os.Open(absPath)
 	if err != nil {
-		respondError(w, r, 0, fmt.Sprintf("error while streaming media: %v", err))
+		respondError(w, r, 0, "error while streaming media: %v", err)
 		return
 	}
 	stat, _ := file.Stat()
@@ -117,7 +116,7 @@ func (c *Controller) Scrobble(w http.ResponseWriter, r *http.Request) {
 		getStrParamOr(r, "submission", "true") != "false",
 	)
 	if err != nil {
-		respondError(w, r, 0, fmt.Sprintf("error when submitting: %v", err))
+		respondError(w, r, 0, "error when submitting: %v", err)
 		return
 	}
 	sub := subsonic.NewResponse()

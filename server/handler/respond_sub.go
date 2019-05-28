@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -49,8 +50,8 @@ func respond(w http.ResponseWriter, r *http.Request,
 }
 
 func respondError(w http.ResponseWriter, r *http.Request,
-	code int, message string) {
+	code int, message string, a ...interface{}) {
 	respondRaw(w, r, http.StatusBadRequest, subsonic.NewError(
-		code, message,
+		code, fmt.Sprintf(message, a...),
 	))
 }
