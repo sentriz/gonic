@@ -13,9 +13,9 @@ import "time"
 type Album struct {
 	IDBase
 	CrudBase
-	AlbumArtist   AlbumArtist
-	AlbumArtistID int    `gorm:"index" sql:"default: null; type:int REFERENCES album_artists(id) ON DELETE CASCADE"`
-	Title         string `gorm:"not null; index"`
+	Artist   Artist
+	ArtistID int    `gorm:"index" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
+	Title    string `gorm:"not null; index"`
 	// an Album having a `Path` is a little weird when browsing by tags
 	// (for the most part - the library's folder structure is treated as
 	// if it were flat), but this solves the "American Football problem"
@@ -28,8 +28,8 @@ type Album struct {
 	IsNew   bool `gorm:"-"`
 }
 
-// AlbumArtist represents the AlbumArtists table
-type AlbumArtist struct {
+// Artist represents the Artists table
+type Artist struct {
 	IDBase
 	CrudBase
 	Name   string `gorm:"not null; unique_index"`
@@ -40,26 +40,26 @@ type AlbumArtist struct {
 type Track struct {
 	IDBase
 	CrudBase
-	Album         Album
-	AlbumID       int `gorm:"index" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
-	AlbumArtist   AlbumArtist
-	AlbumArtistID int `gorm:"index" sql:"default: null; type:int REFERENCES album_artists(id) ON DELETE CASCADE"`
-	Artist        string
-	Bitrate       int
-	Codec         string
-	DiscNumber    int
-	Duration      int
-	Title         string
-	TotalDiscs    int
-	TotalTracks   int
-	TrackNumber   int
-	Year          int
-	Suffix        string
-	ContentType   string
-	Size          int
-	Folder        Folder
-	FolderID      int    `gorm:"not null; index" sql:"default: null; type:int REFERENCES folders(id) ON DELETE CASCADE"`
-	Path          string `gorm:"not null; unique_index"`
+	Album       Album
+	AlbumID     int `gorm:"index" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	Artist      Artist
+	ArtistID    int `gorm:"index" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
+	TrackArtist string
+	Bitrate     int
+	Codec       string
+	DiscNumber  int
+	Duration    int
+	Title       string
+	TotalDiscs  int
+	TotalTracks int
+	TrackNumber int
+	Year        int
+	Suffix      string
+	ContentType string
+	Size        int
+	Folder      Folder
+	FolderID    int    `gorm:"not null; index" sql:"default: null; type:int REFERENCES folders(id) ON DELETE CASCADE"`
+	Path        string `gorm:"not null; unique_index"`
 }
 
 // Cover represents the covers table

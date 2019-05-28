@@ -48,10 +48,10 @@ func Scrobble(apiKey, secret, session string, track *model.Track,
 	}
 	params.Add("api_key", apiKey)
 	params.Add("sk", session)
-	params.Add("artist", track.Artist)
+	params.Add("artist", track.TrackArtist)
 	params.Add("track", track.Title)
 	params.Add("album", track.Album.Title)
-	params.Add("albumArtist", track.AlbumArtist.Name)
+	params.Add("albumArtist", track.Artist.Name)
 	params.Add("trackNumber", strconv.Itoa(track.TrackNumber))
 	params.Add("api_sig", getParamSignature(params, secret))
 	_, err := makeRequest("POST", params)

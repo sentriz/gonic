@@ -31,7 +31,7 @@ type Scanner struct {
 	curTracks  []model.Track
 	curCover   model.Cover
 	curAlbum   model.Album
-	curAArtist model.AlbumArtist
+	curAArtist model.Artist
 }
 
 func New(db *gorm.DB, musicPath string) *Scanner {
@@ -43,7 +43,7 @@ func New(db *gorm.DB, musicPath string) *Scanner {
 		curTracks:  make([]model.Track, 0),
 		curCover:   model.Cover{},
 		curAlbum:   model.Album{},
-		curAArtist: model.AlbumArtist{},
+		curAArtist: model.Artist{},
 	}
 }
 
@@ -105,7 +105,7 @@ func (s *Scanner) MigrateDB() error {
 	defer s.tx.Commit()
 	s.tx.AutoMigrate(
 		model.Album{},
-		model.AlbumArtist{},
+		model.Artist{},
 		model.Track{},
 		model.Cover{},
 		model.User{},
