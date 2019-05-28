@@ -55,3 +55,12 @@ func makeArtistFromFolder(f *model.Folder) *subsonic.Artist {
 		Name: f.Name,
 	}
 }
+
+func makeDirFromFolder(f *model.Folder, children []*subsonic.Child) *subsonic.Directory {
+	return &subsonic.Directory{
+		ID:       f.ID,
+		Parent:   f.ParentID,
+		Name:     f.Name,
+		Children: children,
+	}
+}

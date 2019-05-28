@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/jinzhu/gorm"
 
@@ -82,12 +83,7 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 	//
 	// respond section
 	sub := subsonic.NewResponse()
-	sub.Directory = &subsonic.Directory{
-		ID:       folder.ID,
-		Parent:   folder.ParentID,
-		Name:     folder.Name,
-		Children: childrenObj,
-	}
+	sub.Directory = makeDirFromFolder(&folder, childrenObj)
 	respond(w, r, sub)
 }
 
@@ -153,6 +149,7 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, 10, "please provide a `query` parameter")
 		return
 	}
+	query = strings.TrimSuffix(query, "*")
 	query = fmt.Sprintf("%%%s%%", query)
 	results := &subsonic.SearchResultTwo{}
 	//
@@ -165,7 +162,7 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 		Find(&artists)
 	for _, a := range artists {
 		results.Artists = append(results.Artists,
-			makeChildFromFolder(&a, nil))
+			makeDirFromFolder(&a, nil))
 	}
 	//
 	// search "albums"
