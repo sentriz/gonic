@@ -41,4 +41,6 @@ func (s *Server) setupSubsonic() {
 	s.mux.HandleFunc("/rest/getMusicDirectory.view", withWare(s.GetMusicDirectory))
 	s.mux.HandleFunc("/rest/getAlbumList", withWare(s.GetAlbumList))
 	s.mux.HandleFunc("/rest/getAlbumList.view", withWare(s.GetAlbumList))
+	s.mux.HandleFunc("/rest/search2", withWare(s.SearchTwo))
+	s.mux.HandleFunc("/rest/search2.view", withWare(s.SearchTwo))
 }
