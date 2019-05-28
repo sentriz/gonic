@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/jinzhu/gorm"
@@ -9,11 +10,15 @@ import (
 	"github.com/sentriz/gonic/server/subsonic"
 )
 
+// the subsonic spec metions "artist" a lot when talking about the
+// browse by folder endpoints. but since we're not browsing by tag
+// we can't access artists. so instead we'll consider the artist of
+// an track to be the it's respective folder that comes directly
+// under the root directory
+
 func (c *Controller) GetIndexes(w http.ResponseWriter, r *http.Request) {
-	// we are browsing by folder, but the subsonic docs show sub <artist> elements
-	// for this, so we're going to return root directories as "artists"
 	var folders []model.Folder
-	c.DB.Where("parent_id = ?", 1).Find(&folders)
+	c.DB.Where("parent_id = 1").Find(&folders)
 	var indexMap = make(map[rune]*subsonic.Index)
 	var indexes []*subsonic.Index
 	for _, folder := range folders {
@@ -97,14 +102,11 @@ func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
 	q := c.DB
 	switch listType {
 	case "alphabeticalByArtist":
-		// not sure what it meant by "artist" since we're browsing by folder
-		// - so we'll consider the parent folder's name to be the "artist"
 		q = q.Joins(`
 			JOIN folders AS parent_folders
 			ON folders.parent_id = parent_folders.id`)
 		q = q.Order("parent_folders.name")
 	case "alphabeticalByName":
-		// not sure about "name" either, so lets use the folder's name
 		q = q.Order("name")
 	case "frequent":
 		user := r.Context().Value(contextUserKey).(*model.User)
@@ -142,5 +144,57 @@ func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
 		sub.Albums.List = append(sub.Albums.List,
 			makeAlbumFromFolder(&folder))
 	}
+	respond(w, r, sub)
+}
+
+func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
+	query := getStrParam(r, "query")
+	if query == "" {
+		respondError(w, r, 10, "please provide a `query` parameter")
+		return
+	}
+	query = fmt.Sprintf("%%%s%%", query)
+	results := &subsonic.SearchResultTwo{}
+	//
+	// search "artists"
+	var artists []model.Folder
+	c.DB.
+		Where("parent_id = 1 AND name LIKE ?", query).
+		Offset(getIntParamOr(r, "artistOffset", 0)).
+		Limit(getIntParamOr(r, "artistCount", 20)).
+		Find(&artists)
+	for _, a := range artists {
+		results.Artists = append(results.Artists,
+			makeChildFromFolder(&a, nil))
+	}
+	//
+	// search "albums"
+	var albums []model.Folder
+	c.DB.
+		Preload("Parent").
+		Where("has_tracks = 1 AND name LIKE ?", query).
+		Offset(getIntParamOr(r, "albumOffset", 0)).
+		Limit(getIntParamOr(r, "albumCount", 20)).
+		Find(&albums)
+	for _, a := range albums {
+		results.Albums = append(results.Albums,
+			makeChildFromFolder(&a, a.Parent))
+	}
+	//
+	// search "artists"
+	var tracks []model.Track
+	c.DB.
+		Preload("Folder").
+		Where("title LIKE ?", query).
+		Offset(getIntParamOr(r, "songOffset", 0)).
+		Limit(getIntParamOr(r, "songCount", 20)).
+		Find(&tracks)
+	for _, t := range tracks {
+		results.Tracks = append(results.Tracks,
+			makeChildFromTrack(&t, &t.Folder))
+	}
+	//
+	sub := subsonic.NewResponse()
+	sub.SearchResultTwo = results
 	respond(w, r, sub)
 }

@@ -6,13 +6,16 @@ import (
 )
 
 func makeChildFromFolder(f *model.Folder, parent *model.Folder) *subsonic.Child {
-	return &subsonic.Child{
-		ID:       f.ID,
-		Title:    f.Name,
-		CoverID:  f.CoverID,
-		ParentID: parent.ID,
-		IsDir:    true,
+	child := &subsonic.Child{
+		ID:      f.ID,
+		Title:   f.Name,
+		CoverID: f.CoverID,
+		IsDir:   true,
 	}
+	if parent != nil {
+		child.ParentID = parent.ID
+	}
+	return child
 }
 
 func makeChildFromTrack(t *model.Track, parent *model.Folder) *subsonic.Child {
