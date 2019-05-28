@@ -11,7 +11,7 @@ import (
 )
 
 func (c *Controller) GetArtists(w http.ResponseWriter, r *http.Request) {
-	var artists []*model.AlbumArtist
+	var artists []model.Artist
 	c.DB.Find(&artists)
 	var indexMap = make(map[rune]*subsonic.Index)
 	var indexes subsonic.Artists
@@ -26,10 +26,8 @@ func (c *Controller) GetArtists(w http.ResponseWriter, r *http.Request) {
 			indexMap[i] = index
 			indexes.List = append(indexes.List, index)
 		}
-		index.Artists = append(index.Artists, &subsonic.Artist{
-			ID:   artist.ID,
-			Name: artist.Name,
-		})
+		index.Artists = append(index.Artists,
+			makeArtistFromArtist(&artist))
 	}
 	sub := subsonic.NewResponse()
 	sub.Artists = &indexes
@@ -42,26 +40,15 @@ func (c *Controller) GetArtist(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, 10, "please provide an `id` parameter")
 		return
 	}
-	var artist model.AlbumArtist
+	var artist model.Artist
 	c.DB.
 		Preload("Albums").
 		First(&artist, id)
-	albumsObj := []*subsonic.Album{}
-	for _, album := range artist.Albums {
-		albumsObj = append(albumsObj, &subsonic.Album{
-			ID:       album.ID,
-			Name:     album.Title,
-			Created:  album.CreatedAt,
-			Artist:   artist.Name,
-			ArtistID: artist.ID,
-			CoverID:  album.CoverID,
-		})
-	}
 	sub := subsonic.NewResponse()
-	sub.Artist = &subsonic.Artist{
-		ID:     artist.ID,
-		Name:   artist.Name,
-		Albums: albumsObj,
+	sub.Artist = makeArtistFromArtist(&artist)
+	for _, album := range artist.Albums {
+		sub.Artist.Albums = append(sub.Artist.Albums,
+			makeAlbumFromAlbum(&album, &artist))
 	}
 	respond(w, r, sub)
 }
@@ -73,39 +60,22 @@ func (c *Controller) GetAlbum(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var album model.Album
-	c.DB.
-		Preload("AlbumArtist").
+	err = c.DB.
+		Preload("Artist").
 		Preload("Tracks", func(db *gorm.DB) *gorm.DB {
-            return db.Order("tracks.track_number")
-        }).
-		First(&album, id)
-	tracksObj := []*subsonic.Track{}
-	for _, track := range album.Tracks {
-		tracksObj = append(tracksObj, &subsonic.Track{
-			ID:          track.ID,
-			Title:       track.Title,
-			Artist:      track.Artist, // track artist
-			TrackNo:     track.TrackNumber,
-			ContentType: track.ContentType,
-			Path:        track.Path,
-			Suffix:      track.Suffix,
-			Created:     track.CreatedAt,
-			Size:        track.Size,
-			Album:       album.Title,
-			AlbumID:     album.ID,
-			ArtistID:    album.AlbumArtist.ID, // album artist
-			CoverID:     album.CoverID,
-			Type:        "music",
-		})
+			return db.Order("tracks.track_number")
+		}).
+		First(&album, id).
+		Error
+	if gorm.IsRecordNotFoundError(err) {
+		respondError(w, r, 10, "couldn't find an album with that id")
+		return
 	}
 	sub := subsonic.NewResponse()
-	sub.Album = &subsonic.Album{
-		ID:      album.ID,
-		Name:    album.Title,
-		CoverID: album.CoverID,
-		Created: album.CreatedAt,
-		Artist:  album.AlbumArtist.Name,
-		Tracks:  tracksObj,
+	sub.Album = makeAlbumFromAlbum(&album, &album.Artist)
+	for _, track := range album.Tracks {
+		sub.Album.Tracks = append(sub.Album.Tracks,
+			makeTrackFromTrack(&track, &album))
 	}
 	respond(w, r, sub)
 }
@@ -122,9 +92,9 @@ func (c *Controller) GetAlbumListTwo(w http.ResponseWriter, r *http.Request) {
 	switch listType {
 	case "alphabeticalByArtist":
 		q = q.Joins(`
-			JOIN album_artists
-			ON albums.album_artist_id = album_artists.id`)
-		q = q.Order("album_artists.name")
+			JOIN artists
+			ON albums.artist_id = artists.id`)
+		q = q.Order("artists.name")
 	case "alphabeticalByName":
 		q = q.Order("title")
 	case "byYear":
@@ -157,26 +127,17 @@ func (c *Controller) GetAlbumListTwo(w http.ResponseWriter, r *http.Request) {
 		))
 		return
 	}
-	var albums []*model.Album
+	var albums []model.Album
 	q.
 		Offset(getIntParamOr(r, "offset", 0)).
 		Limit(getIntParamOr(r, "size", 10)).
-		Preload("AlbumArtist").
+		Preload("Artist").
 		Find(&albums)
-	listObj := []*subsonic.Album{}
-	for _, album := range albums {
-		listObj = append(listObj, &subsonic.Album{
-			ID:       album.ID,
-			Name:     album.Title,
-			Created:  album.CreatedAt,
-			CoverID:  album.CoverID,
-			Artist:   album.AlbumArtist.Name,
-			ArtistID: album.AlbumArtist.ID,
-		})
-	}
 	sub := subsonic.NewResponse()
-	sub.AlbumsTwo = &subsonic.Albums{
-		List: listObj,
+	sub.AlbumsTwo = &subsonic.Albums{}
+	for _, album := range albums {
+		sub.AlbumsTwo.List = append(sub.AlbumsTwo.List,
+			makeAlbumFromAlbum(&album, &album.Artist))
 	}
 	respond(w, r, sub)
 }

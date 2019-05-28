@@ -49,7 +49,7 @@ func (c *Controller) ServeLogout(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) ServeHome(w http.ResponseWriter, r *http.Request) {
 	var data templateData
-	c.DB.Table("album_artists").Count(&data.ArtistCount)
+	c.DB.Table("artists").Count(&data.ArtistCount)
 	c.DB.Table("albums").Count(&data.AlbumCount)
 	c.DB.Table("tracks").Count(&data.TrackCount)
 	c.DB.Find(&data.AllUsers)

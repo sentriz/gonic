@@ -1,6 +1,8 @@
 package subsonic
 
-import "time"
+import (
+	"time"
+)
 
 type Albums struct {
 	List []*Album `xml:"album" json:"album,omitempty"`
@@ -30,26 +32,26 @@ type RandomTracks struct {
 }
 
 type Track struct {
-	ID          int       `xml:"id,attr,omitempty"          json:"id"`
-	Parent      int       `xml:"parent,attr,omitempty"      json:"parent"`
-	Title       string    `xml:"title,attr,omitempty"       json:"title"`
-	Album       string    `xml:"album,attr,omitempty"       json:"album"`
-	Artist      string    `xml:"artist,attr,omitempty"      json:"artist"`
-	IsDir       bool      `xml:"isDir,attr,omitempty"       json:"isDir"`
-	CoverID     int       `xml:"coverArt,attr,omitempty"    json:"coverArt"`
-	Created     time.Time `xml:"created,attr,omitempty"     json:"created"`
-	Duration    int       `xml:"duration,attr,omitempty"    json:"duration"`
-	Genre       string    `xml:"genre,attr,omitempty"       json:"genre"`
-	Bitrate     int       `xml:"bitRate,attr,omitempty"     json:"bitRate"`
-	Size        int       `xml:"size,attr,omitempty"        json:"size"`
-	Suffix      string    `xml:"suffix,attr,omitempty"      json:"suffix"`
-	ContentType string    `xml:"contentType,attr,omitempty" json:"contentType"`
-	IsVideo     bool      `xml:"isVideo,attr,omitempty"     json:"isVideo"`
-	Path        string    `xml:"path,attr,omitempty"        json:"path"`
-	AlbumID     int       `xml:"albumId,attr,omitempty"     json:"albumId"`
-	ArtistID    int       `xml:"artistId,attr,omitempty"    json:"artistId"`
-	TrackNo     int       `xml:"track,attr,omitempty"       json:"track"`
-	Type        string    `xml:"type,attr,omitempty"        json:"type"`
+	ID            int       `xml:"id,attr,omitempty"          json:"id"`
+	Parent        int       `xml:"parent,attr,omitempty"      json:"parent"`
+	Title         string    `xml:"title,attr,omitempty"       json:"title"`
+	Album         string    `xml:"album,attr,omitempty"       json:"album"`
+	Artist        string    `xml:"artist,attr,omitempty"      json:"artist"`
+	IsDir         bool      `xml:"isDir,attr,omitempty"       json:"isDir"`
+	CoverID       int       `xml:"coverArt,attr,omitempty"    json:"coverArt"`
+	CreatedAt     time.Time `xml:"created,attr,omitempty"     json:"created"`
+	Duration      int       `xml:"duration,attr,omitempty"    json:"duration"`
+	Genre         string    `xml:"genre,attr,omitempty"       json:"genre"`
+	Bitrate       int       `xml:"bitRate,attr,omitempty"     json:"bitRate"`
+	Size          int       `xml:"size,attr,omitempty"        json:"size"`
+	Suffix        string    `xml:"suffix,attr,omitempty"      json:"suffix"`
+	ContentType   string    `xml:"contentType,attr,omitempty" json:"contentType"`
+	IsVideo       bool      `xml:"isVideo,attr,omitempty"     json:"isVideo"`
+	Path          string    `xml:"path,attr,omitempty"        json:"path"`
+	AlbumID       int       `xml:"albumId,attr,omitempty"     json:"albumId"`
+	ArtistID int       `xml:"artistId,attr,omitempty"    json:"artistId"`
+	TrackNumber   int       `xml:"track,attr,omitempty"       json:"track"`
+	Type          string    `xml:"type,attr,omitempty"        json:"type"`
 }
 
 type Artists struct {
@@ -84,7 +86,7 @@ type Directory struct {
 
 type Child struct {
 	ID          int    `xml:"id,attr,omitempty"          json:"id,omitempty"`
-	Parent      int    `xml:"parent,attr,omitempty"      json:"parent,omitempty"`
+	ParentID    int    `xml:"parent,attr,omitempty"      json:"parent,omitempty"`
 	Title       string `xml:"title,attr,omitempty"       json:"title,omitempty"`
 	IsDir       bool   `xml:"isDir,attr,omitempty"       json:"isDir,omitempty"`
 	Album       string `xml:"album,attr,omitempty"       json:"album,omitempty"`

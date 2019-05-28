@@ -33,12 +33,12 @@ func checkCredentialsToken(password, token, salt string) bool {
 	return token == expToken
 }
 
-func checkCredentialsBasic(password, givenPassword string) bool {
-	if givenPassword[:4] == "enc:" {
-		bytes, _ := hex.DecodeString(givenPassword[4:])
-		givenPassword = string(bytes)
+func checkCredentialsBasic(password, given string) bool {
+	if given[:4] == "enc:" {
+		bytes, _ := hex.DecodeString(given[4:])
+		given = string(bytes)
 	}
-	return password == givenPassword
+	return password == given
 }
 
 func (c *Controller) WithValidSubsonicArgs(next http.HandlerFunc) http.HandlerFunc {
@@ -62,7 +62,6 @@ func (c *Controller) WithValidSubsonicArgs(next http.HandlerFunc) http.HandlerFu
 		}
 		user := c.GetUserFromName(username)
 		if user == nil {
-			// the user does not exist
 			respondError(w, r, 40, "invalid username")
 			return
 		}

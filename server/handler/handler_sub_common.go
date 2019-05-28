@@ -96,14 +96,14 @@ func (c *Controller) Scrobble(w http.ResponseWriter, r *http.Request) {
 	// fetch user to get lastfm session
 	user := r.Context().Value(contextUserKey).(*model.User)
 	if user.LastFMSession == "" {
-		respondError(w, r, 0, fmt.Sprintf("no last.fm session for this user: %v", err))
+		respondError(w, r, 0, "you don't have a last.fm session")
 		return
 	}
 	// fetch track for getting info to send to last.fm function
 	var track model.Track
 	c.DB.
 		Preload("Album").
-		Preload("AlbumArtist").
+		Preload("Artist").
 		First(&track, id)
 	// scrobble with above info
 	err = lastfm.Scrobble(

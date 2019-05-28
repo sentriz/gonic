@@ -81,7 +81,7 @@ func (s *Scanner) callbackPost(path string, info *godirwalk.Dirent) error {
 	s.curTracks = make([]model.Track, 0)
 	s.curCover = model.Cover{}
 	s.curAlbum = model.Album{}
-	s.curAArtist = model.AlbumArtist{}
+	s.curAArtist = model.Artist{}
 	//
 	log.Printf("processed folder `%s`\n", path)
 	return nil
@@ -156,7 +156,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	track.ContentType = it.track.mime
 	track.Size = int(it.stat.Size())
 	track.Title = tags.Title()
-	track.Artist = tags.Artist()
+	track.TrackArtist = tags.Artist()
 	track.Year = tags.Year()
 	track.FolderID = s.curFolders.PeekID()
 	//
@@ -168,7 +168,7 @@ func (s *Scanner) handleTrack(it *item) error {
 		s.curAArtist.Name = tags.AlbumArtist()
 		s.tx.Save(&s.curAArtist)
 	}
-	track.AlbumArtistID = s.curAArtist.ID
+	track.ArtistID = s.curAArtist.ID
 	//
 	// set album if this is the first track in the folder
 	if len(s.curTracks) > 0 {
@@ -189,7 +189,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	s.curAlbum.Path = directory
 	s.curAlbum.Title = tags.Album()
 	s.curAlbum.Year = tags.Year()
-	s.curAlbum.AlbumArtistID = s.curAArtist.ID
+	s.curAlbum.ArtistID = s.curAArtist.ID
 	s.curAlbum.IsNew = true
 	return nil
 }
