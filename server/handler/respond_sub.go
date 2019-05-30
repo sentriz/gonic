@@ -10,17 +10,24 @@ import (
 	"github.com/sentriz/gonic/server/subsonic"
 )
 
+type metaResponse struct {
+	XMLName            xml.Name `xml:"subsonic-response" json:"-"`
+	*subsonic.Response `json:"subsonic-response"`
+}
+
 func respondRaw(w http.ResponseWriter, r *http.Request,
 	code int, sub *subsonic.Response) {
-	res := subsonic.MetaResponse{
+	w.WriteHeader(code)
+	res := metaResponse{
 		Response: sub,
 	}
-	switch r.URL.Query().Get("f") {
+	switch getStrParam(r, "f") {
 	case "json":
 		w.Header().Set("Content-Type", "application/json")
 		data, err := json.Marshal(res)
 		if err != nil {
 			log.Printf("could not marshall to json: %v\n", err)
+			return
 		}
 		w.Write(data)
 	case "jsonp":
@@ -28,9 +35,9 @@ func respondRaw(w http.ResponseWriter, r *http.Request,
 		data, err := json.Marshal(res)
 		if err != nil {
 			log.Printf("could not marshall to json: %v\n", err)
+			return
 		}
-		callback := r.URL.Query().Get("callback")
-		w.Write([]byte(callback))
+		w.Write([]byte(getStrParamOr(r, "callback", "cb")))
 		w.Write([]byte("("))
 		w.Write(data)
 		w.Write([]byte(");"))
@@ -39,6 +46,7 @@ func respondRaw(w http.ResponseWriter, r *http.Request,
 		data, err := xml.MarshalIndent(res, "", "    ")
 		if err != nil {
 			log.Printf("could not marshall to xml: %v\n", err)
+			return
 		}
 		w.Write(data)
 	}

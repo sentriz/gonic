@@ -24,6 +24,7 @@ func makeTrackFromTrack(t *model.Track, album *model.Album) *subsonic.Track {
 		TrackNumber: t.TrackNumber,
 		ContentType: t.ContentType,
 		Path:        t.Path,
+		ParentID:    t.FolderID,
 		Suffix:      t.Suffix,
 		CreatedAt:   t.CreatedAt,
 		Size:        t.Size,
