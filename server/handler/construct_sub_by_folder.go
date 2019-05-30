@@ -5,8 +5,8 @@ import (
 	"github.com/sentriz/gonic/server/subsonic"
 )
 
-func makeChildFromFolder(f *model.Folder, parent *model.Folder) *subsonic.Child {
-	child := &subsonic.Child{
+func makeChildFromFolder(f *model.Folder, parent *model.Folder) *subsonic.Track {
+	child := &subsonic.Track{
 		ID:      f.ID,
 		Title:   f.Name,
 		CoverID: f.CoverID,
@@ -18,8 +18,8 @@ func makeChildFromFolder(f *model.Folder, parent *model.Folder) *subsonic.Child 
 	return child
 }
 
-func makeChildFromTrack(t *model.Track, parent *model.Folder) *subsonic.Child {
-	return &subsonic.Child{
+func makeChildFromTrack(t *model.Track, parent *model.Folder) *subsonic.Track {
+	return &subsonic.Track{
 		ID:          t.ID,
 		Album:       t.Album.Title,
 		Artist:      t.TrackArtist,
@@ -28,7 +28,7 @@ func makeChildFromTrack(t *model.Track, parent *model.Folder) *subsonic.Child {
 		Size:        t.Size,
 		Suffix:      t.Suffix,
 		Title:       t.Title,
-		Track:       t.TrackNumber,
+		TrackNumber: t.TrackNumber,
 		ParentID:    parent.ID,
 		CoverID:     parent.CoverID,
 		Duration:    0,
@@ -41,7 +41,6 @@ func makeAlbumFromFolder(f *model.Folder) *subsonic.Album {
 	return &subsonic.Album{
 		ID:       f.ID,
 		Title:    f.Name,
-		Album:    f.Name,
 		CoverID:  f.CoverID,
 		ParentID: f.ParentID,
 		Artist:   f.Parent.Name,
@@ -56,7 +55,7 @@ func makeArtistFromFolder(f *model.Folder) *subsonic.Artist {
 	}
 }
 
-func makeDirFromFolder(f *model.Folder, children []*subsonic.Child) *subsonic.Directory {
+func makeDirFromFolder(f *model.Folder, children []*subsonic.Track) *subsonic.Directory {
 	return &subsonic.Directory{
 		ID:       f.ID,
 		Parent:   f.ParentID,

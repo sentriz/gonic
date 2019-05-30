@@ -50,7 +50,7 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, 10, "please provide an `id` parameter")
 		return
 	}
-	childrenObj := []*subsonic.Child{}
+	childrenObj := []*subsonic.Track{}
 	var folder model.Folder
 	c.DB.First(&folder, id)
 	//
@@ -149,8 +149,8 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, 10, "please provide a `query` parameter")
 		return
 	}
-	query = strings.TrimSuffix(query, "*")
-	query = fmt.Sprintf("%%%s%%", query)
+	query = fmt.Sprintf("%%%s%%",
+		strings.TrimSuffix(query, "*"))
 	results := &subsonic.SearchResultTwo{}
 	//
 	// search "artists"
@@ -178,7 +178,7 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 			makeChildFromFolder(&a, a.Parent))
 	}
 	//
-	// search "artists"
+	// search tracks
 	var tracks []model.Track
 	c.DB.
 		Preload("Folder").

@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/jinzhu/gorm"
 
@@ -137,5 +139,57 @@ func (c *Controller) GetAlbumListTwo(w http.ResponseWriter, r *http.Request) {
 		sub.AlbumsTwo.List = append(sub.AlbumsTwo.List,
 			makeAlbumFromAlbum(&album, &album.Artist))
 	}
+	respond(w, r, sub)
+}
+
+func (c *Controller) SearchThree(w http.ResponseWriter, r *http.Request) {
+	query := getStrParam(r, "query")
+	if query == "" {
+		respondError(w, r, 10, "please provide a `query` parameter")
+		return
+	}
+	query = fmt.Sprintf("%%%s%%",
+		strings.TrimSuffix(query, "*"))
+	results := &subsonic.SearchResultThree{}
+	//
+	// search "artists"
+	var artists []model.Artist
+	c.DB.
+		Where("name LIKE ?", query).
+		Offset(getIntParamOr(r, "artistOffset", 0)).
+		Limit(getIntParamOr(r, "artistCount", 20)).
+		Find(&artists)
+	for _, a := range artists {
+		results.Artists = append(results.Artists,
+			makeArtistFromArtist(&a))
+	}
+	//
+	// search "albums"
+	var albums []model.Album
+	c.DB.
+		Preload("Artist").
+		Where("title LIKE ?", query).
+		Offset(getIntParamOr(r, "albumOffset", 0)).
+		Limit(getIntParamOr(r, "albumCount", 20)).
+		Find(&albums)
+	for _, a := range albums {
+		results.Albums = append(results.Albums,
+			makeAlbumFromAlbum(&a, &a.Artist))
+	}
+	//
+	// search tracks
+	var tracks []model.Track
+	c.DB.
+		Preload("Album").
+		Where("title LIKE ?", query).
+		Offset(getIntParamOr(r, "songOffset", 0)).
+		Limit(getIntParamOr(r, "songCount", 20)).
+		Find(&tracks)
+	for _, t := range tracks {
+		results.Tracks = append(results.Tracks,
+			makeTrackFromTrack(&t, &t.Album))
+	}
+	sub := subsonic.NewResponse()
+	sub.SearchResultThree = results
 	respond(w, r, sub)
 }
