@@ -27,19 +27,19 @@ func isTrack(fullPath string) (string, string, bool) {
 	return mine, ext, true
 }
 
-var coverFilenames = map[string]bool{
-	"cover.png":   true,
-	"cover.jpg":   true,
-	"cover.jpeg":  true,
-	"folder.png":  true,
-	"folder.jpg":  true,
-	"folder.jpeg": true,
-	"album.png":   true,
-	"album.jpg":   true,
-	"album.jpeg":  true,
-	"front.png":   true,
-	"front.jpg":   true,
-	"front.jpeg":  true,
+var coverFilenames = map[string]struct{}{
+	"cover.png":   struct{}{},
+	"cover.jpg":   struct{}{},
+	"cover.jpeg":  struct{}{},
+	"folder.png":  struct{}{},
+	"folder.jpg":  struct{}{},
+	"folder.jpeg": struct{}{},
+	"album.png":   struct{}{},
+	"album.jpg":   struct{}{},
+	"album.jpeg":  struct{}{},
+	"front.png":   struct{}{},
+	"front.jpg":   struct{}{},
+	"front.jpeg":  struct{}{},
 }
 
 func isCover(fullPath string) bool {
