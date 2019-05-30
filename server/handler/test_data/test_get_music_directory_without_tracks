@@ -1,0 +1,28 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.9.0",
+    "directory": {
+      "id": 2,
+      "parent": 1,
+      "name": "A Certain Ratio",
+      "child": [
+        {
+          "coverArt": 1,
+          "created": "0001-01-01T00:00:00Z",
+          "id": 3,
+          "isDir": true,
+          "parent": 2,
+          "title": "(1994) The Graveyard and the Ballroom"
+        },
+        {
+          "created": "0001-01-01T00:00:00Z",
+          "isDir": true,
+          "id": 4,
+          "parent": 2,
+          "title": "(1981) To Each."
+        }
+      ]
+    }
+  }
+}

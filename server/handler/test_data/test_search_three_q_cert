@@ -1,0 +1,14 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.9.0",
+    "searchResult3": {
+      "artist": [
+        {
+          "id": 1,
+          "name": "A Certain Ratio"
+        }
+      ]
+    }
+  }
+}

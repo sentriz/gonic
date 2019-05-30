@@ -1,0 +1,25 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.9.0",
+    "searchResult2": {
+      "artist": [
+        {
+          "id": 5,
+          "parent": 1,
+          "name": "13th Floor Lowervators"
+        }
+      ],
+      "album": [
+        {
+          "coverArt": 3,
+          "created": "0001-01-01T00:00:00Z",
+          "id": 7,
+          "isDir": true,
+          "parent": 5,
+          "title": "(1966) The Psychedelic Sounds of the 13th Floor Elevators"
+        }
+      ]
+    }
+  }
+}

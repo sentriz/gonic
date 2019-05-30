@@ -1,0 +1,20 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.9.0",
+    "artist": {
+      "id": 3,
+      "name": "Anikas",
+      "album": [
+        {
+          "id": 5,
+          "coverArt": 4,
+          "artistId": 3,
+          "artist": "Anikas",
+          "name": "Anika",
+          "created": "2019-05-28T20:59:03.035442597+01:00"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.9.0",
+    "searchResult3": {
+      "artist": [
+        {
+          "id": 2,
+          "name": "13th Floor Elevators"
+        }
+      ],
+      "album": [
+        {
+          "id": 4,
+          "coverArt": 3,
+          "artistId": 2,
+          "artist": "13th Floor Elevators",
+          "name": "The Psychedelic Sounds of the 13th Floor Elevators",
+          "created": "2019-05-28T20:59:03.022922683+01:00"
+        }
+      ]
+    }
+  }
+}

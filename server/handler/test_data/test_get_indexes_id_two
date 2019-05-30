@@ -1,0 +1,33 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.9.0",
+    "indexes": {
+      "lastModified": 0,
+      "index": [
+        {
+          "name": "A",
+          "artist": [
+            {
+              "id": 2,
+              "name": "A Certain Ratio"
+            },
+            {
+              "id": 8,
+              "name": "Anika"
+            }
+          ]
+        },
+        {
+          "name": "#",
+          "artist": [
+            {
+              "id": 5,
+              "name": "13th Floor Lowervators"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
