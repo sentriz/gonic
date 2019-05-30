@@ -1,0 +1,27 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.9.0",
+    "artist": {
+      "id": 1,
+      "name": "A Certain Ratio",
+      "album": [
+        {
+          "id": 1,
+          "coverArt": 1,
+          "artistId": 1,
+          "artist": "A Certain Ratio",
+          "name": "The Graveyard and the Ballroom",
+          "created": "2019-05-28T20:59:02.988372626+01:00"
+        },
+        {
+          "id": 2,
+          "artistId": 1,
+          "artist": "A Certain Ratio",
+          "name": "To Each...",
+          "created": "2019-05-28T20:59:02.995320471+01:00"
+        }
+      ]
+    }
+  }
+}
