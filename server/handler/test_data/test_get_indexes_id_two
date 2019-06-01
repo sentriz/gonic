@@ -6,6 +6,15 @@
       "lastModified": 0,
       "index": [
         {
+          "name": "#",
+          "artist": [
+            {
+              "id": 5,
+              "name": "13th Floor Lowervators"
+            }
+          ]
+        },
+        {
           "name": "A",
           "artist": [
             {
@@ -15,15 +24,6 @@
             {
               "id": 8,
               "name": "Anika"
-            }
-          ]
-        },
-        {
-          "name": "#",
-          "artist": [
-            {
-              "id": 5,
-              "name": "13th Floor Lowervators"
             }
           ]
         }
