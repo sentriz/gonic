@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/jinzhu/gorm"
@@ -36,6 +37,9 @@ func (c *Controller) GetIndexes(w http.ResponseWriter, r *http.Request) {
 		index.Artists = append(index.Artists,
 			makeArtistFromFolder(&folder))
 	}
+	sort.Slice(indexes[:], func(i, j int) bool {
+		return indexes[i].Name < indexes[j].Name
+	})
 	sub := subsonic.NewResponse()
 	sub.Indexes = &subsonic.Indexes{
 		LastModified: 0,
