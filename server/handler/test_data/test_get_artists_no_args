@@ -5,6 +5,15 @@
     "artists": {
       "index": [
         {
+          "name": "#",
+          "artist": [
+            {
+              "id": 2,
+              "name": "13th Floor Elevators"
+            }
+          ]
+        }
+        {
           "name": "A",
           "artist": [
             {
@@ -17,15 +26,6 @@
             }
           ]
         },
-        {
-          "name": "#",
-          "artist": [
-            {
-              "id": 2,
-              "name": "13th Floor Elevators"
-            }
-          ]
-        }
       ]
     }
   }
