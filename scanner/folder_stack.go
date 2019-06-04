@@ -1,35 +1,40 @@
 package scanner
 
-import "github.com/sentriz/gonic/model"
+import (
+	"fmt"
+	"strings"
 
-type folderStack []model.Folder
+	"github.com/sentriz/gonic/model"
+)
 
-func (s *folderStack) Push(v model.Folder) {
+type folderStack []*model.Folder
+
+func (s *folderStack) Push(v *model.Folder) {
 	*s = append(*s, v)
 }
 
-func (s *folderStack) Pop() model.Folder {
+func (s *folderStack) Pop() *model.Folder {
 	l := len(*s)
 	if l == 0 {
-		return model.Folder{}
+		return nil
 	}
 	r := (*s)[l-1]
 	*s = (*s)[:l-1]
 	return r
 }
 
-func (s *folderStack) Peek() model.Folder {
+func (s *folderStack) Peek() *model.Folder {
 	l := len(*s)
 	if l == 0 {
-		return model.Folder{}
+		return nil
 	}
 	return (*s)[l-1]
 }
 
-func (s *folderStack) PeekID() int {
-	l := len(*s)
-	if l == 0 {
-		return 0
+func (s *folderStack) String() string {
+	paths := make([]string, len(*s))
+	for i, folder := range *s {
+		paths[i] = folder.RightPath
 	}
-	return (*s)[l-1].ID
+	return fmt.Sprintf("[%s]", strings.Join(paths, " "))
 }

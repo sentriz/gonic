@@ -1,12 +1,5 @@
 package scanner
 
-// Album  -> needs a  CoverID
-//        -> needs a  FolderID (American Football)
-// Folder -> needs a  CoverID
-//        -> needs a  ParentID
-// Track  -> needs an AlbumID
-//        -> needs a  FolderID
-
 import (
 	"log"
 	"sync/atomic"
@@ -26,25 +19,30 @@ var (
 type Scanner struct {
 	db, tx     *gorm.DB
 	musicPath  string
-	seenTracks map[string]bool
+	seenTracks map[int]struct{}
 	curFolders folderStack
-	curTracks  []model.Track
-	curCover   model.Cover
-	curAlbum   model.Album
-	curAArtist model.Artist
+	curCover   string
 }
 
 func New(db *gorm.DB, musicPath string) *Scanner {
 	return &Scanner{
 		db:         db,
 		musicPath:  musicPath,
-		seenTracks: make(map[string]bool),
+		seenTracks: make(map[int]struct{}),
 		curFolders: make(folderStack, 0),
-		curTracks:  make([]model.Track, 0),
-		curCover:   model.Cover{},
-		curAlbum:   model.Album{},
-		curAArtist: model.Artist{},
 	}
+}
+
+func (s *Scanner) curFolder() *model.Folder {
+	return s.curFolders.Peek()
+}
+
+func (s *Scanner) curFolderID() int {
+	peek := s.curFolders.Peek()
+	if peek == nil {
+		return 0
+	}
+	return peek.ID
 }
 
 func (s *Scanner) Start() error {
@@ -86,16 +84,17 @@ func (s *Scanner) startClean() error {
 	defer logElapsed(time.Now(), "cleaning database")
 	var tracks []model.Track
 	s.tx.
-		Select("id, path").
+		Select("id").
 		Find(&tracks)
+	var deleted int
 	for _, track := range tracks {
-		_, ok := s.seenTracks[track.Path]
-		if ok {
-			continue
+		_, ok := s.seenTracks[track.ID]
+		if !ok {
+			s.tx.Delete(&track)
+			deleted++
 		}
-		s.tx.Delete(&track)
-		log.Println("removed track", track.Path)
 	}
+	log.Printf("removed %d tracks\n", deleted)
 	return nil
 }
 
@@ -104,10 +103,8 @@ func (s *Scanner) MigrateDB() error {
 	s.tx = s.db.Begin()
 	defer s.tx.Commit()
 	s.tx.AutoMigrate(
-		model.Album{},
 		model.Artist{},
 		model.Track{},
-		model.Cover{},
 		model.User{},
 		model.Setting{},
 		model.Play{},
