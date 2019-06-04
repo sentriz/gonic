@@ -16,11 +16,10 @@ import (
 type item struct {
 	//
 	// common
-	fullPath  string
-	relPath   string
-	directory string
-	filename  string
-	stat      os.FileInfo
+	fullPath string
+	relPath  string
+	filename string
+	stat     os.FileInfo
 	//
 	// track only
 	ext  string
@@ -36,13 +35,12 @@ func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
 	if err != nil {
 		return errors.Wrap(err, "getting relative path")
 	}
-	directory, filename := path.Split(relPath)
+	_, filename := path.Split(relPath)
 	it := &item{
-		fullPath:  fullPath,
-		relPath:   relPath,
-		directory: directory,
-		filename:  filename,
-		stat:      stat,
+		fullPath: fullPath,
+		relPath:  relPath,
+		filename: filename,
+		stat:     stat,
 	}
 	if info.IsDir() {
 		return s.handleFolder(it)
@@ -75,10 +73,7 @@ func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
 func (s *Scanner) handleFolder(it *item) error {
 	var folder model.Folder
 	err := s.tx.
-		Where(model.Folder{
-			LeftPath:  it.directory,
-			RightPath: it.filename,
-		}).
+		Where("path = ?", it.relPath).
 		First(&folder).
 		Error
 	if !gorm.IsRecordNotFoundError(err) &&
@@ -87,8 +82,7 @@ func (s *Scanner) handleFolder(it *item) error {
 		s.curFolders.Push(&folder)
 		return nil
 	}
-	folder.LeftPath = it.directory
-	folder.RightPath = it.filename
+	folder.Path = it.relPath
 	s.tx.Save(&folder)
 	folder.IsNew = true
 	s.curFolders.Push(&folder)
@@ -103,7 +97,6 @@ func (s *Scanner) handleTrack(it *item) error {
 		Where(model.Track{
 			FolderID: s.curFolderID(),
 			Filename: it.filename,
-			Ext:      it.ext,
 		}).
 		First(&track).
 		Error
@@ -114,7 +107,6 @@ func (s *Scanner) handleTrack(it *item) error {
 		return nil
 	}
 	track.Filename = it.filename
-	track.Ext = it.ext
 	track.ContentType = it.mime
 	track.Size = int(it.stat.Size())
 	track.FolderID = s.curFolderID()

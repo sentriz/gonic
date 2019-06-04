@@ -34,7 +34,7 @@ func (s *folderStack) Peek() *model.Folder {
 func (s *folderStack) String() string {
 	paths := make([]string, len(*s))
 	for i, folder := range *s {
-		paths[i] = folder.RightPath
+		paths[i] = folder.Path
 	}
 	return fmt.Sprintf("[%s]", strings.Join(paths, " "))
 }

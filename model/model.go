@@ -21,11 +21,9 @@ type Artist struct {
 type Track struct {
 	IDBase
 	CrudBase
-	Folder Folder
-	// TODO: try removing idx_folder_basename_ext
-	FolderID       int    `gorm:"not null; unique_index:idx_folder_filename_ext" sql:"default: null; type:int REFERENCES folders(id) ON DELETE CASCADE"`
-	Filename       string `gorm:"not null; unique_index:idx_folder_filename_ext" sql:"default: null"`
-	Ext            string `gorm:"not nill; unique_index:idx_folder_filename_ext" sql:"default: null"`
+	Folder         Folder
+	FolderID       int    `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null; type:int REFERENCES folders(id) ON DELETE CASCADE"`
+	Filename       string `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null"`
 	Artist         Artist
 	ArtistID       int    `gorm:"not null; index" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
 	ContentType    string `gorm:"not null" sql:"default: null"`
@@ -69,8 +67,7 @@ type Play struct {
 type Folder struct {
 	IDBase
 	CrudBase
-	LeftPath      string `gorm:"unique_index:idx_left_path_right_path"`
-	RightPath     string `gorm:"not null; unique_index:idx_left_path_right_path" sql:"default: null"`
+	Path          string `gorm:"not null; unique_index" sql:"default: null"`
 	Parent        *Folder
 	ParentID      int `sql:"default: null; type:int REFERENCES folders(id) ON DELETE CASCADE"`
 	AlbumArtist   Artist
