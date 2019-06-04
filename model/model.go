@@ -13,7 +13,6 @@ import (
 
 type Artist struct {
 	IDBase
-	CrudBase
 	Name    string `gorm:"not null; unique_index"`
 	Folders []Folder
 }
