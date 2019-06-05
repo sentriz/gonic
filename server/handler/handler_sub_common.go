@@ -8,6 +8,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/jinzhu/gorm"
 	"github.com/rainycape/unidecode"
 
 	"github.com/sentriz/gonic/model"
@@ -32,15 +33,20 @@ func (c *Controller) Stream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var track model.Track
-	c.DB.
+	err = c.DB.
 		Preload("Album").
-		Preload("Folder").
-		First(&track, id)
-	if track.Path == "" {
+		First(&track, id).
+		Error
+	if gorm.IsRecordNotFoundError(err) {
 		respondError(w, r, 70, "media with id `%d` was not found", id)
 		return
 	}
-	absPath := path.Join(c.MusicPath, track.Path)
+	absPath := path.Join(
+		c.MusicPath,
+		track.Album.LeftPath,
+		track.Album.RightPath,
+		track.Filename,
+	)
 	file, err := os.Open(absPath)
 	if err != nil {
 		respondError(w, r, 0, "error while streaming media: %v", err)
@@ -52,11 +58,12 @@ func (c *Controller) Stream(w http.ResponseWriter, r *http.Request) {
 	// after we've served the file, mark the album as played
 	user := r.Context().Value(contextUserKey).(*model.User)
 	play := model.Play{
-		AlbumID:  track.Album.ID,
-		FolderID: track.Folder.ID,
-		UserID:   user.ID,
+		AlbumID: track.Album.ID,
+		UserID:  user.ID,
 	}
-	c.DB.Where(play).First(&play)
+	c.DB.
+		Where(play).
+		First(&play)
 	play.Time = time.Now() // for getAlbumList?type=recent
 	play.Count++           // for getAlbumList?type=frequent
 	c.DB.Save(&play)
@@ -68,9 +75,26 @@ func (c *Controller) GetCoverArt(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, 10, "please provide an `id` parameter")
 		return
 	}
-	var cover model.Cover
-	c.DB.First(&cover, id)
-	w.Write(cover.Image)
+	var folder model.Album
+	err = c.DB.
+		Select("id, path, cover").
+		First(&folder, id).
+		Error
+	if gorm.IsRecordNotFoundError(err) {
+		respondError(w, r, 10, "could not find a cover with that id")
+		return
+	}
+	if folder.Cover == "" {
+		respondError(w, r, 10, "no cover found for that folder")
+		return
+	}
+	absPath := path.Join(
+		c.MusicPath,
+		folder.RightPath,
+		folder.LeftPath,
+		folder.Cover,
+	)
+	http.ServeFile(w, r, absPath)
 }
 
 func (c *Controller) GetLicence(w http.ResponseWriter, r *http.Request) {

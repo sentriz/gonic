@@ -31,7 +31,7 @@ func (c *Controller) GetArtists(w http.ResponseWriter, r *http.Request) {
 		index.Artists = append(index.Artists,
 			makeArtistFromArtist(&artist))
 	}
-	sort.Slice(indexes.List[:], func(i, j int) bool {
+	sort.Slice(indexes.List, func(i, j int) bool {
 		return indexes.List[i].Name < indexes.List[j].Name
 	})
 	sub := subsonic.NewResponse()
@@ -66,9 +66,9 @@ func (c *Controller) GetAlbum(w http.ResponseWriter, r *http.Request) {
 	}
 	var album model.Album
 	err = c.DB.
-		Preload("Artist").
+		Preload("TagArtist").
 		Preload("Tracks", func(db *gorm.DB) *gorm.DB {
-			return db.Order("tracks.track_number")
+			return db.Order("tracks.tag_track_number")
 		}).
 		First(&album, id).
 		Error
@@ -77,7 +77,7 @@ func (c *Controller) GetAlbum(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sub := subsonic.NewResponse()
-	sub.Album = makeAlbumFromAlbum(&album, &album.Artist)
+	sub.Album = makeAlbumFromAlbum(&album, &album.TagArtist)
 	for _, track := range album.Tracks {
 		sub.Album.Tracks = append(sub.Album.Tracks,
 			makeTrackFromTrack(&track, &album))
@@ -98,16 +98,16 @@ func (c *Controller) GetAlbumListTwo(w http.ResponseWriter, r *http.Request) {
 	case "alphabeticalByArtist":
 		q = q.Joins(`
 			JOIN artists
-			ON albums.artist_id = artists.id`)
+			ON albums.tag_artist_id = artists.id`)
 		q = q.Order("artists.name")
 	case "alphabeticalByName":
-		q = q.Order("title")
+		q = q.Order("tag_title")
 	case "byYear":
 		q = q.Where(
-			"year BETWEEN ? AND ?",
+			"tag_year BETWEEN ? AND ?",
 			getIntParamOr(r, "fromYear", 1800),
 			getIntParamOr(r, "toYear", 2200))
-		q = q.Order("year")
+		q = q.Order("tag_year")
 	case "frequent":
 		user := r.Context().Value(contextUserKey).(*model.User)
 		q = q.Joins(`
@@ -133,15 +133,16 @@ func (c *Controller) GetAlbumListTwo(w http.ResponseWriter, r *http.Request) {
 	}
 	var albums []model.Album
 	q.
+		Where("albums.tag_artist_id IS NOT NULL").
 		Offset(getIntParamOr(r, "offset", 0)).
 		Limit(getIntParamOr(r, "size", 10)).
-		Preload("Artist").
+		Preload("TagArtist").
 		Find(&albums)
 	sub := subsonic.NewResponse()
 	sub.AlbumsTwo = &subsonic.Albums{}
 	for _, album := range albums {
 		sub.AlbumsTwo.List = append(sub.AlbumsTwo.List,
-			makeAlbumFromAlbum(&album, &album.Artist))
+			makeAlbumFromAlbum(&album, &album.TagArtist))
 	}
 	respond(w, r, sub)
 }
@@ -171,21 +172,21 @@ func (c *Controller) SearchThree(w http.ResponseWriter, r *http.Request) {
 	// search "albums"
 	var albums []model.Album
 	c.DB.
-		Preload("Artist").
-		Where("title LIKE ?", query).
+		Preload("TagArtist").
+		Where("tag_title LIKE ?", query).
 		Offset(getIntParamOr(r, "albumOffset", 0)).
 		Limit(getIntParamOr(r, "albumCount", 20)).
 		Find(&albums)
 	for _, a := range albums {
 		results.Albums = append(results.Albums,
-			makeAlbumFromAlbum(&a, &a.Artist))
+			makeAlbumFromAlbum(&a, &a.TagArtist))
 	}
 	//
 	// search tracks
 	var tracks []model.Track
 	c.DB.
 		Preload("Album").
-		Where("title LIKE ?", query).
+		Where("tag_title LIKE ?", query).
 		Offset(getIntParamOr(r, "songOffset", 0)).
 		Limit(getIntParamOr(r, "songCount", 20)).
 		Find(&tracks)

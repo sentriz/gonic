@@ -6,7 +6,7 @@
       "album": [
         {
           "id": 6,
-          "coverArt": 2,
+          "coverArt": 6,
           "artist": "13th Floor Lowervators",
           "title": "(1967) Easter Nowhere",
           "parent": 5,
@@ -15,7 +15,7 @@
         },
         {
           "id": 7,
-          "coverArt": 3,
+          "coverArt": 7,
           "artist": "13th Floor Lowervators",
           "title": "(1966) The Psychedelic Sounds of the 13th Floor Elevators",
           "parent": 5,
@@ -24,7 +24,7 @@
         },
         {
           "id": 3,
-          "coverArt": 1,
+          "coverArt": 3,
           "artist": "A Certain Ratio",
           "title": "(1994) The Graveyard and the Ballroom",
           "parent": 2,
@@ -33,6 +33,7 @@
         },
         {
           "id": 4,
+          "coverArt": 4,
           "artist": "A Certain Ratio",
           "title": "(1981) To Each.",
           "parent": 2,
@@ -41,7 +42,7 @@
         },
         {
           "id": 11,
-          "coverArt": 4,
+          "coverArt": 11,
           "artist": "There",
           "title": "(2010) Anika",
           "parent": 10,

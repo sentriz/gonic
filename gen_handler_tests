@@ -1,0 +1,29 @@
+#!/bin/sh
+
+# by folder
+curl "http://localhost:6969/rest/getAlbumList.view?c=Jamstash&f=json&p=admin&u=admin&v=1.9.0&type=alphabeticalByArtist" | jq > server/handler/test_data/test_get_album_list_alpha_artist
+curl "http://localhost:6969/rest/getAlbumList.view?c=Jamstash&f=json&p=admin&u=admin&v=1.9.0&type=alphabeticalByName" | jq > server/handler/test_data/test_get_album_list_alpha_name
+curl "http://localhost:6969/rest/getAlbumList.view?c=Jamstash&f=json&p=admin&u=admin&v=1.9.0&type=alphabeticalByName" | jq > server/handler/test_data/test_get_album_list_two_alpha_name
+curl "http://localhost:6969/rest/getAlbumList.view?c=Jamstash&f=json&p=admin&u=admin&v=1.9.0&type=newest" | jq > server/handler/test_data/test_get_album_list_newest
+curl "http://localhost:6969/rest/getAlbumList.view?c=Jamstash&f=json&p=admin&u=admin&v=1.9.0&type=random" | jq > server/handler/test_data/test_get_album_list_random
+curl "http://localhost:6969/rest/search2.view?c=Jamstash&f=json&p=admin&u=admin&v=1.9.0&query=13" | jq > server/handler/test_data/test_search_two_q_13
+curl "http://localhost:6969/rest/search2.view?c=Jamstash&f=json&p=admin&u=admin&v=1.9.0&query=ani" | jq > server/handler/test_data/test_search_two_q_ani
+curl "http://localhost:6969/rest/search2.view?c=Jamstash&f=json&p=admin&u=admin&v=1.9.0&query=cert" | jq > server/handler/test_data/test_search_two_q_cert
+curl 'http://localhost:6969/rest/getIndexes.view?c=Jamstash&p=admin&u=admin&v=1.9.0&f=json' | jq > server/handler/test_data/test_get_indexes_no_args
+curl 'http://localhost:6969/rest/getMusicDirectory.view?c=Jamsstash&id=2&p=admin&u=admin&v=1.9.0&f=json' | jq > server/handler/test_data/test_get_music_directory_without_tracks
+curl 'http://localhost:6969/rest/getMusicDirectory.view?c=Jamsstash&id=3&p=admin&u=admin&v=1.9.0&f=json' | jq > server/handler/test_data/test_get_music_directory_with_tracks
+
+# by tags
+curl "http://localhost:6969/rest/getAlbum.view?c=Jamstash&f=json&p=admin&u=admin&v=1.9.0&id=2" | jq > server/handler/test_data/test_get_album_without_cover
+curl "http://localhost:6969/rest/getAlbum.view?c=Jamstash&f=json&p=admin&u=admin&v=1.9.0&id=3" | jq > server/handler/test_data/test_get_album_with_cover
+curl "http://localhost:6969/rest/getAlbumList2.view?c=Jamstash&f=json&p=admin&u=admin&v=1.9.0&type=alphabeticalByArtist" | jq > server/handler/test_data/test_get_album_list_two_alpha_artist
+curl "http://localhost:6969/rest/getAlbumList2.view?c=Jamstash&f=json&p=admin&u=admin&v=1.9.0&type=alphabeticalByName" | jq > server/handler/test_data/test_get_album_list_two_alpha_name
+curl "http://localhost:6969/rest/getAlbumList2.view?c=Jamstash&f=json&p=admin&u=admin&v=1.9.0&type=newest" | jq > server/handler/test_data/test_get_album_list_two_newest
+curl "http://localhost:6969/rest/getAlbumList2.view?c=Jamstash&f=json&p=admin&u=admin&v=1.9.0&type=random" | jq > server/handler/test_data/test_get_album_list_two_random
+curl "http://localhost:6969/rest/getArtist.view?c=Jamstash&f=json&p=admin&u=admin&v=1.9.0&id=1" | jq > server/handler/test_data/test_get_artist_id_one
+curl "http://localhost:6969/rest/getArtist.view?c=Jamstash&f=json&p=admin&u=admin&v=1.9.0&id=2" | jq > server/handler/test_data/test_get_artist_id_two
+curl "http://localhost:6969/rest/getArtist.view?c=Jamstash&f=json&p=admin&u=admin&v=1.9.0&id=3" | jq > server/handler/test_data/test_get_artist_id_three
+curl "http://localhost:6969/rest/getArtists.view?c=Jamstash&f=json&p=admin&u=admin&v=1.9.0" | jq > server/handler/test_data/test_get_artists_no_args
+curl "http://localhost:6969/rest/search3.view?c=Jamstash&f=json&p=admin&u=admin&v=1.9.0&query=13" | jq > server/handler/test_data/test_search_three_q_13
+curl "http://localhost:6969/rest/search3.view?c=Jamstash&f=json&p=admin&u=admin&v=1.9.0&query=ani" | jq > server/handler/test_data/test_search_three_q_ani
+curl "http://localhost:6969/rest/search3.view?c=Jamstash&f=json&p=admin&u=admin&v=1.9.0&query=cert" | jq > server/handler/test_data/test_search_three_q_cert

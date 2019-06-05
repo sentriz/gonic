@@ -1,6 +1,6 @@
 package server
 
-func (s *Server) setupSubsonic() {
+func (s *Server) SetupSubsonic() {
 	withWare := newChain(
 		s.WithLogging,
 		s.WithCORS,

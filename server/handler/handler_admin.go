@@ -128,7 +128,10 @@ func (c *Controller) ServeChangePassword(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	var user model.User
-	err := c.DB.Where("name = ?", username).First(&user).Error
+	err := c.DB.
+		Where("name = ?", username).
+		First(&user).
+		Error
 	if gorm.IsRecordNotFoundError(err) {
 		http.Error(w, "couldn't find a user with that name", 400)
 		return
@@ -142,7 +145,9 @@ func (c *Controller) ServeChangePasswordDo(w http.ResponseWriter, r *http.Reques
 	session := r.Context().Value(contextSessionKey).(*sessions.Session)
 	username := r.URL.Query().Get("user")
 	var user model.User
-	c.DB.Where("name = ?", username).First(&user)
+	c.DB.
+		Where("name = ?", username).
+		First(&user)
 	passwordOne := r.FormValue("password_one")
 	passwordTwo := r.FormValue("password_two")
 	err := validatePasswords(passwordOne, passwordTwo)
@@ -164,7 +169,10 @@ func (c *Controller) ServeDeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var user model.User
-	err := c.DB.Where("name = ?", username).First(&user).Error
+	err := c.DB.
+		Where("name = ?", username).
+		First(&user).
+		Error
 	if gorm.IsRecordNotFoundError(err) {
 		http.Error(w, "couldn't find a user with that name", 400)
 		return
@@ -177,7 +185,9 @@ func (c *Controller) ServeDeleteUser(w http.ResponseWriter, r *http.Request) {
 func (c *Controller) ServeDeleteUserDo(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("user")
 	var user model.User
-	c.DB.Where("name = ?", username).First(&user)
+	c.DB.
+		Where("name = ?", username).
+		First(&user)
 	c.DB.Delete(&user)
 	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 }

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
 
 	"github.com/sentriz/gonic/server/handler"
 )
@@ -43,12 +42,9 @@ func New(db *gorm.DB, musicPath string, listenAddr string) *Server {
 		DB:        db,
 		MusicPath: musicPath,
 	}
-	ret := &Server{
+	return &Server{
 		mux:        mux,
 		Server:     server,
 		Controller: controller,
 	}
-	ret.setupAdmin()
-	ret.setupSubsonic()
-	return ret
 }

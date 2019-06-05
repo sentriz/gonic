@@ -1,31 +1,26 @@
 package model
 
 import (
+	"path"
 	"time"
-)
 
-// q:  what in tarnation are the `IsNew`s for?
-// a:  it's a bit of a hack - but we set a models IsNew to true if
-//     we just filled it in for the first time, so when it comes
-//     time to insert them (post children callback) we can check for
-//     that bool being true - since it won't be true if it was already
-//     in the db
+	"github.com/sentriz/gonic/mime"
+)
 
 type Artist struct {
 	IDBase
-	Name    string `gorm:"not null; unique_index"`
-	Folders []Folder
+	Name   string  `gorm:"not null; unique_index"`
+	Albums []Album `gorm:"foreignkey:TagArtistID"`
 }
 
 type Track struct {
 	IDBase
 	CrudBase
-	Folder         Folder
-	FolderID       int    `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null; type:int REFERENCES folders(id) ON DELETE CASCADE"`
+	Album          Album
+	AlbumID        int    `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Filename       string `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null"`
 	Artist         Artist
 	ArtistID       int    `gorm:"not null; index" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
-	ContentType    string `gorm:"not null" sql:"default: null"`
 	Duration       int    `gorm:"not null" sql:"default: null"`
 	Size           int    `gorm:"not null" sql:"default: null"`
 	Bitrate        int    `gorm:"not null" sql:"default: null"`
@@ -36,6 +31,19 @@ type Track struct {
 	TagTrackArtist string `sql:"default: null"`
 	TagTrackNumber int    `sql:"default: null"`
 	TagYear        int    `sql:"default: null"`
+}
+
+func (t *Track) Ext() string {
+	longExt := path.Ext(t.Filename)
+	if len(longExt) < 1 {
+		return ""
+	}
+	return longExt[1:]
+}
+
+func (t *Track) MIME() string {
+	ext := t.Ext()
+	return mime.Types[ext]
 }
 
 type User struct {
@@ -55,25 +63,26 @@ type Setting struct {
 
 type Play struct {
 	IDBase
-	User     User
-	UserID   int `gorm:"not null; index" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
-	Folder   Folder
-	FolderID int       `gorm:"not null; index" sql:"default: null; type:int REFERENCES folders(id) ON DELETE CASCADE"`
-	Time     time.Time `sql:"default: null"`
-	Count    int
+	User    User
+	UserID  int `gorm:"not null; index" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
+	Album   Album
+	AlbumID int       `gorm:"not null; index" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	Time    time.Time `sql:"default: null"`
+	Count   int
 }
 
-type Folder struct {
+type Album struct {
 	IDBase
 	CrudBase
-	Path          string `gorm:"not null; unique_index" sql:"default: null"`
-	Parent        *Folder
-	ParentID      int `sql:"default: null; type:int REFERENCES folders(id) ON DELETE CASCADE"`
-	AlbumArtist   Artist
-	AlbumArtistID int    `gorm:"index" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
-	AlbumTitle    string `gorm:"index" sql:"default: null"`
-	AlbumYear     int    `sql:"default: null"`
-	Cover         string `sql:"default: null"`
-	Tracks        []Track
-	IsNew         bool `gorm:"-"`
+	LeftPath    string `gorm:"unique_index:idx_left_path_right_path"`
+	RightPath   string `gorm:"not null; unique_index:idx_left_path_right_path" sql:"default: null"`
+	Parent      *Album
+	ParentID    int    `sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	Cover       string `sql:"default: null"`
+	TagArtist   Artist
+	TagArtistID int    `gorm:"index" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
+	TagTitle    string `gorm:"index" sql:"default: null"`
+	TagYear     int    `sql:"default: null"`
+	Tracks      []Track
+	IsNew       bool `gorm:"-"`
 }

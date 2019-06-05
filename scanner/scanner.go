@@ -33,7 +33,7 @@ func New(db *gorm.DB, musicPath string) *Scanner {
 	}
 }
 
-func (s *Scanner) curFolder() *model.Folder {
+func (s *Scanner) curFolder() *model.Album {
 	return s.curFolders.Peek()
 }
 
@@ -43,6 +43,26 @@ func (s *Scanner) curFolderID() int {
 		return 0
 	}
 	return peek.ID
+}
+
+func (s *Scanner) MigrateDB() error {
+	defer logElapsed(time.Now(), "migrating database")
+	s.tx = s.db.Begin()
+	defer s.tx.Commit()
+	s.tx.AutoMigrate(
+		model.Artist{},
+		model.Track{},
+		model.User{},
+		model.Setting{},
+		model.Play{},
+		model.Album{},
+	)
+	s.tx.FirstOrCreate(&model.User{}, model.User{
+		Name:     "admin",
+		Password: "admin",
+		IsAdmin:  true,
+	})
+	return nil
 }
 
 func (s *Scanner) Start() error {
@@ -82,38 +102,22 @@ func (s *Scanner) startScan() error {
 
 func (s *Scanner) startClean() error {
 	defer logElapsed(time.Now(), "cleaning database")
-	var tracks []model.Track
-	s.tx.
+	var tracks []*model.Track
+	err := s.tx.
 		Select("id").
-		Find(&tracks)
+		Find(&tracks).
+		Error
+	if err != nil {
+		return errors.Wrap(err, "scanning tracks")
+	}
 	var deleted int
 	for _, track := range tracks {
 		_, ok := s.seenTracks[track.ID]
 		if !ok {
-			s.tx.Delete(&track)
+			s.tx.Delete(track)
 			deleted++
 		}
 	}
 	log.Printf("removed %d tracks\n", deleted)
-	return nil
-}
-
-func (s *Scanner) MigrateDB() error {
-	defer logElapsed(time.Now(), "migrating database")
-	s.tx = s.db.Begin()
-	defer s.tx.Commit()
-	s.tx.AutoMigrate(
-		model.Artist{},
-		model.Track{},
-		model.User{},
-		model.Setting{},
-		model.Play{},
-		model.Folder{},
-	)
-	s.tx.FirstOrCreate(&model.User{}, model.User{
-		Name:     "admin",
-		Password: "admin",
-		IsAdmin:  true,
-	})
 	return nil
 }

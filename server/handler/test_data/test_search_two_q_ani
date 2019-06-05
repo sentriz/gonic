@@ -7,12 +7,12 @@
         {
           "id": 8,
           "parent": 1,
-          "name": "Anika"
+          "name": "___Anika"
         }
       ],
       "album": [
         {
-          "coverArt": 4,
+          "coverArt": 11,
           "created": "0001-01-01T00:00:00Z",
           "id": 11,
           "isDir": true,

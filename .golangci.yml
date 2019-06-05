@@ -1,0 +1,32 @@
+linters:
+  enable-all: true
+  disable:
+    - gochecknoglobals
+    - gochecknoinits
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+    - text: "weak cryptographic primitive"
+      linters:
+        - gosec
+    - path: model/model.go
+      linters:
+        - lll
+    - path: server/handler/
+      source: "next http.HandlerFunc"
+      linters:
+        - interfacer
+    - path: server/handler/
+      source: "session.Save"
+      linters:
+        - errcheck
+    - path: server/handler/
+      source: "w.Write"
+      linters:
+        - errcheck

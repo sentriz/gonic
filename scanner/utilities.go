@@ -7,27 +7,19 @@ import (
 	"github.com/pkg/errors"
 )
 
-var mimeTypes = map[string]string{
-	"mp3":  "audio/mpeg",
-	"flac": "audio/x-flac",
-	"aac":  "audio/x-aac",
-	"m4a":  "audio/m4a",
-	"ogg":  "audio/ogg",
-}
-
 var coverFilenames = map[string]struct{}{
-	"cover.png":   struct{}{},
-	"cover.jpg":   struct{}{},
-	"cover.jpeg":  struct{}{},
-	"folder.png":  struct{}{},
-	"folder.jpg":  struct{}{},
-	"folder.jpeg": struct{}{},
-	"album.png":   struct{}{},
-	"album.jpg":   struct{}{},
-	"album.jpeg":  struct{}{},
-	"front.png":   struct{}{},
-	"front.jpg":   struct{}{},
-	"front.jpeg":  struct{}{},
+	"cover.png":   {},
+	"cover.jpg":   {},
+	"cover.jpeg":  {},
+	"folder.png":  {},
+	"folder.jpg":  {},
+	"folder.jpeg": {},
+	"album.png":   {},
+	"album.jpg":   {},
+	"album.jpeg":  {},
+	"front.png":   {},
+	"front.jpg":   {},
+	"front.jpeg":  {},
 }
 
 func readTags(path string) (tag.Metadata, error) {

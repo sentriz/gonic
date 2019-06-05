@@ -10,20 +10,16 @@ import (
 	"github.com/karrick/godirwalk"
 	"github.com/pkg/errors"
 
+	"github.com/sentriz/gonic/mime"
 	"github.com/sentriz/gonic/model"
 )
 
 type item struct {
-	//
-	// common
-	fullPath string
-	relPath  string
-	filename string
-	stat     os.FileInfo
-	//
-	// track only
-	ext  string
-	mime string
+	fullPath  string
+	relPath   string
+	directory string
+	filename  string
+	stat      os.FileInfo
 }
 
 func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
@@ -35,12 +31,13 @@ func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
 	if err != nil {
 		return errors.Wrap(err, "getting relative path")
 	}
-	_, filename := path.Split(relPath)
+	directory, filename := path.Split(relPath)
 	it := &item{
-		fullPath: fullPath,
-		relPath:  relPath,
-		filename: filename,
-		stat:     stat,
+		fullPath:  fullPath,
+		relPath:   relPath,
+		directory: directory,
+		filename:  filename,
+		stat:      stat,
 	}
 	if info.IsDir() {
 		return s.handleFolder(it)
@@ -50,9 +47,7 @@ func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
 		return nil
 	}
 	ext := path.Ext(filename)[1:]
-	if mime, ok := mimeTypes[ext]; ok {
-		it.ext = ext
-		it.mime = mime
+	if _, ok := mime.Types[ext]; ok {
 		return s.handleTrack(it)
 	}
 	return nil
@@ -71,9 +66,12 @@ func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
 }
 
 func (s *Scanner) handleFolder(it *item) error {
-	var folder model.Folder
+	var folder model.Album
 	err := s.tx.
-		Where("path = ?", it.relPath).
+		Where(model.Album{
+			LeftPath:  it.directory,
+			RightPath: it.filename,
+		}).
 		First(&folder).
 		Error
 	if !gorm.IsRecordNotFoundError(err) &&
@@ -82,7 +80,8 @@ func (s *Scanner) handleFolder(it *item) error {
 		s.curFolders.Push(&folder)
 		return nil
 	}
-	folder.Path = it.relPath
+	folder.LeftPath = it.directory
+	folder.RightPath = it.filename
 	s.tx.Save(&folder)
 	folder.IsNew = true
 	s.curFolders.Push(&folder)
@@ -95,7 +94,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	var track model.Track
 	err := s.tx.
 		Where(model.Track{
-			FolderID: s.curFolderID(),
+			AlbumID:  s.curFolderID(),
 			Filename: it.filename,
 		}).
 		First(&track).
@@ -107,9 +106,8 @@ func (s *Scanner) handleTrack(it *item) error {
 		return nil
 	}
 	track.Filename = it.filename
-	track.ContentType = it.mime
 	track.Size = int(it.stat.Size())
-	track.FolderID = s.curFolderID()
+	track.AlbumID = s.curFolderID()
 	track.Duration = -1
 	track.Bitrate = -1
 	tags, err := readTags(it.fullPath)
@@ -128,7 +126,8 @@ func (s *Scanner) handleTrack(it *item) error {
 	//
 	// set album artist basics
 	var artist model.Artist
-	err = s.tx.Where("name = ?", tags.AlbumArtist()).
+	err = s.tx.
+		Where("name = ?", tags.AlbumArtist()).
 		First(&artist).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
@@ -143,8 +142,8 @@ func (s *Scanner) handleTrack(it *item) error {
 	if !s.curFolder().IsNew {
 		return nil
 	}
-	s.curFolder().AlbumTitle = tags.Album()
-	s.curFolder().AlbumYear = tags.Year()
-	s.curFolder().AlbumArtistID = artist.ID
+	s.curFolder().TagTitle = tags.Album()
+	s.curFolder().TagYear = tags.Year()
+	s.curFolder().TagArtistID = artist.ID
 	return nil
 }

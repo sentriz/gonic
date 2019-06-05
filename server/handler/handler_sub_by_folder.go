@@ -19,12 +19,14 @@ import (
 // under the root directory
 
 func (c *Controller) GetIndexes(w http.ResponseWriter, r *http.Request) {
-	var folders []model.Folder
-	c.DB.Where("parent_id = 1").Find(&folders)
+	var folders []model.Album
+	c.DB.
+		Where("parent_id = 1").
+		Find(&folders)
 	var indexMap = make(map[rune]*subsonic.Index)
 	var indexes []*subsonic.Index
 	for _, folder := range folders {
-		i := indexOf(folder.Name)
+		i := indexOf(folder.RightPath)
 		index, ok := indexMap[i]
 		if !ok {
 			index = &subsonic.Index{
@@ -37,7 +39,7 @@ func (c *Controller) GetIndexes(w http.ResponseWriter, r *http.Request) {
 		index.Artists = append(index.Artists,
 			makeArtistFromFolder(&folder))
 	}
-	sort.Slice(indexes[:], func(i, j int) bool {
+	sort.Slice(indexes, func(i, j int) bool {
 		return indexes[i].Name < indexes[j].Name
 	})
 	sub := subsonic.NewResponse()
@@ -55,11 +57,11 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	childrenObj := []*subsonic.Track{}
-	var folder model.Folder
+	var folder model.Album
 	c.DB.First(&folder, id)
 	//
 	// start looking for child childFolders in the current dir
-	var childFolders []model.Folder
+	var childFolders []model.Album
 	c.DB.
 		Where("parent_id = ?", id).
 		Find(&childFolders)
@@ -71,18 +73,18 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 	// start looking for child childTracks in the current dir
 	var childTracks []model.Track
 	c.DB.
-		Where("folder_id = ?", id).
+		Where("album_id = ?", id).
 		Preload("Album").
-		Order("title").
+		Order("filename").
 		Find(&childTracks)
 	for _, c := range childTracks {
+		toAppend := makeChildFromTrack(&c, &folder)
 		if getStrParam(r, "c") == "Jamstash" {
 			// jamstash thinks it can't play flacs
-			c.ContentType = "audio/mpeg"
-			c.Suffix = "mp3"
+			toAppend.ContentType = "audio/mpeg"
+			toAppend.Suffix = "mp3"
 		}
-		childrenObj = append(childrenObj,
-			makeChildFromTrack(&c, &folder))
+		childrenObj = append(childrenObj, toAppend)
 	}
 	//
 	// respond section
@@ -103,16 +105,16 @@ func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
 	switch listType {
 	case "alphabeticalByArtist":
 		q = q.Joins(`
-			JOIN folders AS parent_folders
-			ON folders.parent_id = parent_folders.id`)
-		q = q.Order("parent_folders.name")
+			JOIN albums AS parent_albums
+			ON albums.parent_id = parent_albums.id`)
+		q = q.Order("parent_albums.right_path")
 	case "alphabeticalByName":
-		q = q.Order("name")
+		q = q.Order("right_path")
 	case "frequent":
 		user := r.Context().Value(contextUserKey).(*model.User)
 		q = q.Joins(`
 			JOIN plays
-			ON folders.id = plays.folder_id AND plays.user_id = ?`,
+			ON albums.id = plays.album_id AND plays.user_id = ?`,
 			user.ID)
 		q = q.Order("plays.count DESC")
 	case "newest":
@@ -123,7 +125,7 @@ func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
 		user := r.Context().Value(contextUserKey).(*model.User)
 		q = q.Joins(`
 			JOIN plays
-			ON folders.id = plays.folder_id AND plays.user_id = ?`,
+			ON albums.id = plays.album_id AND plays.user_id = ?`,
 			user.ID)
 		q = q.Order("plays.time DESC")
 	default:
@@ -131,9 +133,9 @@ func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
 			"unknown value `%s` for parameter 'type'", listType)
 		return
 	}
-	var folders []model.Folder
+	var folders []model.Album
 	q.
-		Where("folders.has_tracks = 1").
+		Where("albums.tag_artist_id IS NOT NULL").
 		Offset(getIntParamOr(r, "offset", 0)).
 		Limit(getIntParamOr(r, "size", 10)).
 		Preload("Parent").
@@ -158,9 +160,9 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 	results := &subsonic.SearchResultTwo{}
 	//
 	// search "artists"
-	var artists []model.Folder
+	var artists []model.Album
 	c.DB.
-		Where("parent_id = 1 AND name LIKE ?", query).
+		Where("parent_id = 1 AND right_path LIKE ?", query).
 		Offset(getIntParamOr(r, "artistOffset", 0)).
 		Limit(getIntParamOr(r, "artistCount", 20)).
 		Find(&artists)
@@ -170,10 +172,10 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 	}
 	//
 	// search "albums"
-	var albums []model.Folder
+	var albums []model.Album
 	c.DB.
 		Preload("Parent").
-		Where("has_tracks = 1 AND name LIKE ?", query).
+		Where("tag_artist_id IS NOT NULL AND right_path LIKE ?", query).
 		Offset(getIntParamOr(r, "albumOffset", 0)).
 		Limit(getIntParamOr(r, "albumCount", 20)).
 		Find(&albums)
@@ -185,14 +187,14 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 	// search tracks
 	var tracks []model.Track
 	c.DB.
-		Preload("Folder").
-		Where("title LIKE ?", query).
+		Preload("Album").
+		Where("filename LIKE ?", query).
 		Offset(getIntParamOr(r, "songOffset", 0)).
 		Limit(getIntParamOr(r, "songCount", 20)).
 		Find(&tracks)
 	for _, t := range tracks {
 		results.Tracks = append(results.Tracks,
-			makeChildFromTrack(&t, &t.Folder))
+			makeChildFromTrack(&t, &t.Album))
 	}
 	//
 	sub := subsonic.NewResponse()

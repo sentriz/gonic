@@ -25,7 +25,9 @@ type Controller struct {
 
 func (c *Controller) GetSetting(key string) string {
 	var setting model.Setting
-	c.DB.Where("key = ?", key).First(&setting)
+	c.DB.
+		Where("key = ?", key).
+		First(&setting)
 	return setting.Value
 }
 

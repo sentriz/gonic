@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"path"
+
 	"github.com/sentriz/gonic/model"
 	"github.com/sentriz/gonic/server/subsonic"
 )
@@ -8,9 +10,9 @@ import (
 func makeAlbumFromAlbum(a *model.Album, artist *model.Artist) *subsonic.Album {
 	return &subsonic.Album{
 		ID:       a.ID,
-		Name:     a.Title,
+		Name:     a.TagTitle,
 		Created:  a.CreatedAt,
-		CoverID:  a.CoverID,
+		CoverID:  a.ID,
 		Artist:   artist.Name,
 		ArtistID: artist.ID,
 	}
@@ -19,20 +21,24 @@ func makeAlbumFromAlbum(a *model.Album, artist *model.Artist) *subsonic.Album {
 func makeTrackFromTrack(t *model.Track, album *model.Album) *subsonic.Track {
 	return &subsonic.Track{
 		ID:          t.ID,
-		Title:       t.Title,
-		Artist:      t.TrackArtist,
-		TrackNumber: t.TrackNumber,
-		ContentType: t.ContentType,
-		Path:        t.Path,
-		ParentID:    t.FolderID,
-		Suffix:      t.Suffix,
+		ContentType: t.MIME(),
+		Suffix:      t.Ext(),
+		ParentID:    t.AlbumID,
 		CreatedAt:   t.CreatedAt,
 		Size:        t.Size,
-		Album:       album.Title,
-		AlbumID:     album.ID,
-		ArtistID:    album.Artist.ID,
-		CoverID:     album.CoverID,
-		Type:        "music",
+		Title:       t.TagTitle,
+		Artist:      t.TagTrackArtist,
+		TrackNumber: t.TagTrackNumber,
+		Path: path.Join(
+			album.LeftPath,
+			album.RightPath,
+			t.Filename,
+		),
+		Album:    album.TagTitle,
+		AlbumID:  album.ID,
+		ArtistID: album.TagArtist.ID,
+		CoverID:  album.ID,
+		Type:     "music",
 	}
 }
 

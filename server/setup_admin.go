@@ -28,14 +28,14 @@ func extendFromBox(tmpl *template.Template, box *packr.Box, key string) *templat
 	return newT
 }
 
-func (s *Server) setupAdmin() {
+func (s *Server) SetupAdmin() {
 	sessionKey := []byte(s.GetSetting("session_key"))
 	if len(sessionKey) == 0 {
 		sessionKey = securecookie.GenerateRandomKey(32)
 		s.SetSetting("session_key", string(sessionKey))
 	}
 	// create gormstore (and cleanup) for backend sessions
-	s.SessDB = gormstore.New(s.DB, []byte(sessionKey))
+	s.SessDB = gormstore.New(s.DB, sessionKey)
 	go s.SessDB.PeriodicCleanup(1*time.Hour, nil)
 	// using packr to bundle templates and static files
 	box := packr.New("templates", "./templates")
