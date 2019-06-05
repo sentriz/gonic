@@ -17,7 +17,7 @@ type Response struct {
 	Albums            *Albums            `xml:"albumList"     json:"albumList,omitempty"`
 	AlbumsTwo         *Albums            `xml:"albumList2"    json:"albumList2,omitempty"`
 	Album             *Album             `xml:"album"         json:"album,omitempty"`
-	Track             *Track             `xml:"song"          json:"song,omitempty"`
+	Track             *TrackChild        `xml:"song"          json:"song,omitempty"`
 	Indexes           *Indexes           `xml:"indexes"       json:"indexes,omitempty"`
 	Artists           *Artists           `xml:"artists"       json:"artists,omitempty"`
 	Artist            *Artist            `xml:"artist"        json:"artist,omitempty"`
@@ -71,18 +71,18 @@ type Album struct {
 	ParentID int    `xml:"parent,attr,omitempty" json:"parent,omitempty"`
 	IsDir    bool   `xml:"isDir,attr,omitempty"  json:"isDir,omitempty"`
 	// browsing by tags (getAlbumList2)
-	Name       string    `xml:"name,attr,omitempty"      json:"name,omitempty"`
-	TrackCount int       `xml:"songCount,attr,omitempty" json:"songCount,omitempty"`
-	Duration   int       `xml:"duration,attr,omitempty"  json:"duration,omitempty"`
-	Created    time.Time `xml:"created,attr,omitempty"   json:"created,omitempty"`
-	Tracks     []*Track  `xml:"song,omitempty"           json:"song,omitempty"`
+	Name       string        `xml:"name,attr,omitempty"      json:"name,omitempty"`
+	TrackCount int           `xml:"songCount,attr,omitempty" json:"songCount,omitempty"`
+	Duration   int           `xml:"duration,attr,omitempty"  json:"duration,omitempty"`
+	Created    time.Time     `xml:"created,attr,omitempty"   json:"created,omitempty"`
+	Tracks     []*TrackChild `xml:"song,omitempty"           json:"song,omitempty"`
 }
 
 type RandomTracks struct {
-	Tracks []*Track `xml:"song"        json:"song"`
+	Tracks []*TrackChild `xml:"song"        json:"song"`
 }
 
-type Track struct {
+type TrackChild struct {
 	Album       string    `xml:"album,attr,omitempty"       json:"album,omitempty"`
 	AlbumID     int       `xml:"albumId,attr,omitempty"     json:"albumId,omitempty"`
 	Artist      string    `xml:"artist,attr,omitempty"      json:"artist,omitempty"`
@@ -128,11 +128,11 @@ type Index struct {
 }
 
 type Directory struct {
-	ID       int      `xml:"id,attr,omitempty"      json:"id"`
-	Parent   int      `xml:"parent,attr,omitempty"  json:"parent"`
-	Name     string   `xml:"name,attr,omitempty"    json:"name"`
-	Starred  string   `xml:"starred,attr,omitempty" json:"starred,omitempty"`
-	Children []*Track `xml:"child,omitempty"        json:"child,omitempty"`
+	ID       int           `xml:"id,attr,omitempty"      json:"id"`
+	Parent   int           `xml:"parent,attr,omitempty"  json:"parent"`
+	Name     string        `xml:"name,attr,omitempty"    json:"name"`
+	Starred  string        `xml:"starred,attr,omitempty" json:"starred,omitempty"`
+	Children []*TrackChild `xml:"child,omitempty"        json:"child,omitempty"`
 }
 
 type MusicFolders struct {
@@ -154,13 +154,13 @@ type ScanStatus struct {
 }
 
 type SearchResultTwo struct {
-	Artists []*Directory `xml:"artist,omitempty" json:"artist,omitempty"`
-	Albums  []*Track     `xml:"album,omitempty"  json:"album,omitempty"`
-	Tracks  []*Track     `xml:"song,omitempty"   json:"song,omitempty"`
+	Artists []*Directory  `xml:"artist,omitempty" json:"artist,omitempty"`
+	Albums  []*TrackChild `xml:"album,omitempty"  json:"album,omitempty"`
+	Tracks  []*TrackChild `xml:"song,omitempty"   json:"song,omitempty"`
 }
 
 type SearchResultThree struct {
-	Artists []*Artist `xml:"artist,omitempty" json:"artist,omitempty"`
-	Albums  []*Album  `xml:"album,omitempty"  json:"album,omitempty"`
-	Tracks  []*Track  `xml:"song,omitempty"   json:"song,omitempty"`
+	Artists []*Artist     `xml:"artist,omitempty" json:"artist,omitempty"`
+	Albums  []*Album      `xml:"album,omitempty"  json:"album,omitempty"`
+	Tracks  []*TrackChild `xml:"song,omitempty"   json:"song,omitempty"`
 }

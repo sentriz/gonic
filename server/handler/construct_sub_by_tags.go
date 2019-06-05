@@ -7,12 +7,12 @@ import (
 	"github.com/sentriz/gonic/server/subsonic"
 )
 
-func makeAlbumFromAlbum(a *model.Album, artist *model.Artist) *subsonic.Album {
+func newAlbumByTags(a *model.Album, artist *model.Artist) *subsonic.Album {
 	ret := &subsonic.Album{
+		CoverID: a.ID,
+		Created: a.CreatedAt,
 		ID:      a.ID,
 		Name:    a.TagTitle,
-		Created: a.CreatedAt,
-		CoverID: a.ID,
 	}
 	if artist != nil {
 		ret.Artist = artist.Name
@@ -21,8 +21,8 @@ func makeAlbumFromAlbum(a *model.Album, artist *model.Artist) *subsonic.Album {
 	return ret
 }
 
-func makeTrackFromTrack(t *model.Track, album *model.Album) *subsonic.Track {
-	return &subsonic.Track{
+func newTrackByTags(t *model.Track, album *model.Album) *subsonic.TrackChild {
+	return &subsonic.TrackChild{
 		ID:          t.ID,
 		ContentType: t.MIME(),
 		Suffix:      t.Ext(),
@@ -45,7 +45,7 @@ func makeTrackFromTrack(t *model.Track, album *model.Album) *subsonic.Track {
 	}
 }
 
-func makeArtistFromArtist(a *model.Artist) *subsonic.Artist {
+func newArtistByTags(a *model.Artist) *subsonic.Artist {
 	return &subsonic.Artist{
 		ID:   a.ID,
 		Name: a.Name,

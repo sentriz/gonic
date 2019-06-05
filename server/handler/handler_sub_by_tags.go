@@ -29,7 +29,7 @@ func (c *Controller) GetArtists(w http.ResponseWriter, r *http.Request) {
 			indexes.List = append(indexes.List, index)
 		}
 		index.Artists = append(index.Artists,
-			makeArtistFromArtist(artist))
+			newArtistByTags(artist))
 	}
 	sort.Slice(indexes.List, func(i, j int) bool {
 		return indexes.List[i].Name < indexes.List[j].Name
@@ -50,10 +50,10 @@ func (c *Controller) GetArtist(w http.ResponseWriter, r *http.Request) {
 		Preload("Albums").
 		First(artist, id)
 	sub := subsonic.NewResponse()
-	sub.Artist = makeArtistFromArtist(artist)
+	sub.Artist = newArtistByTags(artist)
 	for _, album := range artist.Albums {
 		sub.Artist.Albums = append(sub.Artist.Albums,
-			makeAlbumFromAlbum(album, artist))
+			newAlbumByTags(album, artist))
 	}
 	respond(w, r, sub)
 }
@@ -77,10 +77,10 @@ func (c *Controller) GetAlbum(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sub := subsonic.NewResponse()
-	sub.Album = makeAlbumFromAlbum(album, album.TagArtist)
+	sub.Album = newAlbumByTags(album, album.TagArtist)
 	for _, track := range album.Tracks {
 		sub.Album.Tracks = append(sub.Album.Tracks,
-			makeTrackFromTrack(track, album))
+			newTrackByTags(track, album))
 	}
 	respond(w, r, sub)
 }
@@ -142,7 +142,7 @@ func (c *Controller) GetAlbumListTwo(w http.ResponseWriter, r *http.Request) {
 	sub.AlbumsTwo = &subsonic.Albums{}
 	for _, album := range albums {
 		sub.AlbumsTwo.List = append(sub.AlbumsTwo.List,
-			makeAlbumFromAlbum(album, album.TagArtist))
+			newAlbumByTags(album, album.TagArtist))
 	}
 	respond(w, r, sub)
 }
@@ -166,7 +166,7 @@ func (c *Controller) SearchThree(w http.ResponseWriter, r *http.Request) {
 		Find(&artists)
 	for _, a := range artists {
 		results.Artists = append(results.Artists,
-			makeArtistFromArtist(a))
+			newArtistByTags(a))
 	}
 	//
 	// search "albums"
@@ -179,7 +179,7 @@ func (c *Controller) SearchThree(w http.ResponseWriter, r *http.Request) {
 		Find(&albums)
 	for _, a := range albums {
 		results.Albums = append(results.Albums,
-			makeAlbumFromAlbum(a, a.TagArtist))
+			newAlbumByTags(a, a.TagArtist))
 	}
 	//
 	// search tracks
@@ -192,7 +192,7 @@ func (c *Controller) SearchThree(w http.ResponseWriter, r *http.Request) {
 		Find(&tracks)
 	for _, t := range tracks {
 		results.Tracks = append(results.Tracks,
-			makeTrackFromTrack(t, t.Album))
+			newTrackByTags(t, t.Album))
 	}
 	sub := subsonic.NewResponse()
 	sub.SearchResultThree = results

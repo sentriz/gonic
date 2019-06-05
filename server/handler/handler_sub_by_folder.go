@@ -37,7 +37,7 @@ func (c *Controller) GetIndexes(w http.ResponseWriter, r *http.Request) {
 			indexes = append(indexes, index)
 		}
 		index.Artists = append(index.Artists,
-			makeArtistFromFolder(folder))
+			newArtistByFolder(folder))
 	}
 	sort.Slice(indexes, func(i, j int) bool {
 		return indexes[i].Name < indexes[j].Name
@@ -56,7 +56,7 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, 10, "please provide an `id` parameter")
 		return
 	}
-	childrenObj := []*subsonic.Track{}
+	childrenObj := []*subsonic.TrackChild{}
 	folder := &model.Album{}
 	c.DB.First(folder, id)
 	//
@@ -67,7 +67,7 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 		Find(&childFolders)
 	for _, c := range childFolders {
 		childrenObj = append(childrenObj,
-			makeChildFromFolder(c, folder))
+			newTCAlbumByFolder(c, folder))
 	}
 	//
 	// start looking for child childTracks in the current dir
@@ -78,7 +78,7 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 		Order("filename").
 		Find(&childTracks)
 	for _, c := range childTracks {
-		toAppend := makeChildFromTrack(c, folder)
+		toAppend := newTCTrackByFolder(c, folder)
 		if getStrParam(r, "c") == "Jamstash" {
 			// jamstash thinks it can't play flacs
 			toAppend.ContentType = "audio/mpeg"
@@ -89,7 +89,7 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 	//
 	// respond section
 	sub := subsonic.NewResponse()
-	sub.Directory = makeDirFromFolder(folder, childrenObj)
+	sub.Directory = newDirectoryByFolder(folder, childrenObj)
 	respond(w, r, sub)
 }
 
@@ -144,7 +144,7 @@ func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
 	sub.Albums = &subsonic.Albums{}
 	for _, folder := range folders {
 		sub.Albums.List = append(sub.Albums.List,
-			makeAlbumFromFolder(folder))
+			newAlbumByFolder(folder))
 	}
 	respond(w, r, sub)
 }
@@ -168,7 +168,7 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 		Find(&artists)
 	for _, a := range artists {
 		results.Artists = append(results.Artists,
-			makeDirFromFolder(a, nil))
+			newDirectoryByFolder(a, nil))
 	}
 	//
 	// search "albums"
@@ -181,7 +181,7 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 		Find(&albums)
 	for _, a := range albums {
 		results.Albums = append(results.Albums,
-			makeChildFromFolder(a, a.Parent))
+			newTCAlbumByFolder(a, a.Parent))
 	}
 	//
 	// search tracks
@@ -194,7 +194,7 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 		Find(&tracks)
 	for _, t := range tracks {
 		results.Tracks = append(results.Tracks,
-			makeChildFromTrack(t, t.Album))
+			newTCTrackByFolder(t, t.Album))
 	}
 	//
 	sub := subsonic.NewResponse()
