@@ -38,11 +38,12 @@ var coverFilenames = map[string]struct{}{
 }
 
 type Scanner struct {
-	db, tx     *gorm.DB
-	musicPath  string
-	seenTracks map[int]struct{}
-	curFolders folderStack
-	curCover   string
+	db, tx        *gorm.DB
+	musicPath     string
+	seenTracks    map[int]struct{}
+	seenTracksNew int
+	curFolders    folderStack
+	curCover      string
 }
 
 func New(db *gorm.DB, musicPath string) *Scanner {
@@ -67,7 +68,6 @@ func (s *Scanner) curFolderID() int {
 }
 
 func (s *Scanner) MigrateDB() error {
-	defer logElapsed(time.Now(), "migrating database")
 	s.tx = s.db.Begin()
 	defer s.tx.Commit()
 	s.tx.AutoMigrate(
@@ -83,6 +83,7 @@ func (s *Scanner) MigrateDB() error {
 		Password: "admin",
 		IsAdmin:  true,
 	})
+	log.Printf("finished migrating")
 	return nil
 }
 
@@ -94,22 +95,9 @@ func (s *Scanner) Start() error {
 	defer atomic.StoreInt32(&IsScanning, 0)
 	s.tx = s.db.Begin()
 	defer s.tx.Commit()
-	if err := s.startScan(); err != nil {
-		return errors.Wrap(err, "start scan")
-	}
-	if err := s.startClean(); err != nil {
-		return errors.Wrap(err, "start clean")
-	}
-	return nil
-}
-
-func logElapsed(start time.Time, name string) {
-	elapsed := time.Since(start)
-	log.Printf("finished %s in %s\n", name, elapsed)
-}
-
-func (s *Scanner) startScan() error {
-	defer logElapsed(time.Now(), "scanning")
+	//
+	// being walking
+	start := time.Now()
 	err := godirwalk.Walk(s.musicPath, &godirwalk.Options{
 		Callback:             s.callbackItem,
 		PostChildrenCallback: s.callbackPost,
@@ -118,20 +106,23 @@ func (s *Scanner) startScan() error {
 	if err != nil {
 		return errors.Wrap(err, "walking filesystem")
 	}
-	return nil
-}
-
-func (s *Scanner) startClean() error {
-	defer logElapsed(time.Now(), "cleaning database")
+	log.Printf("finished scanning in %s, +%d/%d tracks\n",
+		time.Since(start),
+		s.seenTracksNew,
+		len(s.seenTracks),
+	)
+	//
+	// begin cleaning
+	start = time.Now()
 	var tracks []*model.Track
-	err := s.tx.
+	err = s.tx.
 		Select("id").
 		Find(&tracks).
 		Error
 	if err != nil {
 		return errors.Wrap(err, "scanning tracks")
 	}
-	var deleted int
+	var deleted uint
 	for _, track := range tracks {
 		_, ok := s.seenTracks[track.ID]
 		if !ok {
@@ -139,7 +130,10 @@ func (s *Scanner) startClean() error {
 			deleted++
 		}
 	}
-	log.Printf("removed %d tracks\n", deleted)
+	log.Printf("finished cleaning in %s, -%d tracks\n",
+		time.Since(start),
+		deleted,
+	)
 	return nil
 }
 
@@ -282,6 +276,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	}
 	track.ArtistID = artist.ID
 	s.tx.Save(track)
+	s.seenTracksNew++
 	//
 	// set album if this is the first track in the folder
 	if !s.curFolder().IsNew {
