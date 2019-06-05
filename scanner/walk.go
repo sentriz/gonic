@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/jinzhu/gorm"
 	"github.com/karrick/godirwalk"
@@ -42,7 +43,8 @@ func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
 	if info.IsDir() {
 		return s.handleFolder(it)
 	}
-	if _, ok := coverFilenames[filename]; ok {
+	lowerFilename := strings.ToLower(filename)
+	if _, ok := coverFilenames[lowerFilename]; ok {
 		s.curCover = filename
 		return nil
 	}
