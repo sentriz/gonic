@@ -70,6 +70,7 @@ func (s *Scanner) curFolderID() int {
 func (s *Scanner) MigrateDB() error {
 	s.tx = s.db.Begin()
 	defer s.tx.Commit()
+	log.Printf("starting migrate...")
 	s.tx.AutoMigrate(
 		model.Artist{},
 		model.Track{},
@@ -83,7 +84,7 @@ func (s *Scanner) MigrateDB() error {
 		Password: "admin",
 		IsAdmin:  true,
 	})
-	log.Printf("finished migrating")
+	log.Printf("finished migrate")
 	return nil
 }
 
@@ -97,6 +98,7 @@ func (s *Scanner) Start() error {
 	defer s.tx.Commit()
 	//
 	// being walking
+	log.Printf("starting scan...")
 	start := time.Now()
 	err := godirwalk.Walk(s.musicPath, &godirwalk.Options{
 		Callback:             s.callbackItem,
@@ -106,13 +108,14 @@ func (s *Scanner) Start() error {
 	if err != nil {
 		return errors.Wrap(err, "walking filesystem")
 	}
-	log.Printf("finished scanning in %s, +%d/%d tracks\n",
+	log.Printf("finished scan in %s, +%d/%d tracks\n",
 		time.Since(start),
 		s.seenTracksNew,
 		len(s.seenTracks),
 	)
 	//
 	// begin cleaning
+	log.Printf("starting clean...")
 	start = time.Now()
 	var tracks []*model.Track
 	err = s.tx.
@@ -146,7 +149,7 @@ func (s *Scanner) Start() error {
                FROM albums
                WHERE tag_artist_id = artists.id) = 0;
 	`)
-	log.Printf("finished cleaning in %s, -%d tracks\n",
+	log.Printf("finished clean in %s, -%d tracks\n",
 		time.Since(start),
 		deleted,
 	)
@@ -199,9 +202,10 @@ func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
 		folder.ParentID = s.curFolderID()
 		folder.Cover = s.curCover
 		s.tx.Save(folder)
+		log.Printf("processed folder `%s`\n",
+			path.Join(folder.LeftPath, folder.RightPath))
 	}
 	s.curCover = ""
-	log.Printf("processed folder `%s`\n", fullPath)
 	return nil
 }
 
