@@ -122,6 +122,7 @@ func (s *Scanner) Start() error {
 	if err != nil {
 		return errors.Wrap(err, "scanning tracks")
 	}
+	// delete tracks not on filesystem
 	var deleted uint
 	for _, track := range tracks {
 		_, ok := s.seenTracks[track.ID]
@@ -130,6 +131,21 @@ func (s *Scanner) Start() error {
 			deleted++
 		}
 	}
+	// then, delete albums without tracks
+	s.tx.Exec(`
+        DELETE FROM albums
+        WHERE tag_artist_id NOT NULL AND
+              (SELECT count(id)
+               FROM tracks
+               WHERE album_id = albums.id) = 0;
+	`)
+	// then, delete artists without albums
+	s.tx.Exec(`
+        DELETE FROM artists
+        WHERE (SELECT count(id)
+               FROM albums
+               WHERE tag_artist_id = artists.id) = 0;
+	`)
 	log.Printf("finished cleaning in %s, -%d tracks\n",
 		time.Since(start),
 		deleted,
