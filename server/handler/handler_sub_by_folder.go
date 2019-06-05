@@ -19,12 +19,12 @@ import (
 // under the root directory
 
 func (c *Controller) GetIndexes(w http.ResponseWriter, r *http.Request) {
-	var folders []model.Album
+	var folders []*model.Album
 	c.DB.
 		Where("parent_id = 1").
 		Find(&folders)
-	var indexMap = make(map[rune]*subsonic.Index)
-	var indexes []*subsonic.Index
+	indexMap := make(map[rune]*subsonic.Index)
+	indexes := []*subsonic.Index{}
 	for _, folder := range folders {
 		i := indexOf(folder.RightPath)
 		index, ok := indexMap[i]
@@ -37,7 +37,7 @@ func (c *Controller) GetIndexes(w http.ResponseWriter, r *http.Request) {
 			indexes = append(indexes, index)
 		}
 		index.Artists = append(index.Artists,
-			makeArtistFromFolder(&folder))
+			makeArtistFromFolder(folder))
 	}
 	sort.Slice(indexes, func(i, j int) bool {
 		return indexes[i].Name < indexes[j].Name
@@ -57,28 +57,28 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	childrenObj := []*subsonic.Track{}
-	var folder model.Album
-	c.DB.First(&folder, id)
+	folder := &model.Album{}
+	c.DB.First(folder, id)
 	//
 	// start looking for child childFolders in the current dir
-	var childFolders []model.Album
+	var childFolders []*model.Album
 	c.DB.
 		Where("parent_id = ?", id).
 		Find(&childFolders)
 	for _, c := range childFolders {
 		childrenObj = append(childrenObj,
-			makeChildFromFolder(&c, &folder))
+			makeChildFromFolder(c, folder))
 	}
 	//
 	// start looking for child childTracks in the current dir
-	var childTracks []model.Track
+	var childTracks []*model.Track
 	c.DB.
 		Where("album_id = ?", id).
 		Preload("Album").
 		Order("filename").
 		Find(&childTracks)
 	for _, c := range childTracks {
-		toAppend := makeChildFromTrack(&c, &folder)
+		toAppend := makeChildFromTrack(c, folder)
 		if getStrParam(r, "c") == "Jamstash" {
 			// jamstash thinks it can't play flacs
 			toAppend.ContentType = "audio/mpeg"
@@ -89,7 +89,7 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 	//
 	// respond section
 	sub := subsonic.NewResponse()
-	sub.Directory = makeDirFromFolder(&folder, childrenObj)
+	sub.Directory = makeDirFromFolder(folder, childrenObj)
 	respond(w, r, sub)
 }
 
@@ -133,7 +133,7 @@ func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
 			"unknown value `%s` for parameter 'type'", listType)
 		return
 	}
-	var folders []model.Album
+	var folders []*model.Album
 	q.
 		Where("albums.tag_artist_id IS NOT NULL").
 		Offset(getIntParamOr(r, "offset", 0)).
@@ -144,7 +144,7 @@ func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
 	sub.Albums = &subsonic.Albums{}
 	for _, folder := range folders {
 		sub.Albums.List = append(sub.Albums.List,
-			makeAlbumFromFolder(&folder))
+			makeAlbumFromFolder(folder))
 	}
 	respond(w, r, sub)
 }
@@ -160,7 +160,7 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 	results := &subsonic.SearchResultTwo{}
 	//
 	// search "artists"
-	var artists []model.Album
+	var artists []*model.Album
 	c.DB.
 		Where("parent_id = 1 AND right_path LIKE ?", query).
 		Offset(getIntParamOr(r, "artistOffset", 0)).
@@ -168,11 +168,11 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 		Find(&artists)
 	for _, a := range artists {
 		results.Artists = append(results.Artists,
-			makeDirFromFolder(&a, nil))
+			makeDirFromFolder(a, nil))
 	}
 	//
 	// search "albums"
-	var albums []model.Album
+	var albums []*model.Album
 	c.DB.
 		Preload("Parent").
 		Where("tag_artist_id IS NOT NULL AND right_path LIKE ?", query).
@@ -181,11 +181,11 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 		Find(&albums)
 	for _, a := range albums {
 		results.Albums = append(results.Albums,
-			makeChildFromFolder(&a, a.Parent))
+			makeChildFromFolder(a, a.Parent))
 	}
 	//
 	// search tracks
-	var tracks []model.Track
+	var tracks []*model.Track
 	c.DB.
 		Preload("Album").
 		Where("filename LIKE ?", query).
@@ -194,7 +194,7 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 		Find(&tracks)
 	for _, t := range tracks {
 		results.Tracks = append(results.Tracks,
-			makeChildFromTrack(&t, &t.Album))
+			makeChildFromTrack(t, t.Album))
 	}
 	//
 	sub := subsonic.NewResponse()

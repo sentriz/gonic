@@ -58,7 +58,7 @@ func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
 	if folder.IsNew {
 		folder.ParentID = s.curFolderID()
 		folder.Cover = s.curCover
-		s.tx.Save(&folder)
+		s.tx.Save(folder)
 	}
 	s.curCover = ""
 	log.Printf("processed folder `%s`\n", fullPath)
@@ -66,42 +66,45 @@ func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
 }
 
 func (s *Scanner) handleFolder(it *item) error {
-	var folder model.Album
+	folder := &model.Album{}
+	defer s.curFolders.Push(folder)
 	err := s.tx.
 		Where(model.Album{
 			LeftPath:  it.directory,
 			RightPath: it.filename,
 		}).
-		First(&folder).
+		First(folder).
 		Error
 	if !gorm.IsRecordNotFoundError(err) &&
 		it.stat.ModTime().Before(folder.UpdatedAt) {
 		// we found the record but it hasn't changed
-		s.curFolders.Push(&folder)
 		return nil
 	}
 	folder.LeftPath = it.directory
 	folder.RightPath = it.filename
-	s.tx.Save(&folder)
+	s.tx.Save(folder)
 	folder.IsNew = true
-	s.curFolders.Push(&folder)
 	return nil
 }
 
 func (s *Scanner) handleTrack(it *item) error {
 	//
 	// set track basics
-	var track model.Track
+	track := &model.Track{}
+	defer func() {
+		// id will will be found (the first early return)
+		// or created the tx.Save(track)
+		s.seenTracks[track.ID] = struct{}{}
+	}()
 	err := s.tx.
 		Where(model.Track{
 			AlbumID:  s.curFolderID(),
 			Filename: it.filename,
 		}).
-		First(&track).
+		First(track).
 		Error
 	if !gorm.IsRecordNotFoundError(err) &&
 		it.stat.ModTime().Before(track.UpdatedAt) {
-		s.seenTracks[track.ID] = struct{}{}
 		// we found the record but it hasn't changed
 		return nil
 	}
@@ -125,18 +128,17 @@ func (s *Scanner) handleTrack(it *item) error {
 	track.TagYear = tags.Year()
 	//
 	// set album artist basics
-	var artist model.Artist
+	artist := &model.Artist{}
 	err = s.tx.
 		Where("name = ?", tags.AlbumArtist()).
-		First(&artist).
+		First(artist).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
 		artist.Name = tags.AlbumArtist()
-		s.tx.Save(&artist)
+		s.tx.Save(artist)
 	}
 	track.ArtistID = artist.ID
-	s.tx.Save(&track)
-	s.seenTracks[track.ID] = struct{}{}
+	s.tx.Save(track)
 	//
 	// set album if this is the first track in the folder
 	if !s.curFolder().IsNew {

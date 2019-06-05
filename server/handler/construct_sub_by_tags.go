@@ -8,14 +8,17 @@ import (
 )
 
 func makeAlbumFromAlbum(a *model.Album, artist *model.Artist) *subsonic.Album {
-	return &subsonic.Album{
-		ID:       a.ID,
-		Name:     a.TagTitle,
-		Created:  a.CreatedAt,
-		CoverID:  a.ID,
-		Artist:   artist.Name,
-		ArtistID: artist.ID,
+	ret := &subsonic.Album{
+		ID:      a.ID,
+		Name:    a.TagTitle,
+		Created: a.CreatedAt,
+		CoverID: a.ID,
 	}
+	if artist != nil {
+		ret.Artist = artist.Name
+		ret.ArtistID = artist.ID
+	}
+	return ret
 }
 
 func makeTrackFromTrack(t *model.Track, album *model.Album) *subsonic.Track {

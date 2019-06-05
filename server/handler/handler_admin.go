@@ -48,11 +48,11 @@ func (c *Controller) ServeLogout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) ServeHome(w http.ResponseWriter, r *http.Request) {
-	var data templateData
-	c.DB.Table("artists").Count(&data.ArtistCount)
-	c.DB.Table("albums").Count(&data.AlbumCount)
-	c.DB.Table("tracks").Count(&data.TrackCount)
-	c.DB.Find(&data.AllUsers)
+	data := &templateData{}
+	c.DB.Table("artists").Count(data.ArtistCount)
+	c.DB.Table("albums").Count(data.AlbumCount)
+	c.DB.Table("tracks").Count(data.TrackCount)
+	c.DB.Find(data.AllUsers)
 	data.CurrentLastFMAPIKey = c.GetSetting("lastfm_api_key")
 	scheme := firstExisting(
 		"http", // fallback
@@ -66,7 +66,7 @@ func (c *Controller) ServeHome(w http.ResponseWriter, r *http.Request) {
 		r.Host,
 	)
 	data.RequestRoot = fmt.Sprintf("%s://%s", scheme, host)
-	renderTemplate(w, r, c.Templates["home"], &data)
+	renderTemplate(w, r, c.Templates["home"], data)
 }
 
 func (c *Controller) ServeChangeOwnPassword(w http.ResponseWriter, r *http.Request) {
@@ -127,27 +127,27 @@ func (c *Controller) ServeChangePassword(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "please provide a username", 400)
 		return
 	}
-	var user model.User
+	user := &model.User{}
 	err := c.DB.
 		Where("name = ?", username).
-		First(&user).
+		First(user).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
 		http.Error(w, "couldn't find a user with that name", 400)
 		return
 	}
-	var data templateData
-	data.SelectedUser = &user
-	renderTemplate(w, r, c.Templates["change_password"], &data)
+	data := &templateData{}
+	data.SelectedUser = user
+	renderTemplate(w, r, c.Templates["change_password"], data)
 }
 
 func (c *Controller) ServeChangePasswordDo(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(contextSessionKey).(*sessions.Session)
 	username := r.URL.Query().Get("user")
-	var user model.User
+	user := &model.User{}
 	c.DB.
 		Where("name = ?", username).
-		First(&user)
+		First(user)
 	passwordOne := r.FormValue("password_one")
 	passwordTwo := r.FormValue("password_two")
 	err := validatePasswords(passwordOne, passwordTwo)
@@ -158,7 +158,7 @@ func (c *Controller) ServeChangePasswordDo(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	user.Password = passwordOne
-	c.DB.Save(&user)
+	c.DB.Save(user)
 	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 }
 
@@ -168,27 +168,27 @@ func (c *Controller) ServeDeleteUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "please provide a username", 400)
 		return
 	}
-	var user model.User
+	user := &model.User{}
 	err := c.DB.
 		Where("name = ?", username).
-		First(&user).
+		First(user).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
 		http.Error(w, "couldn't find a user with that name", 400)
 		return
 	}
-	var data templateData
-	data.SelectedUser = &user
-	renderTemplate(w, r, c.Templates["delete_user"], &data)
+	data := &templateData{}
+	data.SelectedUser = user
+	renderTemplate(w, r, c.Templates["delete_user"], data)
 }
 
 func (c *Controller) ServeDeleteUserDo(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("user")
-	var user model.User
+	user := &model.User{}
 	c.DB.
 		Where("name = ?", username).
-		First(&user)
-	c.DB.Delete(&user)
+		First(user)
+	c.DB.Delete(user)
 	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 }
 
@@ -232,10 +232,10 @@ func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) ServeUpdateLastFMAPIKey(w http.ResponseWriter, r *http.Request) {
-	var data templateData
+	data := &templateData{}
 	data.CurrentLastFMAPIKey = c.GetSetting("lastfm_api_key")
 	data.CurrentLastFMAPISecret = c.GetSetting("lastfm_secret")
-	renderTemplate(w, r, c.Templates["update_lastfm_api_key"], &data)
+	renderTemplate(w, r, c.Templates["update_lastfm_api_key"], data)
 }
 
 func (c *Controller) ServeUpdateLastFMAPIKeyDo(w http.ResponseWriter, r *http.Request) {

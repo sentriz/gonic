@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"path"
@@ -32,10 +33,10 @@ func (c *Controller) Stream(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, 10, "please provide an `id` parameter")
 		return
 	}
-	var track model.Track
+	track := &model.Track{}
 	err = c.DB.
 		Preload("Album").
-		First(&track, id).
+		First(track, id).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
 		respondError(w, r, 70, "media with id `%d` was not found", id)
@@ -75,10 +76,10 @@ func (c *Controller) GetCoverArt(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, 10, "please provide an `id` parameter")
 		return
 	}
-	var folder model.Album
+	folder := &model.Album{}
 	err = c.DB.
 		Select("id, path, cover").
-		First(&folder, id).
+		First(folder, id).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
 		respondError(w, r, 10, "could not find a cover with that id")
@@ -123,17 +124,17 @@ func (c *Controller) Scrobble(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// fetch track for getting info to send to last.fm function
-	var track model.Track
+	track := &model.Track{}
 	c.DB.
 		Preload("Album").
 		Preload("Artist").
-		First(&track, id)
+		First(track, id)
 	// scrobble with above info
 	err = lastfm.Scrobble(
 		c.GetSetting("lastfm_api_key"),
 		c.GetSetting("lastfm_secret"),
 		user.LastFMSession,
-		&track,
+		track,
 		// clients will provide time in miliseconds, so use that or
 		// instead convert UnixNano to miliseconds
 		getIntParamOr(r, "time", int(time.Now().UnixNano()/1e6)),
@@ -158,14 +159,22 @@ func (c *Controller) GetMusicFolders(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) StartScan(w http.ResponseWriter, r *http.Request) {
-	scanC := scanner.New(c.DB, c.MusicPath)
-	go scanC.Start()
+	go func() {
+		err := scanner.
+			New(c.DB, c.MusicPath).
+			Start()
+		if err != nil {
+			log.Printf("error while scanning: %v\n", err)
+		}
+	}()
 	c.GetScanStatus(w, r)
 }
 
 func (c *Controller) GetScanStatus(w http.ResponseWriter, r *http.Request) {
 	var trackCount int
-	c.DB.Model(&model.Track{}).Count(&trackCount)
+	c.DB.
+		Model(model.Track{}).
+		Count(&trackCount)
 	sub := subsonic.NewResponse()
 	sub.ScanStatus = &subsonic.ScanStatus{
 		Scanning: atomic.LoadInt32(&scanner.IsScanning) == 1,

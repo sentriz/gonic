@@ -9,17 +9,17 @@ import (
 
 type Artist struct {
 	IDBase
-	Name   string  `gorm:"not null; unique_index"`
-	Albums []Album `gorm:"foreignkey:TagArtistID"`
+	Name   string   `gorm:"not null; unique_index"`
+	Albums []*Album `gorm:"foreignkey:TagArtistID"`
 }
 
 type Track struct {
 	IDBase
 	CrudBase
-	Album          Album
+	Album          *Album
 	AlbumID        int    `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Filename       string `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null"`
-	Artist         Artist
+	Artist         *Artist
 	ArtistID       int    `gorm:"not null; index" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
 	Duration       int    `gorm:"not null" sql:"default: null"`
 	Size           int    `gorm:"not null" sql:"default: null"`
@@ -63,9 +63,9 @@ type Setting struct {
 
 type Play struct {
 	IDBase
-	User    User
+	User    *User
 	UserID  int `gorm:"not null; index" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
-	Album   Album
+	Album   *Album
 	AlbumID int       `gorm:"not null; index" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Time    time.Time `sql:"default: null"`
 	Count   int
@@ -79,10 +79,10 @@ type Album struct {
 	Parent      *Album
 	ParentID    int    `sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Cover       string `sql:"default: null"`
-	TagArtist   Artist
+	TagArtist   *Artist
 	TagArtistID int    `gorm:"index" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
 	TagTitle    string `gorm:"index" sql:"default: null"`
 	TagYear     int    `sql:"default: null"`
-	Tracks      []Track
+	Tracks      []*Track
 	IsNew       bool `gorm:"-"`
 }

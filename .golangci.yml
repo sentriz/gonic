@@ -8,14 +8,11 @@ issues:
   exclude-rules:
     - path: _test\.go
       linters:
-        - gocyclo
         - errcheck
-        - dupl
-        - gosec
     - text: "weak cryptographic primitive"
       linters:
         - gosec
-    - path: model/model.go
+    - path: model/model\.go
       linters:
         - lll
     - path: server/handler/

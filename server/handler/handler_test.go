@@ -44,7 +44,9 @@ func testNameToPath(name string) string {
 
 func testQueryCases(t *testing.T, handler http.HandlerFunc, cases []*queryCase) {
 	for _, qc := range cases {
+		qc := qc // pin
 		t.Run(qc.expectPath, func(t *testing.T) {
+			t.Parallel()
 			// ensure the handlers give us json
 			qc.params.Add("f", "json")
 			req, _ := http.NewRequest("", "?"+qc.params.Encode(), nil)

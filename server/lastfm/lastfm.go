@@ -84,13 +84,13 @@ func makeRequest(method string, params url.Values) (*LastFM, error) {
 	}
 	defer resp.Body.Close()
 	decoder := xml.NewDecoder(resp.Body)
-	var lastfm LastFM
-	err = decoder.Decode(&lastfm)
+	lastfm := &LastFM{}
+	err = decoder.Decode(lastfm)
 	if err != nil {
 		return nil, errors.Wrap(err, "decoding")
 	}
 	if lastfm.Error != nil {
 		return nil, fmt.Errorf("parsing: %v", lastfm.Error.Value)
 	}
-	return &lastfm, nil
+	return lastfm, nil
 }
