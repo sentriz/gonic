@@ -52,6 +52,8 @@ func main() {
 		*musicPath,
 		*listenAddr,
 	)
+	s.SetupAdmin()
+	s.SetupSubsonic()
 	log.Printf("starting server at %s", *listenAddr)
 	if err := s.ListenAndServe(); err != nil {
 		log.Fatalf("error starting server: %v\n", err)

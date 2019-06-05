@@ -28,4 +28,7 @@ require (
 	golang.org/x/sys v0.0.0-20190422165155-953cdadca894 // indirect
 	golang.org/x/tools v0.0.0-20190422233926-fe54fb35175b // indirect
 	google.golang.org/appengine v1.5.0 // indirect
+	gopkg.in/axiomzen/null.v3 v3.2.4
+	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce // indirect
+	gopkg.in/pg.v4 v4.9.5 // indirect
 )

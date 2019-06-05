@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"path"
@@ -8,6 +9,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/jinzhu/gorm"
 	"github.com/rainycape/unidecode"
 
 	"github.com/sentriz/gonic/model"
@@ -31,16 +33,21 @@ func (c *Controller) Stream(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, 10, "please provide an `id` parameter")
 		return
 	}
-	var track model.Track
-	c.DB.
+	track := &model.Track{}
+	err = c.DB.
 		Preload("Album").
-		Preload("Folder").
-		First(&track, id)
-	if track.Path == "" {
+		First(track, id).
+		Error
+	if gorm.IsRecordNotFoundError(err) {
 		respondError(w, r, 70, "media with id `%d` was not found", id)
 		return
 	}
-	absPath := path.Join(c.MusicPath, track.Path)
+	absPath := path.Join(
+		c.MusicPath,
+		track.Album.LeftPath,
+		track.Album.RightPath,
+		track.Filename,
+	)
 	file, err := os.Open(absPath)
 	if err != nil {
 		respondError(w, r, 0, "error while streaming media: %v", err)
@@ -52,11 +59,12 @@ func (c *Controller) Stream(w http.ResponseWriter, r *http.Request) {
 	// after we've served the file, mark the album as played
 	user := r.Context().Value(contextUserKey).(*model.User)
 	play := model.Play{
-		AlbumID:  track.Album.ID,
-		FolderID: track.Folder.ID,
-		UserID:   user.ID,
+		AlbumID: track.Album.ID,
+		UserID:  user.ID,
 	}
-	c.DB.Where(play).First(&play)
+	c.DB.
+		Where(play).
+		First(&play)
 	play.Time = time.Now() // for getAlbumList?type=recent
 	play.Count++           // for getAlbumList?type=frequent
 	c.DB.Save(&play)
@@ -68,9 +76,26 @@ func (c *Controller) GetCoverArt(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, 10, "please provide an `id` parameter")
 		return
 	}
-	var cover model.Cover
-	c.DB.First(&cover, id)
-	w.Write(cover.Image)
+	folder := &model.Album{}
+	err = c.DB.
+		Select("id, path, cover").
+		First(folder, id).
+		Error
+	if gorm.IsRecordNotFoundError(err) {
+		respondError(w, r, 10, "could not find a cover with that id")
+		return
+	}
+	if folder.Cover == "" {
+		respondError(w, r, 10, "no cover found for that folder")
+		return
+	}
+	absPath := path.Join(
+		c.MusicPath,
+		folder.RightPath,
+		folder.LeftPath,
+		folder.Cover,
+	)
+	http.ServeFile(w, r, absPath)
 }
 
 func (c *Controller) GetLicence(w http.ResponseWriter, r *http.Request) {
@@ -99,17 +124,17 @@ func (c *Controller) Scrobble(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// fetch track for getting info to send to last.fm function
-	var track model.Track
+	track := &model.Track{}
 	c.DB.
 		Preload("Album").
 		Preload("Artist").
-		First(&track, id)
+		First(track, id)
 	// scrobble with above info
 	err = lastfm.Scrobble(
 		c.GetSetting("lastfm_api_key"),
 		c.GetSetting("lastfm_secret"),
 		user.LastFMSession,
-		&track,
+		track,
 		// clients will provide time in miliseconds, so use that or
 		// instead convert UnixNano to miliseconds
 		getIntParamOr(r, "time", int(time.Now().UnixNano()/1e6)),
@@ -134,14 +159,22 @@ func (c *Controller) GetMusicFolders(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) StartScan(w http.ResponseWriter, r *http.Request) {
-	scanC := scanner.New(c.DB, c.MusicPath)
-	go scanC.Start()
+	go func() {
+		err := scanner.
+			New(c.DB, c.MusicPath).
+			Start()
+		if err != nil {
+			log.Printf("error while scanning: %v\n", err)
+		}
+	}()
 	c.GetScanStatus(w, r)
 }
 
 func (c *Controller) GetScanStatus(w http.ResponseWriter, r *http.Request) {
 	var trackCount int
-	c.DB.Model(&model.Track{}).Count(&trackCount)
+	c.DB.
+		Model(model.Track{}).
+		Count(&trackCount)
 	sub := subsonic.NewResponse()
 	sub.ScanStatus = &subsonic.ScanStatus{
 		Scanning: atomic.LoadInt32(&scanner.IsScanning) == 1,

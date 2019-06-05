@@ -11,6 +11,10 @@
             {
               "id": 5,
               "name": "13th Floor Lowervators"
+            },
+            {
+              "id": 8,
+              "name": "___Anika"
             }
           ]
         },
@@ -20,10 +24,6 @@
             {
               "id": 2,
               "name": "A Certain Ratio"
-            },
-            {
-              "id": 8,
-              "name": "Anika"
             }
           ]
         }

@@ -11,12 +11,12 @@
       ],
       "album": [
         {
-          "id": 5,
-          "coverArt": 4,
+          "id": 11,
+          "coverArt": 11,
           "artistId": 3,
           "artist": "Anikas",
           "name": "Anika",
-          "created": "2019-05-28T20:59:03.035442597+01:00"
+          "created": "2019-06-05T16:00:10.565661506+01:00"
         }
       ]
     }

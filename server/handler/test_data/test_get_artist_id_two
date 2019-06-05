@@ -7,20 +7,20 @@
       "name": "13th Floor Elevators",
       "album": [
         {
-          "id": 3,
-          "coverArt": 2,
+          "id": 6,
+          "coverArt": 6,
           "artistId": 2,
           "artist": "13th Floor Elevators",
           "name": "Easter Everywhere",
-          "created": "2019-05-28T20:59:03.010415595+01:00"
+          "created": "2019-06-05T16:00:10.556862345+01:00"
         },
         {
-          "id": 4,
-          "coverArt": 3,
+          "id": 7,
+          "coverArt": 7,
           "artistId": 2,
           "artist": "13th Floor Elevators",
           "name": "The Psychedelic Sounds of the 13th Floor Elevators",
-          "created": "2019-05-28T20:59:03.022922683+01:00"
+          "created": "2019-06-05T16:00:10.560355528+01:00"
         }
       ]
     }

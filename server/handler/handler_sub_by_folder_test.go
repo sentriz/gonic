@@ -9,7 +9,7 @@ import (
 
 func TestGetIndexes(t *testing.T) {
 	testQueryCases(t, testController.GetIndexes, []*queryCase{
-		{url.Values{"id": []string{"2"}}, "id_two", false},
+		{url.Values{}, "no_args", false},
 	})
 }
 

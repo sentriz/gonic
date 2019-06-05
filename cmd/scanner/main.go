@@ -14,7 +14,6 @@ import (
 
 const (
 	programName = "gonic"
-	programVar  = "GONIC"
 )
 
 func main() {

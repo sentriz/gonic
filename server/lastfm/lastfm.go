@@ -48,11 +48,11 @@ func Scrobble(apiKey, secret, session string, track *model.Track,
 	}
 	params.Add("api_key", apiKey)
 	params.Add("sk", session)
-	params.Add("artist", track.TrackArtist)
-	params.Add("track", track.Title)
-	params.Add("album", track.Album.Title)
+	params.Add("artist", track.TagTrackArtist)
+	params.Add("track", track.TagTitle)
+	params.Add("album", track.Album.TagTitle)
 	params.Add("albumArtist", track.Artist.Name)
-	params.Add("trackNumber", strconv.Itoa(track.TrackNumber))
+	params.Add("trackNumber", strconv.Itoa(track.TagTrackNumber))
 	params.Add("api_sig", getParamSignature(params, secret))
 	_, err := makeRequest("POST", params)
 	return err
@@ -84,13 +84,13 @@ func makeRequest(method string, params url.Values) (*LastFM, error) {
 	}
 	defer resp.Body.Close()
 	decoder := xml.NewDecoder(resp.Body)
-	var lastfm LastFM
-	err = decoder.Decode(&lastfm)
+	lastfm := &LastFM{}
+	err = decoder.Decode(lastfm)
 	if err != nil {
 		return nil, errors.Wrap(err, "decoding")
 	}
 	if lastfm.Error != nil {
 		return nil, fmt.Errorf("parsing: %v", lastfm.Error.Value)
 	}
-	return &lastfm, nil
+	return lastfm, nil
 }

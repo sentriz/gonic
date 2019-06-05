@@ -24,8 +24,10 @@ type Controller struct {
 }
 
 func (c *Controller) GetSetting(key string) string {
-	var setting model.Setting
-	c.DB.Where("key = ?", key).First(&setting)
+	setting := &model.Setting{}
+	c.DB.
+		Where("key = ?", key).
+		First(setting)
 	return setting.Value
 }
 
@@ -37,13 +39,13 @@ func (c *Controller) SetSetting(key, value string) {
 }
 
 func (c *Controller) GetUserFromName(name string) *model.User {
-	var user model.User
+	user := &model.User{}
 	err := c.DB.
 		Where("name = ?", name).
-		First(&user).
+		First(user).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
 		return nil
 	}
-	return &user
+	return user
 }
