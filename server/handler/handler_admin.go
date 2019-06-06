@@ -49,10 +49,10 @@ func (c *Controller) ServeLogout(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) ServeHome(w http.ResponseWriter, r *http.Request) {
 	data := &templateData{}
-	c.DB.Table("artists").Count(data.ArtistCount)
-	c.DB.Table("albums").Count(data.AlbumCount)
-	c.DB.Table("tracks").Count(data.TrackCount)
-	c.DB.Find(data.AllUsers)
+	c.DB.Table("artists").Count(&data.ArtistCount)
+	c.DB.Table("albums").Count(&data.AlbumCount)
+	c.DB.Table("tracks").Count(&data.TrackCount)
+	c.DB.Find(&data.AllUsers)
 	data.CurrentLastFMAPIKey = c.GetSetting("lastfm_api_key")
 	scheme := firstExisting(
 		"http", // fallback
