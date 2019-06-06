@@ -160,6 +160,8 @@ github.com/rogpeppe/go-internal v1.3.0 h1:RR9dF3JtopPvtkroDZuVD7qquD0bnHlKSqaQhg
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/sentriz/taggolib v0.0.0-20190606174544-31bc993bccf4 h1:tqGj15O7PcAomjThBovGe9xUxCC22WVItQjW9Wo/69M=
 github.com/sentriz/taggolib v0.0.0-20190606174544-31bc993bccf4/go.mod h1:c+rVE+i+SSdXptoMgXUoW/ABPT3gn5hXHcySx+L4RzE=
+github.com/sentriz/taggolib v0.0.0-20190606182049-26b5d155056e h1:/Vc8Bp4sxpogBPzGRJ1BO9psPQ/bakFsFhghuhCsorY=
+github.com/sentriz/taggolib v0.0.0-20190606182049-26b5d155056e/go.mod h1:c+rVE+i+SSdXptoMgXUoW/ABPT3gn5hXHcySx+L4RzE=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/sirupsen/logrus v1.4.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/sirupsen/logrus v1.4.1 h1:GL2rEmy6nsikmW0r8opw9JIRScdMF5hA8cOYLH7In1k=
