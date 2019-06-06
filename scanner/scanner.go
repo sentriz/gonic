@@ -256,7 +256,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	track.AlbumID = s.curFolderID()
 	tags, err := readTags(it.fullPath)
 	if err != nil {
-		return errors.Wrap(err, "reading tags")
+		return errors.Wrapf(err, "reading tags for file `%s`", it.relPath)
 	}
 	track.TagTitle = tags.Title()
 	track.TagTrackArtist = tags.Artist()

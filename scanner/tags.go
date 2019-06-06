@@ -39,12 +39,12 @@ func (t *tags) DurationSecs() int {
 func readTags(path string) (*tags, error) {
 	track, err := os.Open(path)
 	if err != nil {
-		return nil, errors.Wrap(err, "reading track from disk")
+		return nil, errors.Wrap(err, "reading disk")
 	}
 	defer track.Close()
 	parser, err := taggolib.New(track)
 	if err != nil {
-		return nil, errors.Wrap(err, "reading tags from track")
+		return nil, errors.Wrap(err, "parsing")
 	}
 	newTags := &tags{parser}
 	return newTags, nil
