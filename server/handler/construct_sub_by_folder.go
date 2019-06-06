@@ -19,20 +19,20 @@ func newAlbumByFolder(f *model.Album) *subsonic.Album {
 }
 
 func newTCAlbumByFolder(f *model.Album, parent *model.Album) *subsonic.TrackChild {
-	child := &subsonic.TrackChild{
-		CoverID: f.ID,
-		ID:      f.ID,
-		IsDir:   true,
-		Title:   f.RightPath,
+	trCh := &subsonic.TrackChild{
+		ID:       f.ID,
+		IsDir:    true,
+		Title:    f.RightPath,
+		ParentID: f.ParentID,
 	}
-	if parent != nil {
-		child.ParentID = parent.ID
+	if f.Cover != "" {
+		trCh.CoverID = f.ID
 	}
-	return child
+	return trCh
 }
 
 func newTCTrackByFolder(t *model.Track, parent *model.Album) *subsonic.TrackChild {
-	return &subsonic.TrackChild{
+	trCh := &subsonic.TrackChild{
 		ID:          t.ID,
 		Album:       t.Album.RightPath,
 		ContentType: t.MIME(),
@@ -47,12 +47,15 @@ func newTCTrackByFolder(t *model.Track, parent *model.Album) *subsonic.TrackChil
 			t.Filename,
 		),
 		ParentID: parent.ID,
-		CoverID:  parent.ID,
 		Duration: t.Duration,
 		Bitrate:  t.Bitrate,
 		IsDir:    false,
 		Type:     "music",
 	}
+	if parent.Cover != "" {
+		trCh.CoverID = parent.ID
+	}
+	return trCh
 }
 
 func newArtistByFolder(f *model.Album) *subsonic.Artist {
