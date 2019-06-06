@@ -3,7 +3,7 @@ module github.com/sentriz/gonic
 require (
 	cloud.google.com/go v0.37.1 // indirect
 	github.com/denisenkom/go-mssqldb v0.0.0-20190315220205-a8ed825ac853 // indirect
-	github.com/dhowden/tag v0.0.0-20181104225729-a9f04c2798ca
+	github.com/eaburns/bit v0.0.0-20131029213740-7bd5cd37375d // indirect
 	github.com/erikstmartin/go-testdb v0.0.0-20160219214506-8d10e4a1bae5 // indirect
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
 	github.com/gobuffalo/genny v0.1.1 // indirect
@@ -19,6 +19,7 @@ require (
 	github.com/karrick/godirwalk v1.8.0
 	github.com/lib/pq v1.0.0 // indirect
 	github.com/mattn/go-sqlite3 v1.10.0 // indirect
+	github.com/mdlayher/taggolib v0.0.0-20140723044655-d71b09674cfe
 	github.com/peterbourgon/ff v1.2.0
 	github.com/pkg/errors v0.8.1
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
@@ -28,7 +29,4 @@ require (
 	golang.org/x/sys v0.0.0-20190422165155-953cdadca894 // indirect
 	golang.org/x/tools v0.0.0-20190422233926-fe54fb35175b // indirect
 	google.golang.org/appengine v1.5.0 // indirect
-	gopkg.in/axiomzen/null.v3 v3.2.4
-	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce // indirect
-	gopkg.in/pg.v4 v4.9.5 // indirect
 )

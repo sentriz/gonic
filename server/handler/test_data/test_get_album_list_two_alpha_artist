@@ -10,7 +10,7 @@
           "artistId": 2,
           "artist": "13th Floor Elevators",
           "name": "Easter Everywhere",
-          "created": "2019-06-05T16:00:10.556862345+01:00"
+          "created": "2019-06-06T16:38:39.306600701+01:00"
         },
         {
           "id": 7,
@@ -18,7 +18,7 @@
           "artistId": 2,
           "artist": "13th Floor Elevators",
           "name": "The Psychedelic Sounds of the 13th Floor Elevators",
-          "created": "2019-06-05T16:00:10.560355528+01:00"
+          "created": "2019-06-06T16:38:39.309763889+01:00"
         },
         {
           "id": 3,
@@ -26,15 +26,14 @@
           "artistId": 1,
           "artist": "A Certain Ratio",
           "name": "The Graveyard and the Ballroom",
-          "created": "2019-06-05T16:00:10.54747823+01:00"
+          "created": "2019-06-06T16:38:39.298724062+01:00"
         },
         {
           "id": 4,
-          "coverArt": 4,
           "artistId": 1,
           "artist": "A Certain Ratio",
           "name": "To Each...",
-          "created": "2019-06-05T16:00:10.553065063+01:00"
+          "created": "2019-06-06T16:38:39.303278797+01:00"
         },
         {
           "id": 11,
@@ -42,7 +41,7 @@
           "artistId": 3,
           "artist": "Anikas",
           "name": "Anika",
-          "created": "2019-06-05T16:00:10.565661506+01:00"
+          "created": "2019-06-06T16:38:39.31657693+01:00"
         }
       ]
     }

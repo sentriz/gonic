@@ -9,10 +9,12 @@ import (
 
 func newAlbumByTags(a *model.Album, artist *model.Artist) *subsonic.Album {
 	ret := &subsonic.Album{
-		CoverID: a.ID,
 		Created: a.CreatedAt,
 		ID:      a.ID,
 		Name:    a.TagTitle,
+	}
+	if a.Cover != "" {
+		ret.CoverID = a.ID
 	}
 	if artist != nil {
 		ret.Artist = artist.Name
@@ -22,7 +24,7 @@ func newAlbumByTags(a *model.Album, artist *model.Artist) *subsonic.Album {
 }
 
 func newTrackByTags(t *model.Track, album *model.Album) *subsonic.TrackChild {
-	return &subsonic.TrackChild{
+	ret := &subsonic.TrackChild{
 		ID:          t.ID,
 		ContentType: t.MIME(),
 		Suffix:      t.Ext(),
@@ -40,9 +42,14 @@ func newTrackByTags(t *model.Track, album *model.Album) *subsonic.TrackChild {
 		Album:    album.TagTitle,
 		AlbumID:  album.ID,
 		ArtistID: album.TagArtist.ID,
-		CoverID:  album.ID,
+		Duration: t.Duration,
+		Bitrate:  t.Bitrate,
 		Type:     "music",
 	}
+	if album.Cover != "" {
+		ret.CoverID = album.ID
+	}
+	return ret
 }
 
 func newArtistByTags(a *model.Artist) *subsonic.Artist {

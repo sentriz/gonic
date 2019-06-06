@@ -24,13 +24,9 @@ type Track struct {
 	Duration       int    `gorm:"not null" sql:"default: null"`
 	Size           int    `gorm:"not null" sql:"default: null"`
 	Bitrate        int    `gorm:"not null" sql:"default: null"`
-	TagDiscNumber  int    `sql:"default: null"`
 	TagTitle       string `sql:"default: null"`
-	TagTotalDiscs  int    `sql:"default: null"`
-	TagTotalTracks int    `sql:"default: null"`
 	TagTrackArtist string `sql:"default: null"`
 	TagTrackNumber int    `sql:"default: null"`
-	TagYear        int    `sql:"default: null"`
 }
 
 func (t *Track) Ext() string {
@@ -74,15 +70,16 @@ type Play struct {
 type Album struct {
 	IDBase
 	CrudBase
-	LeftPath    string `gorm:"unique_index:idx_left_path_right_path"`
-	RightPath   string `gorm:"not null; unique_index:idx_left_path_right_path" sql:"default: null"`
-	Parent      *Album
-	ParentID    int    `sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
-	Cover       string `sql:"default: null"`
-	TagArtist   *Artist
-	TagArtistID int    `gorm:"index" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
-	TagTitle    string `gorm:"index" sql:"default: null"`
-	TagYear     int    `sql:"default: null"`
-	Tracks      []*Track
-	IsNew       bool `gorm:"-"`
+	LeftPath      string `gorm:"unique_index:idx_left_path_right_path"`
+	RightPath     string `gorm:"not null; unique_index:idx_left_path_right_path" sql:"default: null"`
+	Parent        *Album
+	ParentID      int    `sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	Cover         string `sql:"default: null"`
+	TagArtist     *Artist
+	TagArtistID   int    `gorm:"index" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
+	TagTitle      string `gorm:"index" sql:"default: null"`
+	TagYear       int    `sql:"default: null"`
+	Tracks        []*Track
+	ReceivedPaths bool `gorm:"-"`
+	ReceivedTags  bool `gorm:"-"`
 }

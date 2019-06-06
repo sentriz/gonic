@@ -9,7 +9,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/dhowden/tag"
 	"github.com/jinzhu/gorm"
 	"github.com/karrick/godirwalk"
 	"github.com/pkg/errors"
@@ -42,6 +41,7 @@ type Scanner struct {
 	musicPath     string
 	seenTracks    map[int]struct{}
 	seenTracksNew int
+	seenTracksErr int
 	curFolders    folderStack
 	curCover      string
 }
@@ -108,10 +108,11 @@ func (s *Scanner) Start() error {
 	if err != nil {
 		return errors.Wrap(err, "walking filesystem")
 	}
-	log.Printf("finished scan in %s, +%d/%d tracks\n",
+	log.Printf("finished scan in %s, +%d/%d tracks (%d err)\n",
 		time.Since(start),
 		s.seenTracksNew,
 		len(s.seenTracks),
+		s.seenTracksErr,
 	)
 	//
 	// begin cleaning
@@ -198,7 +199,7 @@ func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
 
 func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
 	folder := s.curFolders.Pop()
-	if folder.IsNew {
+	if folder.ReceivedPaths {
 		folder.ParentID = s.curFolderID()
 		folder.Cover = s.curCover
 		s.tx.Save(folder)
@@ -207,19 +208,6 @@ func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
 	}
 	s.curCover = ""
 	return nil
-}
-
-func readTags(path string) (tag.Metadata, error) {
-	trackData, err := os.Open(path)
-	if err != nil {
-		return nil, errors.Wrap(err, "reading track from disk")
-	}
-	defer trackData.Close()
-	tags, err := tag.ReadFrom(trackData)
-	if err != nil {
-		return nil, errors.Wrap(err, "reading tags from track")
-	}
-	return tags, nil
 }
 
 func (s *Scanner) handleFolder(it *item) error {
@@ -240,7 +228,7 @@ func (s *Scanner) handleFolder(it *item) error {
 	folder.LeftPath = it.directory
 	folder.RightPath = it.filename
 	s.tx.Save(folder)
-	folder.IsNew = true
+	folder.ReceivedPaths = true
 	return nil
 }
 
@@ -248,11 +236,6 @@ func (s *Scanner) handleTrack(it *item) error {
 	//
 	// set track basics
 	track := &model.Track{}
-	defer func() {
-		// id will will be found (the first early return)
-		// or created the tx.Save(track)
-		s.seenTracks[track.ID] = struct{}{}
-	}()
 	err := s.tx.
 		Where(model.Track{
 			AlbumID:  s.curFolderID(),
@@ -263,26 +246,26 @@ func (s *Scanner) handleTrack(it *item) error {
 	if !gorm.IsRecordNotFoundError(err) &&
 		it.stat.ModTime().Before(track.UpdatedAt) {
 		// we found the record but it hasn't changed
+		s.seenTracks[track.ID] = struct{}{}
 		return nil
 	}
 	track.Filename = it.filename
 	track.Size = int(it.stat.Size())
 	track.AlbumID = s.curFolderID()
-	track.Duration = -1
-	track.Bitrate = -1
 	tags, err := readTags(it.fullPath)
 	if err != nil {
-		return errors.Wrap(err, "reading tags")
+		// not returning the error here because we don't
+		// want the entire walk to stop if we can't read
+		// the tags of a single file
+		log.Printf("error reading tags `%s`: %v", it.relPath, err)
+		s.seenTracksErr++
+		return nil
 	}
-	trackNumber, totalTracks := tags.Track()
-	discNumber, totalDiscs := tags.Disc()
-	track.TagDiscNumber = discNumber
-	track.TagTotalDiscs = totalDiscs
-	track.TagTotalTracks = totalTracks
-	track.TagTrackNumber = trackNumber
 	track.TagTitle = tags.Title()
 	track.TagTrackArtist = tags.Artist()
-	track.TagYear = tags.Year()
+	track.TagTrackNumber = tags.TrackNumber()
+	track.Duration = tags.DurationSecs() // these two should be calculated
+	track.Bitrate = tags.Bitrate()       // from the file instead of tags
 	//
 	// set album artist basics
 	artist := &model.Artist{}
@@ -296,14 +279,18 @@ func (s *Scanner) handleTrack(it *item) error {
 	}
 	track.ArtistID = artist.ID
 	s.tx.Save(track)
+	s.seenTracks[track.ID] = struct{}{}
 	s.seenTracksNew++
 	//
 	// set album if this is the first track in the folder
-	if !s.curFolder().IsNew {
+	folder := s.curFolder()
+	if !folder.ReceivedPaths || folder.ReceivedTags {
+		// the folder hasn't been modified or already has it's tags
 		return nil
 	}
-	s.curFolder().TagTitle = tags.Album()
-	s.curFolder().TagYear = tags.Year()
-	s.curFolder().TagArtistID = artist.ID
+	folder.TagTitle = tags.Album()
+	folder.TagYear = tags.Year()
+	folder.TagArtistID = artist.ID
+	folder.ReceivedTags = true
 	return nil
 }

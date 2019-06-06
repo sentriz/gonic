@@ -78,7 +78,7 @@ func (c *Controller) GetCoverArt(w http.ResponseWriter, r *http.Request) {
 	}
 	folder := &model.Album{}
 	err = c.DB.
-		Select("id, path, cover").
+		Select("id, left_path, right_path, cover").
 		First(folder, id).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
@@ -91,8 +91,8 @@ func (c *Controller) GetCoverArt(w http.ResponseWriter, r *http.Request) {
 	}
 	absPath := path.Join(
 		c.MusicPath,
-		folder.RightPath,
 		folder.LeftPath,
+		folder.RightPath,
 		folder.Cover,
 	)
 	http.ServeFile(w, r, absPath)

@@ -24,9 +24,11 @@
         {
           "album": "(1994) The Graveyard and the Ballroom",
           "artist": "A Certain Ratio",
+          "bitRate": 877,
           "contentType": "audio/x-flac",
           "coverArt": 3,
           "created": "0001-01-01T00:00:00Z",
+          "duration": 332,
           "id": 1,
           "parent": 3,
           "path": "A Certain Ratio/(1994) The Graveyard and the Ballroom/13.14 Flight.flac",
@@ -39,9 +41,11 @@
         {
           "album": "(1966) The Psychedelic Sounds of the 13th Floor Elevators",
           "artist": "13th Floor Elevators",
+          "bitRate": 245,
           "contentType": "audio/mpeg",
           "coverArt": 7,
           "created": "0001-01-01T00:00:00Z",
+          "duration": 154,
           "id": 35,
           "parent": 7,
           "path": "13th Floor Lowervators/(1966) The Psychedelic Sounds of the 13th Floor Elevators/13.21 Before You Accuse Me.mp3",
