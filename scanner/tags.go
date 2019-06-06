@@ -33,7 +33,11 @@ func (t *tags) Year() int {
 }
 
 func (t *tags) DurationSecs() int {
-	return int(t.Duration() / 1e9)
+	duration := int(t.Duration() / 1e9)
+	if duration == 0 {
+		return -1
+	}
+	return duration
 }
 
 func readTags(path string) (*tags, error) {
