@@ -5,8 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/mdlayher/taggolib"
 	"github.com/pkg/errors"
+
+	"github.com/sentriz/taggolib"
 )
 
 type tags struct {
