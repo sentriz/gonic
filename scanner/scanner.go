@@ -41,6 +41,7 @@ type Scanner struct {
 	musicPath     string
 	seenTracks    map[int]struct{}
 	seenTracksNew int
+	seenTracksErr int
 	curFolders    folderStack
 	curCover      string
 }
@@ -107,10 +108,11 @@ func (s *Scanner) Start() error {
 	if err != nil {
 		return errors.Wrap(err, "walking filesystem")
 	}
-	log.Printf("finished scan in %s, +%d/%d tracks\n",
+	log.Printf("finished scan in %s, +%d/%d tracks (%d err)\n",
 		time.Since(start),
 		s.seenTracksNew,
 		len(s.seenTracks),
+		s.seenTracksErr,
 	)
 	//
 	// begin cleaning
@@ -234,11 +236,6 @@ func (s *Scanner) handleTrack(it *item) error {
 	//
 	// set track basics
 	track := &model.Track{}
-	defer func() {
-		// id will will be found (the first early return)
-		// or created the tx.Save(track)
-		s.seenTracks[track.ID] = struct{}{}
-	}()
 	err := s.tx.
 		Where(model.Track{
 			AlbumID:  s.curFolderID(),
@@ -249,6 +246,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	if !gorm.IsRecordNotFoundError(err) &&
 		it.stat.ModTime().Before(track.UpdatedAt) {
 		// we found the record but it hasn't changed
+		s.seenTracks[track.ID] = struct{}{}
 		return nil
 	}
 	track.Filename = it.filename
@@ -256,7 +254,12 @@ func (s *Scanner) handleTrack(it *item) error {
 	track.AlbumID = s.curFolderID()
 	tags, err := readTags(it.fullPath)
 	if err != nil {
-		return errors.Wrapf(err, "reading tags for file `%s`", it.relPath)
+		// not returning the error here because we don't
+		// want the entire walk to stop if we can't read
+		// the tags of a single file
+		log.Printf("error reading tags `%s`: %v", it.relPath, err)
+		s.seenTracksErr++
+		return nil
 	}
 	track.TagTitle = tags.Title()
 	track.TagTrackArtist = tags.Artist()
@@ -276,6 +279,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	}
 	track.ArtistID = artist.ID
 	s.tx.Save(track)
+	s.seenTracks[track.ID] = struct{}{}
 	s.seenTracksNew++
 	//
 	// set album if this is the first track in the folder
