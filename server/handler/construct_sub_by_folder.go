@@ -48,7 +48,8 @@ func newTCTrackByFolder(t *model.Track, parent *model.Album) *subsonic.TrackChil
 		),
 		ParentID: parent.ID,
 		CoverID:  parent.ID,
-		Duration: 0,
+		Duration: t.Duration,
+		Bitrate:  t.Bitrate,
 		IsDir:    false,
 		Type:     "music",
 	}
