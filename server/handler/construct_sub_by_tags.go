@@ -34,6 +34,7 @@ func newTrackByTags(t *model.Track, album *model.Album) *subsonic.TrackChild {
 		Title:       t.TagTitle,
 		Artist:      t.TagTrackArtist,
 		TrackNumber: t.TagTrackNumber,
+		DiscNumber:  t.TagDiscNumber,
 		Path: path.Join(
 			album.LeftPath,
 			album.RightPath,

@@ -16,17 +16,18 @@ type Artist struct {
 type Track struct {
 	IDBase
 	CrudBase
-	Album          *Album
-	AlbumID        int    `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Filename       string `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null"`
+	Album          *Album
+	AlbumID        int `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Artist         *Artist
 	ArtistID       int    `gorm:"not null; index" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
-	Duration       int    `gorm:"not null" sql:"default: null"`
 	Size           int    `gorm:"not null" sql:"default: null"`
+	Duration       int    `gorm:"not null" sql:"default: null"`
 	Bitrate        int    `gorm:"not null" sql:"default: null"`
 	TagTitle       string `sql:"default: null"`
 	TagTrackArtist string `sql:"default: null"`
 	TagTrackNumber int    `sql:"default: null"`
+	TagDiscNumber  int    `sql:"default: null"`
 }
 
 func (t *Track) Ext() string {

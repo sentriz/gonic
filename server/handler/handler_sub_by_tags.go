@@ -68,7 +68,7 @@ func (c *Controller) GetAlbum(w http.ResponseWriter, r *http.Request) {
 	err = c.DB.
 		Preload("TagArtist").
 		Preload("Tracks", func(db *gorm.DB) *gorm.DB {
-			return db.Order("tracks.tag_track_number")
+			return db.Order("tracks.tag_disc_number, tracks.tag_track_number")
 		}).
 		First(album, id).
 		Error

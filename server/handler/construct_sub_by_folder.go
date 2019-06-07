@@ -41,6 +41,7 @@ func newTCTrackByFolder(t *model.Track, parent *model.Album) *subsonic.TrackChil
 		Artist:      t.TagTrackArtist,
 		Title:       t.TagTitle,
 		TrackNumber: t.TagTrackNumber,
+		DiscNumber:  t.TagDiscNumber,
 		Path: path.Join(
 			parent.LeftPath,
 			parent.RightPath,
