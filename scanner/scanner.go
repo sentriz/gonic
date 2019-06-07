@@ -70,7 +70,6 @@ func (s *Scanner) curFolderID() int {
 func (s *Scanner) MigrateDB() error {
 	s.tx = s.db.Begin()
 	defer s.tx.Commit()
-	log.Printf("starting migrate...")
 	s.tx.AutoMigrate(
 		model.Artist{},
 		model.Track{},
@@ -98,7 +97,6 @@ func (s *Scanner) Start() error {
 	defer s.tx.Commit()
 	//
 	// being walking
-	log.Printf("starting scan...")
 	start := time.Now()
 	err := godirwalk.Walk(s.musicPath, &godirwalk.Options{
 		Callback:             s.callbackItem,
@@ -116,7 +114,6 @@ func (s *Scanner) Start() error {
 	)
 	//
 	// begin cleaning
-	log.Printf("starting clean...")
 	start = time.Now()
 	var tracks []*model.Track
 	err = s.tx.
