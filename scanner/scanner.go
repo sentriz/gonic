@@ -15,6 +15,7 @@ import (
 
 	"github.com/sentriz/gonic/mime"
 	"github.com/sentriz/gonic/model"
+	"github.com/sentriz/taggolib"
 )
 
 var (
@@ -34,6 +35,19 @@ var coverFilenames = map[string]struct{}{
 	"front.png":   {},
 	"front.jpg":   {},
 	"front.jpeg":  {},
+}
+
+func readTags(path string) (taggolib.Parser, error) {
+	track, err := os.Open(path)
+	if err != nil {
+		return nil, errors.Wrap(err, "reading disk")
+	}
+	defer track.Close()
+	parser, err := taggolib.New(track)
+	if err != nil {
+		return nil, errors.Wrap(err, "parsing")
+	}
+	return parser, nil
 }
 
 type Scanner struct {
@@ -262,8 +276,8 @@ func (s *Scanner) handleTrack(it *item) error {
 	track.TagTrackArtist = tags.Artist()
 	track.TagTrackNumber = tags.TrackNumber()
 	track.TagDiscNumber = tags.DiscNumber()
-	track.Duration = tags.DurationSecs() // these two should be calculated
-	track.Bitrate = tags.Bitrate()       // from the file instead of tags
+	track.Duration = tags.Duration() // these two should be calculated
+	track.Bitrate = tags.Bitrate()   // from the file instead of tags
 	//
 	// set album artist basics
 	artist := &model.Artist{}

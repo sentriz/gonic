@@ -22,8 +22,8 @@ type Track struct {
 	Artist         *Artist
 	ArtistID       int    `gorm:"not null; index" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
 	Size           int    `gorm:"not null" sql:"default: null"`
-	Duration       int    `gorm:"not null" sql:"default: null"`
-	Bitrate        int    `gorm:"not null" sql:"default: null"`
+	Duration       int    `sql:"default: null"`
+	Bitrate        int    `sql:"default: null"`
 	TagTitle       string `sql:"default: null"`
 	TagTrackArtist string `sql:"default: null"`
 	TagTrackNumber int    `sql:"default: null"`
