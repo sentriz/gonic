@@ -14,7 +14,14 @@ import (
 
 func (c *Controller) GetArtists(w http.ResponseWriter, r *http.Request) {
 	var artists []*model.Artist
-	c.DB.Find(&artists)
+	c.DB.
+		Select("*, count(sub.id) as album_count").
+		Joins(`
+            LEFT JOIN albums sub
+		    ON artists.id = sub.tag_artist_id
+		`).
+		Group("artists.id").
+		Find(&artists)
 	indexMap := make(map[string]*subsonic.Index)
 	indexes := &subsonic.Artists{}
 	for _, artist := range artists {

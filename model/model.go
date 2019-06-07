@@ -9,8 +9,9 @@ import (
 
 type Artist struct {
 	IDBase
-	Name   string   `gorm:"not null; unique_index"`
-	Albums []*Album `gorm:"foreignkey:TagArtistID"`
+	Name       string   `gorm:"not null; unique_index"`
+	Albums     []*Album `gorm:"foreignkey:TagArtistID"`
+	AlbumCount int      `sql:"-"`
 }
 
 type Track struct {
@@ -81,6 +82,7 @@ type Album struct {
 	TagTitle      string `gorm:"index" sql:"default: null"`
 	TagYear       int    `sql:"default: null"`
 	Tracks        []*Track
+	ChildCount    int  `sql:"-"`
 	ReceivedPaths bool `gorm:"-"`
 	ReceivedTags  bool `gorm:"-"`
 }

@@ -55,7 +55,8 @@ func newTrackByTags(t *model.Track, album *model.Album) *subsonic.TrackChild {
 
 func newArtistByTags(a *model.Artist) *subsonic.Artist {
 	return &subsonic.Artist{
-		ID:   a.ID,
-		Name: a.Name,
+		ID:         a.ID,
+		Name:       a.Name,
+		AlbumCount: a.AlbumCount,
 	}
 }

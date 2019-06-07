@@ -61,8 +61,9 @@ func newTCTrackByFolder(t *model.Track, parent *model.Album) *subsonic.TrackChil
 
 func newArtistByFolder(f *model.Album) *subsonic.Artist {
 	return &subsonic.Artist{
-		ID:   f.ID,
-		Name: f.RightPath,
+		ID:         f.ID,
+		Name:       f.RightPath,
+		AlbumCount: f.ChildCount,
 	}
 }
 

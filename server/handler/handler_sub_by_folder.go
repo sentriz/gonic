@@ -20,8 +20,15 @@ import (
 
 func (c *Controller) GetIndexes(w http.ResponseWriter, r *http.Request) {
 	var folders []*model.Album
+
 	c.DB.
-		Where("parent_id = 1").
+		Select("*, count(sub.id) as child_count").
+		Joins(`
+            LEFT JOIN albums sub
+		    ON albums.id = sub.parent_id
+		`).
+		Where("albums.parent_id = 1").
+		Group("albums.id").
 		Find(&folders)
 	indexMap := make(map[string]*subsonic.Index)
 	indexes := []*subsonic.Index{}
