@@ -23,14 +23,14 @@ func (c *Controller) GetIndexes(w http.ResponseWriter, r *http.Request) {
 	c.DB.
 		Where("parent_id = 1").
 		Find(&folders)
-	indexMap := make(map[rune]*subsonic.Index)
+	indexMap := make(map[string]*subsonic.Index)
 	indexes := []*subsonic.Index{}
 	for _, folder := range folders {
-		i := indexOf(folder.RightPath)
+		i := indexOf(folder.RightPath[0])
 		index, ok := indexMap[i]
 		if !ok {
 			index = &subsonic.Index{
-				Name:    string(i),
+				Name:    i,
 				Artists: []*subsonic.Artist{},
 			}
 			indexMap[i] = index

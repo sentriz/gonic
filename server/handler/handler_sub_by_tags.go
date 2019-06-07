@@ -15,14 +15,14 @@ import (
 func (c *Controller) GetArtists(w http.ResponseWriter, r *http.Request) {
 	var artists []*model.Artist
 	c.DB.Find(&artists)
-	indexMap := make(map[rune]*subsonic.Index)
+	indexMap := make(map[string]*subsonic.Index)
 	indexes := &subsonic.Artists{}
 	for _, artist := range artists {
-		i := indexOf(artist.Name)
+		i := indexOf(artist.Name[0])
 		index, ok := indexMap[i]
 		if !ok {
 			index = &subsonic.Index{
-				Name:    string(i),
+				Name:    i,
 				Artists: []*subsonic.Artist{},
 			}
 			indexMap[i] = index

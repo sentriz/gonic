@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 	"sync/atomic"
 	"time"
 	"unicode"
@@ -18,13 +19,13 @@ import (
 	"github.com/sentriz/gonic/server/subsonic"
 )
 
-func indexOf(s string) rune {
-	first := string(s[0])
-	c := rune(unidecode.Unidecode(first)[0])
-	if !unicode.IsLetter(c) {
-		return '#'
+func indexOf(in byte) string {
+	lower := strings.ToLower(string(in))
+	decode := unidecode.Unidecode(lower)
+	if !unicode.IsLetter(rune(decode[0])) {
+		return "#"
 	}
-	return c
+	return decode
 }
 
 func (c *Controller) Stream(w http.ResponseWriter, r *http.Request) {
