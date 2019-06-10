@@ -3,4 +3,6 @@
 packrd/
 cmd/scanner/scanner
 cmd/server/server
+cmd/scanner/main
+cmd/server/main
 _test*
