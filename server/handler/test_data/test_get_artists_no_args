@@ -8,8 +8,9 @@
           "name": "#",
           "artist": [
             {
-              "id": 2,
-              "name": "13th Floor Elevators"
+              "id": 4,
+              "name": "13th Floor Elevators",
+              "albumCount": 2
             }
           ]
         },
@@ -17,12 +18,54 @@
           "name": "a",
           "artist": [
             {
-              "id": 1,
-              "name": "A Certain Ratio"
+              "id": 3,
+              "name": "A Certain Ratio",
+              "albumCount": 2
             },
             {
-              "id": 3,
-              "name": "Anikas"
+              "id": 5,
+              "name": "Anikas",
+              "albumCount": 1
+            }
+          ]
+        },
+        {
+          "name": "d",
+          "artist": [
+            {
+              "id": 2,
+              "name": "Dead Moon",
+              "albumCount": 1
+            }
+          ]
+        },
+        {
+          "name": "j",
+          "artist": [
+            {
+              "id": 1,
+              "name": "Jah Wobble, The Edge & Holger Czukay",
+              "albumCount": 1
+            }
+          ]
+        },
+        {
+          "name": "s",
+          "artist": [
+            {
+              "id": 6,
+              "name": "Swell Maps",
+              "albumCount": 2
+            }
+          ]
+        },
+        {
+          "name": "t",
+          "artist": [
+            {
+              "id": 7,
+              "name": "Ten Years After",
+              "albumCount": 1
             }
           ]
         }

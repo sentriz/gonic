@@ -5,18 +5,18 @@
     "searchResult2": {
       "artist": [
         {
-          "id": 8,
+          "id": 12,
           "parent": 1,
           "name": "___Anika"
         }
       ],
       "album": [
         {
-          "coverArt": 11,
+          "coverArt": 15,
           "created": "0001-01-01T00:00:00Z",
-          "id": 11,
+          "id": 15,
           "isDir": true,
-          "parent": 10,
+          "parent": 14,
           "title": "(2010) Anika"
         }
       ]

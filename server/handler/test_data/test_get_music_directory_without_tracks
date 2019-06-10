@@ -5,7 +5,7 @@
     "directory": {
       "id": 2,
       "parent": 1,
-      "name": "A Certain Ratio",
+      "name": "Jah Wobble, The Edge, Holger Czukay",
       "child": [
         {
           "coverArt": 3,
@@ -13,14 +13,7 @@
           "id": 3,
           "isDir": true,
           "parent": 2,
-          "title": "(1994) The Graveyard and the Ballroom"
-        },
-        {
-          "created": "0001-01-01T00:00:00Z",
-          "id": 4,
-          "isDir": true,
-          "parent": 2,
-          "title": "(1981) To Each."
+          "title": "(1983) Snake Charmer"
         }
       ]
     }
