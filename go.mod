@@ -18,11 +18,10 @@ require (
 	github.com/karrick/godirwalk v1.8.0
 	github.com/lib/pq v1.0.0 // indirect
 	github.com/mattn/go-sqlite3 v1.10.0 // indirect
-	github.com/mdlayher/taggolib v0.0.0-20140723044655-d71b09674cfe
+	github.com/nicksellen/audiotags v0.0.0-20160226222119-94015fa599bd
 	github.com/peterbourgon/ff v1.2.0
 	github.com/pkg/errors v0.8.1
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
-	github.com/sentriz/taggolib v0.0.0-20190607155858-4b02868793c0
 	github.com/wader/gormstore v0.0.0-20190302154359-acb787ba3755
 	golang.org/x/crypto v0.0.0-20190422183909-d864b10871cd // indirect
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58 // indirect

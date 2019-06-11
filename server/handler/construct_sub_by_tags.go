@@ -43,7 +43,7 @@ func newTrackByTags(t *model.Track, album *model.Album) *subsonic.TrackChild {
 		Album:    album.TagTitle,
 		AlbumID:  album.ID,
 		ArtistID: album.TagArtist.ID,
-		Duration: t.Duration,
+		Duration: t.Length,
 		Bitrate:  t.Bitrate,
 		Type:     "music",
 	}

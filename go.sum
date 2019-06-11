@@ -20,8 +20,6 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/denisenkom/go-mssqldb v0.0.0-20190315220205-a8ed825ac853 h1:tTngnoO/B6HQnJ+pK8tN7kEAhmhIfaJOutqq/A4/JTM=
 github.com/denisenkom/go-mssqldb v0.0.0-20190315220205-a8ed825ac853/go.mod h1:xN/JuLBIz4bjkxNmByTiV1IbhfnYb6oo99phBn4Eqhc=
-github.com/eaburns/bit v0.0.0-20131029213740-7bd5cd37375d h1:HB5J9+f1xpkYLgWQ/RqEcbp3SEufyOIMYLoyKNKiG7E=
-github.com/eaburns/bit v0.0.0-20131029213740-7bd5cd37375d/go.mod h1:CHkHWWZ4kbGY6jEy1+qlitDaCtRgNvCOQdakj/1Yl/Q=
 github.com/erikstmartin/go-testdb v0.0.0-20160219214506-8d10e4a1bae5 h1:Yzb9+7DPaBjB8zlTR87/ElzFsnQfuHnVUVqpZZIcV5Y=
 github.com/erikstmartin/go-testdb v0.0.0-20160219214506-8d10e4a1bae5/go.mod h1:a2zkGnVExMxdzMo3M0Hi/3sEU+cWnZpSni0O6/Yb/P0=
 github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568/go.mod h1:xEzjJPgXI435gkrCt3MPfRiAkVrwSbHsst4LCFVfpJc=
@@ -132,9 +130,9 @@ github.com/markbates/safe v1.0.1/go.mod h1:nAqgmRi7cY2nqMc92/bSEeQA+R4OheNU2T1kN
 github.com/mattn/go-sqlite3 v1.10.0 h1:jbhqpg7tQe4SupckyijYiy0mJJ/pRyHvXf7JdWK860o=
 github.com/mattn/go-sqlite3 v1.10.0/go.mod h1:FPy6KqzDD04eiIsT53CuJW3U88zkxoIYsOqkbpncsNc=
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
-github.com/mdlayher/taggolib v0.0.0-20140723044655-d71b09674cfe h1:WyohQTx/GamBIn8NQAH3JrnEk5Tj++eNmwJOexXxNIk=
-github.com/mdlayher/taggolib v0.0.0-20140723044655-d71b09674cfe/go.mod h1:11hji841NkL7BD+0rOgSuBzQ7bxBHKUj7Tp01NFZTE0=
 github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
+github.com/nicksellen/audiotags v0.0.0-20160226222119-94015fa599bd h1:xKn/gU8lZupoZt/HE7a/R3aH93iUO6JwyRsYelQUsRI=
+github.com/nicksellen/audiotags v0.0.0-20160226222119-94015fa599bd/go.mod h1:B6icauz2l4tkYQxmDtCH4qmNWz/evSW5CsOqp6IE5IE=
 github.com/openzipkin/zipkin-go v0.1.1/go.mod h1:NtoC/o8u3JlF1lSlyPNswIbeQH9bJTmOf0Erfk+hxe8=
 github.com/openzipkin/zipkin-go v0.1.3/go.mod h1:NtoC/o8u3JlF1lSlyPNswIbeQH9bJTmOf0Erfk+hxe8=
 github.com/peterbourgon/ff v1.2.0 h1:wGn2NwdHk8MTlRQpnXnO91UKegxt5DvlwR/bTK/L2hc=
@@ -160,16 +158,6 @@ github.com/rogpeppe/go-internal v1.1.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFR
 github.com/rogpeppe/go-internal v1.2.2/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/rogpeppe/go-internal v1.3.0 h1:RR9dF3JtopPvtkroDZuVD7qquD0bnHlKSqaQhgwt8yk=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
-github.com/sentriz/taggolib v0.0.0-20190606174544-31bc993bccf4 h1:tqGj15O7PcAomjThBovGe9xUxCC22WVItQjW9Wo/69M=
-github.com/sentriz/taggolib v0.0.0-20190606174544-31bc993bccf4/go.mod h1:c+rVE+i+SSdXptoMgXUoW/ABPT3gn5hXHcySx+L4RzE=
-github.com/sentriz/taggolib v0.0.0-20190606182049-26b5d155056e h1:/Vc8Bp4sxpogBPzGRJ1BO9psPQ/bakFsFhghuhCsorY=
-github.com/sentriz/taggolib v0.0.0-20190606182049-26b5d155056e/go.mod h1:c+rVE+i+SSdXptoMgXUoW/ABPT3gn5hXHcySx+L4RzE=
-github.com/sentriz/taggolib v0.0.0-20190607145701-c214099e9886 h1:MqjQCIXzpDHy1AVb0eY8WUDsQUfFtJ97fj/B1IJtHlw=
-github.com/sentriz/taggolib v0.0.0-20190607145701-c214099e9886/go.mod h1:c+rVE+i+SSdXptoMgXUoW/ABPT3gn5hXHcySx+L4RzE=
-github.com/sentriz/taggolib v0.0.0-20190607155858-4b02868793c0 h1:g5F6BfCeJyN9Up3qBa9R625e0zsZOBO+XgvGaOO4lps=
-github.com/sentriz/taggolib v0.0.0-20190607155858-4b02868793c0/go.mod h1:o4wJ+dzmd16lEw5UsyrLeLetRropx7LA6SGUJQigEic=
-github.com/sentriz/taggolib v0.0.0-20190607155922-1ac071004ecf h1:EgT2t9K1jeVfPr9Y0omw+31q52FLPJMaVPlncs1hSlw=
-github.com/sentriz/taggolib v0.0.0-20190607155922-1ac071004ecf/go.mod h1:o4wJ+dzmd16lEw5UsyrLeLetRropx7LA6SGUJQigEic=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/sirupsen/logrus v1.4.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/sirupsen/logrus v1.4.1 h1:GL2rEmy6nsikmW0r8opw9JIRScdMF5hA8cOYLH7In1k=
