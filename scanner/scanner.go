@@ -283,8 +283,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	// set album if this is the first track in the folder
 	folder := s.curFolder()
 	if !folder.ReceivedPaths || folder.ReceivedTags {
-		// the folder hasn't been modified
-		// or already has it's tags
+		// the folder hasn't been modified or already has it's tags
 		return nil
 	}
 	folder.TagTitle = tags.Album()
