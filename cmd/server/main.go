@@ -46,7 +46,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("error opening database: %v\n", err)
 	}
-	db.Exec("PRAGMA foreign_keys = ON")
 	s := server.New(
 		db,
 		*musicPath,
