@@ -15,6 +15,7 @@ import (
 
 	"github.com/sentriz/gonic/mime"
 	"github.com/sentriz/gonic/model"
+	"github.com/sentriz/gonic/scanner/tags"
 )
 
 var (
@@ -249,7 +250,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	track.Filename = it.filename
 	track.Size = int(it.stat.Size())
 	track.AlbumID = s.curFolderID()
-	tags, err := readTags(it.fullPath)
+	trTags, err := tags.New(it.fullPath)
 	if err != nil {
 		// not returning the error here because we don't
 		// want the entire walk to stop if we can't read
@@ -258,21 +259,21 @@ func (s *Scanner) handleTrack(it *item) error {
 		s.seenTracksErr++
 		return nil
 	}
-	track.TagTitle = tags.Title()
-	track.TagTrackArtist = tags.Artist()
-	track.TagTrackNumber = tags.TrackNumber()
-	track.TagDiscNumber = tags.DiscNumber()
-	track.Length = tags.Length()   // these two should be calculated
-	track.Bitrate = tags.Bitrate() // from the file instead of tags
+	track.TagTitle = trTags.Title()
+	track.TagTrackArtist = trTags.Artist()
+	track.TagTrackNumber = trTags.TrackNumber()
+	track.TagDiscNumber = trTags.DiscNumber()
+	track.Length = trTags.Length()   // these two should be calculated
+	track.Bitrate = trTags.Bitrate() // from the file instead of tags
 	//
 	// set album artist basics
 	artist := &model.Artist{}
 	err = s.tx.
-		Where("name = ?", tags.AlbumArtist()).
+		Where("name = ?", trTags.AlbumArtist()).
 		First(artist).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
-		artist.Name = tags.AlbumArtist()
+		artist.Name = trTags.AlbumArtist()
 		s.tx.Save(artist)
 	}
 	track.ArtistID = artist.ID
@@ -286,8 +287,8 @@ func (s *Scanner) handleTrack(it *item) error {
 		// the folder hasn't been modified or already has it's tags
 		return nil
 	}
-	folder.TagTitle = tags.Album()
-	folder.TagYear = tags.Year()
+	folder.TagTitle = trTags.Album()
+	folder.TagYear = trTags.Year()
 	folder.TagArtistID = artist.ID
 	folder.ReceivedTags = true
 	return nil
