@@ -6,3 +6,4 @@ cmd/server/server
 cmd/scanner/main
 cmd/server/main
 _test*
+dist

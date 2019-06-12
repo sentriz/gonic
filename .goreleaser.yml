@@ -1,0 +1,40 @@
+env:
+  - GO111MODULE=on
+before:
+  hooks:
+    - go mod download
+builds:
+- id: scanner
+  env:
+  - CGO_ENABLED=1
+  main: ./cmd/scanner/main.go
+  flags:
+  - -tags='sqlite foreign_keys'
+  ldflags:
+   - "-extldflags '-static'"
+   - -s -w -X main.build={{.Version}}
+   - ./usemsan=-msan
+  goos:
+  - linux
+  goarch:
+  - amd64
+  - 386
+archives:
+- replacements:
+    darwin: darwin
+    linux: linux
+    windows: windows
+    386: i386
+    amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+release:
+  disable: true
