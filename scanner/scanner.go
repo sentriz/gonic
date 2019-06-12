@@ -268,12 +268,21 @@ func (s *Scanner) handleTrack(it *item) error {
 	//
 	// set album artist basics
 	artist := &model.Artist{}
+	artistName := func() string {
+		if ret := trTags.AlbumArtist(); ret != "" {
+			return ret
+		}
+		if ret := trTags.Artist(); ret != "" {
+			return ret
+		}
+		return "Unknown Artist"
+	}()
 	err = s.tx.
-		Where("name = ?", trTags.AlbumArtist()).
+		Where("name = ?", artistName).
 		First(artist).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
-		artist.Name = trTags.AlbumArtist()
+		artist.Name = artistName
 		s.tx.Save(artist)
 	}
 	track.ArtistID = artist.ID
