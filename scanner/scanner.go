@@ -41,6 +41,7 @@ type Scanner struct {
 	db, tx        *gorm.DB
 	musicPath     string
 	seenTracks    map[int]struct{}
+	seenFolders   map[int]struct{}
 	seenTracksNew int
 	seenTracksErr int
 	curFolders    folderStack
@@ -49,10 +50,11 @@ type Scanner struct {
 
 func New(db *gorm.DB, musicPath string) *Scanner {
 	return &Scanner{
-		db:         db,
-		musicPath:  musicPath,
-		seenTracks: make(map[int]struct{}),
-		curFolders: make(folderStack, 0),
+		db:          db,
+		musicPath:   musicPath,
+		seenTracks:  make(map[int]struct{}),
+		seenFolders: make(map[int]struct{}),
+		curFolders:  make(folderStack, 0),
 	}
 }
 
@@ -133,20 +135,30 @@ func (s *Scanner) Start() error {
 			deleted++
 		}
 	}
+	// delete folders not on filesystem
+	var folders []*model.Album
+	err = s.tx.
+		Select("id").
+		Find(&folders).
+		Error
+	for _, folder := range folders {
+		_, ok := s.seenFolders[folder.ID]
+		if !ok {
+			s.tx.Delete(folder)
+		}
+	}
 	// then, delete albums without tracks
 	s.tx.Exec(`
         DELETE FROM albums
-        WHERE tag_artist_id NOT NULL AND
-              (SELECT count(id)
-               FROM tracks
-               WHERE album_id = albums.id) = 0;
+        WHERE tag_artist_id NOT NULL
+        AND NOT EXISTS (SELECT 1 FROM tracks
+                        WHERE tracks.album_id = albums.id)
 	`)
 	// then, delete artists without albums
 	s.tx.Exec(`
         DELETE FROM artists
-        WHERE (SELECT count(id)
-               FROM albums
-               WHERE tag_artist_id = artists.id) = 0;
+        WHERE NOT EXISTS (SELECT 1 from albums
+                          WHERE albums.tag_artist_id = artists.id)
 	`)
 	log.Printf("finished clean in %s, -%d tracks\n",
 		time.Since(start),
@@ -210,7 +222,12 @@ func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
 
 func (s *Scanner) handleFolder(it *item) error {
 	folder := &model.Album{}
-	defer s.curFolders.Push(folder)
+	defer func() {
+		// folder's id will come from early return
+		// or save at the end
+		s.seenFolders[folder.ID] = struct{}{}
+		s.curFolders.Push(folder)
+	}()
 	err := s.tx.
 		Where(model.Album{
 			LeftPath:  it.directory,
