@@ -61,4 +61,19 @@
         </div>
     {{ end }}
 </div>
+<div class="padded box mono">
+    <div class="box-title">
+        <i class="mdi mdi-folder-multiple"></i> recent folders
+    </div>
+    <div class="left-cut">
+        <table id="recent-folders">
+        {{ range $folder := .RecentFolders }}
+            <tr>
+            <td><span>{{ $folder.RightPath }}</span></td>
+            <td><span class="light">{{ $folder.CreatedAt | humandate }}</span></td>
+            </tr>
+        {{ end }}
+        </table>
+    </div>
+</div>
 {{ end }}

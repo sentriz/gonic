@@ -34,6 +34,24 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    line-height: 1rem;
+}
+
+.left-cut {
+    display: flex;
+    flex-direction: row-reverse;
+    overflow-x: hidden;
+}
+
+table#recent-folders {
+    line-height: 0.45rem;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+table#recent-folders td, th {
+    border: none;
+    margin: 0;
 }
 
 a,

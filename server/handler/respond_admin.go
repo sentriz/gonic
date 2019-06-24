@@ -11,16 +11,17 @@ import (
 )
 
 type templateData struct {
-	Flashes                []interface{}
-	User                   *model.User
-	SelectedUser           *model.User
+	AlbumCount             int
 	AllUsers               []*model.User
 	ArtistCount            int
-	AlbumCount             int
-	TrackCount             int
 	CurrentLastFMAPIKey    string
 	CurrentLastFMAPISecret string
+	Flashes                []interface{}
+	RecentFolders          []*model.Album
 	RequestRoot            string
+	SelectedUser           *model.User
+	TrackCount             int
+	User                   *model.User
 }
 
 func renderTemplate(w http.ResponseWriter, r *http.Request,

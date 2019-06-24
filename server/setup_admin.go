@@ -6,24 +6,30 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gobuffalo/packr/v2"
+	"github.com/dustin/go-humanize"
 	"github.com/gorilla/securecookie"
 	"github.com/wader/gormstore"
 )
 
-func extendFromBox(tmpl *template.Template, box *packr.Box, key string) *template.Template {
-	strT, err := box.FindString(key)
-	if err != nil {
-		log.Fatalf("error when reading template from box: %v", err)
+var (
+	tmplFuncMap = template.FuncMap{
+		"humandate": humanize.Time,
+	}
+)
+
+func extendFrom(tmpl *template.Template, key string) *template.Template {
+	strT, ok := assets.String(key)
+	if !ok {
+		log.Fatalf("error when reading %q from assets", key)
 	}
 	if tmpl == nil {
-		tmpl = template.New("layout")
+		tmpl = template.New("layout").Funcs(tmplFuncMap)
 	} else {
 		tmpl = template.Must(tmpl.Clone())
 	}
 	newT, err := tmpl.Parse(strT)
 	if err != nil {
-		log.Fatalf("error when parsing template template: %v", err)
+		log.Fatalf("error when parsing template: %v", err)
 	}
 	return newT
 }
@@ -34,22 +40,21 @@ func (s *Server) SetupAdmin() {
 		sessionKey = securecookie.GenerateRandomKey(32)
 		s.SetSetting("session_key", string(sessionKey))
 	}
-	// create gormstore (and cleanup) for backend sessions
 	s.SessDB = gormstore.New(s.DB, sessionKey)
-	go s.SessDB.PeriodicCleanup(1*time.Hour, nil)
-	// using packr to bundle templates and static files
-	box := packr.New("templates", "./templates")
-	layoutT := extendFromBox(nil, box, "layout.tmpl")
-	userT := extendFromBox(layoutT, box, "user.tmpl")
+	go s.SessDB.PeriodicCleanup(time.Hour, nil)
+	//
+	layoutT := extendFrom(nil, "/templates/layout.tmpl")
+	userT := extendFrom(layoutT, "/templates/user.tmpl")
 	s.Templates = map[string]*template.Template{
-		"login":                 extendFromBox(layoutT, box, "pages/login.tmpl"),
-		"home":                  extendFromBox(userT, box, "pages/home.tmpl"),
-		"change_own_password":   extendFromBox(userT, box, "pages/change_own_password.tmpl"),
-		"change_password":       extendFromBox(userT, box, "pages/change_password.tmpl"),
-		"delete_user":           extendFromBox(userT, box, "pages/delete_user.tmpl"),
-		"create_user":           extendFromBox(userT, box, "pages/create_user.tmpl"),
-		"update_lastfm_api_key": extendFromBox(userT, box, "pages/update_lastfm_api_key.tmpl"),
+		"login":                 extendFrom(layoutT, "/templates/pages/login.tmpl"),
+		"home":                  extendFrom(userT, "/templates/pages/home.tmpl"),
+		"change_own_password":   extendFrom(userT, "/templates/pages/change_own_password.tmpl"),
+		"change_password":       extendFrom(userT, "/templates/pages/change_password.tmpl"),
+		"delete_user":           extendFrom(userT, "/templates/pages/delete_user.tmpl"),
+		"create_user":           extendFrom(userT, "/templates/pages/create_user.tmpl"),
+		"update_lastfm_api_key": extendFrom(userT, "/templates/pages/update_lastfm_api_key.tmpl"),
 	}
+	//
 	withPublicWare := newChain(
 		s.WithLogging,
 		s.WithSession,
@@ -62,16 +67,21 @@ func (s *Server) SetupAdmin() {
 		withUserWare,
 		s.WithAdminSession,
 	)
-	server := http.FileServer(packr.New("static", "./static"))
-	s.mux.Handle("/admin/static/", http.StripPrefix("/admin/static/", server))
+	// begin static server
+	s.mux.Handle("/admin/static/", http.StripPrefix("/admin",
+		http.FileServer(assets),
+	))
+	// begin public routes (creates new session)
 	s.mux.HandleFunc("/admin/login", withPublicWare(s.ServeLogin))
 	s.mux.HandleFunc("/admin/login_do", withPublicWare(s.ServeLoginDo))
+	// begin user routes (if session is valid)
 	s.mux.HandleFunc("/admin/logout", withUserWare(s.ServeLogout))
 	s.mux.HandleFunc("/admin/home", withUserWare(s.ServeHome))
 	s.mux.HandleFunc("/admin/change_own_password", withUserWare(s.ServeChangeOwnPassword))
 	s.mux.HandleFunc("/admin/change_own_password_do", withUserWare(s.ServeChangeOwnPasswordDo))
 	s.mux.HandleFunc("/admin/link_lastfm_do", withUserWare(s.ServeLinkLastFMDo))
 	s.mux.HandleFunc("/admin/unlink_lastfm_do", withUserWare(s.ServeUnlinkLastFMDo))
+	// begin admin routes (if session is valid, and is admin)
 	s.mux.HandleFunc("/admin/change_password", withAdminWare(s.ServeChangePassword))
 	s.mux.HandleFunc("/admin/change_password_do", withAdminWare(s.ServeChangePasswordDo))
 	s.mux.HandleFunc("/admin/delete_user", withAdminWare(s.ServeDeleteUser))

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+GO111MODULES=on
+
+./_do_compile_assets
+go build \
+    -tags "$(tr '\n' ' ' < _build_tags) embed" \
+    cmd/server/main.go

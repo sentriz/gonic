@@ -5,20 +5,11 @@
     "albumList": {
       "album": [
         {
-          "id": 7,
-          "coverArt": 7,
-          "artist": "A Certain Ratio",
-          "title": "(1994) The Graveyard and the Ballroom",
-          "parent": 6,
-          "isDir": true,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": 3,
-          "coverArt": 3,
-          "artist": "Jah Wobble, The Edge, Holger Czukay",
-          "title": "(1983) Snake Charmer",
-          "parent": 2,
+          "id": 11,
+          "coverArt": 11,
+          "artist": "13th Floor Lowervators",
+          "title": "(1966) The Psychedelic Sounds of the 13th Floor Elevators",
+          "parent": 9,
           "isDir": true,
           "created": "0001-01-01T00:00:00Z"
         },
@@ -32,38 +23,11 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
-          "id": 19,
-          "coverArt": 19,
-          "artist": "Swell Maps",
-          "title": "(1979) A Trip to Marineville",
-          "parent": 17,
-          "isDir": true,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": 18,
-          "coverArt": 18,
-          "artist": "Swell Maps",
-          "title": "(1980) Jane From Occupied Europe",
-          "parent": 17,
-          "isDir": true,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": 8,
-          "coverArt": 8,
-          "artist": "A Certain Ratio",
-          "title": "(1981) To Each.",
-          "parent": 6,
-          "isDir": true,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": 11,
-          "coverArt": 11,
-          "artist": "13th Floor Lowervators",
-          "title": "(1966) The Psychedelic Sounds of the 13th Floor Elevators",
-          "parent": 9,
+          "id": 3,
+          "coverArt": 3,
+          "artist": "Jah Wobble, The Edge, Holger Czukay",
+          "title": "(1983) Snake Charmer",
+          "parent": 2,
           "isDir": true,
           "created": "0001-01-01T00:00:00Z"
         },
@@ -77,11 +41,20 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
-          "id": 21,
-          "coverArt": 21,
-          "artist": "Ten Years After",
-          "title": "(1967) Ten Years After",
-          "parent": 20,
+          "id": 8,
+          "coverArt": 8,
+          "artist": "A Certain Ratio",
+          "title": "(1981) To Each.",
+          "parent": 6,
+          "isDir": true,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": 19,
+          "coverArt": 19,
+          "artist": "Swell Maps",
+          "title": "(1979) A Trip to Marineville",
+          "parent": 17,
           "isDir": true,
           "created": "0001-01-01T00:00:00Z"
         },
@@ -91,6 +64,33 @@
           "artist": "13th Floor Lowervators",
           "title": "(1967) Easter Nowhere",
           "parent": 9,
+          "isDir": true,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": 18,
+          "coverArt": 18,
+          "artist": "Swell Maps",
+          "title": "(1980) Jane From Occupied Europe",
+          "parent": 17,
+          "isDir": true,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": 7,
+          "coverArt": 7,
+          "artist": "A Certain Ratio",
+          "title": "(1994) The Graveyard and the Ballroom",
+          "parent": 6,
+          "isDir": true,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": 21,
+          "coverArt": 21,
+          "artist": "Ten Years After",
+          "title": "(1967) Ten Years After",
+          "parent": 20,
           "isDir": true,
           "created": "0001-01-01T00:00:00Z"
         }

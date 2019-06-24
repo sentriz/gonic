@@ -1,9 +1,9 @@
 #!/bin/bash
 
-test_data_path="server/handler/test_data"
-test_listen_addr="localhost:9353"
+test_data_path=server/handler/test_data
+test_listen_addr=localhost:9353
 test_music_path=~/music
-test_db_path="$test_data_path/db"
+test_db_path=$test_data_path/db
 
 if [[ "$1" == "--scan" ]]; then
     echo -e "\e[91mwarning: \e[39mthe --scan option was passed"
@@ -11,7 +11,7 @@ if [[ "$1" == "--scan" ]]; then
     echo "- the test json will likely change a lot"
     echo "- make sure you carefully read the diff of old and new json after this script"
     rm "$test_db_path" 2>/dev/null
-    go run cmd/scanner/main.go \
+    ./_do_run_scanner \
         -music-path "$test_music_path" \
         -db-path "$test_db_path"
 fi
@@ -19,11 +19,11 @@ fi
 # start server in fd 3
 mkdir "$test_music_path" 2>/dev/null
 exec 3< <(
-    go run cmd/server/main.go \
-    -music-path "$test_music_path" \
-    -db-path "$test_db_path" \
-    -listen-addr "$test_listen_addr" \
-    2>&1
+    ./_do_run_server \
+        -music-path "$test_music_path" \
+        -db-path "$test_db_path" \
+        -listen-addr "$test_listen_addr" \
+        2>&1
 )
 
 # wait for start message

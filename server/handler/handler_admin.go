@@ -53,6 +53,11 @@ func (c *Controller) ServeHome(w http.ResponseWriter, r *http.Request) {
 	c.DB.Table("albums").Count(&data.AlbumCount)
 	c.DB.Table("tracks").Count(&data.TrackCount)
 	c.DB.Find(&data.AllUsers)
+	c.DB.
+		Where("tag_artist_id IS NOT NULL").
+		Order("updated_at DESC").
+		Limit(8).
+		Find(&data.RecentFolders)
 	data.CurrentLastFMAPIKey = c.GetSetting("lastfm_api_key")
 	scheme := firstExisting(
 		"http", // fallback

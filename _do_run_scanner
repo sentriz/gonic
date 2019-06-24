@@ -1,0 +1,8 @@
+#!/bin/bash
+
+GO111MODULES=on
+
+go run \
+    -tags "$(tr '\n' ' ' < _build_tags)" \
+    cmd/scanner/main.go \
+    $@
