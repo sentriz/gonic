@@ -1,6 +1,6 @@
 package server
 
-func (s *Server) SetupSubsonic() {
+func (s *Server) SetupSubsonic() error {
 	withWare := newChain(
 		s.WithLogging,
 		s.WithCORS,
@@ -45,4 +45,5 @@ func (s *Server) SetupSubsonic() {
 	s.mux.HandleFunc("/rest/getAlbumList.view", withWare(s.GetAlbumList))
 	s.mux.HandleFunc("/rest/search2", withWare(s.SearchTwo))
 	s.mux.HandleFunc("/rest/search2.view", withWare(s.SearchTwo))
+	return nil
 }

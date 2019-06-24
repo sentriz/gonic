@@ -12,7 +12,7 @@ import (
 )
 
 func (c *Controller) ServeLogin(w http.ResponseWriter, r *http.Request) {
-	renderTemplate(w, r, c.Templates["login"], nil)
+	renderTemplate(w, r, c.Templates["login.tmpl"], nil)
 }
 
 func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
@@ -71,11 +71,11 @@ func (c *Controller) ServeHome(w http.ResponseWriter, r *http.Request) {
 		r.Host,
 	)
 	data.RequestRoot = fmt.Sprintf("%s://%s", scheme, host)
-	renderTemplate(w, r, c.Templates["home"], data)
+	renderTemplate(w, r, c.Templates["home.tmpl"], data)
 }
 
 func (c *Controller) ServeChangeOwnPassword(w http.ResponseWriter, r *http.Request) {
-	renderTemplate(w, r, c.Templates["change_own_password"], nil)
+	renderTemplate(w, r, c.Templates["change_own_password.tmpl"], nil)
 }
 
 func (c *Controller) ServeChangeOwnPasswordDo(w http.ResponseWriter, r *http.Request) {
@@ -143,7 +143,7 @@ func (c *Controller) ServeChangePassword(w http.ResponseWriter, r *http.Request)
 	}
 	data := &templateData{}
 	data.SelectedUser = user
-	renderTemplate(w, r, c.Templates["change_password"], data)
+	renderTemplate(w, r, c.Templates["change_password.tmpl"], data)
 }
 
 func (c *Controller) ServeChangePasswordDo(w http.ResponseWriter, r *http.Request) {
@@ -184,7 +184,7 @@ func (c *Controller) ServeDeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 	data := &templateData{}
 	data.SelectedUser = user
-	renderTemplate(w, r, c.Templates["delete_user"], data)
+	renderTemplate(w, r, c.Templates["delete_user.tmpl"], data)
 }
 
 func (c *Controller) ServeDeleteUserDo(w http.ResponseWriter, r *http.Request) {
@@ -198,7 +198,7 @@ func (c *Controller) ServeDeleteUserDo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) ServeCreateUser(w http.ResponseWriter, r *http.Request) {
-	renderTemplate(w, r, c.Templates["create_user"], nil)
+	renderTemplate(w, r, c.Templates["create_user.tmpl"], nil)
 }
 
 func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
@@ -240,7 +240,7 @@ func (c *Controller) ServeUpdateLastFMAPIKey(w http.ResponseWriter, r *http.Requ
 	data := &templateData{}
 	data.CurrentLastFMAPIKey = c.GetSetting("lastfm_api_key")
 	data.CurrentLastFMAPISecret = c.GetSetting("lastfm_secret")
-	renderTemplate(w, r, c.Templates["update_lastfm_api_key"], data)
+	renderTemplate(w, r, c.Templates["update_lastfm_api_key.tmpl"], data)
 }
 
 func (c *Controller) ServeUpdateLastFMAPIKeyDo(w http.ResponseWriter, r *http.Request) {

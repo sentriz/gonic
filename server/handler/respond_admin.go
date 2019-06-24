@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/sessions"
@@ -38,7 +38,8 @@ func renderTemplate(w http.ResponseWriter, r *http.Request,
 	}
 	err := tmpl.Execute(w, data)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("500 when executing: %v", err), 500)
+		log.Println("error executing template: %v\n", err)
+		http.Redirect(w, r, "/", 500)
 		return
 	}
 }

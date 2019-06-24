@@ -1,40 +1,21 @@
 package server
 
 import (
+	"fmt"
 	"html/template"
-	"log"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/gorilla/securecookie"
+	"github.com/pkg/errors"
+	"github.com/shurcooL/httpfs/html/vfstemplate"
+	"github.com/shurcooL/httpfs/path/vfspath"
 	"github.com/wader/gormstore"
 )
 
-var (
-	tmplFuncMap = template.FuncMap{
-		"humandate": humanize.Time,
-	}
-)
-
-func extendFrom(tmpl *template.Template, key string) *template.Template {
-	strT, ok := assets.String(key)
-	if !ok {
-		log.Fatalf("error when reading %q from assets", key)
-	}
-	if tmpl == nil {
-		tmpl = template.New("layout").Funcs(tmplFuncMap)
-	} else {
-		tmpl = template.Must(tmpl.Clone())
-	}
-	newT, err := tmpl.Parse(strT)
-	if err != nil {
-		log.Fatalf("error when parsing template: %v", err)
-	}
-	return newT
-}
-
-func (s *Server) SetupAdmin() {
+func (s *Server) SetupAdmin() error {
 	sessionKey := []byte(s.GetSetting("session_key"))
 	if len(sessionKey) == 0 {
 		sessionKey = securecookie.GenerateRandomKey(32)
@@ -43,16 +24,34 @@ func (s *Server) SetupAdmin() {
 	s.SessDB = gormstore.New(s.DB, sessionKey)
 	go s.SessDB.PeriodicCleanup(time.Hour, nil)
 	//
-	layoutT := extendFrom(nil, "/templates/layout.tmpl")
-	userT := extendFrom(layoutT, "/templates/user.tmpl")
-	s.Templates = map[string]*template.Template{
-		"login":                 extendFrom(layoutT, "/templates/pages/login.tmpl"),
-		"home":                  extendFrom(userT, "/templates/pages/home.tmpl"),
-		"change_own_password":   extendFrom(userT, "/templates/pages/change_own_password.tmpl"),
-		"change_password":       extendFrom(userT, "/templates/pages/change_password.tmpl"),
-		"delete_user":           extendFrom(userT, "/templates/pages/delete_user.tmpl"),
-		"create_user":           extendFrom(userT, "/templates/pages/create_user.tmpl"),
-		"update_lastfm_api_key": extendFrom(userT, "/templates/pages/update_lastfm_api_key.tmpl"),
+	tmplBase := template.
+		New("layout").
+		Funcs(template.FuncMap{
+			"humandate": humanize.Time,
+		})
+	tmplLayouts, err := vfstemplate.ParseGlob(assets, tmplBase, "/templates/layouts/*")
+	if err != nil {
+		return errors.Wrap(err, "parsing layouts")
+	}
+	tmplPartials, err := vfstemplate.ParseGlob(assets, tmplLayouts, "/templates/partials/*")
+	if err != nil {
+		return errors.Wrap(err, "parsing partials")
+	}
+	pages, err := vfspath.Glob(assets, "/templates/pages/*")
+	if err != nil {
+		return errors.Wrap(err, "parsing pages")
+	}
+	s.Templates = make(map[string]*template.Template)
+	for _, page := range pages {
+		tmplStr, ok := assets.String(page)
+		if !ok {
+			return fmt.Errorf("getting template %q from assets: %v\n", page)
+		}
+		tmplBaseClone := template.Must(tmplPartials.Clone())
+		tmplWithPage := template.Must(tmplBaseClone.Parse(tmplStr))
+		tmplWithPartial := template.Must(tmplWithPage.Parse(tmplStr))
+		shortName := filepath.Base(page)
+		s.Templates[shortName] = tmplWithPartial
 	}
 	//
 	withPublicWare := newChain(
@@ -90,4 +89,5 @@ func (s *Server) SetupAdmin() {
 	s.mux.HandleFunc("/admin/create_user_do", withAdminWare(s.ServeCreateUserDo))
 	s.mux.HandleFunc("/admin/update_lastfm_api_key", withAdminWare(s.ServeUpdateLastFMAPIKey))
 	s.mux.HandleFunc("/admin/update_lastfm_api_key_do", withAdminWare(s.ServeUpdateLastFMAPIKeyDo))
+	return nil
 }
