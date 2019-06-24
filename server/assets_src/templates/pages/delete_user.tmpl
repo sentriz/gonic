@@ -5,7 +5,7 @@
     <div class="box-title">
         <i class="mdi mdi-account-remove"></i> deleting user {{ .SelectedUser.Name }}
     </div>
-    <div class="right">
+    <div class="text-right">
         are you sure?
     </div>
     <form action="/admin/delete_user_do?user={{ .SelectedUser.Name }}" method="post">

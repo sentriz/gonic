@@ -13,6 +13,10 @@ form {
     align-items: flex-end;
 }
 
+form>* {
+    width: 100%;
+}
+
 form input[type=password],
 form input[type=text] {
     margin-bottom: 0.25rem;
@@ -37,21 +41,20 @@ body {
     line-height: 1rem;
 }
 
-.left-cut {
-    display: flex;
-    flex-direction: row-reverse;
-    overflow-x: hidden;
+table td, 
+table th {
+    border: none;
+    margin: 0;
 }
 
-table#recent-folders {
-    line-height: 0.45rem;
+table {
     overflow: hidden;
     white-space: nowrap;
 }
 
-table#recent-folders td, th {
-    border: none;
-    margin: 0;
+table#stats td:first-child {
+    display: inline-block;
+    margin-right: 10px;
 }
 
 a,
@@ -75,8 +78,10 @@ a:hover {
 }
 
 #header img {
-    max-width: 580px;
-    position: relative;
+    width: 60%;
+    display: block;
+    margin: 0 auto;
+    height: auto;
 }
 
 #footer {
@@ -89,8 +94,12 @@ a:hover {
     border-bottom: 2px solid #fd1b1b1c;
 }
 
-.right {
+.text-right {
     text-align: right;
+}
+
+.block-right>* {
+    margin-left: auto;
 }
 
 .light {
@@ -99,10 +108,6 @@ a:hover {
 
 .mono {
     font-family: monospace;
-}
-
-.pre {
-    white-space: pre;
 }
 
 .box {

@@ -5,17 +5,25 @@
     <div class="box-title">
         <i class="mdi mdi-chart-arc"></i> stats
     </div>
-    <div class="right">
-        <span class="pre">artists: {{ printf "%7v" .ArtistCount }}</span><br/>
-        <span class="pre">albums: {{ printf "%7v" .AlbumCount }}</span><br/>
-        <span class="pre">tracks: {{ printf "%7v" .TrackCount }}</span>
+    <div class="block-right">
+        <table id="stats" class="text-right">
+            <tr>
+                <td>artists:</td> <td>{{ .ArtistCount }}</td>
+            </tr>
+            <tr>
+                <td>albums:</td> <td>{{ .AlbumCount }}</td>
+            </tr>
+            <tr>
+                <td>tracks:</td> <td>{{ .TrackCount }}</td>
+            </tr>
+        </table>
     </div>
 </div>
 <div class="padded box mono">
     <div class="box-title">
         <i class="mdi mdi-lastfm"></i> last.fm
     </div>
-    <div class="right">
+    <div class="text-right">
         {{ if .User.IsAdmin }}
             <a href="/admin/update_lastfm_api_key">update api key</a><br/>
         {{ end }}
@@ -40,7 +48,7 @@
         <div class="box-title">
             <i class="mdi mdi-account-multiple"></i> users
         </div>
-        <div class="right">
+        <div class="text-right">
         {{ range $user := .AllUsers }}
             <i>{{ $user.Name }}</i>
             <span class="light">{{ $user.CreatedAt.Format "jan 02, 2006" }}</span>
@@ -56,7 +64,7 @@
         <div class="box-title">
             <i class="mdi mdi-account"></i> your account
         </div>
-        <div class="right">
+        <div class="text-right">
             <a href="/admin/change_own_password" class="button">change password</a>
         </div>
     {{ end }}
@@ -65,7 +73,7 @@
     <div class="box-title">
         <i class="mdi mdi-folder-multiple"></i> recent folders
     </div>
-    <div class="left-cut">
+    <div class="left-cut block-right">
         <table id="recent-folders">
         {{ range $folder := .RecentFolders }}
             <tr>
