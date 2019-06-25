@@ -1,13 +1,11 @@
-{{ define "title" }}home{{ end }}
-
 {{ define "user" }}
 <div class="padded box mono">
     <div class="box-title">
         <i class="mdi mdi-key-change"></i> updating last.fm keys
     </div>
     <div class="text-right">
-        <span class="light">current key</span> <i>{{ if .CurrentLastFMAPIKey }}{{ .CurrentLastFMAPIKey }}{{ else }}not set{{ end }}</i><br/>
-        <span class="light">current secret</span> <i>{{ if .CurrentLastFMAPISecret }}{{ .CurrentLastFMAPISecret }}{{ else }}not set{{ end }}</i>
+        <span class="light">current key</span> <i>{{ default "not set" .CurrentLastFMAPIKey }}</i><br/>
+        <span class="light">current secret</span> <i>{{ default "not set" .CurrentLastFMAPISecret }}</i>
     </div>
     <form action="/admin/update_lastfm_api_key_do" method="post">
         <input type="text" id="api_key" name="api_key" placeholder="new key">

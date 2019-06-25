@@ -38,8 +38,8 @@ func renderTemplate(w http.ResponseWriter, r *http.Request,
 	}
 	err := tmpl.Execute(w, data)
 	if err != nil {
-		log.Println("error executing template: %v\n", err)
-		http.Redirect(w, r, "/", 500)
+		log.Printf("error executing template: %v\n", err)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 }

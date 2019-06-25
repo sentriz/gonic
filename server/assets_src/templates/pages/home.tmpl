@@ -1,5 +1,3 @@
-{{ define "title" }}home{{ end }}
-
 {{ define "user" }}
 <div class="padded box mono">
     <div class="box-title">
@@ -78,7 +76,7 @@
         {{ range $folder := .RecentFolders }}
             <tr>
             <td><span>{{ $folder.RightPath }}</span></td>
-            <td><span class="light">{{ $folder.CreatedAt | humandate }}</span></td>
+            <td><span class="light">{{ $folder.CreatedAt | humanDate }}</span></td>
             </tr>
         {{ end }}
         </table>

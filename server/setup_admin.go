@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/Masterminds/sprig"
 	"github.com/dustin/go-humanize"
 	"github.com/gorilla/securecookie"
 	"github.com/pkg/errors"
@@ -26,18 +27,24 @@ func (s *Server) SetupAdmin() error {
 	//
 	tmplBase := template.
 		New("layout").
+		Funcs(sprig.FuncMap()).
 		Funcs(template.FuncMap{
-			"humandate": humanize.Time,
+			"humanDate": humanize.Time,
 		})
-	tmplLayouts, err := vfstemplate.ParseGlob(assets, tmplBase, "/templates/layouts/*")
+	const (
+		layoutDir  = "/templates/layouts/*"
+		partialDir = "/templates/partials/*"
+		pageDir    = "/templates/pages/*"
+	)
+	tmplLayouts, err := vfstemplate.ParseGlob(assets, tmplBase, layoutDir)
 	if err != nil {
 		return errors.Wrap(err, "parsing layouts")
 	}
-	tmplPartials, err := vfstemplate.ParseGlob(assets, tmplLayouts, "/templates/partials/*")
+	tmplPartials, err := vfstemplate.ParseGlob(assets, tmplLayouts, partialDir)
 	if err != nil {
 		return errors.Wrap(err, "parsing partials")
 	}
-	pages, err := vfspath.Glob(assets, "/templates/pages/*")
+	pages, err := vfspath.Glob(assets, pageDir)
 	if err != nil {
 		return errors.Wrap(err, "parsing pages")
 	}
