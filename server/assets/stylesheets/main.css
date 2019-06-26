@@ -52,7 +52,8 @@ table {
     white-space: nowrap;
 }
 
-table#stats td:first-child {
+table#stats td:first-child,
+table#recent-folders td:first-child {
     display: inline-block;
     margin-right: 10px;
 }
