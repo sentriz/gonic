@@ -1,8 +1,7 @@
 #!/bin/bash
 
-GO111MODULES=on
-
+source _build_vars
 go run \
     -tags "$(tr '\n' ' ' < _build_tags)" \
-    cmd/scanner/main.go \
+    cmd/gonicscan/main.go
     $@

@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	programName = "gonic"
+	programName = "gonicscan"
 )
 
 func main() {
@@ -24,8 +24,7 @@ func main() {
 	dbPath := set.String(
 		"db-path", "gonic.db",
 		"path to database (optional)")
-	err := ff.Parse(set, os.Args[1:])
-	if err != nil {
+	if err := ff.Parse(set, os.Args[1:]); err != nil {
 		log.Fatalf("error parsing args: %v\n", err)
 	}
 	if _, err := os.Stat(*musicPath); os.IsNotExist(err) {

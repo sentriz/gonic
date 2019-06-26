@@ -50,6 +50,7 @@ func main() {
 		db,
 		*musicPath,
 		*listenAddr,
+		"server/assets/",
 	)
 	err = s.SetupAdmin()
 	if err != nil {

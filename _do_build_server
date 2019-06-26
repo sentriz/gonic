@@ -1,8 +1,15 @@
 #!/bin/bash
 
-GO111MODULES=on
-
-./_do_compile_assets
+shopt -s globstar
+source _build_vars
+go run \
+    cmd/gonicembed/main.go \
+    -out-path server/assets_bytes.go \
+    -tag-list embed \
+    -package-name server \
+    -assets-var-name AssetBytes \
+    -asset-path-prefix server/assets/ \
+    server/assets/**
 go build \
     -tags "$(tr '\n' ' ' < _build_tags) embed" \
-    cmd/server/main.go
+    cmd/gonic/main.go

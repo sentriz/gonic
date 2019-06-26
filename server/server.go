@@ -24,12 +24,18 @@ func newChain(wares ...middleware) middleware {
 }
 
 type Server struct {
-	mux *http.ServeMux
+	mux    *http.ServeMux
+	assets *Assets
 	*handler.Controller
 	*http.Server
 }
 
-func New(db *gorm.DB, musicPath string, listenAddr string) *Server {
+func New(
+	db *gorm.DB,
+	musicPath string,
+	listenAddr string,
+	assetPath string,
+) *Server {
 	mux := http.NewServeMux()
 	server := &http.Server{
 		Addr:         listenAddr,
@@ -42,8 +48,12 @@ func New(db *gorm.DB, musicPath string, listenAddr string) *Server {
 		DB:        db,
 		MusicPath: musicPath,
 	}
+	assets := &Assets{
+		BasePath: assetPath,
+	}
 	return &Server{
 		mux:        mux,
+		assets:     assets,
 		Server:     server,
 		Controller: controller,
 	}

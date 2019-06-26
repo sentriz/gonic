@@ -1,8 +1,8 @@
 package server
 
 import (
-	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"path/filepath"
 	"time"
@@ -11,10 +11,73 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/gorilla/securecookie"
 	"github.com/pkg/errors"
-	"github.com/shurcooL/httpfs/html/vfstemplate"
-	"github.com/shurcooL/httpfs/path/vfspath"
 	"github.com/wader/gormstore"
 )
+
+var (
+	partialsPaths = []string{
+		"partials/box.tmpl",
+	}
+	layoutPaths = []string{
+		"layouts/base.tmpl",
+		"layouts/user.tmpl",
+	}
+	pagePaths = []string{
+		"pages/change_own_password.tmpl",
+		"pages/change_password.tmpl",
+		"pages/create_user.tmpl",
+		"pages/delete_user.tmpl",
+		"pages/home.tmpl",
+		"pages/login.tmpl",
+		"pages/update_lastfm_api_key.tmpl",
+	}
+	imagePaths = []string{
+		"images/favicon.ico",
+		"images/gonic.png",
+		"images/gone.png",
+	}
+	stylesheetPaths = []string{
+		"stylesheets/main.css",
+		"stylesheets/reset.css",
+	}
+)
+
+type templateMap map[string]*template.Template
+
+func parseFromPaths(assets *Assets, base *template.Template,
+	paths []string, destination templateMap) error {
+	for _, path := range paths {
+		_, tmplBytes, err := assets.FindBytes(path)
+		if err != nil {
+			return errors.Wrapf(err, "getting template %q from assets", path)
+		}
+		tmplStr := string(tmplBytes)
+		if destination != nil {
+			// we have a destination. meaning this template is a page.
+			// instead of parsing as usual, we need to clone and add to the
+			// template map
+			clone := template.Must(base.Clone())
+			tmplKey := filepath.Base(path)
+			destination[tmplKey] = template.Must(clone.Parse(tmplStr))
+			continue
+		}
+		_ = template.Must(base.Parse(tmplStr))
+	}
+	return nil
+}
+
+func staticHandler(assets *Assets, path string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		modTime, reader, err := assets.Find(path)
+		if err != nil {
+			log.Printf("error getting file %q from assets: %v\n", path, err)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+		_, name := filepath.Split(path)
+		http.ServeContent(w, r, name, modTime, reader)
+	}
+}
 
 func (s *Server) SetupAdmin() error {
 	sessionKey := []byte(s.GetSetting("session_key"))
@@ -31,34 +94,18 @@ func (s *Server) SetupAdmin() error {
 		Funcs(template.FuncMap{
 			"humanDate": humanize.Time,
 		})
-	const (
-		layoutDir  = "/templates/layouts/*"
-		partialDir = "/templates/partials/*"
-		pageDir    = "/templates/pages/*"
-	)
-	tmplLayouts, err := vfstemplate.ParseGlob(assets, tmplBase, layoutDir)
-	if err != nil {
-		return errors.Wrap(err, "parsing layouts")
+	if err := parseFromPaths(
+		s.assets, tmplBase, partialsPaths, nil); err != nil {
+		return errors.Wrap(err, "parsing template partials")
 	}
-	tmplPartials, err := vfstemplate.ParseGlob(assets, tmplLayouts, partialDir)
-	if err != nil {
-		return errors.Wrap(err, "parsing partials")
+	if err := parseFromPaths(
+		s.assets, tmplBase, layoutPaths, nil); err != nil {
+		return errors.Wrap(err, "parsing template layouts")
 	}
-	pages, err := vfspath.Glob(assets, pageDir)
-	if err != nil {
-		return errors.Wrap(err, "parsing pages")
-	}
-	s.Templates = make(map[string]*template.Template)
-	for _, page := range pages {
-		tmplStr, ok := assets.String(page)
-		if !ok {
-			return fmt.Errorf("getting template %q from assets: %v\n", page)
-		}
-		tmplBaseClone := template.Must(tmplPartials.Clone())
-		tmplWithPage := template.Must(tmplBaseClone.Parse(tmplStr))
-		tmplWithPartial := template.Must(tmplWithPage.Parse(tmplStr))
-		shortName := filepath.Base(page)
-		s.Templates[shortName] = tmplWithPartial
+	s.Templates = make(templateMap)
+	if err := parseFromPaths(
+		s.assets, tmplBase, pagePaths, s.Templates); err != nil {
+		return errors.Wrap(err, "parsing template pages for destination")
 	}
 	//
 	withPublicWare := newChain(
@@ -74,9 +121,10 @@ func (s *Server) SetupAdmin() error {
 		s.WithAdminSession,
 	)
 	// begin static server
-	s.mux.Handle("/admin/static/", http.StripPrefix("/admin",
-		http.FileServer(assets),
-	))
+	for _, path := range append(imagePaths, stylesheetPaths...) {
+		fullPath := filepath.Join("/admin/static", path)
+		s.mux.HandleFunc(fullPath, staticHandler(s.assets, path))
+	}
 	// begin public routes (creates new session)
 	s.mux.HandleFunc("/admin/login", withPublicWare(s.ServeLogin))
 	s.mux.HandleFunc("/admin/login_do", withPublicWare(s.ServeLoginDo))
