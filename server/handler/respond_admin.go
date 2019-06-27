@@ -31,7 +31,7 @@ func renderTemplate(w http.ResponseWriter, r *http.Request,
 		data = &templateData{}
 	}
 	data.Flashes = session.Flashes()
-	session.Save(r, w)
+	sessionLogSave(w, r, session)
 	user, ok := r.Context().Value(contextUserKey).(*model.User)
 	if ok {
 		data.User = user

@@ -21,14 +21,14 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 	password := r.FormValue("password")
 	if username == "" || password == "" {
 		session.AddFlash("please provide both a username and password")
-		session.Save(r, w)
+		sessionLogSave(w, r, session)
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
 	user := c.GetUserFromName(username)
 	if user == nil || password != user.Password {
 		session.AddFlash("invalid username / password")
-		session.Save(r, w)
+		sessionLogSave(w, r, session)
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
@@ -36,14 +36,14 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 	// are wrapped with WithUserSession() which will get the name from the
 	// session and put the row into the request context.
 	session.Values["user"] = user.Name
-	session.Save(r, w)
+	sessionLogSave(w, r, session)
 	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 }
 
 func (c *Controller) ServeLogout(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(contextSessionKey).(*sessions.Session)
 	session.Options.MaxAge = -1
-	session.Save(r, w)
+	sessionLogSave(w, r, session)
 	http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 }
 
@@ -85,7 +85,7 @@ func (c *Controller) ServeChangeOwnPasswordDo(w http.ResponseWriter, r *http.Req
 	err := validatePasswords(passwordOne, passwordTwo)
 	if err != nil {
 		session.AddFlash(err.Error())
-		session.Save(r, w)
+		sessionLogSave(w, r, session)
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
@@ -109,7 +109,7 @@ func (c *Controller) ServeLinkLastFMDo(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(contextSessionKey).(*sessions.Session)
 	if err != nil {
 		session.AddFlash(err.Error())
-		session.Save(r, w)
+		sessionLogSave(w, r, session)
 		http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 		return
 	}
@@ -158,7 +158,7 @@ func (c *Controller) ServeChangePasswordDo(w http.ResponseWriter, r *http.Reques
 	err := validatePasswords(passwordOne, passwordTwo)
 	if err != nil {
 		session.AddFlash(err.Error())
-		session.Save(r, w)
+		sessionLogSave(w, r, session)
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
@@ -207,7 +207,7 @@ func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
 	err := validateUsername(username)
 	if err != nil {
 		session.AddFlash(err.Error())
-		session.Save(r, w)
+		sessionLogSave(w, r, session)
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
@@ -216,7 +216,7 @@ func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
 	err = validatePasswords(passwordOne, passwordTwo)
 	if err != nil {
 		session.AddFlash(err.Error())
-		session.Save(r, w)
+		sessionLogSave(w, r, session)
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
@@ -229,7 +229,7 @@ func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
 		session.AddFlash(fmt.Sprintf(
 			"could not create user `%s`: %v", username, err,
 		))
-		session.Save(r, w)
+		sessionLogSave(w, r, session)
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
@@ -250,7 +250,7 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(w http.ResponseWriter, r *http.Re
 	err := validateAPIKey(apiKey, secret)
 	if err != nil {
 		session.AddFlash(err.Error())
-		session.Save(r, w)
+		sessionLogSave(w, r, session)
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
