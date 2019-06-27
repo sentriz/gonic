@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 
@@ -15,12 +16,25 @@ type metaResponse struct {
 	*subsonic.Response `json:"subsonic-response"`
 }
 
+type errWriter struct {
+	w   io.Writer
+	err error
+}
+
+func (ew *errWriter) write(buf []byte) {
+	if ew.err != nil {
+		return
+	}
+	_, ew.err = ew.w.Write(buf)
+}
+
 func respondRaw(w http.ResponseWriter, r *http.Request,
 	code int, sub *subsonic.Response) {
 	w.WriteHeader(code)
 	res := metaResponse{
 		Response: sub,
 	}
+	ew := &errWriter{w: w}
 	switch getStrParam(r, "f") {
 	case "json":
 		w.Header().Set("Content-Type", "application/json")
@@ -29,7 +43,7 @@ func respondRaw(w http.ResponseWriter, r *http.Request,
 			log.Printf("could not marshall to json: %v\n", err)
 			return
 		}
-		w.Write(data)
+		ew.write(data)
 	case "jsonp":
 		w.Header().Set("Content-Type", "application/javascript")
 		data, err := json.Marshal(res)
@@ -37,10 +51,10 @@ func respondRaw(w http.ResponseWriter, r *http.Request,
 			log.Printf("could not marshall to json: %v\n", err)
 			return
 		}
-		w.Write([]byte(getStrParamOr(r, "callback", "cb")))
-		w.Write([]byte("("))
-		w.Write(data)
-		w.Write([]byte(");"))
+		ew.write([]byte(getStrParamOr(r, "callback", "cb")))
+		ew.write([]byte("("))
+		ew.write(data)
+		ew.write([]byte(");"))
 	default:
 		w.Header().Set("Content-Type", "application/xml")
 		data, err := xml.MarshalIndent(res, "", "    ")
@@ -48,7 +62,10 @@ func respondRaw(w http.ResponseWriter, r *http.Request,
 			log.Printf("could not marshall to xml: %v\n", err)
 			return
 		}
-		w.Write(data)
+		ew.write(data)
+	}
+	if ew.err != nil {
+		log.Printf("error writing to response: %v\n", ew.err)
 	}
 }
 
