@@ -1,3 +1,28 @@
+body {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 20px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    line-height: 1rem;
+}
+
+@media only screen and (max-width: 780px) {
+    .no-small {
+        display: none;
+    }
+}
+
+@media only screen and (min-width: 780px) {
+    table#stats td:first-child::after,
+    table#recent-folders td:first-child::after {
+        content: " ";
+        white-space: pre;
+    }
+}
+
 form input[type],
 form select,
 form textarea {
@@ -13,8 +38,14 @@ form {
     align-items: flex-end;
 }
 
-form>* {
+form > * {
     width: 100%;
+}
+
+form input {
+    padding: 3px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
 }
 
 form input[type=password],
@@ -24,21 +55,13 @@ form input[type=text] {
 
 form input[type=submit] {
     width: 8rem;
+    background-color: white;
+    cursor: pointer;
 }
 
 div {
     margin: 0;
     padding: 0;
-}
-
-body {
-    max-width: 800px;
-    margin: 0 auto;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    line-height: 1rem;
 }
 
 table td, 
@@ -52,12 +75,6 @@ table {
     white-space: nowrap;
 }
 
-table#stats td:first-child,
-table#recent-folders td:first-child {
-    display: inline-block;
-    margin-right: 10px;
-}
-
 a,
 a:visited {
     color: #0064c1;
@@ -69,7 +86,7 @@ a:hover {
 }
 
 
-#content>* {
+#content > * {
     margin: 2rem 0;
 }
 
@@ -85,10 +102,6 @@ a:hover {
     height: auto;
 }
 
-#footer {
-    text-align: right;
-}
-
 #flashes {
     background-color: #fd1b1b1c;
     border-right: 2px solid #fd1b1b1c;
@@ -99,7 +112,7 @@ a:hover {
     text-align: right;
 }
 
-.block-right>* {
+.block-right > * {
     margin-left: auto;
 }
 

@@ -49,7 +49,7 @@
         <div class="text-right">
         {{ range $user := .AllUsers }}
             <i>{{ $user.Name }}</i>
-            <span class="light">{{ $user.CreatedAt.Format "jan 02, 2006" }}</span>
+            <span class="light no-small">{{ $user.CreatedAt.Format "jan 02, 2006" }}</span>
             <span class="light">&#124;</span>
             <a href="/admin/change_password?user={{ $user.Name }}">change password</a>
             <span class="light">&#124;</span>
@@ -71,12 +71,12 @@
     <div class="box-title">
         <i class="mdi mdi-folder-multiple"></i> recent folders
     </div>
-    <div class="left-cut block-right">
+    <div class="block-right">
         <table id="recent-folders">
         {{ range $folder := .RecentFolders }}
             <tr>
-            <td><span>{{ $folder.RightPath }}</span></td>
-            <td><span class="light">{{ $folder.CreatedAt | humanDate }}</span></td>
+            <td class="text-right">{{ $folder.RightPath }}</td>
+            <td class="no-small"><span class="light">{{ $folder.CreatedAt | humanDate }}</span></td>
             </tr>
         {{ end }}
         </table>
