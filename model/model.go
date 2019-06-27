@@ -11,6 +11,7 @@ import (
 type Artist struct {
 	IDBase
 	Name       string   `gorm:"not null; unique_index"`
+	NameUDec   string   `sql:"default: null"`
 	Albums     []*Album `gorm:"foreignkey:TagArtistID"`
 	AlbumCount int      `sql:"-"`
 }
@@ -19,6 +20,7 @@ type Track struct {
 	IDBase
 	CrudBase
 	Filename       string `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null"`
+	FilenameUDec   string `sql:"default: null"`
 	Album          *Album
 	AlbumID        int `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Artist         *Artist
@@ -27,6 +29,7 @@ type Track struct {
 	Length         int    `sql:"default: null"`
 	Bitrate        int    `sql:"default: null"`
 	TagTitle       string `sql:"default: null"`
+	TagTitleUDec   string `sql:"default: null"`
 	TagTrackArtist string `sql:"default: null"`
 	TagTrackNumber int    `sql:"default: null"`
 	TagDiscNumber  int    `sql:"default: null"`
@@ -75,12 +78,14 @@ type Album struct {
 	CrudBase
 	LeftPath      string `gorm:"unique_index:idx_left_path_right_path"`
 	RightPath     string `gorm:"not null; unique_index:idx_left_path_right_path" sql:"default: null"`
+	RightPathUDec string `sql:"default: null"`
 	Parent        *Album
 	ParentID      int    `sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Cover         string `sql:"default: null"`
 	TagArtist     *Artist
 	TagArtistID   int    `gorm:"index" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
 	TagTitle      string `gorm:"index" sql:"default: null"`
+	TagTitleUDec  string `sql:"default: null"`
 	TagYear       int    `sql:"default: null"`
 	Tracks        []*Track
 	ChildCount    int  `sql:"-"`

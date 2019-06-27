@@ -12,6 +12,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/karrick/godirwalk"
 	"github.com/pkg/errors"
+	"github.com/rainycape/unidecode"
 
 	"github.com/sentriz/gonic/mime"
 	"github.com/sentriz/gonic/model"
@@ -35,6 +36,10 @@ var coverFilenames = map[string]struct{}{
 	"front.png":   {},
 	"front.jpg":   {},
 	"front.jpeg":  {},
+}
+
+func decoded(in string) string {
+	return unidecode.Unidecode(in)
 }
 
 type Scanner struct {
@@ -241,6 +246,7 @@ func (s *Scanner) handleFolder(it *item) error {
 	}
 	folder.LeftPath = it.directory
 	folder.RightPath = it.filename
+	folder.RightPathUDec = decoded(it.filename)
 	s.tx.Save(folder)
 	folder.ReceivedPaths = true
 	return nil
@@ -264,6 +270,7 @@ func (s *Scanner) handleTrack(it *item) error {
 		return nil
 	}
 	track.Filename = it.filename
+	track.FilenameUDec = decoded(it.filename)
 	track.Size = int(it.stat.Size())
 	track.AlbumID = s.curFolderID()
 	trTags, err := tags.New(it.fullPath)
@@ -276,6 +283,7 @@ func (s *Scanner) handleTrack(it *item) error {
 		return nil
 	}
 	track.TagTitle = trTags.Title()
+	track.TagTitleUDec = decoded(trTags.Title())
 	track.TagTrackArtist = trTags.Artist()
 	track.TagTrackNumber = trTags.TrackNumber()
 	track.TagDiscNumber = trTags.DiscNumber()
@@ -299,6 +307,7 @@ func (s *Scanner) handleTrack(it *item) error {
 		Error
 	if gorm.IsRecordNotFoundError(err) {
 		artist.Name = artistName
+		artist.NameUDec = decoded(artistName)
 		s.tx.Save(artist)
 	}
 	track.ArtistID = artist.ID
@@ -313,6 +322,7 @@ func (s *Scanner) handleTrack(it *item) error {
 		return nil
 	}
 	folder.TagTitle = trTags.Album()
+	folder.TagTitleUDec = decoded(trTags.Album())
 	folder.TagYear = trTags.Year()
 	folder.TagArtistID = artist.ID
 	folder.ReceivedTags = true

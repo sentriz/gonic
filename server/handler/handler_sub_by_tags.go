@@ -25,7 +25,7 @@ func (c *Controller) GetArtists(w http.ResponseWriter, r *http.Request) {
 	indexMap := make(map[string]*subsonic.Index)
 	indexes := &subsonic.Artists{}
 	for _, artist := range artists {
-		i := indexOf(artist.Name[0])
+		i := indexOf(artist.NameUDec[0])
 		index, ok := indexMap[i]
 		if !ok {
 			index = &subsonic.Index{
@@ -167,7 +167,7 @@ func (c *Controller) SearchThree(w http.ResponseWriter, r *http.Request) {
 	// search "artists"
 	var artists []*model.Artist
 	c.DB.
-		Where("name LIKE ?", query).
+		Where("name_u_dec LIKE ?", query).
 		Offset(getIntParamOr(r, "artistOffset", 0)).
 		Limit(getIntParamOr(r, "artistCount", 20)).
 		Find(&artists)
@@ -180,7 +180,7 @@ func (c *Controller) SearchThree(w http.ResponseWriter, r *http.Request) {
 	var albums []*model.Album
 	c.DB.
 		Preload("TagArtist").
-		Where("tag_title LIKE ?", query).
+		Where("tag_title_u_dec LIKE ?", query).
 		Offset(getIntParamOr(r, "albumOffset", 0)).
 		Limit(getIntParamOr(r, "albumCount", 20)).
 		Find(&albums)
@@ -193,7 +193,7 @@ func (c *Controller) SearchThree(w http.ResponseWriter, r *http.Request) {
 	var tracks []*model.Track
 	c.DB.
 		Preload("Album").
-		Where("tag_title LIKE ?", query).
+		Where("tag_title_u_dec LIKE ?", query).
 		Offset(getIntParamOr(r, "songOffset", 0)).
 		Limit(getIntParamOr(r, "songCount", 20)).
 		Find(&tracks)

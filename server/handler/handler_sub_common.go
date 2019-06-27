@@ -11,7 +11,6 @@ import (
 	"unicode"
 
 	"github.com/jinzhu/gorm"
-	"github.com/rainycape/unidecode"
 
 	"github.com/sentriz/gonic/model"
 	"github.com/sentriz/gonic/scanner"
@@ -21,11 +20,10 @@ import (
 
 func indexOf(in byte) string {
 	lower := strings.ToLower(string(in))
-	decode := unidecode.Unidecode(lower)
-	if !unicode.IsLetter(rune(decode[0])) {
+	if !unicode.IsLetter(rune(lower[0])) {
 		return "#"
 	}
-	return decode
+	return lower
 }
 
 func (c *Controller) Stream(w http.ResponseWriter, r *http.Request) {

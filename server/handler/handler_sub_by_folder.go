@@ -20,7 +20,6 @@ import (
 
 func (c *Controller) GetIndexes(w http.ResponseWriter, r *http.Request) {
 	var folders []*model.Album
-
 	c.DB.
 		Select("*, count(sub.id) as child_count").
 		Joins(`
@@ -33,7 +32,7 @@ func (c *Controller) GetIndexes(w http.ResponseWriter, r *http.Request) {
 	indexMap := make(map[string]*subsonic.Index)
 	indexes := []*subsonic.Index{}
 	for _, folder := range folders {
-		i := indexOf(folder.RightPath[0])
+		i := indexOf(folder.RightPathUDec[0])
 		index, ok := indexMap[i]
 		if !ok {
 			index = &subsonic.Index{
@@ -167,7 +166,7 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 	// search "artists"
 	var artists []*model.Album
 	c.DB.
-		Where("parent_id = 1 AND right_path LIKE ?", query).
+		Where("parent_id = 1 AND right_path_u_dec LIKE ?", query).
 		Offset(getIntParamOr(r, "artistOffset", 0)).
 		Limit(getIntParamOr(r, "artistCount", 20)).
 		Find(&artists)
@@ -179,7 +178,7 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 	// search "albums"
 	var albums []*model.Album
 	c.DB.
-		Where("tag_artist_id IS NOT NULL AND right_path LIKE ?", query).
+		Where("tag_artist_id IS NOT NULL AND right_path_u_dec LIKE ?", query).
 		Offset(getIntParamOr(r, "albumOffset", 0)).
 		Limit(getIntParamOr(r, "albumCount", 20)).
 		Find(&albums)
@@ -191,7 +190,7 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 	var tracks []*model.Track
 	c.DB.
 		Preload("Album").
-		Where("filename LIKE ?", query).
+		Where("filename_u_dec LIKE ?", query).
 		Offset(getIntParamOr(r, "songOffset", 0)).
 		Limit(getIntParamOr(r, "songCount", 20)).
 		Find(&tracks)
