@@ -10,7 +10,7 @@
           "artistId": 8,
           "artist": "Captain Beefheart & His Magic Band",
           "name": "Lick My Decals Off, Baby",
-          "created": "2019-06-27T15:24:02.506104998+01:00"
+          "created": "2019-06-27T18:19:24.649245076+01:00"
         },
         {
           "id": 21,
@@ -18,7 +18,7 @@
           "artistId": 7,
           "artist": "Ten Years After",
           "name": "Ten Years After",
-          "created": "2019-06-27T15:24:02.49914444+01:00"
+          "created": "2019-06-27T18:19:24.635874145+01:00"
         },
         {
           "id": 19,
@@ -26,7 +26,7 @@
           "artistId": 6,
           "artist": "Swell Maps",
           "name": "A Trip to Marineville",
-          "created": "2019-06-27T15:24:02.492420212+01:00"
+          "created": "2019-06-27T18:19:24.627562734+01:00"
         },
         {
           "id": 18,
@@ -34,7 +34,7 @@
           "artistId": 6,
           "artist": "Swell Maps",
           "name": "Jane From Occupied Europe",
-          "created": "2019-06-27T15:24:02.485555598+01:00"
+          "created": "2019-06-27T18:19:24.620874664+01:00"
         },
         {
           "id": 15,
@@ -42,7 +42,7 @@
           "artistId": 5,
           "artist": "Anikas",
           "name": "Anika",
-          "created": "2019-06-27T15:24:02.477628419+01:00"
+          "created": "2019-06-27T18:19:24.616808837+01:00"
         },
         {
           "id": 11,
@@ -50,7 +50,7 @@
           "artistId": 4,
           "artist": "13th Floor Elevators",
           "name": "The Psychedelic Sounds of the 13th Floor Elevators",
-          "created": "2019-06-27T15:24:02.470330345+01:00"
+          "created": "2019-06-27T18:19:24.601273583+01:00"
         },
         {
           "id": 10,
@@ -58,14 +58,14 @@
           "artistId": 4,
           "artist": "13th Floor Elevators",
           "name": "Easter Everywhere",
-          "created": "2019-06-27T15:24:02.46573003+01:00"
+          "created": "2019-06-27T18:19:24.596131298+01:00"
         },
         {
           "id": 8,
           "artistId": 3,
           "artist": "A Certain Ratio",
           "name": "To Each...",
-          "created": "2019-06-27T15:24:02.461369276+01:00"
+          "created": "2019-06-27T18:19:24.591206366+01:00"
         },
         {
           "id": 7,
@@ -73,7 +73,7 @@
           "artistId": 3,
           "artist": "A Certain Ratio",
           "name": "The Graveyard and the Ballroom",
-          "created": "2019-06-27T15:24:02.450659914+01:00"
+          "created": "2019-06-27T18:19:24.578630222+01:00"
         },
         {
           "id": 5,
@@ -81,7 +81,7 @@
           "artistId": 2,
           "artist": "Dead Moon",
           "name": "Unknown Passage",
-          "created": "2019-06-27T15:24:02.445256544+01:00"
+          "created": "2019-06-27T18:19:24.571757606+01:00"
         }
       ]
     }

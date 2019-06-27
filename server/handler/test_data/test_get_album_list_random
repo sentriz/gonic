@@ -5,24 +5,6 @@
     "albumList": {
       "album": [
         {
-          "id": 23,
-          "coverArt": 23,
-          "artist": "Captain Beefheart",
-          "title": "(1970) Lick My Decals Off, Bitch",
-          "parent": 22,
-          "isDir": true,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": 21,
-          "coverArt": 21,
-          "artist": "Ten Years After",
-          "title": "(1967) Ten Years After",
-          "parent": 20,
-          "isDir": true,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
           "id": 10,
           "coverArt": 10,
           "artist": "13th Floor Lowervators",
@@ -32,11 +14,20 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
-          "id": 18,
-          "coverArt": 18,
+          "id": 19,
+          "coverArt": 19,
           "artist": "Swell Maps",
-          "title": "(1980) Jane From Occupied Europe",
+          "title": "(1979) A Trip to Marineville",
           "parent": 17,
+          "isDir": true,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": 23,
+          "coverArt": 23,
+          "artist": "Captain Beefheart",
+          "title": "(1970) Lick My Decals Off, Bitch",
+          "parent": 22,
           "isDir": true,
           "created": "0001-01-01T00:00:00Z"
         },
@@ -59,6 +50,15 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
+          "id": 3,
+          "coverArt": 3,
+          "artist": "Jah Wobble, The Edge, Holger Czukay",
+          "title": "(1983) Snake Charmer",
+          "parent": 2,
+          "isDir": true,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
           "id": 5,
           "coverArt": 5,
           "artist": "Dead Moon",
@@ -77,20 +77,29 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
+          "id": 18,
+          "coverArt": 18,
+          "artist": "Swell Maps",
+          "title": "(1980) Jane From Occupied Europe",
+          "parent": 17,
+          "isDir": true,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": 21,
+          "coverArt": 21,
+          "artist": "Ten Years After",
+          "title": "(1967) Ten Years After",
+          "parent": 20,
+          "isDir": true,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
           "id": 15,
           "coverArt": 15,
           "artist": "There",
           "title": "(2010) Anika",
           "parent": 14,
-          "isDir": true,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": 19,
-          "coverArt": 19,
-          "artist": "Swell Maps",
-          "title": "(1979) A Trip to Marineville",
-          "parent": 17,
           "isDir": true,
           "created": "0001-01-01T00:00:00Z"
         }
