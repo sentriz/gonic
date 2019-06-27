@@ -31,6 +31,16 @@
           ]
         },
         {
+          "name": "c",
+          "artist": [
+            {
+              "id": 22,
+              "name": "Captain Beefheart",
+              "albumCount": 1
+            }
+          ]
+        },
+        {
           "name": "d",
           "artist": [
             {

@@ -32,6 +32,15 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
+          "id": 23,
+          "coverArt": 23,
+          "artist": "Captain Beefheart",
+          "title": "(1970) Lick My Decals Off, Bitch",
+          "parent": 22,
+          "isDir": true,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
           "id": 19,
           "coverArt": 19,
           "artist": "Swell Maps",
@@ -53,7 +62,7 @@
           "id": 8,
           "coverArt": 8,
           "artist": "A Certain Ratio",
-          "title": "(1981) To Each.",
+          "title": "(1981) To EachOTHER.",
           "parent": 6,
           "isDir": true,
           "created": "0001-01-01T00:00:00Z"
@@ -71,7 +80,7 @@
           "id": 5,
           "coverArt": 5,
           "artist": "Dead Moon",
-          "title": "(1989) Unknown Passage",
+          "title": "(1989) Unknown PassagePENIS",
           "parent": 4,
           "isDir": true,
           "created": "0001-01-01T00:00:00Z"
@@ -82,15 +91,6 @@
           "artist": "A Certain Ratio",
           "title": "(1994) The Graveyard and the Ballroom",
           "parent": 6,
-          "isDir": true,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": 15,
-          "coverArt": 15,
-          "artist": "There",
-          "title": "(2010) Anika",
-          "parent": 14,
           "isDir": true,
           "created": "0001-01-01T00:00:00Z"
         }
