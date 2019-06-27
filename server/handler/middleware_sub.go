@@ -9,11 +9,9 @@ import (
 	"net/url"
 )
 
-var (
-	requiredParameters = []string{
-		"u", "v", "c",
-	}
-)
+var requiredParameters = []string{
+	"u", "v", "c",
+}
 
 func checkHasAllParams(params url.Values) error {
 	for _, req := range requiredParameters {

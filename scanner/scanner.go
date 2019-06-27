@@ -19,9 +19,7 @@ import (
 	"github.com/sentriz/gonic/scanner/tags"
 )
 
-var (
-	IsScanning int32
-)
+var IsScanning int32
 
 var coverFilenames = map[string]struct{}{
 	"cover.png":   {},

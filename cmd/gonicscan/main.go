@@ -12,9 +12,7 @@ import (
 	"github.com/sentriz/gonic/scanner"
 )
 
-const (
-	programName = "gonicscan"
-)
+const programName = "gonicscan"
 
 func main() {
 	set := flag.NewFlagSet(programName, flag.ExitOnError)

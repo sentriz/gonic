@@ -1,8 +1,6 @@
 package handler
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestFirstExisting(t *testing.T) {
 	cases := []struct {
@@ -11,15 +9,21 @@ func TestFirstExisting(t *testing.T) {
 		or     string
 		exp    string
 	}{
-		{"none present",
+		{
+			"none present",
 			[]string{"one", "two", "three"}, "default",
-			"one"},
-		{"first missing",
+			"one",
+		},
+		{
+			"first missing",
 			[]string{"", "two", "three"}, "default",
-			"two"},
-		{"all missing",
+			"two",
+		},
+		{
+			"all missing",
 			[]string{"", "", ""}, "default",
-			"default"},
+			"default",
+		},
 	}
 	for _, tc := range cases {
 		tc := tc // pin

@@ -1,8 +1,6 @@
 package subsonic
 
-import (
-	"time"
-)
+import "time"
 
 var (
 	apiVersion = "1.9.0"
