@@ -1,6 +1,9 @@
 package tags
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/nicksellen/audiotags"
 	"github.com/pkg/errors"
 )
@@ -39,3 +42,15 @@ func (t *Tags) TrackNumber() int    { return intSep(t.firstTag("tracknumber"), "
 func (t *Tags) DiscNumber() int     { return intSep(t.firstTag("discnumber"), "/") }   // eg. 1/2
 func (t *Tags) Length() int         { return t.props.Length }
 func (t *Tags) Bitrate() int        { return t.props.Bitrate }
+
+func intSep(in, sep string) int {
+	if in == "" {
+		return 0
+	}
+	start := strings.SplitN(in, sep, 2)[0]
+	out, err := strconv.Atoi(start)
+	if err != nil {
+		return 0
+	}
+	return out
+}
