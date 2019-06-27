@@ -41,6 +41,7 @@ func checkCredentialsBasic(password, given string) bool {
 	return password == given
 }
 
+//nolint:interfacer
 func (c *Controller) WithValidSubsonicArgs(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := checkHasAllParams(r.URL.Query())
@@ -79,6 +80,7 @@ func (c *Controller) WithValidSubsonicArgs(next http.HandlerFunc) http.HandlerFu
 	}
 }
 
+//nolint:interfacer
 func (c *Controller) WithCORS(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")

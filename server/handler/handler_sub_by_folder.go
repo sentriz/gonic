@@ -73,8 +73,7 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 		Where("parent_id = ?", id).
 		Find(&childFolders)
 	for _, c := range childFolders {
-		childrenObj = append(childrenObj,
-			newTCAlbumByFolder(c, folder))
+		childrenObj = append(childrenObj, newTCAlbumByFolder(c))
 	}
 	//
 	// start looking for child childTracks in the current dir
@@ -150,8 +149,7 @@ func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
 	sub := subsonic.NewResponse()
 	sub.Albums = &subsonic.Albums{}
 	for _, folder := range folders {
-		sub.Albums.List = append(sub.Albums.List,
-			newAlbumByFolder(folder))
+		sub.Albums.List = append(sub.Albums.List, newAlbumByFolder(folder))
 	}
 	respond(w, r, sub)
 }
@@ -181,14 +179,12 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 	// search "albums"
 	var albums []*model.Album
 	c.DB.
-		Preload("Parent").
 		Where("tag_artist_id IS NOT NULL AND right_path LIKE ?", query).
 		Offset(getIntParamOr(r, "albumOffset", 0)).
 		Limit(getIntParamOr(r, "albumCount", 20)).
 		Find(&albums)
 	for _, a := range albums {
-		results.Albums = append(results.Albums,
-			newTCAlbumByFolder(a, a.Parent))
+		results.Albums = append(results.Albums, newTCAlbumByFolder(a))
 	}
 	//
 	// search tracks

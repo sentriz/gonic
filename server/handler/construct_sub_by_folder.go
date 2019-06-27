@@ -18,7 +18,7 @@ func newAlbumByFolder(f *model.Album) *subsonic.Album {
 	}
 }
 
-func newTCAlbumByFolder(f *model.Album, parent *model.Album) *subsonic.TrackChild {
+func newTCAlbumByFolder(f *model.Album) *subsonic.TrackChild {
 	trCh := &subsonic.TrackChild{
 		ID:       f.ID,
 		IsDir:    true,

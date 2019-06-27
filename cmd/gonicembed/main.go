@@ -56,7 +56,8 @@ type file struct {
 	modTime time.Time
 }
 
-func processAsset(c *config, f *file, out io.Writer) error {
+//nolint:errcheck
+func processAsset(c *config, f *file, out io.Writer) {
 	out.Write([]byte(fmt.Sprintf(assetHeader,
 		strings.TrimPrefix(f.path, c.assetPathPrefix),
 		f.modTime.Unix(),
@@ -73,9 +74,9 @@ func processAsset(c *config, f *file, out io.Writer) error {
 		}
 		fmt.Fprintln(out)
 	}
-	return nil
 }
 
+//nolint:errcheck
 func processAssets(c *config, files []string) error {
 	outWriter, err := os.Create(c.outPath)
 	if err != nil {
@@ -99,14 +100,15 @@ func processAssets(c *config, files []string) error {
 		if err != nil {
 			return errors.Wrap(err, "opening asset")
 		}
-		f := &file{
-			data:    data,
-			path:    path,
-			modTime: info.ModTime(),
-		}
-		if err := processAsset(c, f, outWriter); err != nil {
-			return errors.Wrap(err, "processing asset")
-		}
+		processAsset(
+			c,
+			&file{
+				data:    data,
+				path:    path,
+				modTime: info.ModTime(),
+			},
+			outWriter,
+		)
 	}
 	return nil
 }

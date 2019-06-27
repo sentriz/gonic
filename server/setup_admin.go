@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/Masterminds/sprig"
+	"github.com/Masterminds/sprig" //nolint:typecheck
 	"github.com/dustin/go-humanize"
 	"github.com/gorilla/securecookie"
 	"github.com/pkg/errors"

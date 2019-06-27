@@ -137,10 +137,9 @@ func (s *Scanner) Start() error {
 	}
 	// delete folders not on filesystem
 	var folders []*model.Album
-	err = s.tx.
+	s.tx.
 		Select("id").
-		Find(&folders).
-		Error
+		Find(&folders)
 	for _, folder := range folders {
 		_, ok := s.seenFolders[folder.ID]
 		if !ok {

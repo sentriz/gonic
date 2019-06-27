@@ -9,6 +9,7 @@ import (
 	"github.com/sentriz/gonic/model"
 )
 
+//nolint:interfacer
 func (c *Controller) WithSession(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, _ := c.SessDB.Get(r, "gonic")
@@ -17,6 +18,7 @@ func (c *Controller) WithSession(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+//nolint:interfacer
 func (c *Controller) WithUserSession(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// session exists at this point
@@ -43,6 +45,7 @@ func (c *Controller) WithUserSession(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+//nolint:interfacer
 func (c *Controller) WithAdminSession(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// session and user exist at this point

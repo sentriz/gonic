@@ -12,18 +12,3 @@ issues:
     - text: "weak cryptographic primitive"
       linters:
         - gosec
-    - path: model/model\.go
-      linters:
-        - lll
-    - path: server/handler/
-      source: "next http.HandlerFunc"
-      linters:
-        - interfacer
-    - path: server/handler/
-      source: "session.Save"
-      linters:
-        - errcheck
-    - path: server/handler/
-      source: "w.Write"
-      linters:
-        - errcheck
