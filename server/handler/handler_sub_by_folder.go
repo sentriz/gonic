@@ -166,8 +166,11 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 	// search "artists"
 	var artists []*model.Album
 	c.DB.
-		Where("parent_id = 1 "+
-			"AND (right_path || right_path_u_dec) LIKE ?", query).
+		Where(`
+            parent_id = 1
+            AND (right_path LIKE ? AND
+                 right_path_u_dec LIKE ?)
+		`, query, query).
 		Offset(getIntParamOr(r, "artistOffset", 0)).
 		Limit(getIntParamOr(r, "artistCount", 20)).
 		Find(&artists)
@@ -179,8 +182,11 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 	// search "albums"
 	var albums []*model.Album
 	c.DB.
-		Where("tag_artist_id IS NOT NULL "+
-			"AND (right_path || right_path_u_dec) LIKE ?", query).
+		Where(`
+            tag_artist_id IS NOT NULL
+            AND (right_path LIKE ? AND
+                 right_path_u_dec LIKE ?)
+		`, query, query).
 		Offset(getIntParamOr(r, "albumOffset", 0)).
 		Limit(getIntParamOr(r, "albumCount", 20)).
 		Find(&albums)
@@ -192,7 +198,10 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 	var tracks []*model.Track
 	c.DB.
 		Preload("Album").
-		Where("(filename || filename_u_dec) LIKE ?", query).
+		Where(`
+            filename LIKE ? AND
+            filename_u_dec LIKE ?
+		`, query, query).
 		Offset(getIntParamOr(r, "songOffset", 0)).
 		Limit(getIntParamOr(r, "songCount", 20)).
 		Find(&tracks)

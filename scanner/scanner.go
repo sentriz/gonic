@@ -39,7 +39,11 @@ var coverFilenames = map[string]struct{}{
 }
 
 func decoded(in string) string {
-	return unidecode.Unidecode(in)
+	result := unidecode.Unidecode(in)
+	if result == in {
+		return ""
+	}
+	return result
 }
 
 type Scanner struct {
