@@ -167,7 +167,7 @@ func (c *Controller) SearchThree(w http.ResponseWriter, r *http.Request) {
 	// search "artists"
 	var artists []*model.Artist
 	c.DB.
-		Where("name_u_dec LIKE ?", query).
+		Where("(name || name_u_dec) LIKE ?", query).
 		Offset(getIntParamOr(r, "artistOffset", 0)).
 		Limit(getIntParamOr(r, "artistCount", 20)).
 		Find(&artists)
@@ -180,7 +180,7 @@ func (c *Controller) SearchThree(w http.ResponseWriter, r *http.Request) {
 	var albums []*model.Album
 	c.DB.
 		Preload("TagArtist").
-		Where("tag_title_u_dec LIKE ?", query).
+		Where("(tag_title || tag_title_u_dec) LIKE ?", query).
 		Offset(getIntParamOr(r, "albumOffset", 0)).
 		Limit(getIntParamOr(r, "albumCount", 20)).
 		Find(&albums)
@@ -193,7 +193,7 @@ func (c *Controller) SearchThree(w http.ResponseWriter, r *http.Request) {
 	var tracks []*model.Track
 	c.DB.
 		Preload("Album").
-		Where("tag_title_u_dec LIKE ?", query).
+		Where("(tag_title || tag_title_u_dec) LIKE ?", query).
 		Offset(getIntParamOr(r, "songOffset", 0)).
 		Limit(getIntParamOr(r, "songCount", 20)).
 		Find(&tracks)
