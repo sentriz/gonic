@@ -31,7 +31,7 @@ func TestGetAlbumListTwo(t *testing.T) {
 		{url.Values{"type": []string{"alphabeticalByArtist"}}, "alpha_artist", false},
 		{url.Values{"type": []string{"alphabeticalByName"}}, "alpha_name", false},
 		{url.Values{"type": []string{"newest"}}, "newest", false},
-		// {url.Values{"type": []string{"random"}}, "random", true},
+		{url.Values{"type": []string{"random"}, "size": []string{"15"}}, "random", true},
 	})
 }
 
