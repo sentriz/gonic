@@ -32,7 +32,7 @@ func (c *Controller) GetIndexes(w http.ResponseWriter, r *http.Request) {
 	indexMap := make(map[string]*subsonic.Index)
 	indexes := []*subsonic.Index{}
 	for _, folder := range folders {
-		i := indexOf(folder.RightPathUDec[0])
+		i := indexOf(folder.IndexRightPath())
 		index, ok := indexMap[i]
 		if !ok {
 			index = &subsonic.Index{
@@ -168,7 +168,7 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 	c.DB.
 		Where(`
             parent_id = 1
-            AND (right_path LIKE ? AND
+            AND (right_path LIKE ? OR
                  right_path_u_dec LIKE ?)
 		`, query, query).
 		Offset(getIntParamOr(r, "artistOffset", 0)).
@@ -184,7 +184,7 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 	c.DB.
 		Where(`
             tag_artist_id IS NOT NULL
-            AND (right_path LIKE ? AND
+            AND (right_path LIKE ? OR
                  right_path_u_dec LIKE ?)
 		`, query, query).
 		Offset(getIntParamOr(r, "albumOffset", 0)).
@@ -199,7 +199,7 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 	c.DB.
 		Preload("Album").
 		Where(`
-            filename LIKE ? AND
+            filename LIKE ? OR
             filename_u_dec LIKE ?
 		`, query, query).
 		Offset(getIntParamOr(r, "songOffset", 0)).

@@ -25,7 +25,7 @@ func (c *Controller) GetArtists(w http.ResponseWriter, r *http.Request) {
 	indexMap := make(map[string]*subsonic.Index)
 	indexes := &subsonic.Artists{}
 	for _, artist := range artists {
-		i := indexOf(artist.NameUDec[0])
+		i := indexOf(artist.IndexName())
 		index, ok := indexMap[i]
 		if !ok {
 			index = &subsonic.Index{
@@ -168,7 +168,7 @@ func (c *Controller) SearchThree(w http.ResponseWriter, r *http.Request) {
 	var artists []*model.Artist
 	c.DB.
 		Where(`
-            name LIKE ? AND
+            name LIKE ? OR
             name_u_dec LIKE ?
 		`, query, query).
 		Offset(getIntParamOr(r, "artistOffset", 0)).
@@ -184,7 +184,7 @@ func (c *Controller) SearchThree(w http.ResponseWriter, r *http.Request) {
 	c.DB.
 		Preload("TagArtist").
 		Where(`
-            tag_title LIKE ? AND
+            tag_title LIKE ? OR
             tag_title_u_dec LIKE ?
 		`, query, query).
 		Offset(getIntParamOr(r, "albumOffset", 0)).
@@ -200,7 +200,7 @@ func (c *Controller) SearchThree(w http.ResponseWriter, r *http.Request) {
 	c.DB.
 		Preload("Album").
 		Where(`
-            tag_title LIKE ? AND
+            tag_title LIKE ? OR
             tag_title_u_dec LIKE ?
 		`, query, query).
 		Offset(getIntParamOr(r, "songOffset", 0)).

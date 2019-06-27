@@ -16,6 +16,13 @@ type Artist struct {
 	AlbumCount int      `sql:"-"`
 }
 
+func (a *Artist) IndexName() string {
+	if len(a.NameUDec) > 0 {
+		return a.NameUDec
+	}
+	return a.Name
+}
+
 type Track struct {
 	IDBase
 	CrudBase
@@ -91,4 +98,11 @@ type Album struct {
 	ChildCount    int  `sql:"-"`
 	ReceivedPaths bool `gorm:"-"`
 	ReceivedTags  bool `gorm:"-"`
+}
+
+func (a *Album) IndexRightPath() string {
+	if len(a.RightPathUDec) > 0 {
+		return a.RightPathUDec
+	}
+	return a.RightPath
 }
