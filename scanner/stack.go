@@ -7,34 +7,54 @@ import (
 	"github.com/sentriz/gonic/model"
 )
 
-type folderStack []*model.Album
-
-func (s *folderStack) Push(v *model.Album) {
-	*s = append(*s, v)
+type folderItem struct {
+	value *model.Album
+	next  *folderItem
 }
 
-func (s *folderStack) Pop() *model.Album {
-	l := len(*s)
-	if l == 0 {
+type folderStack struct {
+	top *folderItem
+	len uint
+}
+
+func (s *folderStack) push(v *model.Album) {
+	s.top = &folderItem{
+		value: v,
+		next:  s.top,
+	}
+	s.len++
+}
+
+func (s *folderStack) pop() *model.Album {
+	if s.len == 0 {
 		return nil
 	}
-	r := (*s)[l-1]
-	*s = (*s)[:l-1]
-	return r
+	v := s.top.value
+	s.top = s.top.next
+	s.len--
+	return v
 }
 
-func (s *folderStack) Peek() *model.Album {
-	l := len(*s)
-	if l == 0 {
+func (s *folderStack) peek() *model.Album {
+	if s.len == 0 {
 		return nil
 	}
-	return (*s)[l-1]
+	return s.top.value
 }
 
-func (s *folderStack) String() string {
-	paths := make([]string, len(*s))
-	for i, folder := range *s {
-		paths[i] = folder.LeftPath
+func (s *folderStack) peekID() int {
+	if s.len == 0 {
+		return 0
 	}
-	return fmt.Sprintf("[%s]", strings.Join(paths, " "))
+	return s.top.value.ID
+}
+
+func (s *folderStack) string() string {
+	var str strings.Builder
+	str.WriteString("[")
+	for i := s.top; i.next != nil; i = i.next {
+		str.WriteString(fmt.Sprintf("%d, ", i.value.ID))
+	}
+	str.WriteString("root]")
+	return str.String()
 }
