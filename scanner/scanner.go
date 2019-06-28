@@ -19,6 +19,8 @@ import (
 	"github.com/sentriz/gonic/scanner/tags"
 )
 
+// IsScanning acts as an atomic boolean semaphore. we don't
+// want to have more than one scan going on at a time
 var IsScanning int32
 
 var coverFilenames = map[string]struct{}{
@@ -36,6 +38,10 @@ var coverFilenames = map[string]struct{}{
 	"front.jpeg":  {},
 }
 
+// decoded converts a string to it's latin equivalent. it
+// will be used by the model's *UDec fields, and is only set
+// if it differs from the original.
+// the fields are used for searching
 func decoded(in string) string {
 	result := unidecode.Unidecode(in)
 	if result == in {
@@ -51,7 +57,7 @@ type Scanner struct {
 	seenFolders   map[int]struct{}
 	seenTracksNew int
 	seenTracksErr int
-	curFolders    folderStack
+	curFolders    *folderStack
 	curCover      string
 }
 
@@ -61,20 +67,8 @@ func New(db *gorm.DB, musicPath string) *Scanner {
 		musicPath:   musicPath,
 		seenTracks:  make(map[int]struct{}),
 		seenFolders: make(map[int]struct{}),
-		curFolders:  make(folderStack, 0),
+		curFolders:  &folderStack{},
 	}
-}
-
-func (s *Scanner) curFolder() *model.Album {
-	return s.curFolders.Peek()
-}
-
-func (s *Scanner) curFolderID() int {
-	peek := s.curFolders.Peek()
-	if peek == nil {
-		return 0
-	}
-	return peek.ID
 }
 
 func (s *Scanner) MigrateDB() error {
@@ -173,6 +167,7 @@ func (s *Scanner) Start() error {
 	return nil
 }
 
+// items are passed to the handle*() functions
 type item struct {
 	fullPath  string
 	relPath   string
@@ -214,9 +209,9 @@ func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
 }
 
 func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
-	folder := s.curFolders.Pop()
+	folder := s.curFolders.pop()
 	if folder.ReceivedPaths {
-		folder.ParentID = s.curFolderID()
+		folder.ParentID = s.curFolders.peekID()
 		folder.Cover = s.curCover
 		s.tx.Save(folder)
 		log.Printf("processed folder `%s`\n",
@@ -232,7 +227,7 @@ func (s *Scanner) handleFolder(it *item) error {
 		// folder's id will come from early return
 		// or save at the end
 		s.seenFolders[folder.ID] = struct{}{}
-		s.curFolders.Push(folder)
+		s.curFolders.push(folder)
 	}()
 	err := s.tx.
 		Where(model.Album{
@@ -260,7 +255,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	track := &model.Track{}
 	err := s.tx.
 		Where(model.Track{
-			AlbumID:  s.curFolderID(),
+			AlbumID:  s.curFolders.peekID(),
 			Filename: it.filename,
 		}).
 		First(track).
@@ -274,7 +269,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	track.Filename = it.filename
 	track.FilenameUDec = decoded(it.filename)
 	track.Size = int(it.stat.Size())
-	track.AlbumID = s.curFolderID()
+	track.AlbumID = s.curFolders.peekID()
 	trTags, err := tags.New(it.fullPath)
 	if err != nil {
 		// not returning the error here because we don't
@@ -318,7 +313,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	s.seenTracksNew++
 	//
 	// set album if this is the first track in the folder
-	folder := s.curFolder()
+	folder := s.curFolders.peek()
 	if !folder.ReceivedPaths || folder.ReceivedTags {
 		// the folder hasn't been modified or already has it's tags
 		return nil
