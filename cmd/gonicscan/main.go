@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 
@@ -28,7 +29,10 @@ func main() {
 	if _, err := os.Stat(*musicPath); os.IsNotExist(err) {
 		log.Fatal("please provide a valid music directory")
 	}
-	db, err := gorm.Open("sqlite3", *dbPath)
+	db, err := gorm.Open("sqlite3", fmt.Sprintf(
+		"%s?cache=shared&_busy_timeout=%d",
+		*dbPath, 2000,
+	))
 	if err != nil {
 		log.Fatalf("error opening database: %v\n", err)
 	}

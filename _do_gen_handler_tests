@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 test_data_path=server/handler/test_data
 test_listen_addr=localhost:9353

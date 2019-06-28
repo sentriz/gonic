@@ -1,15 +1,17 @@
-#!/bin/bash
+#!/bin/sh
 
-shopt -s globstar
 source _build_vars
-go run \
-    cmd/gonicembed/main.go \
-    -out-path server/assets_bytes.go \
-    -tag-list embed \
-    -package-name server \
-    -assets-var-name AssetBytes \
-    -asset-path-prefix server/assets/ \
-    server/assets/**
+find server/assets/ \
+    -type f \
+    -exec go run \
+        cmd/gonicembed/main.go \
+        -out-path server/assets_bytes.go \
+        -tag-list embed \
+        -package-name server \
+        -assets-var-name AssetBytes \
+        -asset-path-prefix server/assets/ \
+	{} +
 go build \
+    -o gonic \
     -tags "$(tr '\n' ' ' < _build_tags) embed" \
     cmd/gonic/main.go
