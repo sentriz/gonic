@@ -10,7 +10,7 @@ find server/assets/ \
         -package-name server \
         -assets-var-name AssetBytes \
         -asset-path-prefix server/assets/ \
-	{} +
+        {} +
 go build \
     -o gonic \
     -tags "$(tr '\n' ' ' < _build_tags) embed" \
