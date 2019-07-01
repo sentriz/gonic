@@ -5,7 +5,7 @@ test_listen_addr=localhost:9353
 test_music_path=~/music
 test_db_path=$test_data_path/db
 
-if [[ "$1" == "--scan" ]]; then
+if test "$1" == "--scan"; then
     echo -e "\e[91mwarning: \e[39mthe --scan option was passed"
     echo "- this option should only be used if the database schema changes"
     echo "- the test json will likely change a lot"
@@ -16,54 +16,45 @@ if [[ "$1" == "--scan" ]]; then
         -db-path "$test_db_path"
 fi
 
-# start server in fd 3
 mkdir "$test_music_path" 2>/dev/null
-exec 3< <(
-    ./_do_run_server \
-        -music-path "$test_music_path" \
-        -db-path "$test_db_path" \
-        -listen-addr "$test_listen_addr" \
-        2>&1
-)
-
-# wait for start message
 echo "waiting for server to start"
-while read line; do
+./_do_run_server \
+    -music-path "$test_music_path" \
+    -db-path "$test_db_path" \
+    -listen-addr "$test_listen_addr" 2>&1 \
+| while read line; do
     echo "from server: $line"
     if [[ "$line" == *'starting server'* ]]; then
-        break
+	sleep '0.5'
+        #
+        # by folder
+        curl -s "http://$test_listen_addr/rest/getAlbumList.view?c=c&f=json&p=admin&u=admin&v=v&type=alphabeticalByArtist" | jq > "$test_data_path/test_get_album_list_alpha_artist"
+        curl -s "http://$test_listen_addr/rest/getAlbumList.view?c=c&f=json&p=admin&u=admin&v=v&type=alphabeticalByName" | jq > "$test_data_path/test_get_album_list_alpha_name"
+        curl -s "http://$test_listen_addr/rest/getAlbumList.view?c=c&f=json&p=admin&u=admin&v=v&type=alphabeticalByName" | jq > "$test_data_path/test_get_album_list_two_alpha_name"
+        curl -s "http://$test_listen_addr/rest/getAlbumList.view?c=c&f=json&p=admin&u=admin&v=v&type=newest" | jq > "$test_data_path/test_get_album_list_newest"
+        curl -s "http://$test_listen_addr/rest/getAlbumList.view?c=c&f=json&p=admin&u=admin&v=v&type=random&size=15" | jq > "$test_data_path/test_get_album_list_random"
+        curl -s "http://$test_listen_addr/rest/search2.view?c=c&f=json&p=admin&u=admin&v=v&query=13" | jq > "$test_data_path/test_search_two_q_13"
+        curl -s "http://$test_listen_addr/rest/search2.view?c=c&f=json&p=admin&u=admin&v=v&query=ani" | jq > "$test_data_path/test_search_two_q_ani"
+        curl -s "http://$test_listen_addr/rest/search2.view?c=c&f=json&p=admin&u=admin&v=v&query=cert" | jq > "$test_data_path/test_search_two_q_cert"
+        curl -s "http://$test_listen_addr/rest/getIndexes.view?c=c&p=admin&u=admin&v=v&f=json" | jq > "$test_data_path/test_get_indexes_no_args"
+        curl -s "http://$test_listen_addr/rest/getMusicDirectory.view?c=Jamsstash&id=2&p=admin&u=admin&v=v&f=json" | jq > "$test_data_path/test_get_music_directory_without_tracks"
+        curl -s "http://$test_listen_addr/rest/getMusicDirectory.view?c=Jamsstash&id=3&p=admin&u=admin&v=v&f=json" | jq > "$test_data_path/test_get_music_directory_with_tracks"
+        #
+        # by tags
+        curl -s "http://$test_listen_addr/rest/getAlbum.view?c=c&f=json&p=admin&u=admin&v=v&id=2" | jq > "$test_data_path/test_get_album_without_cover"
+        curl -s "http://$test_listen_addr/rest/getAlbum.view?c=c&f=json&p=admin&u=admin&v=v&id=3" | jq > "$test_data_path/test_get_album_with_cover"
+        curl -s "http://$test_listen_addr/rest/getAlbumList2.view?c=c&f=json&p=admin&u=admin&v=v&type=alphabeticalByArtist" | jq > "$test_data_path/test_get_album_list_two_alpha_artist"
+        curl -s "http://$test_listen_addr/rest/getAlbumList2.view?c=c&f=json&p=admin&u=admin&v=v&type=alphabeticalByName" | jq > "$test_data_path/test_get_album_list_two_alpha_name"
+        curl -s "http://$test_listen_addr/rest/getAlbumList2.view?c=c&f=json&p=admin&u=admin&v=v&type=newest" | jq > "$test_data_path/test_get_album_list_two_newest"
+        curl -s "http://$test_listen_addr/rest/getAlbumList2.view?c=c&f=json&p=admin&u=admin&v=v&type=random&size=15" | jq > "$test_data_path/test_get_album_list_two_random"
+        curl -s "http://$test_listen_addr/rest/getArtist.view?c=c&f=json&p=admin&u=admin&v=v&id=1" | jq > "$test_data_path/test_get_artist_id_one"
+        curl -s "http://$test_listen_addr/rest/getArtist.view?c=c&f=json&p=admin&u=admin&v=v&id=2" | jq > "$test_data_path/test_get_artist_id_two"
+        curl -s "http://$test_listen_addr/rest/getArtist.view?c=c&f=json&p=admin&u=admin&v=v&id=3" | jq > "$test_data_path/test_get_artist_id_three"
+        curl -s "http://$test_listen_addr/rest/getArtists.view?c=c&f=json&p=admin&u=admin&v=v" | jq > "$test_data_path/test_get_artists_no_args"
+        curl -s "http://$test_listen_addr/rest/search3.view?c=c&f=json&p=admin&u=admin&v=v&query=13" | jq > "$test_data_path/test_search_three_q_13"
+        curl -s "http://$test_listen_addr/rest/search3.view?c=c&f=json&p=admin&u=admin&v=v&query=ani" | jq > "$test_data_path/test_search_three_q_ani"
+        curl -s "http://$test_listen_addr/rest/search3.view?c=c&f=json&p=admin&u=admin&v=v&query=cert" | jq > "$test_data_path/test_search_three_q_cert"
+	#
+	pkill -INT -f "/tmp/go-build.*$test_listen_addr.*"
     fi
-done <&3
-sleep '0.5'
-
-# by folder
-curl -s "http://$test_listen_addr/rest/getAlbumList.view?c=c&f=json&p=admin&u=admin&v=v&type=alphabeticalByArtist" | jq > "$test_data_path/test_get_album_list_alpha_artist"
-curl -s "http://$test_listen_addr/rest/getAlbumList.view?c=c&f=json&p=admin&u=admin&v=v&type=alphabeticalByName" | jq > "$test_data_path/test_get_album_list_alpha_name"
-curl -s "http://$test_listen_addr/rest/getAlbumList.view?c=c&f=json&p=admin&u=admin&v=v&type=alphabeticalByName" | jq > "$test_data_path/test_get_album_list_two_alpha_name"
-curl -s "http://$test_listen_addr/rest/getAlbumList.view?c=c&f=json&p=admin&u=admin&v=v&type=newest" | jq > "$test_data_path/test_get_album_list_newest"
-curl -s "http://$test_listen_addr/rest/getAlbumList.view?c=c&f=json&p=admin&u=admin&v=v&type=random&size=15" | jq > "$test_data_path/test_get_album_list_random"
-curl -s "http://$test_listen_addr/rest/search2.view?c=c&f=json&p=admin&u=admin&v=v&query=13" | jq > "$test_data_path/test_search_two_q_13"
-curl -s "http://$test_listen_addr/rest/search2.view?c=c&f=json&p=admin&u=admin&v=v&query=ani" | jq > "$test_data_path/test_search_two_q_ani"
-curl -s "http://$test_listen_addr/rest/search2.view?c=c&f=json&p=admin&u=admin&v=v&query=cert" | jq > "$test_data_path/test_search_two_q_cert"
-curl -s "http://$test_listen_addr/rest/getIndexes.view?c=c&p=admin&u=admin&v=v&f=json" | jq > "$test_data_path/test_get_indexes_no_args"
-curl -s "http://$test_listen_addr/rest/getMusicDirectory.view?c=Jamsstash&id=2&p=admin&u=admin&v=v&f=json" | jq > "$test_data_path/test_get_music_directory_without_tracks"
-curl -s "http://$test_listen_addr/rest/getMusicDirectory.view?c=Jamsstash&id=3&p=admin&u=admin&v=v&f=json" | jq > "$test_data_path/test_get_music_directory_with_tracks"
-
-# by tags
-curl -s "http://$test_listen_addr/rest/getAlbum.view?c=c&f=json&p=admin&u=admin&v=v&id=2" | jq > "$test_data_path/test_get_album_without_cover"
-curl -s "http://$test_listen_addr/rest/getAlbum.view?c=c&f=json&p=admin&u=admin&v=v&id=3" | jq > "$test_data_path/test_get_album_with_cover"
-curl -s "http://$test_listen_addr/rest/getAlbumList2.view?c=c&f=json&p=admin&u=admin&v=v&type=alphabeticalByArtist" | jq > "$test_data_path/test_get_album_list_two_alpha_artist"
-curl -s "http://$test_listen_addr/rest/getAlbumList2.view?c=c&f=json&p=admin&u=admin&v=v&type=alphabeticalByName" | jq > "$test_data_path/test_get_album_list_two_alpha_name"
-curl -s "http://$test_listen_addr/rest/getAlbumList2.view?c=c&f=json&p=admin&u=admin&v=v&type=newest" | jq > "$test_data_path/test_get_album_list_two_newest"
-curl -s "http://$test_listen_addr/rest/getAlbumList2.view?c=c&f=json&p=admin&u=admin&v=v&type=random&size=15" | jq > "$test_data_path/test_get_album_list_two_random"
-curl -s "http://$test_listen_addr/rest/getArtist.view?c=c&f=json&p=admin&u=admin&v=v&id=1" | jq > "$test_data_path/test_get_artist_id_one"
-curl -s "http://$test_listen_addr/rest/getArtist.view?c=c&f=json&p=admin&u=admin&v=v&id=2" | jq > "$test_data_path/test_get_artist_id_two"
-curl -s "http://$test_listen_addr/rest/getArtist.view?c=c&f=json&p=admin&u=admin&v=v&id=3" | jq > "$test_data_path/test_get_artist_id_three"
-curl -s "http://$test_listen_addr/rest/getArtists.view?c=c&f=json&p=admin&u=admin&v=v" | jq > "$test_data_path/test_get_artists_no_args"
-curl -s "http://$test_listen_addr/rest/search3.view?c=c&f=json&p=admin&u=admin&v=v&query=13" | jq > "$test_data_path/test_search_three_q_13"
-curl -s "http://$test_listen_addr/rest/search3.view?c=c&f=json&p=admin&u=admin&v=v&query=ani" | jq > "$test_data_path/test_search_three_q_ani"
-curl -s "http://$test_listen_addr/rest/search3.view?c=c&f=json&p=admin&u=admin&v=v&query=cert" | jq > "$test_data_path/test_search_three_q_cert"
-
-# stop server
-pkill -INT -f ".*go.*$test_listen_addr.*"
-exec 3<&-
+done

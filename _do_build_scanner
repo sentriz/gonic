@@ -1,6 +1,6 @@
 #!/bin/sh
 
-source _build_vars
+source ./_build_vars
 go build \
     -o gonicscan \
     -tags "$(tr '\n' ' ' < _build_tags)" \
