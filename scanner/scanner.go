@@ -16,6 +16,7 @@ import (
 
 	"github.com/sentriz/gonic/mime"
 	"github.com/sentriz/gonic/model"
+	"github.com/sentriz/gonic/scanner/stack"
 	"github.com/sentriz/gonic/scanner/tags"
 )
 
@@ -57,7 +58,7 @@ type Scanner struct {
 	seenFolders   map[int]struct{}
 	seenTracksNew int
 	seenTracksErr int
-	curFolders    *folderStack
+	curFolders    *stack.Stack
 	curCover      string
 }
 
@@ -67,7 +68,7 @@ func New(db *gorm.DB, musicPath string) *Scanner {
 		musicPath:   musicPath,
 		seenTracks:  make(map[int]struct{}),
 		seenFolders: make(map[int]struct{}),
-		curFolders:  &folderStack{},
+		curFolders:  &stack.Stack{},
 	}
 }
 
@@ -209,9 +210,9 @@ func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
 }
 
 func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
-	folder := s.curFolders.pop()
+	folder := s.curFolders.Pop()
 	if folder.ReceivedPaths {
-		folder.ParentID = s.curFolders.peekID()
+		folder.ParentID = s.curFolders.PeekID()
 		folder.Cover = s.curCover
 		s.tx.Save(folder)
 		log.Printf("processed folder `%s`\n",
@@ -227,7 +228,7 @@ func (s *Scanner) handleFolder(it *item) error {
 		// folder's id will come from early return
 		// or save at the end
 		s.seenFolders[folder.ID] = struct{}{}
-		s.curFolders.push(folder)
+		s.curFolders.Push(folder)
 	}()
 	err := s.tx.
 		Where(model.Album{
@@ -255,7 +256,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	track := &model.Track{}
 	err := s.tx.
 		Where(model.Track{
-			AlbumID:  s.curFolders.peekID(),
+			AlbumID:  s.curFolders.PeekID(),
 			Filename: it.filename,
 		}).
 		First(track).
@@ -269,7 +270,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	track.Filename = it.filename
 	track.FilenameUDec = decoded(it.filename)
 	track.Size = int(it.stat.Size())
-	track.AlbumID = s.curFolders.peekID()
+	track.AlbumID = s.curFolders.PeekID()
 	trTags, err := tags.New(it.fullPath)
 	if err != nil {
 		// not returning the error here because we don't
@@ -313,7 +314,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	s.seenTracksNew++
 	//
 	// set album if this is the first track in the folder
-	folder := s.curFolders.peek()
+	folder := s.curFolders.Peek()
 	if !folder.ReceivedPaths || folder.ReceivedTags {
 		// the folder hasn't been modified or already has it's tags
 		return nil
