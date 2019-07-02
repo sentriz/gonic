@@ -17,7 +17,7 @@ import (
 	"github.com/sentriz/gonic/server/subsonic"
 )
 
-func indexOf(in string) string {
+func lowerUDecOrHash(in string) string {
 	lower := unicode.ToLower(rune(in[0]))
 	if !unicode.IsLetter(lower) {
 		return "#"

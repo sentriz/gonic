@@ -29,10 +29,11 @@ func (c *Controller) GetIndexes(w http.ResponseWriter, r *http.Request) {
 		Where("albums.parent_id = 1").
 		Group("albums.id").
 		Find(&folders)
-	indexMap := make(map[string]*subsonic.Index)
-	indexes := []*subsonic.Index{}
+	// [a-z#] -> 27
+	indexMap := make(map[string]*subsonic.Index, 27)
+	resp := make([]*subsonic.Index, 0, 27)
 	for _, folder := range folders {
-		i := indexOf(folder.IndexRightPath())
+		i := lowerUDecOrHash(folder.IndexRightPath())
 		index, ok := indexMap[i]
 		if !ok {
 			index = &subsonic.Index{
@@ -40,18 +41,18 @@ func (c *Controller) GetIndexes(w http.ResponseWriter, r *http.Request) {
 				Artists: []*subsonic.Artist{},
 			}
 			indexMap[i] = index
-			indexes = append(indexes, index)
+			resp = append(resp, index)
 		}
 		index.Artists = append(index.Artists,
 			newArtistByFolder(folder))
 	}
-	sort.Slice(indexes, func(i, j int) bool {
-		return indexes[i].Name < indexes[j].Name
+	sort.Slice(resp, func(i, j int) bool {
+		return resp[i].Name < resp[j].Name
 	})
 	sub := subsonic.NewResponse()
 	sub.Indexes = &subsonic.Indexes{
 		LastModified: 0,
-		Index:        indexes,
+		Index:        resp,
 	}
 	respond(w, r, sub)
 }

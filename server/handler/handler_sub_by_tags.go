@@ -22,10 +22,11 @@ func (c *Controller) GetArtists(w http.ResponseWriter, r *http.Request) {
 		`).
 		Group("artists.id").
 		Find(&artists)
-	indexMap := make(map[string]*subsonic.Index)
-	indexes := &subsonic.Artists{}
+	// [a-z#] -> 27
+	indexMap := make(map[string]*subsonic.Index, 27)
+	resp := make([]*subsonic.Index, 0, 27)
 	for _, artist := range artists {
-		i := indexOf(artist.IndexName())
+		i := lowerUDecOrHash(artist.IndexName())
 		index, ok := indexMap[i]
 		if !ok {
 			index = &subsonic.Index{
@@ -33,16 +34,18 @@ func (c *Controller) GetArtists(w http.ResponseWriter, r *http.Request) {
 				Artists: []*subsonic.Artist{},
 			}
 			indexMap[i] = index
-			indexes.List = append(indexes.List, index)
+			resp = append(resp, index)
 		}
 		index.Artists = append(index.Artists,
 			newArtistByTags(artist))
 	}
-	sort.Slice(indexes.List, func(i, j int) bool {
-		return indexes.List[i].Name < indexes.List[j].Name
+	sort.Slice(resp, func(i, j int) bool {
+		return resp[i].Name < resp[j].Name
 	})
 	sub := subsonic.NewResponse()
-	sub.Artists = indexes
+	sub.Artists = &subsonic.Artists{
+		List: resp,
+	}
 	respond(w, r, sub)
 }
 
