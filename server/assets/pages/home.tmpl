@@ -71,7 +71,7 @@
     <div class="box-title">
         <i class="mdi mdi-folder-multiple"></i> recent folders
     </div>
-    <div class="block-right">
+    <div class="block-right text-right">
         <table id="recent-folders">
         {{ range $folder := .RecentFolders }}
             <tr>
@@ -80,6 +80,7 @@
             </tr>
         {{ end }}
         </table>
+        <a href="/admin/start_scan_do">start scan</a>
     </div>
 </div>
 {{ end }}

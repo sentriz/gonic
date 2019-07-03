@@ -2,12 +2,14 @@ package handler
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/sessions"
 	"github.com/jinzhu/gorm"
 
 	"github.com/sentriz/gonic/model"
+	"github.com/sentriz/gonic/scanner"
 	"github.com/sentriz/gonic/server/lastfm"
 )
 
@@ -257,4 +259,19 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(w http.ResponseWriter, r *http.Re
 	c.SetSetting("lastfm_api_key", apiKey)
 	c.SetSetting("lastfm_secret", secret)
 	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
+}
+
+func (c *Controller) ServeStartScanDo(w http.ResponseWriter, r *http.Request) {
+	session := r.Context().Value(contextSessionKey).(*sessions.Session)
+	session.AddFlash("scan started")
+	sessionLogSave(w, r, session)
+	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
+	go func() {
+		err := scanner.
+			New(c.DB, c.MusicPath).
+			Start()
+		if err != nil {
+			log.Printf("error while scanning: %v\n", err)
+		}
+	}()
 }

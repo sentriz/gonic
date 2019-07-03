@@ -144,5 +144,6 @@ func (s *Server) SetupAdmin() error {
 	s.mux.HandleFunc("/admin/create_user_do", withAdminWare(s.ServeCreateUserDo))
 	s.mux.HandleFunc("/admin/update_lastfm_api_key", withAdminWare(s.ServeUpdateLastFMAPIKey))
 	s.mux.HandleFunc("/admin/update_lastfm_api_key_do", withAdminWare(s.ServeUpdateLastFMAPIKeyDo))
+	s.mux.HandleFunc("/admin/start_scan_do", withAdminWare(s.ServeStartScanDo))
 	return nil
 }
