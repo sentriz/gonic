@@ -10,23 +10,26 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jinzhu/gorm"
 	jd "github.com/josephburnett/jd/lib"
+
+	"github.com/sentriz/gonic/db"
 )
 
 var (
-	testController *Controller
 	testDataDir    = "test_data"
 	testCamelExpr  = regexp.MustCompile("([a-z0-9])([A-Z])")
+	testDBPath     = path.Join(testDataDir, "db")
+	testController *Controller
 )
 
 func init() {
-	testDBPath := path.Join(testDataDir, "db")
-	testDB, err := gorm.Open("sqlite3", testDBPath)
+	db, err := db.New(testDBPath)
 	if err != nil {
 		log.Fatalf("error opening database: %v\n", err)
 	}
-	testController = &Controller{DB: testDB}
+	testController = &Controller{
+		DB: db,
+	}
 }
 
 type queryCase struct {
@@ -35,20 +38,16 @@ type queryCase struct {
 	listSet    bool
 }
 
-func testNameToPath(name string) string {
-	snake := testCamelExpr.ReplaceAllString(name, "${1}_${2}")
-	lower := strings.ToLower(snake)
-	relPath := strings.Replace(lower, "/", "_", -1)
-	return path.Join(testDataDir, relPath)
-}
-
-func testQueryCases(t *testing.T, handler http.HandlerFunc, cases []*queryCase) {
+func runQueryCases(t *testing.T, handler http.HandlerFunc, cases []*queryCase) {
 	for _, qc := range cases {
 		qc := qc // pin
 		t.Run(qc.expectPath, func(t *testing.T) {
 			t.Parallel()
+			//
 			// ensure the handlers give us json
 			qc.params.Add("f", "json")
+			//
+			// request from the handler in question
 			req, _ := http.NewRequest("", "?"+qc.params.Encode(), nil)
 			rr := httptest.NewRecorder()
 			handler.ServeHTTP(rr, req)
@@ -56,7 +55,14 @@ func testQueryCases(t *testing.T, handler http.HandlerFunc, cases []*queryCase) 
 			if status := rr.Code; status != http.StatusOK {
 				t.Fatalf("didn't give a 200\n%s", body)
 			}
-			absExpPath := testNameToPath(t.Name())
+			//
+			// convert test name to query case path
+			snake := testCamelExpr.ReplaceAllString(t.Name(), "${1}_${2}")
+			lower := strings.ToLower(snake)
+			relPath := strings.Replace(lower, "/", "_", -1)
+			absExpPath := path.Join(testDataDir, relPath)
+			//
+			// read case to differ with handler result
 			expected, err := jd.ReadJsonFile(absExpPath)
 			if err != nil {
 				t.Fatalf("parsing expected: %v", err)
@@ -70,6 +76,8 @@ func testQueryCases(t *testing.T, handler http.HandlerFunc, cases []*queryCase) 
 				diffOpts = append(diffOpts, jd.SET)
 			}
 			diff := expected.Diff(actual, diffOpts...)
+			//
+			// pass or fail
 			if len(diff) == 0 {
 				return
 			}
