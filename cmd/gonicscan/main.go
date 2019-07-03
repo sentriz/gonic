@@ -2,14 +2,13 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
 
-	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/peterbourgon/ff"
 
+	"github.com/sentriz/gonic/db"
 	"github.com/sentriz/gonic/scanner"
 )
 
@@ -29,14 +28,10 @@ func main() {
 	if _, err := os.Stat(*musicPath); os.IsNotExist(err) {
 		log.Fatal("please provide a valid music directory")
 	}
-	db, err := gorm.Open("sqlite3", fmt.Sprintf(
-		"%s?cache=shared&_busy_timeout=%d",
-		*dbPath, 2000,
-	))
+	db, err := db.New(*dbPath)
 	if err != nil {
 		log.Fatalf("error opening database: %v\n", err)
 	}
-	db.SetLogger(log.New(os.Stdout, "gorm ", 0))
 	s := scanner.New(
 		db,
 		*musicPath,
