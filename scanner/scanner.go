@@ -51,15 +51,31 @@ func decoded(in string) string {
 	return result
 }
 
+func withTx(db *gorm.DB, cb func(tx *gorm.DB)) {
+	tx := db.Begin()
+	cb(tx)
+	tx.Commit()
+}
+
 type Scanner struct {
-	db, tx        *gorm.DB
-	musicPath     string
+	db        *gorm.DB
+	musicPath string
+	// these two are for the transaction we do for every folder.
+	// the boolean is there so we dont begin or commit multiple
+	// times in the handle folder or post children callback
+	trTx     *gorm.DB
+	trTxOpen bool
+	// these two are for keeping state between noted in the tree.
+	// eg. keep track of a parents folder or the path to a cover
+	// we just saw that we need to commit in the post children
+	// callback
+	curFolders *stack.Stack
+	curCover   string
+	// then the rest are for stats and cleanup at the very end
 	seenTracks    map[int]struct{}
 	seenFolders   map[int]struct{}
 	seenTracksNew int
 	seenTracksErr int
-	curFolders    *stack.Stack
-	curCover      string
 }
 
 func New(db *gorm.DB, musicPath string) *Scanner {
@@ -78,8 +94,6 @@ func (s *Scanner) Start() error {
 	}
 	atomic.StoreInt32(&IsScanning, 1)
 	defer atomic.StoreInt32(&IsScanning, 0)
-	s.tx = s.db.Begin()
-	defer s.tx.Commit()
 	//
 	// being walking
 	start := time.Now()
@@ -100,47 +114,48 @@ func (s *Scanner) Start() error {
 	//
 	// begin cleaning
 	start = time.Now()
-	var tracks []*model.Track
-	err = s.tx.
-		Select("id").
-		Find(&tracks).
-		Error
-	if err != nil {
-		return errors.Wrap(err, "scanning tracks")
-	}
-	// delete tracks not on filesystem
 	var deleted uint
-	for _, track := range tracks {
-		_, ok := s.seenTracks[track.ID]
-		if !ok {
-			s.tx.Delete(track)
-			deleted++
+	// delete tracks not on filesystem
+	withTx(s.db, func(tx *gorm.DB) {
+		var tracks []*model.Track
+		tx.
+			Select("id").
+			Find(&tracks)
+		for _, track := range tracks {
+			_, ok := s.seenTracks[track.ID]
+			if !ok {
+				tx.Delete(track)
+				deleted++
+			}
 		}
-	}
+	})
 	// delete folders not on filesystem
-	var folders []*model.Album
-	s.tx.
-		Select("id").
-		Find(&folders)
-	for _, folder := range folders {
-		_, ok := s.seenFolders[folder.ID]
-		if !ok {
-			s.tx.Delete(folder)
+	withTx(s.db, func(tx *gorm.DB) {
+		var folders []*model.Album
+		tx.
+			Select("id").
+			Find(&folders)
+		for _, folder := range folders {
+			_, ok := s.seenFolders[folder.ID]
+			if !ok {
+				tx.Delete(folder)
+			}
 		}
-	}
-	// then, delete albums without tracks
-	s.tx.Exec(`
+	})
+	// delete albums without tracks
+	s.db.Exec(`
         DELETE FROM albums
         WHERE tag_artist_id NOT NULL
         AND NOT EXISTS (SELECT 1 FROM tracks
                         WHERE tracks.album_id = albums.id)
 	`)
-	// then, delete artists without albums
-	s.tx.Exec(`
+	// delete artists without albums
+	s.db.Exec(`
         DELETE FROM artists
         WHERE NOT EXISTS (SELECT 1 from albums
                           WHERE albums.tag_artist_id = artists.id)
 	`)
+	//
 	log.Printf("finished clean in %s, -%d tracks\n",
 		time.Since(start),
 		deleted,
@@ -190,13 +205,17 @@ func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
 }
 
 func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
+	if s.trTxOpen {
+		s.trTx.Commit()
+		s.trTxOpen = false
+	}
 	// begin taking the current folder if the stack and add it's
 	// parent, cover that we found, etc.
 	folder := s.curFolders.Pop()
 	if folder.ReceivedPaths {
 		folder.ParentID = s.curFolders.PeekID()
 		folder.Cover = s.curCover
-		s.tx.Save(folder)
+		s.db.Save(folder)
 		// we only log changed folders
 		log.Printf("processed folder `%s`\n",
 			path.Join(folder.LeftPath, folder.RightPath))
@@ -213,7 +232,7 @@ func (s *Scanner) handleFolder(it *item) error {
 		s.seenFolders[folder.ID] = struct{}{}
 		s.curFolders.Push(folder)
 	}()
-	err := s.tx.
+	err := s.db.
 		Where(model.Album{
 			LeftPath:  it.directory,
 			RightPath: it.filename,
@@ -228,16 +247,20 @@ func (s *Scanner) handleFolder(it *item) error {
 	folder.LeftPath = it.directory
 	folder.RightPath = it.filename
 	folder.RightPathUDec = decoded(it.filename)
-	s.tx.Save(folder)
+	s.db.Save(folder)
 	folder.ReceivedPaths = true
 	return nil
 }
 
 func (s *Scanner) handleTrack(it *item) error {
+	if !s.trTxOpen {
+		s.trTx = s.db.Begin()
+		s.trTxOpen = true
+	}
 	//
 	// set track basics
 	track := &model.Track{}
-	err := s.tx.
+	err := s.trTx.
 		Where(model.Track{
 			AlbumID:  s.curFolders.PeekID(),
 			Filename: it.filename,
@@ -282,17 +305,17 @@ func (s *Scanner) handleTrack(it *item) error {
 		}
 		return "Unknown Artist"
 	}()
-	err = s.tx.
+	err = s.trTx.
 		Where("name = ?", artistName).
 		First(artist).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
 		artist.Name = artistName
 		artist.NameUDec = decoded(artistName)
-		s.tx.Save(artist)
+		s.trTx.Save(artist)
 	}
 	track.ArtistID = artist.ID
-	s.tx.Save(track)
+	s.trTx.Save(track)
 	s.seenTracks[track.ID] = struct{}{}
 	s.seenTracksNew++
 	//

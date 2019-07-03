@@ -32,6 +32,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("error opening database: %v\n", err)
 	}
+	defer db.Close()
 	s := scanner.New(
 		db,
 		*musicPath,
