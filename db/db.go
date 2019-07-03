@@ -8,6 +8,8 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
+
+	"github.com/sentriz/gonic/model"
 )
 
 var (
@@ -28,7 +30,20 @@ func New(path string) (*gorm.DB, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "with gorm")
 	}
-	db.DB().SetMaxOpenConns(dbMaxOpenConns)
 	db.SetLogger(log.New(os.Stdout, "gorm ", 0))
+	db.DB().SetMaxOpenConns(dbMaxOpenConns)
+	db.AutoMigrate(
+		model.Artist{},
+		model.Track{},
+		model.User{},
+		model.Setting{},
+		model.Play{},
+		model.Album{},
+	)
+	db.FirstOrCreate(&model.User{}, model.User{
+		Name:     "admin",
+		Password: "admin",
+		IsAdmin:  true,
+	})
 	return db, nil
 }

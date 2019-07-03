@@ -72,26 +72,6 @@ func New(db *gorm.DB, musicPath string) *Scanner {
 	}
 }
 
-func (s *Scanner) MigrateDB() error {
-	s.tx = s.db.Begin()
-	defer s.tx.Commit()
-	s.tx.AutoMigrate(
-		model.Artist{},
-		model.Track{},
-		model.User{},
-		model.Setting{},
-		model.Play{},
-		model.Album{},
-	)
-	s.tx.FirstOrCreate(&model.User{}, model.User{
-		Name:     "admin",
-		Password: "admin",
-		IsAdmin:  true,
-	})
-	log.Printf("finished migrate")
-	return nil
-}
-
 func (s *Scanner) Start() error {
 	if atomic.LoadInt32(&IsScanning) == 1 {
 		return errors.New("already scanning")
