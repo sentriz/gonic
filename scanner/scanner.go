@@ -53,8 +53,8 @@ func decoded(in string) string {
 
 func withTx(db *gorm.DB, cb func(tx *gorm.DB)) {
 	tx := db.Begin()
+	defer tx.Commit()
 	cb(tx)
-	tx.Commit()
 }
 
 type Scanner struct {
@@ -233,6 +233,7 @@ func (s *Scanner) handleFolder(it *item) error {
 		s.curFolders.Push(folder)
 	}()
 	err := s.db.
+		Select("id, updated_at").
 		Where(model.Album{
 			LeftPath:  it.directory,
 			RightPath: it.filename,
@@ -261,6 +262,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	// set track basics
 	track := &model.Track{}
 	err := s.trTx.
+		Select("id, updated_at").
 		Where(model.Track{
 			AlbumID:  s.curFolders.PeekID(),
 			Filename: it.filename,
@@ -295,7 +297,6 @@ func (s *Scanner) handleTrack(it *item) error {
 	track.Bitrate = trTags.Bitrate() // from the file instead of tags
 	//
 	// set album artist basics
-	artist := &model.Artist{}
 	artistName := func() string {
 		if ret := trTags.AlbumArtist(); ret != "" {
 			return ret
@@ -305,7 +306,9 @@ func (s *Scanner) handleTrack(it *item) error {
 		}
 		return "Unknown Artist"
 	}()
+	artist := &model.Artist{}
 	err = s.trTx.
+		Select("id").
 		Where("name = ?", artistName).
 		First(artist).
 		Error

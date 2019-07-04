@@ -7,7 +7,11 @@ import (
 )
 
 func egAlbum(id int) *model.Album {
-	return &model.Album{IDBase: model.IDBase{id}}
+	return &model.Album{
+		IDBase: model.IDBase{
+			ID: id,
+		},
+	}
 }
 
 func TestFolderStack(t *testing.T) {
@@ -19,8 +23,8 @@ func TestFolderStack(t *testing.T) {
 	expected := "[6, 5, 4, 3, ]"
 	actual := sta.String()
 	if expected != actual {
-		t.Errorf("first stack: expected string %q, got %q",
-			expected, actual)
+		t.Errorf("first stack: expected string "+
+			"%q, got %q", expected, actual)
 	}
 	//
 	sta = &Stack{}
@@ -34,7 +38,7 @@ func TestFolderStack(t *testing.T) {
 	expected = "[6, 5, 4, 27, ]"
 	actual = sta.String()
 	if expected != actual {
-		t.Errorf("second stack: expected string %q, got %q",
-			expected, actual)
+		t.Errorf("second stack: expected string "+
+			"%q, got %q", expected, actual)
 	}
 }
