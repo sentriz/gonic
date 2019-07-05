@@ -4,15 +4,22 @@
     "version": "1.9.0",
     "artist": {
       "id": 2,
-      "name": "Dead Moon",
+      "name": "A Certain Ratio",
       "album": [
         {
           "id": 5,
           "coverArt": 5,
           "artistId": 2,
-          "artist": "Dead Moon",
-          "name": "Unknown Passage",
-          "created": "2019-07-01T11:33:30.528889187+01:00"
+          "artist": "A Certain Ratio",
+          "name": "The Graveyard and the Ballroom",
+          "created": "2019-07-05T16:33:39.020273091+01:00"
+        },
+        {
+          "id": 6,
+          "artistId": 2,
+          "artist": "A Certain Ratio",
+          "name": "To Each...",
+          "created": "2019-07-05T16:33:39.081646318+01:00"
         }
       ]
     }

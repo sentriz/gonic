@@ -5,18 +5,18 @@
     "searchResult3": {
       "artist": [
         {
-          "id": 4,
+          "id": 3,
           "name": "13th Floor Elevators"
         }
       ],
       "album": [
         {
-          "id": 11,
-          "coverArt": 11,
-          "artistId": 4,
+          "id": 9,
+          "coverArt": 9,
+          "artistId": 3,
           "artist": "13th Floor Elevators",
           "name": "The Psychedelic Sounds of the 13th Floor Elevators",
-          "created": "2019-07-01T11:33:30.600080603+01:00"
+          "created": "2019-07-05T16:33:39.189977898+01:00"
         }
       ]
     }

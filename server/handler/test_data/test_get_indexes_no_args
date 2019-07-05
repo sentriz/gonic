@@ -9,12 +9,12 @@
           "name": "#",
           "artist": [
             {
-              "id": 9,
+              "id": 7,
               "name": "13th Floor Lowervators",
               "albumCount": 2
             },
             {
-              "id": 12,
+              "id": 10,
               "name": "___Anika",
               "albumCount": 2
             }
@@ -24,7 +24,7 @@
           "name": "a",
           "artist": [
             {
-              "id": 6,
+              "id": 4,
               "name": "A Certain Ratio",
               "albumCount": 2
             }
@@ -34,18 +34,8 @@
           "name": "c",
           "artist": [
             {
-              "id": 22,
+              "id": 20,
               "name": "Captain Beefheart",
-              "albumCount": 1
-            }
-          ]
-        },
-        {
-          "name": "d",
-          "artist": [
-            {
-              "id": 4,
-              "name": "Dead Moon",
               "albumCount": 1
             }
           ]
@@ -64,7 +54,7 @@
           "name": "s",
           "artist": [
             {
-              "id": 17,
+              "id": 15,
               "name": "Swell Maps",
               "albumCount": 2
             }
@@ -74,7 +64,7 @@
           "name": "t",
           "artist": [
             {
-              "id": 20,
+              "id": 18,
               "name": "Ten Years After",
               "albumCount": 1
             }

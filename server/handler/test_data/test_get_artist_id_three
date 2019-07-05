@@ -4,22 +4,23 @@
     "version": "1.9.0",
     "artist": {
       "id": 3,
-      "name": "A Certain Ratio",
+      "name": "13th Floor Elevators",
       "album": [
         {
-          "id": 7,
-          "coverArt": 7,
+          "id": 8,
+          "coverArt": 8,
           "artistId": 3,
-          "artist": "A Certain Ratio",
-          "name": "The Graveyard and the Ballroom",
-          "created": "2019-07-01T11:33:30.544346174+01:00"
+          "artist": "13th Floor Elevators",
+          "name": "Easter Everywhere",
+          "created": "2019-07-05T16:33:39.13742584+01:00"
         },
         {
-          "id": 8,
+          "id": 9,
+          "coverArt": 9,
           "artistId": 3,
-          "artist": "A Certain Ratio",
-          "name": "To Each...",
-          "created": "2019-07-01T11:33:30.570884787+01:00"
+          "artist": "13th Floor Elevators",
+          "name": "The Psychedelic Sounds of the 13th Floor Elevators",
+          "created": "2019-07-05T16:33:39.189977898+01:00"
         }
       ]
     }

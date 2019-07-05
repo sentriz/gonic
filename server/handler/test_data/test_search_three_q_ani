@@ -5,18 +5,18 @@
     "searchResult3": {
       "artist": [
         {
-          "id": 5,
+          "id": 4,
           "name": "Anikas"
         }
       ],
       "album": [
         {
-          "id": 15,
-          "coverArt": 15,
-          "artistId": 5,
+          "id": 13,
+          "coverArt": 13,
+          "artistId": 4,
           "artist": "Anikas",
           "name": "Anika",
-          "created": "2019-07-01T11:33:30.625217653+01:00"
+          "created": "2019-07-05T16:33:39.295969241+01:00"
         }
       ]
     }

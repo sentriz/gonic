@@ -8,7 +8,7 @@
           "name": "#",
           "artist": [
             {
-              "id": 4,
+              "id": 3,
               "name": "13th Floor Elevators",
               "albumCount": 2
             }
@@ -18,12 +18,12 @@
           "name": "a",
           "artist": [
             {
-              "id": 3,
+              "id": 2,
               "name": "A Certain Ratio",
               "albumCount": 2
             },
             {
-              "id": 5,
+              "id": 4,
               "name": "Anikas",
               "albumCount": 1
             }
@@ -33,18 +33,8 @@
           "name": "c",
           "artist": [
             {
-              "id": 8,
+              "id": 7,
               "name": "Captain Beefheart & His Magic Band",
-              "albumCount": 1
-            }
-          ]
-        },
-        {
-          "name": "d",
-          "artist": [
-            {
-              "id": 2,
-              "name": "Dead Moon",
               "albumCount": 1
             }
           ]
@@ -63,7 +53,7 @@
           "name": "s",
           "artist": [
             {
-              "id": 6,
+              "id": 5,
               "name": "Swell Maps",
               "albumCount": 2
             }
@@ -73,7 +63,7 @@
           "name": "t",
           "artist": [
             {
-              "id": 7,
+              "id": 6,
               "name": "Ten Years After",
               "albumCount": 1
             }
