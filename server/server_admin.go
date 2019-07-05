@@ -80,12 +80,12 @@ func staticHandler(assets *Assets, path string) http.HandlerFunc {
 }
 
 func (s *Server) SetupAdmin() error {
-	sessionKey := []byte(s.GetSetting("session_key"))
+	sessionKey := []byte(s.DB.GetSetting("session_key"))
 	if len(sessionKey) == 0 {
 		sessionKey = securecookie.GenerateRandomKey(32)
-		s.SetSetting("session_key", string(sessionKey))
+		s.DB.SetSetting("session_key", string(sessionKey))
 	}
-	s.SessDB = gormstore.New(s.DB, sessionKey)
+	s.SessDB = gormstore.New(s.DB.DB, sessionKey)
 	go s.SessDB.PeriodicCleanup(time.Hour, nil)
 	//
 	tmplBase := template.

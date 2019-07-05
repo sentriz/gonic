@@ -129,8 +129,8 @@ func (c *Controller) Scrobble(w http.ResponseWriter, r *http.Request) {
 		First(track, id)
 	// scrobble with above info
 	err = lastfm.Scrobble(
-		c.GetSetting("lastfm_api_key"),
-		c.GetSetting("lastfm_secret"),
+		c.DB.GetSetting("lastfm_api_key"),
+		c.DB.GetSetting("lastfm_secret"),
 		user.LastFMSession,
 		track,
 		// clients will provide time in miliseconds, so use that or

@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rainycape/unidecode"
 
+	"github.com/sentriz/gonic/db"
 	"github.com/sentriz/gonic/mime"
 	"github.com/sentriz/gonic/model"
 	"github.com/sentriz/gonic/scanner/stack"
@@ -51,14 +52,14 @@ func decoded(in string) string {
 	return result
 }
 
-func withTx(db *gorm.DB, cb func(tx *gorm.DB)) {
+func withTx(db *db.DB, cb func(tx *gorm.DB)) {
 	tx := db.Begin()
 	defer tx.Commit()
 	cb(tx)
 }
 
 type Scanner struct {
-	db        *gorm.DB
+	db        *db.DB
 	musicPath string
 	// these two are for the transaction we do for every folder.
 	// the boolean is there so we dont begin or commit multiple
@@ -78,7 +79,7 @@ type Scanner struct {
 	seenTracksErr int              // n tracks we we couldn't scan
 }
 
-func New(db *gorm.DB, musicPath string) *Scanner {
+func New(db *db.DB, musicPath string) *Scanner {
 	return &Scanner{
 		db:          db,
 		musicPath:   musicPath,

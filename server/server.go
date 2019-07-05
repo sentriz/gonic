@@ -5,8 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/jinzhu/gorm"
-
+	"github.com/sentriz/gonic/db"
 	"github.com/sentriz/gonic/server/handler"
 )
 
@@ -18,7 +17,7 @@ type Server struct {
 }
 
 func New(
-	db *gorm.DB,
+	db *db.DB,
 	musicPath string,
 	listenAddr string,
 	assetPath string,

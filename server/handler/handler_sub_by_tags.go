@@ -103,7 +103,7 @@ func (c *Controller) GetAlbumListTwo(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, 10, "please provide a `type` parameter")
 		return
 	}
-	q := c.DB
+	q := c.DB.DB
 	switch listType {
 	case "alphabeticalByArtist":
 		q = q.Joins(`

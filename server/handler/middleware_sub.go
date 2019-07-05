@@ -58,7 +58,7 @@ func (c *Controller) WithValidSubsonicArgs(next http.HandlerFunc) http.HandlerFu
 				"please provide parameters `t` and `s`, or just `p`")
 			return
 		}
-		user := c.GetUserFromName(username)
+		user := c.DB.GetUserFromName(username)
 		if user == nil {
 			respondError(w, r, 40, "invalid username `%s`", username)
 			return

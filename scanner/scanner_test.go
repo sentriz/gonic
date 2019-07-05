@@ -5,7 +5,6 @@ import (
 	"log"
 	"testing"
 
-	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 
 	"github.com/sentriz/gonic/db"
@@ -24,7 +23,7 @@ func init() {
 	log.SetOutput(ioutil.Discard)
 }
 
-func resetTables(db *gorm.DB) {
+func resetTables(db *db.DB) {
 	tx := db.Begin()
 	defer tx.Commit()
 	tx.Exec("delete from tracks")
@@ -32,7 +31,7 @@ func resetTables(db *gorm.DB) {
 	tx.Exec("delete from albums")
 }
 
-func resetTablesPause(db *gorm.DB, b *testing.B) {
+func resetTablesPause(db *db.DB, b *testing.B) {
 	b.StopTimer()
 	defer b.StartTimer()
 	resetTables(db)

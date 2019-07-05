@@ -24,7 +24,38 @@ var (
 	}
 )
 
-func New(path string) (*gorm.DB, error) {
+type DB struct {
+	*gorm.DB
+}
+
+func (db *DB) GetSetting(key string) string {
+	setting := &model.Setting{}
+	db.
+		Where("key = ?", key).
+		First(setting)
+	return setting.Value
+}
+
+func (db *DB) SetSetting(key, value string) {
+	db.
+		Where(model.Setting{Key: key}).
+		Assign(model.Setting{Value: value}).
+		FirstOrCreate(&model.Setting{})
+}
+
+func (db *DB) GetUserFromName(name string) *model.User {
+	user := &model.User{}
+	err := db.
+		Where("name = ?", name).
+		First(user).
+		Error
+	if gorm.IsRecordNotFoundError(err) {
+		return nil
+	}
+	return user
+}
+
+func New(path string) (*DB, error) {
 	pathAndArgs := fmt.Sprintf("%s?%s", path, dbOptions.Encode())
 	db, err := gorm.Open("sqlite3", pathAndArgs)
 	if err != nil {
@@ -45,5 +76,5 @@ func New(path string) (*gorm.DB, error) {
 		Password: "admin",
 		IsAdmin:  true,
 	})
-	return db, nil
+	return &DB{DB: db}, nil
 }

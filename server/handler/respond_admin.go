@@ -11,31 +11,35 @@ import (
 )
 
 type templateData struct {
-	AlbumCount             int
-	AllUsers               []*model.User
-	ArtistCount            int
+	// common
+	Flashes []interface{}
+	User    *model.User
+	// home
+	AlbumCount    int
+	ArtistCount   int
+	TrackCount    int
+	RequestRoot   string
+	RecentFolders []*model.Album
+	AllUsers      []*model.User
+	//
 	CurrentLastFMAPIKey    string
 	CurrentLastFMAPISecret string
-	Flashes                []interface{}
-	RecentFolders          []*model.Album
-	RequestRoot            string
 	SelectedUser           *model.User
-	TrackCount             int
-	User                   *model.User
 }
 
-func renderTemplate(w http.ResponseWriter, r *http.Request,
-	tmpl *template.Template, data *templateData) {
-	session := r.Context().Value(contextSessionKey).(*sessions.Session)
+func renderTemplate(
+	w http.ResponseWriter,
+	r *http.Request,
+	tmpl *template.Template,
+	data *templateData,
+) {
 	if data == nil {
 		data = &templateData{}
 	}
+	session := r.Context().Value(contextSessionKey).(*sessions.Session)
 	data.Flashes = session.Flashes()
 	sessionLogSave(w, r, session)
-	user, ok := r.Context().Value(contextUserKey).(*model.User)
-	if ok {
-		data.User = user
-	}
+	data.User = r.Context().Value(contextUserKey).(*model.User)
 	err := tmpl.Execute(w, data)
 	if err != nil {
 		log.Printf("error executing template: %v\n", err)

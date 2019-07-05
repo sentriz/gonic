@@ -31,7 +31,7 @@ func (c *Controller) WithUserSession(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		// take username from sesion and add the user row to the context
-		user := c.GetUserFromName(username)
+		user := c.DB.GetUserFromName(username)
 		if user == nil {
 			// the username in the client's session no longer relates to a
 			// user in the database (maybe the user was deleted)

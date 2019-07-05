@@ -27,7 +27,7 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
-	user := c.GetUserFromName(username)
+	user := c.DB.GetUserFromName(username)
 	if user == nil || password != user.Password {
 		session.AddFlash("invalid username / password")
 		sessionLogSave(w, r, session)
@@ -60,7 +60,7 @@ func (c *Controller) ServeHome(w http.ResponseWriter, r *http.Request) {
 		Order("updated_at DESC").
 		Limit(8).
 		Find(&data.RecentFolders)
-	data.CurrentLastFMAPIKey = c.GetSetting("lastfm_api_key")
+	data.CurrentLastFMAPIKey = c.DB.GetSetting("lastfm_api_key")
 	scheme := firstExisting(
 		"http", // fallback
 		r.Header.Get("X-Forwarded-Proto"),
@@ -104,8 +104,8 @@ func (c *Controller) ServeLinkLastFMDo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sessionKey, err := lastfm.GetSession(
-		c.GetSetting("lastfm_api_key"),
-		c.GetSetting("lastfm_secret"),
+		c.DB.GetSetting("lastfm_api_key"),
+		c.DB.GetSetting("lastfm_secret"),
 		token,
 	)
 	session := r.Context().Value(contextSessionKey).(*sessions.Session)
@@ -240,8 +240,8 @@ func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) ServeUpdateLastFMAPIKey(w http.ResponseWriter, r *http.Request) {
 	data := &templateData{}
-	data.CurrentLastFMAPIKey = c.GetSetting("lastfm_api_key")
-	data.CurrentLastFMAPISecret = c.GetSetting("lastfm_secret")
+	data.CurrentLastFMAPIKey = c.DB.GetSetting("lastfm_api_key")
+	data.CurrentLastFMAPISecret = c.DB.GetSetting("lastfm_secret")
 	renderTemplate(w, r, c.Templates["update_lastfm_api_key.tmpl"], data)
 }
 
@@ -256,8 +256,8 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(w http.ResponseWriter, r *http.Re
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
-	c.SetSetting("lastfm_api_key", apiKey)
-	c.SetSetting("lastfm_secret", secret)
+	c.DB.SetSetting("lastfm_api_key", apiKey)
+	c.DB.SetSetting("lastfm_secret", secret)
 	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 }
 
