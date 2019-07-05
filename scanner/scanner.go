@@ -72,10 +72,10 @@ type Scanner struct {
 	curFolders *stack.Stack
 	curCover   string
 	// then the rest are for stats and cleanup at the very end
-	seenTracks    map[int]struct{}
-	seenFolders   map[int]struct{}
-	seenTracksNew int
-	seenTracksErr int
+	seenTracks    map[int]struct{} // set of p keys
+	seenFolders   map[int]struct{} // set of p keys
+	seenTracksNew int              // n tracks not seen before
+	seenTracksErr int              // n tracks we we couldn't scan
 }
 
 func New(db *gorm.DB, musicPath string) *Scanner {
