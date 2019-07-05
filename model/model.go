@@ -31,7 +31,7 @@ type Track struct {
 	Album          *Album
 	AlbumID        int `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Artist         *Artist
-	ArtistID       int    `gorm:"not null; index" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
+	ArtistID       int    `gorm:"not null" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
 	Size           int    `gorm:"not null" sql:"default: null"`
 	Length         int    `sql:"default: null"`
 	Bitrate        int    `sql:"default: null"`
@@ -90,8 +90,8 @@ type Album struct {
 	ParentID      int    `sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Cover         string `sql:"default: null"`
 	TagArtist     *Artist
-	TagArtistID   int    `gorm:"index" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
-	TagTitle      string `gorm:"index" sql:"default: null"`
+	TagArtistID   int    `sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
+	TagTitle      string `sql:"default: null"`
 	TagTitleUDec  string `sql:"default: null"`
 	TagYear       int    `sql:"default: null"`
 	Tracks        []*Track
