@@ -7,24 +7,22 @@
         {{ template "head" }}
     </head>
     <body>
-        <div>
+        <div id="content">
             <div id="header">
                 <img src="/admin/static/images/gonic.png">
             </div>
-            <div id="content">
-                {{ if .Flashes }}
-                {{ $flash := index .Flashes 0 }}
-                <div class="padded mono flash-{{ $flash.Type }}">
-                    <i class="mdi mdi-alert-circle"></i> {{ $flash.Message }}
-                </div>
-                {{ end }}
-                {{ template "content" . }}
+            {{ if .Flashes }}
+            {{ $flash := index .Flashes 0 }}
+            <div class="padded mono flash-{{ $flash.Type }}">
+                <i class="mdi mdi-alert-circle"></i> {{ $flash.Message }}
             </div>
-        </div>
-        <div id="footer" class="padded mono text-right">
-            senan kelly, 2019
-            <span class="light">&#124;</span>
-            <a href="https://senan.xyz/g/gonic">github</a>
+            {{ end }}
+            {{ template "content" . }}
+            <div class="side-padded mono text-right">
+                senan kelly, 2019
+                <span class="light">&#124;</span>
+                <a href="https://senan.xyz/g/gonic">github</a>
+            </div>
         </div>
     </body>
 </html>

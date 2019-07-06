@@ -2,10 +2,6 @@ body {
     max-width: 780px;
     margin: 0 auto;
     padding: 0 20px;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
     line-height: 1rem;
     overflow-y: scroll;
 }
@@ -89,6 +85,9 @@ a:hover {
     text-decoration: underline;
 }
 
+i.mdi {
+    font-size: 14px;
+}
 
 #content > * {
     margin: 2rem 0;
@@ -96,7 +95,6 @@ a:hover {
 
 #header {
     border-bottom: 2px solid #0000001a;
-    padding-top: 3rem;
 }
 
 #header img {
@@ -113,9 +111,9 @@ a:hover {
 }
 
 .flash-normal {
-    background-color: #15ff5452;
-    border-right: 2px solid #15ff5452;
-    border-bottom: 2px solid #15ff5452;
+    background-color: #15ff5424;
+    border-right: 2px solid #15ff5424;
+    border-bottom: 2px solid #15ff5424;
 }
 
 .text-right {
@@ -124,10 +122,6 @@ a:hover {
 
 .block-right > * {
     margin-left: auto;
-}
-
-.light {
-    color: #00000082;
 }
 
 .mono {
@@ -156,6 +150,6 @@ a:hover {
     background-color: #f4433669;
 }
 
-i.mdi {
-    font-size: 14px;
+.light {
+    color: #00000082;
 }
