@@ -15,11 +15,14 @@ body {
     }
 }
 
-@media only screen and (min-width: 780px) {
-    table#stats td:first-child::after,
+table td:first-child::after {
+    content: " ";
+    white-space: pre;
+}
+
+@media only screen and (max-width: 780px) {
     table#recent-folders td:first-child::after {
-        content: " ";
-        white-space: pre;
+        content: "";
     }
 }
 
