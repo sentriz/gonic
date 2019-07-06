@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/gob"
 	"flag"
 	"log"
 	"os"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/sentriz/gonic/db"
 	"github.com/sentriz/gonic/server"
+	"github.com/sentriz/gonic/server/handler"
 )
 
 const (
@@ -47,6 +49,7 @@ func main() {
 		log.Fatalf("error opening database: %v\n", err)
 	}
 	defer db.Close()
+	gob.Register(&handler.Flash{})
 	s := server.New(
 		db,
 		*musicPath,

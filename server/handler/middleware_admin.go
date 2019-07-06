@@ -25,8 +25,8 @@ func (c *Controller) WithUserSession(next http.HandlerFunc) http.HandlerFunc {
 		session := r.Context().Value(contextSessionKey).(*sessions.Session)
 		username, ok := session.Values["user"].(string)
 		if !ok {
-			session.AddFlash("you are not authenticated")
-			sessionLogSave(w, r, session)
+			sessAddFlashW("you are not authenticated", session)
+			sessLogSave(w, r, session)
 			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 			return
 		}
@@ -36,7 +36,7 @@ func (c *Controller) WithUserSession(next http.HandlerFunc) http.HandlerFunc {
 			// the username in the client's session no longer relates to a
 			// user in the database (maybe the user was deleted)
 			session.Options.MaxAge = -1
-			sessionLogSave(w, r, session)
+			sessLogSave(w, r, session)
 			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 			return
 		}
@@ -52,8 +52,8 @@ func (c *Controller) WithAdminSession(next http.HandlerFunc) http.HandlerFunc {
 		session := r.Context().Value(contextSessionKey).(*sessions.Session)
 		user := r.Context().Value(contextUserKey).(*model.User)
 		if !user.IsAdmin {
-			session.AddFlash("you are not an admin")
-			sessionLogSave(w, r, session)
+			sessAddFlashW("you are not an admin", session)
+			sessLogSave(w, r, session)
 			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 			return
 		}

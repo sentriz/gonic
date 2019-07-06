@@ -13,8 +13,9 @@
             </div>
             <div id="content">
                 {{ if .Flashes }}
-                <div id="flashes" class="padded mono">
-                    <i class="mdi mdi-alert-circle"></i> {{ index .Flashes 0 }}
+                {{ $flash := index .Flashes 0 }}
+                <div class="padded mono flash-{{ $flash.Type }}">
+                    <i class="mdi mdi-alert-circle"></i> {{ $flash.Message }}
                 </div>
                 {{ end }}
                 {{ template "content" . }}

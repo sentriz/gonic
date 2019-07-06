@@ -24,15 +24,15 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 	if username == "" || password == "" {
-		session.AddFlash("please provide both a username and password")
-		sessionLogSave(w, r, session)
+		sessAddFlashW("please provide both a username and password", session)
+		sessLogSave(w, r, session)
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
 	user := c.DB.GetUserFromName(username)
 	if user == nil || password != user.Password {
-		session.AddFlash("invalid username / password")
-		sessionLogSave(w, r, session)
+		sessAddFlashW("invalid username / password", session)
+		sessLogSave(w, r, session)
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
@@ -40,14 +40,14 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 	// are wrapped with WithUserSession() which will get the name from the
 	// session and put the row into the request context.
 	session.Values["user"] = user.Name
-	sessionLogSave(w, r, session)
+	sessLogSave(w, r, session)
 	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 }
 
 func (c *Controller) ServeLogout(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(contextSessionKey).(*sessions.Session)
 	session.Options.MaxAge = -1
-	sessionLogSave(w, r, session)
+	sessLogSave(w, r, session)
 	http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 }
 
@@ -102,8 +102,8 @@ func (c *Controller) ServeChangeOwnPasswordDo(w http.ResponseWriter, r *http.Req
 	passwordTwo := r.FormValue("password_two")
 	err := validatePasswords(passwordOne, passwordTwo)
 	if err != nil {
-		session.AddFlash(err.Error())
-		sessionLogSave(w, r, session)
+		sessAddFlashW(err.Error(), session)
+		sessLogSave(w, r, session)
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
@@ -126,8 +126,8 @@ func (c *Controller) ServeLinkLastFMDo(w http.ResponseWriter, r *http.Request) {
 	)
 	session := r.Context().Value(contextSessionKey).(*sessions.Session)
 	if err != nil {
-		session.AddFlash(err.Error())
-		sessionLogSave(w, r, session)
+		sessAddFlashW(err.Error(), session)
+		sessLogSave(w, r, session)
 		http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 		return
 	}
@@ -175,8 +175,8 @@ func (c *Controller) ServeChangePasswordDo(w http.ResponseWriter, r *http.Reques
 	passwordTwo := r.FormValue("password_two")
 	err := validatePasswords(passwordOne, passwordTwo)
 	if err != nil {
-		session.AddFlash(err.Error())
-		sessionLogSave(w, r, session)
+		sessAddFlashW(err.Error(), session)
+		sessLogSave(w, r, session)
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
@@ -224,8 +224,8 @@ func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	err := validateUsername(username)
 	if err != nil {
-		session.AddFlash(err.Error())
-		sessionLogSave(w, r, session)
+		sessAddFlashW(err.Error(), session)
+		sessLogSave(w, r, session)
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
@@ -233,8 +233,8 @@ func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
 	passwordTwo := r.FormValue("password_two")
 	err = validatePasswords(passwordOne, passwordTwo)
 	if err != nil {
-		session.AddFlash(err.Error())
-		sessionLogSave(w, r, session)
+		sessAddFlashW(err.Error(), session)
+		sessLogSave(w, r, session)
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
@@ -244,10 +244,10 @@ func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
 	}
 	err = c.DB.Create(&user).Error
 	if err != nil {
-		session.AddFlash(fmt.Sprintf(
+		sessAddFlashW(fmt.Sprintf(
 			"could not create user `%s`: %v", username, err,
-		))
-		sessionLogSave(w, r, session)
+		), session)
+		sessLogSave(w, r, session)
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
@@ -267,8 +267,8 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(w http.ResponseWriter, r *http.Re
 	secret := r.FormValue("secret")
 	err := validateAPIKey(apiKey, secret)
 	if err != nil {
-		session.AddFlash(err.Error())
-		sessionLogSave(w, r, session)
+		sessAddFlashW(err.Error(), session)
+		sessLogSave(w, r, session)
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
@@ -279,8 +279,8 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(w http.ResponseWriter, r *http.Re
 
 func (c *Controller) ServeStartScanDo(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(contextSessionKey).(*sessions.Session)
-	session.AddFlash("scan started")
-	sessionLogSave(w, r, session)
+	sessAddFlashN("scan started", session)
+	sessLogSave(w, r, session)
 	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 	go func() {
 		err := scanner.

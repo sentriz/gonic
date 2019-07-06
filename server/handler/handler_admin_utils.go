@@ -16,8 +16,27 @@ func firstExisting(or string, strings ...string) string {
 	return or
 }
 
-func sessionLogSave(w http.ResponseWriter, r *http.Request, s *sessions.Session) {
+func sessLogSave(w http.ResponseWriter, r *http.Request, s *sessions.Session) {
 	if err := s.Save(r, w); err != nil {
 		log.Printf("error saving session: %v\n", err)
 	}
+}
+
+type Flash struct {
+	Message string
+	Type    string
+}
+
+func sessAddFlashW(message string, s *sessions.Session) {
+	s.AddFlash(Flash{
+		Message: message,
+		Type:    "warning",
+	})
+}
+
+func sessAddFlashN(message string, s *sessions.Session) {
+	s.AddFlash(Flash{
+		Message: message,
+		Type:    "normal",
+	})
 }

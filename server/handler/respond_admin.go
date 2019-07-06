@@ -41,7 +41,7 @@ func renderTemplate(
 	}
 	session := r.Context().Value(contextSessionKey).(*sessions.Session)
 	data.Flashes = session.Flashes()
-	sessionLogSave(w, r, session)
+	sessLogSave(w, r, session)
 	data.User, _ = r.Context().Value(contextUserKey).(*model.User)
 	err := tmpl.Execute(w, data)
 	if err != nil {
