@@ -7,7 +7,7 @@ import (
 
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 
-	"github.com/sentriz/gonic/db"
+	"senan.xyz/g/gonic/db"
 )
 
 var testScanner *Scanner

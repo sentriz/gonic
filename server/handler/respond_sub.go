@@ -8,7 +8,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/sentriz/gonic/server/subsonic"
+	"senan.xyz/g/gonic/server/subsonic"
 )
 
 type metaResponse struct {

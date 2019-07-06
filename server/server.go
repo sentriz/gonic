@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/sentriz/gonic/db"
-	"github.com/sentriz/gonic/server/handler"
+	"senan.xyz/g/gonic/db"
+	"senan.xyz/g/gonic/server/handler"
 )
 
 type Server struct {

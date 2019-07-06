@@ -3,7 +3,7 @@ package stack
 import (
 	"testing"
 
-	"github.com/sentriz/gonic/model"
+	"senan.xyz/g/gonic/model"
 )
 
 func egAlbum(id int) *model.Album {

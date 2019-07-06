@@ -8,8 +8,8 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/peterbourgon/ff"
 
-	"github.com/sentriz/gonic/db"
-	"github.com/sentriz/gonic/scanner"
+	"senan.xyz/g/gonic/db"
+	"senan.xyz/g/gonic/scanner"
 )
 
 const programName = "gonicscan"

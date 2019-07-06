@@ -3,8 +3,8 @@ package handler
 import (
 	"path"
 
-	"github.com/sentriz/gonic/model"
-	"github.com/sentriz/gonic/server/subsonic"
+	"senan.xyz/g/gonic/model"
+	"senan.xyz/g/gonic/server/subsonic"
 )
 
 func newAlbumByFolder(f *model.Album) *subsonic.Album {

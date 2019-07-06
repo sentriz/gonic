@@ -9,7 +9,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 
-	"github.com/sentriz/gonic/model"
+	"senan.xyz/g/gonic/model"
 )
 
 var (

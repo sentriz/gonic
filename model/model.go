@@ -5,7 +5,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/sentriz/gonic/mime"
+	"senan.xyz/g/gonic/mime"
 )
 
 type Artist struct {

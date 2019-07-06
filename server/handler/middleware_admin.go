@@ -6,7 +6,7 @@ import (
 
 	"github.com/gorilla/sessions"
 
-	"github.com/sentriz/gonic/model"
+	"senan.xyz/g/gonic/model"
 )
 
 //nolint:interfacer

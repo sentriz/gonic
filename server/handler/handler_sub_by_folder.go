@@ -8,8 +8,8 @@ import (
 
 	"github.com/jinzhu/gorm"
 
-	"github.com/sentriz/gonic/model"
-	"github.com/sentriz/gonic/server/subsonic"
+	"senan.xyz/g/gonic/model"
+	"senan.xyz/g/gonic/server/subsonic"
 )
 
 // the subsonic spec metions "artist" a lot when talking about the

@@ -10,9 +10,9 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/jinzhu/gorm"
 
-	"github.com/sentriz/gonic/model"
-	"github.com/sentriz/gonic/scanner"
-	"github.com/sentriz/gonic/server/lastfm"
+	"senan.xyz/g/gonic/model"
+	"senan.xyz/g/gonic/scanner"
+	"senan.xyz/g/gonic/server/lastfm"
 )
 
 func (c *Controller) ServeLogin(w http.ResponseWriter, r *http.Request) {

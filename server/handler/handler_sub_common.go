@@ -10,10 +10,10 @@ import (
 
 	"github.com/jinzhu/gorm"
 
-	"github.com/sentriz/gonic/model"
-	"github.com/sentriz/gonic/scanner"
-	"github.com/sentriz/gonic/server/lastfm"
-	"github.com/sentriz/gonic/server/subsonic"
+	"senan.xyz/g/gonic/model"
+	"senan.xyz/g/gonic/scanner"
+	"senan.xyz/g/gonic/server/lastfm"
+	"senan.xyz/g/gonic/server/subsonic"
 )
 
 func lowerUDecOrHash(in string) string {

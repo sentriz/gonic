@@ -5,7 +5,7 @@ import (
 
 	"github.com/wader/gormstore"
 
-	"github.com/sentriz/gonic/db"
+	"senan.xyz/g/gonic/db"
 )
 
 type contextKey int

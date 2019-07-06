@@ -12,7 +12,7 @@ import (
 
 	jd "github.com/josephburnett/jd/lib"
 
-	"github.com/sentriz/gonic/db"
+	"senan.xyz/g/gonic/db"
 )
 
 var (
