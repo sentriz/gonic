@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/sessions"
 
@@ -21,6 +22,7 @@ type templateData struct {
 	RequestRoot   string
 	RecentFolders []*model.Album
 	AllUsers      []*model.User
+	LastScanTime  time.Time
 	//
 	CurrentLastFMAPIKey    string
 	CurrentLastFMAPISecret string
@@ -39,7 +41,7 @@ func renderTemplate(
 	session := r.Context().Value(contextSessionKey).(*sessions.Session)
 	data.Flashes = session.Flashes()
 	sessionLogSave(w, r, session)
-	data.User = r.Context().Value(contextUserKey).(*model.User)
+	data.User, _ = r.Context().Value(contextUserKey).(*model.User)
 	err := tmpl.Execute(w, data)
 	if err != nil {
 		log.Printf("error executing template: %v\n", err)

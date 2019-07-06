@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -156,6 +157,9 @@ func (s *Scanner) Start() error {
         WHERE NOT EXISTS (SELECT 1 from albums
                           WHERE albums.tag_artist_id = artists.id)
 	`)
+	// finish up
+	strNow := strconv.FormatInt(time.Now().Unix(), 10)
+	s.db.SetSetting("last_scan_time", strNow)
 	//
 	log.Printf("finished clean in %s, -%d tracks\n",
 		time.Since(start),

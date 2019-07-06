@@ -81,6 +81,13 @@
         {{ end }}
         </table>
         <a href="/admin/start_scan_do">start scan</a>
+        {{ if not .LastScanTime.IsZero }}
+            <br>
+            <span class="light">
+                last completed:
+                <a title="{{ .LastScanTime }}">{{ .LastScanTime | humanDate }}</a>
+            </span>
+        {{ end }}
     </div>
 </div>
 {{ end }}

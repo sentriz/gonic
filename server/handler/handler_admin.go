@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/gorilla/sessions"
 	"github.com/jinzhu/gorm"
@@ -51,16 +53,13 @@ func (c *Controller) ServeLogout(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) ServeHome(w http.ResponseWriter, r *http.Request) {
 	data := &templateData{}
+	//
+	// stats box
 	c.DB.Table("artists").Count(&data.ArtistCount)
 	c.DB.Table("albums").Count(&data.AlbumCount)
 	c.DB.Table("tracks").Count(&data.TrackCount)
-	c.DB.Find(&data.AllUsers)
-	c.DB.
-		Where("tag_artist_id IS NOT NULL").
-		Order("updated_at DESC").
-		Limit(8).
-		Find(&data.RecentFolders)
-	data.CurrentLastFMAPIKey = c.DB.GetSetting("lastfm_api_key")
+	//
+	// lastfm box
 	scheme := firstExisting(
 		"http", // fallback
 		r.Header.Get("X-Forwarded-Proto"),
@@ -73,6 +72,20 @@ func (c *Controller) ServeHome(w http.ResponseWriter, r *http.Request) {
 		r.Host,
 	)
 	data.RequestRoot = fmt.Sprintf("%s://%s", scheme, host)
+	data.CurrentLastFMAPIKey = c.DB.GetSetting("lastfm_api_key")
+	if tStr := c.DB.GetSetting("last_scan_time"); tStr != "" {
+		i, _ := strconv.ParseInt(tStr, 10, 64)
+		data.LastScanTime = time.Unix(i, 0)
+	}
+	c.DB.Find(&data.AllUsers)
+	//
+	// recent folders box
+	c.DB.
+		Where("tag_artist_id IS NOT NULL").
+		Order("updated_at DESC").
+		Limit(8).
+		Find(&data.RecentFolders)
+	//
 	renderTemplate(w, r, c.Templates["home.tmpl"], data)
 }
 
