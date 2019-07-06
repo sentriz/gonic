@@ -1,7 +1,11 @@
+:root {
+  --pad-size: 1.75rem;
+}
+
 body {
     max-width: 780px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 var(--pad-size);
     line-height: 1rem;
     overflow-y: scroll;
 }
@@ -90,7 +94,7 @@ i.mdi {
 }
 
 #content > * {
-    margin: 2rem 0;
+    margin: var(--pad-size) 0;
 }
 
 #header {
