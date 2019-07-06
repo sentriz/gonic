@@ -80,13 +80,12 @@
             </tr>
         {{ end }}
         </table>
-        <a href="/admin/start_scan_do">start scan</a>
-        {{ if not .LastScanTime.IsZero }}
-            <br>
-            <span class="light">
-                last completed:
-                <a title="{{ .LastScanTime }}">{{ .LastScanTime | humanDate }}</a>
-            </span>
+        {{- if not .IsScanning -}}
+            <a href="/admin/start_scan_do">start scan</a>
+            {{- if not .LastScanTime.IsZero -}}
+                <br>
+                <span class="light">scanned {{ .LastScanTime | humanDate }}</span>
+            {{ end }}
         {{ end }}
     </div>
 </div>

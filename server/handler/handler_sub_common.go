@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"sync/atomic"
 	"time"
 	"unicode"
 
@@ -175,7 +174,7 @@ func (c *Controller) GetScanStatus(w http.ResponseWriter, r *http.Request) {
 		Count(&trackCount)
 	sub := subsonic.NewResponse()
 	sub.ScanStatus = &subsonic.ScanStatus{
-		Scanning: atomic.LoadInt32(&scanner.IsScanning) == 1,
+		Scanning: scanner.IsScanning(),
 		Count:    trackCount,
 	}
 	respond(w, r, sub)

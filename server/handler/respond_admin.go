@@ -23,6 +23,7 @@ type templateData struct {
 	RecentFolders []*model.Album
 	AllUsers      []*model.User
 	LastScanTime  time.Time
+	IsScanning    bool
 	//
 	CurrentLastFMAPIKey    string
 	CurrentLastFMAPISecret string

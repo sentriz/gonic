@@ -22,9 +22,22 @@ import (
 	"github.com/sentriz/gonic/scanner/tags"
 )
 
-// IsScanning acts as an atomic boolean semaphore. we don't
+// isScanning acts as an atomic boolean semaphore. we don't
 // want to have more than one scan going on at a time
-var IsScanning int32
+var isScanning int32
+
+func IsScanning() bool {
+	return atomic.LoadInt32(&isScanning) == 1
+}
+
+func SetScanning(status bool) {
+	switch {
+	case status:
+		atomic.StoreInt32(&isScanning, 1)
+	default:
+		atomic.StoreInt32(&isScanning, 0)
+	}
+}
 
 var coverFilenames = map[string]struct{}{
 	"cover.png":   {},
@@ -91,11 +104,11 @@ func New(db *db.DB, musicPath string) *Scanner {
 }
 
 func (s *Scanner) Start() error {
-	if atomic.LoadInt32(&IsScanning) == 1 {
+	if IsScanning() {
 		return errors.New("already scanning")
 	}
-	atomic.StoreInt32(&IsScanning, 1)
-	defer atomic.StoreInt32(&IsScanning, 0)
+	SetScanning(true)
+	defer SetScanning(false)
 	//
 	// being walking
 	start := time.Now()

@@ -73,10 +73,8 @@ func (c *Controller) ServeHome(w http.ResponseWriter, r *http.Request) {
 	)
 	data.RequestRoot = fmt.Sprintf("%s://%s", scheme, host)
 	data.CurrentLastFMAPIKey = c.DB.GetSetting("lastfm_api_key")
-	if tStr := c.DB.GetSetting("last_scan_time"); tStr != "" {
-		i, _ := strconv.ParseInt(tStr, 10, 64)
-		data.LastScanTime = time.Unix(i, 0)
-	}
+	//
+	// users box
 	c.DB.Find(&data.AllUsers)
 	//
 	// recent folders box
@@ -85,6 +83,11 @@ func (c *Controller) ServeHome(w http.ResponseWriter, r *http.Request) {
 		Order("updated_at DESC").
 		Limit(8).
 		Find(&data.RecentFolders)
+	data.IsScanning = scanner.IsScanning()
+	if tStr := c.DB.GetSetting("last_scan_time"); tStr != "" {
+		i, _ := strconv.ParseInt(tStr, 10, 64)
+		data.LastScanTime = time.Unix(i, 0)
+	}
 	//
 	renderTemplate(w, r, c.Templates["home.tmpl"], data)
 }
