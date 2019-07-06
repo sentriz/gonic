@@ -7,6 +7,7 @@ body {
     flex-direction: column;
     justify-content: space-between;
     line-height: 1rem;
+    overflow-y: scroll;
 }
 
 @media only screen and (max-width: 780px) {
