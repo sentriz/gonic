@@ -1,4 +1,4 @@
-module github.com/sentriz/gonic
+module senan.xyz/g/gonic
 
 require (
 	cloud.google.com/go v0.40.0 // indirect
