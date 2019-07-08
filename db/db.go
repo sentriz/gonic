@@ -55,6 +55,12 @@ func (db *DB) GetUserFromName(name string) *model.User {
 	return user
 }
 
+func (db *DB) WithTx(cb func(tx *gorm.DB)) {
+	tx := db.Begin()
+	defer tx.Commit()
+	cb(tx)
+}
+
 func New(path string) (*DB, error) {
 	pathAndArgs := fmt.Sprintf("%s?%s", path, dbOptions.Encode())
 	db, err := gorm.Open("sqlite3", pathAndArgs)

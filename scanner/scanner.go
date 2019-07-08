@@ -39,39 +39,6 @@ func SetScanning(status bool) {
 	}
 }
 
-var coverFilenames = map[string]struct{}{
-	"cover.png":   {},
-	"cover.jpg":   {},
-	"cover.jpeg":  {},
-	"folder.png":  {},
-	"folder.jpg":  {},
-	"folder.jpeg": {},
-	"album.png":   {},
-	"album.jpg":   {},
-	"album.jpeg":  {},
-	"front.png":   {},
-	"front.jpg":   {},
-	"front.jpeg":  {},
-}
-
-// decoded converts a string to it's latin equivalent. it
-// will be used by the model's *UDec fields, and is only set
-// if it differs from the original.
-// the fields are used for searching
-func decoded(in string) string {
-	result := unidecode.Unidecode(in)
-	if result == in {
-		return ""
-	}
-	return result
-}
-
-func withTx(db *db.DB, cb func(tx *gorm.DB)) {
-	tx := db.Begin()
-	defer tx.Commit()
-	cb(tx)
-}
-
 type Scanner struct {
 	db        *db.DB
 	musicPath string
@@ -131,7 +98,7 @@ func (s *Scanner) Start() error {
 	start = time.Now()
 	var deleted uint
 	// delete tracks not on filesystem
-	withTx(s.db, func(tx *gorm.DB) {
+	s.db.WithTx(func(tx *gorm.DB) {
 		var tracks []*model.Track
 		tx.
 			Select("id").
@@ -145,7 +112,7 @@ func (s *Scanner) Start() error {
 		}
 	})
 	// delete folders not on filesystem
-	withTx(s.db, func(tx *gorm.DB) {
+	s.db.WithTx(func(tx *gorm.DB) {
 		var folders []*model.Album
 		tx.
 			Select("id").
@@ -189,6 +156,23 @@ type item struct {
 	filename  string
 	stat      os.FileInfo
 }
+
+var coverFilenames = map[string]struct{}{
+	"cover.png":   {},
+	"cover.jpg":   {},
+	"cover.jpeg":  {},
+	"folder.png":  {},
+	"folder.jpg":  {},
+	"folder.jpeg": {},
+	"album.png":   {},
+	"album.jpg":   {},
+	"album.jpeg":  {},
+	"front.png":   {},
+	"front.jpg":   {},
+	"front.jpeg":  {},
+}
+
+// ## begin callbacks
 
 func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
 	stat, err := os.Stat(fullPath)
@@ -241,6 +225,20 @@ func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
 	s.curCover = ""
 	return nil
 }
+
+// decoded converts a string to it's latin equivalent. it
+// will be used by the model's *UDec fields, and is only set
+// if it differs from the original.
+// the fields are used for searching
+func decoded(in string) string {
+	result := unidecode.Unidecode(in)
+	if result == in {
+		return ""
+	}
+	return result
+}
+
+// ## begin handlers
 
 func (s *Scanner) handleFolder(it *item) error {
 	folder := &model.Album{}
@@ -299,9 +297,9 @@ func (s *Scanner) handleTrack(it *item) error {
 	track.AlbumID = s.curFolders.PeekID()
 	trTags, err := tags.New(it.fullPath)
 	if err != nil {
-		// not returning the error here because we don't
-		// want the entire walk to stop if we can't read
-		// the tags of a single file
+		// not returning the error here because we don't want
+		// the entire walk to stop if we can't read the tags
+		// of a single file
 		log.Printf("error reading tags `%s`: %v", it.relPath, err)
 		s.seenTracksErr++
 		return nil
@@ -312,15 +310,15 @@ func (s *Scanner) handleTrack(it *item) error {
 	track.TagTrackNumber = trTags.TrackNumber()
 	track.TagDiscNumber = trTags.DiscNumber()
 	track.Length = trTags.Length()   // these two should be calculated
-	track.Bitrate = trTags.Bitrate() // from the file instead of tags
+	track.Bitrate = trTags.Bitrate() // ...from the file instead of tags
 	//
 	// set album artist basics
 	artistName := func() string {
-		if ret := trTags.AlbumArtist(); ret != "" {
-			return ret
+		if r := trTags.AlbumArtist(); r != "" {
+			return r
 		}
-		if ret := trTags.Artist(); ret != "" {
-			return ret
+		if r := trTags.Artist(); r != "" {
+			return r
 		}
 		return "Unknown Artist"
 	}()
