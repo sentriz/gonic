@@ -3,7 +3,6 @@ linters:
   disable:
     - gochecknoglobals
     - gochecknoinits
-
 issues:
   exclude-rules:
     - path: _test\.go

@@ -13,7 +13,7 @@ import (
 var testScanner *Scanner
 
 func init() {
-	db, err := db.New(":memory:")
+	db, err := db.NewMock()
 	if err != nil {
 		log.Fatalf("error opening database: %v\n", err)
 	}
