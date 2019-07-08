@@ -28,6 +28,34 @@ type DB struct {
 	*gorm.DB
 }
 
+func New(path string) (*DB, error) {
+	pathAndArgs := fmt.Sprintf("%s?%s", path, dbOptions.Encode())
+	db, err := gorm.Open("sqlite3", pathAndArgs)
+	if err != nil {
+		return nil, errors.Wrap(err, "with gorm")
+	}
+	db.SetLogger(log.New(os.Stdout, "gorm ", 0))
+	db.DB().SetMaxOpenConns(dbMaxOpenConns)
+	db.AutoMigrate(
+		model.Artist{},
+		model.Track{},
+		model.User{},
+		model.Setting{},
+		model.Play{},
+		model.Album{},
+	)
+	db.FirstOrCreate(&model.User{}, model.User{
+		Name:     "admin",
+		Password: "admin",
+		IsAdmin:  true,
+	})
+	return &DB{DB: db}, nil
+}
+
+func NewMock() (*DB, error) {
+	return New(":memory:")
+}
+
 func (db *DB) GetSetting(key string) string {
 	setting := &model.Setting{}
 	db.
@@ -59,28 +87,4 @@ func (db *DB) WithTx(cb func(tx *gorm.DB)) {
 	tx := db.Begin()
 	defer tx.Commit()
 	cb(tx)
-}
-
-func New(path string) (*DB, error) {
-	pathAndArgs := fmt.Sprintf("%s?%s", path, dbOptions.Encode())
-	db, err := gorm.Open("sqlite3", pathAndArgs)
-	if err != nil {
-		return nil, errors.Wrap(err, "with gorm")
-	}
-	db.SetLogger(log.New(os.Stdout, "gorm ", 0))
-	db.DB().SetMaxOpenConns(dbMaxOpenConns)
-	db.AutoMigrate(
-		model.Artist{},
-		model.Track{},
-		model.User{},
-		model.Setting{},
-		model.Play{},
-		model.Album{},
-	)
-	db.FirstOrCreate(&model.User{}, model.User{
-		Name:     "admin",
-		Password: "admin",
-		IsAdmin:  true,
-	})
-	return &DB{DB: db}, nil
 }
