@@ -1,3 +1,9 @@
 #!/bin/sh
 
+if ! command -v 'entr' > /dev/null; then
+    echo 'please install `entr`' >&2
+    echo 'http://eradman.com/entrproject/' >&2
+    exit 1
+fi
+
 find server/assets/ | entr -r ./_do_run_server $@
