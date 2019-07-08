@@ -1,6 +1,4 @@
 *.db
-*-packr.go
-packrd/
 cmd/scanner/scanner
 cmd/server/server
 cmd/scanner/main
