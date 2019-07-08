@@ -347,6 +347,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	}
 	folder.TagTitle = trTags.Album()
 	folder.TagTitleUDec = decoded(trTags.Album())
+	folder.TagBrainzID = trTags.AlbumBrainzID()
 	folder.TagYear = trTags.Year()
 	folder.TagArtistID = artist.ID
 	folder.ReceivedTags = true

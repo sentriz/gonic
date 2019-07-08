@@ -94,6 +94,7 @@ type Album struct {
 	TagArtistID   int    `sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
 	TagTitle      string `sql:"default: null"`
 	TagTitleUDec  string `sql:"default: null"`
+	TagBrainzID   string `sql:"default: null"`
 	TagYear       int    `sql:"default: null"`
 	Tracks        []*Track
 	ChildCount    int  `sql:"-"`

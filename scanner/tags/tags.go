@@ -33,15 +33,16 @@ func (t *Tags) firstTag(keys ...string) string {
 	return ""
 }
 
-func (t *Tags) Title() string       { return t.firstTag("title") }
-func (t *Tags) Artist() string      { return t.firstTag("artist") }
-func (t *Tags) Album() string       { return t.firstTag("album") }
-func (t *Tags) AlbumArtist() string { return t.firstTag("albumartist", "album artist") }
-func (t *Tags) Year() int           { return intSep(t.firstTag("date", "year"), "-") } // eg. 2019-6-11
-func (t *Tags) TrackNumber() int    { return intSep(t.firstTag("tracknumber"), "/") }  // eg. 5/12
-func (t *Tags) DiscNumber() int     { return intSep(t.firstTag("discnumber"), "/") }   // eg. 1/2
-func (t *Tags) Length() int         { return t.props.Length }
-func (t *Tags) Bitrate() int        { return t.props.Bitrate }
+func (t *Tags) Title() string         { return t.firstTag("title") }
+func (t *Tags) Artist() string        { return t.firstTag("artist") }
+func (t *Tags) Album() string         { return t.firstTag("album") }
+func (t *Tags) AlbumArtist() string   { return t.firstTag("albumartist", "album artist") }
+func (t *Tags) AlbumBrainzID() string { return t.firstTag("musicbrainz_albumid") }
+func (t *Tags) Year() int             { return intSep(t.firstTag("date", "year"), "-") } // eg. 2019-6-11
+func (t *Tags) TrackNumber() int      { return intSep(t.firstTag("tracknumber"), "/") }  // eg. 5/12
+func (t *Tags) DiscNumber() int       { return intSep(t.firstTag("discnumber"), "/") }   // eg. 1/2
+func (t *Tags) Length() int           { return t.props.Length }
+func (t *Tags) Bitrate() int          { return t.props.Bitrate }
 
 func intSep(in, sep string) int {
 	if in == "" {
