@@ -124,7 +124,7 @@ func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
 			user.ID)
 		q = q.Order("plays.count DESC")
 	case "newest":
-		q = q.Order("updated_at DESC")
+		q = q.Order("modified_at DESC")
 	case "random":
 		q = q.Order(gorm.Expr("random()"))
 	case "recent":

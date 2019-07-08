@@ -9,7 +9,7 @@ import (
 
 func newAlbumByTags(a *model.Album, artist *model.Artist) *subsonic.Album {
 	ret := &subsonic.Album{
-		Created: a.CreatedAt,
+		Created: a.ModifiedAt,
 		ID:      a.ID,
 		Name:    a.TagTitle,
 	}

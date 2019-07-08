@@ -9,7 +9,7 @@ import (
 )
 
 type Artist struct {
-	IDBase
+	ID         int      `gorm:"primary_key"`
 	Name       string   `gorm:"not null; unique_index"`
 	NameUDec   string   `sql:"default: null"`
 	Albums     []*Album `gorm:"foreignkey:TagArtistID"`
@@ -24,8 +24,9 @@ func (a *Artist) IndexName() string {
 }
 
 type Track struct {
-	IDBase
-	CrudBase
+	ID             int `gorm:"primary_key"`
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 	Filename       string `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null"`
 	FilenameUDec   string `sql:"default: null"`
 	Album          *Album
@@ -56,8 +57,8 @@ func (t *Track) MIME() string {
 }
 
 type User struct {
-	IDBase
-	CrudBase
+	ID            int `gorm:"primary_key"`
+	CreatedAt     time.Time
 	Name          string `gorm:"not null; unique_index" sql:"default: null"`
 	Password      string `gorm:"not null" sql:"default: null"`
 	LastFMSession string `sql:"default: null"`
@@ -65,13 +66,12 @@ type User struct {
 }
 
 type Setting struct {
-	CrudBase
 	Key   string `gorm:"not null; primary_key; auto_increment:false" sql:"default: null"`
 	Value string `sql:"default: null"`
 }
 
 type Play struct {
-	IDBase
+	ID      int `gorm:"primary_key"`
 	User    *User
 	UserID  int `gorm:"not null; index" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
 	Album   *Album
@@ -81,8 +81,9 @@ type Play struct {
 }
 
 type Album struct {
-	IDBase
-	CrudBase
+	ID            int `gorm:"primary_key"`
+	UpdatedAt     time.Time
+	ModifiedAt    time.Time
 	LeftPath      string `gorm:"unique_index:idx_left_path_right_path"`
 	RightPath     string `gorm:"not null; unique_index:idx_left_path_right_path" sql:"default: null"`
 	RightPathUDec string `sql:"default: null"`

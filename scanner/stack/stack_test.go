@@ -6,20 +6,12 @@ import (
 	"senan.xyz/g/gonic/model"
 )
 
-func egAlbum(id int) *model.Album {
-	return &model.Album{
-		IDBase: model.IDBase{
-			ID: id,
-		},
-	}
-}
-
 func TestFolderStack(t *testing.T) {
 	sta := &Stack{}
-	sta.Push(egAlbum(3))
-	sta.Push(egAlbum(4))
-	sta.Push(egAlbum(5))
-	sta.Push(egAlbum(6))
+	sta.Push(&model.Album{ID: 3})
+	sta.Push(&model.Album{ID: 4})
+	sta.Push(&model.Album{ID: 5})
+	sta.Push(&model.Album{ID: 6})
 	expected := "[6, 5, 4, 3, ]"
 	actual := sta.String()
 	if expected != actual {
@@ -28,12 +20,12 @@ func TestFolderStack(t *testing.T) {
 	}
 	//
 	sta = &Stack{}
-	sta.Push(egAlbum(27))
-	sta.Push(egAlbum(4))
+	sta.Push(&model.Album{ID: 27})
+	sta.Push(&model.Album{ID: 4})
 	sta.Peek()
-	sta.Push(egAlbum(5))
-	sta.Push(egAlbum(6))
-	sta.Push(egAlbum(7))
+	sta.Push(&model.Album{ID: 5})
+	sta.Push(&model.Album{ID: 6})
+	sta.Push(&model.Album{ID: 7})
 	sta.Pop()
 	expected = "[6, 5, 4, 27, ]"
 	actual = sta.String()

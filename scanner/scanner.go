@@ -264,6 +264,7 @@ func (s *Scanner) handleFolder(it *item) error {
 	folder.LeftPath = it.directory
 	folder.RightPath = it.filename
 	folder.RightPathUDec = decoded(it.filename)
+	folder.ModifiedAt = it.stat.ModTime()
 	s.db.Save(folder)
 	folder.ReceivedPaths = true
 	return nil
