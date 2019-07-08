@@ -1,7 +1,6 @@
 package server
 
 import (
-	"errors"
 	"net/http"
 	"time"
 
@@ -10,8 +9,7 @@ import (
 )
 
 type Server struct {
-	mux    *http.ServeMux
-	assets *Assets
+	mux *http.ServeMux
 	*handler.Controller
 	*http.Server
 }
@@ -20,7 +18,6 @@ func New(
 	db *db.DB,
 	musicPath string,
 	listenAddr string,
-	assetPath string,
 ) *Server {
 	mux := http.NewServeMux()
 	server := &http.Server{
@@ -34,21 +31,11 @@ func New(
 		DB:        db,
 		MusicPath: musicPath,
 	}
-	assets := &Assets{
-		BasePath: assetPath,
-	}
 	return &Server{
 		mux:        mux,
-		assets:     assets,
 		Server:     server,
 		Controller: controller,
 	}
-}
-
-var ErrAssetNotFound = errors.New("asset not found")
-
-type Assets struct {
-	BasePath string
 }
 
 type middleware func(next http.HandlerFunc) http.HandlerFunc

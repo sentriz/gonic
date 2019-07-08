@@ -21,7 +21,7 @@ const (
 	fileHeader = `// file generated with embed tool
 // do not edit
 
-// +build %s
+// %s
 
 package %s
 import "time"
@@ -81,6 +81,9 @@ func processAssets(c *config, files []string) error {
 	outWriter, err := os.Create(c.outPath)
 	if err != nil {
 		return errors.Wrap(err, "creating out path")
+	}
+	if c.tagList != "" {
+		c.tagList = fmt.Sprintf("+build %s", c.tagList)
 	}
 	outWriter.Write([]byte(fmt.Sprintf(fileHeader,
 		c.tagList,

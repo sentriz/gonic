@@ -44,21 +44,20 @@ var (
 
 type templateMap map[string]*template.Template
 
-func parseFromPaths(assets *Assets, base *template.Template,
-	paths []string, destination templateMap) error {
+func parseFromPaths(base *template.Template, paths []string, dest templateMap) error {
 	for _, path := range paths {
-		_, tmplBytes, err := assets.FindBytes(path)
+		_, tmplBytes, err := findAssetBytes(path)
 		if err != nil {
 			return errors.Wrapf(err, "getting template %q from assets", path)
 		}
 		tmplStr := string(tmplBytes)
-		if destination != nil {
+		if dest != nil {
 			// we have a destination. meaning this template is a page.
 			// instead of parsing as usual, we need to clone and add to the
 			// template map
 			clone := template.Must(base.Clone())
 			tmplKey := filepath.Base(path)
-			destination[tmplKey] = template.Must(clone.Parse(tmplStr))
+			dest[tmplKey] = template.Must(clone.Parse(tmplStr))
 			continue
 		}
 		_ = template.Must(base.Parse(tmplStr))
@@ -66,9 +65,9 @@ func parseFromPaths(assets *Assets, base *template.Template,
 	return nil
 }
 
-func staticHandler(assets *Assets, path string) http.HandlerFunc {
+func staticHandler(path string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		modTime, reader, err := assets.Find(path)
+		modTime, reader, err := findAsset(path)
 		if err != nil {
 			log.Printf("error getting file %q from assets: %v\n", path, err)
 			http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -94,17 +93,14 @@ func (s *Server) SetupAdmin() error {
 		Funcs(template.FuncMap{
 			"humanDate": humanize.Time,
 		})
-	if err := parseFromPaths(
-		s.assets, tmplBase, partialsPaths, nil); err != nil {
+	if err := parseFromPaths(tmplBase, partialsPaths, nil); err != nil {
 		return errors.Wrap(err, "parsing template partials")
 	}
-	if err := parseFromPaths(
-		s.assets, tmplBase, layoutPaths, nil); err != nil {
+	if err := parseFromPaths(tmplBase, layoutPaths, nil); err != nil {
 		return errors.Wrap(err, "parsing template layouts")
 	}
 	s.Templates = make(templateMap)
-	if err := parseFromPaths(
-		s.assets, tmplBase, pagePaths, s.Templates); err != nil {
+	if err := parseFromPaths(tmplBase, pagePaths, s.Templates); err != nil {
 		return errors.Wrap(err, "parsing template pages for destination")
 	}
 	//
@@ -123,7 +119,7 @@ func (s *Server) SetupAdmin() error {
 	// begin static server
 	for _, path := range append(imagePaths, stylesheetPaths...) {
 		fullPath := filepath.Join("/admin/static", path)
-		s.mux.HandleFunc(fullPath, staticHandler(s.assets, path))
+		s.mux.HandleFunc(fullPath, staticHandler(path))
 	}
 	// begin public routes (creates new session)
 	s.mux.HandleFunc("/admin/login", withPublicWare(s.ServeLogin))

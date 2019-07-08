@@ -1,17 +1,8 @@
 #!/bin/sh
 
 source ./_build_vars
-find server/assets/ \
-    -type f \
-    -exec go run \
-        cmd/gonicembed/main.go \
-        -out-path server/assets_bytes.go \
-        -tag-list embed \
-        -package-name server \
-        -assets-var-name AssetBytes \
-        -asset-path-prefix server/assets/ \
-        {} +
+./_do_gen_assets
 go build \
     -o gonic \
-    -tags "$(tr '\n' ' ' < _build_tags) embed" \
+    -tags "$(tr '\n' ' ' < _build_tags)" \
     cmd/gonic/main.go

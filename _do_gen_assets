@@ -1,0 +1,11 @@
+#!/bin/sh
+
+find server/assets/ \
+    -type f \
+    -exec go run \
+        cmd/gonicembed/main.go \
+        -out-path server/assets_bytes.go \
+        -package-name server \
+        -assets-var-name assetBytes \
+        -asset-path-prefix server/assets/ \
+        {} +

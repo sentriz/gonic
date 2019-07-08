@@ -1,0 +1,3 @@
+#!/bin/sh
+
+find server/assets/ | entr -r ./_do_run_server $@
