@@ -76,7 +76,7 @@
         {{ range $folder := .RecentFolders }}
             <tr>
             <td class="text-right">{{ $folder.RightPath }}</td>
-            <td class="no-small"><span class="light">{{ $folder.CreatedAt | humanDate }}</span></td>
+            <td class="no-small"><span class="light" title="{{ $folder.CreatedAt }}">{{ $folder.CreatedAt | humanDate }}</span></td>
             </tr>
         {{ end }}
         </table>
@@ -84,7 +84,7 @@
             <a href="/admin/start_scan_do">start scan</a>
             {{- if not .LastScanTime.IsZero -}}
                 <br>
-                <span class="light">scanned {{ .LastScanTime | humanDate }}</span>
+                <span class="light" title="{{ .LastScanTime }}">scanned {{ .LastScanTime | humanDate }}</span>
             {{ end }}
         {{ end }}
     </div>
