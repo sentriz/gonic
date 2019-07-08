@@ -244,9 +244,7 @@ func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
 	}
 	err = c.DB.Create(&user).Error
 	if err != nil {
-		sessAddFlashW(fmt.Sprintf(
-			"could not create user `%s`: %v", username, err,
-		), session)
+		sessAddFlashWf("could not create user `%s`: %v", session, username, err)
 		sessLogSave(w, r, session)
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -34,9 +35,17 @@ func sessAddFlashW(message string, s *sessions.Session) {
 	})
 }
 
+func sessAddFlashWf(message string, s *sessions.Session, a ...interface{}) {
+	sessAddFlashW(fmt.Sprintf(message, a...), s)
+}
+
 func sessAddFlashN(message string, s *sessions.Session) {
 	s.AddFlash(Flash{
 		Message: message,
 		Type:    "normal",
 	})
+}
+
+func sessAddFlashNf(message string, s *sessions.Session, a ...interface{}) {
+	sessAddFlashN(fmt.Sprintf(message, a...), s)
 }
