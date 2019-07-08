@@ -279,7 +279,7 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(w http.ResponseWriter, r *http.Re
 
 func (c *Controller) ServeStartScanDo(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(contextSessionKey).(*sessions.Session)
-	sessAddFlashN("scan started", session)
+	sessAddFlashN("scan started. refresh for results", session)
 	sessLogSave(w, r, session)
 	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 	go func() {
