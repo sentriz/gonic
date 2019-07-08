@@ -5,38 +5,29 @@
     "albumList": {
       "album": [
         {
-          "id": 9,
-          "coverArt": 9,
-          "artist": "13th Floor Lowervators",
-          "title": "(1966) The Psychedelic Sounds of the 13th Floor Elevators",
-          "parent": 7,
-          "isDir": true,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": 6,
-          "coverArt": 6,
-          "artist": "A Certain Ratio",
-          "title": "(1981) To EachOTHER.",
-          "parent": 4,
-          "isDir": true,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": 16,
-          "coverArt": 16,
-          "artist": "Swell Maps",
-          "title": "(1980) Jane From Occupied Europe",
-          "parent": 15,
-          "isDir": true,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
           "id": 17,
           "coverArt": 17,
           "artist": "Swell Maps",
           "title": "(1979) A Trip to Marineville",
           "parent": 15,
+          "isDir": true,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": 5,
+          "coverArt": 5,
+          "artist": "A Certain Ratio",
+          "title": "(1994) The Graveyard and the Ballroom",
+          "parent": 4,
+          "isDir": true,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": 8,
+          "coverArt": 8,
+          "artist": "13th Floor Lowervators",
+          "title": "(1967) Easter Nowhere",
+          "parent": 7,
           "isDir": true,
           "created": "0001-01-01T00:00:00Z"
         },
@@ -59,11 +50,11 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
-          "id": 8,
-          "coverArt": 8,
-          "artist": "13th Floor Lowervators",
-          "title": "(1967) Easter Nowhere",
-          "parent": 7,
+          "id": 16,
+          "coverArt": 16,
+          "artist": "Swell Maps",
+          "title": "(1980) Jane From Occupied Europe",
+          "parent": 15,
           "isDir": true,
           "created": "0001-01-01T00:00:00Z"
         },
@@ -86,11 +77,20 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
-          "id": 5,
-          "coverArt": 5,
+          "id": 6,
+          "coverArt": 6,
           "artist": "A Certain Ratio",
-          "title": "(1994) The Graveyard and the Ballroom",
+          "title": "(1981) To EachOTHER.",
           "parent": 4,
+          "isDir": true,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": 9,
+          "coverArt": 9,
+          "artist": "13th Floor Lowervators",
+          "title": "(1966) The Psychedelic Sounds of the 13th Floor Elevators",
+          "parent": 7,
           "isDir": true,
           "created": "0001-01-01T00:00:00Z"
         }
