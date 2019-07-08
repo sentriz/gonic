@@ -1,9 +1,17 @@
 #!/bin/sh
 
+embed_bin_path=/tmp/gonicembed
+
+# only build once for some slightly faster live page reloading
+if ! test -e "$embed_bin_path"; then
+    go build \
+        -o "$embed_bin_path" \
+        cmd/gonicembed/main.go
+fi
+
 find server/assets/ \
     -type f \
-    -exec go run \
-        cmd/gonicembed/main.go \
+    -exec "$embed_bin_path" \
         -out-path server/assets_bytes.go \
         -package-name server \
         -assets-var-name assetBytes \
