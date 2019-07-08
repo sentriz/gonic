@@ -147,9 +147,11 @@ func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
 		Preload("Parent").
 		Find(&folders)
 	sub := subsonic.NewResponse()
-	sub.Albums = &subsonic.Albums{}
-	for _, folder := range folders {
-		sub.Albums.List = append(sub.Albums.List, newAlbumByFolder(folder))
+	sub.Albums = &subsonic.Albums{
+		List: make([]*subsonic.Album, len(folders)),
+	}
+	for i, folder := range folders {
+		sub.Albums.List[i] = newAlbumByFolder(folder)
 	}
 	respond(w, r, sub)
 }

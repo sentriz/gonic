@@ -61,9 +61,9 @@ func (c *Controller) GetArtist(w http.ResponseWriter, r *http.Request) {
 		First(artist, id)
 	sub := subsonic.NewResponse()
 	sub.Artist = newArtistByTags(artist)
-	for _, album := range artist.Albums {
-		sub.Artist.Albums = append(sub.Artist.Albums,
-			newAlbumByTags(album, artist))
+	sub.Artist.Albums = make([]*subsonic.Album, len(artist.Albums))
+	for i, album := range artist.Albums {
+		sub.Artist.Albums[i] = newAlbumByTags(album, artist)
 	}
 	respond(w, r, sub)
 }
@@ -88,9 +88,9 @@ func (c *Controller) GetAlbum(w http.ResponseWriter, r *http.Request) {
 	}
 	sub := subsonic.NewResponse()
 	sub.Album = newAlbumByTags(album, album.TagArtist)
-	for _, track := range album.Tracks {
-		sub.Album.Tracks = append(sub.Album.Tracks,
-			newTrackByTags(track, album))
+	sub.Album.Tracks = make([]*subsonic.TrackChild, len(album.Tracks))
+	for i, track := range album.Tracks {
+		sub.Album.Tracks[i] = newTrackByTags(track, album)
 	}
 	respond(w, r, sub)
 }
@@ -149,10 +149,11 @@ func (c *Controller) GetAlbumListTwo(w http.ResponseWriter, r *http.Request) {
 		Preload("TagArtist").
 		Find(&albums)
 	sub := subsonic.NewResponse()
-	sub.AlbumsTwo = &subsonic.Albums{}
-	for _, album := range albums {
-		sub.AlbumsTwo.List = append(sub.AlbumsTwo.List,
-			newAlbumByTags(album, album.TagArtist))
+	sub.AlbumsTwo = &subsonic.Albums{
+		List: make([]*subsonic.Album, len(albums)),
+	}
+	for i, album := range albums {
+		sub.AlbumsTwo.List[i] = newAlbumByTags(album, album.TagArtist)
 	}
 	respond(w, r, sub)
 }
