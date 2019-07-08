@@ -2,6 +2,8 @@ package handler
 
 import "testing"
 
+// silly test for a simple function. i was getting used to
+// testing in go at the time. might aswell keep it though
 func TestFirstExisting(t *testing.T) {
 	cases := []struct {
 		name   string

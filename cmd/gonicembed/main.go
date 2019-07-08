@@ -13,6 +13,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+// once i had this written with ~100% text/template but it was very
+// slow. now this thing is not nice on the eyes or easy to change
+// but it's pretty fast. which i needed it to for live reloading stuff
+
 const (
 	programName = "gonicembed"
 	byteCols    = 24
