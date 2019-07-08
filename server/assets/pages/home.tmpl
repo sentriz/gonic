@@ -72,6 +72,9 @@
         <i class="mdi mdi-folder-multiple"></i> recent folders
     </div>
     <div class="block-right text-right">
+        {{ if eq (len .RecentFolders) 0 }}
+            <span class="light">no folders yet</span>
+        {{ end }}
         <table id="recent-folders">
         {{ range $folder := .RecentFolders }}
             <tr>
