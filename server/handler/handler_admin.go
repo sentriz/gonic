@@ -80,7 +80,7 @@ func (c *Controller) ServeHome(w http.ResponseWriter, r *http.Request) {
 	// recent folders box
 	c.DB.
 		Where("tag_artist_id IS NOT NULL").
-		Order("updated_at DESC").
+		Order("modified_at DESC").
 		Limit(8).
 		Find(&data.RecentFolders)
 	data.IsScanning = scanner.IsScanning()
