@@ -226,10 +226,9 @@ func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
 	return nil
 }
 
-// decoded converts a string to it's latin equivalent. it
-// will be used by the model's *UDec fields, and is only set
-// if it differs from the original.
-// the fields are used for searching
+// decoded converts a string to it's latin equivalent. it will
+// be used by the model's *UDec fields, and is only set if it
+// differs from the original. the fields are used for searching
 func decoded(in string) string {
 	result := unidecode.Unidecode(in)
 	if result == in {
