@@ -16,7 +16,7 @@ import (
 
 var (
 	partialsPaths = []string{
-		"partials/box.tmpl",
+		"partials/head.tmpl",
 	}
 	layoutPaths = []string{
 		"layouts/base.tmpl",
