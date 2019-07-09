@@ -6,14 +6,8 @@ body {
     max-width: 780px;
     margin: 0 auto;
     padding: 0 var(--pad-size);
-    line-height: 1rem;
     overflow-y: scroll;
-}
-
-@media only screen and (max-width: 780px) {
-    .no-small {
-        display: none;
-    }
+    font-size: 14px;
 }
 
 table td:first-child::after {
@@ -25,6 +19,16 @@ table td:first-child::after {
     table#recent-folders td:first-child::after {
         content: "";
     }
+    .no-small {
+        display: none;
+    }
+    body {
+        font-size: 12px;
+    }
+}
+
+* {
+    font-size: 1rem;
 }
 
 form input[type],
@@ -89,10 +93,6 @@ a:hover {
     text-decoration: underline;
 }
 
-i.mdi {
-    font-size: 14px;
-}
-
 #content > * {
     margin: var(--pad-size) 0;
 }
@@ -120,6 +120,12 @@ i.mdi {
     border-bottom: 2px solid #15ff5424;
 }
 
+.box {
+    background-color: #00000005;
+    border-right: 2px solid #0000000c;
+    border-bottom: 2px solid #0000000c;
+}
+
 .text-right {
     text-align: right;
 }
@@ -130,12 +136,6 @@ i.mdi {
 
 .mono {
     font-family: monospace;
-}
-
-.box {
-    background-color: #00000005;
-    border-right: 2px solid #0000000c;
-    border-bottom: 2px solid #0000000c;
 }
 
 .box-title {
