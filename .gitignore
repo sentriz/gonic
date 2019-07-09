@@ -1,4 +1,5 @@
 *.db
+*.sql
 cmd/scanner/scanner
 cmd/server/server
 cmd/scanner/main
