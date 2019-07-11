@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gorilla/sessions"
-	"github.com/jinzhu/gorm"
 
 	"senan.xyz/g/gonic/model"
 	"senan.xyz/g/gonic/scanner"
@@ -38,7 +37,7 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 	}
 	// put the user name into the session. future endpoints after this one
 	// are wrapped with WithUserSession() which will get the name from the
-	// session and put the row into the request context.
+	// session and put the row into the request context
 	session.Values["user"] = user.Name
 	sessLogSave(w, r, session)
 	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
@@ -150,12 +149,8 @@ func (c *Controller) ServeChangePassword(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "please provide a username", 400)
 		return
 	}
-	user := &model.User{}
-	err := c.DB.
-		Where("name = ?", username).
-		First(user).
-		Error
-	if gorm.IsRecordNotFoundError(err) {
+	user := c.DB.GetUserFromName(username)
+	if user == nil {
 		http.Error(w, "couldn't find a user with that name", 400)
 		return
 	}
@@ -167,10 +162,6 @@ func (c *Controller) ServeChangePassword(w http.ResponseWriter, r *http.Request)
 func (c *Controller) ServeChangePasswordDo(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(contextSessionKey).(*sessions.Session)
 	username := r.URL.Query().Get("user")
-	user := &model.User{}
-	c.DB.
-		Where("name = ?", username).
-		First(user)
 	passwordOne := r.FormValue("password_one")
 	passwordTwo := r.FormValue("password_two")
 	err := validatePasswords(passwordOne, passwordTwo)
@@ -180,6 +171,7 @@ func (c *Controller) ServeChangePasswordDo(w http.ResponseWriter, r *http.Reques
 		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 		return
 	}
+	user := c.DB.GetUserFromName(username)
 	user.Password = passwordOne
 	c.DB.Save(user)
 	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
@@ -191,12 +183,8 @@ func (c *Controller) ServeDeleteUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "please provide a username", 400)
 		return
 	}
-	user := &model.User{}
-	err := c.DB.
-		Where("name = ?", username).
-		First(user).
-		Error
-	if gorm.IsRecordNotFoundError(err) {
+	user := c.DB.GetUserFromName(username)
+	if user == nil {
 		http.Error(w, "couldn't find a user with that name", 400)
 		return
 	}
@@ -207,10 +195,7 @@ func (c *Controller) ServeDeleteUser(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) ServeDeleteUserDo(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("user")
-	user := &model.User{}
-	c.DB.
-		Where("name = ?", username).
-		First(user)
+	user := c.DB.GetUserFromName(username)
 	c.DB.Delete(user)
 	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 }
