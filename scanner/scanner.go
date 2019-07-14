@@ -173,6 +173,8 @@ var coverFilenames = map[string]struct{}{
 }
 
 // ## begin callbacks
+// ## begin callbacks
+// ## begin callbacks
 
 func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
 	stat, err := os.Stat(fullPath)
@@ -237,6 +239,8 @@ func decoded(in string) string {
 	return result
 }
 
+// ## begin handlers
+// ## begin handlers
 // ## begin handlers
 
 func (s *Scanner) handleFolder(it *item) error {

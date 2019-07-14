@@ -1,4 +1,4 @@
-package handler
+package parsing
 
 import (
 	"fmt"
@@ -6,19 +6,19 @@ import (
 	"strconv"
 )
 
-func getStrParam(r *http.Request, key string) string {
+func GetStrParam(r *http.Request, key string) string {
 	return r.URL.Query().Get(key)
 }
 
-func getStrParamOr(r *http.Request, key, or string) string {
-	val := getStrParam(r, key)
+func GetStrParamOr(r *http.Request, key, or string) string {
+	val := GetStrParam(r, key)
 	if val == "" {
 		return or
 	}
 	return val
 }
 
-func getIntParam(r *http.Request, key string) (int, error) {
+func GetIntParam(r *http.Request, key string) (int, error) {
 	strVal := r.URL.Query().Get(key)
 	if strVal == "" {
 		return 0, fmt.Errorf("no param with key `%s`", key)
@@ -30,8 +30,8 @@ func getIntParam(r *http.Request, key string) (int, error) {
 	return val, nil
 }
 
-func getIntParamOr(r *http.Request, key string, or int) int {
-	val, err := getIntParam(r, key)
+func GetIntParamOr(r *http.Request, key string, or int) int {
+	val, err := GetIntParam(r, key)
 	if err != nil {
 		return or
 	}

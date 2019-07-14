@@ -1,4 +1,4 @@
-package handler
+package ctrladmin
 
 import (
 	"context"
@@ -7,22 +7,21 @@ import (
 	"github.com/gorilla/sessions"
 
 	"senan.xyz/g/gonic/model"
+	"senan.xyz/g/gonic/server/key"
 )
 
-//nolint:interfacer
-func (c *Controller) WithSession(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		session, _ := c.SessDB.Get(r, "gonic")
-		withSession := context.WithValue(r.Context(), contextSessionKey, session)
+func (c *Controller) WithSession(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, _ := c.sessDB.Get(r, "gonic")
+		withSession := context.WithValue(r.Context(), key.Session, session)
 		next.ServeHTTP(w, r.WithContext(withSession))
-	}
+	})
 }
 
-//nolint:interfacer
-func (c *Controller) WithUserSession(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) WithUserSession(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// session exists at this point
-		session := r.Context().Value(contextSessionKey).(*sessions.Session)
+		session := r.Context().Value(key.Session).(*sessions.Session)
 		username, ok := session.Values["user"].(string)
 		if !ok {
 			sessAddFlashW("you are not authenticated", session)
@@ -40,17 +39,16 @@ func (c *Controller) WithUserSession(next http.HandlerFunc) http.HandlerFunc {
 			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 			return
 		}
-		withUser := context.WithValue(r.Context(), contextUserKey, user)
+		withUser := context.WithValue(r.Context(), key.User, user)
 		next.ServeHTTP(w, r.WithContext(withUser))
-	}
+	})
 }
 
-//nolint:interfacer
-func (c *Controller) WithAdminSession(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) WithAdminSession(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// session and user exist at this point
-		session := r.Context().Value(contextSessionKey).(*sessions.Session)
-		user := r.Context().Value(contextUserKey).(*model.User)
+		session := r.Context().Value(key.Session).(*sessions.Session)
+		user := r.Context().Value(key.User).(*model.User)
 		if !user.IsAdmin {
 			sessAddFlashW("you are not an admin", session)
 			sessLogSave(w, r, session)
@@ -58,5 +56,5 @@ func (c *Controller) WithAdminSession(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		next.ServeHTTP(w, r)
-	}
+	})
 }

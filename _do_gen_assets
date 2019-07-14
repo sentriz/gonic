@@ -9,11 +9,12 @@ if ! test -e "$embed_bin_path"; then
         cmd/gonicembed/main.go
 fi
 
-find server/assets/ \
+find assets/ \
     -type f \
+    ! -name '*.go' \
     -exec "$embed_bin_path" \
-        -out-path server/assets_bytes.go \
-        -package-name server \
-        -assets-var-name assetBytes \
-        -asset-path-prefix server/assets/ \
+        -out-path assets/assets_gen.go \
+        -package-name assets \
+        -assets-var-name Bytes \
+        -asset-path-prefix assets/ \
         {} +

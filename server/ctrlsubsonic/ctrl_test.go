@@ -1,4 +1,4 @@
-package handler
+package ctrlsubsonic
 
 import (
 	"log"
@@ -13,10 +13,11 @@ import (
 	jd "github.com/josephburnett/jd/lib"
 
 	"senan.xyz/g/gonic/db"
+	"senan.xyz/g/gonic/server/ctrlbase"
 )
 
 var (
-	testDataDir    = "test_data"
+	testDataDir    = "testdata"
 	testCamelExpr  = regexp.MustCompile("([a-z0-9])([A-Z])")
 	testDBPath     = path.Join(testDataDir, "db")
 	testController *Controller
@@ -27,9 +28,7 @@ func init() {
 	if err != nil {
 		log.Fatalf("error opening database: %v\n", err)
 	}
-	testController = &Controller{
-		DB: db,
-	}
+	testController = New(&ctrlbase.Controller{DB: db})
 }
 
 type queryCase struct {
@@ -38,7 +37,7 @@ type queryCase struct {
 	listSet    bool
 }
 
-func runQueryCases(t *testing.T, handler http.HandlerFunc, cases []*queryCase) {
+func runQueryCases(t *testing.T, h subsonicHandler, cases []*queryCase) {
 	for _, qc := range cases {
 		qc := qc // pin
 		t.Run(qc.expectPath, func(t *testing.T) {
@@ -50,7 +49,7 @@ func runQueryCases(t *testing.T, handler http.HandlerFunc, cases []*queryCase) {
 			// request from the handler in question
 			req, _ := http.NewRequest("", "?"+qc.params.Encode(), nil)
 			rr := httptest.NewRecorder()
-			handler.ServeHTTP(rr, req)
+			testController.H(h).ServeHTTP(rr, req)
 			body := rr.Body.String()
 			if status := rr.Code; status != http.StatusOK {
 				t.Fatalf("didn't give a 200\n%s", body)
@@ -81,8 +80,7 @@ func runQueryCases(t *testing.T, handler http.HandlerFunc, cases []*queryCase) {
 			if len(diff) == 0 {
 				return
 			}
-			t.Errorf("\u001b[31;1mdiffering json\u001b[0m\n%s",
-				diff.Render())
+			t.Errorf("\u001b[31;1mdiffering json\u001b[0m\n%s", diff.Render())
 		})
 	}
 }

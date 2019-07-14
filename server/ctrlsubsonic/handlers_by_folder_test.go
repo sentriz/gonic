@@ -1,4 +1,4 @@
-package handler
+package ctrlsubsonic
 
 import (
 	"net/url"
@@ -8,20 +8,20 @@ import (
 )
 
 func TestGetIndexes(t *testing.T) {
-	runQueryCases(t, testController.GetIndexes, []*queryCase{
+	runQueryCases(t, testController.ServeGetIndexes, []*queryCase{
 		{url.Values{}, "no_args", false},
 	})
 }
 
 func TestGetMusicDirectory(t *testing.T) {
-	runQueryCases(t, testController.GetMusicDirectory, []*queryCase{
+	runQueryCases(t, testController.ServeGetMusicDirectory, []*queryCase{
 		{url.Values{"id": []string{"2"}}, "without_tracks", false},
 		{url.Values{"id": []string{"3"}}, "with_tracks", false},
 	})
 }
 
 func TestGetAlbumList(t *testing.T) {
-	runQueryCases(t, testController.GetAlbumList, []*queryCase{
+	runQueryCases(t, testController.ServeGetAlbumList, []*queryCase{
 		{url.Values{"type": []string{"alphabeticalByArtist"}}, "alpha_artist", false},
 		{url.Values{"type": []string{"alphabeticalByName"}}, "alpha_name", false},
 		{url.Values{"type": []string{"newest"}}, "newest", false},
@@ -30,7 +30,7 @@ func TestGetAlbumList(t *testing.T) {
 }
 
 func TestSearchTwo(t *testing.T) {
-	runQueryCases(t, testController.SearchTwo, []*queryCase{
+	runQueryCases(t, testController.ServeSearchTwo, []*queryCase{
 		{url.Values{"query": []string{"13"}}, "q_13", false},
 		{url.Values{"query": []string{"ani"}}, "q_ani", false},
 		{url.Values{"query": []string{"cert"}}, "q_cert", false},

@@ -1,14 +1,13 @@
-package handler
+package spec
 
 import (
 	"path"
 
 	"senan.xyz/g/gonic/model"
-	"senan.xyz/g/gonic/server/subsonic"
 )
 
-func newAlbumByTags(a *model.Album, artist *model.Artist) *subsonic.Album {
-	ret := &subsonic.Album{
+func NewAlbumByTags(a *model.Album, artist *model.Artist) *Album {
+	ret := &Album{
 		Created: a.ModifiedAt,
 		ID:      a.ID,
 		Name:    a.TagTitle,
@@ -23,8 +22,8 @@ func newAlbumByTags(a *model.Album, artist *model.Artist) *subsonic.Album {
 	return ret
 }
 
-func newTrackByTags(t *model.Track, album *model.Album) *subsonic.TrackChild {
-	ret := &subsonic.TrackChild{
+func NewTrackByTags(t *model.Track, album *model.Album) *TrackChild {
+	ret := &TrackChild{
 		ID:          t.ID,
 		ContentType: t.MIME(),
 		Suffix:      t.Ext(),
@@ -53,8 +52,8 @@ func newTrackByTags(t *model.Track, album *model.Album) *subsonic.TrackChild {
 	return ret
 }
 
-func newArtistByTags(a *model.Artist) *subsonic.Artist {
-	return &subsonic.Artist{
+func NewArtistByTags(a *model.Artist) *Artist {
+	return &Artist{
 		ID:         a.ID,
 		Name:       a.Name,
 		AlbumCount: a.AlbumCount,

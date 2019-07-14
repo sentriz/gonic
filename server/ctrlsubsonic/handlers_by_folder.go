@@ -1,4 +1,4 @@
-package handler
+package ctrlsubsonic
 
 import (
 	"fmt"
@@ -9,7 +9,9 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"senan.xyz/g/gonic/model"
-	"senan.xyz/g/gonic/server/subsonic"
+	"senan.xyz/g/gonic/server/ctrlsubsonic/spec"
+	"senan.xyz/g/gonic/server/key"
+	"senan.xyz/g/gonic/server/parsing"
 )
 
 // the subsonic spec metions "artist" a lot when talking about the
@@ -18,7 +20,7 @@ import (
 // an track to be the it's respective folder that comes directly
 // under the root directory
 
-func (c *Controller) GetIndexes(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) ServeGetIndexes(r *http.Request) *spec.Response {
 	var folders []*model.Album
 	c.DB.
 		Select("*, count(sub.id) as child_count").
@@ -30,40 +32,39 @@ func (c *Controller) GetIndexes(w http.ResponseWriter, r *http.Request) {
 		Group("albums.id").
 		Find(&folders)
 	// [a-z#] -> 27
-	indexMap := make(map[string]*subsonic.Index, 27)
-	resp := make([]*subsonic.Index, 0, 27)
+	indexMap := make(map[string]*spec.Index, 27)
+	resp := make([]*spec.Index, 0, 27)
 	for _, folder := range folders {
 		i := lowerUDecOrHash(folder.IndexRightPath())
 		index, ok := indexMap[i]
 		if !ok {
-			index = &subsonic.Index{
+			index = &spec.Index{
 				Name:    i,
-				Artists: []*subsonic.Artist{},
+				Artists: []*spec.Artist{},
 			}
 			indexMap[i] = index
 			resp = append(resp, index)
 		}
 		index.Artists = append(index.Artists,
-			newArtistByFolder(folder))
+			spec.NewArtistByFolder(folder))
 	}
 	sort.Slice(resp, func(i, j int) bool {
 		return resp[i].Name < resp[j].Name
 	})
-	sub := subsonic.NewResponse()
-	sub.Indexes = &subsonic.Indexes{
+	sub := spec.NewResponse()
+	sub.Indexes = &spec.Indexes{
 		LastModified: 0,
 		Index:        resp,
 	}
-	respond(w, r, sub)
+	return sub
 }
 
-func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
-	id, err := getIntParam(r, "id")
+func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
+	id, err := parsing.GetIntParam(r, "id")
 	if err != nil {
-		respondError(w, r, 10, "please provide an `id` parameter")
-		return
+		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	childrenObj := []*subsonic.TrackChild{}
+	childrenObj := []*spec.TrackChild{}
 	folder := &model.Album{}
 	c.DB.First(folder, id)
 	//
@@ -73,7 +74,7 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 		Where("parent_id = ?", id).
 		Find(&childFolders)
 	for _, c := range childFolders {
-		childrenObj = append(childrenObj, newTCAlbumByFolder(c))
+		childrenObj = append(childrenObj, spec.NewTCAlbumByFolder(c))
 	}
 	//
 	// start looking for child childTracks in the current dir
@@ -84,8 +85,8 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 		Order("filename").
 		Find(&childTracks)
 	for _, c := range childTracks {
-		toAppend := newTCTrackByFolder(c, folder)
-		if getStrParam(r, "c") == "Jamstash" {
+		toAppend := spec.NewTCTrackByFolder(c, folder)
+		if parsing.GetStrParam(r, "c") == "Jamstash" {
 			// jamstash thinks it can't play flacs
 			toAppend.ContentType = "audio/mpeg"
 			toAppend.Suffix = "mp3"
@@ -94,18 +95,17 @@ func (c *Controller) GetMusicDirectory(w http.ResponseWriter, r *http.Request) {
 	}
 	//
 	// respond section
-	sub := subsonic.NewResponse()
-	sub.Directory = newDirectoryByFolder(folder, childrenObj)
-	respond(w, r, sub)
+	sub := spec.NewResponse()
+	sub.Directory = spec.NewDirectoryByFolder(folder, childrenObj)
+	return sub
 }
 
 // changes to this function should be reflected in in _by_tags.go's
 // getAlbumListTwo() function
-func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
-	listType := getStrParam(r, "type")
+func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
+	listType := parsing.GetStrParam(r, "type")
 	if listType == "" {
-		respondError(w, r, 10, "please provide a `type` parameter")
-		return
+		return spec.NewError(10, "please provide a `type` parameter")
 	}
 	q := c.DB.DB
 	switch listType {
@@ -117,7 +117,7 @@ func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
 	case "alphabeticalByName":
 		q = q.Order("right_path")
 	case "frequent":
-		user := r.Context().Value(contextUserKey).(*model.User)
+		user := r.Context().Value(key.User).(*model.User)
 		q = q.Joins(`
 			JOIN plays
 			ON albums.id = plays.album_id AND plays.user_id = ?`,
@@ -128,43 +128,40 @@ func (c *Controller) GetAlbumList(w http.ResponseWriter, r *http.Request) {
 	case "random":
 		q = q.Order(gorm.Expr("random()"))
 	case "recent":
-		user := r.Context().Value(contextUserKey).(*model.User)
+		user := r.Context().Value(key.User).(*model.User)
 		q = q.Joins(`
 			JOIN plays
 			ON albums.id = plays.album_id AND plays.user_id = ?`,
 			user.ID)
 		q = q.Order("plays.time DESC")
 	default:
-		respondError(w, r, 10,
-			"unknown value `%s` for parameter 'type'", listType)
-		return
+		return spec.NewError(10, "unknown value `%s` for parameter 'type'", listType)
 	}
 	var folders []*model.Album
 	q.
 		Where("albums.tag_artist_id IS NOT NULL").
-		Offset(getIntParamOr(r, "offset", 0)).
-		Limit(getIntParamOr(r, "size", 10)).
+		Offset(parsing.GetIntParamOr(r, "offset", 0)).
+		Limit(parsing.GetIntParamOr(r, "size", 10)).
 		Preload("Parent").
 		Find(&folders)
-	sub := subsonic.NewResponse()
-	sub.Albums = &subsonic.Albums{
-		List: make([]*subsonic.Album, len(folders)),
+	sub := spec.NewResponse()
+	sub.Albums = &spec.Albums{
+		List: make([]*spec.Album, len(folders)),
 	}
 	for i, folder := range folders {
-		sub.Albums.List[i] = newAlbumByFolder(folder)
+		sub.Albums.List[i] = spec.NewAlbumByFolder(folder)
 	}
-	respond(w, r, sub)
+	return sub
 }
 
-func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
-	query := getStrParam(r, "query")
+func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
+	query := parsing.GetStrParam(r, "query")
 	if query == "" {
-		respondError(w, r, 10, "please provide a `query` parameter")
-		return
+		return spec.NewError(10, "please provide a `query` parameter")
 	}
 	query = fmt.Sprintf("%%%s%%",
 		strings.TrimSuffix(query, "*"))
-	results := &subsonic.SearchResultTwo{}
+	results := &spec.SearchResultTwo{}
 	//
 	// search "artists"
 	var artists []*model.Album
@@ -174,12 +171,12 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
             AND (right_path LIKE ? OR
                  right_path_u_dec LIKE ?)
 		`, query, query).
-		Offset(getIntParamOr(r, "artistOffset", 0)).
-		Limit(getIntParamOr(r, "artistCount", 20)).
+		Offset(parsing.GetIntParamOr(r, "artistOffset", 0)).
+		Limit(parsing.GetIntParamOr(r, "artistCount", 20)).
 		Find(&artists)
 	for _, a := range artists {
 		results.Artists = append(results.Artists,
-			newDirectoryByFolder(a, nil))
+			spec.NewDirectoryByFolder(a, nil))
 	}
 	//
 	// search "albums"
@@ -190,11 +187,11 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
             AND (right_path LIKE ? OR
                  right_path_u_dec LIKE ?)
 		`, query, query).
-		Offset(getIntParamOr(r, "albumOffset", 0)).
-		Limit(getIntParamOr(r, "albumCount", 20)).
+		Offset(parsing.GetIntParamOr(r, "albumOffset", 0)).
+		Limit(parsing.GetIntParamOr(r, "albumCount", 20)).
 		Find(&albums)
 	for _, a := range albums {
-		results.Albums = append(results.Albums, newTCAlbumByFolder(a))
+		results.Albums = append(results.Albums, spec.NewTCAlbumByFolder(a))
 	}
 	//
 	// search tracks
@@ -205,15 +202,15 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
             filename LIKE ? OR
             filename_u_dec LIKE ?
 		`, query, query).
-		Offset(getIntParamOr(r, "songOffset", 0)).
-		Limit(getIntParamOr(r, "songCount", 20)).
+		Offset(parsing.GetIntParamOr(r, "songOffset", 0)).
+		Limit(parsing.GetIntParamOr(r, "songCount", 20)).
 		Find(&tracks)
 	for _, t := range tracks {
 		results.Tracks = append(results.Tracks,
-			newTCTrackByFolder(t, t.Album))
+			spec.NewTCTrackByFolder(t, t.Album))
 	}
 	//
-	sub := subsonic.NewResponse()
+	sub := spec.NewResponse()
 	sub.SearchResultTwo = results
-	respond(w, r, sub)
+	return sub
 }

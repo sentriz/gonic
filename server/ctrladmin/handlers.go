@@ -1,4 +1,4 @@
-package handler
+package ctrladmin
 
 import (
 	"fmt"
@@ -8,50 +8,48 @@ import (
 	"time"
 
 	"github.com/gorilla/sessions"
-	"github.com/jinzhu/gorm"
 
 	"senan.xyz/g/gonic/model"
 	"senan.xyz/g/gonic/scanner"
+	"senan.xyz/g/gonic/server/key"
 	"senan.xyz/g/gonic/server/lastfm"
 )
 
-func (c *Controller) ServeLogin(w http.ResponseWriter, r *http.Request) {
-	renderTemplate(w, r, c.Templates["login.tmpl"], nil)
+func (c *Controller) ServeLogin(w http.ResponseWriter, r *http.Request) *response {
+	return &response{template: "login.tmpl"}
 }
 
-func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(contextSessionKey).(*sessions.Session)
+func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) *response {
+	session := r.Context().Value(key.Session).(*sessions.Session)
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 	if username == "" || password == "" {
 		sessAddFlashW("please provide both a username and password", session)
 		sessLogSave(w, r, session)
-		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-		return
+		return &response{redirect: r.Referer()}
 	}
 	user := c.DB.GetUserFromName(username)
 	if user == nil || password != user.Password {
 		sessAddFlashW("invalid username / password", session)
 		sessLogSave(w, r, session)
-		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-		return
+		return &response{redirect: r.Referer()}
 	}
 	// put the user name into the session. future endpoints after this one
 	// are wrapped with WithUserSession() which will get the name from the
 	// session and put the row into the request context
 	session.Values["user"] = user.Name
 	sessLogSave(w, r, session)
-	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
+	return &response{redirect: "/admin/home"}
 }
 
-func (c *Controller) ServeLogout(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(contextSessionKey).(*sessions.Session)
+func (c *Controller) ServeLogout(w http.ResponseWriter, r *http.Request) *response {
+	session := r.Context().Value(key.Session).(*sessions.Session)
 	session.Options.MaxAge = -1
 	sessLogSave(w, r, session)
-	http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
+	return &response{redirect: "/admin/login"}
 }
 
-func (c *Controller) ServeHome(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) ServeHome(w http.ResponseWriter, r *http.Request) *response {
 	data := &templateData{}
 	//
 	// stats box
@@ -89,79 +87,89 @@ func (c *Controller) ServeHome(w http.ResponseWriter, r *http.Request) {
 		data.LastScanTime = time.Unix(i, 0)
 	}
 	//
-	renderTemplate(w, r, c.Templates["home.tmpl"], data)
+	return &response{
+		template: "home.tmpl",
+		data:     data,
+	}
 }
 
-func (c *Controller) ServeChangeOwnPassword(w http.ResponseWriter, r *http.Request) {
-	renderTemplate(w, r, c.Templates["change_own_password.tmpl"], nil)
+func (c *Controller) ServeChangeOwnPassword(w http.ResponseWriter, r *http.Request) *response {
+	return &response{template: "change_own_password.tmpl"}
 }
 
-func (c *Controller) ServeChangeOwnPasswordDo(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(contextSessionKey).(*sessions.Session)
+func (c *Controller) ServeChangeOwnPasswordDo(w http.ResponseWriter, r *http.Request) *response {
+	session := r.Context().Value(key.Session).(*sessions.Session)
 	passwordOne := r.FormValue("password_one")
 	passwordTwo := r.FormValue("password_two")
 	err := validatePasswords(passwordOne, passwordTwo)
 	if err != nil {
 		sessAddFlashW(err.Error(), session)
 		sessLogSave(w, r, session)
-		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-		return
+		return &response{redirect: r.Referer()}
 	}
-	user := r.Context().Value(contextUserKey).(*model.User)
+	user := r.Context().Value(key.User).(*model.User)
 	user.Password = passwordOne
 	c.DB.Save(user)
-	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
+	return &response{redirect: "/admin/home"}
 }
 
-func (c *Controller) ServeLinkLastFMDo(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) ServeLinkLastFMDo(w http.ResponseWriter, r *http.Request) *response {
 	token := r.URL.Query().Get("token")
 	if token == "" {
-		http.Error(w, "please provide a token", 400)
-		return
+		return &response{
+			err:  "please provide a token",
+			code: 400,
+		}
 	}
 	sessionKey, err := lastfm.GetSession(
 		c.DB.GetSetting("lastfm_api_key"),
 		c.DB.GetSetting("lastfm_secret"),
 		token,
 	)
-	session := r.Context().Value(contextSessionKey).(*sessions.Session)
 	if err != nil {
+		session := r.Context().Value(key.Session).(*sessions.Session)
 		sessAddFlashW(err.Error(), session)
 		sessLogSave(w, r, session)
-		http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
-		return
+		return &response{redirect: "/admin/home"}
 	}
-	user := r.Context().Value(contextUserKey).(*model.User)
+	user := r.Context().Value(key.User).(*model.User)
 	user.LastFMSession = sessionKey
 	c.DB.Save(&user)
-	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
+	return &response{redirect: "/admin/home"}
 }
 
-func (c *Controller) ServeUnlinkLastFMDo(w http.ResponseWriter, r *http.Request) {
-	user := r.Context().Value(contextUserKey).(*model.User)
+func (c *Controller) ServeUnlinkLastFMDo(w http.ResponseWriter, r *http.Request) *response {
+	user := r.Context().Value(key.User).(*model.User)
 	user.LastFMSession = ""
 	c.DB.Save(&user)
-	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
+	return &response{redirect: "/admin/home"}
 }
 
-func (c *Controller) ServeChangePassword(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) ServeChangePassword(w http.ResponseWriter, r *http.Request) *response {
 	username := r.URL.Query().Get("user")
 	if username == "" {
-		http.Error(w, "please provide a username", 400)
-		return
+		return &response{
+			err:  "please provide a username",
+			code: 400,
+		}
 	}
 	user := c.DB.GetUserFromName(username)
 	if user == nil {
-		http.Error(w, "couldn't find a user with that name", 400)
-		return
+		return &response{
+			err:  "couldn't find a user with that name",
+			code: 400,
+		}
 	}
 	data := &templateData{}
 	data.SelectedUser = user
-	renderTemplate(w, r, c.Templates["change_password.tmpl"], data)
+	return &response{
+		template: "change_own_password.tmpl",
+		data:     data,
+	}
 }
 
-func (c *Controller) ServeChangePasswordDo(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(contextSessionKey).(*sessions.Session)
+func (c *Controller) ServeChangePasswordDo(w http.ResponseWriter, r *http.Request) *response {
+	session := r.Context().Value(key.Session).(*sessions.Session)
 	username := r.URL.Query().Get("user")
 	passwordOne := r.FormValue("password_one")
 	passwordTwo := r.FormValue("password_two")
@@ -169,51 +177,56 @@ func (c *Controller) ServeChangePasswordDo(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		sessAddFlashW(err.Error(), session)
 		sessLogSave(w, r, session)
-		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-		return
+		return &response{redirect: r.Referer()}
 	}
 	user := c.DB.GetUserFromName(username)
 	user.Password = passwordOne
 	c.DB.Save(user)
-	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
+	return &response{redirect: "/admin/home"}
 }
 
-func (c *Controller) ServeDeleteUser(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) ServeDeleteUser(w http.ResponseWriter, r *http.Request) *response {
 	username := r.URL.Query().Get("user")
 	if username == "" {
-		http.Error(w, "please provide a username", 400)
-		return
+		return &response{
+			err:  "please provide a username",
+			code: 400,
+		}
 	}
 	user := c.DB.GetUserFromName(username)
 	if user == nil {
-		http.Error(w, "couldn't find a user with that name", 400)
-		return
+		return &response{
+			err:  "couldn't find a user with that name",
+			code: 400,
+		}
 	}
 	data := &templateData{}
 	data.SelectedUser = user
-	renderTemplate(w, r, c.Templates["delete_user.tmpl"], data)
+	return &response{
+		template: "delete_user.tmpl",
+		data:     data,
+	}
 }
 
-func (c *Controller) ServeDeleteUserDo(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) ServeDeleteUserDo(w http.ResponseWriter, r *http.Request) *response {
 	username := r.URL.Query().Get("user")
 	user := c.DB.GetUserFromName(username)
 	c.DB.Delete(user)
-	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
+	return &response{redirect: "/admin/home"}
 }
 
-func (c *Controller) ServeCreateUser(w http.ResponseWriter, r *http.Request) {
-	renderTemplate(w, r, c.Templates["create_user.tmpl"], nil)
+func (c *Controller) ServeCreateUser(w http.ResponseWriter, r *http.Request) *response {
+	return &response{template: "create_user.tmpl"}
 }
 
-func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(contextSessionKey).(*sessions.Session)
+func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) *response {
+	session := r.Context().Value(key.Session).(*sessions.Session)
 	username := r.FormValue("username")
 	err := validateUsername(username)
 	if err != nil {
 		sessAddFlashW(err.Error(), session)
 		sessLogSave(w, r, session)
-		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-		return
+		return &response{redirect: r.Referer()}
 	}
 	passwordOne := r.FormValue("password_one")
 	passwordTwo := r.FormValue("password_two")
@@ -221,8 +234,7 @@ func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		sessAddFlashW(err.Error(), session)
 		sessLogSave(w, r, session)
-		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-		return
+		return &response{redirect: r.Referer()}
 	}
 	user := model.User{
 		Name:     username,
@@ -232,46 +244,49 @@ func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		sessAddFlashWf("could not create user `%s`: %v", session, username, err)
 		sessLogSave(w, r, session)
-		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-		return
+		return &response{redirect: r.Referer()}
 	}
-	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
+	return &response{redirect: "/admin/home"}
 }
 
-func (c *Controller) ServeUpdateLastFMAPIKey(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) ServeUpdateLastFMAPIKey(w http.ResponseWriter, r *http.Request) *response {
 	data := &templateData{}
 	data.CurrentLastFMAPIKey = c.DB.GetSetting("lastfm_api_key")
 	data.CurrentLastFMAPISecret = c.DB.GetSetting("lastfm_secret")
-	renderTemplate(w, r, c.Templates["update_lastfm_api_key.tmpl"], data)
+	return &response{
+		template: "create_user.tmpl",
+		data:     data,
+	}
 }
 
-func (c *Controller) ServeUpdateLastFMAPIKeyDo(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(contextSessionKey).(*sessions.Session)
+func (c *Controller) ServeUpdateLastFMAPIKeyDo(w http.ResponseWriter, r *http.Request) *response {
+	session := r.Context().Value(key.Session).(*sessions.Session)
 	apiKey := r.FormValue("api_key")
 	secret := r.FormValue("secret")
 	err := validateAPIKey(apiKey, secret)
 	if err != nil {
 		sessAddFlashW(err.Error(), session)
 		sessLogSave(w, r, session)
-		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-		return
+		return &response{redirect: r.Referer()}
 	}
 	c.DB.SetSetting("lastfm_api_key", apiKey)
 	c.DB.SetSetting("lastfm_secret", secret)
-	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
+	return &response{redirect: r.Referer()}
 }
 
-func (c *Controller) ServeStartScanDo(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(contextSessionKey).(*sessions.Session)
+func (c *Controller) ServeStartScanDo(w http.ResponseWriter, r *http.Request) *response {
+	defer func() {
+		go func() {
+			err := scanner.
+				New(c.DB, c.MusicPath).
+				Start()
+			if err != nil {
+				log.Printf("error while scanning: %v\n", err)
+			}
+		}()
+	}()
+	session := r.Context().Value(key.Session).(*sessions.Session)
 	sessAddFlashN("scan started. refresh for results", session)
 	sessLogSave(w, r, session)
-	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
-	go func() {
-		err := scanner.
-			New(c.DB, c.MusicPath).
-			Start()
-		if err != nil {
-			log.Printf("error while scanning: %v\n", err)
-		}
-	}()
+	return &response{redirect: "/admin/home"}
 }

@@ -1,6 +1,9 @@
-package subsonic
+package spec
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 var (
 	apiVersion = "1.9.0"
@@ -36,19 +39,30 @@ func NewResponse() *Response {
 	}
 }
 
+// spec errors:
+//  0  a generic error
+// 10  required parameter is missing
+// 20  incompatible subsonic rest protocol version. client must upgrade
+// 30  incompatible subsonic rest protocol version. server must upgrade
+// 40  wrong username or password
+// 41  token authentication not supported for ldap users
+// 50  user is not authorized for the given operation
+// 60  the trial period for the subsonic server is over
+// 70  the requested data was not found
+
 type Error struct {
 	Code    int    `xml:"code,attr"    json:"code"`
 	Message string `xml:"message,attr" json:"message"`
 }
 
-func NewError(code int, message string) *Response {
+func NewError(code int, message string, a ...interface{}) *Response {
 	return &Response{
 		Status:  "failed",
 		XMLNS:   xmlns,
 		Version: apiVersion,
 		Error: &Error{
 			Code:    code,
-			Message: message,
+			Message: fmt.Sprintf(message, a...),
 		},
 	}
 }

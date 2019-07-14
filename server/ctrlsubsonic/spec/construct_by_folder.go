@@ -1,14 +1,13 @@
-package handler
+package spec
 
 import (
 	"path"
 
 	"senan.xyz/g/gonic/model"
-	"senan.xyz/g/gonic/server/subsonic"
 )
 
-func newAlbumByFolder(f *model.Album) *subsonic.Album {
-	return &subsonic.Album{
+func NewAlbumByFolder(f *model.Album) *Album {
+	return &Album{
 		Artist:   f.Parent.RightPath,
 		CoverID:  f.ID,
 		ID:       f.ID,
@@ -18,8 +17,8 @@ func newAlbumByFolder(f *model.Album) *subsonic.Album {
 	}
 }
 
-func newTCAlbumByFolder(f *model.Album) *subsonic.TrackChild {
-	trCh := &subsonic.TrackChild{
+func NewTCAlbumByFolder(f *model.Album) *TrackChild {
+	trCh := &TrackChild{
 		ID:       f.ID,
 		IsDir:    true,
 		Title:    f.RightPath,
@@ -31,8 +30,8 @@ func newTCAlbumByFolder(f *model.Album) *subsonic.TrackChild {
 	return trCh
 }
 
-func newTCTrackByFolder(t *model.Track, parent *model.Album) *subsonic.TrackChild {
-	trCh := &subsonic.TrackChild{
+func NewTCTrackByFolder(t *model.Track, parent *model.Album) *TrackChild {
+	trCh := &TrackChild{
 		ID:          t.ID,
 		Album:       t.Album.RightPath,
 		ContentType: t.MIME(),
@@ -59,16 +58,16 @@ func newTCTrackByFolder(t *model.Track, parent *model.Album) *subsonic.TrackChil
 	return trCh
 }
 
-func newArtistByFolder(f *model.Album) *subsonic.Artist {
-	return &subsonic.Artist{
+func NewArtistByFolder(f *model.Album) *Artist {
+	return &Artist{
 		ID:         f.ID,
 		Name:       f.RightPath,
 		AlbumCount: f.ChildCount,
 	}
 }
 
-func newDirectoryByFolder(f *model.Album, children []*subsonic.TrackChild) *subsonic.Directory {
-	return &subsonic.Directory{
+func NewDirectoryByFolder(f *model.Album, children []*TrackChild) *Directory {
+	return &Directory{
 		ID:       f.ID,
 		Parent:   f.ParentID,
 		Name:     f.RightPath,

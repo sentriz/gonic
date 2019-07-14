@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/gob"
 	"flag"
 	"log"
 	"os"
@@ -11,7 +10,6 @@ import (
 
 	"senan.xyz/g/gonic/db"
 	"senan.xyz/g/gonic/server"
-	"senan.xyz/g/gonic/server/handler"
 )
 
 const (
@@ -49,7 +47,6 @@ func main() {
 		log.Fatalf("error opening database: %v\n", err)
 	}
 	defer db.Close()
-	gob.Register(&handler.Flash{})
 	s := server.New(
 		db,
 		*musicPath,
