@@ -1,0 +1,8 @@
+.git
+.github
+.gitignore
+.golangci.yml
+*testdata*
+*_test.go
+*.db
+README.md
