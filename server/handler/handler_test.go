@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	testDataDir    = "test_data"
+	testDataDir    = "testdata"
 	testCamelExpr  = regexp.MustCompile("([a-z0-9])([A-Z])")
 	testDBPath     = path.Join(testDataDir, "db")
 	testController *Controller

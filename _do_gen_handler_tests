@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_data_path=server/handler/test_data
+test_data_path=server/handler/testdata
 test_listen_addr=localhost:9353
 test_music_path=~/music
 test_db_path=$test_data_path/db
