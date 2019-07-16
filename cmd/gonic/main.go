@@ -31,12 +31,11 @@ func main() {
 	_ = set.String(
 		"config-path", "",
 		"path to config (optional)")
-	err := ff.Parse(set, os.Args[1:],
+	if err := ff.Parse(set, os.Args[1:],
 		ff.WithConfigFileFlag("config-path"),
 		ff.WithConfigFileParser(ff.PlainParser),
 		ff.WithEnvVarPrefix(programVar),
-	)
-	if err != nil {
+	); err != nil {
 		log.Fatalf("error parsing args: %v\n", err)
 	}
 	if _, err := os.Stat(*musicPath); os.IsNotExist(err) {
