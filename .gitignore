@@ -7,3 +7,4 @@ cmd/server/main
 *_bytes.go
 _test*
 dist
+*.sql
