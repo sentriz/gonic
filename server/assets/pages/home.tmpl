@@ -23,6 +23,7 @@
     </div>
     <div class="text-right">
         {{ if .User.IsAdmin }}
+            <p class="light">you can get an api key <a href="https://www.last.fm/api/account/create" target="_blank">here</a></p>
             <a href="/admin/update_lastfm_api_key">update api key</a><br/>
         {{ end }}
         {{ if .CurrentLastFMAPIKey }}
