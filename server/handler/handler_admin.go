@@ -276,7 +276,7 @@ func (c *Controller) ServeStartScanDo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) ServeRedirectHome(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "" || r.URL.Path == "/" {
+	if r.URL.Path == "/" {
 		http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 	} else {
 		http.NotFound(w, r)
