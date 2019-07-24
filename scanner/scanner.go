@@ -240,6 +240,13 @@ func decoded(in string) string {
 // ## begin handlers
 
 func (s *Scanner) handleFolder(it *item) error {
+	if s.trTxOpen {
+		// a transaction still being open when we handle a folder can
+		// happen if there is a folder that contains /both/ tracks and
+		// sub folders
+		s.trTx.Commit()
+		s.trTxOpen = false
+	}
 	folder := &model.Album{}
 	defer func() {
 		// folder's id will come from early return
