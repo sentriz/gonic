@@ -274,3 +274,7 @@ func (c *Controller) ServeStartScanDo(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 }
+
+func (c *Controller) ServeRedirectHome(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
+}
