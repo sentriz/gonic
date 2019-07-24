@@ -201,8 +201,11 @@ func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
 		s.curCover = filename
 		return nil
 	}
-	ext := path.Ext(filename)[1:]
-	if _, ok := mime.Types[ext]; ok {
+	ext := path.Ext(filename)
+	if ext == "" {
+		return nil
+	}
+	if _, ok := mime.Types[ext[1:]]; ok {
 		return s.handleTrack(it)
 	}
 	return nil
