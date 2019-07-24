@@ -96,9 +96,9 @@ func (s *Server) SetupAdmin() error {
 		withUserWare,
 		s.WithAdminSession,
 	)
+	// begin public routes (creates new session)
 	// redirect / to /admin/home
 	s.mux.HandleFunc("/", withPublicWare(s.ServeRedirectHome))
-	// begin public routes (creates new session)
 	s.mux.HandleFunc("/admin/login", withPublicWare(s.ServeLogin))
 	s.mux.HandleFunc("/admin/login_do", withPublicWare(s.ServeLoginDo))
 	// begin user routes (if session is valid)
