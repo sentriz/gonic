@@ -36,6 +36,7 @@ func New(path string) (*DB, error) {
 	}
 	db.SetLogger(log.New(os.Stdout, "gorm ", 0))
 	db.DB().SetMaxOpenConns(dbMaxOpenConns)
+	db.Exec("PRAGMA journal_mode=WAL;")
 	db.AutoMigrate(
 		model.Artist{},
 		model.Track{},
@@ -44,6 +45,7 @@ func New(path string) (*DB, error) {
 		model.Play{},
 		model.Album{},
 	)
+	// TODO: don't log if user already exists
 	db.FirstOrCreate(&model.User{}, model.User{
 		Name:     "admin",
 		Password: "admin",

@@ -5,6 +5,7 @@ cmd/server/server
 cmd/scanner/main
 cmd/server/main
 *_bytes.go
+*_gen.go
 _test*
 dist
 *.sql

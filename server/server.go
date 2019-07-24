@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 	"path/filepath"
 	"time"
@@ -27,13 +28,16 @@ func New(db *db.DB, musicPath string, listenAddr string) *Server {
 		MusicPath: musicPath,
 	}
 	router := mux.NewRouter()
-	// jamstash seems to call "musicFolderSettings.view" to start a scan. notice
-	// that there is no "/rest/" prefix, so i doesn't fit in with the nice router,
-	// custom handler, middleware. etc setup that we've got in `SetupSubsonic()`.
-	// instead lets redirect to down there and use the scan endpoint
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// make the admin page the default
+		http.Redirect(w, r, "/admin/home", http.StatusMovedPermanently)
+	})
 	router.HandleFunc("/musicFolderSettings.view", func(w http.ResponseWriter, r *http.Request) {
-		oldParams := r.URL.Query().Encode()
-		redirectTo := "/rest/startScan.view?" + oldParams
+		// jamstash seems to call "musicFolderSettings.view" to start a scan. notice
+		// that there is no "/rest/" prefix, so i doesn't fit in with the nice router,
+		// instead lets redirect to down there and use the scan endpoint
+		// custom handler, middleware. etc setup that we've got in `SetupSubsonic()`.
+		redirectTo := fmt.Sprintf("/rest/startScan.view?%s", r.URL.Query().Encode())
 		http.Redirect(w, r, redirectTo, http.StatusMovedPermanently)
 	})
 	router.Use(ctrlBase.WithLogging)
