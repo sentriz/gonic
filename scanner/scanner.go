@@ -210,22 +210,25 @@ func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
 }
 
 func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
+	defer func() {
+		s.curCover = ""
+	}()
 	if s.trTxOpen {
 		s.trTx.Commit()
 		s.trTxOpen = false
 	}
-	// begin taking the current folder if the stack and add it's
+	// begin taking the current folder off the stack and add it's
 	// parent, cover that we found, etc.
 	folder := s.curFolders.Pop()
-	if folder.ReceivedPaths {
-		folder.ParentID = s.curFolders.PeekID()
-		folder.Cover = s.curCover
-		s.db.Save(folder)
-		// we only log changed folders
-		log.Printf("processed folder `%s`\n",
-			path.Join(folder.LeftPath, folder.RightPath))
+	if !folder.ReceivedPaths {
+		return nil
 	}
-	s.curCover = ""
+	folder.ParentID = s.curFolders.PeekID()
+	folder.Cover = s.curCover
+	s.db.Save(folder)
+	// we only log changed folders
+	log.Printf("processed folder `%s`\n",
+		path.Join(folder.LeftPath, folder.RightPath))
 	return nil
 }
 
