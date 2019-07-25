@@ -1,4 +1,6 @@
 *.db
+*.db-wal
+*.db-shm
 *.sql
 cmd/scanner/scanner
 cmd/server/server
