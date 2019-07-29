@@ -25,14 +25,14 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 	if username == "" || password == "" {
 		sessAddFlashW("please provide both a username and password", session)
 		sessLogSave(w, r, session)
-		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 		return
 	}
 	user := c.DB.GetUserFromName(username)
 	if user == nil || password != user.Password {
 		sessAddFlashW("invalid username / password", session)
 		sessLogSave(w, r, session)
-		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 		return
 	}
 	// put the user name into the session. future endpoints after this one
@@ -103,7 +103,7 @@ func (c *Controller) ServeChangeOwnPasswordDo(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		sessAddFlashW(err.Error(), session)
 		sessLogSave(w, r, session)
-		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 		return
 	}
 	user := r.Context().Value(contextUserKey).(*model.User)
@@ -168,7 +168,7 @@ func (c *Controller) ServeChangePasswordDo(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		sessAddFlashW(err.Error(), session)
 		sessLogSave(w, r, session)
-		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 		return
 	}
 	user := c.DB.GetUserFromName(username)
@@ -211,7 +211,7 @@ func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		sessAddFlashW(err.Error(), session)
 		sessLogSave(w, r, session)
-		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 		return
 	}
 	passwordOne := r.FormValue("password_one")
@@ -220,7 +220,7 @@ func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		sessAddFlashW(err.Error(), session)
 		sessLogSave(w, r, session)
-		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 		return
 	}
 	user := model.User{
@@ -231,7 +231,7 @@ func (c *Controller) ServeCreateUserDo(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		sessAddFlashWf("could not create user `%s`: %v", session, username, err)
 		sessLogSave(w, r, session)
-		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 		return
 	}
 	http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
@@ -252,7 +252,7 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		sessAddFlashW(err.Error(), session)
 		sessLogSave(w, r, session)
-		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 		return
 	}
 	c.DB.SetSetting("lastfm_api_key", apiKey)
