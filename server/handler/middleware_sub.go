@@ -24,14 +24,14 @@ func checkHasAllParams(params url.Values) error {
 	return nil
 }
 
-func checkCredentialsToken(password, token, salt string) bool {
+func checkCredsToken(password, token, salt string) bool {
 	toHash := fmt.Sprintf("%s%s", password, salt)
 	hash := md5.Sum([]byte(toHash))
 	expToken := hex.EncodeToString(hash[:])
 	return token == expToken
 }
 
-func checkCredentialsBasic(password, given string) bool {
+func checkCredsBasic(password, given string) bool {
 	if given[:4] == "enc:" {
 		bytes, _ := hex.DecodeString(given[4:])
 		given = string(bytes)
@@ -47,15 +47,14 @@ func (c *Controller) WithValidSubsonicArgs(next http.HandlerFunc) http.HandlerFu
 			respondError(w, r, 10, err.Error())
 			return
 		}
-		username, password := r.URL.Query().Get("u"),
-			r.URL.Query().Get("p")
-		token, salt := r.URL.Query().Get("t"),
-			r.URL.Query().Get("s")
-		passwordAuth, tokenAuth := token == "" && salt == "",
-			password == ""
+		username := r.URL.Query().Get("u")
+		password := r.URL.Query().Get("p")
+		token := r.URL.Query().Get("t")
+		salt := r.URL.Query().Get("s")
+		passwordAuth := token == "" && salt == ""
+		tokenAuth := password == ""
 		if tokenAuth == passwordAuth {
-			respondError(w, r, 10,
-				"please provide parameters `t` and `s`, or just `p`")
+			respondError(w, r, 10, "please provide params `t` and `s`, or just `p`")
 			return
 		}
 		user := c.DB.GetUserFromName(username)
@@ -65,9 +64,9 @@ func (c *Controller) WithValidSubsonicArgs(next http.HandlerFunc) http.HandlerFu
 		}
 		var credsOk bool
 		if tokenAuth {
-			credsOk = checkCredentialsToken(user.Password, token, salt)
+			credsOk = checkCredsToken(user.Password, token, salt)
 		} else {
-			credsOk = checkCredentialsBasic(user.Password, password)
+			credsOk = checkCredsBasic(user.Password, password)
 		}
 		if !credsOk {
 			respondError(w, r, 40, "invalid password")
