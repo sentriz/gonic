@@ -162,8 +162,7 @@ func (c *Controller) SearchTwo(w http.ResponseWriter, r *http.Request) {
 		respondError(w, r, 10, "please provide a `query` parameter")
 		return
 	}
-	query = fmt.Sprintf("%%%s%%",
-		strings.TrimSuffix(query, "*"))
+	query = fmt.Sprintf("%%%s%%", strings.TrimSuffix(query, "*"))
 	results := &subsonic.SearchResultTwo{}
 	//
 	// search "artists"
