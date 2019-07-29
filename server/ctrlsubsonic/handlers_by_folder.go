@@ -159,8 +159,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	if query == "" {
 		return spec.NewError(10, "please provide a `query` parameter")
 	}
-	query = fmt.Sprintf("%%%s%%",
-		strings.TrimSuffix(query, "*"))
+	query = fmt.Sprintf("%%%s%%", strings.TrimSuffix(query, "*"))
 	results := &spec.SearchResultTwo{}
 	//
 	// search "artists"
