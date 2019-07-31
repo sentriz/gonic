@@ -25,6 +25,10 @@ func (s *Server) SetupSubsonic() error {
 	s.mux.HandleFunc("/rest/startScan.view", withWare(s.StartScan))
 	s.mux.HandleFunc("/rest/getScanStatus", withWare(s.GetScanStatus))
 	s.mux.HandleFunc("/rest/getScanStatus.view", withWare(s.GetScanStatus))
+	s.mux.HandleFunc("/rest/getUser", withWare(s.GetUser))
+	s.mux.HandleFunc("/rest/getUser.view", withWare(s.GetUser))
+	s.mux.HandleFunc("/musicFolderSettings", withWare(s.MusicFolderSettings))
+	s.mux.HandleFunc("/musicFolderSettings.view", withWare(s.MusicFolderSettings))
 	// browse by tag
 	s.mux.HandleFunc("/rest/getAlbum", withWare(s.GetAlbum))
 	s.mux.HandleFunc("/rest/getAlbum.view", withWare(s.GetAlbum))

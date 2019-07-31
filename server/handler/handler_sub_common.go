@@ -180,6 +180,33 @@ func (c *Controller) GetScanStatus(w http.ResponseWriter, r *http.Request) {
 	respond(w, r, sub)
 }
 
+func (c *Controller) GetUser(w http.ResponseWriter, r *http.Request) {
+	user := r.Context().Value(contextUserKey).(*model.User)
+	scrobblingEnabled := user.LastFMSession != ""
+	sub := subsonic.NewResponse()
+	sub.User = &subsonic.User{
+		Username:          user.Name,
+		AdminRole:         user.IsAdmin,
+		ScrobblingEnabled: scrobblingEnabled,
+		Folder:            []int{1},
+	}
+	respond(w, r, sub)
+}
+
+func (c *Controller) MusicFolderSettings(w http.ResponseWriter, r *http.Request) {
+	if _, exists := (r.URL.Query())["scanNow"]; exists {
+		// cant use .Get() cause there is not value for scanNow :)
+		go func() {
+			err := scanner.
+				New(c.DB, c.MusicPath).
+				Start()
+			if err != nil {
+				log.Printf("error while scanning: %v\n", err)
+			}
+		}()
+	}
+}
+
 func (c *Controller) NotFound(w http.ResponseWriter, r *http.Request) {
 	respondError(w, r, 0, "unknown route")
 }
