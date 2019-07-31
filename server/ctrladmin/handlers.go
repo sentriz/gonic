@@ -15,6 +15,10 @@ import (
 	"senan.xyz/g/gonic/server/lastfm"
 )
 
+func (c *Controller) ServeNotFound(w http.ResponseWriter, r *http.Request) *Response {
+	return &Response{template: "not_found.tmpl"}
+}
+
 func (c *Controller) ServeLogin(w http.ResponseWriter, r *http.Request) *Response {
 	return &Response{template: "login.tmpl"}
 }

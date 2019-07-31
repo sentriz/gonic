@@ -63,6 +63,7 @@ func (s *Server) SetupAdmin() error {
 	// begin public routes (creates session)
 	routPublic := s.router.PathPrefix("/admin").Subrouter()
 	routPublic.Use(ctrl.WithSession)
+	routPublic.NotFoundHandler = ctrl.H(ctrl.ServeNotFound)
 	routPublic.Handle("/login", ctrl.H(ctrl.ServeLogin))
 	routPublic.Handle("/login_do", ctrl.H(ctrl.ServeLoginDo))
 	assets.PrefixDo("static", func(path string, asset *assets.EmbeddedAsset) {

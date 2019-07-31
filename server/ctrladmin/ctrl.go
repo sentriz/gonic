@@ -134,13 +134,13 @@ func (c *Controller) H(h adminHandler) http.Handler {
 		if resp.data == nil {
 			resp.data = &templateData{}
 		}
-		session := r.Context().Value(key.Session).(*sessions.Session)
-		resp.data.Flashes = session.Flashes()
-		if err := session.Save(r, w); err != nil {
-			http.Error(w, fmt.Sprintf("saving session: %v", err), 500)
-			return
+		if session, ok := r.Context().Value(key.Session).(*sessions.Session); ok {
+			resp.data.Flashes = session.Flashes()
+			sessLogSave(w, r, session)
 		}
-		resp.data.User, _ = r.Context().Value(key.User).(*model.User)
+		if user, ok := r.Context().Value(key.User).(*model.User); ok {
+			resp.data.User = user
+		}
 		buff := c.buffPool.Get()
 		defer c.buffPool.Put(buff)
 		tmpl, ok := c.templates[resp.template]
