@@ -103,9 +103,9 @@ type templateData struct {
 	SelectedUser           *model.User
 }
 
-type adminHandler func(w http.ResponseWriter, r *http.Request) *response
+type adminHandler func(w http.ResponseWriter, r *http.Request) *Response
 
-type response struct {
+type Response struct {
 	// code is 200
 	template string
 	data     *templateData
@@ -153,8 +153,9 @@ func (c *Controller) H(h adminHandler) http.Handler {
 			return
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		buff.WriteTo(w)
-		return
+		if _, err := buff.WriteTo(w); err != nil {
+			log.Printf("error writing to response buffer: %v\n", err)
+		}
 	})
 }
 
