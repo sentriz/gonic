@@ -194,7 +194,7 @@ func (c *Controller) GetUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) MusicFolderSettings(w http.ResponseWriter, r *http.Request) {
-	if _, exists := (r.URL.Query())["scanNow"]; !exists {
+	if _, ok := (r.URL.Query())["scanNow"]; !exists {
 		return
 	}
 	go func() {
