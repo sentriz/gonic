@@ -258,7 +258,7 @@ func (c *Controller) ServeUpdateLastFMAPIKey(w http.ResponseWriter, r *http.Requ
 	data.CurrentLastFMAPIKey = c.DB.GetSetting("lastfm_api_key")
 	data.CurrentLastFMAPISecret = c.DB.GetSetting("lastfm_secret")
 	return &Response{
-		template: "create_user.tmpl",
+		template: "update_lastfm_api_key.tmpl",
 		data:     data,
 	}
 }
@@ -267,15 +267,14 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(w http.ResponseWriter, r *http.Re
 	session := r.Context().Value(key.Session).(*sessions.Session)
 	apiKey := r.FormValue("api_key")
 	secret := r.FormValue("secret")
-	err := validateAPIKey(apiKey, secret)
-	if err != nil {
+	if err := validateAPIKey(apiKey, secret); err != nil {
 		sessAddFlashW(err.Error(), session)
 		sessLogSave(w, r, session)
 		return &Response{redirect: r.Referer()}
 	}
 	c.DB.SetSetting("lastfm_api_key", apiKey)
 	c.DB.SetSetting("lastfm_secret", secret)
-	return &Response{redirect: r.Referer()}
+	return &Response{redirect: "/admin/home"}
 }
 
 func (c *Controller) ServeStartScanDo(w http.ResponseWriter, r *http.Request) *Response {
