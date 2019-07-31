@@ -40,6 +40,7 @@ func New(db *db.DB, musicPath string, listenAddr string) *Server {
 		redirectTo := fmt.Sprintf("/rest/startScan.view?%s", r.URL.Query().Encode())
 		http.Redirect(w, r, redirectTo, http.StatusMovedPermanently)
 	})
+	// common middleware for admin and subsonic routes
 	router.Use(ctrlBase.WithLogging)
 	router.Use(ctrlBase.WithCORS)
 	server := &http.Server{
@@ -58,7 +59,8 @@ func New(db *db.DB, musicPath string, listenAddr string) *Server {
 
 func (s *Server) SetupAdmin() error {
 	ctrl := ctrladmin.New(s.ctrlBase)
-	// TODO: remove all the H()s
+	//
+	// begin public routes (creates session)
 	routPublic := s.router.PathPrefix("/admin").Subrouter()
 	routPublic.Use(ctrl.WithSession)
 	routPublic.Handle("/login", ctrl.H(ctrl.ServeLogin))
@@ -81,6 +83,7 @@ func (s *Server) SetupAdmin() error {
 	routUser.Handle("/change_own_password_do", ctrl.H(ctrl.ServeChangeOwnPasswordDo))
 	routUser.Handle("/link_lastfm_do", ctrl.H(ctrl.ServeLinkLastFMDo))
 	routUser.Handle("/unlink_lastfm_do", ctrl.H(ctrl.ServeUnlinkLastFMDo))
+	//
 	// begin admin routes (if session is valid, and is admin)
 	routAdmin := routUser.NewRoute().Subrouter()
 	routAdmin.Use(ctrl.WithAdminSession)
@@ -101,24 +104,29 @@ func (s *Server) SetupSubsonic() error {
 	rout := s.router.PathPrefix("/rest").Subrouter()
 	rout.Use(ctrl.WithValidSubsonicArgs)
 	rout.NotFoundHandler = ctrl.H(ctrl.ServeNotFound)
-	// common
+	//
+	// begin common
 	rout.Handle("/getLicense{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetLicence))
 	rout.Handle("/getMusicFolders{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetMusicFolders))
 	rout.Handle("/getScanStatus{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetScanStatus))
 	rout.Handle("/ping{_:(?:\\.view)?}", ctrl.H(ctrl.ServePing))
 	rout.Handle("/scrobble{_:(?:\\.view)?}", ctrl.H(ctrl.ServeScrobble))
 	rout.Handle("/startScan{_:(?:\\.view)?}", ctrl.H(ctrl.ServeStartScan))
-	// raw
+	rout.Handle("/getUser{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetUser))
+	//
+	// begin raw
 	rout.Handle("/download{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeStream))
 	rout.Handle("/getCoverArt{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeGetCoverArt))
 	rout.Handle("/stream{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeStream))
-	// browse by tag
+	//
+	// begin browse by tag
 	rout.Handle("/getAlbum{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetAlbum))
 	rout.Handle("/getAlbumList2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetAlbumListTwo))
 	rout.Handle("/getArtist{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtist))
 	rout.Handle("/getArtists{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtists))
 	rout.Handle("/search3{_:(?:\\.view)?}", ctrl.H(ctrl.ServeSearchThree))
-	// browse by folder
+	//
+	// begin browse by folder
 	rout.Handle("/getIndexes{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetIndexes))
 	rout.Handle("/getMusicDirectory{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetMusicDirectory))
 	rout.Handle("/getAlbumList{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetAlbumList))

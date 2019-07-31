@@ -29,6 +29,7 @@ type Response struct {
 	Licence           *Licence           `xml:"license"       json:"license,omitempty"`
 	SearchResultTwo   *SearchResultTwo   `xml:"searchResult2" json:"searchResult2,omitempty"`
 	SearchResultThree *SearchResultThree `xml:"searchResult3" json:"searchResult3,omitempty"`
+	User              *User              `xml:"user"          json:"user,omitempty"`
 }
 
 func NewResponse() *Response {
@@ -176,4 +177,22 @@ type SearchResultThree struct {
 	Artists []*Artist     `xml:"artist,omitempty" json:"artist,omitempty"`
 	Albums  []*Album      `xml:"album,omitempty"  json:"album,omitempty"`
 	Tracks  []*TrackChild `xml:"song,omitempty"   json:"song,omitempty"`
+}
+
+type User struct {
+	Username            string `xml:"username,attr"            json:"username"`
+	ScrobblingEnabled   bool   `xml:"scrobblingEnabled,attr"   json:"scrobblingEnabled"`
+	AdminRole           bool   `xml:"adminRole,attr"           json:"adminRole"`
+	SettingsRole        bool   `xml:"settingsRole,attr"        json:"settingsRole"`
+	DownloadRole        bool   `xml:"downloadRole,attr"        json:"downloadRole"`
+	UploadRole          bool   `xml:"uploadRole,attr"          json:"uploadRole"`
+	PlaylistRole        bool   `xml:"playlistRole,attr"        json:"playlistRole"`
+	CoverArtRole        bool   `xml:"coverArtRole,attr"        json:"coverArtRole"`
+	CommentRole         bool   `xml:"commentRole,attr"         json:"commentRole"`
+	PodcastRole         bool   `xml:"podcastRole,attr"         json:"podcastRole"`
+	StreamRole          bool   `xml:"streamRole,attr"          json:"streamRole"`
+	JukeboxRole         bool   `xml:"jukeboxRole,attr"         json:"jukeboxRole"`
+	ShareRole           bool   `xml:"shareRole,attr"           json:"shareRole"`
+	VideoConversionRole bool   `xml:"videoConversionRole,attr" json:"videoConversionRole"`
+	Folder              []int  `xml:"folder,attr"              json:"folder"`
 }

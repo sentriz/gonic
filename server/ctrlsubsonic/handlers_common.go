@@ -102,6 +102,18 @@ func (c *Controller) ServeGetScanStatus(r *http.Request) *spec.Response {
 	return sub
 }
 
+func (c *Controller) ServeGetUser(r *http.Request) *spec.Response {
+	user := r.Context().Value(key.User).(*model.User)
+	sub := spec.NewResponse()
+	sub.User = &spec.User{
+		Username:          user.Name,
+		AdminRole:         user.IsAdmin,
+		ScrobblingEnabled: user.LastFMSession != "",
+		Folder:            []int{1},
+	}
+	return sub
+}
+
 func (c *Controller) ServeNotFound(r *http.Request) *spec.Response {
 	return spec.NewError(70, "view not found")
 }
