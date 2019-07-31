@@ -194,17 +194,17 @@ func (c *Controller) GetUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) MusicFolderSettings(w http.ResponseWriter, r *http.Request) {
-	if _, exists := (r.URL.Query())["scanNow"]; exists {
-		// cant use .Get() cause there is not value for scanNow :)
-		go func() {
-			err := scanner.
-				New(c.DB, c.MusicPath).
-				Start()
-			if err != nil {
-				log.Printf("error while scanning: %v\n", err)
-			}
-		}()
+	if _, exists := (r.URL.Query())["scanNow"]; !exists {
+		return
 	}
+	go func() {
+		err := scanner.
+			New(c.DB, c.MusicPath).
+			Start()
+		if err != nil {
+			log.Printf("error while scanning: %v\n", err)
+		}
+	}()
 }
 
 func (c *Controller) NotFound(w http.ResponseWriter, r *http.Request) {
