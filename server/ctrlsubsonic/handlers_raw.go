@@ -2,7 +2,6 @@ package ctrlsubsonic
 
 import (
 	"net/http"
-	"os"
 	"path"
 	"time"
 
@@ -65,12 +64,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		track.Album.RightPath,
 		track.Filename,
 	)
-	file, err := os.Open(absPath)
-	if err != nil {
-		return spec.NewError(0, "error while streaming media: %v", err)
-	}
-	stat, _ := file.Stat()
-	http.ServeContent(w, r, absPath, stat.ModTime(), file)
+	http.ServeFile(w, r, absPath)
 	//
 	// after we've served the file, mark the album as played
 	user := r.Context().Value(key.User).(*model.User)

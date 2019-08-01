@@ -107,6 +107,7 @@ func processAssets(c *config, files []string) error {
 		if err != nil {
 			return errors.Wrap(err, "opening asset")
 		}
+		defer data.Close()
 		processAsset(
 			c,
 			&file{
