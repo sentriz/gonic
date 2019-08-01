@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/pkg/errors"
+
 	"senan.xyz/g/gonic/server/ctrlbase"
 	"senan.xyz/g/gonic/server/ctrlsubsonic/spec"
 	"senan.xyz/g/gonic/server/parsing"
@@ -39,7 +41,10 @@ func (ew *errWriter) write(buf []byte) {
 	_, ew.err = ew.w.Write(buf)
 }
 
-func writeResp(w http.ResponseWriter, r *http.Request, resp *spec.Response) {
+func writeResp(w http.ResponseWriter, r *http.Request, resp *spec.Response) error {
+	if resp.Error != nil {
+		w.WriteHeader(http.StatusBadRequest)
+	}
 	res := metaResponse{Response: resp}
 	ew := &errWriter{w: w}
 	switch parsing.GetStrParam(r, "f") {
@@ -47,18 +52,18 @@ func writeResp(w http.ResponseWriter, r *http.Request, resp *spec.Response) {
 		w.Header().Set("Content-Type", "application/json")
 		data, err := json.Marshal(res)
 		if err != nil {
-			log.Printf("could not marshall to json: %v\n", err)
-			return
+			return errors.Wrap(err, "marshal to json")
 		}
 		ew.write(data)
 	case "jsonp":
 		w.Header().Set("Content-Type", "application/javascript")
 		data, err := json.Marshal(res)
 		if err != nil {
-			log.Printf("could not marshall to json: %v\n", err)
-			return
+			return errors.Wrap(err, "marshal to jsonp")
 		}
-		ew.write([]byte(parsing.GetStrParamOr(r, "callback", "cb")))
+		// TODO: error if no callback provided instead of using a default
+		pCall := parsing.GetStrParamOr(r, "callback", "cb")
+		ew.write([]byte(pCall))
 		ew.write([]byte("("))
 		ew.write(data)
 		ew.write([]byte(");"))
@@ -66,23 +71,21 @@ func writeResp(w http.ResponseWriter, r *http.Request, resp *spec.Response) {
 		w.Header().Set("Content-Type", "application/xml")
 		data, err := xml.MarshalIndent(res, "", "    ")
 		if err != nil {
-			log.Printf("could not marshall to xml: %v\n", err)
-			return
+			return errors.Wrap(err, "marshal to xml")
 		}
 		ew.write(data)
 	}
-	if ew.err != nil {
-		log.Printf("error writing to response: %v\n", ew.err)
-	}
+	return ew.err
 }
 
 type subsonicHandler func(r *http.Request) *spec.Response
 
 func (c *Controller) H(h subsonicHandler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// TODO: write a non 200 if has err
 		response := h(r)
-		writeResp(w, r, response)
+		if err := writeResp(w, r, response); err != nil {
+			log.Printf("error writing subsonic response (normal handler): %v\n", err)
+		}
 	})
 }
 
@@ -90,9 +93,10 @@ type subsonicHandlerRaw func(w http.ResponseWriter, r *http.Request) *spec.Respo
 
 func (c *Controller) HR(h subsonicHandlerRaw) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// TODO: write a non 200 if has err
-		// TODO: ensure no mixed return/writer
+		// TODO: log if both response writer written and non nil spec return
 		response := h(w, r)
-		writeResp(w, r, response)
+		if err := writeResp(w, r, response); err != nil {
+			log.Printf("error writing subsonic response (raw handler): %v\n", err)
+		}
 	})
 }
