@@ -83,6 +83,10 @@ type subsonicHandler func(r *http.Request) *spec.Response
 func (c *Controller) H(h subsonicHandler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		response := h(r)
+		if response == nil {
+			log.Println("error: non raw subsonic handler returned a nil response\n")
+			return
+		}
 		if err := writeResp(w, r, response); err != nil {
 			log.Printf("error writing subsonic response (normal handler): %v\n", err)
 		}
@@ -93,8 +97,10 @@ type subsonicHandlerRaw func(w http.ResponseWriter, r *http.Request) *spec.Respo
 
 func (c *Controller) HR(h subsonicHandlerRaw) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// TODO: log if both response writer written and non nil spec return
 		response := h(w, r)
+		if response == nil {
+			return
+		}
 		if err := writeResp(w, r, response); err != nil {
 			log.Printf("error writing subsonic response (raw handler): %v\n", err)
 		}
