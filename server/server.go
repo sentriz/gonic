@@ -35,8 +35,8 @@ func New(db *db.DB, musicPath string, listenAddr string) *Server {
 	router.HandleFunc("/musicFolderSettings.view", func(w http.ResponseWriter, r *http.Request) {
 		// jamstash seems to call "musicFolderSettings.view" to start a scan. notice
 		// that there is no "/rest/" prefix, so i doesn't fit in with the nice router,
-		// instead lets redirect to down there and use the scan endpoint
 		// custom handler, middleware. etc setup that we've got in `SetupSubsonic()`.
+		// instead lets redirect to down there and use the scan endpoint
 		redirectTo := fmt.Sprintf("/rest/startScan.view?%s", r.URL.Query().Encode())
 		http.Redirect(w, r, redirectTo, http.StatusMovedPermanently)
 	})
