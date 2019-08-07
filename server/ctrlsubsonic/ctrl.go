@@ -84,7 +84,7 @@ func (c *Controller) H(h subsonicHandler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		response := h(r)
 		if response == nil {
-			log.Println("error: non raw subsonic handler returned a nil response\n")
+			log.Println("error: non raw subsonic handler returned a nil response")
 			return
 		}
 		if err := writeResp(w, r, response); err != nil {

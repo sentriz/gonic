@@ -65,7 +65,7 @@ func (s *Server) SetupAdmin() error {
 	routPublic.Use(ctrl.WithSession)
 	routPublic.NotFoundHandler = ctrl.H(ctrl.ServeNotFound)
 	routPublic.Handle("/login", ctrl.H(ctrl.ServeLogin))
-	routPublic.Handle("/login_do", ctrl.H(ctrl.ServeLoginDo))
+	routPublic.HandleFunc("/login_do", ctrl.ServeLoginDo) // "raw" handler, updates session
 	assets.PrefixDo("static", func(path string, asset *assets.EmbeddedAsset) {
 		_, name := filepath.Split(path)
 		route := filepath.Join("/static", name)
@@ -78,7 +78,7 @@ func (s *Server) SetupAdmin() error {
 	// begin user routes (if session is valid)
 	routUser := routPublic.NewRoute().Subrouter()
 	routUser.Use(ctrl.WithUserSession)
-	routUser.Handle("/logout", ctrl.H(ctrl.ServeLogout))
+	routUser.HandleFunc("/logout", ctrl.ServeLogout) // "raw" handler, updates session
 	routUser.Handle("/home", ctrl.H(ctrl.ServeHome))
 	routUser.Handle("/change_own_password", ctrl.H(ctrl.ServeChangeOwnPassword))
 	routUser.Handle("/change_own_password_do", ctrl.H(ctrl.ServeChangeOwnPasswordDo))

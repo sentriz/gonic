@@ -103,7 +103,7 @@ type templateData struct {
 	SelectedUser           *model.User
 }
 
-type adminHandler func(w http.ResponseWriter, r *http.Request) *Response
+type adminHandler func(r *http.Request) *Response
 
 type Response struct {
 	// code is 200
@@ -111,6 +111,8 @@ type Response struct {
 	data     *templateData
 	// code is 303
 	redirect string
+	flashN   string // normal
+	flashW   string // warning
 	// code is >= 400
 	code int
 	err  string
@@ -118,7 +120,16 @@ type Response struct {
 
 func (c *Controller) H(h adminHandler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := h(w, r)
+		resp := h(r)
+		session, ok := r.Context().Value(key.Session).(*sessions.Session)
+		if ok {
+			sessAddFlashN(session, resp.flashN)
+			sessAddFlashW(session, resp.flashW)
+			if err := session.Save(r, w); err != nil {
+				http.Error(w, fmt.Sprint("error saving session: %v", err), 500)
+				return
+			}
+		}
 		if resp.redirect != "" {
 			http.Redirect(w, r, resp.redirect, http.StatusSeeOther)
 			return
@@ -134,9 +145,12 @@ func (c *Controller) H(h adminHandler) http.Handler {
 		if resp.data == nil {
 			resp.data = &templateData{}
 		}
-		if session, ok := r.Context().Value(key.Session).(*sessions.Session); ok {
+		if session != nil {
 			resp.data.Flashes = session.Flashes()
-			sessLogSave(w, r, session)
+			if err := session.Save(r, w); err != nil {
+				http.Error(w, fmt.Sprint("error saving session: %v", err), 500)
+				return
+			}
 		}
 		if user, ok := r.Context().Value(key.User).(*model.User); ok {
 			resp.data.User = user
@@ -172,7 +186,7 @@ func firstExisting(or string, strings ...string) string {
 	return or
 }
 
-func sessLogSave(w http.ResponseWriter, r *http.Request, s *sessions.Session) {
+func sessLogSave(s *sessions.Session, w http.ResponseWriter, r *http.Request) {
 	if err := s.Save(r, w); err != nil {
 		log.Printf("error saving session: %v\n", err)
 	}
@@ -183,26 +197,32 @@ type Flash struct {
 	Type    string
 }
 
-func sessAddFlashW(message string, s *sessions.Session) {
+func sessAddFlashW(s *sessions.Session, message string) {
+	if message == "" {
+		return
+	}
 	s.AddFlash(Flash{
 		Message: message,
 		Type:    "warning",
 	})
 }
 
-func sessAddFlashWf(message string, s *sessions.Session, a ...interface{}) {
-	sessAddFlashW(fmt.Sprintf(message, a...), s)
+func sessAddFlashWf(s *sessions.Session, message string, a ...interface{}) {
+	sessAddFlashW(s, fmt.Sprintf(message, a...))
 }
 
-func sessAddFlashN(message string, s *sessions.Session) {
+func sessAddFlashN(s *sessions.Session, message string) {
+	if message == "" {
+		return
+	}
 	s.AddFlash(Flash{
 		Message: message,
 		Type:    "normal",
 	})
 }
 
-func sessAddFlashNf(message string, s *sessions.Session, a ...interface{}) {
-	sessAddFlashN(fmt.Sprintf(message, a...), s)
+func sessAddFlashNf(s *sessions.Session, message string, a ...interface{}) {
+	sessAddFlashN(s, fmt.Sprintf(message, a...))
 }
 
 // ## begin validation
