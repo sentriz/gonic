@@ -126,7 +126,7 @@ func (c *Controller) H(h adminHandler) http.Handler {
 			sessAddFlashN(session, resp.flashN)
 			sessAddFlashW(session, resp.flashW)
 			if err := session.Save(r, w); err != nil {
-				http.Error(w, fmt.Sprint("error saving session: %v", err), 500)
+				http.Error(w, fmt.Sprintf("error saving session: %v", err), 500)
 				return
 			}
 		}
@@ -148,7 +148,7 @@ func (c *Controller) H(h adminHandler) http.Handler {
 		if session != nil {
 			resp.data.Flashes = session.Flashes()
 			if err := session.Save(r, w); err != nil {
-				http.Error(w, fmt.Sprint("error saving session: %v", err), 500)
+				http.Error(w, fmt.Sprintf("error saving session: %v", err), 500)
 				return
 			}
 		}
