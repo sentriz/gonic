@@ -11,3 +11,6 @@ cmd/server/main
 _test*
 dist
 *.sql
+gonic
+gonicscan
+gonicembed
