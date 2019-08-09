@@ -2,6 +2,11 @@
   --pad-size: 1.75rem;
 }
 
+*, span, div, .mdi {
+    font-family: monospace;
+    font-size: 0.8rem;
+}
+
 body {
     max-width: 780px;
     margin: 0 auto;
@@ -25,10 +30,6 @@ table td:first-child::after {
     body {
         font-size: 12px;
     }
-}
-
-* {
-    font-size: 1rem;
 }
 
 form input[type],
@@ -132,10 +133,6 @@ a:hover {
 
 .block-right > * {
     margin-left: auto;
-}
-
-.mono {
-    font-family: monospace;
 }
 
 .box-title {
