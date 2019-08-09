@@ -1,5 +1,5 @@
 {{ define "user" }}
-<div class="padded box mono">
+<div class="padded box">
     <div class="box-title">
         <i class="mdi mdi-chart-arc"></i> stats
     </div>
@@ -17,7 +17,7 @@
         </table>
     </div>
 </div>
-<div class="padded box mono">
+<div class="padded box">
     <div class="box-title">
         <i class="mdi mdi-lastfm"></i> last.fm
     </div>
@@ -41,7 +41,7 @@
         {{ end }}
     </div>
 </div>
-<div class="padded box mono">
+<div class="padded box">
     {{ if .User.IsAdmin }}
         {{/* admin panel to manage all users */}}
         <div class="box-title">
@@ -68,7 +68,7 @@
         </div>
     {{ end }}
 </div>
-<div class="padded box mono">
+<div class="padded box">
     <div class="box-title">
         <i class="mdi mdi-folder-multiple"></i> recent folders
     </div>

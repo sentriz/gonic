@@ -13,12 +13,12 @@
             </div>
             {{ if .Flashes }}
             {{ $flash := index .Flashes 0 }}
-            <div class="padded mono flash-{{ $flash.Type }}">
+            <div class="padded flash-{{ $flash.Type }}">
                 <i class="mdi mdi-alert-circle"></i> {{ $flash.Message }}
             </div>
             {{ end }}
             {{ template "content" . }}
-            <div class="side-padded mono text-right">
+            <div class="side-padded text-right">
                 senan kelly, 2019
                 <span class="light">&#124;</span>
                 <a href="https://senan.xyz/g/gonic">github</a>
