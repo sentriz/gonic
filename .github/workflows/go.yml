@@ -1,0 +1,22 @@
+name: gonic
+on: [push]
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-18.04
+    steps:
+    - name: install go
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.12
+      id: go
+    - name: install external libraries
+      run: sudo apt install sqlite3 libtag1-dev tree
+    - name: checkout
+      uses: actions/checkout@v1
+    - name: get dependencies
+      run: go get -v -t -d ./...
+    - name: build server
+      run: cd $GOPATH && ./_do_build_server
+    - name: build scanner
+      run: cd $GOPATH && ./_do_build_scanner
