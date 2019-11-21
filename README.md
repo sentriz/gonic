@@ -19,11 +19,11 @@ $ go get github.com/sentriz/gonic/cmd/gonic
 $ gonic -h
 ```
 
-or with docker
+or with docker, available on dockerhub as `sentriz/gonic`
 
 ```yaml
   gonic:
-    build: ${BUILD}/gonic
+    build: sentriz/gonic:latest
     environment:
     - TZ
     - GONIC_MUSIC_PATH=/music
