@@ -24,7 +24,7 @@ or with docker, available on dockerhub as `sentriz/gonic`
 
 ```yaml
   gonic:
-    build: sentriz/gonic:latest
+    image: sentriz/gonic:latest
     environment:
     - TZ
     - GONIC_MUSIC_PATH=/music
