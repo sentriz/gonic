@@ -7,12 +7,14 @@
  - pretty fast scanning (with my library of ~27k tracks, initial scan takes about 10m, and about 5s after incrementally)  
  - last.fm scrobbling  
  - multiple users  
- - a web interface (set up last.fm, manage users, start scans, etc.)  
+ - a web interface for configuration (set up last.fm, manage users, start scans, etc.)  
  - newer salt and token auth  
  - tested on [dsub](https://f-droid.org/en/packages/github.daneren2005.dsub/) and [jamstash](http://jamstash.com/)  
  
  
 ## installation
+
+The default login is **admin**/**admin**.
 
 ```
 $ go get senan.xyz/g/gonic/cmd/gonic
