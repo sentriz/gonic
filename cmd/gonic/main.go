@@ -19,18 +19,10 @@ const (
 
 func main() {
 	set := flag.NewFlagSet(programName, flag.ExitOnError)
-	listenAddr := set.String(
-		"listen-addr", "0.0.0.0:6969",
-		"listen address (optional)")
-	musicPath := set.String(
-		"music-path", "",
-		"path to music")
-	dbPath := set.String(
-		"db-path", "gonic.db",
-		"path to database (optional)")
-	_ = set.String(
-		"config-path", "",
-		"path to config (optional)")
+	listenAddr := set.String("listen-addr", "0.0.0.0:6969", "listen address (optional)")
+	musicPath := set.String("music-path", "", "path to music")
+	dbPath := set.String("db-path", "gonic.db", "path to database (optional)")
+	_ = set.String("config-path", "", "path to config (optional)")
 	if err := ff.Parse(set, os.Args[1:],
 		ff.WithConfigFileFlag("config-path"),
 		ff.WithConfigFileParser(ff.PlainParser),
@@ -51,12 +43,10 @@ func main() {
 		*musicPath,
 		*listenAddr,
 	)
-	err = s.SetupAdmin()
-	if err != nil {
+	if err = s.SetupAdmin(); err != nil {
 		log.Fatalf("error setting up admin routes: %v\n", err)
 	}
-	err = s.SetupSubsonic()
-	if err != nil {
+	if err = s.SetupSubsonic(); err != nil {
 		log.Fatalf("error setting up subsonic routes: %v\n", err)
 	}
 	log.Printf("starting server at %s", *listenAddr)
