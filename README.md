@@ -15,6 +15,7 @@
 ## installation
 
 ```
+$ apt install sqlite tablib libtag1-dev
 $ go get senan.xyz/g/gonic/cmd/gonic
 $ gonic -h
 ```
