@@ -33,7 +33,7 @@ or with docker, available on dockerhub as `sentriz/gonic`
     - 80
     volumes:
     - ./data:/data
-    - ${MEDIA}/music/albums:/music:ro
+    - ${YOUR_MUSIC}:/music:ro
 ```
 
 ## screenshots
