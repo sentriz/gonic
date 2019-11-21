@@ -15,7 +15,7 @@
 ## installation
 
 ```
-$ go get github.com/sentriz/gonic/cmd/gonic
+$ go get senan.xyz/g/gonic/cmd/gonic
 $ gonic -h
 ```
 
