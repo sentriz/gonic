@@ -10,6 +10,31 @@
  - a web interface (set up last.fm, manage users, start scans, etc.)  
  - newer salt and token auth  
  - tested on [dsub](https://f-droid.org/en/packages/github.daneren2005.dsub/) and [jamstash](http://jamstash.com/)  
+ 
+ 
+## installation
+
+```
+$ go get github.com/sentriz/gonic/cmd/gonic
+$ gonic -h
+```
+
+or with docker
+
+```yaml
+  gonic:
+    build: ${BUILD}/gonic
+    environment:
+    - TZ
+    - GONIC_MUSIC_PATH=/music
+    - GONIC_DB_PATH=/data/db.db
+    - GONIC_LISTEN_ADDR=:80
+    expose:
+    - 80
+    volumes:
+    - ./data:/data
+    - ${MEDIA}/music/albums:/music:ro
+```
 
 ## screenshots
 
