@@ -20,7 +20,7 @@ const (
 
 func main() {
 	set := flag.NewFlagSet(programName, flag.ExitOnError)
-	listenAddr := set.String("listen-addr", "0.0.0.0:6969", "listen address (optional)")
+	listenAddr := set.String("listen-addr", "0.0.0.0:4747", "listen address (optional)")
 	musicPath := set.String("music-path", "", "path to music")
 	dbPath := set.String("db-path", "gonic.db", "path to database (optional)")
 	scanInterval := set.Int("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
