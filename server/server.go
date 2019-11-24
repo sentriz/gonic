@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"net/http"
 	"path/filepath"
 	"time"
@@ -11,21 +12,31 @@ import (
 
 	"senan.xyz/g/gonic/assets"
 	"senan.xyz/g/gonic/db"
+	"senan.xyz/g/gonic/scanner"
 	"senan.xyz/g/gonic/server/ctrladmin"
 	"senan.xyz/g/gonic/server/ctrlbase"
 	"senan.xyz/g/gonic/server/ctrlsubsonic"
 )
 
-type Server struct {
-	*http.Server
-	router   *mux.Router
-	ctrlBase *ctrlbase.Controller
+type ServerOptions struct {
+	DB           *db.DB
+	MusicPath    string
+	ListenAddr   string
+	ScanInterval time.Duration
 }
 
-func New(db *db.DB, musicPath string, listenAddr string) *Server {
+type Server struct {
+	*http.Server
+	router       *mux.Router
+	ctrlBase     *ctrlbase.Controller
+	ScanInterval time.Duration
+}
+
+func New(opts ServerOptions) *Server {
 	ctrlBase := &ctrlbase.Controller{
-		DB:        db,
-		MusicPath: musicPath,
+		DB:        opts.DB,
+		MusicPath: opts.MusicPath,
+		Scanner:   scanner.New(opts.DB, opts.MusicPath),
 	}
 	router := mux.NewRouter()
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -44,16 +55,17 @@ func New(db *db.DB, musicPath string, listenAddr string) *Server {
 	router.Use(ctrlBase.WithLogging)
 	router.Use(ctrlBase.WithCORS)
 	server := &http.Server{
-		Addr:         listenAddr,
+		Addr:         opts.ListenAddr,
 		Handler:      router,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  15 * time.Second,
 	}
 	return &Server{
-		Server:   server,
-		router:   router,
-		ctrlBase: ctrlBase,
+		Server:       server,
+		router:       router,
+		ctrlBase:     ctrlBase,
+		ScanInterval: opts.ScanInterval,
 	}
 }
 
@@ -133,4 +145,21 @@ func (s *Server) SetupSubsonic() error {
 	rout.Handle("/getAlbumList{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetAlbumList))
 	rout.Handle("/search2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeSearchTwo))
 	return nil
+}
+
+func (s *Server) scanTick() {
+	ticker := time.NewTicker(s.ScanInterval)
+	for range ticker.C {
+		if err := s.ctrlBase.Scanner.Start(); err != nil {
+			log.Printf("error while scanner: %v", err)
+		}
+	}
+}
+
+func (s *Server) Start() error {
+	if s.ScanInterval > 0 {
+		log.Printf("will be scanning at intervals of %s", s.ScanInterval)
+		go s.scanTick()
+	}
+	return s.ListenAndServe()
 }

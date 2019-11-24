@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"senan.xyz/g/gonic/db"
+	"senan.xyz/g/gonic/scanner"
 )
 
 type statusWriter struct {
@@ -45,6 +46,7 @@ func statusToBlock(code int) string {
 type Controller struct {
 	DB        *db.DB
 	MusicPath string
+	Scanner   *scanner.Scanner
 }
 
 func (c *Controller) WithLogging(next http.Handler) http.Handler {

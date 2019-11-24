@@ -250,10 +250,7 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(r *http.Request) *Response {
 func (c *Controller) ServeStartScanDo(r *http.Request) *Response {
 	defer func() {
 		go func() {
-			err := scanner.
-				New(c.DB, c.MusicPath).
-				Start()
-			if err != nil {
+			if err := c.Scanner.Start(); err != nil {
 				log.Printf("error while scanning: %v\n", err)
 			}
 		}()

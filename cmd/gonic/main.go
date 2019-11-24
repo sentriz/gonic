@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"time"
 
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/peterbourgon/ff"
@@ -22,6 +23,7 @@ func main() {
 	listenAddr := set.String("listen-addr", "0.0.0.0:6969", "listen address (optional)")
 	musicPath := set.String("music-path", "", "path to music")
 	dbPath := set.String("db-path", "gonic.db", "path to database (optional)")
+	scanInterval := set.Int("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
 	_ = set.String("config-path", "", "path to config (optional)")
 	if err := ff.Parse(set, os.Args[1:],
 		ff.WithConfigFileFlag("config-path"),
@@ -38,11 +40,12 @@ func main() {
 		log.Fatalf("error opening database: %v\n", err)
 	}
 	defer db.Close()
-	s := server.New(
-		db,
-		*musicPath,
-		*listenAddr,
-	)
+	s := server.New(server.ServerOptions{
+		DB:           db,
+		MusicPath:    *musicPath,
+		ListenAddr:   *listenAddr,
+		ScanInterval: time.Duration(*scanInterval) * time.Minute,
+	})
 	if err = s.SetupAdmin(); err != nil {
 		log.Fatalf("error setting up admin routes: %v\n", err)
 	}
@@ -50,7 +53,7 @@ func main() {
 		log.Fatalf("error setting up subsonic routes: %v\n", err)
 	}
 	log.Printf("starting server at %s", *listenAddr)
-	if err := s.ListenAndServe(); err != nil {
+	if err := s.Start(); err != nil {
 		log.Fatalf("error starting server: %v\n", err)
 	}
 }
