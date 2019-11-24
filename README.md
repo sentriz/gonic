@@ -18,7 +18,7 @@
 ## installation
 
 the default login is **admin**/**admin**.  
-password can then be change from web interface
+password can then be changed from the web interface
 
 ```
 $ apt install sqlite libtag1-dev
