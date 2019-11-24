@@ -3,6 +3,9 @@ linters:
   disable:
     - gochecknoglobals
     - gochecknoinits
+    - gomnd
+    - funlen
+    - wsl
 issues:
   exclude-rules:
     - path: _test\.go
