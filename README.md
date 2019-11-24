@@ -17,10 +17,11 @@
  
 ## installation
 
-The default login is **admin**/**admin**.
+the default login is **admin**/**admin**.  
+password can then be change from web interface
 
 ```
-$ apt install sqlite tablib libtag1-dev
+$ apt install sqlite libtag1-dev
 $ go get senan.xyz/g/gonic/cmd/gonic
 $ gonic -h
 ```
@@ -28,19 +29,26 @@ $ gonic -h
 or with docker, available on dockerhub as `sentriz/gonic`
 
 ```yaml
-  gonic:
-    image: sentriz/gonic:latest
-    environment:
-    - TZ
-    - GONIC_MUSIC_PATH=/music
-    - GONIC_DB_PATH=/data/db.db
-    - GONIC_LISTEN_ADDR=:80
-    expose:
-    - 80
-    volumes:
-    - ./data:/data
-    - ${YOUR_MUSIC}:/music:ro
+gonic:
+  image: sentriz/gonic:latest
+  environment:
+  - TZ
+  # optionally, see env vars below
+  expose:
+  - 80
+  volumes:
+  - ./data:/data
+  - ${YOUR_MUSIC}:/music:ro
 ```
+
+## configuration options
+
+|env var|command line arg|description|
+|---|---|---|
+|`GONIC_MUSIC_PATH`|`-music-path`|path to your music collection|
+|`GONIC_DB_PATH`|`-db-path`|**optional** path to database file|
+|`GONIC_LISTEN_ADDR`|`-listen-addr`|**optional** host and port to listen on (eg. `0.0.0.0:4747`, `127.0.0.1:4747`) (*default* `0.0.0.0:4747`)|
+|`GONIC_SCAN_INTERVAL`|`-scan-interval`|**optional** interval (in minutes) to check for new music (automatic scanning disabled if omitted)|
 
 ## screenshots
 
