@@ -121,6 +121,7 @@ type Playlist struct {
 
 type PlaylistItem struct {
 	ID         int `gorm:"primary_key"`
+	CreatedAt  time.Time
 	Playlist   Playlist
 	PlaylistID int `sql:"default: null; type:int REFERENCES playlists(id) ON DELETE CASCADE"`
 	Track      Track

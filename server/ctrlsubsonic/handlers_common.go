@@ -156,6 +156,7 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 		`).
 		Where("playlist_items.playlist_id = ?", playlistID).
 		Group("tracks.id").
+		Order("playlist_items.created_at").
 		Preload("Album").
 		Find(&tracks)
 	user := r.Context().Value(key.User).(*model.User)
@@ -169,38 +170,56 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 	return sub
 }
 
-func (c *Controller) ServeCreatePlaylist(r *http.Request) *spec.Response {
-	user := r.Context().Value(key.User).(*model.User)
+func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
+	playlistID, _ := parsing.GetFirstIntParamOf(r, "id", "playlistId")
+	//
+	// begin updating meta
 	playlist := &model.Playlist{}
 	c.DB.
-		Select("id").
-		Where("id = ?", parsing.GetIntParamOr(r, "id", 0)).
+		Where("id = ?", playlistID).
 		First(playlist)
+	user := r.Context().Value(key.User).(*model.User)
 	playlist.UserID = user.ID
-	playlist.Name = parsing.GetStrParam(r, "name")
+	if name := parsing.GetStrParam(r, "name"); name != "" {
+		playlist.Name = name
+	}
+	if comment := parsing.GetStrParam(r, "comment"); comment != "" {
+		playlist.Comment = comment
+	}
 	c.DB.Save(playlist)
-	sub := spec.NewResponse()
-	tracks, ok := r.URL.Query()["songId"]
-	if !ok {
-		return sub
-	}
-	for _, trackIDStr := range tracks {
-		trackID, err := strconv.Atoi(trackIDStr)
-		if err != nil {
-			continue
+	//
+	// begin delete tracks
+	if indexes, ok := r.URL.Query()["songIndexToRemove"]; ok {
+		trackIDs := []int{}
+		c.DB.
+			Order("created_at").
+			Model(&model.PlaylistItem{}).
+			Where("playlist_id = ?", playlistID).
+			Pluck("track_id", &trackIDs)
+		for _, indexStr := range indexes {
+			i, err := strconv.Atoi(indexStr)
+			if err != nil {
+				continue
+			}
+			c.DB.Delete(&model.PlaylistItem{},
+				"track_id = ?", trackIDs[i])
 		}
-		c.DB.Save(&model.PlaylistItem{
-			PlaylistID: playlist.ID,
-			TrackID:    trackID,
-		})
 	}
-	return sub
-}
-
-func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
-	// user := r.Context().Value(key.User).(*model.User)
-	sub := spec.NewResponse()
-	return sub
+	//
+	// begin add tracks
+	if toAdd := parsing.GetFirstParamOf(r, "songId", "songIdToAdd"); toAdd != nil {
+		for _, trackIDStr := range toAdd {
+			trackID, err := strconv.Atoi(trackIDStr)
+			if err != nil {
+				continue
+			}
+			c.DB.Save(&model.PlaylistItem{
+				PlaylistID: playlist.ID,
+				TrackID:    trackID,
+			})
+		}
+	}
+	return spec.NewResponse()
 }
 
 func (c *Controller) ServeDeletePlaylist(r *http.Request) *spec.Response {

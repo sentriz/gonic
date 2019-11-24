@@ -37,3 +37,21 @@ func GetIntParamOr(r *http.Request, key string, or int) int {
 	}
 	return val
 }
+
+func GetFirstParamOf(r *http.Request, keys ...string) []string {
+	for _, key := range keys {
+		if val, ok := r.URL.Query()[key]; ok {
+			return val
+		}
+	}
+	return nil
+}
+
+func GetFirstIntParamOf(r *http.Request, keys ...string) (int, bool) {
+	for _, key := range keys {
+		if v, err := GetIntParam(r, key); err == nil {
+			return v, true
+		}
+	}
+	return 0, false
+}

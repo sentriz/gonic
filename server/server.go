@@ -128,7 +128,7 @@ func (s *Server) SetupSubsonic() error {
 	rout.Handle("/getUser{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetUser))
 	rout.Handle("/getPlaylists{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetPlaylists))
 	rout.Handle("/getPlaylist{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetPlaylist))
-	rout.Handle("/createPlaylist{_:(?:\\.view)?}", ctrl.H(ctrl.ServeCreatePlaylist))
+	rout.Handle("/createPlaylist{_:(?:\\.view)?}", ctrl.H(ctrl.ServeUpdatePlaylist))
 	rout.Handle("/updatePlaylist{_:(?:\\.view)?}", ctrl.H(ctrl.ServeUpdatePlaylist))
 	rout.Handle("/deletePlaylist{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDeletePlaylist))
 	//
