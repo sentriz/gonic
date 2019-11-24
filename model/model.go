@@ -108,3 +108,21 @@ func (a *Album) IndexRightPath() string {
 	}
 	return a.RightPath
 }
+
+type Playlist struct {
+	ID         int `gorm:"primary_key"`
+	UpdatedAt  time.Time
+	ModifiedAt time.Time
+	User       *User
+	UserID     int `sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
+	Name       string
+	Comment    string
+}
+
+type PlaylistItem struct {
+	ID         int `gorm:"primary_key"`
+	Playlist   Playlist
+	PlaylistID int `sql:"default: null; type:int REFERENCES playlists(id) ON DELETE CASCADE"`
+	Track      Track
+	TrackID    int `sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
+}

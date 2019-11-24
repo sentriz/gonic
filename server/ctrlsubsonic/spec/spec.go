@@ -30,6 +30,8 @@ type Response struct {
 	SearchResultTwo   *SearchResultTwo   `xml:"searchResult2" json:"searchResult2,omitempty"`
 	SearchResultThree *SearchResultThree `xml:"searchResult3" json:"searchResult3,omitempty"`
 	User              *User              `xml:"user"          json:"user,omitempty"`
+	Playlists         *Playlists         `xml:"playlists"     json:"playlists,omitempty"`
+	Playlist          *Playlist          `xml:"playlist"      json:"playlist,omitempty"`
 }
 
 func NewResponse() *Response {
@@ -195,4 +197,18 @@ type User struct {
 	ShareRole           bool   `xml:"shareRole,attr"           json:"shareRole"`
 	VideoConversionRole bool   `xml:"videoConversionRole,attr" json:"videoConversionRole"`
 	Folder              []int  `xml:"folder,attr"              json:"folder"`
+}
+
+type Playlists struct {
+	List []*Playlist `xml:"playlist" json:"playlist,omitempty"`
+}
+
+type Playlist struct {
+	ID        int           `xml:"id,attr"        json:"id,omitempty"`
+	Name      string        `xml:"name,attr"      json:"name,omitempty"`
+	Comment   string        `xml:"comment,attr"   json:"comment,omitempty"`
+	Owner     string        `xml:"owner,attr"     json:"owner,omitempty"`
+	SongCount string        `xml:"songCount,attr" json:"songCount,omitempty"`
+	Created   string        `xml:"created,attr"   json:"created,omitempty"`
+	List      []*TrackChild `xml:"entry"          json:"entry,omitempty"`
 }

@@ -3,8 +3,11 @@ package ctrlsubsonic
 import (
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 	"unicode"
+
+	"github.com/jinzhu/gorm"
 
 	"senan.xyz/g/gonic/model"
 	"senan.xyz/g/gonic/scanner"
@@ -113,4 +116,95 @@ func (c *Controller) ServeGetUser(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeNotFound(r *http.Request) *spec.Response {
 	return spec.NewError(70, "view not found")
+}
+
+func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
+	user := r.Context().Value(key.User).(*model.User)
+	var playlists []*model.Playlist
+	c.DB.
+		Where("user_id = ?", user.ID).
+		Find(&playlists)
+	sub := spec.NewResponse()
+	sub.Playlists = &spec.Playlists{
+		List: make([]*spec.Playlist, len(playlists)),
+	}
+	for i, playlist := range playlists {
+		sub.Playlists.List[i] = spec.NewPlaylist(playlist)
+		sub.Playlists.List[i].Owner = user.Name
+	}
+	return sub
+}
+
+func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
+	playlistID, err := parsing.GetIntParam(r, "id")
+	if err != nil {
+		return spec.NewError(10, "please provide an `id` parameter")
+	}
+	playlist := model.Playlist{}
+	err = c.DB.
+		Where("id = ?", playlistID).
+		Find(&playlist).
+		Error
+	if gorm.IsRecordNotFoundError(err) {
+		return spec.NewError(70, "playlist with id `%d` not found", playlistID)
+	}
+	var tracks []*model.Track
+	c.DB.
+		Joins(`
+            JOIN playlist_items
+		    ON playlist_items.track_id = tracks.id
+		`).
+		Where("playlist_items.playlist_id = ?", playlistID).
+		Group("tracks.id").
+		Preload("Album").
+		Find(&tracks)
+	user := r.Context().Value(key.User).(*model.User)
+	sub := spec.NewResponse()
+	sub.Playlist = spec.NewPlaylist(&playlist)
+	sub.Playlist.Owner = user.Name
+	sub.Playlist.List = make([]*spec.TrackChild, len(tracks))
+	for i, track := range tracks {
+		sub.Playlist.List[i] = spec.NewTCTrackByFolder(track, track.Album)
+	}
+	return sub
+}
+
+func (c *Controller) ServeCreatePlaylist(r *http.Request) *spec.Response {
+	user := r.Context().Value(key.User).(*model.User)
+	playlist := &model.Playlist{}
+	c.DB.
+		Select("id").
+		Where("id = ?", parsing.GetIntParamOr(r, "id", 0)).
+		First(playlist)
+	playlist.UserID = user.ID
+	playlist.Name = parsing.GetStrParam(r, "name")
+	c.DB.Save(playlist)
+	sub := spec.NewResponse()
+	tracks, ok := r.URL.Query()["songId"]
+	if !ok {
+		return sub
+	}
+	for _, trackIDStr := range tracks {
+		trackID, err := strconv.Atoi(trackIDStr)
+		if err != nil {
+			continue
+		}
+		c.DB.Save(&model.PlaylistItem{
+			PlaylistID: playlist.ID,
+			TrackID:    trackID,
+		})
+	}
+	return sub
+}
+
+func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
+	// user := r.Context().Value(key.User).(*model.User)
+	sub := spec.NewResponse()
+	return sub
+}
+
+func (c *Controller) ServeDeletePlaylist(r *http.Request) *spec.Response {
+	// user := r.Context().Value(key.User).(*model.User)
+	sub := spec.NewResponse()
+	return sub
 }
