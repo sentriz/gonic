@@ -6,5 +6,5 @@ var Types = map[string]string{
 	"aac":  "audio/x-aac",
 	"m4a":  "audio/m4a",
 	"ogg":  "audio/ogg",
-	"opus":  "audio/ogg",
+	"opus": "audio/ogg",
 }
