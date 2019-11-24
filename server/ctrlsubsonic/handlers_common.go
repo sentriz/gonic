@@ -223,7 +223,8 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeDeletePlaylist(r *http.Request) *spec.Response {
-	// user := r.Context().Value(key.User).(*model.User)
-	sub := spec.NewResponse()
-	return sub
+	c.DB.
+		Where("id = ?", parsing.GetIntParamOr(r, "id", 0)).
+		Delete(&model.Playlist{})
+	return spec.NewResponse()
 }
