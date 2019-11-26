@@ -109,8 +109,8 @@ type TrackChild struct {
 	Duration    int       `xml:"duration,attr,omitempty"    json:"duration,omitempty"`
 	Genre       string    `xml:"genre,attr,omitempty"       json:"genre,omitempty"`
 	ID          int       `xml:"id,attr,omitempty"          json:"id,omitempty"`
-	IsDir       bool      `xml:"isDir,attr,omitempty"       json:"isDir,omitempty"`
-	IsVideo     bool      `xml:"isVideo,attr,omitempty"     json:"isVideo,omitempty"`
+	IsDir       bool      `xml:"isDir,attr"                 json:"isDir"`
+	IsVideo     bool      `xml:"isVideo,attr"               json:"isVideo"`
 	ParentID    int       `xml:"parent,attr,omitempty"      json:"parent,omitempty"`
 	Path        string    `xml:"path,attr,omitempty"        json:"path,omitempty"`
 	Size        int       `xml:"size,attr,omitempty"        json:"size,omitempty"`

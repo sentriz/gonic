@@ -19,10 +19,11 @@ func NewAlbumByFolder(f *model.Album) *Album {
 
 func NewTCAlbumByFolder(f *model.Album) *TrackChild {
 	trCh := &TrackChild{
-		ID:       f.ID,
-		IsDir:    true,
-		Title:    f.RightPath,
-		ParentID: f.ParentID,
+		ID:        f.ID,
+		IsDir:     true,
+		Title:     f.RightPath,
+		ParentID:  f.ParentID,
+		CreatedAt: f.UpdatedAt,
 	}
 	if f.Cover != "" {
 		trCh.CoverID = f.ID
@@ -46,11 +47,12 @@ func NewTCTrackByFolder(t *model.Track, parent *model.Album) *TrackChild {
 			parent.RightPath,
 			t.Filename,
 		),
-		ParentID: parent.ID,
-		Duration: t.Length,
-		Bitrate:  t.Bitrate,
-		IsDir:    false,
-		Type:     "music",
+		ParentID:  parent.ID,
+		Duration:  t.Length,
+		Bitrate:   t.Bitrate,
+		IsDir:     false,
+		Type:      "music",
+		CreatedAt: t.CreatedAt,
 	}
 	if parent.Cover != "" {
 		trCh.CoverID = parent.ID
