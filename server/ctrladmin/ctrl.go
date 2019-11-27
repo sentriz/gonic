@@ -217,7 +217,10 @@ func sessAddFlash(s *sessions.Session, messages []string, flashT FlashType) {
 	if len(messages) == 0 {
 		return
 	}
-	for _, message := range messages {
+	for i, message := range messages {
+		if i > 6 {
+			break
+		}
 		s.AddFlash(Flash{
 			Message: message,
 			Type:    flashT,

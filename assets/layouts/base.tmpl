@@ -11,12 +11,10 @@
             <div id="header">
                 <img src="/admin/static/gonic.png">
             </div>
-            {{ range $i, $flash := .Flashes }}
-            {{ if lt $i 10 }}
+            {{ range $flash := .Flashes }}
             <div class="padded flash-{{ $flash.Type }}">
                 <i class="mdi mdi-alert-circle"></i> {{ $flash.Message }}
             </div>
-            {{ end }}
 	    {{ end }}
             {{ template "content" . }}
             <div class="side-padded text-right">
