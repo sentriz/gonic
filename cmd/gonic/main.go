@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -20,20 +21,23 @@ const (
 )
 
 func main() {
-	log.Println("starting gonic")
-	log.Printf("version %q\n", version.VERSION)
 	set := flag.NewFlagSet(programName, flag.ExitOnError)
 	listenAddr := set.String("listen-addr", "0.0.0.0:4747", "listen address (optional)")
 	musicPath := set.String("music-path", "", "path to music")
 	dbPath := set.String("db-path", "gonic.db", "path to database (optional)")
 	scanInterval := set.Int("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
 	_ = set.String("config-path", "", "path to config (optional)")
+	showVersion := set.Bool("version", false, "show gonic version")
 	if err := ff.Parse(set, os.Args[1:],
 		ff.WithConfigFileFlag("config-path"),
 		ff.WithConfigFileParser(ff.PlainParser),
 		ff.WithEnvVarPrefix(programVar),
 	); err != nil {
 		log.Fatalf("error parsing args: %v\n", err)
+	}
+	if *showVersion {
+		fmt.Println(version.VERSION)
+		os.Exit(0)
 	}
 	if _, err := os.Stat(*musicPath); os.IsNotExist(err) {
 		log.Fatal("please provide a valid music directory")
