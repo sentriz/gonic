@@ -93,4 +93,39 @@
         {{ end }}
     </div>
 </div>
+<div class="padded box">
+    <div class="box-title">
+        <i class="mdi mdi-playlist-music"></i> playlists
+    </div>
+    <div class="block-right text-right">
+        {{ if eq (len .Playlists) 0 }}
+            <span class="light">no playlists yet</span>
+        {{ end }}
+        <table id="recent-playlists">
+        {{ range $playlist := .Playlists }}
+            <tr>
+            <td class="text-right">{{ $playlist.Name }}</td>
+            <td><span class="light">({{ $playlist.TrackCount }} tracks)</span></td>
+            <td class="no-small"><span class="light" title="{{ $playlist.CreatedAt }}">{{ $playlist.CreatedAt | humanDate }}</span></td>
+            </tr>
+        {{ end }}
+        </table>
+        <form
+          id="playlist-upload-form"
+          enctype="multipart/form-data"
+          action="/admin/upload_playlist_do"
+          method="post"
+        >
+            <label for="playlist-upload-input">
+                <a>upload m3u8 files</a>
+            </label>
+            <input id="playlist-upload-input" name="playlist-files" type="file" multiple />
+        </form>
+        <script>
+            document.getElementById("playlist-upload-input").onchange = (e) => {
+                document.getElementById("playlist-upload-form").submit();
+            }
+        </script>
+    </div>
+</div>
 {{ end }}
