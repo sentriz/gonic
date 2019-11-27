@@ -111,8 +111,8 @@ type Response struct {
 	data     *templateData
 	// code is 303
 	redirect string
-	flashN   string // normal
-	flashW   string // warning
+	flashN   []string // normal
+	flashW   []string // warning
 	// code is >= 400
 	code int
 	err  string
@@ -177,6 +177,13 @@ func (c *Controller) H(h adminHandler) http.Handler {
 // ## begin utilities
 // ## begin utilities
 
+type FlashType string
+
+const (
+	FlashNormal  = FlashType("normal")
+	FlashWarning = FlashType("warning")
+)
+
 func firstExisting(or string, strings ...string) string {
 	for _, s := range strings {
 		if s != "" {
@@ -194,35 +201,27 @@ func sessLogSave(s *sessions.Session, w http.ResponseWriter, r *http.Request) {
 
 type Flash struct {
 	Message string
-	Type    string
+	Type    FlashType
 }
 
-func sessAddFlashW(s *sessions.Session, message string) {
-	if message == "" {
+func sessAddFlashN(s *sessions.Session, messages []string) {
+	sessAddFlash(s, messages, FlashNormal)
+}
+
+func sessAddFlashW(s *sessions.Session, messages []string) {
+	sessAddFlash(s, messages, FlashWarning)
+}
+
+func sessAddFlash(s *sessions.Session, messages []string, flashT FlashType) {
+	if len(messages) == 0 {
 		return
 	}
-	s.AddFlash(Flash{
-		Message: message,
-		Type:    "warning",
-	})
-}
-
-func sessAddFlashWf(s *sessions.Session, message string, a ...interface{}) {
-	sessAddFlashW(s, fmt.Sprintf(message, a...))
-}
-
-func sessAddFlashN(s *sessions.Session, message string) {
-	if message == "" {
-		return
+	for _, message := range messages {
+		s.AddFlash(Flash{
+			Message: message,
+			Type:    flashT,
+		})
 	}
-	s.AddFlash(Flash{
-		Message: message,
-		Type:    "normal",
-	})
-}
-
-func sessAddFlashNf(s *sessions.Session, message string, a ...interface{}) {
-	sessAddFlashN(s, fmt.Sprintf(message, a...))
 }
 
 // ## begin validation

@@ -76,7 +76,7 @@ func (c *Controller) ServeChangeOwnPasswordDo(r *http.Request) *Response {
 	if err != nil {
 		return &Response{
 			redirect: r.Referer(),
-			flashW:   err.Error(),
+			flashW:   []string{err.Error()},
 		}
 	}
 	user := r.Context().Value(key.User).(*model.User)
@@ -101,7 +101,7 @@ func (c *Controller) ServeLinkLastFMDo(r *http.Request) *Response {
 	if err != nil {
 		return &Response{
 			redirect: "/admin/home",
-			flashW:   err.Error(),
+			flashW:   []string{err.Error()},
 		}
 	}
 	user := r.Context().Value(key.User).(*model.User)
@@ -148,7 +148,7 @@ func (c *Controller) ServeChangePasswordDo(r *http.Request) *Response {
 	if err != nil {
 		return &Response{
 			redirect: r.Referer(),
-			flashW:   err.Error(),
+			flashW:   []string{err.Error()},
 		}
 	}
 	user := c.DB.GetUserFromName(username)
@@ -197,7 +197,7 @@ func (c *Controller) ServeCreateUserDo(r *http.Request) *Response {
 	if err != nil {
 		return &Response{
 			redirect: r.Referer(),
-			flashW:   err.Error(),
+			flashW:   []string{err.Error()},
 		}
 	}
 	passwordOne := r.FormValue("password_one")
@@ -206,7 +206,7 @@ func (c *Controller) ServeCreateUserDo(r *http.Request) *Response {
 	if err != nil {
 		return &Response{
 			redirect: r.Referer(),
-			flashW:   err.Error(),
+			flashW:   []string{err.Error()},
 		}
 	}
 	user := model.User{
@@ -217,7 +217,7 @@ func (c *Controller) ServeCreateUserDo(r *http.Request) *Response {
 	if err != nil {
 		return &Response{
 			redirect: r.Referer(),
-			flashW:   fmt.Sprintf("could not create user `%s`: %v", username, err),
+			flashW:   []string{fmt.Sprintf("could not create user `%s`: %v", username, err)},
 		}
 	}
 	return &Response{redirect: "/admin/home"}
@@ -239,7 +239,7 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(r *http.Request) *Response {
 	if err := validateAPIKey(apiKey, secret); err != nil {
 		return &Response{
 			redirect: r.Referer(),
-			flashW:   err.Error(),
+			flashW:   []string{err.Error()},
 		}
 	}
 	c.DB.SetSetting("lastfm_api_key", apiKey)

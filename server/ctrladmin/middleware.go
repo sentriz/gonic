@@ -24,7 +24,7 @@ func (c *Controller) WithUserSession(next http.Handler) http.Handler {
 		session := r.Context().Value(key.Session).(*sessions.Session)
 		username, ok := session.Values["user"].(string)
 		if !ok {
-			sessAddFlashW(session, "you are not authenticated")
+			sessAddFlashW(session, []string{"you are not authenticated"})
 			sessLogSave(session, w, r)
 			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 			return
@@ -50,7 +50,7 @@ func (c *Controller) WithAdminSession(next http.Handler) http.Handler {
 		session := r.Context().Value(key.Session).(*sessions.Session)
 		user := r.Context().Value(key.User).(*model.User)
 		if !user.IsAdmin {
-			sessAddFlashW(session, "you are not an admin")
+			sessAddFlashW(session, []string{"you are not an admin"})
 			sessLogSave(session, w, r)
 			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 			return

@@ -13,14 +13,14 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 	if username == "" || password == "" {
-		sessAddFlashW(session, "please provide both a username and password")
+		sessAddFlashW(session, []string{"please provide username and password"})
 		sessLogSave(session, w, r)
 		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 		return
 	}
 	user := c.DB.GetUserFromName(username)
 	if user == nil || password != user.Password {
-		sessAddFlashW(session, "invalid username / password")
+		sessAddFlashW(session, []string{"invalid username / password"})
 		sessLogSave(session, w, r)
 		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 		return
