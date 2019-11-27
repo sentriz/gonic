@@ -20,6 +20,7 @@ import (
 	"senan.xyz/g/gonic/model"
 	"senan.xyz/g/gonic/server/ctrlbase"
 	"senan.xyz/g/gonic/server/key"
+	"senan.xyz/g/gonic/version"
 )
 
 func init() {
@@ -88,6 +89,7 @@ type templateData struct {
 	// common
 	Flashes []interface{}
 	User    *model.User
+	Version string
 	// home
 	AlbumCount    int
 	ArtistCount   int
@@ -146,6 +148,7 @@ func (c *Controller) H(h adminHandler) http.Handler {
 		if resp.data == nil {
 			resp.data = &templateData{}
 		}
+		resp.data.Version = version.VERSION
 		if session != nil {
 			resp.data.Flashes = session.Flashes()
 			if err := session.Save(r, w); err != nil {

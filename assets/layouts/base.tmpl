@@ -15,9 +15,10 @@
             <div class="padded flash-{{ $flash.Type }}">
                 <i class="mdi mdi-alert-circle"></i> {{ $flash.Message }}
             </div>
-	    {{ end }}
+            {{ end }}
             {{ template "content" . }}
             <div class="side-padded text-right">
+                <span class="light">{{ .Version }}</span>
                 senan kelly, 2019
                 <span class="light">&#124;</span>
                 <a href="https://senan.xyz/g/gonic">github</a>

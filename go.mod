@@ -14,7 +14,6 @@ require (
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/jinzhu/gorm v1.9.9
 	github.com/josephburnett/jd v0.0.0-20190531151850-1f9071c800e7
-	github.com/justinas/alice v0.0.0-20171023064455-03f45bd4b7da
 	github.com/karrick/godirwalk v1.10.12
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/nicksellen/audiotags v0.0.0-20160226222119-94015fa599bd

@@ -11,6 +11,7 @@ import (
 
 	"senan.xyz/g/gonic/db"
 	"senan.xyz/g/gonic/server"
+	"senan.xyz/g/gonic/version"
 )
 
 const (
@@ -19,6 +20,8 @@ const (
 )
 
 func main() {
+	log.Println("starting gonic")
+	log.Printf("version %q\n", version.VERSION)
 	set := flag.NewFlagSet(programName, flag.ExitOnError)
 	listenAddr := set.String("listen-addr", "0.0.0.0:4747", "listen address (optional)")
 	musicPath := set.String("music-path", "", "path to music")
