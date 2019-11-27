@@ -59,6 +59,19 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 		data.LastScanTime = time.Unix(i, 0)
 	}
 	//
+	// playlists box
+	user := r.Context().Value(key.User).(*model.User)
+	c.DB.
+		Select("*, count(items.id) as track_count").
+		Joins(`
+            LEFT JOIN playlist_items items
+		    ON items.playlist_id = playlists.id
+		`).
+		Where("user_id = ?", user.ID).
+		Group("playlists.id").
+		Limit(20).
+		Find(&data.Playlists)
+	//
 	return &Response{
 		template: "home.tmpl",
 		data:     data,
@@ -257,6 +270,36 @@ func (c *Controller) ServeStartScanDo(r *http.Request) *Response {
 	}()
 	return &Response{
 		redirect: "/admin/home",
-		flashN:   "scan started. refresh for results",
+		flashN:   []string{"scan started. refresh for results"},
+	}
+}
+
+func (c *Controller) ServeUploadPlaylist(r *http.Request) *Response {
+	return &Response{template: "upload_playlist.tmpl"}
+}
+
+func (c *Controller) ServeUploadPlaylistDo(r *http.Request) *Response {
+	if err := r.ParseMultipartForm((1 << 10) * 24); nil != err {
+		return &Response{
+			err:  "couldn't parse mutlipart",
+			code: 500,
+		}
+	}
+	user := r.Context().Value(key.User).(*model.User)
+	var playlistCount int
+	var errors []string
+	for _, headers := range r.MultipartForm.File {
+		for _, header := range headers {
+			headerErrors, created := playlistParseUpload(c, user.ID, header)
+			if created {
+				playlistCount++
+			}
+			errors = append(errors, headerErrors...)
+		}
+	}
+	return &Response{
+		redirect: "/admin/home",
+		flashN:   []string{fmt.Sprintf("%d playlist(s) created", playlistCount)},
+		flashW:   errors,
 	}
 }

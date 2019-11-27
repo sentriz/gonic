@@ -27,12 +27,13 @@ type ServerOptions struct {
 
 type Server struct {
 	*http.Server
-	router       *mux.Router
-	ctrlBase     *ctrlbase.Controller
-	ScanInterval time.Duration
+	router   *mux.Router
+	ctrlBase *ctrlbase.Controller
+	opts     ServerOptions
 }
 
 func New(opts ServerOptions) *Server {
+	opts.MusicPath = filepath.Clean(opts.MusicPath)
 	ctrlBase := &ctrlbase.Controller{
 		DB:        opts.DB,
 		MusicPath: opts.MusicPath,
@@ -62,10 +63,10 @@ func New(opts ServerOptions) *Server {
 		IdleTimeout:  15 * time.Second,
 	}
 	return &Server{
-		Server:       server,
-		router:       router,
-		ctrlBase:     ctrlBase,
-		ScanInterval: opts.ScanInterval,
+		Server:   server,
+		router:   router,
+		ctrlBase: ctrlBase,
+		opts:     opts,
 	}
 }
 
@@ -96,6 +97,7 @@ func (s *Server) SetupAdmin() error {
 	routUser.Handle("/change_own_password_do", ctrl.H(ctrl.ServeChangeOwnPasswordDo))
 	routUser.Handle("/link_lastfm_do", ctrl.H(ctrl.ServeLinkLastFMDo))
 	routUser.Handle("/unlink_lastfm_do", ctrl.H(ctrl.ServeUnlinkLastFMDo))
+	routUser.Handle("/upload_playlist_do", ctrl.H(ctrl.ServeUploadPlaylistDo))
 	//
 	// begin admin routes (if session is valid, and is admin)
 	routAdmin := routUser.NewRoute().Subrouter()
@@ -153,7 +155,7 @@ func (s *Server) SetupSubsonic() error {
 }
 
 func (s *Server) scanTick() {
-	ticker := time.NewTicker(s.ScanInterval)
+	ticker := time.NewTicker(s.opts.ScanInterval)
 	for range ticker.C {
 		if err := s.ctrlBase.Scanner.Start(); err != nil {
 			log.Printf("error while scanner: %v", err)
@@ -162,8 +164,8 @@ func (s *Server) scanTick() {
 }
 
 func (s *Server) Start() error {
-	if s.ScanInterval > 0 {
-		log.Printf("will be scanning at intervals of %s", s.ScanInterval)
+	if s.opts.ScanInterval > 0 {
+		log.Printf("will be scanning at intervals of %s", s.opts.ScanInterval)
 		go s.scanTick()
 	}
 	return s.ListenAndServe()

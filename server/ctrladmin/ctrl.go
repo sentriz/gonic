@@ -97,6 +97,7 @@ type templateData struct {
 	AllUsers      []*model.User
 	LastScanTime  time.Time
 	IsScanning    bool
+	Playlists     []*model.Playlist
 	//
 	CurrentLastFMAPIKey    string
 	CurrentLastFMAPISecret string

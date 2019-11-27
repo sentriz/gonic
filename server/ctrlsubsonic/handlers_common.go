@@ -172,7 +172,6 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 	playlistID, _ := parsing.GetFirstIntParamOf(r, "id", "playlistId")
-	//
 	// begin updating meta
 	playlist := &model.Playlist{}
 	c.DB.
@@ -187,7 +186,6 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 		playlist.Comment = comment
 	}
 	c.DB.Save(playlist)
-	//
 	// begin delete tracks
 	if indexes, ok := r.URL.Query()["songIndexToRemove"]; ok {
 		trackIDs := []int{}
@@ -205,7 +203,6 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 				"track_id = ?", trackIDs[i])
 		}
 	}
-	//
 	// begin add tracks
 	if toAdd := parsing.GetFirstParamOf(r, "songId", "songIdToAdd"); toAdd != nil {
 		for _, trackIDStr := range toAdd {

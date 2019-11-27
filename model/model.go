@@ -111,12 +111,13 @@ func (a *Album) IndexRightPath() string {
 
 type Playlist struct {
 	ID         int `gorm:"primary_key"`
+	CreatedAt  time.Time
 	UpdatedAt  time.Time
-	ModifiedAt time.Time
 	User       *User
 	UserID     int `sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
 	Name       string
 	Comment    string
+	TrackCount int `sql:"-"`
 }
 
 type PlaylistItem struct {

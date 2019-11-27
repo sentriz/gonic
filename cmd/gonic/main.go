@@ -40,12 +40,14 @@ func main() {
 		log.Fatalf("error opening database: %v\n", err)
 	}
 	defer db.Close()
-	s := server.New(server.ServerOptions{
+	serverOptions := server.ServerOptions{
 		DB:           db,
 		MusicPath:    *musicPath,
 		ListenAddr:   *listenAddr,
 		ScanInterval: time.Duration(*scanInterval) * time.Minute,
-	})
+	}
+	log.Printf("using opts %+v\n", serverOptions)
+	s := server.New(serverOptions)
 	if err = s.SetupAdmin(); err != nil {
 		log.Fatalf("error setting up admin routes: %v\n", err)
 	}
