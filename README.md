@@ -21,12 +21,17 @@ the default login is **admin**/**admin**.
 password can then be changed from the web interface
 
 ```
-$ apt install sqlite libtag1-dev
+$ apt install build-essential git sqlite libtag1-dev # for debian like
+$ pacman -S base-devel git sqlite taglib             # for arch like
 $ go get senan.xyz/g/gonic/cmd/gonic
-$ gonic -h
+$ export PATH=$PATH:$HOME/go/bin
+$ gonic -h                                           # or see "configuration options below"
 ```
 
-or with docker, available on dockerhub as `sentriz/gonic`
+**note:** unfortunately if you do this above, you'll be compiling gonic locally on your machine
+(if someone knows how I can statically link sqlite3 and taglib, please let me know so I can distribute static binaries)  
+
+or else you can run in docker, available on dockerhub as `sentriz/gonic`
 
 ```yaml
 gonic:
