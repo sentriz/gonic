@@ -30,11 +30,9 @@ func IsScanning() bool {
 	return atomic.LoadInt32(&isScanning) == 1
 }
 
-func SetScanning(status bool) {
-	switch {
-	case status:
-		atomic.StoreInt32(&isScanning, 1)
-	default:
+func SetScanning() func() {
+	atomic.StoreInt32(&isScanning, 1)
+	return func() {
 		atomic.StoreInt32(&isScanning, 0)
 	}
 }
@@ -74,8 +72,16 @@ func (s *Scanner) Start() error {
 	if IsScanning() {
 		return errors.New("already scanning")
 	}
-	SetScanning(true)
-	defer SetScanning(false)
+	unSet := SetScanning()
+	defer unSet()
+	// reset tracking variables when finished
+	defer func() {
+		s.seenTracks = make(map[int]struct{})
+		s.seenFolders = make(map[int]struct{})
+		s.curFolders = &stack.Stack{}
+		s.seenTracksNew = 0
+		s.seenTracksErr = 0
+	}()
 	//
 	// being walking
 	start := time.Now()
