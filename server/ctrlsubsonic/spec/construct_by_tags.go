@@ -41,13 +41,15 @@ func NewTrackByTags(t *model.Track, album *model.Album) *TrackChild {
 		),
 		Album:    album.TagTitle,
 		AlbumID:  album.ID,
-		ArtistID: album.TagArtist.ID,
 		Duration: t.Length,
 		Bitrate:  t.Bitrate,
 		Type:     "music",
 	}
 	if album.Cover != "" {
 		ret.CoverID = album.ID
+	}
+	if album.TagArtist != nil {
+		ret.ArtistID = album.TagArtist.ID
 	}
 	return ret
 }

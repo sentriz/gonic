@@ -34,7 +34,6 @@ func NewTCAlbumByFolder(f *model.Album) *TrackChild {
 func NewTCTrackByFolder(t *model.Track, parent *model.Album) *TrackChild {
 	trCh := &TrackChild{
 		ID:          t.ID,
-		Album:       t.Album.RightPath,
 		ContentType: t.MIME(),
 		Suffix:      t.Ext(),
 		Size:        t.Size,
@@ -56,6 +55,9 @@ func NewTCTrackByFolder(t *model.Track, parent *model.Album) *TrackChild {
 	}
 	if parent.Cover != "" {
 		trCh.CoverID = parent.ID
+	}
+	if t.Album != nil {
+		trCh.Album = t.Album.RightPath
 	}
 	return trCh
 }
