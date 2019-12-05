@@ -34,16 +34,20 @@ $ gonic -h                                           # or see "configuration opt
 or else you can run in docker, available on dockerhub as `sentriz/gonic`
 
 ```yaml
-gonic:
-  image: sentriz/gonic:latest
-  environment:
-  - TZ
-  # optionally, see env vars below
-  expose:
-  - 80
-  volumes:
-  - ./data:/data
-  - ${YOUR_MUSIC}:/music:ro
+# example docker-compose.yml
+
+version: '3'
+services:
+  gonic:
+    image: sentriz/gonic:latest
+    environment:
+    - TZ
+    # optionally, see env vars below
+    expose:
+    - 80
+    volumes:
+    - ./data:/data
+    - /path/to/music:/music:ro
 ```
 
 ## configuration options
