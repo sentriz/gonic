@@ -50,6 +50,8 @@ services:
     - /path/to/music:/music:ro
 ```
 
+then start with `docker-compose up -d`
+
 ## configuration options
 
 |env var|command line arg|description|
