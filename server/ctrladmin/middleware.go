@@ -7,13 +7,12 @@ import (
 	"github.com/gorilla/sessions"
 
 	"senan.xyz/g/gonic/model"
-	"senan.xyz/g/gonic/server/key"
 )
 
 func (c *Controller) WithSession(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, _ := c.sessDB.Get(r, "gonic")
-		withSession := context.WithValue(r.Context(), key.Session, session)
+		withSession := context.WithValue(r.Context(), CtxSession, session)
 		next.ServeHTTP(w, r.WithContext(withSession))
 	})
 }
@@ -21,7 +20,7 @@ func (c *Controller) WithSession(next http.Handler) http.Handler {
 func (c *Controller) WithUserSession(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// session exists at this point
-		session := r.Context().Value(key.Session).(*sessions.Session)
+		session := r.Context().Value(CtxSession).(*sessions.Session)
 		username, ok := session.Values["user"].(string)
 		if !ok {
 			sessAddFlashW(session, []string{"you are not authenticated"})
@@ -39,7 +38,7 @@ func (c *Controller) WithUserSession(next http.Handler) http.Handler {
 			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 			return
 		}
-		withUser := context.WithValue(r.Context(), key.User, user)
+		withUser := context.WithValue(r.Context(), CtxUser, user)
 		next.ServeHTTP(w, r.WithContext(withUser))
 	})
 }
@@ -47,8 +46,8 @@ func (c *Controller) WithUserSession(next http.Handler) http.Handler {
 func (c *Controller) WithAdminSession(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// session and user exist at this point
-		session := r.Context().Value(key.Session).(*sessions.Session)
-		user := r.Context().Value(key.User).(*model.User)
+		session := r.Context().Value(CtxSession).(*sessions.Session)
+		user := r.Context().Value(CtxUser).(*model.User)
 		if !user.IsAdmin {
 			sessAddFlashW(session, []string{"you are not an admin"})
 			sessLogSave(session, w, r)

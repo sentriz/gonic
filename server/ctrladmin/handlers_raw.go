@@ -4,12 +4,10 @@ import (
 	"net/http"
 
 	"github.com/gorilla/sessions"
-
-	"senan.xyz/g/gonic/server/key"
 )
 
 func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(key.Session).(*sessions.Session)
+	session := r.Context().Value(CtxSession).(*sessions.Session)
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 	if username == "" || password == "" {
@@ -34,7 +32,7 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) ServeLogout(w http.ResponseWriter, r *http.Request) {
-	session := r.Context().Value(key.Session).(*sessions.Session)
+	session := r.Context().Value(CtxSession).(*sessions.Session)
 	session.Options.MaxAge = -1
 	sessLogSave(session, w, r)
 	http.Redirect(w, r, "/admin/login", http.StatusSeeOther)

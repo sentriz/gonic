@@ -6,27 +6,10 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/http"
-	"net/url"
 
+	"senan.xyz/g/gonic/server/ctrlsubsonic/params"
 	"senan.xyz/g/gonic/server/ctrlsubsonic/spec"
-	"senan.xyz/g/gonic/server/key"
-	"senan.xyz/g/gonic/server/parsing"
 )
-
-var requiredParameters = []string{
-	"u", "v", "c",
-}
-
-func checkHasAllParams(params url.Values) error {
-	for _, req := range requiredParameters {
-		param := params.Get(req)
-		if param != "" {
-			continue
-		}
-		return fmt.Errorf("please provide a `%s` parameter", req)
-	}
-	return nil
-}
 
 func checkCredsToken(password, token, salt string) bool {
 	toHash := fmt.Sprintf("%s%s", password, salt)
@@ -43,16 +26,34 @@ func checkCredsBasic(password, given string) bool {
 	return password == given
 }
 
-func (c *Controller) WithValidSubsonicArgs(next http.Handler) http.Handler {
+func (c *Controller) WithParams(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := checkHasAllParams(r.URL.Query()); err != nil {
-			writeResp(w, r, spec.NewError(10, err.Error()))
+		params := params.New(r)
+		withParams := context.WithValue(r.Context(), CtxParams, params)
+		next.ServeHTTP(w, r.WithContext(withParams))
+	})
+}
+
+func (c *Controller) WithUser(next http.Handler) http.Handler {
+	requiredParameters := []string{
+		"u", "v", "c",
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		params := r.Context().Value(CtxParams).(params.Params)
+		for _, req := range requiredParameters {
+			param := params.Get(req)
+			if param != "" {
+				continue
+			}
+			writeResp(w, r, spec.NewError(10, "please provide a `%s` parameter", req))
 			return
 		}
-		username := parsing.GetStrParam(r, "u")
-		password := parsing.GetStrParam(r, "p")
-		token := parsing.GetStrParam(r, "t")
-		salt := parsing.GetStrParam(r, "s")
+		//
+		username := params.Get("u")
+		password := params.Get("p")
+		token := params.Get("t")
+		salt := params.Get("s")
+		//
 		passwordAuth := token == "" && salt == ""
 		tokenAuth := password == ""
 		if tokenAuth == passwordAuth {
@@ -74,7 +75,7 @@ func (c *Controller) WithValidSubsonicArgs(next http.Handler) http.Handler {
 			writeResp(w, r, spec.NewError(40, "invalid password"))
 			return
 		}
-		withUser := context.WithValue(r.Context(), key.User, user)
+		withUser := context.WithValue(r.Context(), CtxUser, user)
 		next.ServeHTTP(w, r.WithContext(withUser))
 	})
 }

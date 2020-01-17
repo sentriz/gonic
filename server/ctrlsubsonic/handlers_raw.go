@@ -8,9 +8,8 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"senan.xyz/g/gonic/model"
+	"senan.xyz/g/gonic/server/ctrlsubsonic/params"
 	"senan.xyz/g/gonic/server/ctrlsubsonic/spec"
-	"senan.xyz/g/gonic/server/key"
-	"senan.xyz/g/gonic/server/parsing"
 )
 
 // "raw" handlers are ones that don't always return a spec response.
@@ -20,7 +19,8 @@ import (
 //  _but not both_
 
 func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *spec.Response {
-	id, err := parsing.GetIntParam(r, "id")
+	params := r.Context().Value(CtxParams).(params.Params)
+	id, err := params.GetInt("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
@@ -46,7 +46,8 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 }
 
 func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.Response {
-	id, err := parsing.GetIntParam(r, "id")
+	params := r.Context().Value(CtxParams).(params.Params)
+	id, err := params.GetInt("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
@@ -67,7 +68,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	http.ServeFile(w, r, absPath)
 	//
 	// after we've served the file, mark the album as played
-	user := r.Context().Value(key.User).(*model.User)
+	user := r.Context().Value(CtxUser).(*model.User)
 	play := model.Play{
 		AlbumID: track.Album.ID,
 		UserID:  user.ID,

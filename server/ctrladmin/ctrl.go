@@ -19,13 +19,19 @@ import (
 	"senan.xyz/g/gonic/assets"
 	"senan.xyz/g/gonic/model"
 	"senan.xyz/g/gonic/server/ctrlbase"
-	"senan.xyz/g/gonic/server/key"
 	"senan.xyz/g/gonic/version"
 )
 
 func init() {
 	gob.Register(&Flash{})
 }
+
+type CtxKey int
+
+const (
+	CtxUser CtxKey = iota
+	CtxSession
+)
 
 // extendFromPaths /extends/ the given template for every asset
 // with given prefix
@@ -124,7 +130,7 @@ type Response struct {
 func (c *Controller) H(h adminHandler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := h(r)
-		session, ok := r.Context().Value(key.Session).(*sessions.Session)
+		session, ok := r.Context().Value(CtxSession).(*sessions.Session)
 		if ok {
 			sessAddFlashN(session, resp.flashN)
 			sessAddFlashW(session, resp.flashW)
@@ -156,7 +162,7 @@ func (c *Controller) H(h adminHandler) http.Handler {
 				return
 			}
 		}
-		if user, ok := r.Context().Value(key.User).(*model.User); ok {
+		if user, ok := r.Context().Value(CtxUser).(*model.User); ok {
 			resp.data.User = user
 		}
 		buff := c.buffPool.Get()

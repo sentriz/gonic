@@ -11,10 +11,9 @@ import (
 
 	"senan.xyz/g/gonic/model"
 	"senan.xyz/g/gonic/scanner"
+	"senan.xyz/g/gonic/server/ctrlsubsonic/params"
 	"senan.xyz/g/gonic/server/ctrlsubsonic/spec"
-	"senan.xyz/g/gonic/server/key"
 	"senan.xyz/g/gonic/server/lastfm"
-	"senan.xyz/g/gonic/server/parsing"
 )
 
 func lowerUDecOrHash(in string) string {
@@ -38,12 +37,13 @@ func (c *Controller) ServePing(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
-	id, err := parsing.GetIntParam(r, "id")
+	params := r.Context().Value(CtxParams).(params.Params)
+	id, err := params.GetInt("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 	// fetch user to get lastfm session
-	user := r.Context().Value(key.User).(*model.User)
+	user := r.Context().Value(CtxUser).(*model.User)
 	if user.LastFMSession == "" {
 		return spec.NewError(0, "you don't have a last.fm session")
 	}
@@ -61,8 +61,8 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 		track,
 		// clients will provide time in miliseconds, so use that or
 		// instead convert UnixNano to miliseconds
-		parsing.GetIntParamOr(r, "time", int(time.Now().UnixNano()/1e6)),
-		parsing.GetStrParamOr(r, "submission", "true") != "false",
+		params.GetIntOr("time", int(time.Now().UnixNano()/1e6)),
+		params.GetOr("submission", "true") != "false",
 	)
 	if err != nil {
 		return spec.NewError(0, "error when submitting: %v", err)
@@ -103,7 +103,7 @@ func (c *Controller) ServeGetScanStatus(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeGetUser(r *http.Request) *spec.Response {
-	user := r.Context().Value(key.User).(*model.User)
+	user := r.Context().Value(CtxUser).(*model.User)
 	sub := spec.NewResponse()
 	sub.User = &spec.User{
 		Username:          user.Name,
@@ -119,7 +119,7 @@ func (c *Controller) ServeNotFound(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
-	user := r.Context().Value(key.User).(*model.User)
+	user := r.Context().Value(CtxUser).(*model.User)
 	var playlists []*model.Playlist
 	c.DB.
 		Where("user_id = ?", user.ID).
@@ -136,7 +136,8 @@ func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
-	playlistID, err := parsing.GetIntParam(r, "id")
+	params := r.Context().Value(CtxParams).(params.Params)
+	playlistID, err := params.GetInt("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
@@ -159,7 +160,7 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 		Order("playlist_items.created_at").
 		Preload("Album").
 		Find(&tracks)
-	user := r.Context().Value(key.User).(*model.User)
+	user := r.Context().Value(CtxUser).(*model.User)
 	sub := spec.NewResponse()
 	sub.Playlist = spec.NewPlaylist(&playlist)
 	sub.Playlist.Owner = user.Name
@@ -171,23 +172,32 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
-	playlistID, _ := parsing.GetFirstIntParamOf(r, "id", "playlistId")
+	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*model.User)
+	var playlistID int
+	for _, key := range []string{"id", "playlistId"} {
+		if val, err := params.GetInt(key); err != nil {
+			playlistID = val
+		}
+	}
 	// begin updating meta
+	// playlist ID may still be 0 here, if so it's okay,
+	// we get a new playlist
 	playlist := &model.Playlist{}
 	c.DB.
 		Where("id = ?", playlistID).
 		First(playlist)
-	user := r.Context().Value(key.User).(*model.User)
 	playlist.UserID = user.ID
-	if name := parsing.GetStrParam(r, "name"); name != "" {
-		playlist.Name = name
+	if val := params.Get("name"); val != "" {
+		playlist.Name = val
 	}
-	if comment := parsing.GetStrParam(r, "comment"); comment != "" {
-		playlist.Comment = comment
+	if val := params.Get("comment"); val != "" {
+		playlist.Comment = val
 	}
 	c.DB.Save(playlist)
 	// begin delete tracks
-	if indexes, ok := r.URL.Query()["songIndexToRemove"]; ok {
+	indexes, ok := params.GetList("songIndexToRemove")
+	if ok {
 		trackIDs := []int{}
 		c.DB.
 			Order("created_at").
@@ -204,24 +214,30 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 		}
 	}
 	// begin add tracks
-	if toAdd := parsing.GetFirstParamOf(r, "songId", "songIdToAdd"); toAdd != nil {
-		for _, trackIDStr := range toAdd {
-			trackID, err := strconv.Atoi(trackIDStr)
-			if err != nil {
-				continue
-			}
-			c.DB.Save(&model.PlaylistItem{
-				PlaylistID: playlist.ID,
-				TrackID:    trackID,
-			})
+	var toAdd []string
+	for _, val := range []string{"songId", "songIdToAdd"} {
+		toAdd, ok := params.GetList(val)
+		if ok {
+			break
 		}
+	}
+	for _, trackIDStr := range toAdd {
+		trackID, err := strconv.Atoi(trackIDStr)
+		if err != nil {
+			continue
+		}
+		c.DB.Save(&model.PlaylistItem{
+			PlaylistID: playlist.ID,
+			TrackID:    trackID,
+		})
 	}
 	return spec.NewResponse()
 }
 
 func (c *Controller) ServeDeletePlaylist(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
 	c.DB.
-		Where("id = ?", parsing.GetIntParamOr(r, "id", 0)).
+		Where("id = ?", params.GetIntOr("id", 0)).
 		Delete(&model.Playlist{})
 	return spec.NewResponse()
 }

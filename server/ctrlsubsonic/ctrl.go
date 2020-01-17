@@ -10,8 +10,16 @@ import (
 	"github.com/pkg/errors"
 
 	"senan.xyz/g/gonic/server/ctrlbase"
+	"senan.xyz/g/gonic/server/ctrlsubsonic/params"
 	"senan.xyz/g/gonic/server/ctrlsubsonic/spec"
-	"senan.xyz/g/gonic/server/parsing"
+)
+
+type CtxKey int
+
+const (
+	CtxUser CtxKey = iota
+	CtxSession
+	CtxParams
 )
 
 type Controller struct {
@@ -42,12 +50,10 @@ func (ew *errWriter) write(buf []byte) {
 }
 
 func writeResp(w http.ResponseWriter, r *http.Request, resp *spec.Response) error {
-	if resp.Error != nil {
-		w.WriteHeader(http.StatusBadRequest)
-	}
 	res := metaResponse{Response: resp}
+	params := r.Context().Value(CtxParams).(params.Params)
 	ew := &errWriter{w: w}
-	switch parsing.GetStrParam(r, "f") {
+	switch params.Get("f") {
 	case "json":
 		w.Header().Set("Content-Type", "application/json")
 		data, err := json.Marshal(res)
@@ -62,7 +68,7 @@ func writeResp(w http.ResponseWriter, r *http.Request, resp *spec.Response) erro
 			return errors.Wrap(err, "marshal to jsonp")
 		}
 		// TODO: error if no callback provided instead of using a default
-		pCall := parsing.GetStrParamOr(r, "callback", "cb")
+		pCall := params.GetOr("callback", "cb")
 		ew.write([]byte(pCall))
 		ew.write([]byte("("))
 		ew.write(data)

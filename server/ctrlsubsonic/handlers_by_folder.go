@@ -9,9 +9,8 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"senan.xyz/g/gonic/model"
+	"senan.xyz/g/gonic/server/ctrlsubsonic/params"
 	"senan.xyz/g/gonic/server/ctrlsubsonic/spec"
-	"senan.xyz/g/gonic/server/key"
-	"senan.xyz/g/gonic/server/parsing"
 )
 
 // the subsonic spec metions "artist" a lot when talking about the
@@ -60,7 +59,8 @@ func (c *Controller) ServeGetIndexes(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
-	id, err := parsing.GetIntParam(r, "id")
+	params := r.Context().Value(CtxParams).(params.Params)
+	id, err := params.GetInt("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
@@ -86,7 +86,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 		Find(&childTracks)
 	for _, c := range childTracks {
 		toAppend := spec.NewTCTrackByFolder(c, folder)
-		if parsing.GetStrParam(r, "c") == "Jamstash" {
+		if params.Get("c") == "Jamstash" {
 			// jamstash thinks it can't play flacs
 			toAppend.ContentType = "audio/mpeg"
 			toAppend.Suffix = "mp3"
@@ -103,7 +103,8 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 // changes to this function should be reflected in in _by_tags.go's
 // getAlbumListTwo() function
 func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
-	listType := parsing.GetStrParam(r, "type")
+	params := r.Context().Value(CtxParams).(params.Params)
+	listType := params.Get("type")
 	if listType == "" {
 		return spec.NewError(10, "please provide a `type` parameter")
 	}
@@ -117,7 +118,7 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 	case "alphabeticalByName":
 		q = q.Order("right_path")
 	case "frequent":
-		user := r.Context().Value(key.User).(*model.User)
+		user := r.Context().Value(CtxUser).(*model.User)
 		q = q.Joins(`
 			JOIN plays
 			ON albums.id = plays.album_id AND plays.user_id = ?`,
@@ -128,7 +129,7 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 	case "random":
 		q = q.Order(gorm.Expr("random()"))
 	case "recent":
-		user := r.Context().Value(key.User).(*model.User)
+		user := r.Context().Value(CtxUser).(*model.User)
 		q = q.Joins(`
 			JOIN plays
 			ON albums.id = plays.album_id AND plays.user_id = ?`,
@@ -140,8 +141,8 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 	var folders []*model.Album
 	q.
 		Where("albums.tag_artist_id IS NOT NULL").
-		Offset(parsing.GetIntParamOr(r, "offset", 0)).
-		Limit(parsing.GetIntParamOr(r, "size", 10)).
+		Offset(params.GetIntOr("offset", 0)).
+		Limit(params.GetIntOr("size", 10)).
 		Preload("Parent").
 		Find(&folders)
 	sub := spec.NewResponse()
@@ -155,7 +156,8 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
-	query := parsing.GetStrParam(r, "query")
+	params := r.Context().Value(CtxParams).(params.Params)
+	query := params.Get("query")
 	if query == "" {
 		return spec.NewError(10, "please provide a `query` parameter")
 	}
@@ -170,8 +172,8 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
             AND (right_path LIKE ? OR
                  right_path_u_dec LIKE ?)
 		`, query, query).
-		Offset(parsing.GetIntParamOr(r, "artistOffset", 0)).
-		Limit(parsing.GetIntParamOr(r, "artistCount", 20)).
+		Offset(params.GetIntOr("artistOffset", 0)).
+		Limit(params.GetIntOr("artistCount", 20)).
 		Find(&artists)
 	for _, a := range artists {
 		results.Artists = append(results.Artists,
@@ -186,8 +188,8 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
             AND (right_path LIKE ? OR
                  right_path_u_dec LIKE ?)
 		`, query, query).
-		Offset(parsing.GetIntParamOr(r, "albumOffset", 0)).
-		Limit(parsing.GetIntParamOr(r, "albumCount", 20)).
+		Offset(params.GetIntOr("albumOffset", 0)).
+		Limit(params.GetIntOr("albumCount", 20)).
 		Find(&albums)
 	for _, a := range albums {
 		results.Albums = append(results.Albums, spec.NewTCAlbumByFolder(a))
@@ -201,8 +203,8 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
             filename LIKE ? OR
             filename_u_dec LIKE ?
 		`, query, query).
-		Offset(parsing.GetIntParamOr(r, "songOffset", 0)).
-		Limit(parsing.GetIntParamOr(r, "songCount", 20)).
+		Offset(params.GetIntOr("songOffset", 0)).
+		Limit(params.GetIntOr("songCount", 20)).
 		Find(&tracks)
 	for _, t := range tracks {
 		results.Tracks = append(results.Tracks,
