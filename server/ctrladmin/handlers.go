@@ -240,7 +240,7 @@ func (c *Controller) ServeUpdateLastFMAPIKey(r *http.Request) *Response {
 	data.CurrentLastFMAPIKey = c.DB.GetSetting("lastfm_api_key")
 	data.CurrentLastFMAPISecret = c.DB.GetSetting("lastfm_secret")
 	return &Response{
-		template: "update_lastfm_api_key",
+		template: "update_lastfm_api_key.tmpl",
 		data:     data,
 	}
 }

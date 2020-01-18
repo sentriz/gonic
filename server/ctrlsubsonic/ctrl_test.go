@@ -1,6 +1,7 @@
 package ctrlsubsonic
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +15,7 @@ import (
 
 	"senan.xyz/g/gonic/db"
 	"senan.xyz/g/gonic/server/ctrlbase"
+	"senan.xyz/g/gonic/server/ctrlsubsonic/params"
 )
 
 var (
@@ -48,6 +50,9 @@ func runQueryCases(t *testing.T, h subsonicHandler, cases []*queryCase) {
 			//
 			// request from the handler in question
 			req, _ := http.NewRequest("", "?"+qc.params.Encode(), nil)
+			params := params.New(req)
+			withParams := context.WithValue(req.Context(), CtxParams, params)
+			req = req.WithContext(withParams)
 			rr := httptest.NewRecorder()
 			testController.H(h).ServeHTTP(rr, req)
 			body := rr.Body.String()

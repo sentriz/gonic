@@ -24,6 +24,55 @@ func lowerUDecOrHash(in string) string {
 	return string(lower)
 }
 
+type playlistOpValues struct {
+	c    *Controller
+	r    *http.Request
+	user *model.User
+	id   int
+}
+
+func playlistDelete(opts playlistOpValues) {
+	indexes, ok := opts.r.URL.Query()["songIndexToRemove"]
+	if !ok {
+		return
+	}
+	trackIDs := []int{}
+	opts.c.DB.
+		Order("created_at").
+		Model(&model.PlaylistItem{}).
+		Where("playlist_id = ?", opts.id).
+		Pluck("track_id", &trackIDs)
+	for _, indexStr := range indexes {
+		i, err := strconv.Atoi(indexStr)
+		if err != nil {
+			continue
+		}
+		opts.c.DB.Delete(&model.PlaylistItem{},
+			"track_id = ?", trackIDs[i])
+	}
+}
+
+func playlistAdd(opts playlistOpValues) {
+	var toAdd []string
+	for _, val := range []string{"songId", "songIdToAdd"} {
+		var ok bool
+		toAdd, ok = opts.r.URL.Query()[val]
+		if ok {
+			break
+		}
+	}
+	for _, trackIDStr := range toAdd {
+		trackID, err := strconv.Atoi(trackIDStr)
+		if err != nil {
+			continue
+		}
+		opts.c.DB.Save(&model.PlaylistItem{
+			PlaylistID: opts.id,
+			TrackID:    trackID,
+		})
+	}
+}
+
 func (c *Controller) ServeGetLicence(r *http.Request) *spec.Response {
 	sub := spec.NewResponse()
 	sub.Licence = &spec.Licence{
@@ -180,57 +229,19 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 			playlistID = val
 		}
 	}
-	// begin updating meta
-	// playlist ID may still be 0 here, if so it's okay,
-	// we get a new playlist
-	playlist := &model.Playlist{}
-	c.DB.
-		Where("id = ?", playlistID).
-		First(playlist)
+	playlist := model.Playlist{ID: playlistID}
+	c.DB.Where(playlist).First(&playlist)
 	playlist.UserID = user.ID
-	if val := params.Get("name"); val != "" {
+	if val := r.URL.Query().Get("name"); val != "" {
 		playlist.Name = val
 	}
-	if val := params.Get("comment"); val != "" {
+	if val := r.URL.Query().Get("comment"); val != "" {
 		playlist.Comment = val
 	}
-	c.DB.Save(playlist)
-	// begin delete tracks
-	indexes, ok := params.GetList("songIndexToRemove")
-	if ok {
-		trackIDs := []int{}
-		c.DB.
-			Order("created_at").
-			Model(&model.PlaylistItem{}).
-			Where("playlist_id = ?", playlistID).
-			Pluck("track_id", &trackIDs)
-		for _, indexStr := range indexes {
-			i, err := strconv.Atoi(indexStr)
-			if err != nil {
-				continue
-			}
-			c.DB.Delete(&model.PlaylistItem{},
-				"track_id = ?", trackIDs[i])
-		}
-	}
-	// begin add tracks
-	var toAdd []string
-	for _, val := range []string{"songId", "songIdToAdd"} {
-		toAdd, ok := params.GetList(val)
-		if ok {
-			break
-		}
-	}
-	for _, trackIDStr := range toAdd {
-		trackID, err := strconv.Atoi(trackIDStr)
-		if err != nil {
-			continue
-		}
-		c.DB.Save(&model.PlaylistItem{
-			PlaylistID: playlist.ID,
-			TrackID:    trackID,
-		})
-	}
+	c.DB.Save(&playlist)
+	opts := playlistOpValues{c, r, user, playlist.ID}
+	playlistDelete(opts)
+	playlistAdd(opts)
 	return spec.NewResponse()
 }
 
