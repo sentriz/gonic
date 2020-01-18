@@ -13,7 +13,7 @@ import (
 )
 
 func (c *Controller) ServeNotFound(r *http.Request) *Response {
-	return &Response{template: "not_found.tmpl"}
+	return &Response{template: "not_found.tmpl", code: 404}
 }
 
 func (c *Controller) ServeLogin(r *http.Request) *Response {

@@ -34,7 +34,7 @@ func (c *Controller) WithParams(next http.Handler) http.Handler {
 	})
 }
 
-func (c *Controller) WithUser(next http.Handler) http.Handler {
+func (c *Controller) WithRequiredParams(next http.Handler) http.Handler {
 	requiredParameters := []string{
 		"u", "v", "c",
 	}
@@ -45,10 +45,17 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 			if param != "" {
 				continue
 			}
-			writeResp(w, r, spec.NewError(10, "please provide a `%s` parameter", req))
+			_ = writeResp(w, r, spec.NewError(10,
+				"please provide a `%s` parameter", req))
 			return
 		}
-		//
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (c *Controller) WithUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		params := r.Context().Value(CtxParams).(params.Params)
 		username := params.Get("u")
 		password := params.Get("p")
 		token := params.Get("t")
@@ -57,12 +64,14 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 		passwordAuth := token == "" && salt == ""
 		tokenAuth := password == ""
 		if tokenAuth == passwordAuth {
-			writeResp(w, r, spec.NewError(10, "please provide `t` and `s`, or just `p`"))
+			_ = writeResp(w, r, spec.NewError(10,
+				"please provide `t` and `s`, or just `p`"))
 			return
 		}
 		user := c.DB.GetUserFromName(username)
 		if user == nil {
-			writeResp(w, r, spec.NewError(40, "invalid username `%s`", username))
+			_ = writeResp(w, r, spec.NewError(40,
+				"invalid username `%s`", username))
 			return
 		}
 		var credsOk bool
@@ -72,7 +81,7 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 			credsOk = checkCredsBasic(user.Password, password)
 		}
 		if !credsOk {
-			writeResp(w, r, spec.NewError(40, "invalid password"))
+			_ = writeResp(w, r, spec.NewError(40, "invalid password"))
 			return
 		}
 		withUser := context.WithValue(r.Context(), CtxUser, user)

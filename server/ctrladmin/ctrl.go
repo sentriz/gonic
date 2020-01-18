@@ -177,6 +177,9 @@ func (c *Controller) H(h adminHandler) http.Handler {
 			return
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		if resp.code != 0 {
+			w.WriteHeader(resp.code)
+		}
 		if _, err := buff.WriteTo(w); err != nil {
 			log.Printf("error writing to response buffer: %v\n", err)
 		}

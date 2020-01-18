@@ -76,7 +76,6 @@ func (s *Server) SetupAdmin() error {
 	// begin public routes (creates session)
 	routPublic := s.router.PathPrefix("/admin").Subrouter()
 	routPublic.Use(ctrl.WithSession)
-	routPublic.NotFoundHandler = ctrl.H(ctrl.ServeNotFound)
 	routPublic.Handle("/login", ctrl.H(ctrl.ServeLogin))
 	routPublic.HandleFunc("/login_do", ctrl.ServeLoginDo) // "raw" handler, updates session
 	assets.PrefixDo("static", func(path string, asset *assets.EmbeddedAsset) {
@@ -111,14 +110,20 @@ func (s *Server) SetupAdmin() error {
 	routAdmin.Handle("/update_lastfm_api_key", ctrl.H(ctrl.ServeUpdateLastFMAPIKey))
 	routAdmin.Handle("/update_lastfm_api_key_do", ctrl.H(ctrl.ServeUpdateLastFMAPIKeyDo))
 	routAdmin.Handle("/start_scan_do", ctrl.H(ctrl.ServeStartScanDo))
+	// middlewares should be run for not found handler
+	// https://github.com/gorilla/mux/issues/416
+	notFoundHandler := ctrl.H(ctrl.ServeNotFound)
+	notFoundRoute := routPublic.NewRoute().Handler(notFoundHandler)
+	routPublic.NotFoundHandler = notFoundRoute.GetHandler()
 	return nil
 }
 
 func (s *Server) SetupSubsonic() error {
 	ctrl := ctrlsubsonic.New(s.ctrlBase)
 	rout := s.router.PathPrefix("/rest").Subrouter()
-	rout.Use(ctrl.WithValidSubsonicArgs)
-	rout.NotFoundHandler = ctrl.H(ctrl.ServeNotFound)
+	rout.Use(ctrl.WithParams)
+	rout.Use(ctrl.WithRequiredParams)
+	rout.Use(ctrl.WithUser)
 	//
 	// begin common
 	rout.Handle("/getLicense{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetLicence))
@@ -151,6 +156,11 @@ func (s *Server) SetupSubsonic() error {
 	rout.Handle("/getMusicDirectory{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetMusicDirectory))
 	rout.Handle("/getAlbumList{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetAlbumList))
 	rout.Handle("/search2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeSearchTwo))
+	// middlewares should be run for not found handler
+	// https://github.com/gorilla/mux/issues/416
+	notFoundHandler := ctrl.H(ctrl.ServeNotFound)
+	notFoundRoute := rout.NewRoute().Handler(notFoundHandler)
+	rout.NotFoundHandler = notFoundRoute.GetHandler()
 	return nil
 }
 
