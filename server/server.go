@@ -18,7 +18,7 @@ import (
 	"senan.xyz/g/gonic/server/ctrlsubsonic"
 )
 
-type ServerOptions struct {
+type Options struct {
 	DB           *db.DB
 	MusicPath    string
 	ListenAddr   string
@@ -29,10 +29,10 @@ type Server struct {
 	*http.Server
 	router   *mux.Router
 	ctrlBase *ctrlbase.Controller
-	opts     ServerOptions
+	opts     Options
 }
 
-func New(opts ServerOptions) *Server {
+func New(opts Options) *Server {
 	opts.MusicPath = filepath.Clean(opts.MusicPath)
 	ctrlBase := &ctrlbase.Controller{
 		DB:        opts.DB,

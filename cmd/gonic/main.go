@@ -42,7 +42,7 @@ func main() {
 		log.Fatalf("error opening database: %v\n", err)
 	}
 	defer db.Close()
-	serverOptions := server.ServerOptions{
+	serverOptions := server.Options{
 		DB:           db,
 		MusicPath:    *musicPath,
 		ListenAddr:   *listenAddr,
