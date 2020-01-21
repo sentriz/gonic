@@ -3,6 +3,8 @@ package spec
 import (
 	"fmt"
 	"time"
+
+	"senan.xyz/g/gonic/version"
 )
 
 var (
@@ -11,34 +13,38 @@ var (
 )
 
 type Response struct {
-	Status            string             `xml:"status,attr"   json:"status"`
-	Version           string             `xml:"version,attr"  json:"version"`
-	XMLNS             string             `xml:"xmlns,attr"    json:"-"`
-	Error             *Error             `xml:"error"         json:"error,omitempty"`
-	Albums            *Albums            `xml:"albumList"     json:"albumList,omitempty"`
-	AlbumsTwo         *Albums            `xml:"albumList2"    json:"albumList2,omitempty"`
-	Album             *Album             `xml:"album"         json:"album,omitempty"`
-	Track             *TrackChild        `xml:"song"          json:"song,omitempty"`
-	Indexes           *Indexes           `xml:"indexes"       json:"indexes,omitempty"`
-	Artists           *Artists           `xml:"artists"       json:"artists,omitempty"`
-	Artist            *Artist            `xml:"artist"        json:"artist,omitempty"`
-	Directory         *Directory         `xml:"directory"     json:"directory,omitempty"`
-	RandomTracks      *RandomTracks      `xml:"randomSongs"   json:"randomSongs,omitempty"`
-	MusicFolders      *MusicFolders      `xml:"musicFolders"  json:"musicFolders,omitempty"`
-	ScanStatus        *ScanStatus        `xml:"scanStatus"    json:"scanStatus,omitempty"`
-	Licence           *Licence           `xml:"license"       json:"license,omitempty"`
-	SearchResultTwo   *SearchResultTwo   `xml:"searchResult2" json:"searchResult2,omitempty"`
-	SearchResultThree *SearchResultThree `xml:"searchResult3" json:"searchResult3,omitempty"`
-	User              *User              `xml:"user"          json:"user,omitempty"`
-	Playlists         *Playlists         `xml:"playlists"     json:"playlists,omitempty"`
-	Playlist          *Playlist          `xml:"playlist"      json:"playlist,omitempty"`
+	Status            string             `xml:"status,attr"       json:"status"`
+	Version           string             `xml:"version,attr"      json:"version"`
+	XMLNS             string             `xml:"xmlns,attr"        json:"-"`
+	Type              string             `xml:"type,attr"         json:"type"`
+	GonicVersion      string             `xml:"gonicVersion,attr" json:"gonicVersion"`
+	Error             *Error             `xml:"error"             json:"error,omitempty"`
+	Albums            *Albums            `xml:"albumList"         json:"albumList,omitempty"`
+	AlbumsTwo         *Albums            `xml:"albumList2"        json:"albumList2,omitempty"`
+	Album             *Album             `xml:"album"             json:"album,omitempty"`
+	Track             *TrackChild        `xml:"song"              json:"song,omitempty"`
+	Indexes           *Indexes           `xml:"indexes"           json:"indexes,omitempty"`
+	Artists           *Artists           `xml:"artists"           json:"artists,omitempty"`
+	Artist            *Artist            `xml:"artist"            json:"artist,omitempty"`
+	Directory         *Directory         `xml:"directory"         json:"directory,omitempty"`
+	RandomTracks      *RandomTracks      `xml:"randomSongs"       json:"randomSongs,omitempty"`
+	MusicFolders      *MusicFolders      `xml:"musicFolders"      json:"musicFolders,omitempty"`
+	ScanStatus        *ScanStatus        `xml:"scanStatus"        json:"scanStatus,omitempty"`
+	Licence           *Licence           `xml:"license"           json:"license,omitempty"`
+	SearchResultTwo   *SearchResultTwo   `xml:"searchResult2"     json:"searchResult2,omitempty"`
+	SearchResultThree *SearchResultThree `xml:"searchResult3"     json:"searchResult3,omitempty"`
+	User              *User              `xml:"user"              json:"user,omitempty"`
+	Playlists         *Playlists         `xml:"playlists"         json:"playlists,omitempty"`
+	Playlist          *Playlist          `xml:"playlist"          json:"playlist,omitempty"`
 }
 
 func NewResponse() *Response {
 	return &Response{
-		Status:  "ok",
-		XMLNS:   xmlns,
-		Version: apiVersion,
+		Status:       "ok",
+		XMLNS:        xmlns,
+		Version:      apiVersion,
+		Type:         version.NAME,
+		GonicVersion: version.VERSION,
 	}
 }
 
@@ -67,6 +73,8 @@ func NewError(code int, message string, a ...interface{}) *Response {
 			Code:    code,
 			Message: fmt.Sprintf(message, a...),
 		},
+		Type:         version.NAME,
+		GonicVersion: version.VERSION,
 	}
 }
 
