@@ -4,4 +4,8 @@
 
 package version
 
+const NAME = "gonic"
+const NAME_UPPER = "GONIC"
+const NAME_EMBED = "gonicembed"
+const NAME_SCAN = "gonicscan"
 const VERSION = "v0.4.3"

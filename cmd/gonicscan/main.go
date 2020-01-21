@@ -10,15 +10,11 @@ import (
 
 	"senan.xyz/g/gonic/db"
 	"senan.xyz/g/gonic/scanner"
-)
-
-const (
-	programName = "gonicscan"
-	programVar  = "GONIC"
+	"senan.xyz/g/gonic/version"
 )
 
 func main() {
-	set := flag.NewFlagSet(programName, flag.ExitOnError)
+	set := flag.NewFlagSet(version.NAME_SCAN, flag.ExitOnError)
 	musicPath := set.String(
 		"music-path", "",
 		"path to music")
@@ -26,7 +22,7 @@ func main() {
 		"db-path", "gonic.db",
 		"path to database (optional)")
 	if err := ff.Parse(set, os.Args[1:],
-		ff.WithEnvVarPrefix(programVar),
+		ff.WithEnvVarPrefix(version.NAME_UPPER),
 	); err != nil {
 		log.Fatalf("error parsing args: %v\n", err)
 	}

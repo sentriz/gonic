@@ -11,6 +11,8 @@ import (
 
 	"github.com/peterbourgon/ff"
 	"github.com/pkg/errors"
+
+	"senan.xyz/g/gonic/version"
 )
 
 // once i had this written with ~100% text/template but it was very
@@ -18,8 +20,7 @@ import (
 // but it's pretty fast. which i needed it to for live reloading stuff
 
 const (
-	programName = "gonicembed"
-	byteCols    = 24
+	byteCols = 24
 
 	// begin file template
 	fileHeader = `// file generated with embed tool
@@ -122,7 +123,7 @@ func processAssets(c *config, files []string) error {
 }
 
 func main() {
-	set := flag.NewFlagSet(programName, flag.ExitOnError)
+	set := flag.NewFlagSet(version.NAME_EMBED, flag.ExitOnError)
 	outPath := set.String(
 		"out-path", "",
 		"generated file's path (required)")
