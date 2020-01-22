@@ -45,6 +45,10 @@ func playlistParseUpload(c *Controller, userID int, header *multipart.FileHeader
 	if playlistName == "" {
 		return []string{fmt.Sprintf("invalid filename %q", header.Filename)}, false
 	}
+	contentType := header.Header.Get("Content-Type")
+	if !(contentType == "audio/x-mpegurl" || contentType == "application/octet-stream") {
+		return []string{fmt.Sprintf("invalid content-type %q", contentType)}, false
+	}
 	playlist := &model.Playlist{}
 	c.DB.FirstOrCreate(playlist, model.Playlist{
 		Name:   playlistName,
@@ -56,7 +60,8 @@ func playlistParseUpload(c *Controller, userID int, header *multipart.FileHeader
 	for scanner.Scan() {
 		path := scanner.Text()
 		if err := playlistParseLine(c, playlist.ID, path); err != nil {
-			errors = append(errors, err.Error())
+			// trim length of error to not overflow cookie flash
+			errors = append(errors, fmt.Sprintf("%.100s", err.Error()))
 		}
 	}
 	if err := scanner.Err(); err != nil {
