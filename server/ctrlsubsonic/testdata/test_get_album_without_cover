@@ -2,6 +2,8 @@
   "subsonic-response": {
     "status": "ok",
     "version": "1.9.0",
+    "type": "gonic",
+    "gonicVersion": "v0.4.3",
     "album": {
       "id": 2,
       "created": "2019-05-16T22:10:21+01:00"

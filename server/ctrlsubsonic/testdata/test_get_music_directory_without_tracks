@@ -2,6 +2,8 @@
   "subsonic-response": {
     "status": "ok",
     "version": "1.9.0",
+    "type": "gonic",
+    "gonicVersion": "v0.4.3",
     "directory": {
       "id": 2,
       "parent": 1,
@@ -9,9 +11,10 @@
       "child": [
         {
           "coverArt": 3,
-          "created": "0001-01-01T00:00:00Z",
+          "created": "2019-07-08T21:49:40.995905275+01:00",
           "id": 3,
           "isDir": true,
+          "isVideo": false,
           "parent": 2,
           "title": "(1983) Snake Charmer"
         }

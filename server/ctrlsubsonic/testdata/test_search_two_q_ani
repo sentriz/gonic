@@ -2,6 +2,8 @@
   "subsonic-response": {
     "status": "ok",
     "version": "1.9.0",
+    "type": "gonic",
+    "gonicVersion": "v0.4.3",
     "searchResult2": {
       "artist": [
         {
@@ -13,9 +15,10 @@
       "album": [
         {
           "coverArt": 13,
-          "created": "0001-01-01T00:00:00Z",
+          "created": "2019-07-08T21:49:41.334460116+01:00",
           "id": 13,
           "isDir": true,
+          "isVideo": false,
           "parent": 12,
           "title": "(2010) Anika"
         }
