@@ -123,7 +123,7 @@ type TrackChild struct {
 	Path        string    `xml:"path,attr,omitempty"        json:"path,omitempty"`
 	Size        int       `xml:"size,attr,omitempty"        json:"size,omitempty"`
 	Suffix      string    `xml:"suffix,attr,omitempty"      json:"suffix,omitempty"`
-	Title       string    `xml:"title,attr,omitempty"       json:"title,omitempty"`
+	Title       string    `xml:"title,attr"                 json:"title"`
 	TrackNumber int       `xml:"track,attr,omitempty"       json:"track,omitempty"`
 	DiscNumber  int       `xml:"discNumber,attr,omitempty"  json:"discNumber,omitempty"`
 	Type        string    `xml:"type,attr,omitempty"        json:"type,omitempty"`
