@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"path"
 
 	"senan.xyz/g/gonic/db"
 	"senan.xyz/g/gonic/scanner"
@@ -44,9 +45,15 @@ func statusToBlock(code int) string {
 }
 
 type Controller struct {
-	DB        *db.DB
-	MusicPath string
-	Scanner   *scanner.Scanner
+	DB          *db.DB
+	MusicPath   string
+	Scanner     *scanner.Scanner
+	ProxyPrefix string
+}
+
+// Path returns a URL path with the proxy prefix included
+func (c *Controller) Path(rel string) string {
+	return path.Join(c.ProxyPrefix, rel)
 }
 
 func (c *Controller) WithLogging(next http.Handler) http.Handler {

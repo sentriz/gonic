@@ -23,26 +23,28 @@ type Options struct {
 	MusicPath    string
 	ListenAddr   string
 	ScanInterval time.Duration
+	ProxyPrefix  string
 }
 
 type Server struct {
 	*http.Server
-	router   *mux.Router
-	ctrlBase *ctrlbase.Controller
-	opts     Options
+	router *mux.Router
+	base   *ctrlbase.Controller
+	opts   Options
 }
 
 func New(opts Options) *Server {
 	opts.MusicPath = filepath.Clean(opts.MusicPath)
-	ctrlBase := &ctrlbase.Controller{
-		DB:        opts.DB,
-		MusicPath: opts.MusicPath,
-		Scanner:   scanner.New(opts.DB, opts.MusicPath),
+	base := &ctrlbase.Controller{
+		DB:          opts.DB,
+		MusicPath:   opts.MusicPath,
+		Scanner:     scanner.New(opts.DB, opts.MusicPath),
+		ProxyPrefix: opts.ProxyPrefix,
 	}
 	router := mux.NewRouter()
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// make the admin page the default
-		http.Redirect(w, r, "/admin/home", http.StatusMovedPermanently)
+		http.Redirect(w, r, base.Path("/admin/home"), http.StatusMovedPermanently)
 	})
 	router.HandleFunc("/musicFolderSettings.view", func(w http.ResponseWriter, r *http.Request) {
 		// jamstash seems to call "musicFolderSettings.view" to start a scan. notice
@@ -50,11 +52,11 @@ func New(opts Options) *Server {
 		// custom handler, middleware. etc setup that we've got in `SetupSubsonic()`.
 		// instead lets redirect to down there and use the scan endpoint
 		redirectTo := fmt.Sprintf("/rest/startScan.view?%s", r.URL.Query().Encode())
-		http.Redirect(w, r, redirectTo, http.StatusMovedPermanently)
+		http.Redirect(w, r, base.Path(redirectTo), http.StatusMovedPermanently)
 	})
 	// common middleware for admin and subsonic routes
-	router.Use(ctrlBase.WithLogging)
-	router.Use(ctrlBase.WithCORS)
+	router.Use(base.WithLogging)
+	router.Use(base.WithCORS)
 	server := &http.Server{
 		Addr:         opts.ListenAddr,
 		Handler:      router,
@@ -63,15 +65,15 @@ func New(opts Options) *Server {
 		IdleTimeout:  15 * time.Second,
 	}
 	return &Server{
-		Server:   server,
-		router:   router,
-		ctrlBase: ctrlBase,
-		opts:     opts,
+		Server: server,
+		router: router,
+		base:   base,
+		opts:   opts,
 	}
 }
 
 func (s *Server) SetupAdmin() error {
-	ctrl := ctrladmin.New(s.ctrlBase)
+	ctrl := ctrladmin.New(s.base)
 	//
 	// begin public routes (creates session)
 	routPublic := s.router.PathPrefix("/admin").Subrouter()
@@ -119,7 +121,7 @@ func (s *Server) SetupAdmin() error {
 }
 
 func (s *Server) SetupSubsonic() error {
-	ctrl := ctrlsubsonic.New(s.ctrlBase)
+	ctrl := ctrlsubsonic.New(s.base)
 	rout := s.router.PathPrefix("/rest").Subrouter()
 	rout.Use(ctrl.WithParams)
 	rout.Use(ctrl.WithRequiredParams)
@@ -167,7 +169,7 @@ func (s *Server) SetupSubsonic() error {
 func (s *Server) scanTick() {
 	ticker := time.NewTicker(s.opts.ScanInterval)
 	for range ticker.C {
-		if err := s.ctrlBase.Scanner.Start(); err != nil {
+		if err := s.base.Scanner.Start(); err != nil {
 			log.Printf("error while scanner: %v", err)
 		}
 	}

@@ -25,7 +25,7 @@ func (c *Controller) WithUserSession(next http.Handler) http.Handler {
 		if !ok {
 			sessAddFlashW(session, []string{"you are not authenticated"})
 			sessLogSave(session, w, r)
-			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
+			http.Redirect(w, r, c.Path("/admin/login"), http.StatusSeeOther)
 			return
 		}
 		// take username from sesion and add the user row to the context
@@ -35,7 +35,7 @@ func (c *Controller) WithUserSession(next http.Handler) http.Handler {
 			// user in the database (maybe the user was deleted)
 			session.Options.MaxAge = -1
 			sessLogSave(session, w, r)
-			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
+			http.Redirect(w, r, c.Path("/admin/login"), http.StatusSeeOther)
 			return
 		}
 		withUser := context.WithValue(r.Context(), CtxUser, user)
@@ -51,7 +51,7 @@ func (c *Controller) WithAdminSession(next http.Handler) http.Handler {
 		if !user.IsAdmin {
 			sessAddFlashW(session, []string{"you are not an admin"})
 			sessLogSave(session, w, r)
-			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
+			http.Redirect(w, r, c.Path("/admin/login"), http.StatusSeeOther)
 			return
 		}
 		next.ServeHTTP(w, r)

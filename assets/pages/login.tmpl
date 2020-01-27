@@ -3,7 +3,7 @@
     <div class="box-title">
         <i class="mdi mdi-login-variant"></i> login
     </div>
-    <form action="/admin/login_do" method="post">
+    <form action="{{ path "/admin/login_do" }}" method="post">
         <input type="text" id="username" name="username" placeholder="username">
         <input type="password" id="password" name="password" placeholder="password">
         <input type="submit" value="login">

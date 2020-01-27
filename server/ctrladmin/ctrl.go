@@ -3,6 +3,7 @@ package ctrladmin
 import (
 	"encoding/gob"
 	"fmt"
+	"strings"
 	"html/template"
 	"log"
 	"net/http"
@@ -80,6 +81,7 @@ func New(base *ctrlbase.Controller) *Controller {
 		Funcs(sprig.FuncMap()).
 		Funcs(template.FuncMap{
 			"humanDate": humanize.Time,
+			"path":      base.Path,
 		})
 	tmplBase = extendFromPaths(tmplBase, prefixPartials)
 	tmplBase = extendFromPaths(tmplBase, prefixLayouts)
@@ -140,7 +142,11 @@ func (c *Controller) H(h adminHandler) http.Handler {
 			}
 		}
 		if resp.redirect != "" {
-			http.Redirect(w, r, resp.redirect, http.StatusSeeOther)
+			to := resp.redirect
+			if strings.HasPrefix(to, "/") {
+				to = c.Path(to)
+			}
+			http.Redirect(w, r, to, http.StatusSeeOther)
 			return
 		}
 		if resp.err != "" {

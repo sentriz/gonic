@@ -2,9 +2,9 @@
 <div class="side-padded light text-right">
     welcome {{ .User.Name }}
     &#124;
-    <a href="/admin/home">home</a>
+    <a href="{{ path "/admin/home" }}">home</a>
     &#124;
-    <a href="/admin/logout">logout <i class="mdi mdi-logout-variant"></i></a>
+    <a href="{{ path "/admin/logout" }}">logout <i class="mdi mdi-logout-variant"></i></a>
 </div>
 {{ template "user" . }}
 {{ end }}

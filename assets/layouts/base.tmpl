@@ -9,7 +9,7 @@
     <body>
         <div id="content">
             <div id="header">
-                <img src="/admin/static/gonic.png">
+                <img src="{{ path "/admin/static/gonic.png" }}">
             </div>
             {{ range $flash := .Flashes }}
             <div class="padded flash-{{ $flash.Type }}">

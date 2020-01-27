@@ -36,7 +36,7 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 		r.URL.Scheme,
 	)
 	host := firstExisting(
-		"localhost:7373", // fallback
+		"localhost:4747", // fallback
 		r.Header.Get("X-Forwarded-Host"),
 		r.Host,
 	)
