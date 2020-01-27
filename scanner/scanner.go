@@ -89,6 +89,7 @@ func (s *Scanner) Start() error {
 		Callback:             s.callbackItem,
 		PostChildrenCallback: s.callbackPost,
 		Unsorted:             true,
+		FollowSymbolicLinks:  true,
 	})
 	if err != nil {
 		return errors.Wrap(err, "walking filesystem")
