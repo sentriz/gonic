@@ -200,7 +200,11 @@ func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
 		filename:  filename,
 		stat:      stat,
 	}
-	if info.IsDir() {
+	isDir, err := info.IsDirOrSymlinkToDir()
+	if err != nil {
+		return errors.Wrap(err, "stating link to dir")
+	}
+	if isDir {
 		return s.handleFolder(it)
 	}
 	lowerFilename := strings.ToLower(filename)
