@@ -3,7 +3,7 @@
     "status": "ok",
     "version": "1.9.0",
     "type": "gonic",
-    "gonicVersion": "v0.6.1",
+    "gonicVersion": "v0.6.2",
     "searchResult2": {
       "artist": [
         {

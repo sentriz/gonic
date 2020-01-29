@@ -3,24 +3,16 @@
     "status": "ok",
     "version": "1.9.0",
     "type": "gonic",
-    "gonicVersion": "v0.6.1",
+    "gonicVersion": "v0.6.2",
     "albumList2": {
       "album": [
         {
-          "id": 21,
-          "coverArt": 21,
-          "artistId": 7,
-          "artist": "Captain Beefheart & His Magic Band",
-          "name": "Lick My Decals Off, Baby",
-          "created": "2019-06-10T19:26:30.944742894+01:00"
-        },
-        {
-          "id": 16,
-          "coverArt": 16,
-          "artistId": 5,
-          "artist": "Swell Maps",
-          "name": "Jane From Occupied Europe",
-          "created": "2019-04-30T16:48:48+01:00"
+          "id": 19,
+          "coverArt": 19,
+          "artistId": 6,
+          "artist": "Ten Years After",
+          "name": "Ten Years After",
+          "created": "2019-04-30T16:48:30+01:00"
         },
         {
           "id": 17,
@@ -39,35 +31,11 @@
           "created": "2019-06-13T12:57:28.850090338+01:00"
         },
         {
-          "id": 13,
-          "coverArt": 13,
-          "artistId": 4,
-          "artist": "Anikas",
-          "name": "Anika",
-          "created": "2019-05-23T15:12:02.921473302+01:00"
-        },
-        {
           "id": 6,
           "artistId": 2,
           "artist": "A Certain Ratio",
           "name": "To Each...",
           "created": "2019-05-23T15:12:02.921473302+01:00"
-        },
-        {
-          "id": 5,
-          "coverArt": 5,
-          "artistId": 2,
-          "artist": "A Certain Ratio",
-          "name": "The Graveyard and the Ballroom",
-          "created": "2019-06-05T17:46:37.675917974+01:00"
-        },
-        {
-          "id": 19,
-          "coverArt": 19,
-          "artistId": 6,
-          "artist": "Ten Years After",
-          "name": "Ten Years After",
-          "created": "2019-04-30T16:48:30+01:00"
         },
         {
           "id": 3,
@@ -78,12 +46,44 @@
           "created": "2019-05-16T22:10:52+01:00"
         },
         {
+          "id": 21,
+          "coverArt": 21,
+          "artistId": 7,
+          "artist": "Captain Beefheart & His Magic Band",
+          "name": "Lick My Decals Off, Baby",
+          "created": "2019-06-10T19:26:30.944742894+01:00"
+        },
+        {
+          "id": 16,
+          "coverArt": 16,
+          "artistId": 5,
+          "artist": "Swell Maps",
+          "name": "Jane From Occupied Europe",
+          "created": "2019-04-30T16:48:48+01:00"
+        },
+        {
           "id": 9,
           "coverArt": 9,
           "artistId": 3,
           "artist": "13th Floor Elevators",
           "name": "The Psychedelic Sounds of the 13th Floor Elevators",
           "created": "2019-06-13T12:57:24.306717554+01:00"
+        },
+        {
+          "id": 13,
+          "coverArt": 13,
+          "artistId": 4,
+          "artist": "Anikas",
+          "name": "Anika",
+          "created": "2019-05-23T15:12:02.921473302+01:00"
+        },
+        {
+          "id": 5,
+          "coverArt": 5,
+          "artistId": 2,
+          "artist": "A Certain Ratio",
+          "name": "The Graveyard and the Ballroom",
+          "created": "2019-06-05T17:46:37.675917974+01:00"
         }
       ]
     }
