@@ -39,6 +39,7 @@ type Response struct {
 	ArtistInfo        *ArtistInfo        `xml:"artistInfo"        json:"artistInfo,omitempty"`
 	ArtistInfoTwo     *ArtistInfo        `xml:"artistInfo2"       json:"artistInfo2,omitempty"`
 	Genres            *Genres            `xml:"genres"            json:"genres,omitempty"`
+	PlayQueue         *PlayQueue         `xml:"playQueue"         json:"playQueue,omitempty"`
 }
 
 func NewResponse() *Response {
@@ -248,4 +249,13 @@ type Genre struct {
 
 type Genres struct {
 	Genre []*Genres `xml:"genre" json:"genre"`
+}
+
+type PlayQueue struct {
+	Current   int           `xml:"current,attr,omitempty"  json:"current,omitempty"`
+	Position  int           `xml:"position,attr,omitempty" json:"position,omitempty"`
+	Username  string        `xml:"username,attr"           json:"username"`
+	Changed   time.Time     `xml:"changed,attr"            json:"changed"`
+	ChangedBy string        `xml:"changedBy,attr"          json:"changedBy"`
+	List      []*TrackChild `xml:"entry,omitempty"         json:"entry,omitempty"`
 }

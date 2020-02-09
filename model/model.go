@@ -155,3 +155,23 @@ func (p *Playlist) SetItems(items []int) {
 	p.Items = joinInt(items, ",")
 	p.TrackCount = len(items)
 }
+
+type PlayQueue struct {
+	ID        int `gorm:"primary_key"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	User      *User
+	UserID    int `sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
+	Current   int
+	Position  int
+	ChangedBy string
+	Items     string
+}
+
+func (p *PlayQueue) GetItems() []int {
+	return splitInt(p.Items, ",")
+}
+
+func (p *PlayQueue) SetItems(items []int) {
+	p.Items = joinInt(items, ",")
+}

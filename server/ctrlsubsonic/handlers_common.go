@@ -213,9 +213,48 @@ func (c *Controller) ServeDeletePlaylist(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
-	return spec.NewResponse()
+	user := r.Context().Value(CtxUser).(*model.User)
+	queue := model.PlayQueue{}
+	err := c.DB.
+		Where("user_id = ?", user.ID).
+		Find(&queue).
+		Error
+	if gorm.IsRecordNotFoundError(err) {
+		return spec.NewResponse()
+	}
+	sub := spec.NewResponse()
+	sub.PlayQueue = &spec.PlayQueue{}
+	sub.PlayQueue.Username = user.Name
+	sub.PlayQueue.Position = queue.Position
+	sub.PlayQueue.Current = queue.Current
+	sub.PlayQueue.Changed = queue.UpdatedAt
+	sub.PlayQueue.ChangedBy = queue.ChangedBy
+	trackIDs := queue.GetItems()
+	sub.PlayQueue.List = make([]*spec.TrackChild, len(trackIDs))
+	for i, id := range trackIDs {
+		track := model.Track{}
+		c.DB.
+			Where("id = ?", id).
+			Preload("Album").
+			Find(&track)
+		sub.PlayQueue.List[i] = spec.NewTCTrackByFolder(&track, track.Album)
+	}
+	return sub
 }
 
 func (c *Controller) ServeSavePlayQueue(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	tracks := params.GetFirstListInt("id")
+	if tracks == nil {
+		return spec.NewError(10, "please provide some `id` parameters")
+	}
+	user := r.Context().Value(CtxUser).(*model.User)
+	queue := &model.PlayQueue{UserID: user.ID}
+	c.DB.Where(queue).First(queue)
+	queue.Current = params.GetIntOr("current", 0)
+	queue.Position = params.GetIntOr("position", 0)
+	queue.ChangedBy = params.Get("c")
+	queue.SetItems(tracks)
+	c.DB.Save(queue)
 	return spec.NewResponse()
 }
