@@ -10,6 +10,30 @@ import (
 	"senan.xyz/g/gonic/mime"
 )
 
+func splitInt(in, sep string) []int {
+	if len(in) == 0 {
+		return []int{}
+	}
+	parts := strings.Split(in, sep)
+	ret := make([]int, 0, len(parts))
+	for _, p := range parts {
+		i, _ := strconv.Atoi(p)
+		ret = append(ret, i)
+	}
+	return ret
+}
+
+func joinInt(in []int, sep string) string {
+	if in == nil {
+		return ""
+	}
+	strs := make([]string, 0, len(in))
+	for _, i := range in {
+		strs = append(strs, strconv.Itoa(i))
+	}
+	return strings.Join(strs, sep)
+}
+
 type Artist struct {
 	ID         int      `gorm:"primary_key"`
 	Name       string   `gorm:"not null; unique_index"`
@@ -124,23 +148,10 @@ type Playlist struct {
 }
 
 func (p *Playlist) GetItems() []int {
-	if len(p.Items) == 0 {
-		return []int{}
-	}
-	parts := strings.Split(p.Items, ",")
-	ret := make([]int, 0, len(parts))
-	for _, p := range parts {
-		i, _ := strconv.Atoi(p)
-		ret = append(ret, i)
-	}
-	return ret
+	return splitInt(p.Items, ",")
 }
 
 func (p *Playlist) SetItems(items []int) {
-	strs := make([]string, 0, len(items))
-	for _, p := range items {
-		strs = append(strs, strconv.Itoa(p))
-	}
+	p.Items = joinInt(items, ",")
 	p.TrackCount = len(items)
-	p.Items = strings.Join(strs, ",")
 }
