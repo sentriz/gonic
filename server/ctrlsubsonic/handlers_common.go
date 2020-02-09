@@ -3,6 +3,7 @@ package ctrlsubsonic
 import (
 	"log"
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 	"unicode"
@@ -22,55 +23,6 @@ func lowerUDecOrHash(in string) string {
 		return "#"
 	}
 	return string(lower)
-}
-
-type playlistOpValues struct {
-	c    *Controller
-	r    *http.Request
-	user *model.User
-	id   int
-}
-
-func playlistDelete(opts playlistOpValues) {
-	indexes, ok := opts.r.URL.Query()["songIndexToRemove"]
-	if !ok {
-		return
-	}
-	trackIDs := []int{}
-	opts.c.DB.
-		Order("created_at").
-		Model(&model.PlaylistItem{}).
-		Where("playlist_id = ?", opts.id).
-		Pluck("track_id", &trackIDs)
-	for _, indexStr := range indexes {
-		i, err := strconv.Atoi(indexStr)
-		if err != nil {
-			continue
-		}
-		opts.c.DB.Delete(&model.PlaylistItem{},
-			"track_id = ?", trackIDs[i])
-	}
-}
-
-func playlistAdd(opts playlistOpValues) {
-	var toAdd []string
-	for _, val := range []string{"songId", "songIdToAdd"} {
-		var ok bool
-		toAdd, ok = opts.r.URL.Query()[val]
-		if ok {
-			break
-		}
-	}
-	for _, trackIDStr := range toAdd {
-		trackID, err := strconv.Atoi(trackIDStr)
-		if err != nil {
-			continue
-		}
-		opts.c.DB.Save(&model.PlaylistItem{
-			PlaylistID: opts.id,
-			TrackID:    trackID,
-		})
-	}
 }
 
 func (c *Controller) ServeGetLicence(r *http.Request) *spec.Response {
@@ -170,9 +122,7 @@ func (c *Controller) ServeNotFound(r *http.Request) *spec.Response {
 func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*model.User)
 	var playlists []*model.Playlist
-	c.DB.
-		Where("user_id = ?", user.ID).
-		Find(&playlists)
+	c.DB.Where("user_id = ?", user.ID).Find(&playlists)
 	sub := spec.NewResponse()
 	sub.Playlists = &spec.Playlists{
 		List: make([]*spec.Playlist, len(playlists)),
@@ -180,6 +130,7 @@ func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
 	for i, playlist := range playlists {
 		sub.Playlists.List[i] = spec.NewPlaylist(playlist)
 		sub.Playlists.List[i].Owner = user.Name
+		sub.Playlists.List[i].SongCount = playlist.TrackCount
 	}
 	return sub
 }
@@ -198,50 +149,58 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 	if gorm.IsRecordNotFoundError(err) {
 		return spec.NewError(70, "playlist with id `%d` not found", playlistID)
 	}
-	var tracks []*model.Track
-	c.DB.
-		Joins(`
-            JOIN playlist_items
-		    ON playlist_items.track_id = tracks.id
-		`).
-		Where("playlist_items.playlist_id = ?", playlistID).
-		Group("tracks.id").
-		Order("playlist_items.created_at").
-		Preload("Album").
-		Find(&tracks)
 	user := r.Context().Value(CtxUser).(*model.User)
 	sub := spec.NewResponse()
 	sub.Playlist = spec.NewPlaylist(&playlist)
 	sub.Playlist.Owner = user.Name
-	sub.Playlist.List = make([]*spec.TrackChild, len(tracks))
-	for i, track := range tracks {
-		sub.Playlist.List[i] = spec.NewTCTrackByFolder(track, track.Album)
+	sub.Playlist.SongCount = playlist.TrackCount
+	trackIDs := playlist.GetItems()
+	sub.Playlist.List = make([]*spec.TrackChild, len(trackIDs))
+	for i, id := range trackIDs {
+		track := model.Track{}
+		c.DB.
+			Where("id = ?", id).
+			Preload("Album").
+			Find(&track)
+		sub.Playlist.List[i] = spec.NewTCTrackByFolder(&track, track.Album)
 	}
 	return sub
 }
 
 func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
-	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*model.User)
+	params := r.Context().Value(CtxParams).(params.Params)
 	var playlistID int
-	for _, key := range []string{"id", "playlistId"} {
-		if val, err := params.GetInt(key); err != nil {
-			playlistID = val
-		}
+	if p := params.GetFirstList("id", "playlistId"); p != nil {
+		playlistID, _ = strconv.Atoi(p[0])
 	}
-	playlist := model.Playlist{ID: playlistID}
-	c.DB.Where(playlist).First(&playlist)
+	// playlistID may be 0 from above. in that case we get a new playlist
+	// as intended
+	playlist := &model.Playlist{ID: playlistID}
+	c.DB.Where(playlist).First(playlist)
+	// ** begin update meta info
 	playlist.UserID = user.ID
-	if val := r.URL.Query().Get("name"); val != "" {
+	if val := params.Get("name"); val != "" {
 		playlist.Name = val
 	}
-	if val := r.URL.Query().Get("comment"); val != "" {
+	if val := params.Get("comment"); val != "" {
 		playlist.Comment = val
 	}
-	c.DB.Save(&playlist)
-	opts := playlistOpValues{c, r, user, playlist.ID}
-	playlistDelete(opts)
-	playlistAdd(opts)
+	trackIDs := playlist.GetItems()
+	// ** begin delete items
+	if p := params.GetFirstListInt("songIndexToRemove"); p != nil {
+		sort.Sort(sort.Reverse(sort.IntSlice(trackIDs)))
+		for _, i := range p {
+			trackIDs = append(trackIDs[:i], trackIDs[i+1:]...)
+		}
+	}
+	// ** begin add items
+	if p := params.GetFirstListInt("songId", "songIdToAdd"); p != nil {
+		trackIDs = append(trackIDs, p...)
+	}
+	//
+	playlist.SetItems(trackIDs)
+	c.DB.Save(playlist)
 	return spec.NewResponse()
 }
 

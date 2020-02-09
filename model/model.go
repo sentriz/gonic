@@ -3,6 +3,8 @@ package model
 
 import (
 	"path"
+	"strconv"
+	"strings"
 	"time"
 
 	"senan.xyz/g/gonic/mime"
@@ -117,14 +119,28 @@ type Playlist struct {
 	UserID     int `sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
 	Name       string
 	Comment    string
-	TrackCount int `sql:"-"`
+	TrackCount int
+	Items      string
 }
 
-type PlaylistItem struct {
-	ID         int `gorm:"primary_key"`
-	CreatedAt  time.Time
-	Playlist   Playlist
-	PlaylistID int `sql:"default: null; type:int REFERENCES playlists(id) ON DELETE CASCADE"`
-	Track      Track
-	TrackID    int `sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
+func (p *Playlist) GetItems() []int {
+	if len(p.Items) == 0 {
+		return []int{}
+	}
+	parts := strings.Split(p.Items, ",")
+	ret := make([]int, 0, len(parts))
+	for _, p := range parts {
+		i, _ := strconv.Atoi(p)
+		ret = append(ret, i)
+	}
+	return ret
+}
+
+func (p *Playlist) SetItems(items []int) {
+	strs := make([]string, 0, len(items))
+	for _, p := range items {
+		strs = append(strs, strconv.Itoa(p))
+	}
+	p.TrackCount = len(items)
+	p.Items = strings.Join(strs, ",")
 }

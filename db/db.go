@@ -45,7 +45,6 @@ func New(path string) (*DB, error) {
 		model.Play{},
 		model.Album{},
 		model.Playlist{},
-		model.PlaylistItem{},
 	)
 	// TODO: don't log if user already exists
 	db.FirstOrCreate(&model.User{}, model.User{

@@ -8,9 +8,10 @@ import (
 
 func NewAlbumByTags(a *model.Album, artist *model.Artist) *Album {
 	ret := &Album{
-		Created: a.ModifiedAt,
-		ID:      a.ID,
-		Name:    a.TagTitle,
+		Created:    a.ModifiedAt,
+		ID:         a.ID,
+		Name:       a.TagTitle,
+		TrackCount: a.ChildCount,
 	}
 	if a.Cover != "" {
 		ret.CoverID = a.ID

@@ -8,12 +8,13 @@ import (
 
 func NewAlbumByFolder(f *model.Album) *Album {
 	return &Album{
-		Artist:   f.Parent.RightPath,
-		CoverID:  f.ID,
-		ID:       f.ID,
-		IsDir:    true,
-		ParentID: f.ParentID,
-		Title:    f.RightPath,
+		Artist:     f.Parent.RightPath,
+		CoverID:    f.ID,
+		ID:         f.ID,
+		IsDir:      true,
+		ParentID:   f.ParentID,
+		Title:      f.RightPath,
+		TrackCount: f.ChildCount,
 	}
 }
 

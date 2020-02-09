@@ -55,3 +55,25 @@ func (p Params) GetIntOr(key string, or int) int {
 	}
 	return val
 }
+
+func (p Params) GetFirstList(keys ...string) []string {
+	for _, key := range keys {
+		if v, ok := p.values[key]; ok && len(v) > 0 {
+			return v
+		}
+	}
+	return nil
+}
+
+func (p Params) GetFirstListInt(keys ...string) []int {
+	v := p.GetFirstList(keys...)
+	if v == nil {
+		return nil
+	}
+	ret := make([]int, 0, len(v))
+	for _, p := range v {
+		i, _ := strconv.Atoi(p)
+		ret = append(ret, i)
+	}
+	return ret
+}

@@ -22,13 +22,11 @@ func (c *Controller) ServeLogin(r *http.Request) *Response {
 
 func (c *Controller) ServeHome(r *http.Request) *Response {
 	data := &templateData{}
-	//
-	// stats box
+	// ** begin stats box
 	c.DB.Table("artists").Count(&data.ArtistCount)
 	c.DB.Table("albums").Count(&data.AlbumCount)
 	c.DB.Table("tracks").Count(&data.TrackCount)
-	//
-	// lastfm box
+	// ** begin lastfm box
 	scheme := firstExisting(
 		"http", // fallback
 		r.Header.Get("X-Forwarded-Proto"),
@@ -42,11 +40,9 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	)
 	data.RequestRoot = fmt.Sprintf("%s://%s", scheme, host)
 	data.CurrentLastFMAPIKey = c.DB.GetSetting("lastfm_api_key")
-	//
-	// users box
+	// ** begin users box
 	c.DB.Find(&data.AllUsers)
-	//
-	// recent folders box
+	// ** begin recent folders box
 	c.DB.
 		Where("tag_artist_id IS NOT NULL").
 		Order("modified_at DESC").
@@ -57,17 +53,10 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 		i, _ := strconv.ParseInt(tStr, 10, 64)
 		data.LastScanTime = time.Unix(i, 0)
 	}
-	//
-	// playlists box
+	// ** begin playlists box
 	user := r.Context().Value(CtxUser).(*model.User)
 	c.DB.
-		Select("*, count(items.id) as track_count").
-		Joins(`
-            LEFT JOIN playlist_items items
-		    ON items.playlist_id = playlists.id
-		`).
 		Where("user_id = ?", user.ID).
-		Group("playlists.id").
 		Limit(20).
 		Find(&data.Playlists)
 	//
