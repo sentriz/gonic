@@ -74,8 +74,7 @@ func New(opts Options) *Server {
 
 func (s *Server) SetupAdmin() error {
 	ctrl := ctrladmin.New(s.base)
-	//
-	// begin public routes (creates session)
+	// ** begin public routes (creates session)
 	routPublic := s.router.PathPrefix("/admin").Subrouter()
 	routPublic.Use(ctrl.WithSession)
 	routPublic.Handle("/login", ctrl.H(ctrl.ServeLogin))
@@ -88,8 +87,7 @@ func (s *Server) SetupAdmin() error {
 			http.ServeContent(w, r, name, asset.ModTime, reader)
 		})
 	})
-	//
-	// begin user routes (if session is valid)
+	// ** begin user routes (if session is valid)
 	routUser := routPublic.NewRoute().Subrouter()
 	routUser.Use(ctrl.WithUserSession)
 	routUser.HandleFunc("/logout", ctrl.ServeLogout) // "raw" handler, updates session
@@ -99,8 +97,7 @@ func (s *Server) SetupAdmin() error {
 	routUser.Handle("/link_lastfm_do", ctrl.H(ctrl.ServeLinkLastFMDo))
 	routUser.Handle("/unlink_lastfm_do", ctrl.H(ctrl.ServeUnlinkLastFMDo))
 	routUser.Handle("/upload_playlist_do", ctrl.H(ctrl.ServeUploadPlaylistDo))
-	//
-	// begin admin routes (if session is valid, and is admin)
+	// ** begin admin routes (if session is valid, and is admin)
 	routAdmin := routUser.NewRoute().Subrouter()
 	routAdmin.Use(ctrl.WithAdminSession)
 	routAdmin.Handle("/change_password", ctrl.H(ctrl.ServeChangePassword))
@@ -126,8 +123,7 @@ func (s *Server) SetupSubsonic() error {
 	rout.Use(ctrl.WithParams)
 	rout.Use(ctrl.WithRequiredParams)
 	rout.Use(ctrl.WithUser)
-	//
-	// begin common
+	// ** begin common
 	rout.Handle("/getLicense{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetLicence))
 	rout.Handle("/getMusicFolders{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetMusicFolders))
 	rout.Handle("/getScanStatus{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetScanStatus))
@@ -140,24 +136,27 @@ func (s *Server) SetupSubsonic() error {
 	rout.Handle("/createPlaylist{_:(?:\\.view)?}", ctrl.H(ctrl.ServeUpdatePlaylist))
 	rout.Handle("/updatePlaylist{_:(?:\\.view)?}", ctrl.H(ctrl.ServeUpdatePlaylist))
 	rout.Handle("/deletePlaylist{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDeletePlaylist))
-	//
-	// begin raw
+	rout.Handle("/savePlayQueue{_:(?:\\.view)?}", ctrl.H(ctrl.ServeSavePlayQueue))
+	rout.Handle("/getPlayQueue{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetPlayQueue))
+	// ** begin raw
 	rout.Handle("/download{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeStream))
 	rout.Handle("/getCoverArt{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeGetCoverArt))
 	rout.Handle("/stream{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeStream))
-	//
-	// begin browse by tag
+	// ** begin browse by tag
 	rout.Handle("/getAlbum{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetAlbum))
 	rout.Handle("/getAlbumList2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetAlbumListTwo))
 	rout.Handle("/getArtist{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtist))
 	rout.Handle("/getArtists{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtists))
 	rout.Handle("/search3{_:(?:\\.view)?}", ctrl.H(ctrl.ServeSearchThree))
-	//
-	// begin browse by folder
+	// ** begin browse by folder
 	rout.Handle("/getIndexes{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetIndexes))
 	rout.Handle("/getMusicDirectory{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetMusicDirectory))
 	rout.Handle("/getAlbumList{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetAlbumList))
 	rout.Handle("/search2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeSearchTwo))
+	// ** begin unimplemented
+	rout.Handle("/getArtistInfo{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtistInfo))
+	rout.Handle("/getArtistInfo2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtistInfoTwo))
+	rout.Handle("/getGenres{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetGenres))
 	// middlewares should be run for not found handler
 	// https://github.com/gorilla/mux/issues/416
 	notFoundHandler := ctrl.H(ctrl.ServeNotFound)

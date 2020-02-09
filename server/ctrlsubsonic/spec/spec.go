@@ -36,6 +36,9 @@ type Response struct {
 	User              *User              `xml:"user"              json:"user,omitempty"`
 	Playlists         *Playlists         `xml:"playlists"         json:"playlists,omitempty"`
 	Playlist          *Playlist          `xml:"playlist"          json:"playlist,omitempty"`
+	ArtistInfo        *ArtistInfo        `xml:"artistInfo"        json:"artistInfo,omitempty"`
+	ArtistInfoTwo     *ArtistInfo        `xml:"artistInfo2"       json:"artistInfo2,omitempty"`
+	Genres            *Genres            `xml:"genres"            json:"genres,omitempty"`
 }
 
 func NewResponse() *Response {
@@ -102,7 +105,7 @@ type Album struct {
 }
 
 type RandomTracks struct {
-	Tracks []*TrackChild `xml:"song"        json:"song"`
+	Tracks []*TrackChild `xml:"song" json:"song"`
 }
 
 type TrackChild struct {
@@ -221,4 +224,28 @@ type Playlist struct {
 	Duration  string        `xml:"duration,attr"  json:"duration,omitempty"`
 	Public    bool          `xml:"public,attr"    json:"public,omitempty"`
 	List      []*TrackChild `xml:"entry"          json:"entry,omitempty"`
+}
+
+type SimilarArtist struct {
+	ID   string `xml:"id,attr"   json:"id"`
+	Name string `xml:"name,attr" json:"name"`
+}
+
+type ArtistInfo struct {
+	Biography      string           `xml:"biography"      json:"biography"`
+	MusicBrainzID  string           `xml:"musicBrainzId"  json:"musicBrainzId"`
+	LastFMURL      string           `xml:"lastFmUrl"      json:"lastFmUrl"`
+	SmallImageURL  string           `xml:"smallImageUrl"  json:"smallImageUrl"`
+	MediumImageURL string           `xml:"mediumImageUrl" json:"mediumImageUrl"`
+	LargeImageURL  string           `xml:"largeImageUrl"  json:"largeImageUrl"`
+	SimilarArtist  []*SimilarArtist `xml:"similarArtist"  json:"similarArtist"`
+}
+
+type Genre struct {
+	SongCount  string `xml:"songCount,attr"`
+	AlbumCount string `xml:"albumCount,attr"`
+}
+
+type Genres struct {
+	Genre []*Genres `xml:"genre" json:"genre"`
 }

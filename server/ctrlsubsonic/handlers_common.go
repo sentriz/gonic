@@ -211,3 +211,11 @@ func (c *Controller) ServeDeletePlaylist(r *http.Request) *spec.Response {
 		Delete(&model.Playlist{})
 	return spec.NewResponse()
 }
+
+func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
+	return spec.NewResponse()
+}
+
+func (c *Controller) ServeSavePlayQueue(r *http.Request) *spec.Response {
+	return spec.NewResponse()
+}
