@@ -66,6 +66,7 @@ func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 	for i, album := range artist.Albums {
 		sub.Artist.Albums[i] = spec.NewAlbumByTags(album, artist)
 	}
+	sub.Artist.AlbumCount = len(artist.Albums)
 	return sub
 }
 

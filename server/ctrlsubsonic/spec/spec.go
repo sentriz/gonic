@@ -94,11 +94,11 @@ type Album struct {
 	ParentID int    `xml:"parent,attr,omitempty" json:"parent,omitempty"`
 	IsDir    bool   `xml:"isDir,attr,omitempty"  json:"isDir,omitempty"`
 	// browsing by tags (getAlbumList2)
-	Name       string        `xml:"name,attr,omitempty"      json:"name,omitempty"`
-	TrackCount int           `xml:"songCount,attr,omitempty" json:"songCount,omitempty"`
-	Duration   int           `xml:"duration,attr,omitempty"  json:"duration,omitempty"`
-	Created    time.Time     `xml:"created,attr,omitempty"   json:"created,omitempty"`
-	Tracks     []*TrackChild `xml:"song,omitempty"           json:"song,omitempty"`
+	Name       string        `xml:"name,attr,omitempty"    json:"name,omitempty"`
+	TrackCount int           `xml:"songCount,attr"         json:"songCount"`
+	Duration   int           `xml:"duration,attr"          json:"duration"`
+	Created    time.Time     `xml:"created,attr,omitempty" json:"created,omitempty"`
+	Tracks     []*TrackChild `xml:"song,omitempty"         json:"song,omitempty"`
 }
 
 type RandomTracks struct {
@@ -134,11 +134,11 @@ type Artists struct {
 }
 
 type Artist struct {
-	ID         int      `xml:"id,attr,omitempty"         json:"id"`
-	Name       string   `xml:"name,attr,omitempty"       json:"name"`
-	CoverID    int      `xml:"coverArt,attr,omitempty"   json:"coverArt,omitempty"`
-	AlbumCount int      `xml:"albumCount,attr,omitempty" json:"albumCount,omitempty"`
-	Albums     []*Album `xml:"album,omitempty"           json:"album,omitempty"`
+	ID         int      `xml:"id,attr,omitempty"       json:"id"`
+	Name       string   `xml:"name,attr,omitempty"     json:"name"`
+	CoverID    int      `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty"`
+	AlbumCount int      `xml:"albumCount,attr"         json:"albumCount"`
+	Albums     []*Album `xml:"album,omitempty"         json:"album,omitempty"`
 }
 
 type Indexes struct {
@@ -212,12 +212,12 @@ type Playlists struct {
 }
 
 type Playlist struct {
-	ID        int           `xml:"id,attr"        json:"id,omitempty"`
-	Name      string        `xml:"name,attr"      json:"name,omitempty"`
-	Comment   string        `xml:"comment,attr"   json:"comment,omitempty"`
-	Owner     string        `xml:"owner,attr"     json:"owner,omitempty"`
-	SongCount string        `xml:"songCount,attr" json:"songCount,omitempty"`
-	Created   string        `xml:"created,attr"   json:"created,omitempty"`
+	ID        int           `xml:"id,attr"        json:"id"`
+	Name      string        `xml:"name,attr"      json:"name"`
+	Comment   string        `xml:"comment,attr"   json:"comment"`
+	Owner     string        `xml:"owner,attr"     json:"owner"`
+	SongCount int           `xml:"songCount,attr" json:"songCount"`
+	Created   string        `xml:"created,attr"   json:"created"`
 	Duration  string        `xml:"duration,attr"  json:"duration,omitempty"`
 	Public    bool          `xml:"public,attr"    json:"public,omitempty"`
 	List      []*TrackChild `xml:"entry"          json:"entry,omitempty"`
