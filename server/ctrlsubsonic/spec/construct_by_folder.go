@@ -7,15 +7,18 @@ import (
 )
 
 func NewAlbumByFolder(f *model.Album) *Album {
-	return &Album{
+	a := &Album{
 		Artist:     f.Parent.RightPath,
-		CoverID:    f.ID,
 		ID:         f.ID,
 		IsDir:      true,
 		ParentID:   f.ParentID,
 		Title:      f.RightPath,
 		TrackCount: f.ChildCount,
 	}
+	if f.Cover != "" {
+		a.CoverID = f.ID
+	}
+	return a
 }
 
 func NewTCAlbumByFolder(f *model.Album) *TrackChild {
