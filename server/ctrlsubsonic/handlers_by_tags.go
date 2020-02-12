@@ -257,5 +257,31 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 			sub.ArtistInfoTwo.LargeImageURL = image.Text
 		}
 	}
+	count := params.GetIntOr("count", 20)
+	includeNotPresent := params.Get("includeNotPresent") == "true"
+	for i, similarInfo := range info.Similar.Artists {
+		if i == count {
+			break
+		}
+		artist = &model.Artist{}
+		err = c.DB.
+			Select("*, count(albums.id) as album_count").
+			Where("name = ?", similarInfo.Name).
+			Joins(`LEFT JOIN albums ON artists.id = albums.tag_artist_id`).
+			Group("artists.id").
+			Find(artist).
+			Error
+		if gorm.IsRecordNotFoundError(err) && !includeNotPresent {
+			continue
+		}
+		similar := &spec.SimilarArtist{ID: -1}
+		if artist.ID != 0 {
+			similar.ID = artist.ID
+		}
+		similar.Name = similarInfo.Name
+		similar.AlbumCount = artist.AlbumCount
+		sub.ArtistInfoTwo.SimilarArtist = append(
+			sub.ArtistInfoTwo.SimilarArtist, similar)
+	}
 	return sub
 }

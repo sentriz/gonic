@@ -228,18 +228,19 @@ type Playlist struct {
 }
 
 type SimilarArtist struct {
-	ID   int    `xml:"id,attr"   json:"id,string"`
-	Name string `xml:"name,attr" json:"name"`
+	ID         int    `xml:"id,attr"                   json:"id,string"`
+	Name       string `xml:"name,attr"                 json:"name"`
+	AlbumCount int    `xml:"albumCount,attr,omitempty" json:"albumCount,omitempty"`
 }
 
 type ArtistInfo struct {
-	Biography      string           `xml:"biography"      json:"biography"`
-	MusicBrainzID  string           `xml:"musicBrainzId"  json:"musicBrainzId"`
-	LastFMURL      string           `xml:"lastFmUrl"      json:"lastFmUrl"`
-	SmallImageURL  string           `xml:"smallImageUrl"  json:"smallImageUrl"`
-	MediumImageURL string           `xml:"mediumImageUrl" json:"mediumImageUrl"`
-	LargeImageURL  string           `xml:"largeImageUrl"  json:"largeImageUrl"`
-	SimilarArtist  []*SimilarArtist `xml:"similarArtist"  json:"similarArtist"`
+	Biography      string           `xml:"biography"               json:"biography"`
+	MusicBrainzID  string           `xml:"musicBrainzId"           json:"musicBrainzId"`
+	LastFMURL      string           `xml:"lastFmUrl"               json:"lastFmUrl"`
+	SmallImageURL  string           `xml:"smallImageUrl"           json:"smallImageUrl"`
+	MediumImageURL string           `xml:"mediumImageUrl"          json:"mediumImageUrl"`
+	LargeImageURL  string           `xml:"largeImageUrl"           json:"largeImageUrl"`
+	SimilarArtist  []*SimilarArtist `xml:"similarArtist,omitempty" json:"similarArtist,omitempty"`
 }
 
 type Genre struct {
