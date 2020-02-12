@@ -23,6 +23,8 @@ var (
 	}
 )
 
+// TODO: remove this package's dependency on models/db
+
 func getParamSignature(params url.Values, secret string) string {
 	// the parameters must be in order before hashing
 	paramKeys := make([]string, 0)
@@ -40,22 +42,22 @@ func getParamSignature(params url.Values, secret string) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func makeRequest(method string, params url.Values) (*LastFM, error) {
+func makeRequest(method string, params url.Values) (LastFM, error) {
 	req, _ := http.NewRequest(method, baseURL, nil)
 	req.URL.RawQuery = params.Encode()
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, errors.Wrap(err, "get")
+		return LastFM{}, errors.Wrap(err, "get")
 	}
 	defer resp.Body.Close()
 	decoder := xml.NewDecoder(resp.Body)
-	lastfm := &LastFM{}
-	err = decoder.Decode(lastfm)
-	if err != nil {
-		return nil, errors.Wrap(err, "decoding")
+	lastfm := LastFM{}
+	if err = decoder.Decode(&lastfm); err != nil {
+		return LastFM{}, errors.Wrap(err, "decoding")
 	}
-	if lastfm.Error != nil {
-		return nil, fmt.Errorf("parsing: %v", lastfm.Error.Value)
+	//?
+	if lastfm.Error.Code != 0 {
+		return LastFM{}, fmt.Errorf("parsing: %v", lastfm.Error.Value)
 	}
 	return lastfm, nil
 }
@@ -99,4 +101,16 @@ func Scrobble(apiKey, secret, session string, opts ScrobbleOpts) error {
 	params.Add("api_sig", getParamSignature(params, secret))
 	_, err := makeRequest("POST", params)
 	return err
+}
+
+func ArtistGetInfo(apiKey string, artist *model.Artist) (Artist, error) {
+	params := url.Values{}
+	params.Add("method", "artist.getInfo")
+	params.Add("api_key", apiKey)
+	params.Add("artist", artist.Name)
+	resp, err := makeRequest("GET", params)
+	if err != nil {
+		return Artist{}, errors.Wrap(err, "making artist GET")
+	}
+	return resp.Artist, nil
 }

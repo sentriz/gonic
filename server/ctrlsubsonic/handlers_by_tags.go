@@ -11,6 +11,7 @@ import (
 	"senan.xyz/g/gonic/model"
 	"senan.xyz/g/gonic/server/ctrlsubsonic/params"
 	"senan.xyz/g/gonic/server/ctrlsubsonic/spec"
+	"senan.xyz/g/gonic/server/lastfm"
 )
 
 func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
@@ -215,5 +216,46 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	}
 	sub := spec.NewResponse()
 	sub.SearchResultThree = results
+	return sub
+}
+
+func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	id, err := params.GetInt("id")
+	if err != nil {
+		return spec.NewError(10, "please provide an `id` parameter")
+	}
+	apiKey := c.DB.GetSetting("lastfm_api_key")
+	if apiKey == "" {
+		return spec.NewError(0, "please set ask your admin to set the last.fm api key")
+	}
+	artist := &model.Artist{}
+	err = c.DB.
+		Where("id = ?", id).
+		Find(artist).
+		Error
+	if gorm.IsRecordNotFoundError(err) {
+		return spec.NewError(70, "artist with id `%d` not found", id)
+	}
+	info, err := lastfm.ArtistGetInfo(apiKey, artist)
+	if err != nil {
+		return spec.NewError(0, "fetching artist info: %v", err)
+	}
+	sub := spec.NewResponse()
+	sub.ArtistInfoTwo = &spec.ArtistInfo{
+		Biography:     info.Bio.Summary,
+		MusicBrainzID: info.MBID,
+		LastFMURL:     info.URL,
+	}
+	for _, image := range info.Image {
+		switch image.Size {
+		case "small":
+			sub.ArtistInfoTwo.SmallImageURL = image.Text
+		case "medium":
+			sub.ArtistInfoTwo.MediumImageURL = image.Text
+		case "large":
+			sub.ArtistInfoTwo.LargeImageURL = image.Text
+		}
+	}
 	return sub
 }
