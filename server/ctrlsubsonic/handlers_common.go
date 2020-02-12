@@ -261,3 +261,23 @@ func (c *Controller) ServeSavePlayQueue(r *http.Request) *spec.Response {
 	c.DB.Save(queue)
 	return spec.NewResponse()
 }
+
+func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	id, err := params.GetInt("id")
+	if err != nil {
+		return spec.NewError(10, "provide an `id` parameter")
+	}
+	track := &model.Track{}
+	err = c.DB.
+		Where("id = ?", id).
+		Preload("Album").
+		First(track).
+		Error
+	if gorm.IsRecordNotFoundError(err) {
+		return spec.NewError(10, "couldn't find a track with that id")
+	}
+	sub := spec.NewResponse()
+	sub.Track = spec.NewTrackByTags(track, track.Album)
+	return sub
+}
