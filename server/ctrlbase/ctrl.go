@@ -47,6 +47,7 @@ func statusToBlock(code int) string {
 type Controller struct {
 	DB          *db.DB
 	MusicPath   string
+	CachePath   string
 	Scanner     *scanner.Scanner
 	ProxyPrefix string
 }
