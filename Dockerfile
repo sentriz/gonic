@@ -10,6 +10,7 @@ COPY . .
 RUN ./_do_build_server && ./_do_build_scanner
 
 FROM alpine
+RUN apk add -U --no-cache ffmpeg
 COPY --from=builder \
     /etc/ssl/certs/ca-certificates.crt \
     /etc/ssl/certs/
