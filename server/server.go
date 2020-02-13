@@ -149,7 +149,7 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/getSong{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetSong))
 	r.Handle("/getRandomSongs{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetRandomSongs))
 	// ** begin raw
-	r.Handle("/download{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeStream))
+	r.Handle("/download{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeDownload))
 	r.Handle("/getCoverArt{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeGetCoverArt))
 	r.Handle("/stream{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeStream))
 	// ** begin browse by tag
