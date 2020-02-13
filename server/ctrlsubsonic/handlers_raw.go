@@ -84,3 +84,32 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	c.DB.Save(&play)
 	return nil
 }
+
+func (c *Controller) ServeDownload(w http.ResponseWriter, r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	id, err := params.GetInt("id")
+	if err != nil {
+		return spec.NewError(10, "please provide an `id` parameter")
+	}
+	track := &model.Track{}
+	err = c.DB.
+		Preload("Album").
+		First(track, id).
+		Error
+	if gorm.IsRecordNotFoundError(err) {
+		return spec.NewError(70, "media with id `%d` was not found", id)
+	}
+
+	absPath := path.Join(
+		c.MusicPath,
+		track.Album.LeftPath,
+		track.Album.RightPath,
+		track.Filename,
+	)
+	http.ServeFile(w, r, absPath)
+
+	//
+	// We don't need to mark album/track as played
+	// if user just downloads a track, so bail out here:
+	return nil
+}
