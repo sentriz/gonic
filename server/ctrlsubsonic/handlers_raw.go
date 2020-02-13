@@ -60,6 +60,9 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	if gorm.IsRecordNotFoundError(err) {
 		return spec.NewError(70, "media with id `%d` was not found", id)
 	}
+
+	client := params.GetOr("c", "generic")
+
 	absPath := path.Join(
 		c.MusicPath,
 		track.Album.LeftPath,
