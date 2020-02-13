@@ -69,10 +69,9 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		track.Album.RightPath,
 		track.Filename,
 	)
-	if mime, ok := mime.Types[track.Ext()]; ok {
-		w.Header().Set("Content-Type", mime)
-	}
-	http.ServeFile(w, r, absPath)
+	StreamTrack(w, r, absPath, client, c.CachePath)
+
+	//
 	// after we've served the file, mark the album as played
 	user := r.Context().Value(CtxUser).(*db.User)
 	play := db.Play{
@@ -109,6 +108,9 @@ func (c *Controller) ServeDownload(w http.ResponseWriter, r *http.Request) *spec
 		track.Album.RightPath,
 		track.Filename,
 	)
+	if mime, ok := mime.Types[track.Ext()]; ok {
+		w.Header().Set("Content-Type", mime)
+	}
 	http.ServeFile(w, r, absPath)
 
 	//
