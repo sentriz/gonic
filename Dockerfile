@@ -23,9 +23,10 @@ COPY --from=builder \
     /src/gonic \
     /src/gonicscan \
     /bin/
-VOLUME ["/data", "/music"]
+VOLUME ["/data", "/music", "/cache"]
 EXPOSE 80
 ENV GONIC_DB_PATH /data/gonic.db
 ENV GONIC_LISTEN_ADDR :80
 ENV GONIC_MUSIC_PATH /music
+ENV GONIC_CACHE_PATH /cache
 CMD ["gonic"]
