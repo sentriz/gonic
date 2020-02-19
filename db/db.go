@@ -8,6 +8,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
+	"gopkg.in/gormigrate.v1"
 )
 
 var (
@@ -35,12 +36,14 @@ func New(path string) (*DB, error) {
 	db.SetLogger(log.New(os.Stdout, "gorm ", 0))
 	db.DB().SetMaxOpenConns(dbMaxOpenConns)
 	db.Exec("PRAGMA journal_mode=WAL;")
-	// TODO: don't log if user already exists
-	db.FirstOrCreate(&User{}, User{
-		Name:     "admin",
-		Password: "admin",
-		IsAdmin:  true,
+	migr := gormigrate.New(db, gormigrate.DefaultOptions, []*gormigrate.Migration{
+		&migrationCreateInitUser,
+		&migrationInitSchema,
+		&migrationMergePlaylist,
 	})
+	if err = migr.Migrate(); err != nil {
+		return nil, errors.Wrap(err, "migrating to latest version")
+	}
 	return &DB{DB: db}, nil
 }
 

@@ -24,6 +24,7 @@ require (
 	github.com/wader/gormstore v0.0.0-20190302154359-acb787ba3755
 	golang.org/x/crypto v0.0.0-20190621222207-cc06ce4a13d4 // indirect
 	google.golang.org/appengine v1.6.1 // indirect
+	gopkg.in/gormigrate.v1 v1.6.0
 )
 
 replace github.com/golang/lint => golang.org/x/lint v0.0.0-20190409202823-959b441ac422
