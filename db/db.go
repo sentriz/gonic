@@ -8,8 +8,6 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
-
-	"senan.xyz/g/gonic/model"
 )
 
 var (
@@ -37,18 +35,8 @@ func New(path string) (*DB, error) {
 	db.SetLogger(log.New(os.Stdout, "gorm ", 0))
 	db.DB().SetMaxOpenConns(dbMaxOpenConns)
 	db.Exec("PRAGMA journal_mode=WAL;")
-	db.AutoMigrate(
-		model.Artist{},
-		model.Track{},
-		model.User{},
-		model.Setting{},
-		model.Play{},
-		model.Album{},
-		model.Playlist{},
-		model.PlayQueue{},
-	)
 	// TODO: don't log if user already exists
-	db.FirstOrCreate(&model.User{}, model.User{
+	db.FirstOrCreate(&User{}, User{
 		Name:     "admin",
 		Password: "admin",
 		IsAdmin:  true,
@@ -61,7 +49,7 @@ func NewMock() (*DB, error) {
 }
 
 func (db *DB) GetSetting(key string) string {
-	setting := &model.Setting{}
+	setting := &Setting{}
 	db.
 		Where("key = ?", key).
 		First(setting)
@@ -70,13 +58,13 @@ func (db *DB) GetSetting(key string) string {
 
 func (db *DB) SetSetting(key, value string) {
 	db.
-		Where(model.Setting{Key: key}).
-		Assign(model.Setting{Value: value}).
-		FirstOrCreate(&model.Setting{})
+		Where(Setting{Key: key}).
+		Assign(Setting{Value: value}).
+		FirstOrCreate(&Setting{})
 }
 
-func (db *DB) GetUserFromName(name string) *model.User {
-	user := &model.User{}
+func (db *DB) GetUserFromName(name string) *User {
+	user := &User{}
 	err := db.
 		Where("name = ?", name).
 		First(user).

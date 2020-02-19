@@ -4,6 +4,7 @@ linters:
     - gochecknoglobals
     - gochecknoinits
     - gomnd
+    - godox
     - funlen
     - wsl
 issues:

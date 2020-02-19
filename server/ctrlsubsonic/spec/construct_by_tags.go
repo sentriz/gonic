@@ -3,10 +3,10 @@ package spec
 import (
 	"path"
 
-	"senan.xyz/g/gonic/model"
+	"senan.xyz/g/gonic/db"
 )
 
-func NewAlbumByTags(a *model.Album, artist *model.Artist) *Album {
+func NewAlbumByTags(a *db.Album, artist *db.Artist) *Album {
 	ret := &Album{
 		Created:    a.ModifiedAt,
 		ID:         a.ID,
@@ -23,7 +23,7 @@ func NewAlbumByTags(a *model.Album, artist *model.Artist) *Album {
 	return ret
 }
 
-func NewTrackByTags(t *model.Track, album *model.Album) *TrackChild {
+func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 	ret := &TrackChild{
 		ID:          t.ID,
 		ContentType: t.MIME(),
@@ -55,7 +55,7 @@ func NewTrackByTags(t *model.Track, album *model.Album) *TrackChild {
 	return ret
 }
 
-func NewArtistByTags(a *model.Artist) *Artist {
+func NewArtistByTags(a *db.Artist) *Artist {
 	return &Artist{
 		ID:         a.ID,
 		Name:       a.Name,

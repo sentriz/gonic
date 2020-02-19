@@ -3,15 +3,15 @@ package stack
 import (
 	"testing"
 
-	"senan.xyz/g/gonic/model"
+	"senan.xyz/g/gonic/db"
 )
 
 func TestFolderStack(t *testing.T) {
 	sta := &Stack{}
-	sta.Push(&model.Album{ID: 3})
-	sta.Push(&model.Album{ID: 4})
-	sta.Push(&model.Album{ID: 5})
-	sta.Push(&model.Album{ID: 6})
+	sta.Push(&db.Album{ID: 3})
+	sta.Push(&db.Album{ID: 4})
+	sta.Push(&db.Album{ID: 5})
+	sta.Push(&db.Album{ID: 6})
 	expected := "[6, 5, 4, 3, ]"
 	actual := sta.String()
 	if expected != actual {
@@ -20,12 +20,12 @@ func TestFolderStack(t *testing.T) {
 	}
 	//
 	sta = &Stack{}
-	sta.Push(&model.Album{ID: 27})
-	sta.Push(&model.Album{ID: 4})
+	sta.Push(&db.Album{ID: 27})
+	sta.Push(&db.Album{ID: 4})
 	sta.Peek()
-	sta.Push(&model.Album{ID: 5})
-	sta.Push(&model.Album{ID: 6})
-	sta.Push(&model.Album{ID: 7})
+	sta.Push(&db.Album{ID: 5})
+	sta.Push(&db.Album{ID: 6})
+	sta.Push(&db.Album{ID: 7})
 	sta.Pop()
 	expected = "[6, 5, 4, 27, ]"
 	actual = sta.String()

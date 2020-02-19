@@ -17,7 +17,6 @@ import (
 
 	"senan.xyz/g/gonic/db"
 	"senan.xyz/g/gonic/mime"
-	"senan.xyz/g/gonic/model"
 	"senan.xyz/g/gonic/scanner/stack"
 	"senan.xyz/g/gonic/scanner/tags"
 )
@@ -106,7 +105,7 @@ func (s *Scanner) Start() error {
 	var deleted uint
 	// delete tracks not on filesystem
 	s.db.WithTx(func(tx *gorm.DB) {
-		var tracks []*model.Track
+		var tracks []*db.Track
 		tx.
 			Select("id").
 			Find(&tracks)
@@ -120,7 +119,7 @@ func (s *Scanner) Start() error {
 	})
 	// delete folders not on filesystem
 	s.db.WithTx(func(tx *gorm.DB) {
-		var folders []*model.Album
+		var folders []*db.Album
 		tx.
 			Select("id").
 			Find(&folders)
@@ -268,7 +267,7 @@ func (s *Scanner) handleFolder(it *item) error {
 		s.trTx.Commit()
 		s.trTxOpen = false
 	}
-	folder := &model.Album{}
+	folder := &db.Album{}
 	defer func() {
 		// folder's id will come from early return
 		// or save at the end
@@ -277,7 +276,7 @@ func (s *Scanner) handleFolder(it *item) error {
 	}()
 	err := s.db.
 		Select("id, updated_at").
-		Where(model.Album{
+		Where(db.Album{
 			LeftPath:  it.directory,
 			RightPath: it.filename,
 		}).
@@ -304,10 +303,10 @@ func (s *Scanner) handleTrack(it *item) error {
 	}
 	//
 	// set track basics
-	track := &model.Track{}
+	track := &db.Track{}
 	err := s.trTx.
 		Select("id, updated_at").
-		Where(model.Track{
+		Where(db.Track{
 			AlbumID:  s.curFolders.PeekID(),
 			Filename: it.filename,
 		}).
@@ -350,7 +349,7 @@ func (s *Scanner) handleTrack(it *item) error {
 		}
 		return "Unknown Artist"
 	}()
-	artist := &model.Artist{}
+	artist := &db.Artist{}
 	err = s.trTx.
 		Select("id").
 		Where("name = ?", artistName).

@@ -1,5 +1,5 @@
 //nolint:lll
-package model
+package db
 
 import (
 	"path"

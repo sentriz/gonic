@@ -5,8 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/sessions"
-
-	"senan.xyz/g/gonic/model"
+	"senan.xyz/g/gonic/db"
 )
 
 func (c *Controller) WithSession(next http.Handler) http.Handler {
@@ -47,7 +46,7 @@ func (c *Controller) WithAdminSession(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// session and user exist at this point
 		session := r.Context().Value(CtxSession).(*sessions.Session)
-		user := r.Context().Value(CtxUser).(*model.User)
+		user := r.Context().Value(CtxUser).(*db.User)
 		if !user.IsAdmin {
 			sessAddFlashW(session, []string{"you are not an admin"})
 			sessLogSave(session, w, r)

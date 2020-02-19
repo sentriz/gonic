@@ -1,8 +1,8 @@
 package spec
 
-import "senan.xyz/g/gonic/model"
+import "senan.xyz/g/gonic/db"
 
-func NewPlaylist(p *model.Playlist) *Playlist {
+func NewPlaylist(p *db.Playlist) *Playlist {
 	return &Playlist{
 		ID:       p.ID,
 		Name:     p.Name,

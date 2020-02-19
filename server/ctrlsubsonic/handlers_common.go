@@ -10,7 +10,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 
-	"senan.xyz/g/gonic/model"
+	"senan.xyz/g/gonic/db"
 	"senan.xyz/g/gonic/scanner"
 	"senan.xyz/g/gonic/server/ctrlsubsonic/params"
 	"senan.xyz/g/gonic/server/ctrlsubsonic/spec"
@@ -44,12 +44,12 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 	// fetch user to get lastfm session
-	user := r.Context().Value(CtxUser).(*model.User)
+	user := r.Context().Value(CtxUser).(*db.User)
 	if user.LastFMSession == "" {
 		return spec.NewError(0, "you don't have a last.fm session")
 	}
 	// fetch track for getting info to send to last.fm function
-	track := &model.Track{}
+	track := &db.Track{}
 	c.DB.
 		Preload("Album").
 		Preload("Artist").
@@ -96,7 +96,7 @@ func (c *Controller) ServeStartScan(r *http.Request) *spec.Response {
 func (c *Controller) ServeGetScanStatus(r *http.Request) *spec.Response {
 	var trackCount int
 	c.DB.
-		Model(model.Track{}).
+		Model(db.Track{}).
 		Count(&trackCount)
 	sub := spec.NewResponse()
 	sub.ScanStatus = &spec.ScanStatus{
@@ -107,7 +107,7 @@ func (c *Controller) ServeGetScanStatus(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeGetUser(r *http.Request) *spec.Response {
-	user := r.Context().Value(CtxUser).(*model.User)
+	user := r.Context().Value(CtxUser).(*db.User)
 	sub := spec.NewResponse()
 	sub.User = &spec.User{
 		Username:          user.Name,
@@ -123,8 +123,8 @@ func (c *Controller) ServeNotFound(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
-	user := r.Context().Value(CtxUser).(*model.User)
-	var playlists []*model.Playlist
+	user := r.Context().Value(CtxUser).(*db.User)
+	var playlists []*db.Playlist
 	c.DB.Where("user_id = ?", user.ID).Find(&playlists)
 	sub := spec.NewResponse()
 	sub.Playlists = &spec.Playlists{
@@ -144,7 +144,7 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	playlist := model.Playlist{}
+	playlist := db.Playlist{}
 	err = c.DB.
 		Where("id = ?", playlistID).
 		Find(&playlist).
@@ -152,7 +152,7 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 	if gorm.IsRecordNotFoundError(err) {
 		return spec.NewError(70, "playlist with id `%d` not found", playlistID)
 	}
-	user := r.Context().Value(CtxUser).(*model.User)
+	user := r.Context().Value(CtxUser).(*db.User)
 	sub := spec.NewResponse()
 	sub.Playlist = spec.NewPlaylist(&playlist)
 	sub.Playlist.Owner = user.Name
@@ -160,7 +160,7 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 	trackIDs := playlist.GetItems()
 	sub.Playlist.List = make([]*spec.TrackChild, len(trackIDs))
 	for i, id := range trackIDs {
-		track := model.Track{}
+		track := db.Track{}
 		c.DB.
 			Where("id = ?", id).
 			Preload("Album").
@@ -171,7 +171,7 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
-	user := r.Context().Value(CtxUser).(*model.User)
+	user := r.Context().Value(CtxUser).(*db.User)
 	params := r.Context().Value(CtxParams).(params.Params)
 	var playlistID int
 	if p := params.GetFirstList("id", "playlistId"); p != nil {
@@ -179,7 +179,7 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 	}
 	// playlistID may be 0 from above. in that case we get a new playlist
 	// as intended
-	playlist := &model.Playlist{ID: playlistID}
+	playlist := &db.Playlist{ID: playlistID}
 	c.DB.Where(playlist).First(playlist)
 	// ** begin update meta info
 	playlist.UserID = user.ID
@@ -211,13 +211,13 @@ func (c *Controller) ServeDeletePlaylist(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	c.DB.
 		Where("id = ?", params.GetIntOr("id", 0)).
-		Delete(&model.Playlist{})
+		Delete(&db.Playlist{})
 	return spec.NewResponse()
 }
 
 func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
-	user := r.Context().Value(CtxUser).(*model.User)
-	queue := model.PlayQueue{}
+	user := r.Context().Value(CtxUser).(*db.User)
+	queue := db.PlayQueue{}
 	err := c.DB.
 		Where("user_id = ?", user.ID).
 		Find(&queue).
@@ -235,7 +235,7 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 	trackIDs := queue.GetItems()
 	sub.PlayQueue.List = make([]*spec.TrackChild, len(trackIDs))
 	for i, id := range trackIDs {
-		track := model.Track{}
+		track := db.Track{}
 		c.DB.
 			Where("id = ?", id).
 			Preload("Album").
@@ -251,8 +251,8 @@ func (c *Controller) ServeSavePlayQueue(r *http.Request) *spec.Response {
 	if tracks == nil {
 		return spec.NewError(10, "please provide some `id` parameters")
 	}
-	user := r.Context().Value(CtxUser).(*model.User)
-	queue := &model.PlayQueue{UserID: user.ID}
+	user := r.Context().Value(CtxUser).(*db.User)
+	queue := &db.PlayQueue{UserID: user.ID}
 	c.DB.Where(queue).First(queue)
 	queue.Current = params.GetIntOr("current", 0)
 	queue.Position = params.GetIntOr("position", 0)
@@ -268,7 +268,7 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "provide an `id` parameter")
 	}
-	track := &model.Track{}
+	track := &db.Track{}
 	err = c.DB.
 		Where("id = ?", id).
 		Preload("Album").

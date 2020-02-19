@@ -4,8 +4,10 @@
 
 package version
 
-const NAME = "gonic"
-const NAME_UPPER = "GONIC"
-const NAME_EMBED = "gonicembed"
-const NAME_SCAN = "gonicscan"
-const VERSION = "v0.6.3"
+const (
+	NAME       = "gonic"
+	NAME_UPPER = "GONIC"
+	NAME_EMBED = "gonicembed"
+	NAME_SCAN  = "gonicscan"
+	VERSION    = "v0.6.3"
+)

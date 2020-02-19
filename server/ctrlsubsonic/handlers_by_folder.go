@@ -8,7 +8,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 
-	"senan.xyz/g/gonic/model"
+	"senan.xyz/g/gonic/db"
 	"senan.xyz/g/gonic/server/ctrlsubsonic/params"
 	"senan.xyz/g/gonic/server/ctrlsubsonic/spec"
 )
@@ -20,7 +20,7 @@ import (
 // under the root directory
 
 func (c *Controller) ServeGetIndexes(r *http.Request) *spec.Response {
-	var folders []*model.Album
+	var folders []*db.Album
 	c.DB.
 		Select("*, count(sub.id) as child_count").
 		Joins(`
@@ -65,11 +65,11 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 	childrenObj := []*spec.TrackChild{}
-	folder := &model.Album{}
+	folder := &db.Album{}
 	c.DB.First(folder, id)
 	//
 	// start looking for child childFolders in the current dir
-	var childFolders []*model.Album
+	var childFolders []*db.Album
 	c.DB.
 		Where("parent_id = ?", id).
 		Find(&childFolders)
@@ -78,7 +78,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	}
 	//
 	// start looking for child childTracks in the current dir
-	var childTracks []*model.Track
+	var childTracks []*db.Track
 	c.DB.
 		Where("album_id = ?", id).
 		Preload("Album").
@@ -118,7 +118,7 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 	case "alphabeticalByName":
 		q = q.Order("right_path")
 	case "frequent":
-		user := r.Context().Value(CtxUser).(*model.User)
+		user := r.Context().Value(CtxUser).(*db.User)
 		q = q.Joins(`
 			JOIN plays
 			ON albums.id = plays.album_id AND plays.user_id = ?`,
@@ -129,7 +129,7 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 	case "random":
 		q = q.Order(gorm.Expr("random()"))
 	case "recent":
-		user := r.Context().Value(CtxUser).(*model.User)
+		user := r.Context().Value(CtxUser).(*db.User)
 		q = q.Joins(`
 			JOIN plays
 			ON albums.id = plays.album_id AND plays.user_id = ?`,
@@ -138,7 +138,7 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 	default:
 		return spec.NewError(10, "unknown value `%s` for parameter 'type'", listType)
 	}
-	var folders []*model.Album
+	var folders []*db.Album
 	q.
 		Where("albums.tag_artist_id IS NOT NULL").
 		Offset(params.GetIntOr("offset", 0)).
@@ -165,7 +165,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	results := &spec.SearchResultTwo{}
 	//
 	// search "artists"
-	var artists []*model.Album
+	var artists []*db.Album
 	c.DB.
 		Where(`
             parent_id = 1
@@ -181,7 +181,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	}
 	//
 	// search "albums"
-	var albums []*model.Album
+	var albums []*db.Album
 	c.DB.
 		Where(`
             tag_artist_id IS NOT NULL
@@ -196,7 +196,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	}
 	//
 	// search tracks
-	var tracks []*model.Track
+	var tracks []*db.Track
 	c.DB.
 		Preload("Album").
 		Where(`

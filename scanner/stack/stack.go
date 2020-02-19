@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"senan.xyz/g/gonic/model"
+	"senan.xyz/g/gonic/db"
 )
 
 type item struct {
-	value *model.Album
+	value *db.Album
 	next  *item
 }
 
@@ -17,7 +17,7 @@ type Stack struct {
 	len uint
 }
 
-func (s *Stack) Push(v *model.Album) {
+func (s *Stack) Push(v *db.Album) {
 	s.top = &item{
 		value: v,
 		next:  s.top,
@@ -25,7 +25,7 @@ func (s *Stack) Push(v *model.Album) {
 	s.len++
 }
 
-func (s *Stack) Pop() *model.Album {
+func (s *Stack) Pop() *db.Album {
 	if s.len == 0 {
 		return nil
 	}
@@ -35,7 +35,7 @@ func (s *Stack) Pop() *model.Album {
 	return v
 }
 
-func (s *Stack) Peek() *model.Album {
+func (s *Stack) Peek() *db.Album {
 	if s.len == 0 {
 		return nil
 	}

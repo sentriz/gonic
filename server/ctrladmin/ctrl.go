@@ -3,11 +3,11 @@ package ctrladmin
 import (
 	"encoding/gob"
 	"fmt"
-	"strings"
 	"html/template"
 	"log"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/Masterminds/sprig"
@@ -18,7 +18,7 @@ import (
 	"github.com/wader/gormstore"
 
 	"senan.xyz/g/gonic/assets"
-	"senan.xyz/g/gonic/model"
+	"senan.xyz/g/gonic/db"
 	"senan.xyz/g/gonic/server/ctrlbase"
 	"senan.xyz/g/gonic/version"
 )
@@ -96,22 +96,22 @@ func New(base *ctrlbase.Controller) *Controller {
 type templateData struct {
 	// common
 	Flashes []interface{}
-	User    *model.User
+	User    *db.User
 	Version string
 	// home
 	AlbumCount    int
 	ArtistCount   int
 	TrackCount    int
 	RequestRoot   string
-	RecentFolders []*model.Album
-	AllUsers      []*model.User
+	RecentFolders []*db.Album
+	AllUsers      []*db.User
 	LastScanTime  time.Time
 	IsScanning    bool
-	Playlists     []*model.Playlist
+	Playlists     []*db.Playlist
 	//
 	CurrentLastFMAPIKey    string
 	CurrentLastFMAPISecret string
-	SelectedUser           *model.User
+	SelectedUser           *db.User
 }
 
 type adminHandler func(r *http.Request) *Response
@@ -168,7 +168,7 @@ func (c *Controller) H(h adminHandler) http.Handler {
 				return
 			}
 		}
-		if user, ok := r.Context().Value(CtxUser).(*model.User); ok {
+		if user, ok := r.Context().Value(CtxUser).(*db.User); ok {
 			resp.data.User = user
 		}
 		buff := c.buffPool.Get()

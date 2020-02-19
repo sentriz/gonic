@@ -13,7 +13,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"senan.xyz/g/gonic/model"
+	"senan.xyz/g/gonic/db"
 )
 
 var (
@@ -55,7 +55,6 @@ func makeRequest(method string, params url.Values) (LastFM, error) {
 	if err = decoder.Decode(&lastfm); err != nil {
 		return LastFM{}, errors.Wrap(err, "decoding")
 	}
-	//?
 	if lastfm.Error.Code != 0 {
 		return LastFM{}, fmt.Errorf("parsing: %v", lastfm.Error.Value)
 	}
@@ -76,7 +75,7 @@ func GetSession(apiKey, secret, token string) (string, error) {
 }
 
 type ScrobbleOpts struct {
-	Track      *model.Track
+	Track      *db.Track
 	StampMili  int
 	Submission bool
 }
@@ -103,7 +102,7 @@ func Scrobble(apiKey, secret, session string, opts ScrobbleOpts) error {
 	return err
 }
 
-func ArtistGetInfo(apiKey string, artist *model.Artist) (Artist, error) {
+func ArtistGetInfo(apiKey string, artist *db.Artist) (Artist, error) {
 	params := url.Values{}
 	params.Add("method", "artist.getInfo")
 	params.Add("api_key", apiKey)

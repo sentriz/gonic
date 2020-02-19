@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"senan.xyz/g/gonic/model"
+	"senan.xyz/g/gonic/db"
 	"senan.xyz/g/gonic/scanner"
 	"senan.xyz/g/gonic/server/lastfm"
 )
@@ -54,7 +54,7 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 		data.LastScanTime = time.Unix(i, 0)
 	}
 	// ** begin playlists box
-	user := r.Context().Value(CtxUser).(*model.User)
+	user := r.Context().Value(CtxUser).(*db.User)
 	c.DB.
 		Where("user_id = ?", user.ID).
 		Limit(20).
@@ -80,7 +80,7 @@ func (c *Controller) ServeChangeOwnPasswordDo(r *http.Request) *Response {
 			flashW:   []string{err.Error()},
 		}
 	}
-	user := r.Context().Value(CtxUser).(*model.User)
+	user := r.Context().Value(CtxUser).(*db.User)
 	user.Password = passwordOne
 	c.DB.Save(user)
 	return &Response{redirect: "/admin/home"}
@@ -105,14 +105,14 @@ func (c *Controller) ServeLinkLastFMDo(r *http.Request) *Response {
 			flashW:   []string{err.Error()},
 		}
 	}
-	user := r.Context().Value(CtxUser).(*model.User)
+	user := r.Context().Value(CtxUser).(*db.User)
 	user.LastFMSession = sessionKey
 	c.DB.Save(&user)
 	return &Response{redirect: "/admin/home"}
 }
 
 func (c *Controller) ServeUnlinkLastFMDo(r *http.Request) *Response {
-	user := r.Context().Value(CtxUser).(*model.User)
+	user := r.Context().Value(CtxUser).(*db.User)
 	user.LastFMSession = ""
 	c.DB.Save(&user)
 	return &Response{redirect: "/admin/home"}
@@ -210,7 +210,7 @@ func (c *Controller) ServeCreateUserDo(r *http.Request) *Response {
 			flashW:   []string{err.Error()},
 		}
 	}
-	user := model.User{
+	user := db.User{
 		Name:     username,
 		Password: passwordOne,
 	}
@@ -273,7 +273,7 @@ func (c *Controller) ServeUploadPlaylistDo(r *http.Request) *Response {
 			code: 500,
 		}
 	}
-	user := r.Context().Value(CtxUser).(*model.User)
+	user := r.Context().Value(CtxUser).(*db.User)
 	var playlistCount int
 	var errors []string
 	for _, headers := range r.MultipartForm.File {

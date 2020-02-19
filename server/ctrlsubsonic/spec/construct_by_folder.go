@@ -3,10 +3,10 @@ package spec
 import (
 	"path"
 
-	"senan.xyz/g/gonic/model"
+	"senan.xyz/g/gonic/db"
 )
 
-func NewAlbumByFolder(f *model.Album) *Album {
+func NewAlbumByFolder(f *db.Album) *Album {
 	a := &Album{
 		Artist:     f.Parent.RightPath,
 		ID:         f.ID,
@@ -21,7 +21,7 @@ func NewAlbumByFolder(f *model.Album) *Album {
 	return a
 }
 
-func NewTCAlbumByFolder(f *model.Album) *TrackChild {
+func NewTCAlbumByFolder(f *db.Album) *TrackChild {
 	trCh := &TrackChild{
 		ID:        f.ID,
 		IsDir:     true,
@@ -35,7 +35,7 @@ func NewTCAlbumByFolder(f *model.Album) *TrackChild {
 	return trCh
 }
 
-func NewTCTrackByFolder(t *model.Track, parent *model.Album) *TrackChild {
+func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 	trCh := &TrackChild{
 		ID:          t.ID,
 		ContentType: t.MIME(),
@@ -66,7 +66,7 @@ func NewTCTrackByFolder(t *model.Track, parent *model.Album) *TrackChild {
 	return trCh
 }
 
-func NewArtistByFolder(f *model.Album) *Artist {
+func NewArtistByFolder(f *db.Album) *Artist {
 	return &Artist{
 		ID:         f.ID,
 		Name:       f.RightPath,
@@ -74,7 +74,7 @@ func NewArtistByFolder(f *model.Album) *Artist {
 	}
 }
 
-func NewDirectoryByFolder(f *model.Album, children []*TrackChild) *Directory {
+func NewDirectoryByFolder(f *db.Album, children []*TrackChild) *Directory {
 	dir := &Directory{
 		ID:       f.ID,
 		Name:     f.RightPath,

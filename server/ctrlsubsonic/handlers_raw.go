@@ -7,7 +7,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 
-	"senan.xyz/g/gonic/model"
+	"senan.xyz/g/gonic/db"
 	"senan.xyz/g/gonic/server/ctrlsubsonic/params"
 	"senan.xyz/g/gonic/server/ctrlsubsonic/spec"
 )
@@ -24,7 +24,7 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	folder := &model.Album{}
+	folder := &db.Album{}
 	err = c.DB.
 		Select("id, left_path, right_path, cover").
 		First(folder, id).
@@ -51,7 +51,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	track := &model.Track{}
+	track := &db.Track{}
 	err = c.DB.
 		Preload("Album").
 		First(track, id).
@@ -68,8 +68,8 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	http.ServeFile(w, r, absPath)
 	//
 	// after we've served the file, mark the album as played
-	user := r.Context().Value(CtxUser).(*model.User)
-	play := model.Play{
+	user := r.Context().Value(CtxUser).(*db.User)
+	play := db.Play{
 		AlbumID: track.Album.ID,
 		UserID:  user.ID,
 	}

@@ -8,14 +8,14 @@ import (
 
 	"github.com/jinzhu/gorm"
 
-	"senan.xyz/g/gonic/model"
+	"senan.xyz/g/gonic/db"
 	"senan.xyz/g/gonic/server/ctrlsubsonic/params"
 	"senan.xyz/g/gonic/server/ctrlsubsonic/spec"
 	"senan.xyz/g/gonic/server/lastfm"
 )
 
 func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
-	var artists []*model.Artist
+	var artists []*db.Artist
 	c.DB.
 		Select("*, count(sub.id) as album_count").
 		Joins(`
@@ -57,7 +57,7 @@ func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	artist := &model.Artist{}
+	artist := &db.Artist{}
 	c.DB.
 		Preload("Albums").
 		First(artist, id)
@@ -77,7 +77,7 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	album := &model.Album{}
+	album := &db.Album{}
 	err = c.DB.
 		Preload("TagArtist").
 		Preload("Tracks", func(db *gorm.DB) *gorm.DB {
@@ -121,7 +121,7 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 			params.GetIntOr("toYear", 2200))
 		q = q.Order("tag_year")
 	case "frequent":
-		user := r.Context().Value(CtxUser).(*model.User)
+		user := r.Context().Value(CtxUser).(*db.User)
 		q = q.Joins(`
 			JOIN plays
 			ON albums.id = plays.album_id AND plays.user_id = ?`,
@@ -132,7 +132,7 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	case "random":
 		q = q.Order(gorm.Expr("random()"))
 	case "recent":
-		user := r.Context().Value(CtxUser).(*model.User)
+		user := r.Context().Value(CtxUser).(*db.User)
 		q = q.Joins(`
 			JOIN plays
 			ON albums.id = plays.album_id AND plays.user_id = ?`,
@@ -141,7 +141,7 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	default:
 		return spec.NewError(10, "unknown value `%s` for parameter 'type'", listType)
 	}
-	var albums []*model.Album
+	var albums []*db.Album
 	q.
 		Where("albums.tag_artist_id IS NOT NULL").
 		Offset(params.GetIntOr("offset", 0)).
@@ -169,7 +169,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	results := &spec.SearchResultThree{}
 	//
 	// search "artists"
-	var artists []*model.Artist
+	var artists []*db.Artist
 	c.DB.
 		Where(`
             name LIKE ? OR
@@ -184,7 +184,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	}
 	//
 	// search "albums"
-	var albums []*model.Album
+	var albums []*db.Album
 	c.DB.
 		Preload("TagArtist").
 		Where(`
@@ -200,7 +200,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	}
 	//
 	// search tracks
-	var tracks []*model.Track
+	var tracks []*db.Track
 	c.DB.
 		Preload("Album").
 		Where(`
@@ -229,7 +229,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	if apiKey == "" {
 		return spec.NewError(0, "please set ask your admin to set the last.fm api key")
 	}
-	artist := &model.Artist{}
+	artist := &db.Artist{}
 	err = c.DB.
 		Where("id = ?", id).
 		Find(artist).
@@ -263,7 +263,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		if i == count {
 			break
 		}
-		artist = &model.Artist{}
+		artist = &db.Artist{}
 		err = c.DB.
 			Select("*, count(albums.id) as album_count").
 			Where("name = ?", similarInfo.Name).

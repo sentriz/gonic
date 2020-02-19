@@ -8,15 +8,14 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
-
-	"senan.xyz/g/gonic/model"
+	"senan.xyz/g/gonic/db"
 )
 
 func playlistParseLine(c *Controller, path string) (int, error) {
 	if strings.HasPrefix(path, "#") || strings.TrimSpace(path) == "" {
 		return 0, nil
 	}
-	var track model.Track
+	var track db.Track
 	query := c.DB.Raw(`
 		SELECT tracks.id FROM TRACKS
 		JOIN albums ON tracks.album_id = albums.id
@@ -62,8 +61,8 @@ func playlistParseUpload(c *Controller, userID int, header *multipart.FileHeader
 	if err := scanner.Err(); err != nil {
 		return []string{fmt.Sprintf("iterating playlist file: %v", err)}, true
 	}
-	playlist := &model.Playlist{}
-	c.DB.FirstOrCreate(playlist, model.Playlist{
+	playlist := &db.Playlist{}
+	c.DB.FirstOrCreate(playlist, db.Playlist{
 		Name:   playlistName,
 		UserID: userID,
 	})
