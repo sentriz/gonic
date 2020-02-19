@@ -179,8 +179,10 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 	}
 	// playlistID may be 0 from above. in that case we get a new playlist
 	// as intended
-	playlist := &db.Playlist{ID: playlistID}
-	c.DB.Where(playlist).First(playlist)
+	var playlist db.Playlist
+	c.DB.
+		Where("id = ?", playlistID).
+		FirstOrCreate(&playlist)
 	// ** begin update meta info
 	playlist.UserID = user.ID
 	if val := params.Get("name"); val != "" {
@@ -192,7 +194,7 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 	trackIDs := playlist.GetItems()
 	// ** begin delete items
 	if p := params.GetFirstListInt("songIndexToRemove"); p != nil {
-		sort.Sort(sort.Reverse(sort.IntSlice(trackIDs)))
+		sort.Sort(sort.Reverse(sort.IntSlice(p)))
 		for _, i := range p {
 			trackIDs = append(trackIDs[:i], trackIDs[i+1:]...)
 		}
