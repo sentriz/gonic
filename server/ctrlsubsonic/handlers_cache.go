@@ -1,9 +1,9 @@
 package ctrlsubsonic
 
 import (
+	"fmt"
 	"net/http"
 	"path"
-	"fmt"
 
 	"io"
 	"os"
@@ -13,28 +13,28 @@ import (
 )
 
 type encoderProfile struct {
-	format string
-	bitrate string
+	format        string
+	bitrate       string
 	ffmpegOptions []string
-	forceRG bool
+	forceRG       bool
 }
 
 var (
-	ENC_PROFILES = map[string]*encoderProfile {
-		"mp3"    : {  "mp3", "128k", []string{"-c:a", "libmp3lame"}                    , false },
-		"mp3_rg" : {  "mp3", "128k", []string{"-c:a", "libmp3lame"}                    , true  },
-		"opus"   : { "opus",  "96k", []string{"-c:a", "libopus", "-vbr", "constrained"}, false },
-		"opus_rg": { "opus",  "96k", []string{"-c:a", "libopus", "-vbr", "constrained"}, true  },
+	encProfiles = map[string]*encoderProfile{
+		"mp3":     {"mp3", "128k", []string{"-c:a", "libmp3lame"}, false},
+		"mp3_rg":  {"mp3", "128k", []string{"-c:a", "libmp3lame"}, true},
+		"opus":    {"opus", "96k", []string{"-c:a", "libopus", "-vbr", "constrained"}, false},
+		"opus_rg": {"opus", "96k", []string{"-c:a", "libopus", "-vbr", "constrained"}, true},
 	}
-	BUF_LEN = 4096
+	bufLen = 4096
 )
 
 func StreamTrack(w http.ResponseWriter, r *http.Request, trackPath string, client string, cachePath string) {
 	// Guess required format based on client:
-	profile_name := detectFormat(client)
-	profile := ENC_PROFILES[profile_name]
+	profileName := detectFormat(client)
+	profile := encProfiles[profileName]
 
-	cacheFile := path.Join(cachePath, getCacheKey(trackPath, profile_name))
+	cacheFile := path.Join(cachePath, getCacheKey(trackPath, profileName))
 
 	if fileExists(cacheFile) {
 		fmt.Printf("`%s`: cache [%s/%s] hit!\n", trackPath, profile.format, profile.bitrate)
@@ -65,11 +65,17 @@ func EncodeTrack(w http.ResponseWriter, r *http.Request, trackPath string, cache
 	go writeCmdOutput(w, cacheFile, pipeReader)
 
 	// Run FFmpeg:
-	cmd.Run()
+	err = cmd.Run()
+	if err != nil {
+		fmt.Printf("Failed to encode `%s`: %s\n", trackPath, err)
+	}
 
 	// Close all pipes and flush cache file:
 	pipeWriter.Close()
-	cacheFile.Sync()
+	err = cacheFile.Sync()
+	if err != nil {
+		fmt.Printf("Failed to flush `%s`: %s\n", cachePath, err)
+	}
 	cacheFile.Close()
 
 	fmt.Printf("`%s`: Encoded track to [%s/%s] successfully\n", trackPath, profile.format, profile.bitrate)
@@ -89,7 +95,7 @@ func copyCmdOutput(res http.ResponseWriter, cache *os.File, pipeReader *io.PipeR
 
 // Copy command output to HTTP response manually with a buffer (should reduce TTFB)
 func writeCmdOutput(res http.ResponseWriter, cache *os.File, pipeReader *io.PipeReader) {
-	buffer := make([]byte, BUF_LEN)
+	buffer := make([]byte, bufLen)
 	for {
 		n, err := pipeReader.Read(buffer)
 		if err != nil {
@@ -98,8 +104,16 @@ func writeCmdOutput(res http.ResponseWriter, cache *os.File, pipeReader *io.Pipe
 		}
 
 		data := buffer[0:n]
-		res.Write(data)
-		cache.Write(data)
+		_, err = res.Write(data)
+		if err != nil {
+			fmt.Printf("Error while writing HTTP response: %s\n", err)
+		}
+
+		_, err = cache.Write(data)
+		if err != nil {
+			fmt.Printf("Error while writing cache file: %s\n", err)
+		}
+
 		if f, ok := res.(http.Flusher); ok {
 			f.Flush()
 		}
@@ -125,10 +139,10 @@ func ffmpegCommand(filePath string, profile *encoderProfile) *exec.Cmd {
 		"-vn", "-b:a", profile.bitrate,
 	}
 	ffmpegArgs = append(ffmpegArgs, profile.ffmpegOptions...)
-	if profile.forceRG == true {
+	if profile.forceRG {
 		ffmpegArgs = append(ffmpegArgs,
 			// Set up ReplayGain processing
-			"-af", "volume=replaygain=track:replaygain_preamp=3dB:replaygain_noclip=0, alimiter=level=disabled",
+			"-af", "volume=replaygain=track:replaygain_preamp=6dB:replaygain_noclip=0, alimiter=level=disabled",
 			// Drop redundant ReplayGain tags
 			"-metadata", "replaygain_album_gain=",
 			"-metadata", "replaygain_album_peak=",
@@ -143,13 +157,17 @@ func ffmpegCommand(filePath string, profile *encoderProfile) *exec.Cmd {
 
 // Put special clients that can't handle Opus here:
 func detectFormat(client string) (profile string) {
-	if client == "Soundwaves" { return "mp3_rg"  }
-	if client == "Jamstash"   { return "opus_rg" }
+	if client == "Soundwaves" {
+		return "mp3_rg"
+	}
+	if client == "Jamstash" {
+		return "opus_rg"
+	}
 	return "opus"
 }
 
 // Generate cache key (file name). For, you know, encoded tracks cache.
-func getCacheKey(sourcePath string, profile string) (string) {
-	format := ENC_PROFILES[profile].format
+func getCacheKey(sourcePath string, profile string) string {
+	format := encProfiles[profile].format
 	return fmt.Sprintf("%x-%s.%s", xxhash.Sum64String(sourcePath), profile, format)
 }
