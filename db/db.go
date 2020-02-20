@@ -37,8 +37,8 @@ func New(path string) (*DB, error) {
 	db.DB().SetMaxOpenConns(dbMaxOpenConns)
 	db.Exec("PRAGMA journal_mode=WAL;")
 	migr := gormigrate.New(db, gormigrate.DefaultOptions, []*gormigrate.Migration{
-		&migrationCreateInitUser,
 		&migrationInitSchema,
+		&migrationCreateInitUser,
 		&migrationMergePlaylist,
 	})
 	if err = migr.Migrate(); err != nil {
