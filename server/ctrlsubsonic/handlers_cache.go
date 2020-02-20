@@ -41,11 +41,11 @@ func StreamTrack(w http.ResponseWriter, r *http.Request, trackPath string, clien
 		http.ServeFile(w, r, cacheFile)
 	} else {
 		fmt.Printf("`%s`: cache [%s/%s] miss!\n", trackPath, profile.format, profile.bitrate)
-		EncodeTrack(w, r, trackPath, cacheFile, profile)
+		encodeTrack(w, r, trackPath, cacheFile, profile)
 	}
 }
 
-func EncodeTrack(w http.ResponseWriter, r *http.Request, trackPath string, cachePath string, profile *encoderProfile) {
+func encodeTrack(w http.ResponseWriter, r *http.Request, trackPath string, cachePath string, profile *encoderProfile) {
 	// Prepare the command and file descriptors:
 	cmd := ffmpegCommand(trackPath, profile)
 	pipeReader, pipeWriter := io.Pipe()
