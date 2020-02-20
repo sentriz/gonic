@@ -2,6 +2,7 @@ package encode
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"io"
@@ -9,6 +10,7 @@ import (
 	"os/exec"
 
 	"github.com/cespare/xxhash"
+	"github.com/pkg/errors"
 )
 
 type Profile struct {
@@ -37,7 +39,7 @@ func copyCmdOutput(out, cache io.Writer, pipeReader io.Reader) {
 
 	// Start copying!
 	if _, err := io.Copy(w, pipeReader); err != nil {
-		fmt.Printf("Error while writing encoded output: %s\n", err)
+		log.Printf("error while writing encoded output: %s\n", err)
 	}
 }
 
@@ -55,12 +57,12 @@ func writeCmdOutput(out, cache io.Writer, pipeReader io.ReadCloser) {
 		data := buffer[0:n]
 		_, err = out.Write(data)
 		if err != nil {
-			fmt.Printf("Error while writing HTTP response: %s\n", err)
+			log.Printf("error while writing HTTP response: %s\n", err)
 		}
 
 		_, err = cache.Write(data)
 		if err != nil {
-			fmt.Printf("Error while writing cache file: %s\n", err)
+			log.Printf("error while writing cache file: %s\n", err)
 		}
 
 		if f, ok := out.(http.Flusher); ok {
@@ -106,7 +108,7 @@ func Encode(out io.Writer, trackPath, cachePath string, profile *Profile, bitrat
 	// Create cache file:
 	cacheFile, err := os.Create(cachePath)
 	if err != nil {
-		fmt.Printf("Failed to write to cache file `%s`: %s\n", cachePath, err)
+		return errors.Wrapf(err, "writing to cache file %q: %v", cachePath)
 	}
 
 	//// I'm still unsure if buffer version (writeCmdOutput) is any better than io.Copy-based one (copyCmdOutput).
@@ -116,21 +118,17 @@ func Encode(out io.Writer, trackPath, cachePath string, profile *Profile, bitrat
 	go writeCmdOutput(out, cacheFile, pipeReader)
 
 	// Run FFmpeg:
-	err = cmd.Run()
-	if err != nil {
-		fmt.Printf("Failed to encode `%s`: %s\n", trackPath, err)
+	if err := cmd.Run(); err != nil {
+		return errors.Wrapf(err, "running ffmpeg")
 	}
 
 	// Close all pipes and flush cache file:
 	pipeWriter.Close()
-	err = cacheFile.Sync()
-	if err != nil {
-		fmt.Printf("Failed to flush `%s`: %s\n", cachePath, err)
+	if err := cacheFile.Sync(); err != nil {
+		return errors.Wrapf(err, "flushing %q", cachePath)
 	}
 	cacheFile.Close()
-
-	fmt.Printf("`%s`: Encoded track to [%s/%s] successfully\n",
-		trackPath, profile.Format, profile.Bitrate)
+	return nil
 }
 
 // Generate cache key (file name). For, you know, encoded tracks cache.
