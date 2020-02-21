@@ -134,12 +134,12 @@ type TrackChild struct {
 }
 
 type Artists struct {
-	List []*Index `xml:"index,omitempty" json:"index"`
+	List []*Index `xml:"index" json:"index"`
 }
 
 type Artist struct {
 	ID         int      `xml:"id,attr,omitempty"       json:"id,string"`
-	Name       string   `xml:"name,attr,omitempty"     json:"name"`
+	Name       string   `xml:"name,attr"               json:"name"`
 	CoverID    int      `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty,string"`
 	AlbumCount int      `xml:"albumCount,attr"         json:"albumCount"`
 	Albums     []*Album `xml:"album,omitempty"         json:"album,omitempty"`
@@ -147,12 +147,12 @@ type Artist struct {
 
 type Indexes struct {
 	LastModified int      `xml:"lastModified,attr,omitempty" json:"lastModified"`
-	Index        []*Index `xml:"index,omitempty"             json:"index"`
+	Index        []*Index `xml:"index"                       json:"index"`
 }
 
 type Index struct {
 	Name    string    `xml:"name,attr,omitempty" json:"name"`
-	Artists []*Artist `xml:"artist,omitempty"    json:"artist"`
+	Artists []*Artist `xml:"artist"              json:"artist"`
 }
 
 type Directory struct {
@@ -164,7 +164,7 @@ type Directory struct {
 }
 
 type MusicFolders struct {
-	List []*MusicFolder `xml:"musicFolder,omitempty" json:"musicFolder,omitempty"`
+	List []*MusicFolder `xml:"musicFolder" json:"musicFolder"`
 }
 
 type MusicFolder struct {
@@ -224,7 +224,7 @@ type Playlist struct {
 	Created   time.Time     `xml:"created,attr"   json:"created"`
 	Duration  string        `xml:"duration,attr"  json:"duration,omitempty"`
 	Public    bool          `xml:"public,attr"    json:"public,omitempty"`
-	List      []*TrackChild `xml:"entry"          json:"entry,omitempty"`
+	List      []*TrackChild `xml:"entry"          json:"entry"`
 }
 
 type SimilarArtist struct {

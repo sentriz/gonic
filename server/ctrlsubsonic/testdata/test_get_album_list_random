@@ -7,28 +7,6 @@
     "albumList": {
       "album": [
         {
-          "id": "19",
-          "coverArt": "19",
-          "artist": "Ten Years After",
-          "title": "(1967) Ten Years After",
-          "parent": "18",
-          "isDir": true,
-          "songCount": 15,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "8",
-          "coverArt": "8",
-          "artist": "13th Floor Lowervators",
-          "title": "(1967) Easter Nowhere",
-          "parent": "7",
-          "isDir": true,
-          "songCount": 10,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
           "id": "9",
           "coverArt": "9",
           "artist": "13th Floor Lowervators",
@@ -36,6 +14,17 @@
           "parent": "7",
           "isDir": true,
           "songCount": 21,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "19",
+          "coverArt": "19",
+          "artist": "Ten Years After",
+          "title": "(1967) Ten Years After",
+          "parent": "18",
+          "isDir": true,
+          "songCount": 15,
           "duration": 0,
           "created": "0001-01-01T00:00:00Z"
         },
@@ -51,23 +40,24 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
-          "id": "3",
-          "coverArt": "3",
-          "artist": "Jah Wobble, The Edge, Holger Czukay",
-          "title": "(1983) Snake Charmer",
-          "parent": "2",
+          "id": "21",
+          "coverArt": "21",
+          "artist": "Captain Beefheart",
+          "title": "(1970) Lick My Decals Off, Bitch",
+          "parent": "20",
           "isDir": true,
-          "songCount": 5,
+          "songCount": 15,
           "duration": 0,
           "created": "0001-01-01T00:00:00Z"
         },
         {
-          "id": "6",
-          "artist": "A Certain Ratio",
-          "title": "(1981) To EachOTHER.",
-          "parent": "4",
+          "id": "17",
+          "coverArt": "17",
+          "artist": "Swell Maps",
+          "title": "(1979) A Trip to Marineville",
+          "parent": "15",
           "isDir": true,
-          "songCount": 9,
+          "songCount": 18,
           "duration": 0,
           "created": "0001-01-01T00:00:00Z"
         },
@@ -83,13 +73,12 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
-          "id": "21",
-          "coverArt": "21",
-          "artist": "Captain Beefheart",
-          "title": "(1970) Lick My Decals Off, Bitch",
-          "parent": "20",
+          "id": "6",
+          "artist": "A Certain Ratio",
+          "title": "(1981) To EachOTHER.",
+          "parent": "4",
           "isDir": true,
-          "songCount": 15,
+          "songCount": 9,
           "duration": 0,
           "created": "0001-01-01T00:00:00Z"
         },
@@ -105,13 +94,24 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
-          "id": "17",
-          "coverArt": "17",
-          "artist": "Swell Maps",
-          "title": "(1979) A Trip to Marineville",
-          "parent": "15",
+          "id": "8",
+          "coverArt": "8",
+          "artist": "13th Floor Lowervators",
+          "title": "(1967) Easter Nowhere",
+          "parent": "7",
           "isDir": true,
-          "songCount": 18,
+          "songCount": 10,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "3",
+          "coverArt": "3",
+          "artist": "Jah Wobble, The Edge, Holger Czukay",
+          "title": "(1983) Snake Charmer",
+          "parent": "2",
+          "isDir": true,
+          "songCount": 5,
           "duration": 0,
           "created": "0001-01-01T00:00:00Z"
         }
