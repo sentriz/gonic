@@ -73,7 +73,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		track.Album.RightPath,
 		track.Filename,
 	)
-	StreamTrack(w, r, absPath, client, c.CachePath)
+	StreamTrack(w, r, absPath, client, bitrate, c.CachePath)
 
 	//
 	// after we've served the file, mark the album as played
