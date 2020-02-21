@@ -62,6 +62,10 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	}
 
 	client := params.GetOr("c", "generic")
+	bitrate, err := params.GetInt("maxBitRate")
+	if err != nil {
+		bitrate = 0
+	}
 
 	absPath := path.Join(
 		c.MusicPath,
