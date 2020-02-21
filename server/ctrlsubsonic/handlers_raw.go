@@ -8,6 +8,7 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"senan.xyz/g/gonic/db"
+	"senan.xyz/g/gonic/mime"
 	"senan.xyz/g/gonic/server/ctrlsubsonic/params"
 	"senan.xyz/g/gonic/server/ctrlsubsonic/spec"
 )
@@ -65,8 +66,10 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		track.Album.RightPath,
 		track.Filename,
 	)
+	if mime, ok := mime.Types[track.Ext()]; ok {
+		w.Header().Set("Content-Type", mime)
+	}
 	http.ServeFile(w, r, absPath)
-	//
 	// after we've served the file, mark the album as played
 	user := r.Context().Value(CtxUser).(*db.User)
 	play := db.Play{
