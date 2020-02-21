@@ -55,12 +55,6 @@ func main() {
 	}
 	log.Printf("using opts %+v\n", serverOptions)
 	s := server.New(serverOptions)
-	if err = s.SetupAdmin(); err != nil {
-		log.Fatalf("error setting up admin routes: %v\n", err)
-	}
-	if err = s.SetupSubsonic(); err != nil {
-		log.Fatalf("error setting up subsonic routes: %v\n", err)
-	}
 	log.Printf("starting server at %s", *listenAddr)
 	if err := s.Start(); err != nil {
 		log.Fatalf("error starting server: %v\n", err)

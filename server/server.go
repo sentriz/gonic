@@ -28,35 +28,29 @@ type Options struct {
 
 type Server struct {
 	*http.Server
-	router *mux.Router
-	base   *ctrlbase.Controller
-	opts   Options
+	scanner      *scanner.Scanner
+	scanInterval time.Duration
 }
 
 func New(opts Options) *Server {
+	// ** begin sanitation
 	opts.MusicPath = filepath.Clean(opts.MusicPath)
+	// ** begin controllers
+	scanner := scanner.New(opts.DB, opts.MusicPath)
 	base := &ctrlbase.Controller{
 		DB:          opts.DB,
 		MusicPath:   opts.MusicPath,
-		Scanner:     scanner.New(opts.DB, opts.MusicPath),
 		ProxyPrefix: opts.ProxyPrefix,
+		Scanner:     scanner,
 	}
+	// router with common wares for admin / subsonic
 	router := mux.NewRouter()
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// make the admin page the default
-		http.Redirect(w, r, base.Path("/admin/home"), http.StatusMovedPermanently)
-	})
-	router.HandleFunc("/musicFolderSettings.view", func(w http.ResponseWriter, r *http.Request) {
-		// jamstash seems to call "musicFolderSettings.view" to start a scan. notice
-		// that there is no "/rest/" prefix, so i doesn't fit in with the nice router,
-		// custom handler, middleware. etc setup that we've got in `SetupSubsonic()`.
-		// instead lets redirect to down there and use the scan endpoint
-		redirectTo := fmt.Sprintf("/rest/startScan.view?%s", r.URL.Query().Encode())
-		http.Redirect(w, r, base.Path(redirectTo), http.StatusMovedPermanently)
-	})
-	// common middleware for admin and subsonic routes
 	router.Use(base.WithLogging)
 	router.Use(base.WithCORS)
+	setupMisc(router, base)
+	setupAdmin(router, ctrladmin.New(base))
+	setupSubsonic(router, ctrlsubsonic.New(base))
+	//
 	server := &http.Server{
 		Addr:         opts.ListenAddr,
 		Handler:      router,
@@ -65,17 +59,30 @@ func New(opts Options) *Server {
 		IdleTimeout:  15 * time.Second,
 	}
 	return &Server{
-		Server: server,
-		router: router,
-		base:   base,
-		opts:   opts,
+		Server:       server,
+		scanner:      scanner,
+		scanInterval: opts.ScanInterval,
 	}
 }
 
-func (s *Server) SetupAdmin() error {
-	ctrl := ctrladmin.New(s.base)
+func setupMisc(router *mux.Router, ctrl *ctrlbase.Controller) {
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// make the admin page the default
+		http.Redirect(w, r, ctrl.Path("/admin/home"), http.StatusMovedPermanently)
+	})
+	router.HandleFunc("/musicFolderSettings.view", func(w http.ResponseWriter, r *http.Request) {
+		// jamstash seems to call "musicFolderSettings.view" to start a scan. notice
+		// that there is no "/rest/" prefix, so i doesn't fit in with the nice router,
+		// custom handler, middleware. etc setup that we've got in `SetupSubsonic()`.
+		// instead lets redirect to down there and use the scan endpoint
+		redirectTo := fmt.Sprintf("/rest/startScan.view?%s", r.URL.Query().Encode())
+		http.Redirect(w, r, ctrl.Path(redirectTo), http.StatusMovedPermanently)
+	})
+}
+
+func setupAdmin(router *mux.Router, ctrl *ctrladmin.Controller) {
 	// ** begin public routes (creates session)
-	routPublic := s.router.PathPrefix("/admin").Subrouter()
+	routPublic := router.PathPrefix("/admin").Subrouter()
 	routPublic.Use(ctrl.WithSession)
 	routPublic.Handle("/login", ctrl.H(ctrl.ServeLogin))
 	routPublic.HandleFunc("/login_do", ctrl.ServeLoginDo) // "raw" handler, updates session
@@ -114,12 +121,10 @@ func (s *Server) SetupAdmin() error {
 	notFoundHandler := ctrl.H(ctrl.ServeNotFound)
 	notFoundRoute := routPublic.NewRoute().Handler(notFoundHandler)
 	routPublic.NotFoundHandler = notFoundRoute.GetHandler()
-	return nil
 }
 
-func (s *Server) SetupSubsonic() error {
-	ctrl := ctrlsubsonic.New(s.base)
-	rout := s.router.PathPrefix("/rest").Subrouter()
+func setupSubsonic(router *mux.Router, ctrl *ctrlsubsonic.Controller) {
+	rout := router.PathPrefix("/rest").Subrouter()
 	rout.Use(ctrl.WithParams)
 	rout.Use(ctrl.WithRequiredParams)
 	rout.Use(ctrl.WithUser)
@@ -162,22 +167,19 @@ func (s *Server) SetupSubsonic() error {
 	notFoundHandler := ctrl.H(ctrl.ServeNotFound)
 	notFoundRoute := rout.NewRoute().Handler(notFoundHandler)
 	rout.NotFoundHandler = notFoundRoute.GetHandler()
-	return nil
-}
-
-func (s *Server) scanTick() {
-	ticker := time.NewTicker(s.opts.ScanInterval)
-	for range ticker.C {
-		if err := s.base.Scanner.Start(); err != nil {
-			log.Printf("error while scanner: %v", err)
-		}
-	}
 }
 
 func (s *Server) Start() error {
-	if s.opts.ScanInterval > 0 {
-		log.Printf("will be scanning at intervals of %s", s.opts.ScanInterval)
-		go s.scanTick()
+	if s.scanInterval > 0 {
+		log.Printf("will be scanning at intervals of %s", s.scanInterval)
+		ticker := time.NewTicker(s.scanInterval)
+		go func() {
+			for range ticker.C {
+				if err := s.scanner.Start(); err != nil {
+					log.Printf("error while scanner: %v", err)
+				}
+			}
+		}()
 	}
 	return s.ListenAndServe()
 }
