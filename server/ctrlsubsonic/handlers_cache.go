@@ -14,40 +14,41 @@ import (
 
 type encoderProfile struct {
 	format        string
-	bitrate       string
+	bitrate       int
 	ffmpegOptions []string
 	forceRG       bool
 }
 
 var (
 	encProfiles = map[string]*encoderProfile{
-		"mp3":     {"mp3", "128k", []string{"-c:a", "libmp3lame"}, false},
-		"mp3_rg":  {"mp3", "128k", []string{"-c:a", "libmp3lame"}, true},
-		"opus":    {"opus", "96k", []string{"-c:a", "libopus", "-vbr", "constrained"}, false},
-		"opus_rg": {"opus", "96k", []string{"-c:a", "libopus", "-vbr", "constrained"}, true},
+		"mp3":     {"mp3", 128, []string{"-c:a", "libmp3lame"}, false},
+		"mp3_rg":  {"mp3", 128, []string{"-c:a", "libmp3lame"}, true},
+		"opus":    {"opus", 96, []string{"-c:a", "libopus", "-vbr", "constrained"}, false},
+		"opus_rg": {"opus", 96, []string{"-c:a", "libopus", "-vbr", "constrained"}, true},
 	}
 	bufLen = 4096
 )
 
-func StreamTrack(w http.ResponseWriter, r *http.Request, trackPath string, client string, cachePath string) {
+func StreamTrack(w http.ResponseWriter, r *http.Request, trackPath string, client string, clBitrate int, cachePath string) {
 	// Guess required format based on client:
 	profileName := detectFormat(client)
 	profile := encProfiles[profileName]
+	bitrate := getBitrate(clBitrate, profile)
 
-	cacheFile := path.Join(cachePath, getCacheKey(trackPath, profileName))
+	cacheFile := path.Join(cachePath, getCacheKey(trackPath, profileName, bitrate))
 
 	if fileExists(cacheFile) {
-		fmt.Printf("`%s`: cache [%s/%s] hit!\n", trackPath, profile.format, profile.bitrate)
+		fmt.Printf("`%s`: cache [%s/%s] hit!\n", trackPath, profile.format, bitrate)
 		http.ServeFile(w, r, cacheFile)
 	} else {
-		fmt.Printf("`%s`: cache [%s/%s] miss!\n", trackPath, profile.format, profile.bitrate)
-		encodeTrack(w, r, trackPath, cacheFile, profile)
+		fmt.Printf("`%s`: cache [%s/%s] miss!\n", trackPath, profile.format, bitrate)
+		encodeTrack(w, trackPath, cacheFile, profile, bitrate)
 	}
 }
 
-func encodeTrack(w http.ResponseWriter, r *http.Request, trackPath string, cachePath string, profile *encoderProfile) {
+func encodeTrack(w http.ResponseWriter, trackPath string, cachePath string, profile *encoderProfile, bitrate string) {
 	// Prepare the command and file descriptors:
-	cmd := ffmpegCommand(trackPath, profile)
+	cmd := ffmpegCommand(trackPath, profile, bitrate)
 	pipeReader, pipeWriter := io.Pipe()
 	cmd.Stdout = pipeWriter
 	cmd.Stderr = pipeWriter
@@ -78,7 +79,7 @@ func encodeTrack(w http.ResponseWriter, r *http.Request, trackPath string, cache
 	}
 	cacheFile.Close()
 
-	fmt.Printf("`%s`: Encoded track to [%s/%s] successfully\n", trackPath, profile.format, profile.bitrate)
+	fmt.Printf("`%s`: Encoded track to [%s/%s] successfully\n", trackPath, profile.format, bitrate)
 }
 
 // Copy command output to HTTP response body using io.Copy (simpler, but may increase TTFB)
@@ -133,10 +134,10 @@ func fileExists(filename string) bool {
 }
 
 // Pre-format the FFmpeg command with needed options:
-func ffmpegCommand(filePath string, profile *encoderProfile) *exec.Cmd {
+func ffmpegCommand(filePath string, profile *encoderProfile, bitrate string) *exec.Cmd {
 	ffmpegArgs := []string{
 		"-v", "0", "-i", filePath, "-map", "0:0",
-		"-vn", "-b:a", profile.bitrate,
+		"-vn", "-b:a", bitrate,
 	}
 	ffmpegArgs = append(ffmpegArgs, profile.ffmpegOptions...)
 	if profile.forceRG {
@@ -167,7 +168,16 @@ func detectFormat(client string) (profile string) {
 }
 
 // Generate cache key (file name). For, you know, encoded tracks cache.
-func getCacheKey(sourcePath string, profile string) string {
+func getCacheKey(sourcePath string, profile string, bitrate string) string {
 	format := encProfiles[profile].format
-	return fmt.Sprintf("%x-%s.%s", xxhash.Sum64String(sourcePath), profile, format)
+	return fmt.Sprintf("%x-%s-%s.%s", xxhash.Sum64String(sourcePath), profile, bitrate, format)
+}
+
+// Check if client forces bitrate lower than set in profile:
+func getBitrate(clientBitrate int, profile *encoderProfile) string {
+	bitrate := profile.bitrate
+	if clientBitrate != 0 && clientBitrate < profile.bitrate {
+		bitrate = clientBitrate
+	}
+	return fmt.Sprintf("%dk", bitrate)
 }
