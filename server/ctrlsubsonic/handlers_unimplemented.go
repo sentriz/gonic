@@ -12,5 +12,6 @@ import (
 func (c *Controller) ServeGetGenres(r *http.Request) *spec.Response {
 	sub := spec.NewResponse()
 	sub.Genres = &spec.Genres{}
+	sub.Genres.List = []*spec.Genre{}
 	return sub
 }

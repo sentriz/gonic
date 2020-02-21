@@ -83,7 +83,7 @@ func NewError(code int, message string, a ...interface{}) *Response {
 }
 
 type Albums struct {
-	List []*Album `xml:"album" json:"album,omitempty"`
+	List []*Album `xml:"album" json:"album"`
 }
 
 type Album struct {
@@ -134,7 +134,7 @@ type TrackChild struct {
 }
 
 type Artists struct {
-	List []*Index `xml:"index,omitempty" json:"index,omitempty"`
+	List []*Index `xml:"index,omitempty" json:"index"`
 }
 
 type Artist struct {
@@ -212,7 +212,7 @@ type User struct {
 }
 
 type Playlists struct {
-	List []*Playlist `xml:"playlist" json:"playlist,omitempty"`
+	List []*Playlist `xml:"playlist" json:"playlist"`
 }
 
 type Playlist struct {
@@ -243,13 +243,13 @@ type ArtistInfo struct {
 	SimilarArtist  []*SimilarArtist `xml:"similarArtist,omitempty" json:"similarArtist,omitempty"`
 }
 
+type Genres struct {
+	List []*Genre `xml:"genre" json:"genre"`
+}
+
 type Genre struct {
 	SongCount  string `xml:"songCount,attr"`
 	AlbumCount string `xml:"albumCount,attr"`
-}
-
-type Genres struct {
-	Genre []*Genres `xml:"genre" json:"genre"`
 }
 
 type PlayQueue struct {

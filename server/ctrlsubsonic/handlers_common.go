@@ -1,6 +1,7 @@
 package ctrlsubsonic
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"sort"
@@ -130,6 +131,7 @@ func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
 	sub.Playlists = &spec.Playlists{
 		List: make([]*spec.Playlist, len(playlists)),
 	}
+	fmt.Println("aaaa")
 	for i, playlist := range playlists {
 		sub.Playlists.List[i] = spec.NewPlaylist(playlist)
 		sub.Playlists.List[i].Owner = user.Name
