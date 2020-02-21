@@ -106,7 +106,7 @@ type Album struct {
 }
 
 type RandomTracks struct {
-	Tracks []*TrackChild `xml:"song" json:"song"`
+	List []*TrackChild `xml:"song" json:"song"`
 }
 
 type TrackChild struct {

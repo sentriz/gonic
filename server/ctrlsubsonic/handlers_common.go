@@ -283,3 +283,26 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 	sub.Track = spec.NewTrackByTags(track, track.Album)
 	return sub
 }
+
+func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	// TODO: add genre restraint here
+	var tracks []*db.Track
+	c.DB.DB.
+		Limit(params.GetIntOr("size", 10)).
+		Where(
+			"albums.tag_year BETWEEN ? AND ?",
+			params.GetIntOr("fromYear", 1800),
+			params.GetIntOr("toYear", 2200)).
+		Joins("JOIN albums ON tracks.album_id=albums.id").
+		Preload("Album").
+		Order(gorm.Expr("random()")).
+		Find(&tracks)
+	sub := spec.NewResponse()
+	sub.RandomTracks = &spec.RandomTracks{}
+	sub.RandomTracks.List = make([]*spec.TrackChild, len(tracks))
+	for i, track := range tracks {
+		sub.RandomTracks.List[i] = spec.NewTrackByTags(track, track.Album)
+	}
+	return sub
+}
