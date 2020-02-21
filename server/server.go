@@ -44,16 +44,16 @@ func New(opts Options) *Server {
 		Scanner:     scanner,
 	}
 	// router with common wares for admin / subsonic
-	router := mux.NewRouter()
-	router.Use(base.WithLogging)
-	router.Use(base.WithCORS)
-	setupMisc(router, base)
-	setupAdmin(router, ctrladmin.New(base))
-	setupSubsonic(router, ctrlsubsonic.New(base))
+	r := mux.NewRouter()
+	r.Use(base.WithLogging)
+	r.Use(base.WithCORS)
+	setupMisc(r, base)
+	setupAdmin(r.PathPrefix("/admin").Subrouter(), ctrladmin.New(base))
+	setupSubsonic(r.PathPrefix("/rest").Subrouter(), ctrlsubsonic.New(base))
 	//
 	server := &http.Server{
 		Addr:         opts.ListenAddr,
-		Handler:      router,
+		Handler:      r,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  15 * time.Second,
@@ -65,37 +65,38 @@ func New(opts Options) *Server {
 	}
 }
 
-func setupMisc(router *mux.Router, ctrl *ctrlbase.Controller) {
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// make the admin page the default
-		http.Redirect(w, r, ctrl.Path("/admin/home"), http.StatusMovedPermanently)
-	})
-	router.HandleFunc("/musicFolderSettings.view", func(w http.ResponseWriter, r *http.Request) {
-		// jamstash seems to call "musicFolderSettings.view" to start a scan. notice
-		// that there is no "/rest/" prefix, so i doesn't fit in with the nice router,
-		// custom handler, middleware. etc setup that we've got in `SetupSubsonic()`.
-		// instead lets redirect to down there and use the scan endpoint
-		redirectTo := fmt.Sprintf("/rest/startScan.view?%s", r.URL.Query().Encode())
-		http.Redirect(w, r, ctrl.Path(redirectTo), http.StatusMovedPermanently)
-	})
+func setupMisc(r *mux.Router, ctrl *ctrlbase.Controller) {
+	r.HandleFunc("/",
+		func(w http.ResponseWriter, r *http.Request) {
+			// make the admin page the default
+			http.Redirect(w, r, ctrl.Path("/admin/home"), http.StatusMovedPermanently)
+		})
+	r.HandleFunc("/musicFolderSettings.view",
+		func(w http.ResponseWriter, r *http.Request) {
+			// jamstash seems to call "musicFolderSettings.view" to start a scan. notice
+			// that there is no "/rest/" prefix, so i doesn't fit in with the nice router,
+			// custom handler, middleware. etc setup that we've got in `SetupSubsonic()`.
+			// instead lets redirect to down there and use the scan endpoint
+			redirectTo := fmt.Sprintf("/rest/startScan.view?%s", r.URL.Query().Encode())
+			http.Redirect(w, r, ctrl.Path(redirectTo), http.StatusMovedPermanently)
+		})
 }
 
-func setupAdmin(router *mux.Router, ctrl *ctrladmin.Controller) {
+func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	// ** begin public routes (creates session)
-	routPublic := router.PathPrefix("/admin").Subrouter()
-	routPublic.Use(ctrl.WithSession)
-	routPublic.Handle("/login", ctrl.H(ctrl.ServeLogin))
-	routPublic.HandleFunc("/login_do", ctrl.ServeLoginDo) // "raw" handler, updates session
+	r.Use(ctrl.WithSession)
+	r.Handle("/login", ctrl.H(ctrl.ServeLogin))
+	r.HandleFunc("/login_do", ctrl.ServeLoginDo) // "raw" handler, updates session
 	assets.PrefixDo("static", func(path string, asset *assets.EmbeddedAsset) {
 		_, name := filepath.Split(path)
 		route := filepath.Join("/static", name)
 		reader := bytes.NewReader(asset.Bytes)
-		routPublic.HandleFunc(route, func(w http.ResponseWriter, r *http.Request) {
+		r.HandleFunc(route, func(w http.ResponseWriter, r *http.Request) {
 			http.ServeContent(w, r, name, asset.ModTime, reader)
 		})
 	})
 	// ** begin user routes (if session is valid)
-	routUser := routPublic.NewRoute().Subrouter()
+	routUser := r.NewRoute().Subrouter()
 	routUser.Use(ctrl.WithUserSession)
 	routUser.HandleFunc("/logout", ctrl.ServeLogout) // "raw" handler, updates session
 	routUser.Handle("/home", ctrl.H(ctrl.ServeHome))
@@ -119,55 +120,54 @@ func setupAdmin(router *mux.Router, ctrl *ctrladmin.Controller) {
 	// middlewares should be run for not found handler
 	// https://github.com/gorilla/mux/issues/416
 	notFoundHandler := ctrl.H(ctrl.ServeNotFound)
-	notFoundRoute := routPublic.NewRoute().Handler(notFoundHandler)
-	routPublic.NotFoundHandler = notFoundRoute.GetHandler()
+	notFoundRoute := r.NewRoute().Handler(notFoundHandler)
+	r.NotFoundHandler = notFoundRoute.GetHandler()
 }
 
-func setupSubsonic(router *mux.Router, ctrl *ctrlsubsonic.Controller) {
-	rout := router.PathPrefix("/rest").Subrouter()
-	rout.Use(ctrl.WithParams)
-	rout.Use(ctrl.WithRequiredParams)
-	rout.Use(ctrl.WithUser)
+func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
+	r.Use(ctrl.WithParams)
+	r.Use(ctrl.WithRequiredParams)
+	r.Use(ctrl.WithUser)
 	// ** begin common
-	rout.Handle("/getLicense{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetLicence))
-	rout.Handle("/getMusicFolders{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetMusicFolders))
-	rout.Handle("/getScanStatus{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetScanStatus))
-	rout.Handle("/ping{_:(?:\\.view)?}", ctrl.H(ctrl.ServePing))
-	rout.Handle("/scrobble{_:(?:\\.view)?}", ctrl.H(ctrl.ServeScrobble))
-	rout.Handle("/startScan{_:(?:\\.view)?}", ctrl.H(ctrl.ServeStartScan))
-	rout.Handle("/getUser{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetUser))
-	rout.Handle("/getPlaylists{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetPlaylists))
-	rout.Handle("/getPlaylist{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetPlaylist))
-	rout.Handle("/createPlaylist{_:(?:\\.view)?}", ctrl.H(ctrl.ServeUpdatePlaylist))
-	rout.Handle("/updatePlaylist{_:(?:\\.view)?}", ctrl.H(ctrl.ServeUpdatePlaylist))
-	rout.Handle("/deletePlaylist{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDeletePlaylist))
-	rout.Handle("/savePlayQueue{_:(?:\\.view)?}", ctrl.H(ctrl.ServeSavePlayQueue))
-	rout.Handle("/getPlayQueue{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetPlayQueue))
-	rout.Handle("/getSong{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetSong))
-	rout.Handle("/getRandomSongs{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetRandomSongs))
+	r.Handle("/getLicense{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetLicence))
+	r.Handle("/getMusicFolders{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetMusicFolders))
+	r.Handle("/getScanStatus{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetScanStatus))
+	r.Handle("/ping{_:(?:\\.view)?}", ctrl.H(ctrl.ServePing))
+	r.Handle("/scrobble{_:(?:\\.view)?}", ctrl.H(ctrl.ServeScrobble))
+	r.Handle("/startScan{_:(?:\\.view)?}", ctrl.H(ctrl.ServeStartScan))
+	r.Handle("/getUser{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetUser))
+	r.Handle("/getPlaylists{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetPlaylists))
+	r.Handle("/getPlaylist{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetPlaylist))
+	r.Handle("/createPlaylist{_:(?:\\.view)?}", ctrl.H(ctrl.ServeUpdatePlaylist))
+	r.Handle("/updatePlaylist{_:(?:\\.view)?}", ctrl.H(ctrl.ServeUpdatePlaylist))
+	r.Handle("/deletePlaylist{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDeletePlaylist))
+	r.Handle("/savePlayQueue{_:(?:\\.view)?}", ctrl.H(ctrl.ServeSavePlayQueue))
+	r.Handle("/getPlayQueue{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetPlayQueue))
+	r.Handle("/getSong{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetSong))
+	r.Handle("/getRandomSongs{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetRandomSongs))
 	// ** begin raw
-	rout.Handle("/download{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeStream))
-	rout.Handle("/getCoverArt{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeGetCoverArt))
-	rout.Handle("/stream{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeStream))
+	r.Handle("/download{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeStream))
+	r.Handle("/getCoverArt{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeGetCoverArt))
+	r.Handle("/stream{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeStream))
 	// ** begin browse by tag
-	rout.Handle("/getAlbum{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetAlbum))
-	rout.Handle("/getAlbumList2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetAlbumListTwo))
-	rout.Handle("/getArtist{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtist))
-	rout.Handle("/getArtists{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtists))
-	rout.Handle("/search3{_:(?:\\.view)?}", ctrl.H(ctrl.ServeSearchThree))
-	rout.Handle("/getArtistInfo2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtistInfoTwo))
+	r.Handle("/getAlbum{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetAlbum))
+	r.Handle("/getAlbumList2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetAlbumListTwo))
+	r.Handle("/getArtist{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtist))
+	r.Handle("/getArtists{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtists))
+	r.Handle("/search3{_:(?:\\.view)?}", ctrl.H(ctrl.ServeSearchThree))
+	r.Handle("/getArtistInfo2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtistInfoTwo))
 	// ** begin browse by folder
-	rout.Handle("/getIndexes{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetIndexes))
-	rout.Handle("/getMusicDirectory{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetMusicDirectory))
-	rout.Handle("/getAlbumList{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetAlbumList))
-	rout.Handle("/search2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeSearchTwo))
+	r.Handle("/getIndexes{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetIndexes))
+	r.Handle("/getMusicDirectory{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetMusicDirectory))
+	r.Handle("/getAlbumList{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetAlbumList))
+	r.Handle("/search2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeSearchTwo))
 	// ** begin unimplemented
-	rout.Handle("/getGenres{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetGenres))
+	r.Handle("/getGenres{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetGenres))
 	// middlewares should be run for not found handler
 	// https://github.com/gorilla/mux/issues/416
 	notFoundHandler := ctrl.H(ctrl.ServeNotFound)
-	notFoundRoute := rout.NewRoute().Handler(notFoundHandler)
-	rout.NotFoundHandler = notFoundRoute.GetHandler()
+	notFoundRoute := r.NewRoute().Handler(notFoundHandler)
+	r.NotFoundHandler = notFoundRoute.GetHandler()
 }
 
 func (s *Server) Start() error {
