@@ -7,8 +7,9 @@
     "searchResult3": {
       "artist": [
         {
-          "id": 2,
-          "name": "A Certain Ratio"
+          "id": "2",
+          "name": "A Certain Ratio",
+          "albumCount": 0
         }
       ]
     }

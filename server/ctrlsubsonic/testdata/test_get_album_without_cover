@@ -5,7 +5,9 @@
     "type": "gonic",
     "gonicVersion": "v0.6.3",
     "album": {
-      "id": 2,
+      "id": "2",
+      "songCount": 0,
+      "duration": 0,
       "created": "2019-05-16T22:10:21+01:00"
     }
   }

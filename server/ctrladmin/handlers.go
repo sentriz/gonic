@@ -56,7 +56,7 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	// ** begin playlists box
 	user := r.Context().Value(CtxUser).(*db.User)
 	c.DB.
-		Where("user_id = ?", user.ID).
+		Where("user_id=?", user.ID).
 		Limit(20).
 		Find(&data.Playlists)
 	//

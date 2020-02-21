@@ -5,17 +5,16 @@
     "type": "gonic",
     "gonicVersion": "v0.6.3",
     "directory": {
-      "id": 2,
-      "parent": 1,
+      "id": "2",
       "name": "Jah Wobble, The Edge, Holger Czukay",
       "child": [
         {
-          "coverArt": 3,
+          "coverArt": "3",
           "created": "2019-07-08T21:49:40.995905275+01:00",
-          "id": 3,
+          "id": "3",
           "isDir": true,
           "isVideo": false,
-          "parent": 2,
+          "parent": "2",
           "title": "(1983) Snake Charmer"
         }
       ]

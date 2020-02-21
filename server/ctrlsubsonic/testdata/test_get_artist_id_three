@@ -5,23 +5,28 @@
     "type": "gonic",
     "gonicVersion": "v0.6.3",
     "artist": {
-      "id": 3,
+      "id": "3",
       "name": "13th Floor Elevators",
+      "albumCount": 2,
       "album": [
         {
-          "id": 8,
-          "coverArt": 8,
-          "artistId": 3,
+          "id": "8",
+          "coverArt": "8",
+          "artistId": "3",
           "artist": "13th Floor Elevators",
           "name": "Easter Everywhere",
+          "songCount": 0,
+          "duration": 0,
           "created": "2019-06-13T12:57:28.850090338+01:00"
         },
         {
-          "id": 9,
-          "coverArt": 9,
-          "artistId": 3,
+          "id": "9",
+          "coverArt": "9",
+          "artistId": "3",
           "artist": "13th Floor Elevators",
           "name": "The Psychedelic Sounds of the 13th Floor Elevators",
+          "songCount": 0,
+          "duration": 0,
           "created": "2019-06-13T12:57:24.306717554+01:00"
         }
       ]

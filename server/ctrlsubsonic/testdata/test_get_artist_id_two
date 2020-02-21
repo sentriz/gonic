@@ -5,22 +5,27 @@
     "type": "gonic",
     "gonicVersion": "v0.6.3",
     "artist": {
-      "id": 2,
+      "id": "2",
       "name": "A Certain Ratio",
+      "albumCount": 2,
       "album": [
         {
-          "id": 5,
-          "coverArt": 5,
-          "artistId": 2,
+          "id": "5",
+          "coverArt": "5",
+          "artistId": "2",
           "artist": "A Certain Ratio",
           "name": "The Graveyard and the Ballroom",
+          "songCount": 0,
+          "duration": 0,
           "created": "2019-06-05T17:46:37.675917974+01:00"
         },
         {
-          "id": 6,
-          "artistId": 2,
+          "id": "6",
+          "artistId": "2",
           "artist": "A Certain Ratio",
           "name": "To Each...",
+          "songCount": 0,
+          "duration": 0,
           "created": "2019-05-23T15:12:02.921473302+01:00"
         }
       ]

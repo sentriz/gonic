@@ -22,12 +22,9 @@ import (
 func (c *Controller) ServeGetIndexes(r *http.Request) *spec.Response {
 	var folders []*db.Album
 	c.DB.
-		Select("*, count(sub.id) as child_count").
-		Joins(`
-            LEFT JOIN albums sub
-		    ON albums.id = sub.parent_id
-		`).
-		Where("albums.parent_id = 1").
+		Select("*, count(sub.id) child_count").
+		Joins("JOIN albums sub ON albums.id=sub.parent_id").
+		Where("albums.parent_id=1").
 		Group("albums.id").
 		Find(&folders)
 	// [a-z#] -> 27
@@ -71,7 +68,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	// start looking for child childFolders in the current dir
 	var childFolders []*db.Album
 	c.DB.
-		Where("parent_id = ?", id).
+		Where("parent_id=?", id).
 		Find(&childFolders)
 	for _, c := range childFolders {
 		childrenObj = append(childrenObj, spec.NewTCAlbumByFolder(c))
@@ -80,7 +77,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	// start looking for child childTracks in the current dir
 	var childTracks []*db.Track
 	c.DB.
-		Where("album_id = ?", id).
+		Where("album_id=?", id).
 		Preload("Album").
 		Order("filename").
 		Find(&childTracks)
@@ -112,8 +109,8 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 	switch listType {
 	case "alphabeticalByArtist":
 		q = q.Joins(`
-			JOIN albums AS parent_albums
-			ON albums.parent_id = parent_albums.id`)
+			JOIN albums parent_albums
+			ON albums.parent_id=parent_albums.id`)
 		q = q.Order("parent_albums.right_path")
 	case "alphabeticalByName":
 		q = q.Order("right_path")
@@ -121,7 +118,7 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 		user := r.Context().Value(CtxUser).(*db.User)
 		q = q.Joins(`
 			JOIN plays
-			ON albums.id = plays.album_id AND plays.user_id = ?`,
+			ON albums.id=plays.album_id AND plays.user_id=?`,
 			user.ID)
 		q = q.Order("plays.count DESC")
 	case "newest":
@@ -132,14 +129,19 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 		user := r.Context().Value(CtxUser).(*db.User)
 		q = q.Joins(`
 			JOIN plays
-			ON albums.id = plays.album_id AND plays.user_id = ?`,
+			ON albums.id=plays.album_id AND plays.user_id=?`,
 			user.ID)
 		q = q.Order("plays.time DESC")
 	default:
 		return spec.NewError(10, "unknown value `%s` for parameter 'type'", listType)
 	}
 	var folders []*db.Album
+	// TODO: think about removing this extra join to count number
+	// of children. it might make sense to store that in the db
 	q.
+		Select("albums.*, count(tracks.id) child_count").
+		Joins("JOIN tracks ON tracks.album_id=albums.id").
+		Group("albums.id").
 		Where("albums.tag_artist_id IS NOT NULL").
 		Offset(params.GetIntOr("offset", 0)).
 		Limit(params.GetIntOr("size", 10)).
@@ -168,10 +170,10 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	var artists []*db.Album
 	c.DB.
 		Where(`
-            parent_id = 1
-            AND (right_path LIKE ? OR
-                 right_path_u_dec LIKE ?)
-		`, query, query).
+			parent_id=1
+			AND (	right_path LIKE ? OR
+					right_path_u_dec LIKE ?	)`,
+			query, query).
 		Offset(params.GetIntOr("artistOffset", 0)).
 		Limit(params.GetIntOr("artistCount", 20)).
 		Find(&artists)
@@ -184,10 +186,10 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	var albums []*db.Album
 	c.DB.
 		Where(`
-            tag_artist_id IS NOT NULL
-            AND (right_path LIKE ? OR
-                 right_path_u_dec LIKE ?)
-		`, query, query).
+			tag_artist_id IS NOT NULL
+			AND (	right_path LIKE ? OR
+					right_path_u_dec LIKE ?	)`,
+			query, query).
 		Offset(params.GetIntOr("albumOffset", 0)).
 		Limit(params.GetIntOr("albumCount", 20)).
 		Find(&albums)
@@ -199,10 +201,8 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	var tracks []*db.Track
 	c.DB.
 		Preload("Album").
-		Where(`
-            filename LIKE ? OR
-            filename_u_dec LIKE ?
-		`, query, query).
+		Where("filename LIKE ? OR filename_u_dec LIKE ?",
+			query, query).
 		Offset(params.GetIntOr("songOffset", 0)).
 		Limit(params.GetIntOr("songCount", 20)).
 		Find(&tracks)

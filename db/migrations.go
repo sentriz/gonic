@@ -33,7 +33,7 @@ var migrationCreateInitUser = gormigrate.Migration{
 			initPassword = "admin"
 		)
 		err := tx.
-			Where("name = ?", initUsername).
+			Where("name=?", initUsername).
 			First(&User{}).
 			Error
 		if !gorm.IsRecordNotFoundError(err) {
@@ -56,7 +56,7 @@ var migrationMergePlaylist = gormigrate.Migration{
 		}
 		return tx.Exec(`
 			UPDATE playlists
-			SET items = ( SELECT group_concat(track_id) FROM (
+			SET items=( SELECT group_concat(track_id) FROM (
 				SELECT track_id
 				FROM playlist_items
 				WHERE playlist_items.playlist_id=playlists.id

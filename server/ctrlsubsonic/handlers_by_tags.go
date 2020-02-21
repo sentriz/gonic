@@ -17,11 +17,8 @@ import (
 func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 	var artists []*db.Artist
 	c.DB.
-		Select("*, count(sub.id) as album_count").
-		Joins(`
-            LEFT JOIN albums sub
-		    ON artists.id = sub.tag_artist_id
-		`).
+		Select("*, count(sub.id) album_count").
+		Joins("JOIN albums sub ON artists.id=sub.tag_artist_id").
 		Group("artists.id").
 		Find(&artists)
 	// [a-z#] -> 27
@@ -108,9 +105,7 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	q := c.DB.DB
 	switch listType {
 	case "alphabeticalByArtist":
-		q = q.Joins(`
-			JOIN artists
-			ON albums.tag_artist_id = artists.id`)
+		q = q.Joins("JOIN artists ON albums.tag_artist_id=artists.id")
 		q = q.Order("artists.name")
 	case "alphabeticalByName":
 		q = q.Order("tag_title")
@@ -122,9 +117,7 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 		q = q.Order("tag_year")
 	case "frequent":
 		user := r.Context().Value(CtxUser).(*db.User)
-		q = q.Joins(`
-			JOIN plays
-			ON albums.id = plays.album_id AND plays.user_id = ?`,
+		q = q.Joins("JOIN plays ON albums.id=plays.album_id AND plays.user_id=?",
 			user.ID)
 		q = q.Order("plays.count DESC")
 	case "newest":
@@ -133,16 +126,19 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 		q = q.Order(gorm.Expr("random()"))
 	case "recent":
 		user := r.Context().Value(CtxUser).(*db.User)
-		q = q.Joins(`
-			JOIN plays
-			ON albums.id = plays.album_id AND plays.user_id = ?`,
+		q = q.Joins("JOIN plays ON albums.id=plays.album_id AND plays.user_id=?",
 			user.ID)
 		q = q.Order("plays.time DESC")
 	default:
 		return spec.NewError(10, "unknown value `%s` for parameter 'type'", listType)
 	}
 	var albums []*db.Album
+	// TODO: think about removing this extra join to count number
+	// of children. it might make sense to store that in the db
 	q.
+		Select("albums.*, count(tracks.id) child_count").
+		Joins("JOIN tracks ON tracks.album_id=albums.id").
+		Group("albums.id").
 		Where("albums.tag_artist_id IS NOT NULL").
 		Offset(params.GetIntOr("offset", 0)).
 		Limit(params.GetIntOr("size", 10)).
@@ -171,10 +167,8 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	// search "artists"
 	var artists []*db.Artist
 	c.DB.
-		Where(`
-            name LIKE ? OR
-            name_u_dec LIKE ?
-		`, query, query).
+		Where("name LIKE ? OR name_u_dec LIKE ?",
+			query, query).
 		Offset(params.GetIntOr("artistOffset", 0)).
 		Limit(params.GetIntOr("artistCount", 20)).
 		Find(&artists)
@@ -187,10 +181,8 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	var albums []*db.Album
 	c.DB.
 		Preload("TagArtist").
-		Where(`
-            tag_title LIKE ? OR
-            tag_title_u_dec LIKE ?
-		`, query, query).
+		Where("tag_title LIKE ? OR tag_title_u_dec LIKE ?",
+			query, query).
 		Offset(params.GetIntOr("albumOffset", 0)).
 		Limit(params.GetIntOr("albumCount", 20)).
 		Find(&albums)
@@ -203,10 +195,8 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	var tracks []*db.Track
 	c.DB.
 		Preload("Album").
-		Where(`
-            tag_title LIKE ? OR
-            tag_title_u_dec LIKE ?
-		`, query, query).
+		Where("tag_title LIKE ? OR tag_title_u_dec LIKE ?",
+			query, query).
 		Offset(params.GetIntOr("songOffset", 0)).
 		Limit(params.GetIntOr("songCount", 20)).
 		Find(&tracks)
@@ -231,7 +221,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	}
 	artist := &db.Artist{}
 	err = c.DB.
-		Where("id = ?", id).
+		Where("id=?", id).
 		Find(artist).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
@@ -265,9 +255,9 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		}
 		artist = &db.Artist{}
 		err = c.DB.
-			Select("*, count(albums.id) as album_count").
-			Where("name = ?", similarInfo.Name).
-			Joins(`LEFT JOIN albums ON artists.id = albums.tag_artist_id`).
+			Select("artists.*, count(albums.id) album_count").
+			Where("name=?", similarInfo.Name).
+			Joins("JOIN albums ON artists.id=albums.tag_artist_id").
 			Group("artists.id").
 			Find(artist).
 			Error

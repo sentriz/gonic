@@ -7,8 +7,7 @@
     "searchResult2": {
       "artist": [
         {
-          "id": 4,
-          "parent": 1,
+          "id": "4",
           "name": "A Certain Ratio"
         }
       ]

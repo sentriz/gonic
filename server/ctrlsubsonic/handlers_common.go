@@ -125,7 +125,7 @@ func (c *Controller) ServeNotFound(r *http.Request) *spec.Response {
 func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	var playlists []*db.Playlist
-	c.DB.Where("user_id = ?", user.ID).Find(&playlists)
+	c.DB.Where("user_id=?", user.ID).Find(&playlists)
 	sub := spec.NewResponse()
 	sub.Playlists = &spec.Playlists{
 		List: make([]*spec.Playlist, len(playlists)),
@@ -146,7 +146,7 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 	}
 	playlist := db.Playlist{}
 	err = c.DB.
-		Where("id = ?", playlistID).
+		Where("id=?", playlistID).
 		Find(&playlist).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
@@ -162,7 +162,7 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 	for i, id := range trackIDs {
 		track := db.Track{}
 		c.DB.
-			Where("id = ?", id).
+			Where("id=?", id).
 			Preload("Album").
 			Find(&track)
 		sub.Playlist.List[i] = spec.NewTCTrackByFolder(&track, track.Album)
@@ -181,7 +181,7 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 	// as intended
 	var playlist db.Playlist
 	c.DB.
-		Where("id = ?", playlistID).
+		Where("id=?", playlistID).
 		FirstOrCreate(&playlist)
 	// ** begin update meta info
 	playlist.UserID = user.ID
@@ -212,7 +212,7 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 func (c *Controller) ServeDeletePlaylist(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	c.DB.
-		Where("id = ?", params.GetIntOr("id", 0)).
+		Where("id=?", params.GetIntOr("id", 0)).
 		Delete(&db.Playlist{})
 	return spec.NewResponse()
 }
@@ -221,7 +221,7 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	queue := db.PlayQueue{}
 	err := c.DB.
-		Where("user_id = ?", user.ID).
+		Where("user_id=?", user.ID).
 		Find(&queue).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
@@ -239,7 +239,7 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 	for i, id := range trackIDs {
 		track := db.Track{}
 		c.DB.
-			Where("id = ?", id).
+			Where("id=?", id).
 			Preload("Album").
 			Find(&track)
 		sub.PlayQueue.List[i] = spec.NewTCTrackByFolder(&track, track.Album)
@@ -272,7 +272,7 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 	}
 	track := &db.Track{}
 	err = c.DB.
-		Where("id = ?", id).
+		Where("id=?", id).
 		Preload("Album").
 		First(track).
 		Error

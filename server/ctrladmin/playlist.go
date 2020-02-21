@@ -8,6 +8,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
+
 	"senan.xyz/g/gonic/db"
 )
 
@@ -18,9 +19,9 @@ func playlistParseLine(c *Controller, path string) (int, error) {
 	var track db.Track
 	query := c.DB.Raw(`
 		SELECT tracks.id FROM TRACKS
-		JOIN albums ON tracks.album_id = albums.id
-		WHERE (? || '/' || albums.left_path || albums.right_path || '/' || tracks.filename) = ?
-	`, c.MusicPath, path)
+		JOIN albums ON tracks.album_id=albums.id
+		WHERE (? || '/' || albums.left_path || albums.right_path || '/' || tracks.filename)=?`,
+		c.MusicPath, path)
 	err := query.First(&track).Error
 	switch {
 	case gorm.IsRecordNotFoundError(err):

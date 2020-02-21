@@ -7,17 +7,20 @@
     "searchResult3": {
       "artist": [
         {
-          "id": 4,
-          "name": "Anikas"
+          "id": "4",
+          "name": "Anikas",
+          "albumCount": 0
         }
       ],
       "album": [
         {
-          "id": 13,
-          "coverArt": 13,
-          "artistId": 4,
+          "id": "13",
+          "coverArt": "13",
+          "artistId": "4",
           "artist": "Anikas",
           "name": "Anika",
+          "songCount": 0,
+          "duration": 0,
           "created": "2019-05-23T15:12:02.921473302+01:00"
         }
       ]

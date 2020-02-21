@@ -54,7 +54,7 @@ func NewMock() (*DB, error) {
 func (db *DB) GetSetting(key string) string {
 	setting := &Setting{}
 	db.
-		Where("key = ?", key).
+		Where("key=?", key).
 		First(setting)
 	return setting.Value
 }
@@ -69,7 +69,7 @@ func (db *DB) SetSetting(key, value string) {
 func (db *DB) GetUserFromName(name string) *User {
 	user := &User{}
 	err := db.
-		Where("name = ?", name).
+		Where("name=?", name).
 		First(user).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
