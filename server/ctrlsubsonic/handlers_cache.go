@@ -29,7 +29,7 @@ var (
 	bufLen = 4096
 )
 
-func StreamTrack(w http.ResponseWriter, r *http.Request, trackPath string, client string, clBitrate int, cachePath string) {
+func streamTrack(w http.ResponseWriter, r *http.Request, trackPath string, client string, clBitrate int, cachePath string) {
 	// Guess required format based on client:
 	profileName := detectFormat(client)
 	profile := encProfiles[profileName]
