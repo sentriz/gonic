@@ -52,7 +52,7 @@
         <div class="text-right">
         {{ range $user := .AllUsers }}
             <i>{{ $user.Name }}</i>
-            <span class="light no-small">{{ $user.CreatedAt.Format "jan 02, 2006" }}</span>
+            <span class="light no-small">{{ $user.CreatedAt | date }}</span>
             <span class="light">&#124;</span>
             <a href="{{ printf "/admin/change_password?user=%s" $user.Name | path }}">change password</a>
             <span class="light">&#124;</span>
@@ -82,7 +82,7 @@
         {{ range $folder := .RecentFolders }}
             <tr>
             <td class="text-right">{{ $folder.RightPath }}</td>
-            <td class="no-small"><span class="light" title="{{ $folder.ModifiedAt }}">{{ $folder.ModifiedAt | humanDate }}</span></td>
+            <td class="no-small"><span class="light" title="{{ $folder.ModifiedAt }}">{{ $folder.ModifiedAt | dateHuman }}</span></td>
             </tr>
         {{ end }}
         </table>
@@ -90,7 +90,7 @@
             <a href="{{ path "/admin/start_scan_do" }}">start scan</a>
             {{- if not .LastScanTime.IsZero -}}
                 <br>
-                <span class="light" title="{{ .LastScanTime }}">scanned {{ .LastScanTime | humanDate }}</span>
+                <span class="light" title="{{ .LastScanTime }}">scanned {{ .LastScanTime | dateHuman }}</span>
             {{ end }}
         {{ end }}
     </div>
@@ -108,7 +108,7 @@
             <tr>
             <td class="text-right">{{ $playlist.Name }}</td>
             <td><span class="light">({{ $playlist.TrackCount }} tracks)</span></td>
-            <td class="no-small"><span class="light" title="{{ $playlist.CreatedAt }}">{{ $playlist.CreatedAt | humanDate }}</span></td>
+            <td class="no-small"><span class="light" title="{{ $playlist.CreatedAt }}">{{ $playlist.CreatedAt | dateHuman }}</span></td>
             </tr>
         {{ end }}
         </table>

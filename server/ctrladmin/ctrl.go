@@ -80,7 +80,10 @@ func New(base *ctrlbase.Controller) *Controller {
 		New("layout").
 		Funcs(sprig.FuncMap()).
 		Funcs(template.FuncMap{
-			"humanDate": humanize.Time,
+			"date": func(in time.Time) string {
+				return strings.ToLower(in.Format("Jan 02, 2006"))
+			},
+			"dateHuman": humanize.Time,
 			"path":      base.Path,
 		})
 	tmplBase = extendFromPaths(tmplBase, prefixPartials)
