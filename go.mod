@@ -12,7 +12,7 @@ require (
 	github.com/gorilla/sessions v1.1.3
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
-	github.com/jinzhu/gorm v1.9.9
+	github.com/jinzhu/gorm v1.9.10
 	github.com/josephburnett/jd v0.0.0-20190531151850-1f9071c800e7
 	github.com/karrick/godirwalk v1.15.2
 	github.com/kr/pretty v0.1.0 // indirect
