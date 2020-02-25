@@ -3,7 +3,7 @@
     "status": "ok",
     "version": "1.9.0",
     "type": "gonic",
-    "gonicVersion": "v0.7.2",
+    "gonicVersion": "v0.7.3",
     "directory": {
       "id": "3",
       "parent": "2",
