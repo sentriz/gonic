@@ -136,7 +136,7 @@ func (c *Controller) ServeChangePassword(r *http.Request) *Response {
 	data := &templateData{}
 	data.SelectedUser = user
 	return &Response{
-		template: "change_own_password.tmpl",
+		template: "change_password.tmpl",
 		data:     data,
 	}
 }
