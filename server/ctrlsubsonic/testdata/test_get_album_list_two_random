@@ -3,7 +3,7 @@
     "status": "ok",
     "version": "1.9.0",
     "type": "gonic",
-    "gonicVersion": "v0.7.3",
+    "gonicVersion": "v0.7.4",
     "albumList2": {
       "album": [
         {
@@ -17,45 +17,6 @@
           "created": "2019-04-30T16:48:30+01:00"
         },
         {
-          "id": "17",
-          "coverArt": "17",
-          "artistId": "5",
-          "artist": "Swell Maps",
-          "name": "A Trip to Marineville",
-          "songCount": 18,
-          "duration": 0,
-          "created": "2019-04-30T16:48:48+01:00"
-        },
-        {
-          "id": "6",
-          "artistId": "2",
-          "artist": "A Certain Ratio",
-          "name": "To Each...",
-          "songCount": 9,
-          "duration": 0,
-          "created": "2019-05-23T15:12:02.921473302+01:00"
-        },
-        {
-          "id": "16",
-          "coverArt": "16",
-          "artistId": "5",
-          "artist": "Swell Maps",
-          "name": "Jane From Occupied Europe",
-          "songCount": 16,
-          "duration": 0,
-          "created": "2019-04-30T16:48:48+01:00"
-        },
-        {
-          "id": "8",
-          "coverArt": "8",
-          "artistId": "3",
-          "artist": "13th Floor Elevators",
-          "name": "Easter Everywhere",
-          "songCount": 10,
-          "duration": 0,
-          "created": "2019-06-13T12:57:28.850090338+01:00"
-        },
-        {
           "id": "3",
           "coverArt": "3",
           "artistId": "1",
@@ -66,14 +27,14 @@
           "created": "2019-05-16T22:10:52+01:00"
         },
         {
-          "id": "9",
-          "coverArt": "9",
-          "artistId": "3",
-          "artist": "13th Floor Elevators",
-          "name": "The Psychedelic Sounds of the 13th Floor Elevators",
-          "songCount": 21,
+          "id": "13",
+          "coverArt": "13",
+          "artistId": "4",
+          "artist": "Anikas",
+          "name": "Anika",
+          "songCount": 9,
           "duration": 0,
-          "created": "2019-06-13T12:57:24.306717554+01:00"
+          "created": "2019-05-23T15:12:02.921473302+01:00"
         },
         {
           "id": "5",
@@ -96,14 +57,53 @@
           "created": "2019-06-10T19:26:30.944742894+01:00"
         },
         {
-          "id": "13",
-          "coverArt": "13",
-          "artistId": "4",
-          "artist": "Anikas",
-          "name": "Anika",
+          "id": "16",
+          "coverArt": "16",
+          "artistId": "5",
+          "artist": "Swell Maps",
+          "name": "Jane From Occupied Europe",
+          "songCount": 16,
+          "duration": 0,
+          "created": "2019-04-30T16:48:48+01:00"
+        },
+        {
+          "id": "8",
+          "coverArt": "8",
+          "artistId": "3",
+          "artist": "13th Floor Elevators",
+          "name": "Easter Everywhere",
+          "songCount": 10,
+          "duration": 0,
+          "created": "2019-06-13T12:57:28.850090338+01:00"
+        },
+        {
+          "id": "17",
+          "coverArt": "17",
+          "artistId": "5",
+          "artist": "Swell Maps",
+          "name": "A Trip to Marineville",
+          "songCount": 18,
+          "duration": 0,
+          "created": "2019-04-30T16:48:48+01:00"
+        },
+        {
+          "id": "6",
+          "artistId": "2",
+          "artist": "A Certain Ratio",
+          "name": "To Each...",
           "songCount": 9,
           "duration": 0,
           "created": "2019-05-23T15:12:02.921473302+01:00"
+        },
+        {
+          "id": "9",
+          "coverArt": "9",
+          "artistId": "3",
+          "artist": "13th Floor Elevators",
+          "name": "The Psychedelic Sounds of the 13th Floor Elevators",
+          "songCount": 21,
+          "duration": 0,
+          "created": "2019-06-13T12:57:24.306717554+01:00"
         }
       ]
     }
