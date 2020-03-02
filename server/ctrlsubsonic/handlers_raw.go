@@ -84,8 +84,8 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		return spec.NewError(70, "media with id `%d` was not found", id)
 	}
 	defer func() {
-		user := r.Context().Value(CtxUser).(*model.User)
-		play := model.Play{
+		user := r.Context().Value(CtxUser).(*db.User)
+		play := db.Play{
 			AlbumID: track.Album.ID,
 			UserID:  user.ID,
 		}
@@ -133,7 +133,7 @@ func (c *Controller) ServeDownload(w http.ResponseWriter, r *http.Request) *spec
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	track := &model.Track{}
+	track := &db.Track{}
 	err = c.DB.
 		Preload("Album").
 		First(track, id).
