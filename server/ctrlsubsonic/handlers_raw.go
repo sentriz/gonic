@@ -123,7 +123,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		log.Printf("error encoding %q: %v\n", absPath, err)
 	}
 	log.Printf("track `%s` encoded to [%s/%s] successfully\n",
-		track.Filename, profile.Format, profile.Bitrate)
+		track.Filename, profile.Format, bitrate)
 	return nil
 }
 
