@@ -140,7 +140,7 @@ func CacheKey(sourcePath string, profile string, bitrate string) string {
 // Check if client forces bitrate lower than set in profile:
 func GetBitrate(clientBitrate int, profile *Profile) string {
 	bitrate := profile.Bitrate
-	if clientBitrate != 0 && clientBitrate < profile.Bitrate {
+	if clientBitrate != 0 && clientBitrate < bitrate {
 		bitrate = clientBitrate
 	}
 	return fmt.Sprintf("%dk", bitrate)
