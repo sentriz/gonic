@@ -134,7 +134,8 @@ type TrackChild struct {
 }
 
 type Artists struct {
-	List []*Index `xml:"index" json:"index"`
+	IgnoredArticles string   `xml:"ignoredArticles,attr" json:"ignoredArticles"`
+	List            []*Index `xml:"index"                json:"index"`
 }
 
 type Artist struct {
@@ -146,8 +147,9 @@ type Artist struct {
 }
 
 type Indexes struct {
-	LastModified int      `xml:"lastModified,attr,omitempty" json:"lastModified"`
-	Index        []*Index `xml:"index"                       json:"index"`
+	LastModified    int      `xml:"lastModified,attr,omitempty" json:"lastModified"`
+	IgnoredArticles string   `xml:"ignoredArticles,attr"        json:"ignoredArticles"`
+	Index           []*Index `xml:"index"                       json:"index"`
 }
 
 type Index struct {
