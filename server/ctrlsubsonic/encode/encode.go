@@ -15,7 +15,7 @@ import (
 
 type Profile struct {
 	Format        string
-	Bitrate       string
+	Bitrate       int
 	ffmpegOptions []string
 	forceRG       bool
 }
