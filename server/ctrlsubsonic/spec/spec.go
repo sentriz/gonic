@@ -250,8 +250,9 @@ type Genres struct {
 }
 
 type Genre struct {
-	SongCount  string `xml:"songCount,attr"`
-	AlbumCount string `xml:"albumCount,attr"`
+	Name       string `xml:",chardata",json:"value"`
+	SongCount  int    `xml:"songCount,attr,omitempty" json:"songCount,omitempty"`
+	AlbumCount int    `xml:"albumCount,attr,omitempty" json:"albumCount,omitempty"`
 }
 
 type PlayQueue struct {

@@ -275,3 +275,22 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	}
 	return sub
 }
+
+func (c *Controller) ServeGetGenres(r *http.Request) *spec.Response {
+	var genres []*db.Genre
+	c.DB.
+		Select(`*,
+(SELECT count(id) FROM albums WHERE tag_genre_id=genres.id) album_count,
+(SELECT count(id) FROM tracks WHERE tag_genre_id=genres.id) track_count`).
+		Group("genres.id").
+		Find(&genres)
+
+	sub := spec.NewResponse()
+	sub.Genres = &spec.Genres{
+		List: make([]*spec.Genre, len(genres)),
+	}
+	for i, genre := range genres {
+		sub.Genres.List[i] = spec.NewGenre(genre)
+	}
+	return sub
+}

@@ -161,8 +161,8 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/getMusicDirectory{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetMusicDirectory))
 	r.Handle("/getAlbumList{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetAlbumList))
 	r.Handle("/search2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeSearchTwo))
-	// ** begin unimplemented
 	r.Handle("/getGenres{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetGenres))
+	// ** begin unimplemented
 	// middlewares should be run for not found handler
 	// https://github.com/gorilla/mux/issues/416
 	notFoundHandler := ctrl.H(ctrl.ServeNotFound)
