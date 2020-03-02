@@ -67,3 +67,15 @@ var migrationMergePlaylist = gormigrate.Migration{
 			Error
 	},
 }
+
+var migrationAddGenre = gormigrate.Migration{
+	ID: "202003020000",
+	Migrate: func(tx *gorm.DB) error {
+		return tx.AutoMigrate(
+			Genre{},
+			Album{},
+			Track{},
+		).
+			Error
+	},
+}
