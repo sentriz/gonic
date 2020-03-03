@@ -95,7 +95,7 @@ func Scrobble(apiKey, secret, session string, opts ScrobbleOpts) error {
 	params.Add("track", opts.Track.TagTitle)
 	params.Add("trackNumber", strconv.Itoa(opts.Track.TagTrackNumber))
 	params.Add("album", opts.Track.Album.TagTitle)
-	params.Add("mbid", opts.Track.Album.TagBrainzID)
+	params.Add("mbid", opts.Track.TagBrainzID)
 	params.Add("albumArtist", opts.Track.Artist.Name)
 	params.Add("api_sig", getParamSignature(params, secret))
 	_, err := makeRequest("POST", params)
