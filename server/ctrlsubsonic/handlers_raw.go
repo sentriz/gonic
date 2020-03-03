@@ -114,15 +114,15 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	cacheKey := encode.CacheKey(absPath, profileName, bitrate)
 	cacheFile := path.Join(c.CachePath, cacheKey)
 	if fileExists(cacheFile) {
-		log.Printf("cache [%s/%s] hit!\n", profile.Format, bitrate)
+		log.Printf("track `%s`: cache [%s/%s] hit!\n", track.Filename, profile.Format, bitrate)
 		http.ServeFile(w, r, cacheFile)
 		return nil
 	}
-	log.Printf("cache [%s/%s] miss!\n", profile.Format, bitrate)
+	log.Printf("track `%s`: cache [%s/%s] miss!\n", track.Filename, profile.Format, bitrate)
 	if err := encode.Encode(w, absPath, cacheFile, profile, bitrate); err != nil {
 		log.Printf("error encoding %q: %v\n", absPath, err)
 	}
-	log.Printf("track `%s` encoded to [%s/%s] successfully\n",
+	log.Printf("track `%s`: encoded to [%s/%s] successfully\n",
 		track.Filename, profile.Format, bitrate)
 	return nil
 }
