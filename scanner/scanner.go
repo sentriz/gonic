@@ -336,6 +336,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	track.TagTrackArtist = trTags.Artist()
 	track.TagTrackNumber = trTags.TrackNumber()
 	track.TagDiscNumber = trTags.DiscNumber()
+	track.TagBrainzID = trTags.BrainzID()
 	track.Length = trTags.Length()   // these two should be calculated
 	track.Bitrate = trTags.Bitrate() // ...from the file instead of tags
 	//

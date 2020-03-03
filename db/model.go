@@ -78,6 +78,7 @@ type Track struct {
 	TagDiscNumber  int    `sql:"default: null"`
 	TagGenre       *Genre
 	TagGenreID     int `sql:"default: null; type:int REFERENCES genres(id) ON DELETE CASCADE"`
+	TagBrainzID    string `sql:"default: null"`
 }
 
 func (t *Track) Ext() string {
