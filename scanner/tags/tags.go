@@ -34,6 +34,7 @@ func (t *Tags) firstTag(keys ...string) string {
 }
 
 func (t *Tags) Title() string         { return t.firstTag("title") }
+func (t *Tags) BrainzID() string      { return t.firstTag("musicbrainz_trackid") }
 func (t *Tags) Artist() string        { return t.firstTag("artist") }
 func (t *Tags) Album() string         { return t.firstTag("album") }
 func (t *Tags) AlbumArtist() string   { return t.firstTag("albumartist", "album artist") }

@@ -67,6 +67,7 @@ type Track struct {
 	TagTrackArtist string `sql:"default: null"`
 	TagTrackNumber int    `sql:"default: null"`
 	TagDiscNumber  int    `sql:"default: null"`
+	TagBrainzID    string `sql:"default: null"`
 }
 
 func (t *Track) Ext() string {
