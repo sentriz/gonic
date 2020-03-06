@@ -12,7 +12,7 @@
  - multiple users  
  - a web interface for configuration (set up last.fm, manage users, start scans, etc.)  
  - newer salt and token auth  
- - tested on [dsub](https://f-droid.org/en/packages/github.daneren2005.dsub/) and [jamstash](http://jamstash.com/)  
+ - tested on [dsub](https://f-droid.org/en/packages/github.daneren2005.dsub/), [jamstash](http://jamstash.com/), and [sublime music](https://gitlab.com/sumner/sublime-music/)  
  
  
 ## installation
