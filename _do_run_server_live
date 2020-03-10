@@ -6,4 +6,4 @@ if ! command -v 'entr' > /dev/null; then
     exit 1
 fi
 
-find assets/ | entr -r ./_do_run_server $@
+find assets/ -not -name '*_gen.go' | entr -r ./_do_run_server $@
