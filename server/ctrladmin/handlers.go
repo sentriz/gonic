@@ -184,6 +184,12 @@ func (c *Controller) ServeDeleteUser(r *http.Request) *Response {
 func (c *Controller) ServeDeleteUserDo(r *http.Request) *Response {
 	username := r.URL.Query().Get("user")
 	user := c.DB.GetUserFromName(username)
+	if user.IsAdmin {
+		return &Response{
+			redirect: "/admin/home",
+			flashW:   []string{"can't delete the admin user"},
+		}
+	}
 	c.DB.Delete(user)
 	return &Response{redirect: "/admin/home"}
 }
