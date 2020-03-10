@@ -56,7 +56,12 @@
             <span class="light">&#124;</span>
             <a href="{{ printf "/admin/change_password?user=%s" $user.Name | path }}">change password</a>
             <span class="light">&#124;</span>
-            <a href="{{ printf "/admin/delete_user?user=%s" $user.Name | path }}">delete</a><br/>
+            {{ if $user.IsAdmin }}
+                <span class="light">delete</span>
+            {{ else }}
+                <a href="{{ printf "/admin/delete_user?user=%s" $user.Name | path }}">delete</a>
+            {{ end }}
+            <br/>
         {{ end }}
         <a href="{{ path "/admin/create_user" }}" class="button">create new</a>
         </div>
