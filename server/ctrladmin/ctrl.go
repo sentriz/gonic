@@ -132,6 +132,7 @@ type Response struct {
 	err  string
 }
 
+//nolint:gocognit
 func (c *Controller) H(h adminHandler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := h(r)
