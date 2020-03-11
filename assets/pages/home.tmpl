@@ -97,12 +97,45 @@
         {{ end }}
         </table>
         {{- if not .IsScanning -}}
-            <a href="{{ path "/admin/start_scan_do" }}">start scan</a>
+            <br/>
             {{- if not .LastScanTime.IsZero -}}
-                <br>
-                <span class="light" title="{{ .LastScanTime }}">scanned {{ .LastScanTime | dateHuman }}</span>
+                <p class="light" title="{{ .LastScanTime }}">scanned {{ .LastScanTime | dateHuman }}</p>
             {{ end }}
+            <form action="{{ path "/admin/start_scan_do" }}" method="post">
+                <td><input type="submit" value="start scan"></td>
+            </form>
         {{ end }}
+    </div>
+</div>
+<div class="padded box">
+    <div class="box-title">
+        <i class="mdi mdi-file-music"></i> transcoding device profiles
+    </div>
+    <div class="block-right">
+        <p class="light text-right">have gonic transcode audio streams on the fly</p>
+        <p class="light text-right">(you can find your device's client name in the gonic logs. look for "&c=")</p>
+        <p class="light text-right">some common client names: "<span class="emp">DSub</span>", "<span class="emp">Jamstash</span>", "<span class="emp">Soundwaves</span>"</p>
+        <br/>
+        <table id="transcode-preferences">
+        {{ range $pref := .TranscodePreferences }}
+            <tr>
+                <form id="transcode-pref-{{ $pref.Client }}" action="{{ printf "/admin/delete_transcode_pref_do?client=%s" $pref.Client | path }}" method="post"></form>
+                <td>{{ $pref.Client }}</td>
+                <td>{{ $pref.Profile }}</td>
+                <td><input form="transcode-pref-{{ $pref.Client }}" type="submit" value="delete"></td>
+            </tr>
+        {{ end }}
+        <tr>
+            <form id="transcode-pref-add" action="{{ path "/admin/create_transcode_pref_do" }}" method="post"></form>
+            <td><input form="transcode-pref-add" type="text" name="client" placeholder="client name"></td>
+            <td><select form="transcode-pref-add" name="profile">
+                {{ range $profile := .TranscodeProfiles }}
+                    <option value="{{ $profile }}">{{ $profile }}</option>
+                {{ end }}
+            </select></td>
+            <td><input form="transcode-pref-add" type="submit" value="save"></td>
+        </tr>
+        </table>
     </div>
 </div>
 <div class="padded box">

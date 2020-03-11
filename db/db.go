@@ -40,6 +40,7 @@ func New(path string) (*DB, error) {
 		&migrationInitSchema,
 		&migrationCreateInitUser,
 		&migrationMergePlaylist,
+		&migrationCreateTranscode,
 		&migrationAddGenre,
 	})
 	if err = migr.Migrate(); err != nil {

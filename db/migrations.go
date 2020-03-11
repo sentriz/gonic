@@ -6,6 +6,8 @@ import (
 	"gopkg.in/gormigrate.v1"
 )
 
+// $ date '+%Y%m%d%H%M'
+
 // not really a migration
 var migrationInitSchema = gormigrate.Migration{
 	ID: "202002192100",
@@ -68,8 +70,18 @@ var migrationMergePlaylist = gormigrate.Migration{
 	},
 }
 
+var migrationCreateTranscode = gormigrate.Migration{
+	ID: "202003111222",
+	Migrate: func(tx *gorm.DB) error {
+		return tx.AutoMigrate(
+			TranscodePreference{},
+		).
+			Error
+	},
+}
+
 var migrationAddGenre = gormigrate.Migration{
-	ID: "202003020000",
+	ID: "202003121330",
 	Migrate: func(tx *gorm.DB) error {
 		return tx.AutoMigrate(
 			Genre{},
