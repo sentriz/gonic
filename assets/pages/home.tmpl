@@ -22,13 +22,7 @@
         <i class="mdi mdi-lastfm"></i> last.fm
     </div>
     <div class="text-right">
-        <p class="light">have gonic scrobble to <a href="https://www.last.fm/">last.fm</a> on your behalf</p>
-        {{ if .User.IsAdmin }}
-            <br/>
-            <a href="{{ path "/admin/update_lastfm_api_key" }}">update api key&#8230;</a><br/>
-        {{ end }}
         {{ if .CurrentLastFMAPIKey }}
-            <br/>
             <span class="light">current status</span>
             {{ if .User.LastFMSession }}
                 linked
@@ -40,10 +34,15 @@
                 {{ $cbURL := printf "%s%s" .RequestRoot $cbPath }}
                 <a href="https://www.last.fm/api/auth/?api_key={{ .CurrentLastFMAPIKey }}&cb={{ $cbURL }}">link</a><br/>
             {{ end }}
-        {{ else if not .User.IsAdmin }}
-            <br/>
+        {{ else }}
             <p class="light">api key not set</p>
-            <p class="light">please ask your admin to set it</p>
+            {{ if not .User.IsAdmin }}
+                <p class="light">please ask your admin to set it</p>
+	    {{ end }}
+        {{ end }}
+        {{ if .User.IsAdmin }}
+	    <br/>
+            <p><a href="{{ path "/admin/update_lastfm_api_key" }}">update api key&#8230;</a></p>
         {{ end }}
     </div>
 </div>
@@ -112,8 +111,8 @@
         <i class="mdi mdi-file-music"></i> transcoding device profiles
     </div>
     <div class="block-right">
-        <p class="light text-right">have gonic transcode audio streams on the fly</p>
-        <p class="light text-right">(you can find your device's client name in the gonic logs. look for "&c=")</p>
+        <p class="light text-right">you can find your device's client name in the gonic logs</p>
+        <p class="light text-right">(look for the "&c=" url query parameter)</p>
         <p class="light text-right">some common client names: "<span class="emp">DSub</span>", "<span class="emp">Jamstash</span>", "<span class="emp">Soundwaves</span>"</p>
         <br/>
         <table id="transcode-preferences">
