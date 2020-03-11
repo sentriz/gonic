@@ -11,9 +11,9 @@ import (
 
 	"senan.xyz/g/gonic/db"
 	"senan.xyz/g/gonic/mime"
-	"senan.xyz/g/gonic/server/ctrlsubsonic/encode"
 	"senan.xyz/g/gonic/server/ctrlsubsonic/params"
 	"senan.xyz/g/gonic/server/ctrlsubsonic/spec"
+	"senan.xyz/g/gonic/server/encode"
 )
 
 // Put special clients that can't handle Opus here:
