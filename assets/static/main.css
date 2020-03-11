@@ -35,28 +35,19 @@ table td:not(:last-child)::after {
   }
 }
 
-form input[type="file"] {
-  display: none;
-}
-
-form input[type],
-form select,
-form textarea {
-  margin-bottom: 0;
-}
-
-form input {
-  padding: 3px;
+input,
+select,
+textarea {
+  border-radius: 0;
   border: 1px solid #ccc;
   box-sizing: border-box;
+  margin: 1px 0;
+  padding: 0;
+  height: 20px;
 }
 
-form input[type="password"],
-form input[type="text"] {
-  margin-bottom: 0.25rem;
-}
-
-form input[type="submit"] {
+input[type="submit"],
+input[type="button"] {
   width: 8rem;
   background-color: white;
   cursor: pointer;
@@ -161,4 +152,8 @@ a:hover {
 
 .light {
   color: #00000082;
+}
+
+.emp {
+  font-style: italic;
 }
