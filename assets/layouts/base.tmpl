@@ -9,7 +9,9 @@
     <body>
         <div id="content">
             <div id="header">
-                <img src="{{ path "/admin/static/gonic.png" }}">
+                <a href="{{ path "/admin/home" }}">
+                    <img src="{{ path "/admin/static/gonic.png" }}">
+                </a>
             </div>
             {{ range $flash := .Flashes }}
             <div class="padded flash-{{ $flash.Type }}">
