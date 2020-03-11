@@ -73,8 +73,7 @@ func (c *Controller) ServeChangeOwnPassword(r *http.Request) *Response {
 func (c *Controller) ServeChangeOwnPasswordDo(r *http.Request) *Response {
 	passwordOne := r.FormValue("password_one")
 	passwordTwo := r.FormValue("password_two")
-	err := validatePasswords(passwordOne, passwordTwo)
-	if err != nil {
+	if err := validatePasswords(passwordOne, passwordTwo); err != nil {
 		return &Response{
 			redirect: r.Referer(),
 			flashW:   []string{err.Error()},
@@ -145,8 +144,7 @@ func (c *Controller) ServeChangePasswordDo(r *http.Request) *Response {
 	username := r.URL.Query().Get("user")
 	passwordOne := r.FormValue("password_one")
 	passwordTwo := r.FormValue("password_two")
-	err := validatePasswords(passwordOne, passwordTwo)
-	if err != nil {
+	if err := validatePasswords(passwordOne, passwordTwo); err != nil {
 		return &Response{
 			redirect: r.Referer(),
 			flashW:   []string{err.Error()},
@@ -220,8 +218,7 @@ func (c *Controller) ServeCreateUserDo(r *http.Request) *Response {
 		Name:     username,
 		Password: passwordOne,
 	}
-	err = c.DB.Create(&user).Error
-	if err != nil {
+	if err := c.DB.Create(&user).Error; err != nil {
 		return &Response{
 			redirect: r.Referer(),
 			flashW:   []string{fmt.Sprintf("could not create user `%s`: %v", username, err)},

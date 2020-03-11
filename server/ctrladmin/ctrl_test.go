@@ -28,6 +28,7 @@ func TestFirstExisting(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
+		tc := tc // pin
 		t.Run(tc.name, func(t *testing.T) {
 			actu := firstExisting(tc.or, tc.values...)
 			if actu != tc.exp {
