@@ -6,6 +6,8 @@ import (
 	"gopkg.in/gormigrate.v1"
 )
 
+// $ date '+%Y%m%d%H%M'
+
 // not really a migration
 var migrationInitSchema = gormigrate.Migration{
 	ID: "202002192100",
@@ -63,6 +65,16 @@ var migrationMergePlaylist = gormigrate.Migration{
 				ORDER BY created_at
 			) );
 			DROP TABLE playlist_items;`,
+		).
+			Error
+	},
+}
+
+var migrationCreateTranscode = gormigrate.Migration{
+	ID: "202003111222",
+	Migrate: func(tx *gorm.DB) error {
+		return tx.AutoMigrate(
+			TranscodePreference{},
 		).
 			Error
 	},

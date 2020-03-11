@@ -102,15 +102,17 @@ type templateData struct {
 	User    *db.User
 	Version string
 	// home
-	AlbumCount    int
-	ArtistCount   int
-	TrackCount    int
-	RequestRoot   string
-	RecentFolders []*db.Album
-	AllUsers      []*db.User
-	LastScanTime  time.Time
-	IsScanning    bool
-	Playlists     []*db.Playlist
+	AlbumCount           int
+	ArtistCount          int
+	TrackCount           int
+	RequestRoot          string
+	RecentFolders        []*db.Album
+	AllUsers             []*db.User
+	LastScanTime         time.Time
+	IsScanning           bool
+	Playlists            []*db.Playlist
+	TranscodePreferences []*db.TranscodePreference
+	TranscodeProfiles    []string
 	//
 	CurrentLastFMAPIKey    string
 	CurrentLastFMAPISecret string
