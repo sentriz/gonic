@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"time"
@@ -82,6 +83,13 @@ func New(base *ctrlbase.Controller) *Controller {
 		Funcs(template.FuncMap{
 			"date": func(in time.Time) string {
 				return strings.ToLower(in.Format("Jan 02, 2006"))
+			},
+			"noCache": func(in string) string {
+				parsed, _ := url.Parse(in)
+				params := parsed.Query()
+				params.Set("v", version.VERSION)
+				parsed.RawQuery = params.Encode()
+				return parsed.String()
 			},
 			"dateHuman": humanize.Time,
 			"path":      base.Path,
