@@ -287,13 +287,11 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	var tracks []*db.Track
-
 	q := c.DB.DB.
 		Joins("JOIN albums ON tracks.album_id=albums.id").
 		Limit(params.GetIntOr("size", 10)).
 		Preload("Album").
 		Order(gorm.Expr("random()"))
-
 	if year, err := params.GetInt("fromYear"); err == nil {
 		q = q.Where("albums.tag_year >= ?", year)
 	}
@@ -307,7 +305,6 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 		)
 	}
 	q.Find(&tracks)
-
 	sub := spec.NewResponse()
 	sub.RandomTracks = &spec.RandomTracks{}
 	sub.RandomTracks.List = make([]*spec.TrackChild, len(tracks))

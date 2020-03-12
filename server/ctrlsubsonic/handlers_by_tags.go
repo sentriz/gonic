@@ -166,8 +166,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	query = fmt.Sprintf("%%%s%%",
 		strings.TrimSuffix(query, "*"))
 	results := &spec.SearchResultThree{}
-	//
-	// search "artists"
+	// ** begin search "artists"
 	var artists []*db.Artist
 	c.DB.
 		Where("name LIKE ? OR name_u_dec LIKE ?",
@@ -179,8 +178,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		results.Artists = append(results.Artists,
 			spec.NewArtistByTags(a))
 	}
-	//
-	// search "albums"
+	// ** begin search "albums"
 	var albums []*db.Album
 	c.DB.
 		Preload("TagArtist").
@@ -193,8 +191,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		results.Albums = append(results.Albums,
 			spec.NewAlbumByTags(a, a.TagArtist))
 	}
-	//
-	// search tracks
+	// ** begin search tracks
 	var tracks []*db.Track
 	c.DB.
 		Preload("Album").
@@ -287,7 +284,6 @@ func (c *Controller) ServeGetGenres(r *http.Request) *spec.Response {
 			(SELECT count(id) FROM tracks WHERE tag_genre_id=genres.id) track_count`).
 		Group("genres.id").
 		Find(&genres)
-
 	sub := spec.NewResponse()
 	sub.Genres = &spec.Genres{
 		List: make([]*spec.Genre, len(genres)),
@@ -304,10 +300,8 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 	if genre == "" {
 		return spec.NewError(10, "please provide an `genre` parameter")
 	}
-
-	// TODO: add musicFolderId parameter:
-	// (Since 1.12.0) Only return albums in the music folder with the given ID.
-
+	// TODO: add musicFolderId parameter
+	// (since 1.12.0) only return albums in the music folder with the given id
 	var tracks []*db.Track
 	c.DB.
 		Joins("JOIN albums ON tracks.album_id=albums.id").
@@ -316,7 +310,6 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 		Offset(params.GetIntOr("offset", 0)).
 		Limit(params.GetIntOr("count", 10)).
 		Find(&tracks)
-
 	sub := spec.NewResponse()
 	sub.TracksByGenre = &spec.TracksByGenre{
 		List: make([]*spec.TrackChild, len(tracks)),

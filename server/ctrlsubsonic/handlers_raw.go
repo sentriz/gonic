@@ -20,7 +20,6 @@ import (
 //   a) write to response writer
 //   b) return a non-nil spec.Response
 //  _but not both_
-
 func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	id, err := params.GetInt("id")

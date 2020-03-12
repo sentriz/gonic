@@ -63,7 +63,6 @@ func NewResponse() *Response {
 // 50  user is not authorized for the given operation
 // 60  the trial period for the subsonic server is over
 // 70  the requested data was not found
-
 type Error struct {
 	Code    int    `xml:"code,attr"    json:"code"`
 	Message string `xml:"message,attr" json:"message"`

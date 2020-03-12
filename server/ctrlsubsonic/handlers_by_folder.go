@@ -18,7 +18,6 @@ import (
 // we can't access artists. so instead we'll consider the artist of
 // an track to be the it's respective folder that comes directly
 // under the root directory
-
 func (c *Controller) ServeGetIndexes(r *http.Request) *spec.Response {
 	var folders []*db.Album
 	c.DB.
@@ -64,8 +63,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	childrenObj := []*spec.TrackChild{}
 	folder := &db.Album{}
 	c.DB.First(folder, id)
-	//
-	// start looking for child childFolders in the current dir
+	// ** begin start looking for child childFolders in the current dir
 	var childFolders []*db.Album
 	c.DB.
 		Where("parent_id=?", id).
@@ -73,8 +71,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	for _, c := range childFolders {
 		childrenObj = append(childrenObj, spec.NewTCAlbumByFolder(c))
 	}
-	//
-	// start looking for child childTracks in the current dir
+	// ** begin start looking for child childTracks in the current dir
 	var childTracks []*db.Track
 	c.DB.
 		Where("album_id=?", id).
@@ -90,8 +87,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 		}
 		childrenObj = append(childrenObj, toAppend)
 	}
-	//
-	// respond section
+	// ** begin respond section
 	sub := spec.NewResponse()
 	sub.Directory = spec.NewDirectoryByFolder(folder, childrenObj)
 	return sub
@@ -165,8 +161,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	}
 	query = fmt.Sprintf("%%%s%%", strings.TrimSuffix(query, "*"))
 	results := &spec.SearchResultTwo{}
-	//
-	// search "artists"
+	// ** begin search "artists"
 	var artists []*db.Album
 	c.DB.
 		Where(`
@@ -181,8 +176,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 		results.Artists = append(results.Artists,
 			spec.NewDirectoryByFolder(a, nil))
 	}
-	//
-	// search "albums"
+	// ** begin search "albums"
 	var albums []*db.Album
 	c.DB.
 		Where(`
@@ -196,8 +190,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	for _, a := range albums {
 		results.Albums = append(results.Albums, spec.NewTCAlbumByFolder(a))
 	}
-	//
-	// search tracks
+	// ** begin search tracks
 	var tracks []*db.Track
 	c.DB.
 		Preload("Album").

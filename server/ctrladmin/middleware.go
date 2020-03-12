@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/sessions"
+
 	"senan.xyz/g/gonic/db"
 )
 

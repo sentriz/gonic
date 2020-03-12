@@ -7,7 +7,6 @@ import (
 )
 
 // $ date '+%Y%m%d%H%M'
-
 // not really a migration
 var migrationInitSchema = gormigrate.Migration{
 	ID: "202002192100",

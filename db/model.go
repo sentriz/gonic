@@ -77,7 +77,7 @@ type Track struct {
 	TagTrackNumber int    `sql:"default: null"`
 	TagDiscNumber  int    `sql:"default: null"`
 	TagGenre       *Genre
-	TagGenreID     int `sql:"default: null; type:int REFERENCES genres(id) ON DELETE CASCADE"`
+	TagGenreID     int    `sql:"default: null; type:int REFERENCES genres(id) ON DELETE CASCADE"`
 	TagBrainzID    string `sql:"default: null"`
 }
 

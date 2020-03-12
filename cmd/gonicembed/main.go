@@ -18,16 +18,12 @@ import (
 // once i had this written with ~100% text/template but it was very
 // slow. now this thing is not nice on the eyes or easy to change
 // but it's pretty fast. which i needed it to for live reloading stuff
-
 const (
 	byteCols = 24
-
 	// begin file template
 	fileHeader = `// file generated with embed tool
 // do not edit
-
 // %s
-
 package %s
 import "time"
 type EmbeddedAsset struct {
@@ -37,7 +33,6 @@ type EmbeddedAsset struct {
 var %s = map[string]*EmbeddedAsset{`
 	fileFooter = `
 }`
-
 	// begin asset template
 	assetHeader = `
 %q: &EmbeddedAsset{

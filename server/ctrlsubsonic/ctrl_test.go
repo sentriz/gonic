@@ -44,10 +44,8 @@ func runQueryCases(t *testing.T, h subsonicHandler, cases []*queryCase) {
 		qc := qc // pin
 		t.Run(qc.expectPath, func(t *testing.T) {
 			t.Parallel()
-			//
 			// ensure the handlers give us json
 			qc.params.Add("f", "json")
-			//
 			// request from the handler in question
 			req, _ := http.NewRequest("", "?"+qc.params.Encode(), nil)
 			params := params.New(req)
@@ -59,13 +57,11 @@ func runQueryCases(t *testing.T, h subsonicHandler, cases []*queryCase) {
 			if status := rr.Code; status != http.StatusOK {
 				t.Fatalf("didn't give a 200\n%s", body)
 			}
-			//
 			// convert test name to query case path
 			snake := testCamelExpr.ReplaceAllString(t.Name(), "${1}_${2}")
 			lower := strings.ToLower(snake)
 			relPath := strings.Replace(lower, "/", "_", -1)
 			absExpPath := path.Join(testDataDir, relPath)
-			//
 			// read case to differ with handler result
 			expected, err := jd.ReadJsonFile(absExpPath)
 			if err != nil {
@@ -80,7 +76,6 @@ func runQueryCases(t *testing.T, h subsonicHandler, cases []*queryCase) {
 				diffOpts = append(diffOpts, jd.SET)
 			}
 			diff := expected.Diff(actual, diffOpts...)
-			//
 			// pass or fail
 			if len(diff) == 0 {
 				return

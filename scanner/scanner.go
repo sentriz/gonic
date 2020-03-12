@@ -81,8 +81,7 @@ func (s *Scanner) Start() error {
 		s.seenTracksNew = 0
 		s.seenTracksErr = 0
 	}()
-	//
-	// being walking
+	// ** begin being walking
 	start := time.Now()
 	err := godirwalk.Walk(s.musicPath, &godirwalk.Options{
 		Callback:             s.callbackItem,
@@ -99,8 +98,7 @@ func (s *Scanner) Start() error {
 		len(s.seenTracks),
 		s.seenTracksErr,
 	)
-	//
-	// begin cleaning
+	// ** begin cleaning
 	start = time.Now()
 	var deleted uint
 	// delete tracks not on filesystem
@@ -301,8 +299,7 @@ func (s *Scanner) handleTrack(it *item) error {
 		s.trTx = s.db.Begin()
 		s.trTxOpen = true
 	}
-	//
-	// set track basics
+	// ** begin set track basics
 	track := &db.Track{}
 	err := s.trTx.
 		Select("id, updated_at").
@@ -339,8 +336,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	track.TagBrainzID = trTags.BrainzID()
 	track.Length = trTags.Length()   // these two should be calculated
 	track.Bitrate = trTags.Bitrate() // ...from the file instead of tags
-	//
-	// set album artist basics
+	// ** begin set album artist basics
 	artistName := func() string {
 		if r := trTags.AlbumArtist(); r != "" {
 			return r
@@ -362,8 +358,7 @@ func (s *Scanner) handleTrack(it *item) error {
 		s.trTx.Save(artist)
 	}
 	track.ArtistID = artist.ID
-	//
-	// set genre
+	// ** begin set genre
 	genreName := func() string {
 		if r := trTags.Genre(); r != "" {
 			return r
@@ -381,13 +376,11 @@ func (s *Scanner) handleTrack(it *item) error {
 		s.trTx.Save(genre)
 	}
 	track.TagGenreID = genre.ID
-	//
-	// save the track
+	// ** begin save the track
 	s.trTx.Save(track)
 	s.seenTracks[track.ID] = struct{}{}
 	s.seenTracksNew++
-	//
-	// set album if this is the first track in the folder
+	// ** begin set album if this is the first track in the folder
 	folder := s.curFolders.Peek()
 	if !folder.ReceivedPaths || folder.ReceivedTags {
 		// the folder hasn't been modified or already has it's tags
