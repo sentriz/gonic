@@ -83,6 +83,17 @@ func (t *Track) MIME() string {
 	return mime.Types[ext]
 }
 
+func (t *Track) RelPath() string {
+	if t.Album == nil {
+		return ""
+	}
+	return path.Join(
+		t.Album.LeftPath,
+		t.Album.RightPath,
+		t.Filename,
+	)
+}
+
 type User struct {
 	ID            int `gorm:"primary_key"`
 	CreatedAt     time.Time
