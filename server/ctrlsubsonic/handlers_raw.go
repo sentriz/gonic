@@ -118,14 +118,16 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		play.Count++           // for getAlbumList?type=frequent
 		c.DB.Save(&play)
 	}()
-	client := params.GetOr("c", "*")
+	client := params.Get("c")
 	servOpts := serveTrackOptions{
 		track:     track,
 		musicPath: c.MusicPath,
 	}
 	pref := &db.TranscodePreference{}
 	err = c.DB.
-		Where("user_id=? AND client=? COLLATE NOCASE", user.ID, client).
+		Where("user_id=?", user.ID).
+		Where("client COLLATE NOCASE IN (?)", []string{"*", client}).
+		Order("client DESC"). // ensure "*" is last if it's there
 		First(pref).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
