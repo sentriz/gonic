@@ -47,8 +47,13 @@ textarea {
 }
 
 input[type="submit"],
-input[type="button"] {
+input[type="submit"],
+input[type="file"] {
   width: 8rem;
+}
+
+input[type="submit"],
+input[type="button"] {
   background-color: white;
   cursor: pointer;
 }
