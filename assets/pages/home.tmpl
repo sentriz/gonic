@@ -22,10 +22,6 @@
         <i class="mdi mdi-lastfm"></i> last.fm
     </div>
     <div class="text-right">
-        {{ if .User.IsAdmin }}
-            <p class="light">you can get an api key <a href="https://www.last.fm/api/account/create" target="_blank">here</a></p>
-            <a href="{{ path "/admin/update_lastfm_api_key" }}">update api key</a><br/>
-        {{ end }}
         {{ if .CurrentLastFMAPIKey }}
             <span class="light">current status</span>
             {{ if .User.LastFMSession }}
@@ -34,12 +30,19 @@
                 <a href="{{ path "/admin/unlink_lastfm_do" }}">unlink</a><br/>
             {{ else }}
                 <span class="angry">unlinked</span>
-		{{ $cbPath := path "/admin/link_lastfm_do" }}
-		{{ $cbURL := printf "%s%s" .RequestRoot $cbPath }}
+                {{ $cbPath := path "/admin/link_lastfm_do" }}
+                {{ $cbURL := printf "%s%s" .RequestRoot $cbPath }}
                 <a href="https://www.last.fm/api/auth/?api_key={{ .CurrentLastFMAPIKey }}&cb={{ $cbURL }}">link</a><br/>
             {{ end }}
-        {{ else if not .User.IsAdmin }}
-            <span class="light">api key not set. please ask your admin to set it</span>
+        {{ else }}
+            <p class="light">api key not set</p>
+            {{ if not .User.IsAdmin }}
+                <p class="light">please ask your admin to set it</p>
+	    {{ end }}
+        {{ end }}
+        {{ if .User.IsAdmin }}
+	    <br/>
+            <p><a href="{{ path "/admin/update_lastfm_api_key" }}">update api key&#8230;</a></p>
         {{ end }}
     </div>
 </div>
@@ -54,11 +57,17 @@
             <i>{{ $user.Name }}</i>
             <span class="light no-small">{{ $user.CreatedAt | date }}</span>
             <span class="light">&#124;</span>
-            <a href="{{ printf "/admin/change_password?user=%s" $user.Name | path }}">change password</a>
+            <a href="{{ printf "/admin/change_password?user=%s" $user.Name | path }}">change password&#8230;</a>
             <span class="light">&#124;</span>
-            <a href="{{ printf "/admin/delete_user?user=%s" $user.Name | path }}">delete</a><br/>
+            {{ if $user.IsAdmin }}
+                <span class="light">delete&#8230;</span>
+            {{ else }}
+                <a href="{{ printf "/admin/delete_user?user=%s" $user.Name | path }}">delete&#8230;</a>
+            {{ end }}
+            <br/>
         {{ end }}
-        <a href="{{ path "/admin/create_user" }}" class="button">create new</a>
+        <br/>
+        <a href="{{ path "/admin/create_user" }}" class="button">create new&#8230;</a>
         </div>
     {{ else }}
         {{/* user panel to manage themselves */}}
@@ -66,7 +75,7 @@
             <i class="mdi mdi-account"></i> your account
         </div>
         <div class="text-right">
-            <a href="{{ path "/admin/change_own_password" }}" class="button">change password</a>
+            <a href="{{ path "/admin/change_own_password" }}" class="button">change password&#8230;</a>
         </div>
     {{ end }}
 </div>
@@ -87,12 +96,45 @@
         {{ end }}
         </table>
         {{- if not .IsScanning -}}
-            <a href="{{ path "/admin/start_scan_do" }}">start scan</a>
+            <br/>
             {{- if not .LastScanTime.IsZero -}}
-                <br>
-                <span class="light" title="{{ .LastScanTime }}">scanned {{ .LastScanTime | dateHuman }}</span>
+                <p class="light" title="{{ .LastScanTime }}">scanned {{ .LastScanTime | dateHuman }}</p>
             {{ end }}
+            <form action="{{ path "/admin/start_scan_do" }}" method="post">
+                <td><input type="submit" value="start scan"></td>
+            </form>
         {{ end }}
+    </div>
+</div>
+<div class="padded box">
+    <div class="box-title">
+        <i class="mdi mdi-file-music"></i> transcoding device profiles
+    </div>
+    <div class="block-right">
+        <p class="light text-right">you can find your device's client name in the gonic logs</p>
+        <p class="light text-right">some common client names: "<span class="emp">DSub</span>", "<span class="emp">Jamstash</span>", "<span class="emp">Soundwaves</span>"</p>
+        <p class="light text-right">or use "*" as fallback rule for any client</p>
+        <br/>
+        <table id="transcode-preferences">
+        {{ range $pref := .TranscodePreferences }}
+            <tr>
+                <form id="transcode-pref-{{ $pref.Client }}" action="{{ printf "/admin/delete_transcode_pref_do?client=%s" $pref.Client | path }}" method="post"></form>
+                <td>{{ $pref.Client }}</td>
+                <td>{{ $pref.Profile }}</td>
+                <td><input form="transcode-pref-{{ $pref.Client }}" type="submit" value="delete"></td>
+            </tr>
+        {{ end }}
+        <tr>
+            <form id="transcode-pref-add" action="{{ path "/admin/create_transcode_pref_do" }}" method="post"></form>
+            <td><input form="transcode-pref-add" type="text" name="client" placeholder="client name"></td>
+            <td><select form="transcode-pref-add" name="profile">
+                {{ range $profile := .TranscodeProfiles }}
+                    <option value="{{ $profile }}">{{ $profile }}</option>
+                {{ end }}
+            </select></td>
+            <td><input form="transcode-pref-add" type="submit" value="save"></td>
+        </tr>
+        </table>
     </div>
 </div>
 <div class="padded box">
@@ -112,16 +154,17 @@
             </tr>
         {{ end }}
         </table>
+        <br/>
         <form
-          id="playlist-upload-form"
-          enctype="multipart/form-data"
-          action="{{ path "/admin/upload_playlist_do" }}"
-          method="post"
+            id="playlist-upload-form"
+            enctype="multipart/form-data"
+            action="{{ path "/admin/upload_playlist_do" }}"
+            method="post"
         >
-            <label for="playlist-upload-input">
-                <a>upload m3u8 files</a>
-            </label>
-            <input id="playlist-upload-input" name="playlist-files" type="file" multiple />
+            <div style="position: relative;">
+                <input id="playlist-upload-input" style="position: absolute; opacity: 0;" name="playlist-files" type="file" multiple />
+                <input type="button" value="upload m3u8">
+            </div>
         </form>
         <script>
             document.getElementById("playlist-upload-input").onchange = (e) => {

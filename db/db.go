@@ -40,6 +40,7 @@ func New(path string) (*DB, error) {
 		&migrationInitSchema,
 		&migrationCreateInitUser,
 		&migrationMergePlaylist,
+		&migrationCreateTranscode,
 	})
 	if err = migr.Migrate(); err != nil {
 		return nil, errors.Wrap(err, "migrating to latest version")

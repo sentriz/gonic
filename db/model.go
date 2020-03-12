@@ -83,6 +83,17 @@ func (t *Track) MIME() string {
 	return mime.Types[ext]
 }
 
+func (t *Track) RelPath() string {
+	if t.Album == nil {
+		return ""
+	}
+	return path.Join(
+		t.Album.LeftPath,
+		t.Album.RightPath,
+		t.Filename,
+	)
+}
+
 type User struct {
 	ID            int `gorm:"primary_key"`
 	CreatedAt     time.Time
@@ -175,4 +186,11 @@ func (p *PlayQueue) GetItems() []int {
 
 func (p *PlayQueue) SetItems(items []int) {
 	p.Items = joinInt(items, ",")
+}
+
+type TranscodePreference struct {
+	User    *User
+	UserID  int    `sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
+	Client  string `gorm:"not null; unique_index:idx_client_profile" sql:"default: null"`
+	Profile string `gorm:"not null; unique_index:idx_client_profile" sql:"default: null"`
 }

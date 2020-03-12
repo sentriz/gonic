@@ -20,7 +20,7 @@ func main() {
 	set := flag.NewFlagSet(version.NAME, flag.ExitOnError)
 	listenAddr := set.String("listen-addr", "0.0.0.0:4747", "listen address (optional)")
 	musicPath := set.String("music-path", "", "path to music")
-	cachePath := set.String("cache-path", "", "path to cache")
+	cachePath := set.String("cache-path", "/tmp/gonic_cache", "path to cache")
 	dbPath := set.String("db-path", "gonic.db", "path to database (optional)")
 	scanInterval := set.Int("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
 	proxyPrefix := set.String("proxy-prefix", "", "url path prefix to use if behind proxy. eg '/gonic' (optional)")
@@ -41,7 +41,9 @@ func main() {
 		log.Fatal("please provide a valid music directory")
 	}
 	if _, err := os.Stat(*cachePath); os.IsNotExist(err) {
-		log.Fatal("please provide a valid cache directory")
+		if err := os.MkdirAll(*cachePath, os.ModePerm); err != nil {
+			log.Fatalf("couldn't create cache path: %v\n", err)
+		}
 	}
 	db, err := db.New(*dbPath)
 	if err != nil {

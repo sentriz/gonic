@@ -12,7 +12,7 @@
  - multiple users  
  - a web interface for configuration (set up last.fm, manage users, start scans, etc.)  
  - newer salt and token auth  
- - tested on [dsub](https://f-droid.org/en/packages/github.daneren2005.dsub/), [jamstash](http://jamstash.com/), and [sublime music](https://gitlab.com/sumner/sublime-music/)  
+ - tested on [dsub](https://f-droid.org/en/packages/github.daneren2005.dsub/), [jamstash](http://jamstash.com/), [sublime music](https://gitlab.com/sumner/sublime-music/), and [soundwaves](https://apps.apple.com/us/app/soundwaves/id736139596)  
  
  
 ## installation
@@ -57,6 +57,7 @@ then start with `docker-compose up -d`
 |env var|command line arg|description|
 |---|---|---|
 |`GONIC_MUSIC_PATH`|`-music-path`|path to your music collection|
+|`GONIC_CACHE_PATH`|`-cache-path`|**optional** path to store audio transcodes (*default* `/tmp/gonic_cache`)|
 |`GONIC_DB_PATH`|`-db-path`|**optional** path to database file|
 |`GONIC_LISTEN_ADDR`|`-listen-addr`|**optional** host and port to listen on (eg. `0.0.0.0:4747`, `127.0.0.1:4747`) (*default* `0.0.0.0:4747`)|
 |`GONIC_PROXY_PREFIX`|`-proxy-prefix`|**optional** url path prefix to use if behind reverse proxy. eg `/gonic` (see example configs below)|

@@ -9,6 +9,7 @@ import (
 
 	"senan.xyz/g/gonic/db"
 	"senan.xyz/g/gonic/scanner"
+	"senan.xyz/g/gonic/server/encode"
 	"senan.xyz/g/gonic/server/lastfm"
 )
 
@@ -53,12 +54,20 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 		i, _ := strconv.ParseInt(tStr, 10, 64)
 		data.LastScanTime = time.Unix(i, 0)
 	}
-	// ** begin playlists box
+	//
 	user := r.Context().Value(CtxUser).(*db.User)
+	// ** begin playlists box
 	c.DB.
 		Where("user_id=?", user.ID).
 		Limit(20).
 		Find(&data.Playlists)
+	// ** begin transcoding box
+	c.DB.
+		Where("user_id=?", user.ID).
+		Find(&data.TranscodePreferences)
+	for profile := range encode.Profiles {
+		data.TranscodeProfiles = append(data.TranscodeProfiles, profile)
+	}
 	//
 	return &Response{
 		template: "home.tmpl",
@@ -73,8 +82,7 @@ func (c *Controller) ServeChangeOwnPassword(r *http.Request) *Response {
 func (c *Controller) ServeChangeOwnPasswordDo(r *http.Request) *Response {
 	passwordOne := r.FormValue("password_one")
 	passwordTwo := r.FormValue("password_two")
-	err := validatePasswords(passwordOne, passwordTwo)
-	if err != nil {
+	if err := validatePasswords(passwordOne, passwordTwo); err != nil {
 		return &Response{
 			redirect: r.Referer(),
 			flashW:   []string{err.Error()},
@@ -145,8 +153,7 @@ func (c *Controller) ServeChangePasswordDo(r *http.Request) *Response {
 	username := r.URL.Query().Get("user")
 	passwordOne := r.FormValue("password_one")
 	passwordTwo := r.FormValue("password_two")
-	err := validatePasswords(passwordOne, passwordTwo)
-	if err != nil {
+	if err := validatePasswords(passwordOne, passwordTwo); err != nil {
 		return &Response{
 			redirect: r.Referer(),
 			flashW:   []string{err.Error()},
@@ -184,6 +191,12 @@ func (c *Controller) ServeDeleteUser(r *http.Request) *Response {
 func (c *Controller) ServeDeleteUserDo(r *http.Request) *Response {
 	username := r.URL.Query().Get("user")
 	user := c.DB.GetUserFromName(username)
+	if user.IsAdmin {
+		return &Response{
+			redirect: "/admin/home",
+			flashW:   []string{"can't delete the admin user"},
+		}
+	}
 	c.DB.Delete(user)
 	return &Response{redirect: "/admin/home"}
 }
@@ -214,8 +227,7 @@ func (c *Controller) ServeCreateUserDo(r *http.Request) *Response {
 		Name:     username,
 		Password: passwordOne,
 	}
-	err = c.DB.Create(&user).Error
-	if err != nil {
+	if err := c.DB.Create(&user).Error; err != nil {
 		return &Response{
 			redirect: r.Referer(),
 			flashW:   []string{fmt.Sprintf("could not create user `%s`: %v", username, err)},
@@ -289,5 +301,46 @@ func (c *Controller) ServeUploadPlaylistDo(r *http.Request) *Response {
 		redirect: "/admin/home",
 		flashN:   []string{fmt.Sprintf("%d playlist(s) created", playlistCount)},
 		flashW:   errors,
+	}
+}
+
+func (c *Controller) ServeCreateTranscodePrefDo(r *http.Request) *Response {
+	client := r.FormValue("client")
+	profile := r.FormValue("profile")
+	if client == "" {
+		return &Response{
+			redirect: "/admin/home",
+			flashW:   []string{"please provide a client name"},
+		}
+	}
+	user := r.Context().Value(CtxUser).(*db.User)
+	pref := db.TranscodePreference{
+		UserID:  user.ID,
+		Client:  client,
+		Profile: profile,
+	}
+	if err := c.DB.Create(&pref).Error; err != nil {
+		return &Response{
+			redirect: "/admin/home",
+			flashW:   []string{fmt.Sprintf("could not create preference: %v", err)},
+		}
+	}
+	return &Response{redirect: "/admin/home"}
+}
+
+func (c *Controller) ServeDeleteTranscodePrefDo(r *http.Request) *Response {
+	user := r.Context().Value(CtxUser).(*db.User)
+	client := r.URL.Query().Get("client")
+	if client == "" {
+		return &Response{
+			err:  "please provide a client",
+			code: 400,
+		}
+	}
+	c.DB.
+		Where("user_id=? AND client=?", user.ID, client).
+		Delete(db.TranscodePreference{})
+	return &Response{
+		redirect: "/admin/home",
 	}
 }

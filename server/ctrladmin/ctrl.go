@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"time"
@@ -83,6 +84,13 @@ func New(base *ctrlbase.Controller) *Controller {
 			"date": func(in time.Time) string {
 				return strings.ToLower(in.Format("Jan 02, 2006"))
 			},
+			"noCache": func(in string) string {
+				parsed, _ := url.Parse(in)
+				params := parsed.Query()
+				params.Set("v", version.VERSION)
+				parsed.RawQuery = params.Encode()
+				return parsed.String()
+			},
 			"dateHuman": humanize.Time,
 			"path":      base.Path,
 		})
@@ -102,15 +110,17 @@ type templateData struct {
 	User    *db.User
 	Version string
 	// home
-	AlbumCount    int
-	ArtistCount   int
-	TrackCount    int
-	RequestRoot   string
-	RecentFolders []*db.Album
-	AllUsers      []*db.User
-	LastScanTime  time.Time
-	IsScanning    bool
-	Playlists     []*db.Playlist
+	AlbumCount           int
+	ArtistCount          int
+	TrackCount           int
+	RequestRoot          string
+	RecentFolders        []*db.Album
+	AllUsers             []*db.User
+	LastScanTime         time.Time
+	IsScanning           bool
+	Playlists            []*db.Playlist
+	TranscodePreferences []*db.TranscodePreference
+	TranscodeProfiles    []string
 	//
 	CurrentLastFMAPIKey    string
 	CurrentLastFMAPISecret string
@@ -132,6 +142,7 @@ type Response struct {
 	err  string
 }
 
+//nolint:gocognit
 func (c *Controller) H(h adminHandler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := h(r)

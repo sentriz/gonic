@@ -132,9 +132,10 @@ func Encode(out io.Writer, trackPath, cachePath string, profile *Profile, bitrat
 }
 
 // Generate cache key (file name). For, you know, encoded tracks cache.
-func CacheKey(sourcePath string, profile string, bitrate string) string {
+func CacheKey(sourcePath string, profile, bitrate string) string {
 	format := Profiles[profile].Format
-	return fmt.Sprintf("%x-%s-%s.%s", xxhash.Sum64String(sourcePath), profile, bitrate, format)
+	hash := xxhash.Sum64String(sourcePath)
+	return fmt.Sprintf("%x-%s-%s.%s", hash, profile, bitrate, format)
 }
 
 // Check if client forces bitrate lower than set in profile:
