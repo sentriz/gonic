@@ -112,8 +112,8 @@
     </div>
     <div class="block-right">
         <p class="light text-right">you can find your device's client name in the gonic logs</p>
-        <p class="light text-right">(look for the "&c=" url query parameter)</p>
         <p class="light text-right">some common client names: "<span class="emp">DSub</span>", "<span class="emp">Jamstash</span>", "<span class="emp">Soundwaves</span>"</p>
+        <p class="light text-right">or use "*" as fallback rule for any client</p>
         <br/>
         <table id="transcode-preferences">
         {{ range $pref := .TranscodePreferences }}
