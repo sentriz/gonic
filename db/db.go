@@ -41,6 +41,7 @@ func New(path string) (*DB, error) {
 		&migrationCreateInitUser,
 		&migrationMergePlaylist,
 		&migrationCreateTranscode,
+		&migrationAddGenre,
 	})
 	if err = migr.Migrate(); err != nil {
 		return nil, errors.Wrap(err, "migrating to latest version")

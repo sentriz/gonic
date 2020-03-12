@@ -49,6 +49,15 @@ func (a *Artist) IndexName() string {
 	return a.Name
 }
 
+type Genre struct {
+	ID         int      `gorm:"primary_ket"`
+	Name       string   `gorm:"not null; unique_index"`
+	Albums     []*Album `gorm:"foreignkey:TagGenreID"`
+	AlbumCount int      `sql:"-"`
+	Tracks     []*Track `gorm:"foreignkey:TagGenreID"`
+	TrackCount int      `sql:"-"`
+}
+
 type Track struct {
 	ID             int `gorm:"primary_key"`
 	CreatedAt      time.Time
@@ -67,6 +76,8 @@ type Track struct {
 	TagTrackArtist string `sql:"default: null"`
 	TagTrackNumber int    `sql:"default: null"`
 	TagDiscNumber  int    `sql:"default: null"`
+	TagGenre       *Genre
+	TagGenreID     int `sql:"default: null; type:int REFERENCES genres(id) ON DELETE CASCADE"`
 	TagBrainzID    string `sql:"default: null"`
 }
 
@@ -129,7 +140,9 @@ type Album struct {
 	ParentID      int    `sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Cover         string `sql:"default: null"`
 	TagArtist     *Artist
-	TagArtistID   int    `sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
+	TagArtistID   int `sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
+	TagGenre      *Genre
+	TagGenreID    int    `sql:"default: null; type:int REFERENCES genres(id) ON DELETE CASCADE"`
 	TagTitle      string `sql:"default: null"`
 	TagTitleUDec  string `sql:"default: null"`
 	TagBrainzID   string `sql:"default: null"`

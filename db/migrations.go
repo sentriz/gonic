@@ -79,3 +79,15 @@ var migrationCreateTranscode = gormigrate.Migration{
 			Error
 	},
 }
+
+var migrationAddGenre = gormigrate.Migration{
+	ID: "202003121330",
+	Migrate: func(tx *gorm.DB) error {
+		return tx.AutoMigrate(
+			Genre{},
+			Album{},
+			Track{},
+		).
+			Error
+	},
+}

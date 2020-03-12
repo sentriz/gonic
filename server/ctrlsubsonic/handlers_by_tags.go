@@ -115,6 +115,9 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 			params.GetIntOr("fromYear", 1800),
 			params.GetIntOr("toYear", 2200))
 		q = q.Order("tag_year")
+	case "byGenre":
+		q = q.Joins("JOIN genres ON albums.tag_genre_id=genres.id AND genres.name=?",
+			params.GetOr("genre", "Unknown Genre"))
 	case "frequent":
 		user := r.Context().Value(CtxUser).(*db.User)
 		q = q.Joins("JOIN plays ON albums.id=plays.album_id AND plays.user_id=?",
@@ -272,6 +275,54 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		similar.AlbumCount = artist.AlbumCount
 		sub.ArtistInfoTwo.SimilarArtist = append(
 			sub.ArtistInfoTwo.SimilarArtist, similar)
+	}
+	return sub
+}
+
+func (c *Controller) ServeGetGenres(r *http.Request) *spec.Response {
+	var genres []*db.Genre
+	c.DB.
+		Select(`*,
+			(SELECT count(id) FROM albums WHERE tag_genre_id=genres.id) album_count,
+			(SELECT count(id) FROM tracks WHERE tag_genre_id=genres.id) track_count`).
+		Group("genres.id").
+		Find(&genres)
+
+	sub := spec.NewResponse()
+	sub.Genres = &spec.Genres{
+		List: make([]*spec.Genre, len(genres)),
+	}
+	for i, genre := range genres {
+		sub.Genres.List[i] = spec.NewGenre(genre)
+	}
+	return sub
+}
+
+func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	genre := params.Get("genre")
+	if genre == "" {
+		return spec.NewError(10, "please provide an `genre` parameter")
+	}
+
+	// TODO: add musicFolderId parameter:
+	// (Since 1.12.0) Only return albums in the music folder with the given ID.
+
+	var tracks []*db.Track
+	c.DB.
+		Joins("JOIN albums ON tracks.album_id=albums.id").
+		Joins("JOIN genres ON tracks.tag_genre_id=genres.id AND genres.name=?", genre).
+		Preload("Album").
+		Offset(params.GetIntOr("offset", 0)).
+		Limit(params.GetIntOr("count", 10)).
+		Find(&tracks)
+
+	sub := spec.NewResponse()
+	sub.TracksByGenre = &spec.TracksByGenre{
+		List: make([]*spec.TrackChild, len(tracks)),
+	}
+	for i, track := range tracks {
+		sub.TracksByGenre.List[i] = spec.NewTrackByTags(track, track.Album)
 	}
 	return sub
 }

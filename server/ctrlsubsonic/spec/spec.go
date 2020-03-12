@@ -28,6 +28,7 @@ type Response struct {
 	Artist            *Artist            `xml:"artist"            json:"artist,omitempty"`
 	Directory         *Directory         `xml:"directory"         json:"directory,omitempty"`
 	RandomTracks      *RandomTracks      `xml:"randomSongs"       json:"randomSongs,omitempty"`
+	TracksByGenre     *TracksByGenre     `xml:"songsByGenre"      json:"songsByGenre,omitempty"`
 	MusicFolders      *MusicFolders      `xml:"musicFolders"      json:"musicFolders,omitempty"`
 	ScanStatus        *ScanStatus        `xml:"scanStatus"        json:"scanStatus,omitempty"`
 	Licence           *Licence           `xml:"license"           json:"license,omitempty"`
@@ -106,6 +107,10 @@ type Album struct {
 }
 
 type RandomTracks struct {
+	List []*TrackChild `xml:"song" json:"song"`
+}
+
+type TracksByGenre struct {
 	List []*TrackChild `xml:"song" json:"song"`
 }
 
@@ -250,8 +255,9 @@ type Genres struct {
 }
 
 type Genre struct {
-	SongCount  string `xml:"songCount,attr"`
-	AlbumCount string `xml:"albumCount,attr"`
+	Name       string `xml:",chardata",json:"value"`
+	SongCount  int    `xml:"songCount,attr,omitempty" json:"songCount,omitempty"`
+	AlbumCount int    `xml:"albumCount,attr,omitempty" json:"albumCount,omitempty"`
 }
 
 type PlayQueue struct {

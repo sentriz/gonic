@@ -362,6 +362,27 @@ func (s *Scanner) handleTrack(it *item) error {
 		s.trTx.Save(artist)
 	}
 	track.ArtistID = artist.ID
+	//
+	// set genre
+	genreName := func() string {
+		if r := trTags.Genre(); r != "" {
+			return r
+		}
+		return "Unknown Genre"
+	}()
+	genre := &db.Genre{}
+	err = s.trTx.
+		Select("id").
+		Where("name=?", genreName).
+		First(genre).
+		Error
+	if gorm.IsRecordNotFoundError(err) {
+		genre.Name = genreName
+		s.trTx.Save(genre)
+	}
+	track.TagGenreID = genre.ID
+	//
+	// save the track
 	s.trTx.Save(track)
 	s.seenTracks[track.ID] = struct{}{}
 	s.seenTracksNew++
@@ -377,6 +398,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	folder.TagBrainzID = trTags.AlbumBrainzID()
 	folder.TagYear = trTags.Year()
 	folder.TagArtistID = artist.ID
+	folder.TagGenreID = genre.ID
 	folder.ReceivedTags = true
 	return nil
 }

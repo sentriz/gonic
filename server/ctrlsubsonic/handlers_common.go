@@ -286,18 +286,28 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	// TODO: add genre restraint here
 	var tracks []*db.Track
-	c.DB.DB.
-		Limit(params.GetIntOr("size", 10)).
-		Where(
-			"albums.tag_year BETWEEN ? AND ?",
-			params.GetIntOr("fromYear", 1800),
-			params.GetIntOr("toYear", 2200)).
+
+	q := c.DB.DB.
 		Joins("JOIN albums ON tracks.album_id=albums.id").
+		Limit(params.GetIntOr("size", 10)).
 		Preload("Album").
-		Order(gorm.Expr("random()")).
-		Find(&tracks)
+		Order(gorm.Expr("random()"))
+
+	if year, err := params.GetInt("fromYear"); err == nil {
+		q = q.Where("albums.tag_year >= ?", year)
+	}
+	if year, err := params.GetInt("toYear"); err == nil {
+		q = q.Where("albums.tag_year <= ?", year)
+	}
+	if genre := params.Get("genre"); genre != "" {
+		q = q.Joins(
+			"JOIN genres ON tracks.tag_genre_id=genres.id AND genres.name=?",
+			genre,
+		)
+	}
+	q.Find(&tracks)
+
 	sub := spec.NewResponse()
 	sub.RandomTracks = &spec.RandomTracks{}
 	sub.RandomTracks.List = make([]*spec.TrackChild, len(tracks))

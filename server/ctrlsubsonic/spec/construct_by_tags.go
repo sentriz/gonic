@@ -72,3 +72,11 @@ func NewArtistByTags(a *db.Artist) *Artist {
 		AlbumCount: a.AlbumCount,
 	}
 }
+
+func NewGenre(g *db.Genre) *Genre {
+	return &Genre{
+		Name: g.Name,
+		AlbumCount: g.AlbumCount,
+		SongCount: g.TrackCount,
+	}
+}
