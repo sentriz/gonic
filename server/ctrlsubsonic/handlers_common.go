@@ -288,7 +288,8 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	var tracks []*db.Track
 
-	q := c.DB.DB.Joins("JOIN albums ON tracks.album_id=albums.id").
+	q := c.DB.DB.
+		Joins("JOIN albums ON tracks.album_id=albums.id").
 		Limit(params.GetIntOr("size", 10)).
 		Preload("Album").
 		Order(gorm.Expr("random()"))

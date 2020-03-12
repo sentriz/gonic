@@ -116,7 +116,8 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 			params.GetIntOr("toYear", 2200))
 		q = q.Order("tag_year")
 	case "byGenre":
-		q = q.Joins("JOIN genres ON albums.tag_genre_id=genres.id AND genres.name=?", params.GetOr("genre", "Unknown Genre"))
+		q = q.Joins("JOIN genres ON albums.tag_genre_id=genres.id AND genres.name=?",
+			params.GetOr("genre", "Unknown Genre"))
 	case "frequent":
 		user := r.Context().Value(CtxUser).(*db.User)
 		q = q.Joins("JOIN plays ON albums.id=plays.album_id AND plays.user_id=?",
@@ -282,8 +283,8 @@ func (c *Controller) ServeGetGenres(r *http.Request) *spec.Response {
 	var genres []*db.Genre
 	c.DB.
 		Select(`*,
-(SELECT count(id) FROM albums WHERE tag_genre_id=genres.id) album_count,
-(SELECT count(id) FROM tracks WHERE tag_genre_id=genres.id) track_count`).
+			(SELECT count(id) FROM albums WHERE tag_genre_id=genres.id) album_count,
+			(SELECT count(id) FROM tracks WHERE tag_genre_id=genres.id) track_count`).
 		Group("genres.id").
 		Find(&genres)
 
