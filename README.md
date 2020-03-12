@@ -7,6 +7,7 @@
 
  - browsing by folder (keeping your full tree intact)  
  - browsing by tags (using [taglib](https://taglib.org/) - supports mp3, opus, flac, ape, m4a, wav, etc.)  
+ - on-the-fly audio transcoding and caching (requires [ffmpeg](https://ffmpeg.org/)) (thank you [spijet](github.com/spijet/))
  - pretty fast scanning (with my library of ~27k tracks, initial scan takes about 10m, and about 5s after incrementally)  
  - last.fm scrobbling  
  - multiple users  
@@ -21,11 +22,11 @@ the default login is **admin**/**admin**.
 password can then be changed from the web interface
 
 ```
-$ apt install build-essential git sqlite libtag1-dev # for debian like
-$ pacman -S base-devel git sqlite taglib             # for arch like
+$ apt install build-essential git sqlite libtag1-dev ffmpeg # for debian like
+$ pacman -S base-devel git sqlite taglib ffmpeg             # for arch like
 $ go get senan.xyz/g/gonic/cmd/gonic
 $ export PATH=$PATH:$HOME/go/bin
-$ gonic -h                                           # or see "configuration options below"
+$ gonic -h # or see "configuration options below"
 ```
 
 **note:** unfortunately if you do this above, you'll be compiling gonic locally on your machine
@@ -46,8 +47,9 @@ services:
     expose:
     - 80
     volumes:
-    - ./data:/data
-    - /path/to/music:/music:ro
+    - ./data:/data             # gonic db etc
+    - /path/to/music:/music:ro # your music
+    - /path/to/cache:/cache    # transcode cache dir
 ```
 
 then start with `docker-compose up -d`
