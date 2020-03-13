@@ -1,21 +1,28 @@
 :root {
-  --pad-size: 1.75rem;
+  --size: 13px;
+}
+
+@media only screen and (max-width: 780px) {
+  :root {
+    --size: 11px;
+  }
 }
 
 *,
 span,
 div,
-.mdi {
+i,
+input,
+body,
+html {
   font-family: monospace;
-  font-size: 0.8rem;
+  font-size: var(--size);
 }
 
 body {
   max-width: 780px;
   margin: 0 auto;
-  padding: 0 var(--pad-size);
   overflow-y: scroll;
-  font-size: 14px;
 }
 
 table td:not(:last-child)::after {
@@ -27,12 +34,6 @@ table td:not(:last-child)::after {
   table#recent-folders td:first-child::after {
     content: "";
   }
-  .no-small {
-    display: none;
-  }
-  body {
-    font-size: 12px;
-  }
 }
 
 input,
@@ -43,13 +44,13 @@ textarea {
   box-sizing: border-box;
   margin: 1px 0;
   padding: 0;
-  height: 20px;
+  height: calc(var(--size) * 1.5);
 }
 
 input[type="submit"],
-input[type="submit"],
+input[type="button"],
 input[type="file"] {
-  width: 8rem;
+  width: calc(var(--size) * 8);
 }
 
 input[type="submit"],
@@ -99,7 +100,7 @@ a:hover {
 }
 
 #content > * {
-  margin: var(--pad-size) 0;
+  margin: calc(var(--size) * 1.5);
 }
 
 #header {
@@ -131,6 +132,12 @@ a:hover {
   border-bottom: 2px solid #0000000c;
 }
 
+@media only screen and (max-width: 780px) {
+  .no-small {
+    display: none;
+  }
+}
+
 .text-right {
   text-align: right;
 }
@@ -140,11 +147,11 @@ a:hover {
 }
 
 .padded {
-  padding: 1rem;
+  padding: var(--size);
 }
 
 .side-padded {
-  padding: 0 1rem;
+  padding: 0 var(--size);
 }
 
 .angry {
