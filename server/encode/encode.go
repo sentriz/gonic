@@ -52,12 +52,10 @@ func writeCmdOutput(out, cache io.Writer, pipeReader io.ReadCloser) {
 			break
 		}
 		data := buffer[0:n]
-		_, err = out.Write(data)
-		if err != nil {
+		if _, err := out.Write(data); err != nil {
 			log.Printf("error while writing HTTP response: %s\n", err)
 		}
-		_, err = cache.Write(data)
-		if err != nil {
+		if _, err := cache.Write(data); err != nil {
 			log.Printf("error while writing cache file: %s\n", err)
 		}
 		if f, ok := out.(http.Flusher); ok {
@@ -72,13 +70,16 @@ func writeCmdOutput(out, cache io.Writer, pipeReader io.ReadCloser) {
 
 // pre-format the ffmpeg command with needed options
 func ffmpegCommand(filePath string, profile *Profile, bitrate string) *exec.Cmd {
-	ffmpegArgs := []string{
-		"-v", "0", "-i", filePath, "-map", "0:0",
-		"-vn", "-b:a", bitrate,
+	args := []string{
+		"-v", "0",
+		"-i", filePath,
+		"-map", "0:0",
+		"-vn",
+		"-b:a", bitrate,
 	}
-	ffmpegArgs = append(ffmpegArgs, profile.ffmpegOptions...)
+	args = append(args, profile.ffmpegOptions...)
 	if profile.forceRG {
-		ffmpegArgs = append(ffmpegArgs,
+		args = append(args,
 			// set up replaygain processing
 			"-af", "volume=replaygain=track:replaygain_preamp=6dB:replaygain_noclip=0, alimiter=level=disabled",
 			// drop redundant replaygain tags
@@ -88,8 +89,8 @@ func ffmpegCommand(filePath string, profile *Profile, bitrate string) *exec.Cmd 
 			"-metadata", "replaygain_track_peak=",
 		)
 	}
-	ffmpegArgs = append(ffmpegArgs, "-f", profile.Format, "-")
-	return exec.Command("/usr/bin/ffmpeg", ffmpegArgs...)
+	args = append(args, "-f", profile.Format, "-")
+	return exec.Command("/usr/bin/ffmpeg", args...)
 }
 
 func Encode(out io.Writer, trackPath, cachePath string, profile *Profile, bitrate string) error {
@@ -108,7 +109,6 @@ func Encode(out io.Writer, trackPath, cachePath string, profile *Profile, bitrat
 	// -- @spijet
 	//
 	// start up writers for cache file and http response
-	// go copyCmdOutput(w, cacheFile, pipeReader)
 	go writeCmdOutput(out, cacheFile, pipeReader)
 	// run ffmpeg
 	if err := cmd.Run(); err != nil {

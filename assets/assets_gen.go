@@ -1,8 +1,6 @@
 // file generated with embed tool
 // do not edit
-
 // 
-
 package assets
 import "time"
 type EmbeddedAsset struct {
