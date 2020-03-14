@@ -1,6 +1,6 @@
 #!/bin/sh
 
-source ./_build_vars
+. ./_build_vars
 ./_do_gen_assets
 go build \
     -o gonic \
