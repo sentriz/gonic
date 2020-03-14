@@ -18,6 +18,7 @@ import (
 // we can't access artists. so instead we'll consider the artist of
 // an track to be the it's respective folder that comes directly
 // under the root directory
+
 func (c *Controller) ServeGetIndexes(r *http.Request) *spec.Response {
 	var folders []*db.Album
 	c.DB.

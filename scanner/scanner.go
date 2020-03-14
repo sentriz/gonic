@@ -104,12 +104,9 @@ func (s *Scanner) Start() error {
 	// delete tracks not on filesystem
 	s.db.WithTx(func(tx *gorm.DB) {
 		var tracks []*db.Track
-		tx.
-			Select("id").
-			Find(&tracks)
+		tx.Select("id").Find(&tracks)
 		for _, track := range tracks {
-			_, ok := s.seenTracks[track.ID]
-			if !ok {
+			if _, ok := s.seenTracks[track.ID]; !ok {
 				tx.Delete(track)
 				deleted++
 			}
@@ -118,12 +115,9 @@ func (s *Scanner) Start() error {
 	// delete folders not on filesystem
 	s.db.WithTx(func(tx *gorm.DB) {
 		var folders []*db.Album
-		tx.
-			Select("id").
-			Find(&folders)
+		tx.Select("id").Find(&folders)
 		for _, folder := range folders {
-			_, ok := s.seenFolders[folder.ID]
-			if !ok {
+			if _, ok := s.seenFolders[folder.ID]; !ok {
 				tx.Delete(folder)
 			}
 		}
