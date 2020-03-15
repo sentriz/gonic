@@ -39,15 +39,11 @@ func SetScanning() func() {
 type Scanner struct {
 	db        *db.DB
 	musicPath string
-	// these three are for the transaction we do for every folder.
-	// we are trying to do one album track inserting transaction per
-	// folder. this will keep track of that.
-	// we should also note whether we encountered a track in each folder
-	// so as not in insert and empty folder, and keep the stats/walking
-	// to a minimum
-	trTx          *gorm.DB
-	trTxOpen      bool
-	trEncountered bool
+	// these two are for the transaction we do for every folder.
+	// the boolean is there so we dont begin or commit multiple
+	// times in the handle folder or post children callback
+	trTx     *gorm.DB
+	trTxOpen bool
 	// these two are for keeping state between noted in the tree.
 	// eg. keep track of a parents folder or the path to a cover
 	// we just saw that we need to commit in the post children
@@ -220,17 +216,15 @@ func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
 func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
 	defer func() {
 		s.curCover = ""
-		s.trEncountered = false
 	}()
 	if s.trTxOpen {
-		// commit the tracks from the folder
 		s.trTx.Commit()
 		s.trTxOpen = false
 	}
-	// we have just finished processing a folder. next let's take it off the stack
-	// to set set it's parent, cover id, etc
+	// begin taking the current folder off the stack and add it's
+	// parent, cover that we found, etc.
 	folder := s.curFolders.Pop()
-	if !folder.ReceivedPaths || !s.trEncountered {
+	if !folder.ReceivedPaths {
 		return nil
 	}
 	folder.ParentID = s.curFolders.PeekID()
@@ -258,10 +252,10 @@ func decoded(in string) string {
 // ## begin handlers
 
 func (s *Scanner) handleFolder(it *item) error {
-	// a transaction still being open when we handle a folder can
-	// happen if there is a folder that contains /both/ tracks and
-	// sub folders
 	if s.trTxOpen {
+		// a transaction still being open when we handle a folder can
+		// happen if there is a folder that contains /both/ tracks and
+		// sub folders
 		s.trTx.Commit()
 		s.trTxOpen = false
 	}
@@ -295,7 +289,6 @@ func (s *Scanner) handleFolder(it *item) error {
 }
 
 func (s *Scanner) handleTrack(it *item) error {
-	s.trEncountered = true
 	if !s.trTxOpen {
 		s.trTx = s.db.Begin()
 		s.trTxOpen = true
