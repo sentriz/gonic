@@ -40,8 +40,8 @@ type Scanner struct {
 	db        *db.DB
 	musicPath string
 	// these two are for the transaction we do for every folder.
-	// the boolean is there so we dont begin or commit multiple
-	// times in the handle folder or post children callback
+	// we are trying to do one album track inserting transaction per
+	// folder. this will keep track of that.
 	trTx     *gorm.DB
 	trTxOpen bool
 	// these two are for keeping state between noted in the tree.
@@ -217,13 +217,18 @@ func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
 	defer func() {
 		s.curCover = ""
 	}()
+	// we have just finished processing a folder. next let's take it off the stack
+	// to set set it's parent, cover id, etc
+	folder := s.curFolders.Pop()
 	if s.trTxOpen {
+		// commit the tracks from the folder
 		s.trTx.Commit()
 		s.trTxOpen = false
+	} else {
+		// transaction for the folder's tracks was still open, so there must be no
+		// tracks. skip the empty folder
+		return nil
 	}
-	// begin taking the current folder off the stack and add it's
-	// parent, cover that we found, etc.
-	folder := s.curFolders.Pop()
 	if !folder.ReceivedPaths {
 		return nil
 	}
