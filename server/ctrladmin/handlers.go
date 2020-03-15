@@ -274,36 +274,6 @@ func (c *Controller) ServeStartScanDo(r *http.Request) *Response {
 	}
 }
 
-func (c *Controller) ServeUploadPlaylist(r *http.Request) *Response {
-	return &Response{template: "upload_playlist.tmpl"}
-}
-
-func (c *Controller) ServeUploadPlaylistDo(r *http.Request) *Response {
-	if err := r.ParseMultipartForm((1 << 10) * 24); nil != err {
-		return &Response{
-			err:  "couldn't parse mutlipart",
-			code: 500,
-		}
-	}
-	user := r.Context().Value(CtxUser).(*db.User)
-	var playlistCount int
-	var errors []string
-	for _, headers := range r.MultipartForm.File {
-		for _, header := range headers {
-			headerErrors, created := playlistParseUpload(c, user.ID, header)
-			if created {
-				playlistCount++
-			}
-			errors = append(errors, headerErrors...)
-		}
-	}
-	return &Response{
-		redirect: "/admin/home",
-		flashN:   []string{fmt.Sprintf("%d playlist(s) created", playlistCount)},
-		flashW:   errors,
-	}
-}
-
 func (c *Controller) ServeCreateTranscodePrefDo(r *http.Request) *Response {
 	client := r.FormValue("client")
 	profile := r.FormValue("profile")

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"mime/multipart"
+	"net/http"
 	"strings"
 
 	"github.com/jinzhu/gorm"
@@ -70,4 +71,34 @@ func playlistParseUpload(c *Controller, userID int, header *multipart.FileHeader
 	playlist.SetItems(trackIDs)
 	c.DB.Save(playlist)
 	return errors, true
+}
+
+func (c *Controller) ServeUploadPlaylist(r *http.Request) *Response {
+	return &Response{template: "upload_playlist.tmpl"}
+}
+
+func (c *Controller) ServeUploadPlaylistDo(r *http.Request) *Response {
+	if err := r.ParseMultipartForm((1 << 10) * 24); nil != err {
+		return &Response{
+			err:  "couldn't parse mutlipart",
+			code: 500,
+		}
+	}
+	user := r.Context().Value(CtxUser).(*db.User)
+	var playlistCount int
+	var errors []string
+	for _, headers := range r.MultipartForm.File {
+		for _, header := range headers {
+			headerErrors, created := playlistParseUpload(c, user.ID, header)
+			if created {
+				playlistCount++
+			}
+			errors = append(errors, headerErrors...)
+		}
+	}
+	return &Response{
+		redirect: "/admin/home",
+		flashN:   []string{fmt.Sprintf("%d playlist(s) created", playlistCount)},
+		flashW:   errors,
+	}
 }
