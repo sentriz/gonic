@@ -36,6 +36,40 @@ func SetScanning() func() {
 	}
 }
 
+func IsIgnorableDir(directory string) bool {
+	// The directory is deemed ignorable if it contains
+	// no subdirectories and no media files
+	scanner, err := godirwalk.NewScanner(directory)
+	if err != nil {
+		log.Printf("cannot scan directory: %s", directory)
+		log.Printf("error: %s", err)
+		return true
+	}
+
+	for scanner.Scan() {
+		dirent, err := scanner.Dirent()
+		if err != nil {
+			log.Printf("cannot get dirent: %s", err)
+			return true
+		}
+		isDir, err := dirent.IsDirOrSymlinkToDir()
+		if err == nil && isDir {
+			return false
+		}
+		filename := strings.ToLower(dirent.Name())
+		ext := path.Ext(filename)
+		if ext != "" {
+			_, ok := mime.Types[ext[1:]]
+			if ok {
+				return false // music file found
+			}
+		}
+	}
+
+	log.Printf("skipping folder `%s`", directory)
+	return true
+}
+
 type Scanner struct {
 	db        *db.DB
 	musicPath string
@@ -196,7 +230,8 @@ func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
 		return errors.Wrap(err, "stating link to dir")
 	}
 	if isDir {
-		return s.handleFolder(it)
+		ignore := IsIgnorableDir(fullPath)
+		return s.handleFolder(it, ignore)
 	}
 	lowerFilename := strings.ToLower(filename)
 	if _, ok := coverFilenames[lowerFilename]; ok {
@@ -256,7 +291,7 @@ func decoded(in string) string {
 // ## begin handlers
 // ## begin handlers
 
-func (s *Scanner) handleFolder(it *item) error {
+func (s *Scanner) handleFolder(it *item, ignore bool) error {
 	if s.trTxOpen {
 		// a transaction still being open when we handle a folder can
 		// happen if there is a folder that contains /both/ tracks and
@@ -271,6 +306,11 @@ func (s *Scanner) handleFolder(it *item) error {
 		s.seenFolders[folder.ID] = struct{}{}
 		s.curFolders.Push(folder)
 	}()
+
+	if ignore {
+		return nil
+	}
+
 	err := s.db.
 		Select("id, updated_at").
 		Where(db.Album{
