@@ -126,14 +126,14 @@ func (s *Scanner) Start() error {
 	s.db.Exec(`
 		DELETE FROM albums
 		WHERE tag_artist_id NOT NULL
-		AND NOT EXISTS (	SELECT 1 FROM tracks
-							WHERE tracks.album_id=albums.id
+		AND NOT EXISTS ( SELECT 1 FROM tracks
+		                 WHERE tracks.album_id=albums.id
 		)`)
 	// delete artists without albums
 	s.db.Exec(`
 		DELETE FROM artists
-		WHERE NOT EXISTS (	SELECT 1 from albums
-							WHERE albums.tag_artist_id=artists.id
+		WHERE NOT EXISTS ( SELECT 1 from albums
+		                   WHERE albums.tag_artist_id=artists.id
 		)`)
 	// finish up
 	strNow := strconv.FormatInt(time.Now().Unix(), 10)

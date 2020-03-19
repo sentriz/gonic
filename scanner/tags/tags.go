@@ -32,6 +32,7 @@ func (t *Tags) firstTag(keys ...string) string {
 	}
 	return ""
 }
+
 func (t *Tags) Title() string         { return t.firstTag("title") }
 func (t *Tags) BrainzID() string      { return t.firstTag("musicbrainz_trackid") }
 func (t *Tags) Artist() string        { return t.firstTag("artist") }
@@ -44,6 +45,7 @@ func (t *Tags) TrackNumber() int      { return intSep(t.firstTag("tracknumber"),
 func (t *Tags) DiscNumber() int       { return intSep(t.firstTag("discnumber"), "/") }   // eg. 1/2
 func (t *Tags) Length() int           { return t.props.Length }
 func (t *Tags) Bitrate() int          { return t.props.Bitrate }
+
 func intSep(in, sep string) int {
 	if in == "" {
 		return 0
