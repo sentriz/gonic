@@ -25,18 +25,7 @@ body {
   overflow-y: scroll;
 }
 
-table td:not(:last-child)::after {
-  content: " ";
-  white-space: pre;
-}
-
-@media only screen and (max-width: 780px) {
-  table#recent-folders td:first-child::after {
-    content: "";
-  }
-}
-
-input,
+input[type],
 select,
 textarea {
   border-radius: 0;
@@ -45,21 +34,25 @@ textarea {
   margin: 1px 0;
   padding: 0;
   height: calc(var(--size) * 1.5);
+  vertical-align: middle;
 }
 
-input[type="submit"],
-input[type="button"],
-input[type="file"] {
+input[type] {
   width: calc(var(--size) * 8);
-}
-
-input[type="submit"],
-input[type="button"] {
   background-color: white;
   cursor: pointer;
 }
 
+input[type=text],
+input[type=password] {
+    width: 100%;
+}
+
 form {
+  display: inline;
+}
+
+form.block {
   max-width: 400px;
   margin-left: auto;
   margin-right: 0;
@@ -73,20 +66,13 @@ form > * {
   width: 100%;
 }
 
-div {
-  margin: 0;
-  padding: 0;
-}
-
-table td,
-table th {
-  border: none;
-  margin: 0;
-}
-
 table {
   overflow: hidden;
   white-space: nowrap;
+}
+
+table td {
+  padding-left: calc(var(--size) * 0.5);
 }
 
 a,

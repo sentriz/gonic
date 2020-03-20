@@ -7,7 +7,7 @@
         are you sure?<br/>
         <span class="light">their plays, starred, etc. will also be deleted</span>
     </div>
-    <form action="{{ printf "/admin/delete_user_do?user=%s" .SelectedUser.Name | path }}" method="post">
+    <form class="block" action="{{ printf "/admin/delete_user_do?user=%s" .SelectedUser.Name | path }}" method="post">
         <input type="submit" value="yes">
     </form>
 </div>

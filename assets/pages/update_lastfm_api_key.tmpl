@@ -9,7 +9,7 @@
         <p><span class="light">current key</span> <i>{{ default "not set" .CurrentLastFMAPIKey }}</i></p>
         <p><span class="light">current secret</span> <i>{{ default "not set" .CurrentLastFMAPISecret }}</i></p>
     </div>
-    <form action="{{ path "/admin/update_lastfm_api_key_do" }}" method="post">
+    <form class="block" action="{{ path "/admin/update_lastfm_api_key_do" }}" method="post">
         <input type="text" id="api_key" name="api_key" placeholder="new key">
         <input type="text" id="secret" name="secret" placeholder="new secret">
         <input type="submit" value="update">

@@ -27,12 +27,14 @@
             {{ if .User.LastFMSession }}
                 linked
                 <span class="light">&#124;</span>
-                <a href="{{ path "/admin/unlink_lastfm_do" }}">unlink</a><br/>
+                <form action="{{ path "/admin/unlink_lastfm_do" }}" method="post">
+                    <input type="submit" value="unlink">
+                </form>
             {{ else }}
                 <span class="angry">unlinked</span>
                 {{ $cbPath := path "/admin/link_lastfm_do" }}
                 {{ $cbURL := printf "%s%s" .RequestRoot $cbPath }}
-                <a href="https://www.last.fm/api/auth/?api_key={{ .CurrentLastFMAPIKey }}&cb={{ $cbURL }}">link</a><br/>
+                <a href="https://www.last.fm/api/auth/?api_key={{ .CurrentLastFMAPIKey }}&cb={{ $cbURL }}">link&#8230;</a>
             {{ end }}
         {{ else }}
             <p class="light">api key not set</p>
@@ -41,7 +43,6 @@
 	    {{ end }}
         {{ end }}
         {{ if .User.IsAdmin }}
-	    <br/>
             <p><a href="{{ path "/admin/update_lastfm_api_key" }}">update api key&#8230;</a></p>
         {{ end }}
     </div>
@@ -64,9 +65,8 @@
             {{ else }}
                 <a href="{{ printf "/admin/delete_user?user=%s" $user.Name | path }}">delete&#8230;</a>
             {{ end }}
-            <br/>
+	    <br/>
         {{ end }}
-        <br/>
         <a href="{{ path "/admin/create_user" }}" class="button">create new&#8230;</a>
         </div>
     {{ else }}
@@ -95,8 +95,7 @@
             </tr>
         {{ end }}
         </table>
-        {{- if not .IsScanning -}}
-            <br/>
+        {{- if and (not .IsScanning) (.User.IsAdmin) -}}
             {{- if not .LastScanTime.IsZero -}}
                 <p class="light" title="{{ .LastScanTime }}">scanned {{ .LastScanTime | dateHuman }}</p>
             {{ end }}
@@ -114,7 +113,6 @@
         <p class="light text-right">you can find your device's client name in the gonic logs</p>
         <p class="light text-right">some common client names: "<span class="emp">DSub</span>", "<span class="emp">Jamstash</span>", "<span class="emp">Soundwaves</span>"</p>
         <p class="light text-right">or use "*" as fallback rule for any client</p>
-        <br/>
         <table id="transcode-preferences">
         {{ range $pref := .TranscodePreferences }}
             <tr>
@@ -154,7 +152,6 @@
             </tr>
         {{ end }}
         </table>
-        <br/>
         <form
             id="playlist-upload-form"
             enctype="multipart/form-data"
