@@ -18,6 +18,17 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
+          "id": "19",
+          "coverArt": "19",
+          "artist": "Ten Years After",
+          "title": "(1967) Ten Years After",
+          "parent": "18",
+          "isDir": true,
+          "songCount": 15,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
           "id": "8",
           "coverArt": "8",
           "artist": "13th Floor Lowervators",
@@ -25,6 +36,17 @@
           "parent": "7",
           "isDir": true,
           "songCount": 10,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "5",
+          "coverArt": "5",
+          "artist": "A Certain Ratio",
+          "title": "(1994) The Graveyard and the Ballroom",
+          "parent": "4",
+          "isDir": true,
+          "songCount": 14,
           "duration": 0,
           "created": "0001-01-01T00:00:00Z"
         },
@@ -51,13 +73,13 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
-          "id": "9",
-          "coverArt": "9",
-          "artist": "13th Floor Lowervators",
-          "title": "(1966) The Psychedelic Sounds of the 13th Floor Elevators",
-          "parent": "7",
+          "id": "21",
+          "coverArt": "21",
+          "artist": "Captain Beefheart",
+          "title": "(1970) Lick My Decals Off, Bitch",
+          "parent": "20",
           "isDir": true,
-          "songCount": 21,
+          "songCount": 15,
           "duration": 0,
           "created": "0001-01-01T00:00:00Z"
         },
@@ -73,45 +95,23 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
-          "id": "5",
-          "coverArt": "5",
-          "artist": "A Certain Ratio",
-          "title": "(1994) The Graveyard and the Ballroom",
-          "parent": "4",
-          "isDir": true,
-          "songCount": 14,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "19",
-          "coverArt": "19",
-          "artist": "Ten Years After",
-          "title": "(1967) Ten Years After",
-          "parent": "18",
-          "isDir": true,
-          "songCount": 15,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "21",
-          "coverArt": "21",
-          "artist": "Captain Beefheart",
-          "title": "(1970) Lick My Decals Off, Bitch",
-          "parent": "20",
-          "isDir": true,
-          "songCount": 15,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
           "id": "6",
           "artist": "A Certain Ratio",
           "title": "(1981) To EachOTHER.",
           "parent": "4",
           "isDir": true,
           "songCount": 9,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "9",
+          "coverArt": "9",
+          "artist": "13th Floor Lowervators",
+          "title": "(1966) The Psychedelic Sounds of the 13th Floor Elevators",
+          "parent": "7",
+          "isDir": true,
+          "songCount": 21,
           "duration": 0,
           "created": "0001-01-01T00:00:00Z"
         }

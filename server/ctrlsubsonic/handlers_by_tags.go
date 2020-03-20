@@ -18,7 +18,7 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 	var artists []*db.Artist
 	c.DB.
 		Select("*, count(sub.id) album_count").
-		Joins("JOIN albums sub ON artists.id=sub.tag_artist_id").
+		Joins("LEFT JOIN albums sub ON artists.id=sub.tag_artist_id").
 		Group("artists.id").
 		Find(&artists)
 	// [a-z#] -> 27
@@ -140,7 +140,7 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	// of children. it might make sense to store that in the db
 	q.
 		Select("albums.*, count(tracks.id) child_count").
-		Joins("JOIN tracks ON tracks.album_id=albums.id").
+		Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
 		Group("albums.id").
 		Where("albums.tag_artist_id IS NOT NULL").
 		Offset(params.GetIntOr("offset", 0)).
@@ -257,7 +257,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		err = c.DB.
 			Select("artists.*, count(albums.id) album_count").
 			Where("name=?", similarInfo.Name).
-			Joins("JOIN albums ON artists.id=albums.tag_artist_id").
+			Joins("LEFT JOIN albums ON artists.id=albums.tag_artist_id").
 			Group("artists.id").
 			Find(artist).
 			Error

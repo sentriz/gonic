@@ -23,7 +23,7 @@ func (c *Controller) ServeGetIndexes(r *http.Request) *spec.Response {
 	var folders []*db.Album
 	c.DB.
 		Select("*, count(sub.id) child_count").
-		Joins("JOIN albums sub ON albums.id=sub.parent_id").
+		Joins("LEFT JOIN albums sub ON albums.id=sub.parent_id").
 		Where("albums.parent_id=1").
 		Group("albums.id").
 		Find(&folders)
@@ -137,7 +137,7 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 	// of children. it might make sense to store that in the db
 	q.
 		Select("albums.*, count(tracks.id) child_count").
-		Joins("JOIN tracks ON tracks.album_id=albums.id").
+		Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
 		Group("albums.id").
 		Where("albums.tag_artist_id IS NOT NULL").
 		Offset(params.GetIntOr("offset", 0)).
