@@ -1,6 +1,7 @@
 #!/bin/sh
 
 embed_bin_path=/tmp/gonicembed
+assets_path=server/assets
 
 # only build once for some slightly faster live page reloading
 if ! test -e "$embed_bin_path"; then
@@ -9,12 +10,12 @@ if ! test -e "$embed_bin_path"; then
         cmd/gonicembed/main.go
 fi
 
-find assets/ \
+find $assets_path/ \
     -type f \
     ! -name '*.go' \
     -exec "$embed_bin_path" \
-        -out-path assets/assets_gen.go \
+        -out-path $assets_path/assets_gen.go \
         -package-name assets \
         -assets-var-name Bytes \
-        -asset-path-prefix assets/ \
+        -asset-path-prefix $assets_path/ \
         {} +

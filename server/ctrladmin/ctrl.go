@@ -18,8 +18,8 @@ import (
 	"github.com/oxtoacart/bpool"
 	"github.com/wader/gormstore"
 
-	"senan.xyz/g/gonic/assets"
 	"senan.xyz/g/gonic/db"
+	"senan.xyz/g/gonic/server/assets"
 	"senan.xyz/g/gonic/server/ctrlbase"
 	"senan.xyz/g/gonic/version"
 )
