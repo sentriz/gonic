@@ -21,6 +21,9 @@
     <div class="box-title">
         <i class="mdi mdi-lastfm"></i> last.fm
     </div>
+    <div class="box-description text-light">
+        <p>gonic can scrobble to <a href="https://www.last.fm/" target="_blank">last.fm</a> for any user (but the admin must set a global api key)</p>
+    </div>
     <div class="text-right">
         {{ if .CurrentLastFMAPIKey }}
             <span class="text-light">current status</span>
@@ -89,7 +92,7 @@
         {{ end }}
         <table id="recent-folders">
         <colgroup>
-            <col width="100%" />
+            <col width="80%" />
             <col width="0%" />
         </colgroup>
         {{ range $folder := .RecentFolders }}
@@ -113,10 +116,11 @@
     <div class="box-title">
         <i class="mdi mdi-file-music"></i> transcoding device profiles
     </div>
+    <div class="box-description text-light">
+        <p>you can find your device's client name in the gonic logs.</p>
+        <p>some common client names are <span class="text-emp">DSub</span>, <span class="text-emp">Jamstash</span>, <span class="text-emp">Soundwaves</span>, or use <span class="text-emp">*</span> as fallback rule for any client</p>
+    </div>
     <div class="block-right">
-        <p class="text-light text-right">you can find your device's client name in the gonic logs</p>
-        <p class="text-light text-right">some common client names: "<span class="text-emp">DSub</span>", "<span class="text-emp">Jamstash</span>", "<span class="text-emp">Soundwaves</span>"</p>
-        <p class="text-light text-right">or use "*" as fallback rule for any client</p>
         <table id="transcode-preferences">
         {{ range $pref := .TranscodePreferences }}
             <tr>

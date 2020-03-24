@@ -1,5 +1,8 @@
 :root {
   --size: 13px;
+  --width-body: 750px;
+  --width-box-description: 510px;
+  --width-form: 400px;
 }
 
 @media only screen and (max-width: 780px) {
@@ -20,7 +23,7 @@ html {
 }
 
 body {
-  max-width: 780px;
+  max-width: var(--width-body);
   margin: 0 auto;
   overflow-y: scroll;
 }
@@ -33,7 +36,7 @@ textarea {
   box-sizing: border-box;
   margin: 1px 0;
   padding: 0;
-  height: calc(var(--size) * 1.5);
+  height: calc(var(--size) * 1.25);
   vertical-align: middle;
 }
 
@@ -43,9 +46,9 @@ input[type] {
   cursor: pointer;
 }
 
-input[type=text],
-input[type=password] {
-    width: 100%;
+input[type="text"],
+input[type="password"] {
+  width: 100%;
 }
 
 form {
@@ -53,7 +56,7 @@ form {
 }
 
 form.block {
-  max-width: 400px;
+  max-width: var(--width-form);
   margin-left: auto;
   margin-right: 0;
   display: flex;
@@ -123,6 +126,10 @@ a:hover {
   border-bottom: 2px solid #0000000c;
 }
 
+.box-description {
+  max-width: var(--width-box-description);
+}
+
 @media only screen and (max-width: 780px) {
   .no-small {
     display: none;
@@ -139,6 +146,7 @@ a:hover {
 
 .text-emp {
   font-style: italic;
+  color: #444;
 }
 
 .block-right > * {
