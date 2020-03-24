@@ -9,8 +9,8 @@
  - browsing by tags (using [taglib](https://taglib.org/) - supports mp3, opus, flac, ape, m4a, wav, etc.)  
  - on-the-fly audio transcoding and caching (requires [ffmpeg](https://ffmpeg.org/)) (thank you [spijet](https://github.com/spijet/))
  - pretty fast scanning (with my library of ~27k tracks, initial scan takes about 10m, and about 5s after incrementally)  
+ - multiple users, each with their own transcoding preferences, playlists, top tracks, top artists, etc.
  - last.fm scrobbling  
- - multiple users  
  - a web interface for configuration (set up last.fm, manage users, start scans, etc.)  
  - support for the [album-artist](https://mkoby.com/2007/02/18/artist-versus-album-artist/) tag, to not clutter your artist list with compilation album appearances  
  - written in [go](https://golang.org/), so lightweight and suitable for a raspberry pi, etc.  
