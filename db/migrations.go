@@ -2,6 +2,8 @@
 package db
 
 import (
+	"fmt"
+
 	"github.com/jinzhu/gorm"
 	"gopkg.in/gormigrate.v1"
 )
@@ -89,5 +91,44 @@ var migrationAddGenre = gormigrate.Migration{
 			Track{},
 		).
 			Error
+	},
+}
+
+var migrationUpdateTranscodePrefIDX = gormigrate.Migration{
+	ID: "202003241509",
+	Migrate: func(tx *gorm.DB) error {
+		var hasIDX int
+		tx.
+			Select("1").
+			Table("sqlite_master").
+			Where("type = ?", "index").
+			Where("name = ?", "idx_user_id_client").
+			Count(&hasIDX)
+		if hasIDX == 1 {
+			// index already exists
+			return nil
+		}
+		step := tx.Exec(`
+			ALTER TABLE transcode_preferences RENAME TO transcode_preferences_orig;
+		`)
+		if err := step.Error; err != nil {
+			return fmt.Errorf("step rename: %w", err)
+		}
+		step = tx.AutoMigrate(
+			TranscodePreference{},
+		)
+		if err := step.Error; err != nil {
+			return fmt.Errorf("step create: %w", err)
+		}
+		step = tx.Exec(`
+			INSERT INTO transcode_preferences (user_id, client, profile)
+				SELECT user_id, client, profile
+				FROM transcode_preferences_orig;
+			DROP TABLE transcode_preferences_orig;
+		`)
+		if err := step.Error; err != nil {
+			return fmt.Errorf("step copy: %w", err)
+		}
+		return nil
 	},
 }

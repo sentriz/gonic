@@ -203,7 +203,7 @@ func (p *PlayQueue) SetItems(items []int) {
 
 type TranscodePreference struct {
 	User    *User
-	UserID  int    `sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
-	Client  string `gorm:"not null; unique_index:idx_client_profile" sql:"default: null"`
-	Profile string `gorm:"not null; unique_index:idx_client_profile" sql:"default: null"`
+	UserID  int    `gorm:"not null; unique_index:idx_user_id_client" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
+	Client  string `gorm:"not null; unique_index:idx_user_id_client" sql:"default: null"`
+	Profile string `gorm:"not null" sql:"default: null"`
 }
