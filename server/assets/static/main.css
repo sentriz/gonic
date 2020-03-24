@@ -133,6 +133,14 @@ a:hover {
   text-align: right;
 }
 
+.text-light {
+  color: #00000082;
+}
+
+.text-emp {
+  font-style: italic;
+}
+
 .block-right > * {
   margin-left: auto;
 }
@@ -141,18 +149,10 @@ a:hover {
   padding: var(--size);
 }
 
-.side-padded {
+.padded-side {
   padding: 0 var(--size);
 }
 
 .angry {
   background-color: #f4433669;
-}
-
-.light {
-  color: #00000082;
-}
-
-.emp {
-  font-style: italic;
 }

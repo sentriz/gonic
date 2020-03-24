@@ -4,10 +4,10 @@
         <i class="mdi mdi-key-change"></i> updating last.fm keys
     </div>
     <div class="text-right">
-        <p class="light">(you can get an api key <a href="https://www.last.fm/api/account/create" target="_blank">here</a>)</p>
+        <p class="text-light">(you can get an api key <a href="https://www.last.fm/api/account/create" target="_blank">here</a>)</p>
         <br/>
-        <p><span class="light">current key</span> <i>{{ default "not set" .CurrentLastFMAPIKey }}</i></p>
-        <p><span class="light">current secret</span> <i>{{ default "not set" .CurrentLastFMAPISecret }}</i></p>
+        <p><span class="text-light">current key</span> <i>{{ default "not set" .CurrentLastFMAPIKey }}</i></p>
+        <p><span class="text-light">current secret</span> <i>{{ default "not set" .CurrentLastFMAPISecret }}</i></p>
     </div>
     <form class="block" action="{{ path "/admin/update_lastfm_api_key_do" }}" method="post">
         <input type="text" id="api_key" name="api_key" placeholder="new key">

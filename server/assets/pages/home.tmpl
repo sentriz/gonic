@@ -23,10 +23,10 @@
     </div>
     <div class="text-right">
         {{ if .CurrentLastFMAPIKey }}
-            <span class="light">current status</span>
+            <span class="text-light">current status</span>
             {{ if .User.LastFMSession }}
                 linked
-                <span class="light">&#124;</span>
+                <span class="text-light">&#124;</span>
                 <form action="{{ path "/admin/unlink_lastfm_do" }}" method="post">
                     <input type="submit" value="unlink">
                 </form>
@@ -37,9 +37,9 @@
                 <a href="https://www.last.fm/api/auth/?api_key={{ .CurrentLastFMAPIKey }}&cb={{ $cbURL }}">link&#8230;</a>
             {{ end }}
         {{ else }}
-            <p class="light">api key not set</p>
+            <p class="text-light">api key not set</p>
             {{ if not .User.IsAdmin }}
-                <p class="light">please ask your admin to set it</p>
+                <p class="text-light">please ask your admin to set it</p>
 	    {{ end }}
         {{ end }}
         {{ if .User.IsAdmin }}
@@ -56,12 +56,12 @@
         <div class="text-right">
         {{ range $user := .AllUsers }}
             <i>{{ $user.Name }}</i>
-            <span class="light no-small">{{ $user.CreatedAt | date }}</span>
-            <span class="light">&#124;</span>
+            <span class="text-light no-small">{{ $user.CreatedAt | date }}</span>
+            <span class="text-light">&#124;</span>
             <a href="{{ printf "/admin/change_password?user=%s" $user.Name | path }}">change password&#8230;</a>
-            <span class="light">&#124;</span>
+            <span class="text-light">&#124;</span>
             {{ if $user.IsAdmin }}
-                <span class="light">delete&#8230;</span>
+                <span class="text-light">delete&#8230;</span>
             {{ else }}
                 <a href="{{ printf "/admin/delete_user?user=%s" $user.Name | path }}">delete&#8230;</a>
             {{ end }}
@@ -85,7 +85,7 @@
     </div>
     <div class="block-right text-right">
         {{ if eq (len .RecentFolders) 0 }}
-            <span class="light">no folders yet</span>
+            <span class="text-light">no folders yet</span>
         {{ end }}
         <table id="recent-folders">
         <colgroup>
@@ -95,13 +95,13 @@
         {{ range $folder := .RecentFolders }}
             <tr>
             <td class="text-right text-trunc">{{ $folder.RightPath }}</td>
-            <td><span class="light" title="{{ $folder.ModifiedAt }}">{{ $folder.ModifiedAt | dateHuman }}</span></td>
+            <td><span class="text-light" title="{{ $folder.ModifiedAt }}">{{ $folder.ModifiedAt | dateHuman }}</span></td>
             </tr>
         {{ end }}
         </table>
         {{- if and (not .IsScanning) (.User.IsAdmin) -}}
             {{- if not .LastScanTime.IsZero -}}
-                <p class="light" title="{{ .LastScanTime }}">scanned {{ .LastScanTime | dateHuman }}</p>
+                <p class="text-light" title="{{ .LastScanTime }}">scanned {{ .LastScanTime | dateHuman }}</p>
             {{ end }}
             <form action="{{ path "/admin/start_scan_do" }}" method="post">
                 <td><input type="submit" value="start scan"></td>
@@ -114,9 +114,9 @@
         <i class="mdi mdi-file-music"></i> transcoding device profiles
     </div>
     <div class="block-right">
-        <p class="light text-right">you can find your device's client name in the gonic logs</p>
-        <p class="light text-right">some common client names: "<span class="emp">DSub</span>", "<span class="emp">Jamstash</span>", "<span class="emp">Soundwaves</span>"</p>
-        <p class="light text-right">or use "*" as fallback rule for any client</p>
+        <p class="text-light text-right">you can find your device's client name in the gonic logs</p>
+        <p class="text-light text-right">some common client names: "<span class="text-emp">DSub</span>", "<span class="text-emp">Jamstash</span>", "<span class="text-emp">Soundwaves</span>"</p>
+        <p class="text-light text-right">or use "*" as fallback rule for any client</p>
         <table id="transcode-preferences">
         {{ range $pref := .TranscodePreferences }}
             <tr>
@@ -145,14 +145,14 @@
     </div>
     <div class="block-right text-right">
         {{ if eq (len .Playlists) 0 }}
-            <span class="light">no playlists yet</span>
+            <span class="text-light">no playlists yet</span>
         {{ end }}
         <table id="recent-playlists">
         {{ range $playlist := .Playlists }}
             <tr>
             <td class="text-right">{{ $playlist.Name }}</td>
-            <td><span class="light">({{ $playlist.TrackCount }} tracks)</span></td>
-            <td class="no-small"><span class="light" title="{{ $playlist.CreatedAt }}">{{ $playlist.CreatedAt | dateHuman }}</span></td>
+            <td><span class="text-light">({{ $playlist.TrackCount }} tracks)</span></td>
+            <td class="no-small"><span class="text-light" title="{{ $playlist.CreatedAt }}">{{ $playlist.CreatedAt | dateHuman }}</span></td>
             </tr>
         {{ end }}
         </table>
