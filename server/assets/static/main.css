@@ -67,12 +67,17 @@ form > * {
 }
 
 table {
-  overflow: hidden;
   white-space: nowrap;
 }
 
 table td {
   padding-left: calc(var(--size) * 0.5);
+}
+
+table td.text-trunc {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 0;
 }
 
 a,

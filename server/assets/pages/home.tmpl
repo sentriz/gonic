@@ -65,7 +65,7 @@
             {{ else }}
                 <a href="{{ printf "/admin/delete_user?user=%s" $user.Name | path }}">delete&#8230;</a>
             {{ end }}
-	    <br/>
+            <br/>
         {{ end }}
         <a href="{{ path "/admin/create_user" }}" class="button">create new&#8230;</a>
         </div>
@@ -88,10 +88,14 @@
             <span class="light">no folders yet</span>
         {{ end }}
         <table id="recent-folders">
+        <colgroup>
+            <col width="100%" />
+            <col width="0%" />
+        </colgroup>
         {{ range $folder := .RecentFolders }}
             <tr>
-            <td class="text-right">{{ $folder.RightPath }}</td>
-            <td class="no-small"><span class="light" title="{{ $folder.ModifiedAt }}">{{ $folder.ModifiedAt | dateHuman }}</span></td>
+            <td class="text-right text-trunc">{{ $folder.RightPath }}</td>
+            <td><span class="light" title="{{ $folder.ModifiedAt }}">{{ $folder.ModifiedAt | dateHuman }}</span></td>
             </tr>
         {{ end }}
         </table>
