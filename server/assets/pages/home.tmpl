@@ -124,10 +124,11 @@
         <table id="transcode-preferences">
         {{ range $pref := .TranscodePreferences }}
             <tr>
-                <form id="transcode-pref-{{ $pref.Client }}" action="{{ printf "/admin/delete_transcode_pref_do?client=%s" $pref.Client | path }}" method="post"></form>
+                {{ $formSuffix := kebabcase $pref.Client }}
+                <form id="transcode-pref-{{ $formSuffix }}" action="{{ printf "/admin/delete_transcode_pref_do?client=%s" $pref.Client | path }}" method="post"></form>
                 <td>{{ $pref.Client }}</td>
                 <td>{{ $pref.Profile }}</td>
-                <td><input form="transcode-pref-{{ $pref.Client }}" type="submit" value="delete"></td>
+                <td><input form="transcode-pref-{{ $formSuffix }}" type="submit" value="delete"></td>
             </tr>
         {{ end }}
         <tr>
