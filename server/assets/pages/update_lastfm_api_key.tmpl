@@ -3,9 +3,10 @@
     <div class="box-title">
         <i class="mdi mdi-key-change"></i> updating last.fm keys
     </div>
+    <div class="box-description text-light">
+        <p>you can get an api key <a href="https://www.last.fm/api/account/create" target="_blank">here</a> (note: only the "application name" field is required)</p>
+    </div>
     <div class="text-right">
-        <p class="text-light">(you can get an api key <a href="https://www.last.fm/api/account/create" target="_blank">here</a>)</p>
-        <br/>
         <p><span class="text-light">current key</span> <i>{{ default "not set" .CurrentLastFMAPIKey }}</i></p>
         <p><span class="text-light">current secret</span> <i>{{ default "not set" .CurrentLastFMAPISecret }}</i></p>
     </div>
