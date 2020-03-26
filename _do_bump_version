@@ -9,6 +9,10 @@ if [[ -n "$(git status --porcelain)" ]]; then
     echo "working directory is dirty" >&2
     exit 1
 fi
+if [[ "$(git branch --show-current)" != 'master' ]]; then
+    echo "not on the master branch" >&2
+    exit 1
+fi
 
 # get the current verison from last git tag into array and
 # inc the provided part
