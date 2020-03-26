@@ -84,9 +84,9 @@ func writeResp(w http.ResponseWriter, r *http.Request, resp *spec.Response) erro
 	return ew.err
 }
 
-type subsonicHandler func(r *http.Request) *spec.Response
+type handlerSubsonic func(r *http.Request) *spec.Response
 
-func (c *Controller) H(h subsonicHandler) http.Handler {
+func (c *Controller) H(h handlerSubsonic) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		response := h(r)
 		if response == nil {
@@ -99,9 +99,9 @@ func (c *Controller) H(h subsonicHandler) http.Handler {
 	})
 }
 
-type subsonicHandlerRaw func(w http.ResponseWriter, r *http.Request) *spec.Response
+type handlerSubsonicRaw func(w http.ResponseWriter, r *http.Request) *spec.Response
 
-func (c *Controller) HR(h subsonicHandlerRaw) http.Handler {
+func (c *Controller) HR(h handlerSubsonicRaw) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		response := h(w, r)
 		if response == nil {

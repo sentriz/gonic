@@ -13,6 +13,15 @@ import (
 	"senan.xyz/g/gonic/server/lastfm"
 )
 
+func firstExisting(or string, strings ...string) string {
+	for _, s := range strings {
+		if s != "" {
+			return s
+		}
+	}
+	return or
+}
+
 func (c *Controller) ServeNotFound(r *http.Request) *Response {
 	return &Response{template: "not_found.tmpl", code: 404}
 }

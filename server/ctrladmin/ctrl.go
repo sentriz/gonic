@@ -24,10 +24,6 @@ import (
 	"senan.xyz/g/gonic/version"
 )
 
-func init() {
-	gob.Register(&Flash{})
-}
-
 type CtxKey int
 
 const (
@@ -64,6 +60,22 @@ const (
 	prefixPages    = "pages"
 )
 
+func funcMap() template.FuncMap {
+	return template.FuncMap{
+		"noCache": func(in string) string {
+			parsed, _ := url.Parse(in)
+			params := parsed.Query()
+			params.Set("v", version.VERSION)
+			parsed.RawQuery = params.Encode()
+			return parsed.String()
+		},
+		"date": func(in time.Time) string {
+			return strings.ToLower(in.Format("Jan 02, 2006"))
+		},
+		"dateHuman": humanize.Time,
+	}
+}
+
 type Controller struct {
 	*ctrlbase.Controller
 	buffPool  *bpool.BufferPool
@@ -80,19 +92,9 @@ func New(base *ctrlbase.Controller) *Controller {
 	tmplBase := template.
 		New("layout").
 		Funcs(sprig.FuncMap()).
-		Funcs(template.FuncMap{
-			"date": func(in time.Time) string {
-				return strings.ToLower(in.Format("Jan 02, 2006"))
-			},
-			"noCache": func(in string) string {
-				parsed, _ := url.Parse(in)
-				params := parsed.Query()
-				params.Set("v", version.VERSION)
-				parsed.RawQuery = params.Encode()
-				return parsed.String()
-			},
-			"dateHuman": humanize.Time,
-			"path":      base.Path,
+		Funcs(funcMap()).       // static
+		Funcs(template.FuncMap{ // from base
+			"path": base.Path,
 		})
 	tmplBase = extendFromPaths(tmplBase, prefixPartials)
 	tmplBase = extendFromPaths(tmplBase, prefixLayouts)
@@ -127,8 +129,6 @@ type templateData struct {
 	SelectedUser           *db.User
 }
 
-type adminHandler func(r *http.Request) *Response
-
 type Response struct {
 	// code is 200
 	template string
@@ -142,8 +142,11 @@ type Response struct {
 	err  string
 }
 
+type handlerAdmin func(r *http.Request) *Response
+
 //nolint:gocognit
-func (c *Controller) H(h adminHandler) http.Handler {
+func (c *Controller) H(h handlerAdmin) http.Handler {
+	// TODO: break this up a bit
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := h(r)
 		session, ok := r.Context().Value(CtxSession).(*sessions.Session)
@@ -217,24 +220,13 @@ const (
 	FlashWarning = FlashType("warning")
 )
 
-func firstExisting(or string, strings ...string) string {
-	for _, s := range strings {
-		if s != "" {
-			return s
-		}
-	}
-	return or
-}
-
-func sessLogSave(s *sessions.Session, w http.ResponseWriter, r *http.Request) {
-	if err := s.Save(r, w); err != nil {
-		log.Printf("error saving session: %v\n", err)
-	}
-}
-
 type Flash struct {
 	Message string
 	Type    FlashType
+}
+
+func init() {
+	gob.Register(&Flash{})
 }
 
 func sessAddFlashN(s *sessions.Session, messages []string) {
@@ -257,6 +249,12 @@ func sessAddFlash(s *sessions.Session, messages []string, flashT FlashType) {
 			Message: message,
 			Type:    flashT,
 		})
+	}
+}
+
+func sessLogSave(s *sessions.Session, w http.ResponseWriter, r *http.Request) {
+	if err := s.Save(r, w); err != nil {
+		log.Printf("error saving session: %v\n", err)
 	}
 }
 

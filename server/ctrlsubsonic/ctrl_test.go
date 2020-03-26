@@ -39,7 +39,7 @@ type queryCase struct {
 	listSet    bool
 }
 
-func runQueryCases(t *testing.T, h subsonicHandler, cases []*queryCase) {
+func runQueryCases(t *testing.T, h handlerSubsonic, cases []*queryCase) {
 	for _, qc := range cases {
 		qc := qc // pin
 		t.Run(qc.expectPath, func(t *testing.T) {
