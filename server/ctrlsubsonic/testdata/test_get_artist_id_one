@@ -3,7 +3,7 @@
     "status": "ok",
     "version": "1.9.0",
     "type": "gonic",
-    "gonicVersion": "v0.8.2",
+    "gonicVersion": "v0.8.3",
     "artist": {
       "id": "1",
       "name": "Jah Wobble, The Edge & Holger Czukay",
