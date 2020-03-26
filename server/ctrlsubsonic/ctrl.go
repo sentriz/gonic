@@ -24,11 +24,13 @@ const (
 
 type Controller struct {
 	*ctrlbase.Controller
+	cachePath string
 }
 
-func New(base *ctrlbase.Controller) *Controller {
+func New(base *ctrlbase.Controller, cachePath string) *Controller {
 	return &Controller{
 		Controller: base,
+		cachePath:  cachePath,
 	}
 }
 

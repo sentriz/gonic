@@ -39,10 +39,11 @@ func New(opts Options) *Server {
 	opts.CachePath = filepath.Clean(opts.CachePath)
 	// ** begin controllers
 	scanner := scanner.New(opts.DB, opts.MusicPath)
+	// the base controller, it's fields/middlewares are embedded/used by the
+	// other two admin ui and subsonic controllers
 	base := &ctrlbase.Controller{
 		DB:          opts.DB,
 		MusicPath:   opts.MusicPath,
-		CachePath:   opts.CachePath,
 		ProxyPrefix: opts.ProxyPrefix,
 		Scanner:     scanner,
 	}
@@ -51,8 +52,10 @@ func New(opts Options) *Server {
 	r.Use(base.WithLogging)
 	r.Use(base.WithCORS)
 	setupMisc(r, base)
-	setupAdmin(r.PathPrefix("/admin").Subrouter(), ctrladmin.New(base))
-	setupSubsonic(r.PathPrefix("/rest").Subrouter(), ctrlsubsonic.New(base))
+	setupAdminRouter := r.PathPrefix("/admin").Subrouter()
+	setupAdmin(setupAdminRouter, ctrladmin.New(base))
+	setupSubsonicRouter := r.PathPrefix("/rest").Subrouter()
+	setupSubsonic(setupSubsonicRouter, ctrlsubsonic.New(base, opts.CachePath))
 	//
 	server := &http.Server{
 		Addr:         opts.ListenAddr,
