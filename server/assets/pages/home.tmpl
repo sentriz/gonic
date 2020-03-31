@@ -172,11 +172,7 @@
                 <input type="button" value="upload m3u8">
             </div>
         </form>
-        <script>
-            document.getElementById("playlist-upload-input").onchange = (e) => {
-                document.getElementById("playlist-upload-form").submit();
-            }
-        </script>
+        <script src="{{ path "/admin/static/playlist-upload.js" }}"></script>
     </div>
 </div>
 {{ end }}
