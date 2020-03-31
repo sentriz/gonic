@@ -1,4 +1,4 @@
-FROM golang:1.12-alpine AS builder
+FROM golang:1.12-alpine AS base
 RUN apk add -U --no-cache \
         build-base \
         ca-certificates \
@@ -6,14 +6,20 @@ RUN apk add -U --no-cache \
         sqlite \
         taglib-dev
 WORKDIR /src
+COPY go.mod .
+COPY go.sum .
+ENV GO111MODULE=on
+RUN go mod download
+
+FROM base AS builder
+WORKDIR /src
 COPY . .
 RUN ./_do_build_server && ./_do_build_scanner
 
 FROM alpine
-RUN apk add -U --no-cache ffmpeg
-COPY --from=builder \
-    /etc/ssl/certs/ca-certificates.crt \
-    /etc/ssl/certs/
+RUN apk add -U --no-cache \
+	ffmpeg \
+	ca-certificates
 COPY --from=builder \
     /usr/lib/libgcc_s.so.1 \
     /usr/lib/libstdc++.so.6 \
