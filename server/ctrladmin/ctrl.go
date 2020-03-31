@@ -98,11 +98,14 @@ func New(base *ctrlbase.Controller) *Controller {
 		})
 	tmplBase = extendFromPaths(tmplBase, prefixPartials)
 	tmplBase = extendFromPaths(tmplBase, prefixLayouts)
+	sessDB := gormstore.New(base.DB.DB, sessionKey)
+	sessDB.SessionOpts.HttpOnly = true
+	sessDB.SessionOpts.SameSite = http.SameSiteLaxMode
 	return &Controller{
 		Controller: base,
 		buffPool:   bpool.NewBufferPool(64),
 		templates:  pagesFromPaths(tmplBase, prefixPages),
-		sessDB:     gormstore.New(base.DB.DB, sessionKey),
+		sessDB:     sessDB,
 	}
 }
 
