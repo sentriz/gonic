@@ -30,4 +30,4 @@ require (
 
 replace github.com/golang/lint => golang.org/x/lint v0.0.0-20190409202823-959b441ac422
 
-go 1.13
+go 1.14
