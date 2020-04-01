@@ -82,7 +82,9 @@ then start with `docker-compose up -d`
 ```nginx
   location /gonic/ {
       proxy_pass http://localhost:4747/;
-      # set X-Forwarded-Host for last.fm connection callback
+      # set "Secure" cookie if using HTTPS
+      proxy_cookie_path / "/; Secure";
+      # set "X-Forwarded-Host" header for last.fm connection callback
       proxy_set_header X-Forwarded-Host $host;
   }
 ```
