@@ -1,16 +1,19 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # safety checks
 if [[ $# -ne 1 ]]; then
     echo "usage: $0 <major|minor|patch>" >&2
     exit 1
 fi
-if [[ -n "$(git status --porcelain)" ]]; then
-    echo "working directory is dirty" >&2
+if [[ "$(git rev-parse --abbrev-ref HEAD)" != 'master' ]]; then
+    echo "not on the master branch" >&2
     exit 1
 fi
-if [[ "$(git branch --show-current)" != 'master' ]]; then
-    echo "not on the master branch" >&2
+
+# get latest and check if clean
+git pull
+if [[ -n "$(git status --porcelain)" ]]; then
+    echo "working directory is dirty" >&2
     exit 1
 fi
 

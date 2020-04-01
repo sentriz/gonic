@@ -1,11 +1,11 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 test_data_path=server/ctrlsubsonic/testdata
 test_listen_addr=localhost:9353
 test_music_path=~/music
 test_db_path=$test_data_path/db
 
-if test "$1" == "--scan"; then
+if [[ "$1" == "--scan" ]]; then
     echo -e "\e[91mwarning: \e[39mthe --scan option was passed"
     echo "- this option should only be used if the database schema changes"
     echo "- the test json will likely change a lot"
