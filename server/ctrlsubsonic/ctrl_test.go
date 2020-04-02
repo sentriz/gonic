@@ -13,9 +13,9 @@ import (
 
 	jd "github.com/josephburnett/jd/lib"
 
-	"senan.xyz/g/gonic/db"
-	"senan.xyz/g/gonic/server/ctrlbase"
-	"senan.xyz/g/gonic/server/ctrlsubsonic/params"
+	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/server/ctrlbase"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 )
 
 var (

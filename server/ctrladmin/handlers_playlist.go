@@ -10,7 +10,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 
-	"senan.xyz/g/gonic/db"
+	"go.senan.xyz/gonic/db"
 )
 
 func playlistParseLine(c *Controller, path string) (int, error) {

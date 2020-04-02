@@ -10,11 +10,11 @@ import (
 
 	"github.com/jinzhu/gorm"
 
-	"senan.xyz/g/gonic/db"
-	"senan.xyz/g/gonic/scanner"
-	"senan.xyz/g/gonic/server/ctrlsubsonic/params"
-	"senan.xyz/g/gonic/server/ctrlsubsonic/spec"
-	"senan.xyz/g/gonic/server/lastfm"
+	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/scanner"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
+	"go.senan.xyz/gonic/server/lastfm"
 )
 
 func lowerUDecOrHash(in string) string {

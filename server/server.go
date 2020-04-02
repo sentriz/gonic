@@ -10,12 +10,12 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"senan.xyz/g/gonic/db"
-	"senan.xyz/g/gonic/scanner"
-	"senan.xyz/g/gonic/server/assets"
-	"senan.xyz/g/gonic/server/ctrladmin"
-	"senan.xyz/g/gonic/server/ctrlbase"
-	"senan.xyz/g/gonic/server/ctrlsubsonic"
+	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/scanner"
+	"go.senan.xyz/gonic/server/assets"
+	"go.senan.xyz/gonic/server/ctrladmin"
+	"go.senan.xyz/gonic/server/ctrlbase"
+	"go.senan.xyz/gonic/server/ctrlsubsonic"
 )
 
 type Options struct {

@@ -3,7 +3,7 @@ package spec
 import (
 	"path"
 
-	"senan.xyz/g/gonic/db"
+	"go.senan.xyz/gonic/db"
 )
 
 func NewAlbumByFolder(f *db.Album) *Album {

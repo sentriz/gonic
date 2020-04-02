@@ -18,10 +18,10 @@ import (
 	"github.com/oxtoacart/bpool"
 	"github.com/wader/gormstore"
 
-	"senan.xyz/g/gonic/db"
-	"senan.xyz/g/gonic/server/assets"
-	"senan.xyz/g/gonic/server/ctrlbase"
-	"senan.xyz/g/gonic/version"
+	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/server/assets"
+	"go.senan.xyz/gonic/server/ctrlbase"
+	"go.senan.xyz/gonic/version"
 )
 
 type CtxKey int

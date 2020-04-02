@@ -9,9 +9,9 @@ import (
 
 	"github.com/pkg/errors"
 
-	"senan.xyz/g/gonic/server/ctrlbase"
-	"senan.xyz/g/gonic/server/ctrlsubsonic/params"
-	"senan.xyz/g/gonic/server/ctrlsubsonic/spec"
+	"go.senan.xyz/gonic/server/ctrlbase"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 )
 
 type CtxKey int

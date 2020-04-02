@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"time"
 
-	"senan.xyz/g/gonic/db"
-	"senan.xyz/g/gonic/scanner"
-	"senan.xyz/g/gonic/server/encode"
-	"senan.xyz/g/gonic/server/lastfm"
+	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/scanner"
+	"go.senan.xyz/gonic/server/encode"
+	"go.senan.xyz/gonic/server/lastfm"
 )
 
 func firstExisting(or string, strings ...string) string {

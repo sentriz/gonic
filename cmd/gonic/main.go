@@ -11,9 +11,9 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/peterbourgon/ff"
 
-	"senan.xyz/g/gonic/db"
-	"senan.xyz/g/gonic/server"
-	"senan.xyz/g/gonic/version"
+	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/server"
+	"go.senan.xyz/gonic/version"
 )
 
 func main() {

@@ -13,7 +13,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"senan.xyz/g/gonic/db"
+	"go.senan.xyz/gonic/db"
 )
 
 var (

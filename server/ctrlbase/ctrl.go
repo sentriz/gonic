@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"path"
 
-	"senan.xyz/g/gonic/db"
-	"senan.xyz/g/gonic/scanner"
+	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/scanner"
 )
 
 type statusWriter struct {

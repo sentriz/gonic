@@ -1,4 +1,4 @@
-module senan.xyz/g/gonic
+module go.senan.xyz/gonic
 
 require (
 	cloud.google.com/go v0.40.0 // indirect

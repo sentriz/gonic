@@ -27,7 +27,7 @@ password can then be changed from the web interface
 ```
 $ apt install build-essential git sqlite libtag1-dev ffmpeg # for debian like
 $ pacman -S base-devel git sqlite taglib ffmpeg             # for arch like
-$ go get senan.xyz/g/gonic/cmd/gonic
+$ go get go.senan.xyz/gonic/cmd/gonic
 $ export PATH=$PATH:$HOME/go/bin
 $ gonic -h # or see "configuration options below"
 ```

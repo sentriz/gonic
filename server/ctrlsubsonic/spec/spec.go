@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"senan.xyz/g/gonic/version"
+	"go.senan.xyz/gonic/version"
 )
 
 var (

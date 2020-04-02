@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"senan.xyz/g/gonic/server/ctrlsubsonic/params"
-	"senan.xyz/g/gonic/server/ctrlsubsonic/spec"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 )
 
 func checkCredsToken(password, token, salt string) bool {

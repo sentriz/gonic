@@ -12,7 +12,7 @@ import (
 	"github.com/peterbourgon/ff"
 	"github.com/pkg/errors"
 
-	"senan.xyz/g/gonic/version"
+	"go.senan.xyz/gonic/version"
 )
 
 // once i had this written with ~100% text/template but it was very

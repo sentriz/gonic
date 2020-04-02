@@ -15,10 +15,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rainycape/unidecode"
 
-	"senan.xyz/g/gonic/db"
-	"senan.xyz/g/gonic/mime"
-	"senan.xyz/g/gonic/scanner/stack"
-	"senan.xyz/g/gonic/scanner/tags"
+	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/mime"
+	"go.senan.xyz/gonic/scanner/stack"
+	"go.senan.xyz/gonic/scanner/tags"
 )
 
 // isScanning acts as an atomic boolean semaphore. we don't

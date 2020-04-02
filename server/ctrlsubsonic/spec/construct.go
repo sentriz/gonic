@@ -1,6 +1,6 @@
 package spec
 
-import "senan.xyz/g/gonic/db"
+import "go.senan.xyz/gonic/db"
 
 func NewPlaylist(p *db.Playlist) *Playlist {
 	return &Playlist{
