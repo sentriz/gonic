@@ -12,11 +12,13 @@
 }
 
 *,
-span,
+body,
+button,
 div,
 i,
-input,
-body,
+input[type],
+select,
+span,
 html {
   font-family: monospace;
   font-size: var(--size);
@@ -30,6 +32,7 @@ body {
 
 input[type],
 select,
+button,
 textarea {
   border-radius: 0;
   border: 1px solid #ccc;
@@ -37,7 +40,7 @@ textarea {
   margin: 1px 0;
   padding: 0;
   height: calc(var(--size) * 1.25);
-  vertical-align: middle;
+  vertical-align: bottom;
 }
 
 input[type] {
