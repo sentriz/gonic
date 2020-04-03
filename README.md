@@ -70,12 +70,9 @@ then start with `docker-compose up -d`
 
 ## screenshots
 
-<p align="center">
-<p float="left">
-    <img width="400" src="https://github.com/sentriz/gonic/raw/master/.github/scrot_2.png">
-    <img width="400" src="https://github.com/sentriz/gonic/raw/master/.github/scrot_3.png">
-</p>
-</p>
+||||||
+|:-:|:-:|:-:|:-:|:-:|
+![](https://raw.githubusercontent.com/sentriz/gonic/master/.github/scrot_1.png)|![](https://raw.githubusercontent.com/sentriz/gonic/master/.github/scrot_2.png)|![](https://raw.githubusercontent.com/sentriz/gonic/master/.github/scrot_3.png)|![](https://raw.githubusercontent.com/sentriz/gonic/master/.github/scrot_4.png)|![](https://raw.githubusercontent.com/sentriz/gonic/master/.github/scrot_5.png)|
 
 ## example nginx config with `GONIC_PROXY_PREFIX`
 
