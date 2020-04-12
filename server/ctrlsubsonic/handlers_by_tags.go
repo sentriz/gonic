@@ -77,6 +77,7 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 	album := &db.Album{}
 	err = c.DB.
 		Preload("TagArtist").
+		Preload("TagGenre").
 		Preload("Tracks", func(db *gorm.DB) *gorm.DB {
 			return db.Order("tracks.tag_disc_number, tracks.tag_track_number")
 		}).

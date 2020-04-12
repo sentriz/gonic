@@ -11,7 +11,11 @@ func NewAlbumByTags(a *db.Album, artist *db.Artist) *Album {
 		Created:    a.ModifiedAt,
 		ID:         a.ID,
 		Name:       a.TagTitle,
+		Year:       a.TagYear,
 		TrackCount: a.ChildCount,
+	}
+	if a.TagGenre != nil {
+		ret.Genre = a.TagGenre.Name
 	}
 	if a.Cover != "" {
 		ret.CoverID = a.ID
