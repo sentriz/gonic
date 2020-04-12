@@ -3,7 +3,7 @@
     "status": "ok",
     "version": "1.9.0",
     "type": "gonic",
-    "gonicVersion": "v0.8.4",
+    "gonicVersion": "v0.8.5",
     "albumList2": {
       "album": [
         {
@@ -14,7 +14,8 @@
           "name": "Easter Everywhere",
           "songCount": 10,
           "duration": 0,
-          "created": "2019-06-13T12:57:28.850090338+01:00"
+          "created": "2019-06-13T12:57:28.850090338+01:00",
+          "year": 1967
         },
         {
           "id": "9",
@@ -24,7 +25,8 @@
           "name": "The Psychedelic Sounds of the 13th Floor Elevators",
           "songCount": 21,
           "duration": 0,
-          "created": "2019-06-13T12:57:24.306717554+01:00"
+          "created": "2019-06-13T12:57:24.306717554+01:00",
+          "year": 1966
         },
         {
           "id": "21",
@@ -34,7 +36,8 @@
           "name": "Lick My Decals Off, Baby",
           "songCount": 15,
           "duration": 0,
-          "created": "2019-06-10T19:26:30.944742894+01:00"
+          "created": "2019-06-10T19:26:30.944742894+01:00",
+          "year": 1970
         },
         {
           "id": "5",
@@ -44,7 +47,8 @@
           "name": "The Graveyard and the Ballroom",
           "songCount": 14,
           "duration": 0,
-          "created": "2019-06-05T17:46:37.675917974+01:00"
+          "created": "2019-06-05T17:46:37.675917974+01:00",
+          "year": 1994
         },
         {
           "id": "6",
@@ -53,7 +57,8 @@
           "name": "To Each...",
           "songCount": 9,
           "duration": 0,
-          "created": "2019-05-23T15:12:02.921473302+01:00"
+          "created": "2019-05-23T15:12:02.921473302+01:00",
+          "year": 1981
         },
         {
           "id": "13",
@@ -63,7 +68,8 @@
           "name": "Anika",
           "songCount": 9,
           "duration": 0,
-          "created": "2019-05-23T15:12:02.921473302+01:00"
+          "created": "2019-05-23T15:12:02.921473302+01:00",
+          "year": 2010
         },
         {
           "id": "3",
@@ -73,7 +79,8 @@
           "name": "Snake Charmer",
           "songCount": 5,
           "duration": 0,
-          "created": "2019-05-16T22:10:52+01:00"
+          "created": "2019-05-16T22:10:52+01:00",
+          "year": 1983
         },
         {
           "id": "16",
@@ -83,7 +90,8 @@
           "name": "Jane From Occupied Europe",
           "songCount": 16,
           "duration": 0,
-          "created": "2019-04-30T16:48:48+01:00"
+          "created": "2019-04-30T16:48:48+01:00",
+          "year": 1980
         },
         {
           "id": "17",
@@ -93,7 +101,8 @@
           "name": "A Trip to Marineville",
           "songCount": 18,
           "duration": 0,
-          "created": "2019-04-30T16:48:48+01:00"
+          "created": "2019-04-30T16:48:48+01:00",
+          "year": 1979
         },
         {
           "id": "19",
@@ -103,7 +112,8 @@
           "name": "Ten Years After",
           "songCount": 15,
           "duration": 0,
-          "created": "2019-04-30T16:48:30+01:00"
+          "created": "2019-04-30T16:48:30+01:00",
+          "year": 1967
         }
       ]
     }

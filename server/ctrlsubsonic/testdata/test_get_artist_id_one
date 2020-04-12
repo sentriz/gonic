@@ -3,7 +3,7 @@
     "status": "ok",
     "version": "1.9.0",
     "type": "gonic",
-    "gonicVersion": "v0.8.4",
+    "gonicVersion": "v0.8.5",
     "artist": {
       "id": "1",
       "name": "Jah Wobble, The Edge & Holger Czukay",
@@ -17,7 +17,8 @@
           "name": "Snake Charmer",
           "songCount": 0,
           "duration": 0,
-          "created": "2019-05-16T22:10:52+01:00"
+          "created": "2019-05-16T22:10:52+01:00",
+          "year": 1983
         }
       ]
     }

@@ -3,7 +3,7 @@
     "status": "ok",
     "version": "1.9.0",
     "type": "gonic",
-    "gonicVersion": "v0.8.4",
+    "gonicVersion": "v0.8.5",
     "artist": {
       "id": "3",
       "name": "13th Floor Elevators",
@@ -17,7 +17,8 @@
           "name": "Easter Everywhere",
           "songCount": 0,
           "duration": 0,
-          "created": "2019-06-13T12:57:28.850090338+01:00"
+          "created": "2019-06-13T12:57:28.850090338+01:00",
+          "year": 1967
         },
         {
           "id": "9",
@@ -27,7 +28,8 @@
           "name": "The Psychedelic Sounds of the 13th Floor Elevators",
           "songCount": 0,
           "duration": 0,
-          "created": "2019-06-13T12:57:24.306717554+01:00"
+          "created": "2019-06-13T12:57:24.306717554+01:00",
+          "year": 1966
         }
       ]
     }

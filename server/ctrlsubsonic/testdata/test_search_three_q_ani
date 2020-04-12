@@ -3,7 +3,7 @@
     "status": "ok",
     "version": "1.9.0",
     "type": "gonic",
-    "gonicVersion": "v0.8.4",
+    "gonicVersion": "v0.8.5",
     "searchResult3": {
       "artist": [
         {
@@ -21,7 +21,8 @@
           "name": "Anika",
           "songCount": 0,
           "duration": 0,
-          "created": "2019-05-23T15:12:02.921473302+01:00"
+          "created": "2019-05-23T15:12:02.921473302+01:00",
+          "year": 2010
         }
       ]
     }

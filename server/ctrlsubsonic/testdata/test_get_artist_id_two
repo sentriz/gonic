@@ -3,7 +3,7 @@
     "status": "ok",
     "version": "1.9.0",
     "type": "gonic",
-    "gonicVersion": "v0.8.4",
+    "gonicVersion": "v0.8.5",
     "artist": {
       "id": "2",
       "name": "A Certain Ratio",
@@ -17,7 +17,8 @@
           "name": "The Graveyard and the Ballroom",
           "songCount": 0,
           "duration": 0,
-          "created": "2019-06-05T17:46:37.675917974+01:00"
+          "created": "2019-06-05T17:46:37.675917974+01:00",
+          "year": 1994
         },
         {
           "id": "6",
@@ -26,7 +27,8 @@
           "name": "To Each...",
           "songCount": 0,
           "duration": 0,
-          "created": "2019-05-23T15:12:02.921473302+01:00"
+          "created": "2019-05-23T15:12:02.921473302+01:00",
+          "year": 1981
         }
       ]
     }
