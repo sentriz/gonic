@@ -7,6 +7,7 @@ import (
 	"path"
 
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/jukebox"
 	"go.senan.xyz/gonic/scanner"
 )
 
@@ -49,6 +50,7 @@ type Controller struct {
 	MusicPath   string
 	Scanner     *scanner.Scanner
 	ProxyPrefix string
+	Jukebox     *jukebox.Jukebox
 }
 
 // Path returns a URL path with the proxy prefix included

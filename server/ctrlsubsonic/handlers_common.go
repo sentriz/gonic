@@ -313,3 +313,44 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	}
 	return sub
 }
+
+func (c *Controller) ServeJukebox(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	var tracks []*db.Track
+
+	action := params.Get("action")
+	switch action {
+	case "set":
+		ids := params.GetFirstListInt("id")
+		if len(ids) == 0 {
+			break
+		}
+		err := c.DB.Where("id IN (?)", ids).Preload("Album").Find(&tracks).Error
+		if err != nil {
+			return spec.NewError(10, "couldn't find tracks with provided ids")
+		}
+		c.Jukebox.SetTracks(tracks)
+	case "clear":
+		c.Jukebox.ClearTracks()
+	case "remove":
+		index, err := params.GetInt("index")
+		if err != nil {
+			return spec.NewError(10, "please provide an id for remove actions")
+		}
+		c.Jukebox.RemoveTrack(index)
+	case "stop":
+		c.Jukebox.Stop()
+	case "start":
+		c.Jukebox.Start()
+	case "skip":
+		c.Jukebox.Skip()
+	case "get":
+		sub := spec.NewResponse()
+		sub.JukeboxPlaylist = c.Jukebox.GetTracks()
+		return sub
+	}
+	// All actions except get are expected to return a status
+	sub := spec.NewResponse()
+	sub.JukeboxStatus = c.Jukebox.Status()
+	return sub
+}
