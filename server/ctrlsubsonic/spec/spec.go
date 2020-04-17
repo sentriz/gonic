@@ -41,6 +41,8 @@ type Response struct {
 	ArtistInfoTwo     *ArtistInfo        `xml:"artistInfo2"       json:"artistInfo2,omitempty"`
 	Genres            *Genres            `xml:"genres"            json:"genres,omitempty"`
 	PlayQueue         *PlayQueue         `xml:"playQueue"         json:"playQueue,omitempty"`
+	JukeboxStatus     *JukeboxStatus     `xml:"jukeboxStatus"     json:"jukeboxStatus,omitempty"`
+	JukeboxPlaylist   *JukeboxPlaylist   `xml:"jukeboxPlaylist"   json:"jukeboxPlaylist,omitempty"`
 }
 
 func NewResponse() *Response {
@@ -268,4 +270,16 @@ type PlayQueue struct {
 	Changed   time.Time     `xml:"changed,attr"            json:"changed"`
 	ChangedBy string        `xml:"changedBy,attr"          json:"changedBy"`
 	List      []*TrackChild `xml:"entry,omitempty"         json:"entry,omitempty"`
+}
+
+type JukeboxStatus struct {
+	CurrentIndex int     `xml:"currentIndex,attr" json:"currentIndex"`
+	Playing      bool    `xml:"playing,attr"      json:"playing"`
+	Gain         float64 `xml:"gain,attr"         json:"gain"`
+	Position     int     `xml:"position,attr"     json:"position"`
+}
+
+type JukeboxPlaylist struct {
+	List []*TrackChild `xml:"entry,omitempty" json:"entry,omitempty"`
+	JukeboxStatus
 }

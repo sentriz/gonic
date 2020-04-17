@@ -112,6 +112,7 @@ func (c *Controller) ServeGetUser(r *http.Request) *spec.Response {
 	sub.User = &spec.User{
 		Username:          user.Name,
 		AdminRole:         user.IsAdmin,
+		JukeboxRole:       true,
 		ScrobblingEnabled: user.LastFMSession != "",
 		Folder:            []int{1},
 	}
@@ -311,5 +312,53 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	for i, track := range tracks {
 		sub.RandomTracks.List[i] = spec.NewTrackByTags(track, track.Album)
 	}
+	return sub
+}
+
+func (c *Controller) ServeJukebox(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	switch params.Get("action") {
+	case "set":
+		var tracks []*db.Track
+		ids := params.GetFirstListInt("id")
+		if len(ids) == 0 {
+			c.Jukebox.ClearTracks()
+		}
+		for _, id := range ids {
+			track := &db.Track{}
+			err := c.DB.Preload("Album").First(track, id).Error
+			if err != nil {
+				return spec.NewError(10, "couldn't find tracks with provided ids")
+			}
+			tracks = append(tracks, track)
+		}
+		c.Jukebox.SetTracks(tracks)
+	case "clear":
+		c.Jukebox.ClearTracks()
+	case "remove":
+		index, err := params.GetInt("index")
+		if err != nil {
+			return spec.NewError(10, "please provide an id for remove actions")
+		}
+		c.Jukebox.RemoveTrack(index)
+	case "stop":
+		c.Jukebox.Stop()
+	case "start":
+		c.Jukebox.Start()
+	case "skip":
+		index, err := params.GetInt("index")
+		var skipCurrent bool
+		if err != nil {
+			skipCurrent = true
+		}
+		c.Jukebox.Skip(index, skipCurrent)
+	case "get":
+		sub := spec.NewResponse()
+		sub.JukeboxPlaylist = c.Jukebox.GetTracks()
+		return sub
+	}
+	// All actions except get are expected to return a status
+	sub := spec.NewResponse()
+	sub.JukeboxStatus = c.Jukebox.Status()
 	return sub
 }

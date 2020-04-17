@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/jukebox"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/server/assets"
 	"go.senan.xyz/gonic/server/ctrladmin"
@@ -46,7 +47,9 @@ func New(opts Options) *Server {
 		MusicPath:   opts.MusicPath,
 		ProxyPrefix: opts.ProxyPrefix,
 		Scanner:     scanner,
+		Jukebox:     &jukebox.Jukebox{},
 	}
+	base.Jukebox.Init(opts.MusicPath)
 	// router with common wares for admin / subsonic
 	r := mux.NewRouter()
 	r.Use(base.WithLogging)
@@ -154,6 +157,7 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/getSong{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetSong))
 	r.Handle("/getRandomSongs{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetRandomSongs))
 	r.Handle("/getSongsByGenre{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetSongsByGenre))
+	r.Handle("/jukeboxControl{_:(?:\\.view)?}", ctrl.H(ctrl.ServeJukebox))
 	// ** begin raw
 	r.Handle("/download{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeDownload))
 	r.Handle("/getCoverArt{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeGetCoverArt))
