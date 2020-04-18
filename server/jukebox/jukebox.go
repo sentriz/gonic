@@ -1,3 +1,5 @@
+// author: AlexKraak (https://github.com/alexkraak/)
+
 package jukebox
 
 import (

@@ -1,3 +1,5 @@
+// author: spijet (https://github.com/spijet/)
+
 package encode
 
 import (
