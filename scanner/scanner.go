@@ -57,7 +57,7 @@ type Scanner struct {
 	seenTracksErr int              // n tracks we we couldn't scan
 }
 
-func New(db *db.DB, musicPath string) *Scanner {
+func New(musicPath string, db *db.DB) *Scanner {
 	return &Scanner{
 		db:          db,
 		musicPath:   musicPath,

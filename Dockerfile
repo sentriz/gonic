@@ -4,7 +4,8 @@ RUN apk add -U --no-cache \
     ca-certificates \
     git \
     sqlite \
-    taglib-dev
+    taglib-dev \
+    alsa-lib-dev
 WORKDIR /src
 COPY go.mod .
 COPY go.sum .

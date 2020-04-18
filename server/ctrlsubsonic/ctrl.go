@@ -12,6 +12,7 @@ import (
 	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
+	"go.senan.xyz/gonic/server/jukebox"
 )
 
 type CtxKey int
@@ -24,14 +25,8 @@ const (
 
 type Controller struct {
 	*ctrlbase.Controller
-	cachePath string
-}
-
-func New(base *ctrlbase.Controller, cachePath string) *Controller {
-	return &Controller{
-		Controller: base,
-		cachePath:  cachePath,
-	}
+	CachePath string
+	Jukebox   *jukebox.Jukebox
 }
 
 type metaResponse struct {

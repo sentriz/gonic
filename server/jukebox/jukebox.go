@@ -1,6 +1,7 @@
 package jukebox
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"sync"
@@ -10,6 +11,7 @@ import (
 	"github.com/faiface/beep/flac"
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
+
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 )
@@ -21,90 +23,142 @@ type strmInfo struct {
 }
 
 type Jukebox struct {
-	playlist []*db.Track
-	index    int
-	playing  bool
+	playlist  []*db.Track
+	musicPath string
+	index     int
+	playing   bool
+	sr        beep.SampleRate
 	// used to notify the player to re read the members
 	updates chan struct{}
+	quit    chan struct{}
 	done    chan bool
 	info    *strmInfo
 	sync.Mutex
 }
 
-func (j *Jukebox) Init(musicPath string) error {
-	j.updates = make(chan struct{})
-	sr := beep.SampleRate(48000)
-	err := speaker.Init(sr, sr.N(time.Second/2))
-	if err != nil {
-		return err
+func New(musicPath string) *Jukebox {
+	return &Jukebox{
+		musicPath: musicPath,
+		sr:        beep.SampleRate(48000),
+		updates:   make(chan struct{}),
+		done:      make(chan bool),
+		quit:      make(chan struct{}),
 	}
-	j.done = make(chan bool)
-	go func() {
-		for range j.updates {
-			var streamer beep.Streamer
-			var format beep.Format
-			f, err := os.Open(path.Join(musicPath, j.playlist[j.index].RelPath()))
-			if err != nil {
-				j.index++
-				continue
-			}
-			switch j.playlist[j.index].Ext() {
-			case "mp3":
-				streamer, format, err = mp3.Decode(f)
-			case "flac":
-				streamer, format, err = flac.Decode(f)
-			default:
-				j.index++
-				continue
-			}
-			if err != nil {
-				j.index++
-				continue
-			}
-			if j.playing {
-				j.Lock()
-				{
-					j.info = &strmInfo{}
-					j.info.strm = streamer.(beep.StreamSeekCloser)
-					j.info.ctrlStrmr.Streamer = beep.Resample(4, format.SampleRate, sr, j.info.strm)
-					j.info.format = format
-				}
-				j.Unlock()
-				speaker.Play(beep.Seq(&j.info.ctrlStrmr, beep.Callback(func() {
-					j.done <- false
-				})))
-				if v := <-j.done; !v {
-					j.index++
-					j.Lock()
-					if j.index > len(j.playlist) {
-						j.index = 0
-						j.playing = false
-					}
-					j.Unlock()
-					// in a go routine as otherwise this hangs as the
-					go func() {
-						j.updates <- struct{}{}
-					}()
-				} else {
-					continue
-				}
-			}
+}
+
+func (j *Jukebox) Listen() error {
+	if err := speaker.Init(j.sr, j.sr.N(time.Second/2)); err != nil {
+		return fmt.Errorf("initing speaker: %w", err)
+	}
+	for {
+		select {
+		case <-j.quit:
+			return nil
+		case <-j.updates:
+			j.doUpdate()
 		}
-	}()
-	return nil
+	}
+}
+
+func (j *Jukebox) Quit() {
+	j.quit <- struct{}{}
+}
+
+func (j *Jukebox) doUpdate() {
+	var streamer beep.Streamer
+	var format beep.Format
+	if j.index >= len(j.playlist) {
+		j.Lock()
+		j.index = 0
+		j.playing = false
+		j.Unlock()
+		return
+	}
+	j.Lock()
+	f, err := os.Open(path.Join(
+		j.musicPath,
+		j.playlist[j.index].RelPath(),
+	))
+	j.Unlock()
+	if err != nil {
+		j.incIndex()
+		return
+	}
+	switch j.playlist[j.index].Ext() {
+	case "mp3":
+		streamer, format, err = mp3.Decode(f)
+	case "flac":
+		streamer, format, err = flac.Decode(f)
+	default:
+		j.incIndex()
+		return
+	}
+	if err != nil {
+		j.incIndex()
+		return
+	}
+	if j.playing {
+		j.Lock()
+		{
+			j.info = &strmInfo{}
+			j.info.strm = streamer.(beep.StreamSeekCloser)
+			j.info.ctrlStrmr.Streamer = beep.Resample(
+				4, format.SampleRate,
+				j.sr, j.info.strm,
+			)
+			j.info.format = format
+		}
+		j.Unlock()
+		speaker.Play(beep.Seq(&j.info.ctrlStrmr, beep.Callback(func() {
+			j.done <- false
+		})))
+		if v := <-j.done; v {
+			return
+		}
+		j.Lock()
+		j.index++
+		if j.index >= len(j.playlist) {
+			j.index = 0
+			j.playing = false
+			j.Unlock()
+			return
+		}
+		j.Unlock()
+		// in a go routine as otherwise this hangs as the
+		go func() {
+			j.updates <- struct{}{}
+		}()
+	}
+}
+
+func (j *Jukebox) incIndex() {
+	j.Lock()
+	defer j.Unlock()
+	j.index++
 }
 
 func (j *Jukebox) SetTracks(tracks []*db.Track) {
 	j.Lock()
+	defer j.Unlock()
 	j.index = 0
-	j.playing = true
-	if len(j.playlist) > 0 {
-		j.done <- true
+	if len(tracks) == 0 {
+		if j.playing {
+			j.done <- true
+		}
+		j.playing = false
 		j.playlist = []*db.Track{}
 		speaker.Clear()
+		return
+	}
+	if j.playing {
+		j.playlist = tracks
+		j.done <- true
+		speaker.Clear()
+		j.updates <- struct{}{}
+		return
 	}
 	j.playlist = tracks
-	j.Unlock()
+	j.playing = true
 	j.updates <- struct{}{}
 }
 
@@ -173,20 +227,25 @@ func (j *Jukebox) Stop() {
 
 func (j *Jukebox) Start() {
 	j.Lock()
-	j.playing = false
+	j.playing = true
 	j.info.ctrlStrmr.Paused = false
 	j.Unlock()
 }
 
 func (j *Jukebox) Skip(i int, skipCurrent bool) {
 	j.Lock()
+	defer j.Unlock()
+	if i == j.index {
+		return
+	}
 	if skipCurrent {
 		j.index++
 	} else {
 		j.index = i
 	}
 	speaker.Clear()
-	j.done <- true
+	if j.playing {
+		j.done <- true
+	}
 	j.updates <- struct{}{}
-	j.Unlock()
 }

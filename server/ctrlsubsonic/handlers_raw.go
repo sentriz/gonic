@@ -136,7 +136,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	}
 	servOpts.pref = pref
 	servOpts.maxBitrate = params.GetIntOr("maxBitRate", 0)
-	servOpts.cachePath = c.cachePath
+	servOpts.cachePath = c.CachePath
 	serveTrackEncode(w, r, servOpts)
 	return nil
 }

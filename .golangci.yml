@@ -1,3 +1,6 @@
+run:
+  skip-files:
+    - server/assets/assets_gen.go
 linters:
   enable-all: true
   disable:

@@ -11,27 +11,25 @@ import (
 	"github.com/gorilla/mux"
 
 	"go.senan.xyz/gonic/db"
-	"go.senan.xyz/gonic/jukebox"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/server/assets"
 	"go.senan.xyz/gonic/server/ctrladmin"
 	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/ctrlsubsonic"
+	"go.senan.xyz/gonic/server/jukebox"
 )
 
 type Options struct {
-	DB           *db.DB
-	MusicPath    string
-	CachePath    string
-	ListenAddr   string
-	ScanInterval time.Duration
-	ProxyPrefix  string
+	DB          *db.DB
+	MusicPath   string
+	CachePath   string
+	ProxyPrefix string
 }
 
 type Server struct {
-	*http.Server
-	scanner      *scanner.Scanner
-	scanInterval time.Duration
+	scanner *scanner.Scanner
+	jukebox *jukebox.Jukebox
+	router  *mux.Router
 }
 
 func New(opts Options) *Server {
@@ -39,7 +37,8 @@ func New(opts Options) *Server {
 	opts.MusicPath = filepath.Clean(opts.MusicPath)
 	opts.CachePath = filepath.Clean(opts.CachePath)
 	// ** begin controllers
-	scanner := scanner.New(opts.DB, opts.MusicPath)
+	scanner := scanner.New(opts.MusicPath, opts.DB)
+	jukebox := jukebox.New(opts.MusicPath)
 	// the base controller, it's fields/middlewares are embedded/used by the
 	// other two admin ui and subsonic controllers
 	base := &ctrlbase.Controller{
@@ -47,30 +46,25 @@ func New(opts Options) *Server {
 		MusicPath:   opts.MusicPath,
 		ProxyPrefix: opts.ProxyPrefix,
 		Scanner:     scanner,
-		Jukebox:     &jukebox.Jukebox{},
 	}
-	base.Jukebox.Init(opts.MusicPath)
 	// router with common wares for admin / subsonic
 	r := mux.NewRouter()
 	r.Use(base.WithLogging)
 	r.Use(base.WithCORS)
-	setupMisc(r, base)
-	setupAdminRouter := r.PathPrefix("/admin").Subrouter()
-	setupAdmin(setupAdminRouter, ctrladmin.New(base))
-	setupSubsonicRouter := r.PathPrefix("/rest").Subrouter()
-	setupSubsonic(setupSubsonicRouter, ctrlsubsonic.New(base, opts.CachePath))
-	//
-	server := &http.Server{
-		Addr:         opts.ListenAddr,
-		Handler:      r,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 80 * time.Second,
-		IdleTimeout:  60 * time.Second,
+	ctrlAdmin := ctrladmin.New(base)
+	ctrlSubsonic := &ctrlsubsonic.Controller{
+		Controller: base,
+		CachePath:  opts.CachePath,
+		Jukebox:    jukebox,
 	}
+	setupMisc(r, base)
+	setupAdmin(r.PathPrefix("/admin").Subrouter(), ctrlAdmin)
+	setupSubsonic(r.PathPrefix("/rest").Subrouter(), ctrlSubsonic)
+	//
 	return &Server{
-		Server:       server,
-		scanner:      scanner,
-		scanInterval: opts.ScanInterval,
+		scanner: scanner,
+		jukebox: jukebox,
+		router:  r,
 	}
 }
 
@@ -183,17 +177,54 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.NotFoundHandler = notFoundRoute.GetHandler()
 }
 
-func (s *Server) Start() error {
-	if s.scanInterval > 0 {
-		log.Printf("will be scanning at intervals of %s", s.scanInterval)
-		ticker := time.NewTicker(s.scanInterval)
-		go func() {
-			for range ticker.C {
+type funcExecute func() error
+type funcInterrupt func(error)
+
+func (s *Server) StartHTTP(listenAddr string) (funcExecute, funcInterrupt) {
+	log.Print("starting job 'http'\n")
+	list := &http.Server{
+		Addr:         listenAddr,
+		Handler:      s.router,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 80 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+	execute := func() error {
+		return list.ListenAndServe()
+	}
+	return execute, func(_ error) {
+		list.Close()
+	}
+}
+
+func (s *Server) StartScanTicker(dur time.Duration) (funcExecute, funcInterrupt) {
+	log.Printf("starting job 'scan timer'\n")
+	ticker := time.NewTicker(dur)
+	done := make(chan struct{})
+	execute := func() error {
+		for {
+			select {
+			case <-done:
+				return nil
+			case <-ticker.C:
 				if err := s.scanner.Start(); err != nil {
-					log.Printf("error while scanner: %v", err)
+					log.Printf("error scanning: %v", err)
 				}
 			}
-		}()
+		}
 	}
-	return s.ListenAndServe()
+	return execute, func(_ error) {
+		ticker.Stop()
+		done <- struct{}{}
+	}
+}
+
+func (s *Server) StartJukebox() (funcExecute, funcInterrupt) {
+	log.Printf("starting job 'jukebox'\n")
+	execute := func() error {
+		return s.jukebox.Listen()
+	}
+	return execute, func(_ error) {
+		s.jukebox.Quit()
+	}
 }

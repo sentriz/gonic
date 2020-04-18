@@ -9,6 +9,7 @@ import (
 	"time"
 
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"github.com/oklog/run"
 	"github.com/peterbourgon/ff"
 
 	"go.senan.xyz/gonic/db"
@@ -33,10 +34,16 @@ func main() {
 	); err != nil {
 		log.Fatalf("error parsing args: %v\n", err)
 	}
+	//
 	if *showVersion {
 		fmt.Println(version.VERSION)
 		os.Exit(0)
 	}
+	log.Printf("starting gonic %s\n", version.VERSION)
+	log.Printf("provided config:\n")
+	set.VisitAll(func(f *flag.Flag) {
+		fmt.Printf("\t%s:\t%s\n", f.Name, f.Value)
+	})
 	if _, err := os.Stat(*musicPath); os.IsNotExist(err) {
 		log.Fatal("please provide a valid music directory")
 	}
@@ -50,20 +57,24 @@ func main() {
 		log.Fatalf("error opening database: %v\n", err)
 	}
 	defer db.Close()
+	//
 	proxyPrefixExpr := regexp.MustCompile(`^\/*(.*?)\/*$`)
 	*proxyPrefix = proxyPrefixExpr.ReplaceAllString(*proxyPrefix, `/$1`)
-	serverOptions := server.Options{
-		DB:           db,
-		MusicPath:    *musicPath,
-		CachePath:    *cachePath,
-		ListenAddr:   *listenAddr,
-		ScanInterval: time.Duration(*scanInterval) * time.Minute,
-		ProxyPrefix:  *proxyPrefix,
+	//
+	server := server.New(server.Options{
+		DB:          db,
+		MusicPath:   *musicPath,
+		CachePath:   *cachePath,
+		ProxyPrefix: *proxyPrefix,
+	})
+	var g run.Group
+	g.Add(server.StartJukebox())
+	g.Add(server.StartHTTP(*listenAddr))
+	if *scanInterval > 0 {
+		tickerDur := time.Duration(*scanInterval) * time.Minute
+		g.Add(server.StartScanTicker(tickerDur))
 	}
-	log.Printf("using opts %+v\n", serverOptions)
-	s := server.New(serverOptions)
-	log.Printf("starting server at %s", *listenAddr)
-	if err := s.Start(); err != nil {
-		log.Fatalf("error starting server: %v\n", err)
+	if err := g.Run(); err != nil {
+		log.Printf("error in job: %v", err)
 	}
 }

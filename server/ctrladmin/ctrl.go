@@ -83,26 +83,26 @@ type Controller struct {
 	sessDB    *gormstore.Store
 }
 
-func New(base *ctrlbase.Controller) *Controller {
-	sessionKey := []byte(base.DB.GetSetting("session_key"))
+func New(b *ctrlbase.Controller) *Controller {
+	sessionKey := []byte(b.DB.GetSetting("session_key"))
 	if len(sessionKey) == 0 {
 		sessionKey = securecookie.GenerateRandomKey(32)
-		base.DB.SetSetting("session_key", string(sessionKey))
+		b.DB.SetSetting("session_key", string(sessionKey))
 	}
 	tmplBase := template.
 		New("layout").
 		Funcs(sprig.FuncMap()).
 		Funcs(funcMap()).       // static
 		Funcs(template.FuncMap{ // from base
-			"path": base.Path,
+			"path": b.Path,
 		})
 	tmplBase = extendFromPaths(tmplBase, prefixPartials)
 	tmplBase = extendFromPaths(tmplBase, prefixLayouts)
-	sessDB := gormstore.New(base.DB.DB, sessionKey)
+	sessDB := gormstore.New(b.DB.DB, sessionKey)
 	sessDB.SessionOpts.HttpOnly = true
 	sessDB.SessionOpts.SameSite = http.SameSiteLaxMode
 	return &Controller{
-		Controller: base,
+		Controller: b,
 		buffPool:   bpool.NewBufferPool(64),
 		templates:  pagesFromPaths(tmplBase, prefixPages),
 		sessDB:     sessDB,

@@ -317,22 +317,23 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeJukebox(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	switch params.Get("action") {
-	case "set":
+	getTracks := func() []*db.Track {
 		var tracks []*db.Track
 		ids := params.GetFirstListInt("id")
-		if len(ids) == 0 {
-			c.Jukebox.ClearTracks()
-		}
 		for _, id := range ids {
 			track := &db.Track{}
-			err := c.DB.Preload("Album").First(track, id).Error
-			if err != nil {
-				return spec.NewError(10, "couldn't find tracks with provided ids")
+			c.DB.Preload("Album").First(track, id)
+			if track.ID != 0 {
+				tracks = append(tracks, track)
 			}
-			tracks = append(tracks, track)
 		}
-		c.Jukebox.SetTracks(tracks)
+		return tracks
+	}
+	switch act := params.Get("action"); act {
+	case "set":
+		c.Jukebox.SetTracks(getTracks())
+	case "add":
+		c.Jukebox.AddTracks(getTracks())
 	case "clear":
 		c.Jukebox.ClearTracks()
 	case "remove":
@@ -356,8 +357,10 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response {
 		sub := spec.NewResponse()
 		sub.JukeboxPlaylist = c.Jukebox.GetTracks()
 		return sub
+	default:
+		return spec.NewError(10, "unknown value `%s` for parameter 'action'", act)
 	}
-	// All actions except get are expected to return a status
+	// all actions except get are expected to return a status
 	sub := spec.NewResponse()
 	sub.JukeboxStatus = c.Jukebox.Status()
 	return sub
