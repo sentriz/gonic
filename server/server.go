@@ -181,7 +181,6 @@ type funcExecute func() error
 type funcInterrupt func(error)
 
 func (s *Server) StartHTTP(listenAddr string) (funcExecute, funcInterrupt) {
-	log.Print("starting job 'http'\n")
 	list := &http.Server{
 		Addr:         listenAddr,
 		Handler:      s.router,
@@ -190,18 +189,20 @@ func (s *Server) StartHTTP(listenAddr string) (funcExecute, funcInterrupt) {
 		IdleTimeout:  60 * time.Second,
 	}
 	execute := func() error {
+		log.Print("starting job 'http'\n")
 		return list.ListenAndServe()
 	}
 	return execute, func(_ error) {
+		// stop job
 		list.Close()
 	}
 }
 
 func (s *Server) StartScanTicker(dur time.Duration) (funcExecute, funcInterrupt) {
-	log.Printf("starting job 'scan timer'\n")
 	ticker := time.NewTicker(dur)
 	done := make(chan struct{})
 	execute := func() error {
+		log.Printf("starting job 'scan timer'\n")
 		for {
 			select {
 			case <-done:
@@ -214,17 +215,19 @@ func (s *Server) StartScanTicker(dur time.Duration) (funcExecute, funcInterrupt)
 		}
 	}
 	return execute, func(_ error) {
+		// stop job
 		ticker.Stop()
 		done <- struct{}{}
 	}
 }
 
 func (s *Server) StartJukebox() (funcExecute, funcInterrupt) {
-	log.Printf("starting job 'jukebox'\n")
 	execute := func() error {
+		log.Printf("starting job 'jukebox'\n")
 		return s.jukebox.Listen()
 	}
 	return execute, func(_ error) {
+		// stop job
 		s.jukebox.Quit()
 	}
 }
