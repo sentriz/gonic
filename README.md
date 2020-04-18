@@ -8,6 +8,7 @@
  - browsing by folder (keeping your full tree intact)  
  - browsing by tags (using [taglib](https://taglib.org/) - supports mp3, opus, flac, ape, m4a, wav, etc.)  
  - on-the-fly audio transcoding and caching (requires [ffmpeg](https://ffmpeg.org/)) (thank you [spijet](https://github.com/spijet/))
+ - jukebox mode (thank you [AlexKraak](https://github.com/AlexKraak/))
  - pretty fast scanning (with my library of ~27k tracks, initial scan takes about 10m, and about 5s after incrementally)  
  - multiple users, each with their own transcoding preferences, playlists, top tracks, top artists, etc.
  - [last.fm](https://www.last.fm/) scrobbling  
@@ -49,6 +50,8 @@ services:
     # optionally, see env vars below
     expose:
     - 80
+    devices:
+    - /dev/snd:/dev/snd        # if using jukebox
     volumes:
     - ./data:/data             # gonic db etc
     - /path/to/music:/music:ro # your music
@@ -67,6 +70,7 @@ then start with `docker-compose up -d`
 |`GONIC_LISTEN_ADDR`|`-listen-addr`|**optional** host and port to listen on (eg. `0.0.0.0:4747`, `127.0.0.1:4747`) (*default* `0.0.0.0:4747`)|
 |`GONIC_PROXY_PREFIX`|`-proxy-prefix`|**optional** url path prefix to use if behind reverse proxy. eg `/gonic` (see example configs below)|
 |`GONIC_SCAN_INTERVAL`|`-scan-interval`|**optional** interval (in minutes) to check for new music (automatic scanning disabled if omitted)|
+|`GONIC_JUKEBOX_ENABLED`|`-jukebox-enabled`|**optional** whether the subsonic [jukebox api](https://airsonic.github.io/docs/jukebox/) should be enabled|
 
 ## screenshots
 

@@ -24,6 +24,7 @@ func main() {
 	cachePath := set.String("cache-path", "/tmp/gonic_cache", "path to cache")
 	dbPath := set.String("db-path", "gonic.db", "path to database (optional)")
 	scanInterval := set.Int("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
+	jukeboxEnabled := set.Bool("jukebox-enabled", false, "whether the subsonic jukebox api should be enabled (optional)")
 	proxyPrefix := set.String("proxy-prefix", "", "url path prefix to use if behind proxy. eg '/gonic' (optional)")
 	_ = set.String("config-path", "", "path to config (optional)")
 	showVersion := set.Bool("version", false, "show gonic version")
@@ -40,9 +41,9 @@ func main() {
 		os.Exit(0)
 	}
 	log.Printf("starting gonic %s\n", version.VERSION)
-	log.Printf("provided config:\n")
+	log.Printf("provided config\n")
 	set.VisitAll(func(f *flag.Flag) {
-		fmt.Printf("\t%s:\t%s\n", f.Name, f.Value)
+		log.Printf("    %-15s %s\n", f.Name, f.Value)
 	})
 	if _, err := os.Stat(*musicPath); os.IsNotExist(err) {
 		log.Fatal("please provide a valid music directory")
@@ -68,11 +69,13 @@ func main() {
 		ProxyPrefix: *proxyPrefix,
 	})
 	var g run.Group
-	g.Add(server.StartJukebox())
 	g.Add(server.StartHTTP(*listenAddr))
 	if *scanInterval > 0 {
 		tickerDur := time.Duration(*scanInterval) * time.Minute
 		g.Add(server.StartScanTicker(tickerDur))
+	}
+	if *jukeboxEnabled {
+		g.Add(server.StartJukebox())
 	}
 	if err := g.Run(); err != nil {
 		log.Printf("error in job: %v", err)

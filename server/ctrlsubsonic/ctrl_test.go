@@ -30,10 +30,9 @@ func init() {
 	if err != nil {
 		log.Fatalf("error opening database: %v\n", err)
 	}
-	testController = New(
-		&ctrlbase.Controller{DB: db},
-		"",
-	)
+	testController = &Controller{
+		Controller: &ctrlbase.Controller{DB: db},
+	}
 }
 
 type queryCase struct {
