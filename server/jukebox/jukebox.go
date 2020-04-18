@@ -127,12 +127,16 @@ func (j *Jukebox) doUpdate(u update) {
 		j.playlist = append(j.playlist[:u.index], j.playlist[u.index+1:]...)
 		j.Unlock()
 	case stop:
-		j.playing = false
-		j.info.ctrlStrmr.Paused = true
+		if j.info != nil {
+			j.playing = false
+			j.info.ctrlStrmr.Paused = true
+		}
 		j.Unlock()
 	case start:
-		j.playing = true
-		j.info.ctrlStrmr.Paused = false
+		if j.info != nil {
+			j.playing = true
+			j.info.ctrlStrmr.Paused = false
+		}
 		j.Unlock()
 	}
 }
