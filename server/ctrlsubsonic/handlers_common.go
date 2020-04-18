@@ -348,17 +348,14 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response {
 		c.Jukebox.Start()
 	case "skip":
 		index, err := params.GetInt("index")
-		var skipCurrent bool
 		if err != nil {
-			skipCurrent = true
+			return spec.NewError(10, "please provide an index for skip actions")
 		}
-		c.Jukebox.Skip(index, skipCurrent)
+		c.Jukebox.Skip(index)
 	case "get":
 		sub := spec.NewResponse()
 		sub.JukeboxPlaylist = c.Jukebox.GetTracks()
 		return sub
-	default:
-		return spec.NewError(10, "unknown value `%s` for parameter 'action'", act)
 	}
 	// all actions except get are expected to return a status
 	sub := spec.NewResponse()
