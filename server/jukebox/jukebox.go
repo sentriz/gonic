@@ -96,20 +96,8 @@ func (j *Jukebox) doUpdate(u update) {
 	j.Lock()
 	switch u.action {
 	case set:
-		if j.playing {
-			speaker.Clear()
-		}
-		speaker.Clear()
-		if len(u.tracks) == 0 {
-			j.playlist = []*db.Track{}
-			j.Unlock()
-			return
-		}
 		j.playlist = u.tracks
-		j.index = 0
-		j.playing = true
 		j.Unlock()
-		j.speaker <- updateSpeaker{j.index}
 	case clear:
 		speaker.Clear()
 		j.playing = false
@@ -118,12 +106,23 @@ func (j *Jukebox) doUpdate(u update) {
 	case skip:
 		speaker.Clear()
 		j.index = u.index
+		j.playing = true
 		j.Unlock()
 		j.speaker <- updateSpeaker{j.index}
 	case add:
+		if len(j.playlist) == 0 {
+			j.playlist = u.tracks
+			j.playing = true
+			j.index = 0
+			j.Unlock()
+			j.speaker <- updateSpeaker{0}
+			return
+		}
 		j.playlist = append(j.playlist, u.tracks...)
+		j.Unlock()
 	case remove:
-		if u.index < 0 || u.index > len(j.playlist) {
+		if u.index < 0 || u.index >= len(j.playlist) {
+			j.Unlock()
 			return
 		}
 		j.playlist = append(j.playlist[:u.index], j.playlist[u.index+1:]...)
@@ -144,10 +143,15 @@ func (j *Jukebox) doUpdate(u update) {
 }
 
 func (j *Jukebox) doUpdateSpeaker(su updateSpeaker) error {
-	if su.index > len(j.playlist)-1 {
+	if su.index >= len(j.playlist) {
+		j.Lock()
 		j.playing = false
+		j.Unlock()
 		return nil
 	}
+	j.Lock()
+	j.index = su.index
+	j.Unlock()
 	f, err := os.Open(path.Join(
 		j.musicPath,
 		j.playlist[su.index].RelPath(),
