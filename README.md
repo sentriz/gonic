@@ -41,21 +41,25 @@ or else you can run in docker, available on dockerhub as `sentriz/gonic`
 ```yaml
 # example docker-compose.yml
 
-version: '3'
+version: '2.4'
 services:
   gonic:
     image: sentriz/gonic:latest
     environment:
     - TZ
-    # optionally, see env vars below
+    # optionally, see more env vars below
     expose:
     - 80
-    devices:
-    - /dev/snd:/dev/snd        # if using jukebox
     volumes:
     - ./data:/data             # gonic db etc
     - /path/to/music:/music:ro # your music
     - /path/to/cache:/cache    # transcode cache dir
+
+    # set the following two sections if you've enabled jukebox
+    group_add:
+    - audio
+    devices:
+    - /dev/snd:/dev/snd
 ```
 
 then start with `docker-compose up -d`
