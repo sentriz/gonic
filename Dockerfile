@@ -11,7 +11,7 @@ COPY go.mod .
 COPY go.sum .
 RUN go mod download
 COPY . .
-RUN ./_do_build_server && ./_do_build_scanner
+RUN ./_do_build_server
 
 FROM alpine:3.9
 RUN apk add -U --no-cache \
@@ -24,7 +24,6 @@ COPY --from=builder \
     /usr/lib/
 COPY --from=builder \
     /src/gonic \
-    /src/gonicscan \
     /bin/
 VOLUME ["/data", "/music", "/cache"]
 EXPOSE 80

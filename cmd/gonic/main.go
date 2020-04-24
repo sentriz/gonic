@@ -12,7 +12,7 @@ import (
 	"github.com/oklog/run"
 	"github.com/peterbourgon/ff"
 
-	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server"
 	"go.senan.xyz/gonic/version"
 )

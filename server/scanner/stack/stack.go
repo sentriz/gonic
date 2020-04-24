@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/server/db"
 )
 
 type item struct {

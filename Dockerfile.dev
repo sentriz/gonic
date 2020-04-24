@@ -12,7 +12,7 @@ WORKDIR /src
 COPY . .
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    ./_do_build_server && ./_do_build_scanner
+    ./_do_build_server
 
 FROM alpine:3.9
 RUN apk add -U --no-cache \
@@ -25,7 +25,6 @@ COPY --from=builder \
     /usr/lib/
 COPY --from=builder \
     /src/gonic \
-    /src/gonicscan \
     /bin/
 VOLUME ["/data", "/music", "/cache"]
 EXPOSE 80

@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
 
-. ./_build_vars
 ./_do_gen_assets
-go run \
-    -tags "$(tr '\n' ' ' < _build_tags)" \
-    cmd/gonic/main.go \
-    $@
+go run cmd/gonic/main.go $@

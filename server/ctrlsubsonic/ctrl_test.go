@@ -13,7 +13,7 @@ import (
 
 	jd "github.com/josephburnett/jd/lib"
 
-	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 )

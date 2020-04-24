@@ -1,9 +1,5 @@
 #!/bin/sh
 # using sh, is run from alpine
 
-. ./_build_vars
 ./_do_gen_assets
-go build \
-    -o gonic \
-    -tags "$(tr '\n' ' ' < _build_tags)" \
-    cmd/gonic/main.go
+go build -o gonic cmd/gonic/main.go

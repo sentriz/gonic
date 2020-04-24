@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	"go.senan.xyz/gonic/db"
-	"go.senan.xyz/gonic/scanner"
+	"go.senan.xyz/gonic/server/db"
+	"go.senan.xyz/gonic/server/scanner"
 	"go.senan.xyz/gonic/server/encode"
 	"go.senan.xyz/gonic/server/lastfm"
 )

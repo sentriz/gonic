@@ -1,7 +1,6 @@
 package db
 
 import (
-	"fmt"
 	"log"
 	"net/url"
 	"os"
@@ -16,11 +15,12 @@ var (
 	dbOptions      = url.Values{
 		// with this, multiple connections share a single data and schema cache.
 		// see https://www.sqlite.org/sharedcache.html
-		"cache": []string{"shared"},
+		"cache": {"shared"},
 		// with this, the db sleeps for a little while when locked. can prevent
 		// a SQLITE_BUSY. see https://www.sqlite.org/c3ref/busy_timeout.html
-		"_busy_timeout": []string{"30000"},
-		"_journal_mode": []string{"WAL"},
+		"_busy_timeout": {"30000"},
+		"_journal_mode": {"WAL"},
+		"_foreign_keys": {"true"},
 	}
 )
 
@@ -29,8 +29,9 @@ type DB struct {
 }
 
 func New(path string) (*DB, error) {
-	pathAndArgs := fmt.Sprintf("%s?%s", path, dbOptions.Encode())
-	db, err := gorm.Open("sqlite3", pathAndArgs)
+	url := url.URL{Path: path}
+	url.RawQuery = dbOptions.Encode()
+	db, err := gorm.Open("sqlite3", url.String())
 	if err != nil {
 		return nil, errors.Wrap(err, "with gorm")
 	}

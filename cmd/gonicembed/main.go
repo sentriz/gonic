@@ -118,21 +118,11 @@ func processAssets(c *config, files []string) error {
 
 func main() {
 	set := flag.NewFlagSet(version.NAME_EMBED, flag.ExitOnError)
-	outPath := set.String(
-		"out-path", "",
-		"generated file's path (required)")
-	pkgName := set.String(
-		"package-name", "assets",
-		"generated file's package name")
-	tagList := set.String(
-		"tag-list", "",
-		"generated file's build tag list")
-	assetsVarName := set.String(
-		"assets-var-name", "Assets",
-		"generated file's assets var name")
-	assetPathPrefix := set.String(
-		"asset-path-prefix", "",
-		"generated file's assets map key prefix to be stripped")
+	outPath := set.String("out-path", "", "generated file's path (required)")
+	pkgName := set.String("package-name", "assets", "generated file's package name")
+	tagList := set.String("tag-list", "", "generated file's build tag list")
+	assetsVarName := set.String("assets-var-name", "Assets", "generated assets var name")
+	assetPathPrefix := set.String("asset-path-prefix", "", "generated assets map key prefix")
 	if err := ff.Parse(set, os.Args[1:]); err != nil {
 		log.Fatalf("error parsing args: %v\n", err)
 	}

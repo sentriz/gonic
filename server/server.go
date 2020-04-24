@@ -10,8 +10,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"go.senan.xyz/gonic/db"
-	"go.senan.xyz/gonic/scanner"
+	"go.senan.xyz/gonic/server/db"
+	"go.senan.xyz/gonic/server/scanner"
 	"go.senan.xyz/gonic/server/assets"
 	"go.senan.xyz/gonic/server/ctrladmin"
 	"go.senan.xyz/gonic/server/ctrlbase"

@@ -6,7 +6,7 @@ import (
 
 	"github.com/gorilla/sessions"
 
-	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/server/db"
 )
 
 func (c *Controller) WithSession(next http.Handler) http.Handler {

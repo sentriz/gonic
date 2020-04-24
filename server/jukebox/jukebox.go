@@ -14,7 +14,7 @@ import (
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
 
-	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 )
 

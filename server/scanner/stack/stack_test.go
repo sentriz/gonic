@@ -3,7 +3,7 @@ package stack
 import (
 	"testing"
 
-	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/server/db"
 )
 
 func TestFolderStack(t *testing.T) {

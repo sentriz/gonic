@@ -18,6 +18,7 @@ require (
 	github.com/josephburnett/jd v0.0.0-20190531151850-1f9071c800e7
 	github.com/karrick/godirwalk v1.15.2
 	github.com/kr/pretty v0.1.0 // indirect
+	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/nicksellen/audiotags v0.0.0-20160226222119-94015fa599bd
 	github.com/oklog/run v1.1.0
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c

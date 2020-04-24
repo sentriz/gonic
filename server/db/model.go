@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"go.senan.xyz/gonic/mime"
+	"go.senan.xyz/gonic/server/mime"
 )
 
 func splitInt(in, sep string) []int {
