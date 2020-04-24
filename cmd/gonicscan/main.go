@@ -15,12 +15,9 @@ import (
 
 func main() {
 	set := flag.NewFlagSet(version.NAME_SCAN, flag.ExitOnError)
-	musicPath := set.String(
-		"music-path", "",
-		"path to music")
-	dbPath := set.String(
-		"db-path", "gonic.db",
-		"path to database (optional)")
+	musicPath := set.String("music-path", "", "path to music")
+	dbPath := set.String("db-path", "gonic.db", "path to database (optional)")
+	fullScan := set.Bool("full-scan", false, "ignore file modtimes while scanning (optional)")
 	if err := ff.Parse(set, os.Args[1:],
 		ff.WithEnvVarPrefix(version.NAME_UPPER),
 	); err != nil {
@@ -34,11 +31,15 @@ func main() {
 		log.Fatalf("error opening database: %v\n", err)
 	}
 	defer db.Close()
-	s := scanner.New(
-		*musicPath,
-		db,
-	)
-	if err := s.Start(); err != nil {
-		log.Fatalf("error starting scanner: %v\n", err)
+	s := scanner.New(*musicPath, db)
+	var scan func() error
+	switch {
+	case *fullScan:
+		scan = s.StartFull
+	default:
+		scan = s.StartInc
+	}
+	if err := scan(); err != nil {
+		log.Fatalf("error during scan: %v\n", err)
 	}
 }

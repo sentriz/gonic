@@ -39,6 +39,7 @@ func SetScanning() func() {
 type Scanner struct {
 	db        *db.DB
 	musicPath string
+	isFull    bool
 	// these two are for the transaction we do for every folder.
 	// the boolean is there so we dont begin or commit multiple
 	// times in the handle folder or post children callback
@@ -67,7 +68,7 @@ func New(musicPath string, db *db.DB) *Scanner {
 	}
 }
 
-func (s *Scanner) Start() error {
+func (s *Scanner) Start(isFull bool) error {
 	if IsScanning() {
 		return errors.New("already scanning")
 	}
@@ -82,6 +83,7 @@ func (s *Scanner) Start() error {
 		s.seenTracksErr = 0
 	}()
 	// ** begin being walking
+	s.isFull = isFull
 	start := time.Now()
 	err := godirwalk.Walk(s.musicPath, &godirwalk.Options{
 		Callback:             s.callbackItem,
@@ -144,6 +146,14 @@ func (s *Scanner) Start() error {
 		deleted,
 	)
 	return nil
+}
+
+func (s *Scanner) StartInc() error {
+	return s.Start(false)
+}
+
+func (s *Scanner) StartFull() error {
+	return s.Start(true)
 }
 
 // items are passed to the handle*() functions
@@ -274,8 +284,8 @@ func (s *Scanner) handleFolder(it *item) error {
 		}).
 		First(folder).
 		Error
-	if !gorm.IsRecordNotFoundError(err) &&
-		it.stat.ModTime().Before(folder.UpdatedAt) {
+	if !s.isFull && (!gorm.IsRecordNotFoundError(err) &&
+		it.stat.ModTime().Before(folder.UpdatedAt)) {
 		// we found the record but it hasn't changed
 		return nil
 	}
@@ -303,7 +313,7 @@ func (s *Scanner) handleTrack(it *item) error {
 		}).
 		First(track).
 		Error
-	if !gorm.IsRecordNotFoundError(err) &&
+	if !s.isFull && !gorm.IsRecordNotFoundError(err) &&
 		it.stat.ModTime().Before(track.UpdatedAt) {
 		// we found the record but it hasn't changed
 		s.seenTracks[track.ID] = struct{}{}

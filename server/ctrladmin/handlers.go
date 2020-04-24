@@ -272,7 +272,7 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(r *http.Request) *Response {
 func (c *Controller) ServeStartScanDo(r *http.Request) *Response {
 	defer func() {
 		go func() {
-			if err := c.Scanner.Start(); err != nil {
+			if err := c.Scanner.StartInc(); err != nil {
 				log.Printf("error while scanning: %v\n", err)
 			}
 		}()
