@@ -20,6 +20,7 @@ var (
 		// with this, the db sleeps for a little while when locked. can prevent
 		// a SQLITE_BUSY. see https://www.sqlite.org/c3ref/busy_timeout.html
 		"_busy_timeout": []string{"30000"},
+		"_journal_mode": []string{"WAL"},
 	}
 )
 
@@ -35,7 +36,6 @@ func New(path string) (*DB, error) {
 	}
 	db.SetLogger(log.New(os.Stdout, "gorm ", 0))
 	db.DB().SetMaxOpenConns(dbMaxOpenConns)
-	db.Exec("PRAGMA journal_mode=WAL;")
 	migr := gormigrate.New(db, gormigrate.DefaultOptions, []*gormigrate.Migration{
 		&migrationInitSchema,
 		&migrationCreateInitUser,
