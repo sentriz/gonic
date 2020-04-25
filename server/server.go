@@ -89,7 +89,7 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	// ** begin public routes (creates session)
 	r.Use(ctrl.WithSession)
 	r.Handle("/login", ctrl.H(ctrl.ServeLogin))
-	r.HandleFunc("/login_do", ctrl.ServeLoginDo) // "raw" handler, updates session
+	r.Handle("/login_do", ctrl.HR(ctrl.ServeLoginDo)) // "raw" handler, updates session
 	assets.PrefixDo("static", func(path string, asset *assets.EmbeddedAsset) {
 		_, name := filepath.Split(path)
 		route := filepath.Join("/static", name)
@@ -101,7 +101,7 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	// ** begin user routes (if session is valid)
 	routUser := r.NewRoute().Subrouter()
 	routUser.Use(ctrl.WithUserSession)
-	routUser.HandleFunc("/logout", ctrl.ServeLogout) // "raw" handler, updates session
+	routUser.Handle("/logout", ctrl.HR(ctrl.ServeLogout)) // "raw" handler, updates session
 	routUser.Handle("/home", ctrl.H(ctrl.ServeHome))
 	routUser.Handle("/change_own_password", ctrl.H(ctrl.ServeChangeOwnPassword))
 	routUser.Handle("/change_own_password_do", ctrl.H(ctrl.ServeChangeOwnPasswordDo))

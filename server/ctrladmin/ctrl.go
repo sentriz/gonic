@@ -18,9 +18,9 @@ import (
 	"github.com/oxtoacart/bpool"
 	"github.com/wader/gormstore"
 
-	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/assets"
 	"go.senan.xyz/gonic/server/ctrlbase"
+	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/version"
 )
 
@@ -146,6 +146,7 @@ type Response struct {
 }
 
 type handlerAdmin func(r *http.Request) *Response
+type handlerAdminRaw func(w http.ResponseWriter, r *http.Request)
 
 //nolint:gocognit
 func (c *Controller) H(h handlerAdmin) http.Handler {
@@ -210,6 +211,10 @@ func (c *Controller) H(h handlerAdmin) http.Handler {
 			log.Printf("error writing to response buffer: %v\n", err)
 		}
 	})
+}
+
+func (c *Controller) HR(h handlerAdminRaw) http.Handler {
+	return http.HandlerFunc(h)
 }
 
 // ## begin utilities

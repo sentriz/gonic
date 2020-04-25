@@ -82,6 +82,7 @@ func writeResp(w http.ResponseWriter, r *http.Request, resp *spec.Response) erro
 }
 
 type handlerSubsonic func(r *http.Request) *spec.Response
+type handlerSubsonicRaw func(w http.ResponseWriter, r *http.Request) *spec.Response
 
 func (c *Controller) H(h handlerSubsonic) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -95,8 +96,6 @@ func (c *Controller) H(h handlerSubsonic) http.Handler {
 		}
 	})
 }
-
-type handlerSubsonicRaw func(w http.ResponseWriter, r *http.Request) *spec.Response
 
 func (c *Controller) HR(h handlerSubsonicRaw) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
