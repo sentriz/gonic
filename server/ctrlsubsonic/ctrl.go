@@ -50,7 +50,7 @@ func writeResp(w http.ResponseWriter, r *http.Request, resp *spec.Response) erro
 	res := metaResponse{Response: resp}
 	params := r.Context().Value(CtxParams).(params.Params)
 	ew := &errWriter{w: w}
-	switch params.Get("f") {
+	switch v, _ := params.Get("f"); v {
 	case "json":
 		w.Header().Set("Content-Type", "application/json")
 		data, err := json.Marshal(res)
