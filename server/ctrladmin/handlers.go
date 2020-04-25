@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"go.senan.xyz/gonic/server/db"
-	"go.senan.xyz/gonic/server/scanner"
 	"go.senan.xyz/gonic/server/encode"
 	"go.senan.xyz/gonic/server/lastfm"
+	"go.senan.xyz/gonic/server/scanner"
 )
 
 func firstExisting(or string, strings ...string) string {
@@ -20,6 +20,14 @@ func firstExisting(or string, strings ...string) string {
 		}
 	}
 	return or
+}
+
+func doScan(scanFunc func() error) {
+	go func() {
+		if err := scanFunc(); err != nil {
+			log.Printf("error while scanning: %v\n", err)
+		}
+	}()
 }
 
 func (c *Controller) ServeNotFound(r *http.Request) *Response {
@@ -269,17 +277,19 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(r *http.Request) *Response {
 	return &Response{redirect: "/admin/home"}
 }
 
-func (c *Controller) ServeStartScanDo(r *http.Request) *Response {
-	defer func() {
-		go func() {
-			if err := c.Scanner.StartInc(); err != nil {
-				log.Printf("error while scanning: %v\n", err)
-			}
-		}()
-	}()
+func (c *Controller) ServeStartScanIncDo(r *http.Request) *Response {
+	defer doScan(c.Scanner.StartInc)
 	return &Response{
 		redirect: "/admin/home",
-		flashN:   []string{"scan started. refresh for results"},
+		flashN:   []string{"incremental scan started. refresh for results"},
+	}
+}
+
+func (c *Controller) ServeStartScanFullDo(r *http.Request) *Response {
+	defer doScan(c.Scanner.StartFull)
+	return &Response{
+		redirect: "/admin/home",
+		flashN:   []string{"full scan started. refresh for results"},
 	}
 }
 

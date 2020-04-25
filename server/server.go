@@ -10,13 +10,13 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"go.senan.xyz/gonic/server/db"
-	"go.senan.xyz/gonic/server/scanner"
 	"go.senan.xyz/gonic/server/assets"
 	"go.senan.xyz/gonic/server/ctrladmin"
 	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/ctrlsubsonic"
+	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/jukebox"
+	"go.senan.xyz/gonic/server/scanner"
 )
 
 type Options struct {
@@ -121,7 +121,8 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	routAdmin.Handle("/create_user_do", ctrl.H(ctrl.ServeCreateUserDo))
 	routAdmin.Handle("/update_lastfm_api_key", ctrl.H(ctrl.ServeUpdateLastFMAPIKey))
 	routAdmin.Handle("/update_lastfm_api_key_do", ctrl.H(ctrl.ServeUpdateLastFMAPIKeyDo))
-	routAdmin.Handle("/start_scan_do", ctrl.H(ctrl.ServeStartScanDo))
+	routAdmin.Handle("/start_scan_inc_do", ctrl.H(ctrl.ServeStartScanIncDo))
+	routAdmin.Handle("/start_scan_full_do", ctrl.H(ctrl.ServeStartScanFullDo))
 	// middlewares should be run for not found handler
 	// https://github.com/gorilla/mux/issues/416
 	notFoundHandler := ctrl.H(ctrl.ServeNotFound)

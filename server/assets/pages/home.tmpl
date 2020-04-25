@@ -106,8 +106,11 @@
             {{- if not .LastScanTime.IsZero -}}
                 <p class="text-light" title="{{ .LastScanTime }}">scanned {{ .LastScanTime | dateHuman }}</p>
             {{ end }}
-            <form action="{{ path "/admin/start_scan_do" }}" method="post">
-                <td><input type="submit" value="start scan"></td>
+            <form action="{{ path "/admin/start_scan_inc_do" }}" method="post">
+                <input type="submit" title="start a incremental scan" value="scan now"><br/>
+            </form>
+            <form action="{{ path "/admin/start_scan_full_do" }}" method="post">
+                <input type="submit" title="start a full scan (takes longer, and shouldn&#39;t usually be necessary)" value="scan full (!)">
             </form>
         {{ end }}
     </div>
