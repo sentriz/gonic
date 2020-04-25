@@ -3,14 +3,13 @@ package ctrlsubsonic
 import (
 	"fmt"
 	"net/http"
-	"sort"
 	"strings"
 
 	"github.com/jinzhu/gorm"
 
-	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
+	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/lastfm"
 )
 
@@ -20,6 +19,7 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 		Select("*, count(sub.id) album_count").
 		Joins("LEFT JOIN albums sub ON artists.id=sub.tag_artist_id").
 		Group("artists.id").
+		Order("artists.name COLLATE NOCASE").
 		Find(&artists)
 	// [a-z#] -> 27
 	indexMap := make(map[string]*spec.Index, 27)
@@ -38,9 +38,6 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 		index.Artists = append(index.Artists,
 			spec.NewArtistByTags(artist))
 	}
-	sort.Slice(resp, func(i, j int) bool {
-		return resp[i].Name < resp[j].Name
-	})
 	sub := spec.NewResponse()
 	sub.Artists = &spec.Artists{
 		List: resp,

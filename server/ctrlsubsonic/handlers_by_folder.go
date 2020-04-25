@@ -3,14 +3,13 @@ package ctrlsubsonic
 import (
 	"fmt"
 	"net/http"
-	"sort"
 	"strings"
 
 	"github.com/jinzhu/gorm"
 
-	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
+	"go.senan.xyz/gonic/server/db"
 )
 
 // the subsonic spec metions "artist" a lot when talking about the
@@ -26,6 +25,7 @@ func (c *Controller) ServeGetIndexes(r *http.Request) *spec.Response {
 		Joins("LEFT JOIN albums sub ON albums.id=sub.parent_id").
 		Where("albums.parent_id=1").
 		Group("albums.id").
+		Order("albums.right_path COLLATE NOCASE").
 		Find(&folders)
 	// [a-z#] -> 27
 	indexMap := make(map[string]*spec.Index, 27)
@@ -44,9 +44,6 @@ func (c *Controller) ServeGetIndexes(r *http.Request) *spec.Response {
 		index.Artists = append(index.Artists,
 			spec.NewArtistByFolder(folder))
 	}
-	sort.Slice(resp, func(i, j int) bool {
-		return resp[i].Name < resp[j].Name
-	})
 	sub := spec.NewResponse()
 	sub.Indexes = &spec.Indexes{
 		LastModified: 0,
