@@ -3,31 +3,9 @@
     "status": "ok",
     "version": "1.9.0",
     "type": "gonic",
-    "gonicVersion": "v0.8.6",
+    "gonicVersion": "v0.8.7",
     "albumList2": {
       "album": [
-        {
-          "id": "16",
-          "coverArt": "16",
-          "artistId": "5",
-          "artist": "Swell Maps",
-          "name": "Jane From Occupied Europe",
-          "songCount": 16,
-          "duration": 0,
-          "created": "2019-04-30T16:48:48+01:00",
-          "year": 1980
-        },
-        {
-          "id": "19",
-          "coverArt": "19",
-          "artistId": "6",
-          "artist": "Ten Years After",
-          "name": "Ten Years After",
-          "songCount": 15,
-          "duration": 0,
-          "created": "2019-04-30T16:48:30+01:00",
-          "year": 1967
-        },
         {
           "id": "3",
           "coverArt": "3",
@@ -50,6 +28,72 @@
           "year": 1981
         },
         {
+          "id": "8",
+          "coverArt": "8",
+          "artistId": "3",
+          "artist": "13th Floor Elevators",
+          "name": "Easter Everywhere",
+          "songCount": 10,
+          "duration": 0,
+          "created": "2019-06-13T12:57:28.850090338+01:00",
+          "year": 1967
+        },
+        {
+          "id": "13",
+          "coverArt": "13",
+          "artistId": "4",
+          "artist": "Anikas",
+          "name": "Anika",
+          "songCount": 9,
+          "duration": 0,
+          "created": "2019-05-23T15:12:02.921473302+01:00",
+          "year": 2010
+        },
+        {
+          "id": "19",
+          "coverArt": "19",
+          "artistId": "6",
+          "artist": "Ten Years After",
+          "name": "Ten Years After",
+          "songCount": 15,
+          "duration": 0,
+          "created": "2019-04-30T16:48:30+01:00",
+          "year": 1967
+        },
+        {
+          "id": "5",
+          "coverArt": "5",
+          "artistId": "2",
+          "artist": "A Certain Ratio",
+          "name": "The Graveyard and the Ballroom",
+          "songCount": 14,
+          "duration": 0,
+          "created": "2019-06-05T17:46:37.675917974+01:00",
+          "year": 1994
+        },
+        {
+          "id": "17",
+          "coverArt": "17",
+          "artistId": "5",
+          "artist": "Swell Maps",
+          "name": "A Trip to Marineville",
+          "songCount": 18,
+          "duration": 0,
+          "created": "2019-04-30T16:48:48+01:00",
+          "year": 1979
+        },
+        {
+          "id": "16",
+          "coverArt": "16",
+          "artistId": "5",
+          "artist": "Swell Maps",
+          "name": "Jane From Occupied Europe",
+          "songCount": 16,
+          "duration": 0,
+          "created": "2019-04-30T16:48:48+01:00",
+          "year": 1980
+        },
+        {
           "id": "9",
           "coverArt": "9",
           "artistId": "3",
@@ -70,50 +114,6 @@
           "duration": 0,
           "created": "2019-06-10T19:26:30.944742894+01:00",
           "year": 1970
-        },
-        {
-          "id": "17",
-          "coverArt": "17",
-          "artistId": "5",
-          "artist": "Swell Maps",
-          "name": "A Trip to Marineville",
-          "songCount": 18,
-          "duration": 0,
-          "created": "2019-04-30T16:48:48+01:00",
-          "year": 1979
-        },
-        {
-          "id": "8",
-          "coverArt": "8",
-          "artistId": "3",
-          "artist": "13th Floor Elevators",
-          "name": "Easter Everywhere",
-          "songCount": 10,
-          "duration": 0,
-          "created": "2019-06-13T12:57:28.850090338+01:00",
-          "year": 1967
-        },
-        {
-          "id": "5",
-          "coverArt": "5",
-          "artistId": "2",
-          "artist": "A Certain Ratio",
-          "name": "The Graveyard and the Ballroom",
-          "songCount": 14,
-          "duration": 0,
-          "created": "2019-06-05T17:46:37.675917974+01:00",
-          "year": 1994
-        },
-        {
-          "id": "13",
-          "coverArt": "13",
-          "artistId": "4",
-          "artist": "Anikas",
-          "name": "Anika",
-          "songCount": 9,
-          "duration": 0,
-          "created": "2019-05-23T15:12:02.921473302+01:00",
-          "year": 2010
         }
       ]
     }
