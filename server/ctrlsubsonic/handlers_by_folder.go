@@ -65,6 +65,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	var childFolders []*db.Album
 	c.DB.
 		Where("parent_id=?", id).
+		Order("albums.right_path COLLATE NOCASE").
 		Find(&childFolders)
 	for _, c := range childFolders {
 		childrenObj = append(childrenObj, spec.NewTCAlbumByFolder(c))
