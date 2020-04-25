@@ -24,7 +24,7 @@ echo "waiting for server to start"
     -listen-addr "$test_listen_addr" 2>&1 \
 | while read line; do
     echo "from server: $line"
-    [[ "$line" != *'starting server'* ]] && continue
+    [[ "$line" != *$'starting job \'http\''* ]] && continue
     sleep '0.5'
     # ** begin by folder
     curl -s "http://$test_listen_addr/rest/getAlbumList.view?c=c&f=json&p=admin&u=admin&v=v&type=alphabeticalByArtist"  | jq > "$test_data_path/test_get_album_list_alpha_artist"
