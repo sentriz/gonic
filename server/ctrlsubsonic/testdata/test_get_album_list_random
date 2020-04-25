@@ -3,9 +3,75 @@
     "status": "ok",
     "version": "1.9.0",
     "type": "gonic",
-    "gonicVersion": "v0.8.5",
+    "gonicVersion": "v0.8.6",
     "albumList": {
       "album": [
+        {
+          "id": "3",
+          "coverArt": "3",
+          "artist": "Jah Wobble, The Edge, Holger Czukay",
+          "title": "(1983) Snake Charmer",
+          "parent": "2",
+          "isDir": true,
+          "songCount": 5,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "5",
+          "coverArt": "5",
+          "artist": "A Certain Ratio",
+          "title": "(1994) The Graveyard and the Ballroom",
+          "parent": "4",
+          "isDir": true,
+          "songCount": 14,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "21",
+          "coverArt": "21",
+          "artist": "Captain Beefheart",
+          "title": "(1970) Lick My Decals Off, Bitch",
+          "parent": "20",
+          "isDir": true,
+          "songCount": 15,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "17",
+          "coverArt": "17",
+          "artist": "Swell Maps",
+          "title": "(1979) A Trip to Marineville",
+          "parent": "15",
+          "isDir": true,
+          "songCount": 18,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "8",
+          "coverArt": "8",
+          "artist": "13th Floor Lowervators",
+          "title": "(1967) Easter Nowhere",
+          "parent": "7",
+          "isDir": true,
+          "songCount": 10,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "13",
+          "coverArt": "13",
+          "artist": "There",
+          "title": "(2010) Anika",
+          "parent": "12",
+          "isDir": true,
+          "songCount": 9,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
         {
           "id": "19",
           "coverArt": "19",
@@ -29,6 +95,16 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
+          "id": "6",
+          "artist": "A Certain Ratio",
+          "title": "(1981) To EachOTHER.",
+          "parent": "4",
+          "isDir": true,
+          "songCount": 9,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
           "id": "16",
           "coverArt": "16",
           "artist": "Swell Maps",
@@ -36,82 +112,6 @@
           "parent": "15",
           "isDir": true,
           "songCount": 16,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "8",
-          "coverArt": "8",
-          "artist": "13th Floor Lowervators",
-          "title": "(1967) Easter Nowhere",
-          "parent": "7",
-          "isDir": true,
-          "songCount": 10,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "21",
-          "coverArt": "21",
-          "artist": "Captain Beefheart",
-          "title": "(1970) Lick My Decals Off, Bitch",
-          "parent": "20",
-          "isDir": true,
-          "songCount": 15,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "3",
-          "coverArt": "3",
-          "artist": "Jah Wobble, The Edge, Holger Czukay",
-          "title": "(1983) Snake Charmer",
-          "parent": "2",
-          "isDir": true,
-          "songCount": 5,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "13",
-          "coverArt": "13",
-          "artist": "There",
-          "title": "(2010) Anika",
-          "parent": "12",
-          "isDir": true,
-          "songCount": 9,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "17",
-          "coverArt": "17",
-          "artist": "Swell Maps",
-          "title": "(1979) A Trip to Marineville",
-          "parent": "15",
-          "isDir": true,
-          "songCount": 18,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "5",
-          "coverArt": "5",
-          "artist": "A Certain Ratio",
-          "title": "(1994) The Graveyard and the Ballroom",
-          "parent": "4",
-          "isDir": true,
-          "songCount": 14,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "6",
-          "artist": "A Certain Ratio",
-          "title": "(1981) To EachOTHER.",
-          "parent": "4",
-          "isDir": true,
-          "songCount": 9,
           "duration": 0,
           "created": "0001-01-01T00:00:00Z"
         }
