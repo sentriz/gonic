@@ -79,7 +79,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 		Find(&childTracks)
 	for _, c := range childTracks {
 		toAppend := spec.NewTCTrackByFolder(c, folder)
-		if params.Get("c") == "Jamstash" {
+		if v, _ := params.Get("c"); v == "Jamstash" {
 			// jamstash thinks it can't play flacs
 			toAppend.ContentType = "audio/mpeg"
 			toAppend.Suffix = "mp3"
