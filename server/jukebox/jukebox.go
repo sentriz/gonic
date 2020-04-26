@@ -15,13 +15,13 @@ import (
 	"github.com/faiface/beep/speaker"
 
 	"go.senan.xyz/gonic/server/db"
-	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 )
 
-type strmInfo struct {
-	ctrlStrmr beep.Ctrl
-	strm      beep.StreamSeekCloser
-	format    beep.Format
+type Status struct {
+	CurrentIndex int
+	Playing      bool
+	Gain         float64
+	Position     int
 }
 
 type Jukebox struct {
@@ -37,6 +37,12 @@ type Jukebox struct {
 	info    *strmInfo
 	speaker chan updateSpeaker
 	sync.Mutex
+}
+
+type strmInfo struct {
+	ctrlStrmr beep.Ctrl
+	strm      beep.StreamSeekCloser
+	format    beep.Format
 }
 
 type updateType string
@@ -227,13 +233,13 @@ func (j *Jukebox) Start() {
 	j.updates <- update{action: start}
 }
 
-func (j *Jukebox) Status() *spec.JukeboxStatus {
+func (j *Jukebox) GetStatus() Status {
 	position := 0
 	if j.info != nil {
 		length := j.info.format.SampleRate.D(j.info.strm.Position())
 		position = int(length.Round(time.Millisecond).Seconds())
 	}
-	return &spec.JukeboxStatus{
+	return Status{
 		CurrentIndex: j.index,
 		Playing:      j.playing,
 		Gain:         0.9,
@@ -241,21 +247,8 @@ func (j *Jukebox) Status() *spec.JukeboxStatus {
 	}
 }
 
-func (j *Jukebox) GetTracks() *spec.JukeboxPlaylist {
+func (j *Jukebox) GetTracks() []*db.Track {
 	j.Lock()
 	defer j.Unlock()
-	jb := &spec.JukeboxPlaylist{}
-	jb.List = make([]*spec.TrackChild, len(j.playlist))
-	for i, track := range j.playlist {
-		jb.List[i] = spec.NewTrackByTags(track, track.Album)
-	}
-	jb.CurrentIndex = j.index
-	jb.Playing = j.playing
-	jb.Gain = 0.9
-	jb.Position = 0
-	if j.info != nil {
-		length := j.info.format.SampleRate.D(j.info.strm.Position())
-		jb.Position = int(length.Round(time.Millisecond).Seconds())
-	}
-	return jb
+	return j.playlist
 }

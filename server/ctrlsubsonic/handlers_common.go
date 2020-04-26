@@ -10,11 +10,11 @@ import (
 
 	"github.com/jinzhu/gorm"
 
-	"go.senan.xyz/gonic/server/db"
-	"go.senan.xyz/gonic/server/scanner"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
+	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/lastfm"
+	"go.senan.xyz/gonic/server/scanner"
 )
 
 func lowerUDecOrHash(in string) string {
@@ -329,6 +329,23 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response {
 		}
 		return tracks
 	}
+	getStatus := func() spec.JukeboxStatus {
+		status := c.Jukebox.GetStatus()
+		return spec.JukeboxStatus{
+			CurrentIndex: status.CurrentIndex,
+			Playing:      status.Playing,
+			Gain:         status.Gain,
+			Position:     status.Position,
+		}
+	}
+	getStatusTracks := func() []*spec.TrackChild {
+		tracks := c.Jukebox.GetTracks()
+		ret := make([]*spec.TrackChild, len(tracks))
+		for i, track := range tracks {
+			ret[i] = spec.NewTrackByTags(track, track.Album)
+		}
+		return ret
+	}
 	switch act := params.Get("action"); act {
 	case "set":
 		c.Jukebox.SetTracks(getTracks())
@@ -354,11 +371,16 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response {
 		c.Jukebox.Skip(index)
 	case "get":
 		sub := spec.NewResponse()
-		sub.JukeboxPlaylist = c.Jukebox.GetTracks()
+		sub.JukeboxPlaylist = &spec.JukeboxPlaylist{
+			JukeboxStatus: getStatus(),
+			List:          getStatusTracks(),
+		}
 		return sub
 	}
 	// all actions except get are expected to return a status
 	sub := spec.NewResponse()
-	sub.JukeboxStatus = c.Jukebox.Status()
+	sub.JukeboxPlaylist = &spec.JukeboxPlaylist{
+		JukeboxStatus: getStatus(),
+	}
 	return sub
 }
