@@ -35,21 +35,27 @@ func TestParseID(t *testing.T) {
 }
 
 // TODO?
-func TestGet(t *testing.T)             {}
-func TestGetFirst(t *testing.T)        {}
-func TestGetOr(t *testing.T)           {}
-func TestGetList(t *testing.T)         {}
-func TestGetFirstList(t *testing.T)    {}
-func TestGetOrList(t *testing.T)       {}
-func TestGetInt(t *testing.T)          {}
-func TestGetFirstInt(t *testing.T)     {}
-func TestGetOrInt(t *testing.T)        {}
-func TestGetIntList(t *testing.T)      {}
-func TestGetFirstIntList(t *testing.T) {}
-func TestGetOrIntList(t *testing.T)    {}
-func TestGetID(t *testing.T)           {}
-func TestGetFirstID(t *testing.T)      {}
-func TestGetOrID(t *testing.T)         {}
-func TestGetIDList(t *testing.T)       {}
-func TestGetFirstIDList(t *testing.T)  {}
-func TestGetOrIDList(t *testing.T)     {}
+func TestGet(t *testing.T)              {}
+func TestGetFirst(t *testing.T)         {}
+func TestGetOr(t *testing.T)            {}
+func TestGetList(t *testing.T)          {}
+func TestGetFirstList(t *testing.T)     {}
+func TestGetOrList(t *testing.T)        {}
+func TestGetInt(t *testing.T)           {}
+func TestGetFirstInt(t *testing.T)      {}
+func TestGetOrInt(t *testing.T)         {}
+func TestGetIntList(t *testing.T)       {}
+func TestGetFirstIntList(t *testing.T)  {}
+func TestGetOrIntList(t *testing.T)     {}
+func TestGetID(t *testing.T)            {}
+func TestGetFirstID(t *testing.T)       {}
+func TestGetOrID(t *testing.T)          {}
+func TestGetIDList(t *testing.T)        {}
+func TestGetFirstIDList(t *testing.T)   {}
+func TestGetOrIDList(t *testing.T)      {}
+func TestGetBool(t *testing.T)          {}
+func TestGetFirstBool(t *testing.T)     {}
+func TestGetOrBool(t *testing.T)        {}
+func TestGetBoolList(t *testing.T)      {}
+func TestGetFirstBoolList(t *testing.T) {}
+func TestGetOrBoolList(t *testing.T)    {}
