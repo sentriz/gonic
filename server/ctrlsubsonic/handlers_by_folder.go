@@ -97,12 +97,8 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 // getAlbumListTwo() function
 func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	listType := params.Get("type")
-	if listType == "" {
-		return spec.NewError(10, "please provide a `type` parameter")
-	}
 	q := c.DB.DB
-	switch listType {
+	switch v, _ := params.Get("type"); v {
 	case "alphabeticalByArtist":
 		q = q.Joins(`
 			JOIN albums parent_albums
@@ -129,7 +125,7 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 			user.ID)
 		q = q.Order("plays.time DESC")
 	default:
-		return spec.NewError(10, "unknown value `%s` for parameter 'type'", listType)
+		return spec.NewError(10, "unknown value `%s` for parameter 'type'", v)
 	}
 	var folders []*db.Album
 	// TODO: think about removing this extra join to count number
@@ -139,8 +135,8 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 		Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
 		Group("albums.id").
 		Where("albums.tag_artist_id IS NOT NULL").
-		Offset(params.GetIntOr("offset", 0)).
-		Limit(params.GetIntOr("size", 10)).
+		Offset(params.GetOrInt("offset", 0)).
+		Limit(params.GetOrInt("size", 10)).
 		Preload("Parent").
 		Find(&folders)
 	sub := spec.NewResponse()
@@ -155,8 +151,8 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	query := params.Get("query")
-	if query == "" {
+	query, err := params.Get("query")
+	if err != nil {
 		return spec.NewError(10, "please provide a `query` parameter")
 	}
 	query = fmt.Sprintf("%%%s%%", strings.TrimSuffix(query, "*"))
@@ -169,8 +165,8 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 			AND (	right_path LIKE ? OR
 					right_path_u_dec LIKE ?	)`,
 			query, query).
-		Offset(params.GetIntOr("artistOffset", 0)).
-		Limit(params.GetIntOr("artistCount", 20)).
+		Offset(params.GetOrInt("artistOffset", 0)).
+		Limit(params.GetOrInt("artistCount", 20)).
 		Find(&artists)
 	for _, a := range artists {
 		results.Artists = append(results.Artists,
@@ -184,8 +180,8 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 			AND (	right_path LIKE ? OR
 					right_path_u_dec LIKE ?	)`,
 			query, query).
-		Offset(params.GetIntOr("albumOffset", 0)).
-		Limit(params.GetIntOr("albumCount", 20)).
+		Offset(params.GetOrInt("albumOffset", 0)).
+		Limit(params.GetOrInt("albumCount", 20)).
 		Find(&albums)
 	for _, a := range albums {
 		results.Albums = append(results.Albums, spec.NewTCAlbumByFolder(a))
@@ -196,8 +192,8 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 		Preload("Album").
 		Where("filename LIKE ? OR filename_u_dec LIKE ?",
 			query, query).
-		Offset(params.GetIntOr("songOffset", 0)).
-		Limit(params.GetIntOr("songCount", 20)).
+		Offset(params.GetOrInt("songOffset", 0)).
+		Limit(params.GetOrInt("songCount", 20)).
 		Find(&tracks)
 	for _, t := range tracks {
 		results.Tracks = append(results.Tracks,

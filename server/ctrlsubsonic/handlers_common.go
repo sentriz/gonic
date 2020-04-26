@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/http"
 	"sort"
-	"strconv"
 	"time"
 	"unicode"
 
@@ -59,8 +58,8 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 		Track: track,
 		// clients will provide time in miliseconds, so use that or
 		// instead convert UnixNano to miliseconds
-		StampMili:  params.GetIntOr("time", int(time.Now().UnixNano()/1e6)),
-		Submission: params.GetOr("submission", "true") != "false",
+		StampMili:  params.GetOrInt("time", int(time.Now().UnixNano()/1e6)),
+		Submission: params.GetOrBool("submission", true),
 	}
 	err = lastfm.Scrobble(
 		c.DB.GetSetting("lastfm_api_key"),
@@ -179,10 +178,7 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	params := r.Context().Value(CtxParams).(params.Params)
-	var playlistID int
-	if p := params.GetFirstList("id", "playlistId"); p != nil {
-		playlistID, _ = strconv.Atoi(p[0])
-	}
+	playlistID := params.GetFirstOrInt( /* default */ 0, "id", "playlistId")
 	// playlistID may be 0 from above. in that case we get a new playlist
 	// as intended
 	var playlist db.Playlist
@@ -191,22 +187,22 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 		FirstOrCreate(&playlist)
 	// ** begin update meta info
 	playlist.UserID = user.ID
-	if val := params.Get("name"); val != "" {
+	if val, err := params.Get("name"); err != nil {
 		playlist.Name = val
 	}
-	if val := params.Get("comment"); val != "" {
+	if val, err := params.Get("comment"); err != nil {
 		playlist.Comment = val
 	}
 	trackIDs := playlist.GetItems()
 	// ** begin delete items
-	if p := params.GetFirstListInt("songIndexToRemove"); p != nil {
+	if p, err := params.GetIntList("songIndexToRemove"); err == nil {
 		sort.Sort(sort.Reverse(sort.IntSlice(p)))
 		for _, i := range p {
 			trackIDs = append(trackIDs[:i], trackIDs[i+1:]...)
 		}
 	}
 	// ** begin add items
-	if p := params.GetFirstListInt("songId", "songIdToAdd"); p != nil {
+	if p, err := params.GetFirstIntList("songId", "songIdToAdd"); err == nil {
 		trackIDs = append(trackIDs, p...)
 	}
 	//
@@ -218,7 +214,7 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 func (c *Controller) ServeDeletePlaylist(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	c.DB.
-		Where("id=?", params.GetIntOr("id", 0)).
+		Where("id=?", params.GetOrInt("id", 0)).
 		Delete(&db.Playlist{})
 	return spec.NewResponse()
 }
@@ -255,16 +251,16 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeSavePlayQueue(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	tracks := params.GetFirstListInt("id")
-	if tracks == nil {
+	tracks, err := params.GetIntList("id")
+	if err != nil {
 		return spec.NewError(10, "please provide some `id` parameters")
 	}
 	user := r.Context().Value(CtxUser).(*db.User)
 	queue := &db.PlayQueue{UserID: user.ID}
 	c.DB.Where(queue).First(queue)
-	queue.Current = params.GetIntOr("current", 0)
-	queue.Position = params.GetIntOr("position", 0)
-	queue.ChangedBy = params.Get("c")
+	queue.Current = params.GetOrInt("current", 0)
+	queue.Position = params.GetOrInt("position", 0)
+	queue.ChangedBy = params.GetOr("c", "") // must exist, middleware checks
 	queue.SetItems(tracks)
 	c.DB.Save(queue)
 	return spec.NewResponse()
@@ -295,7 +291,7 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	var tracks []*db.Track
 	q := c.DB.DB.
 		Joins("JOIN albums ON tracks.album_id=albums.id").
-		Limit(params.GetIntOr("size", 10)).
+		Limit(params.GetOrInt("size", 10)).
 		Preload("Album").
 		Order(gorm.Expr("random()"))
 	if year, err := params.GetInt("fromYear"); err == nil {
@@ -304,7 +300,7 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	if year, err := params.GetInt("toYear"); err == nil {
 		q = q.Where("albums.tag_year <= ?", year)
 	}
-	if genre := params.Get("genre"); genre != "" {
+	if genre, err := params.Get("genre"); err == nil {
 		q = q.Joins(
 			"JOIN genres ON tracks.tag_genre_id=genres.id AND genres.name=?",
 			genre,
@@ -324,7 +320,10 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	getTracks := func() []*db.Track {
 		var tracks []*db.Track
-		ids := params.GetFirstListInt("id")
+		ids, err := params.GetIDList("id")
+		if err != nil {
+			return tracks
+		}
 		for _, id := range ids {
 			track := &db.Track{}
 			c.DB.Preload("Album").First(track, id)
@@ -351,7 +350,7 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response {
 		}
 		return ret
 	}
-	switch act := params.Get("action"); act {
+	switch act, _ := params.Get("action"); act {
 	case "set":
 		c.Jukebox.SetTracks(getTracks())
 	case "add":

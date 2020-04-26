@@ -41,13 +41,11 @@ func (c *Controller) WithRequiredParams(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		params := r.Context().Value(CtxParams).(params.Params)
 		for _, req := range requiredParameters {
-			param := params.Get(req)
-			if param != "" {
-				continue
+			if _, err := params.Get(req); err != nil {
+				_ = writeResp(w, r, spec.NewError(10,
+					"please provide a `%s` parameter", req))
+				return
 			}
-			_ = writeResp(w, r, spec.NewError(10,
-				"please provide a `%s` parameter", req))
-			return
 		}
 		next.ServeHTTP(w, r)
 	})
@@ -56,10 +54,11 @@ func (c *Controller) WithRequiredParams(next http.Handler) http.Handler {
 func (c *Controller) WithUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		params := r.Context().Value(CtxParams).(params.Params)
-		username := params.Get("u")
-		password := params.Get("p")
-		token := params.Get("t")
-		salt := params.Get("s")
+		// ignoring errors here, a middleware has already ensured they exist
+		username, _ := params.Get("u")
+		password, _ := params.Get("p")
+		token, _ := params.Get("t")
+		salt, _ := params.Get("s")
 		//
 		passwordAuth := token == "" && salt == ""
 		tokenAuth := password == ""

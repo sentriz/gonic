@@ -97,8 +97,8 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 // getAlbumList() function
 func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	listType := params.Get("type")
-	if listType == "" {
+	listType, err := params.Get("type")
+	if err != nil {
 		return spec.NewError(10, "please provide a `type` parameter")
 	}
 	q := c.DB.DB
@@ -111,8 +111,8 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	case "byYear":
 		q = q.Where(
 			"tag_year BETWEEN ? AND ?",
-			params.GetIntOr("fromYear", 1800),
-			params.GetIntOr("toYear", 2200))
+			params.GetOrInt("fromYear", 1800),
+			params.GetOrInt("toYear", 2200))
 		q = q.Order("tag_year")
 	case "byGenre":
 		q = q.Joins("JOIN genres ON albums.tag_genre_id=genres.id AND genres.name=?",
@@ -142,8 +142,8 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 		Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
 		Group("albums.id").
 		Where("albums.tag_artist_id IS NOT NULL").
-		Offset(params.GetIntOr("offset", 0)).
-		Limit(params.GetIntOr("size", 10)).
+		Offset(params.GetOrInt("offset", 0)).
+		Limit(params.GetOrInt("size", 10)).
 		Preload("TagArtist").
 		Find(&albums)
 	sub := spec.NewResponse()
@@ -158,8 +158,8 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	query := params.Get("query")
-	if query == "" {
+	query, err := params.Get("query")
+	if err != nil {
 		return spec.NewError(10, "please provide a `query` parameter")
 	}
 	query = fmt.Sprintf("%%%s%%",
@@ -170,8 +170,8 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	c.DB.
 		Where("name LIKE ? OR name_u_dec LIKE ?",
 			query, query).
-		Offset(params.GetIntOr("artistOffset", 0)).
-		Limit(params.GetIntOr("artistCount", 20)).
+		Offset(params.GetOrInt("artistOffset", 0)).
+		Limit(params.GetOrInt("artistCount", 20)).
 		Find(&artists)
 	for _, a := range artists {
 		results.Artists = append(results.Artists,
@@ -183,8 +183,8 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		Preload("TagArtist").
 		Where("tag_title LIKE ? OR tag_title_u_dec LIKE ?",
 			query, query).
-		Offset(params.GetIntOr("albumOffset", 0)).
-		Limit(params.GetIntOr("albumCount", 20)).
+		Offset(params.GetOrInt("albumOffset", 0)).
+		Limit(params.GetOrInt("albumCount", 20)).
 		Find(&albums)
 	for _, a := range albums {
 		results.Albums = append(results.Albums,
@@ -196,8 +196,8 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		Preload("Album").
 		Where("tag_title LIKE ? OR tag_title_u_dec LIKE ?",
 			query, query).
-		Offset(params.GetIntOr("songOffset", 0)).
-		Limit(params.GetIntOr("songCount", 20)).
+		Offset(params.GetOrInt("songOffset", 0)).
+		Limit(params.GetOrInt("songCount", 20)).
 		Find(&tracks)
 	for _, t := range tracks {
 		results.Tracks = append(results.Tracks,
@@ -210,7 +210,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	id, err := params.GetInt("id")
+	id, err := params.GetIDDefault()
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
@@ -246,8 +246,8 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 			sub.ArtistInfoTwo.LargeImageURL = image.Text
 		}
 	}
-	count := params.GetIntOr("count", 20)
-	includeNotPresent := params.Get("includeNotPresent") == "true"
+	count := params.GetOrInt("count", 20)
+	inclNotPresent := params.GetOrBool("includeNotPresent", false)
 	for i, similarInfo := range info.Similar.Artists {
 		if i == count {
 			break
@@ -260,7 +260,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 			Group("artists.id").
 			Find(artist).
 			Error
-		if gorm.IsRecordNotFoundError(err) && !includeNotPresent {
+		if gorm.IsRecordNotFoundError(err) && !inclNotPresent {
 			continue
 		}
 		similar := &spec.SimilarArtist{ID: -1}
@@ -295,8 +295,8 @@ func (c *Controller) ServeGetGenres(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	genre := params.Get("genre")
-	if genre == "" {
+	genre, err := params.Get("genre")
+	if err != nil {
 		return spec.NewError(10, "please provide an `genre` parameter")
 	}
 	// TODO: add musicFolderId parameter
@@ -306,8 +306,8 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 		Joins("JOIN albums ON tracks.album_id=albums.id").
 		Joins("JOIN genres ON tracks.tag_genre_id=genres.id AND genres.name=?", genre).
 		Preload("Album").
-		Offset(params.GetIntOr("offset", 0)).
-		Limit(params.GetIntOr("count", 10)).
+		Offset(params.GetOrInt("offset", 0)).
+		Limit(params.GetOrInt("count", 10)).
 		Find(&tracks)
 	sub := spec.NewResponse()
 	sub.TracksByGenre = &spec.TracksByGenre{
