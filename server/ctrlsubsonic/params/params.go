@@ -1,6 +1,6 @@
 package params
 
-// {get, get first, get or} * {str, int, id} * {list, not list} = 18
+// {get, get first, get or} * {str, int, id, bool} * {list, not list} = 24 funcs
 
 import (
 	"errors"
@@ -15,6 +15,7 @@ var (
 	ErrKeyNotFound = errors.New("key(s) not found")
 	ErrIDInvalid   = errors.New("invalid id")
 	ErrIDNotAnInt  = errors.New("not an int")
+	ErrIDNotABool  = errors.New("not an bool")
 )
 
 const IDSeparator = "-"
@@ -51,6 +52,8 @@ func parse(values []string, i interface{}) error {
 		*v, err = parseInt(values[0])
 	case *ID:
 		*v, err = parseID(values[0])
+	case *bool:
+		*v, err = parseBool(values[0])
 	case *[]string:
 		for _, val := range values {
 			parsed, err := parseStr(val)
@@ -70,6 +73,14 @@ func parse(values []string, i interface{}) error {
 	case *[]ID:
 		for _, val := range values {
 			parsed, err := parseID(val)
+			if err != nil {
+				return err
+			}
+			*v = append(*v, parsed)
+		}
+	case *[]bool:
+		for _, val := range values {
+			parsed, err := parseBool(val)
 			if err != nil {
 				return err
 			}
@@ -112,6 +123,13 @@ func parseID(in string) (ID, error) {
 		return ID{Type: IDTypeTrack, Value: val}, nil
 	}
 	return ID{}, ErrIDInvalid
+}
+
+func parseBool(in string) (bool, error) {
+	if v, err := strconv.ParseBool(in); err == nil {
+		return v, nil
+	}
+	return false, ErrIDNotABool
 }
 
 type Params url.Values
@@ -228,6 +246,11 @@ func (p Params) GetID(key string) (ID, error) {
 	return ret, parse(p.get(key), &ret)
 }
 
+func (p Params) GetIDDefault() (ID, error) {
+	var ret ID
+	return ret, parse(p.get("id"), &ret)
+}
+
 func (p Params) GetFirstID(keys ...string) (ID, error) {
 	var ret ID
 	return ret, parse(p.getFirst(keys), &ret)
@@ -255,6 +278,46 @@ func (p Params) GetFirstIDList(keys ...string) ([]ID, error) {
 
 func (p Params) GetOrIDList(key string, or []ID) []ID {
 	var ret []ID
+	if err := parse(p.get(key), &ret); err == nil {
+		return ret
+	}
+	return or
+}
+
+// ** begin bool {get, get first, get or}
+
+func (p Params) GetBool(key string) (bool, error) {
+	var ret bool
+	return ret, parse(p.get(key), &ret)
+}
+
+func (p Params) GetFirstBool(keys ...string) (bool, error) {
+	var ret bool
+	return ret, parse(p.getFirst(keys), &ret)
+}
+
+func (p Params) GetOrBool(key string, or bool) bool {
+	var ret bool
+	if err := parse(p.get(key), &ret); err == nil {
+		return ret
+	}
+	return or
+}
+
+// ** begin []bool {get, get first, get or}
+
+func (p Params) GetBoolList(key string) ([]bool, error) {
+	var ret []bool
+	return ret, parse(p.get(key), &ret)
+}
+
+func (p Params) GetFirstBoolList(keys ...string) ([]bool, error) {
+	var ret []bool
+	return ret, parse(p.getFirst(keys), &ret)
+}
+
+func (p Params) GetOrBoolList(key string, or []bool) []bool {
+	var ret []bool
 	if err := parse(p.get(key), &ret); err == nil {
 		return ret
 	}
