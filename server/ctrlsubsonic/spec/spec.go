@@ -90,14 +90,14 @@ type Albums struct {
 
 type Album struct {
 	// common
-	ID       int    `xml:"id,attr,omitempty"       json:"id,string"`
+	ID       string `xml:"id,attr,omitempty"       json:"id"`
 	CoverID  int    `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty,string"`
-	ArtistID int    `xml:"artistId,attr,omitempty" json:"artistId,omitempty,string"`
+	ArtistID string `xml:"artistId,attr,omitempty" json:"artistId,omitempty"`
 	Artist   string `xml:"artist,attr,omitempty"   json:"artist,omitempty"`
 	// browsing by folder (eg. getAlbumList)
 	Title    string `xml:"title,attr"            json:"title"`
 	Album    string `xml:"album,attr"            json:"album"`
-	ParentID int    `xml:"parent,attr,omitempty" json:"parent,omitempty,string"`
+	ParentID string `xml:"parent,attr,omitempty" json:"parent,omitempty"`
 	IsDir    bool   `xml:"isDir,attr,omitempty"  json:"isDir,omitempty"`
 	// browsing by tags (eg. getAlbumList2)
 	Name       string        `xml:"name,attr"              json:"name"`
@@ -119,19 +119,19 @@ type TracksByGenre struct {
 
 type TrackChild struct {
 	Album       string    `xml:"album,attr,omitempty"       json:"album,omitempty"`
-	AlbumID     int       `xml:"albumId,attr,omitempty"     json:"albumId,omitempty,string"`
+	AlbumID     string    `xml:"albumId,attr,omitempty"     json:"albumId,omitempty"`
 	Artist      string    `xml:"artist,attr,omitempty"      json:"artist,omitempty"`
-	ArtistID    int       `xml:"artistId,attr,omitempty"    json:"artistId,omitempty,string"`
+	ArtistID    string    `xml:"artistId,attr,omitempty"    json:"artistId,omitempty"`
 	Bitrate     int       `xml:"bitRate,attr,omitempty"     json:"bitRate,omitempty"`
 	ContentType string    `xml:"contentType,attr,omitempty" json:"contentType,omitempty"`
 	CoverID     int       `xml:"coverArt,attr,omitempty"    json:"coverArt,omitempty,string"`
 	CreatedAt   time.Time `xml:"created,attr,omitempty"     json:"created,omitempty"`
 	Duration    int       `xml:"duration,attr,omitempty"    json:"duration,omitempty"`
 	Genre       string    `xml:"genre,attr,omitempty"       json:"genre,omitempty"`
-	ID          int       `xml:"id,attr,omitempty"          json:"id,omitempty,string"`
+	ID          string    `xml:"id,attr,omitempty"          json:"id,omitempty"`
 	IsDir       bool      `xml:"isDir,attr"                 json:"isDir"`
 	IsVideo     bool      `xml:"isVideo,attr"               json:"isVideo"`
-	ParentID    int       `xml:"parent,attr,omitempty"      json:"parent,omitempty,string"`
+	ParentID    string    `xml:"parent,attr,omitempty"      json:"parent,omitempty"`
 	Path        string    `xml:"path,attr,omitempty"        json:"path,omitempty"`
 	Size        int       `xml:"size,attr,omitempty"        json:"size,omitempty"`
 	Suffix      string    `xml:"suffix,attr,omitempty"      json:"suffix,omitempty"`
@@ -147,7 +147,7 @@ type Artists struct {
 }
 
 type Artist struct {
-	ID         int      `xml:"id,attr,omitempty"       json:"id,string"`
+	ID         string   `xml:"id,attr,omitempty"       json:"id"`
 	Name       string   `xml:"name,attr"               json:"name"`
 	CoverID    int      `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty,string"`
 	AlbumCount int      `xml:"albumCount,attr"         json:"albumCount"`
@@ -166,8 +166,8 @@ type Index struct {
 }
 
 type Directory struct {
-	ID       int           `xml:"id,attr,omitempty"      json:"id,string"`
-	ParentID int           `xml:"parent,attr,omitempty"  json:"parent,omitempty,string"`
+	ID       string        `xml:"id,attr,omitempty"      json:"id"`
+	ParentID string        `xml:"parent,attr,omitempty"  json:"parent,omitempty"`
 	Name     string        `xml:"name,attr,omitempty"    json:"name"`
 	Starred  string        `xml:"starred,attr,omitempty" json:"starred,omitempty"`
 	Children []*TrackChild `xml:"child,omitempty"        json:"child,omitempty"`
@@ -178,7 +178,7 @@ type MusicFolders struct {
 }
 
 type MusicFolder struct {
-	ID   int    `xml:"id,attr,omitempty"   json:"id,omitempty,string"`
+	ID   string `xml:"id,attr,omitempty"   json:"id,omitempty"`
 	Name string `xml:"name,attr,omitempty" json:"name,omitempty"`
 }
 
@@ -238,7 +238,7 @@ type Playlist struct {
 }
 
 type SimilarArtist struct {
-	ID         int    `xml:"id,attr"                   json:"id,string"`
+	ID         string `xml:"id,attr"                   json:"id"`
 	Name       string `xml:"name,attr"                 json:"name"`
 	AlbumCount int    `xml:"albumCount,attr,omitempty" json:"albumCount,omitempty"`
 }
