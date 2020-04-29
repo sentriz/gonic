@@ -210,7 +210,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	id, err := params.GetIDDefault()
+	id, err := params.GetInt("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}

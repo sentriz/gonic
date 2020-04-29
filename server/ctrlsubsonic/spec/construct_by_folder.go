@@ -3,15 +3,16 @@ package spec
 import (
 	"path"
 
+	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/db"
 )
 
 func NewAlbumByFolder(f *db.Album) *Album {
 	a := &Album{
 		Artist:     f.Parent.RightPath,
-		ID:         f.ID,
+		ID:         params.IDAlbum(f.ID),
 		IsDir:      true,
-		ParentID:   f.ParentID,
+		ParentID:   params.IDAlbum(f.ParentID),
 		Title:      f.RightPath,
 		TrackCount: f.ChildCount,
 	}
@@ -23,10 +24,10 @@ func NewAlbumByFolder(f *db.Album) *Album {
 
 func NewTCAlbumByFolder(f *db.Album) *TrackChild {
 	trCh := &TrackChild{
-		ID:        f.ID,
+		ID:        params.IDAlbum(f.ID),
 		IsDir:     true,
 		Title:     f.RightPath,
-		ParentID:  f.ParentID,
+		ParentID:  params.IDAlbum(f.ParentID),
 		CreatedAt: f.UpdatedAt,
 	}
 	if f.Cover != "" {
@@ -37,7 +38,7 @@ func NewTCAlbumByFolder(f *db.Album) *TrackChild {
 
 func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 	trCh := &TrackChild{
-		ID:          t.ID,
+		ID:          params.IDTrack(t.ID),
 		ContentType: t.MIME(),
 		Suffix:      t.Ext(),
 		Size:        t.Size,
@@ -50,7 +51,7 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 			parent.RightPath,
 			t.Filename,
 		),
-		ParentID:  parent.ID,
+		ParentID:  params.IDAlbum(parent.ID),
 		Duration:  t.Length,
 		Bitrate:   t.Bitrate,
 		IsDir:     false,
@@ -67,8 +68,12 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 }
 
 func NewArtistByFolder(f *db.Album) *Artist {
+	// the db is structued around "browse by tags", and where
+	// an album is also a folder. so we're constructing an artist
+	// from an "album" where
+	// maybe TODO: rename the Album model to Folder
 	return &Artist{
-		ID:         f.ID,
+		ID:         params.IDAlbum(f.ID),
 		Name:       f.RightPath,
 		AlbumCount: f.ChildCount,
 	}

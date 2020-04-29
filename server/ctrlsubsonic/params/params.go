@@ -26,45 +26,23 @@ package params
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
+
+	"go.senan.xyz/gonic/server/ids"
 )
 
-var (
-	ErrKeyNotFound = errors.New("key(s) not found")
-	ErrIDInvalid   = errors.New("invalid id")
-	ErrIDNotAnInt  = errors.New("not an int")
-	ErrIDNotABool  = errors.New("not an bool")
-)
-
-const IDSeparator = "-"
-
-type IDType string
-
-const (
-	// type values copied from subsonic
-	IDTypeArtist IDType = "ar"
-	IDTypeAlbum  IDType = "al"
-	IDTypeTrack  IDType = "tr"
-)
-
-type ID struct {
-	Type  IDType
-	Value int
-}
-
-func IDArtist(id int) string { return fmt.Sprintf("%d-%s", id, IDTypeArtist) }
-func IDAlbum(id int) string  { return fmt.Sprintf("%d-%s", id, IDTypeAlbum) }
-func IDTrack(id int) string  { return fmt.Sprintf("%d-%s", id, IDTypeTrack) }
-
-// ** begin type parsing, support {[],}{string,int,ID} => 6 types
+// some thin wrappers
+// may be needed when cleaning up parse() below
+func parseStr(in string) (string, error) { return in, nil }
+func parseInt(in string) (int, error)    { return strconv.Atoi(in) }
+func parseID(in string) (ids.IDV, error) { return ids.Parse(in) }
+func parseBool(in string) (bool, error)  { return strconv.ParseBool(in) }
 
 func parse(values []string, i interface{}) error {
 	if len(values) == 0 {
-		return ErrKeyNotFound
+		return errors.New("no values provided")
 	}
 	var err error
 	switch v := i.(type) {
@@ -72,37 +50,37 @@ func parse(values []string, i interface{}) error {
 		*v, err = parseStr(values[0])
 	case *int:
 		*v, err = parseInt(values[0])
-	case *ID:
+	case *ids.IDV:
 		*v, err = parseID(values[0])
 	case *bool:
 		*v, err = parseBool(values[0])
 	case *[]string:
-		for _, val := range values {
-			parsed, err := parseStr(val)
+		for _, value := range values {
+			parsed, err := parseStr(value)
 			if err != nil {
 				return err
 			}
 			*v = append(*v, parsed)
 		}
 	case *[]int:
-		for _, val := range values {
-			parsed, err := parseInt(val)
+		for _, value := range values {
+			parsed, err := parseInt(value)
 			if err != nil {
 				return err
 			}
 			*v = append(*v, parsed)
 		}
-	case *[]ID:
-		for _, val := range values {
-			parsed, err := parseID(val)
+	case *[]ids.IDV:
+		for _, value := range values {
+			parsed, err := parseID(value)
 			if err != nil {
 				return err
 			}
 			*v = append(*v, parsed)
 		}
 	case *[]bool:
-		for _, val := range values {
-			parsed, err := parseBool(val)
+		for _, value := range values {
+			parsed, err := parseBool(value)
 			if err != nil {
 				return err
 			}
@@ -110,48 +88,6 @@ func parse(values []string, i interface{}) error {
 		}
 	}
 	return err
-}
-
-// ** begin parse funcs
-
-func parseStr(in string) (string, error) {
-	return in, nil
-}
-
-func parseInt(in string) (int, error) {
-	if v, err := strconv.Atoi(in); err == nil {
-		return v, nil
-	}
-	return 0, ErrIDNotAnInt
-}
-
-func parseID(in string) (ID, error) {
-	parts := strings.Split(in, IDSeparator)
-	if len(parts) != 2 {
-		return ID{}, fmt.Errorf("bad separator: %w", ErrIDInvalid)
-	}
-	partType := parts[0]
-	partValue := parts[1]
-	val, err := parseInt(partValue)
-	if err != nil {
-		return ID{}, fmt.Errorf("%s: %w", partValue, err)
-	}
-	switch partType {
-	case string(IDTypeArtist):
-		return ID{Type: IDTypeArtist, Value: val}, nil
-	case string(IDTypeAlbum):
-		return ID{Type: IDTypeAlbum, Value: val}, nil
-	case string(IDTypeTrack):
-		return ID{Type: IDTypeTrack, Value: val}, nil
-	}
-	return ID{}, ErrIDInvalid
-}
-
-func parseBool(in string) (bool, error) {
-	if v, err := strconv.ParseBool(in); err == nil {
-		return v, nil
-	}
-	return false, ErrIDNotABool
 }
 
 type Params url.Values
@@ -293,61 +229,56 @@ func (p Params) GetFirstOrIntList(or []int, keys ...string) []int {
 	return or
 }
 
-// ** begin ID {get, get first, get or, get first or}
+// ** begin ids.IDV {get, get first, get or, get first or}
 
-func (p Params) GetID(key string) (ID, error) {
-	var ret ID
+func (p Params) GetID(key string) (ids.IDV, error) {
+	var ret ids.IDV
 	return ret, parse(p.get(key), &ret)
 }
 
-func (p Params) GetIDDefault() (ID, error) {
-	var ret ID
-	return ret, parse(p.get("id"), &ret)
-}
-
-func (p Params) GetFirstID(keys ...string) (ID, error) {
-	var ret ID
+func (p Params) GetFirstID(keys ...string) (ids.IDV, error) {
+	var ret ids.IDV
 	return ret, parse(p.getFirst(keys), &ret)
 }
 
-func (p Params) GetOrID(key string, or ID) ID {
-	var ret ID
+func (p Params) GetOrID(key string, or ids.IDV) ids.IDV {
+	var ret ids.IDV
 	if err := parse(p.get(key), &ret); err == nil {
 		return ret
 	}
 	return or
 }
 
-func (p Params) GetFirstOrID(or ID, keys ...string) ID {
-	var ret ID
+func (p Params) GetFirstOrID(or ids.IDV, keys ...string) ids.IDV {
+	var ret ids.IDV
 	if err := parse(p.getFirst(keys), &ret); err == nil {
 		return ret
 	}
 	return or
 }
 
-// ** begin []ID {get, get first, get or, get first or}
+// ** begin []ids.IDV {get, get first, get or, get first or}
 
-func (p Params) GetIDList(key string) ([]ID, error) {
-	var ret []ID
+func (p Params) GetIDList(key string) ([]ids.IDV, error) {
+	var ret []ids.IDV
 	return ret, parse(p.get(key), &ret)
 }
 
-func (p Params) GetFirstIDList(keys ...string) ([]ID, error) {
-	var ret []ID
+func (p Params) GetFirstIDList(keys ...string) ([]ids.IDV, error) {
+	var ret []ids.IDV
 	return ret, parse(p.getFirst(keys), &ret)
 }
 
-func (p Params) GetOrIDList(key string, or []ID) []ID {
-	var ret []ID
+func (p Params) GetOrIDList(key string, or []ids.IDV) []ids.IDV {
+	var ret []ids.IDV
 	if err := parse(p.get(key), &ret); err == nil {
 		return ret
 	}
 	return or
 }
 
-func (p Params) GetFirstOrIDList(or []ID, keys ...string) []ID {
-	var ret []ID
+func (p Params) GetFirstOrIDList(or []ids.IDV, keys ...string) []ids.IDV {
+	var ret []ids.IDV
 	if err := parse(p.getFirst(keys), &ret); err == nil {
 		return ret
 	}
