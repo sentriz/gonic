@@ -11,8 +11,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"go.senan.xyz/gonic/server/db"
 )
 
@@ -47,13 +45,13 @@ func makeRequest(method string, params url.Values) (LastFM, error) {
 	req.URL.RawQuery = params.Encode()
 	resp, err := client.Do(req)
 	if err != nil {
-		return LastFM{}, errors.Wrap(err, "get")
+		return LastFM{}, fmt.Errorf("get: %w", err)
 	}
 	defer resp.Body.Close()
 	decoder := xml.NewDecoder(resp.Body)
 	lastfm := LastFM{}
 	if err = decoder.Decode(&lastfm); err != nil {
-		return LastFM{}, errors.Wrap(err, "decoding")
+		return LastFM{}, fmt.Errorf("decoding: %w", err)
 	}
 	if lastfm.Error.Code != 0 {
 		return LastFM{}, fmt.Errorf("parsing: %v", lastfm.Error.Value)
@@ -69,7 +67,7 @@ func GetSession(apiKey, secret, token string) (string, error) {
 	params.Add("api_sig", getParamSignature(params, secret))
 	resp, err := makeRequest("GET", params)
 	if err != nil {
-		return "", errors.Wrap(err, "making session GET")
+		return "", fmt.Errorf("making session GET: %w", err)
 	}
 	return resp.Session.Key, nil
 }
@@ -109,7 +107,7 @@ func ArtistGetInfo(apiKey string, artist *db.Artist) (Artist, error) {
 	params.Add("artist", artist.Name)
 	resp, err := makeRequest("GET", params)
 	if err != nil {
-		return Artist{}, errors.Wrap(err, "making artist GET")
+		return Artist{}, fmt.Errorf("making artist GET: %w", err)
 	}
 	return resp.Artist, nil
 }

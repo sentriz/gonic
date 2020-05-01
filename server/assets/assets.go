@@ -1,6 +1,8 @@
 package assets
 
-import "strings"
+import (
+	"strings"
+)
 
 // PrefixDo runs a given callback for every path in our assets with
 // the given prefix

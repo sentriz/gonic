@@ -1,6 +1,8 @@
 package scanner
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"os"
 	"path"
@@ -12,7 +14,6 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/karrick/godirwalk"
-	"github.com/pkg/errors"
 	"github.com/rainycape/unidecode"
 
 	"go.senan.xyz/gonic/server/db"
@@ -96,7 +97,7 @@ func (s *Scanner) cleanTracks() (int, error) {
 		Pluck("id", &previous).
 		Error
 	if err != nil {
-		return 0, errors.Wrap(err, "plucking ids")
+		return 0, fmt.Errorf("plucking ids: %w", err)
 	}
 	for _, prev := range previous {
 		if _, ok := s.seenTracks[prev]; !ok {
@@ -117,7 +118,7 @@ func (s *Scanner) cleanFolders() (int, error) {
 		Pluck("id", &previous).
 		Error
 	if err != nil {
-		return 0, errors.Wrap(err, "plucking ids")
+		return 0, fmt.Errorf("plucking ids: %w", err)
 	}
 	for _, prev := range previous {
 		if _, ok := s.seenFolders[prev]; !ok {
@@ -171,11 +172,11 @@ func (s *Scanner) Start(opts ScanOptions) error {
 		Unsorted:             true,
 		FollowSymbolicLinks:  true,
 		ErrorCallback: func(s string, err error) godirwalk.ErrorAction {
-			return
+			return godirwalk.SkipNode
 		},
 	})
 	if err != nil {
-		return errors.Wrap(err, "walking filesystem")
+		return fmt.Errorf("walking filesystem: %w", err)
 	}
 	log.Printf("finished scan in %s, +%d/%d tracks (%d err)\n",
 		durSince(start),
@@ -235,11 +236,11 @@ var coverFilenames = map[string]struct{}{
 func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
 	stat, err := os.Stat(fullPath)
 	if err != nil {
-		return errors.Wrap(err, "stating")
+		return fmt.Errorf("stating: %w", err)
 	}
 	relPath, err := filepath.Rel(s.musicPath, fullPath)
 	if err != nil {
-		return errors.Wrap(err, "getting relative path")
+		return fmt.Errorf("getting relative path: %w", err)
 	}
 	directory, filename := path.Split(relPath)
 	it := &item{
@@ -251,7 +252,7 @@ func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
 	}
 	isDir, err := info.IsDirOrSymlinkToDir()
 	if err != nil {
-		return errors.Wrap(err, "stating link to dir")
+		return fmt.Errorf("stating link to dir: %w", err)
 	}
 	if isDir {
 		return s.handleFolder(it)

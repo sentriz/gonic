@@ -1,12 +1,13 @@
 package db
 
 import (
+	"fmt"
 	"log"
 	"net/url"
 	"os"
 
 	"github.com/jinzhu/gorm"
-	"github.com/pkg/errors"
+
 	"gopkg.in/gormigrate.v1"
 )
 
@@ -56,7 +57,7 @@ func New(path string) (*DB, error) {
 	url.RawQuery = dbOptions.Encode()
 	db, err := gorm.Open("sqlite3", url.String())
 	if err != nil {
-		return nil, errors.Wrap(err, "with gorm")
+		return nil, fmt.Errorf("with gorm: %w", err)
 	}
 	db.SetLogger(log.New(os.Stdout, "gorm ", 0))
 	db.DB().SetMaxOpenConns(dbMaxOpenConns)
@@ -70,7 +71,7 @@ func New(path string) (*DB, error) {
 		migrationAddAlbumIDX,
 	))
 	if err = migr.Migrate(); err != nil {
-		return nil, errors.Wrap(err, "migrating to latest version")
+		return nil, fmt.Errorf("migrating to latest version: %w", err)
 	}
 	return &DB{DB: db}, nil
 }

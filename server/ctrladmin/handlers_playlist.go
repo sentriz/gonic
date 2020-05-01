@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/jinzhu/gorm"
-	"github.com/pkg/errors"
 
 	"go.senan.xyz/gonic/server/db"
 )
@@ -28,7 +27,7 @@ func playlistParseLine(c *Controller, path string) (int, error) {
 	case gorm.IsRecordNotFoundError(err):
 		return 0, fmt.Errorf("couldn't match track %q", path)
 	case err != nil:
-		return 0, errors.Wrap(err, "while matching")
+		return 0, fmt.Errorf("while matching: %w", err)
 	default:
 		return track.ID, nil
 	}

@@ -23,7 +23,6 @@ require (
 	github.com/oklog/run v1.1.0
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c
 	github.com/peterbourgon/ff v1.2.0
-	github.com/pkg/errors v0.8.1
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
 	github.com/wader/gormstore v0.0.0-20190302154359-acb787ba3755
 	golang.org/x/exp v0.0.0-20190121172915-509febef88a4 // indirect

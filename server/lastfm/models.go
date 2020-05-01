@@ -1,6 +1,8 @@
 package lastfm
 
-import "encoding/xml"
+import (
+	"encoding/xml"
+)
 
 type LastFM struct {
 	XMLName xml.Name `xml:"lfm"`

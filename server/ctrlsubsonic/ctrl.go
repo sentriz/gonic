@@ -3,11 +3,10 @@ package ctrlsubsonic
 import (
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
-
-	"github.com/pkg/errors"
 
 	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
@@ -55,14 +54,14 @@ func writeResp(w http.ResponseWriter, r *http.Request, resp *spec.Response) erro
 		w.Header().Set("Content-Type", "application/json")
 		data, err := json.Marshal(res)
 		if err != nil {
-			return errors.Wrap(err, "marshal to json")
+			return fmt.Errorf("marshal to json: %w", err)
 		}
 		ew.write(data)
 	case "jsonp":
 		w.Header().Set("Content-Type", "application/javascript")
 		data, err := json.Marshal(res)
 		if err != nil {
-			return errors.Wrap(err, "marshal to jsonp")
+			return fmt.Errorf("marshal to jsonp: %w", err)
 		}
 		// TODO: error if no callback provided instead of using a default
 		pCall := params.GetOr("callback", "cb")
@@ -74,7 +73,7 @@ func writeResp(w http.ResponseWriter, r *http.Request, resp *spec.Response) erro
 		w.Header().Set("Content-Type", "application/xml")
 		data, err := xml.MarshalIndent(res, "", "    ")
 		if err != nil {
-			return errors.Wrap(err, "marshal to xml")
+			return fmt.Errorf("marshal to xml: %w", err)
 		}
 		ew.write(data)
 	}

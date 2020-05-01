@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/peterbourgon/ff"
-	"github.com/pkg/errors"
 
 	"go.senan.xyz/gonic/version"
 )
@@ -81,7 +80,7 @@ func processAsset(c *config, f *file, out io.Writer) {
 func processAssets(c *config, files []string) error {
 	outWriter, err := os.Create(c.outPath)
 	if err != nil {
-		return errors.Wrap(err, "creating out path")
+		return fmt.Errorf("creating out path: %w", err)
 	}
 	if c.tagList != "" {
 		c.tagList = fmt.Sprintf("+build %s", c.tagList)
@@ -95,14 +94,14 @@ func processAssets(c *config, files []string) error {
 	for _, path := range files {
 		info, err := os.Stat(path)
 		if err != nil {
-			return errors.Wrap(err, "stating asset")
+			return fmt.Errorf("stating asset: %w", err)
 		}
 		if info.IsDir() {
 			continue
 		}
 		data, err := os.Open(path)
 		if err != nil {
-			return errors.Wrap(err, "opening asset")
+			return fmt.Errorf("opening asset: %w", err)
 		}
 		defer data.Close()
 		processAsset(c, &file{

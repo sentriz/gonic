@@ -11,7 +11,6 @@ import (
 	"os/exec"
 
 	"github.com/cespare/xxhash"
-	"github.com/pkg/errors"
 )
 
 type Profile struct {
@@ -104,7 +103,7 @@ func Encode(out io.Writer, trackPath, cachePath string, profile *Profile, bitrat
 	// create cache file
 	cacheFile, err := os.Create(cachePath)
 	if err != nil {
-		return errors.Wrapf(err, "writing to cache file %q: %v", cachePath, err)
+		return fmt.Errorf("writing to cache file %q: %v: %w", cachePath, err, err)
 	}
 	// still unsure if buffer version (writeCmdOutput) is any better than io.Copy-based one (copyCmdOutput)
 	// initial goal here is to start streaming response asap, with smallest ttfb. more testing needed
@@ -114,12 +113,12 @@ func Encode(out io.Writer, trackPath, cachePath string, profile *Profile, bitrat
 	go writeCmdOutput(out, cacheFile, pipeReader)
 	// run ffmpeg
 	if err := cmd.Run(); err != nil {
-		return errors.Wrapf(err, "running ffmpeg")
+		return fmt.Errorf("running ffmpeg: %w", err)
 	}
 	// close all pipes and flush cache file
 	pipeWriter.Close()
 	if err := cacheFile.Sync(); err != nil {
-		return errors.Wrapf(err, "flushing %q", cachePath)
+		return fmt.Errorf("flushing %q: %w", cachePath, err)
 	}
 	cacheFile.Close()
 	return nil
