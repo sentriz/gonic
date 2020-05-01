@@ -10,6 +10,25 @@ import (
 	"gopkg.in/gormigrate.v1"
 )
 
+func addMigrationLog(migrs ...gormigrate.Migration) []*gormigrate.Migration {
+	log := func(i int, mig gormigrate.MigrateFunc, name string) gormigrate.MigrateFunc {
+		return func(tx *gorm.DB) error {
+			// print that we're on the ith out of n migrations
+			defer log.Printf("migration (%d/%d) '%s' finished", i+1, len(migrs), name)
+			return mig(tx)
+		}
+	}
+	ret := make([]*gormigrate.Migration, 0, len(migrs))
+	for i, mig := range migrs {
+		ret = append(ret, &gormigrate.Migration{
+			ID:       mig.ID,
+			Rollback: mig.Rollback,
+			Migrate:  log(i, mig.Migrate, mig.ID),
+		})
+	}
+	return ret
+}
+
 var (
 	dbMaxOpenConns = 1
 	dbOptions      = url.Values{
@@ -37,14 +56,15 @@ func New(path string) (*DB, error) {
 	}
 	db.SetLogger(log.New(os.Stdout, "gorm ", 0))
 	db.DB().SetMaxOpenConns(dbMaxOpenConns)
-	migr := gormigrate.New(db, gormigrate.DefaultOptions, []*gormigrate.Migration{
-		&migrationInitSchema,
-		&migrationCreateInitUser,
-		&migrationMergePlaylist,
-		&migrationCreateTranscode,
-		&migrationAddGenre,
-		&migrationUpdateTranscodePrefIDX,
-	})
+	migr := gormigrate.New(db, gormigrate.DefaultOptions, addMigrationLog(
+		migrationInitSchema,
+		migrationCreateInitUser,
+		migrationMergePlaylist,
+		migrationCreateTranscode,
+		migrationAddGenre,
+		migrationUpdateTranscodePrefIDX,
+		migrationAddAlbumIDX,
+	))
 	if err = migr.Migrate(); err != nil {
 		return nil, errors.Wrap(err, "migrating to latest version")
 	}
