@@ -48,7 +48,11 @@ type DB struct {
 }
 
 func New(path string) (*DB, error) {
-	url := url.URL{Path: path}
+	// https://github.com/mattn/go-sqlite3#connection-string
+	url := url.URL{
+		Scheme: "file",
+		Opaque: path,
+	}
 	url.RawQuery = dbOptions.Encode()
 	db, err := gorm.Open("sqlite3", url.String())
 	if err != nil {
