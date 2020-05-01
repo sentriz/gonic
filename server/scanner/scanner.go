@@ -128,7 +128,8 @@ func (s *Scanner) cleanArtists() (int, error) {
 
 type ScanOptions struct {
 	IsFull bool
-	Path   string // TODO
+	// TODO https://github.com/sentriz/gonic/issues/64
+	Path string
 }
 
 func (s *Scanner) Start(opts ScanOptions) error {
@@ -145,6 +146,7 @@ func (s *Scanner) Start(opts ScanOptions) error {
 	s.seenTracksNew = 0
 	s.seenTracksErr = 0
 	// ** begin being walking
+	log.Println("starting scan")
 	start := time.Now()
 	err := godirwalk.Walk(s.musicPath, &godirwalk.Options{
 		Callback:             s.callbackItem,
@@ -276,6 +278,13 @@ func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
 // ## begin handlers
 // ## begin handlers
 
+func (s *Scanner) itemUnchanged(stat, updated time.Time) bool {
+	if s.isFull {
+		return false
+	}
+	return stat.Before(updated)
+}
+
 func (s *Scanner) handleFolder(it *item) error {
 	if s.trTxOpen {
 		// a transaction still being open when we handle a folder can
@@ -300,7 +309,7 @@ func (s *Scanner) handleFolder(it *item) error {
 		First(folder).
 		Error
 	if !gorm.IsRecordNotFoundError(err) &&
-		it.stat.ModTime().Before(folder.UpdatedAt) {
+		s.itemUnchanged(it.stat.ModTime(), folder.UpdatedAt) {
 		// we found the record but it hasn't changed
 		return nil
 	}
@@ -334,7 +343,7 @@ func (s *Scanner) handleTrack(it *item) error {
 		First(track).
 		Error
 	if !gorm.IsRecordNotFoundError(err) &&
-		it.stat.ModTime().Before(track.UpdatedAt) {
+		s.itemUnchanged(it.stat.ModTime(), track.UpdatedAt) {
 		// we found the record but it hasn't changed
 		return nil
 	}
