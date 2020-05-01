@@ -77,7 +77,7 @@ type Track struct {
 	TagTrackNumber int    `sql:"default: null"`
 	TagDiscNumber  int    `sql:"default: null"`
 	TagGenre       *Genre
-	TagGenreID     int    `sql:"default: null; type:int REFERENCES genres(id) ON DELETE CASCADE"`
+	TagGenreID     int    `sql:"default: null; type:int REFERENCES genres(id)"`
 	TagBrainzID    string `sql:"default: null"`
 }
 
@@ -140,9 +140,9 @@ type Album struct {
 	ParentID      int    `sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Cover         string `sql:"default: null"`
 	TagArtist     *Artist
-	TagArtistID   int `sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
+	TagArtistID   int `gorm:"index" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
 	TagGenre      *Genre
-	TagGenreID    int    `sql:"default: null; type:int REFERENCES genres(id) ON DELETE CASCADE"`
+	TagGenreID    int    `sql:"default: null; type:int"`
 	TagTitle      string `sql:"default: null"`
 	TagTitleUDec  string `sql:"default: null"`
 	TagBrainzID   string `sql:"default: null"`

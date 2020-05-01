@@ -132,3 +132,13 @@ var migrationUpdateTranscodePrefIDX = gormigrate.Migration{
 		return nil
 	},
 }
+
+var migrationAddAlbumIDX = gormigrate.Migration{
+	ID: "202004302006",
+	Migrate: func(tx *gorm.DB) error {
+		return tx.AutoMigrate(
+			Album{},
+		).
+			Error
+	},
+}
