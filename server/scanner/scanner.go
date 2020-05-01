@@ -21,6 +21,11 @@ import (
 	"go.senan.xyz/gonic/server/scanner/tags"
 )
 
+var (
+	ErrStatingItem = errors.New("stating item")
+	ErrReadingTags = errors.New("reading tags")
+)
+
 func durSince(t time.Time) time.Duration {
 	return time.Since(t).Truncate(10 * time.Microsecond)
 }
@@ -86,31 +91,43 @@ func New(musicPath string, db *db.DB) *Scanner {
 func (s *Scanner) cleanTracks() (int, error) {
 	var previous []int
 	var missing []int64
-	s.db.Model(&db.Track{}).Pluck("id", &previous)
+	err := s.db.
+		Model(&db.Track{}).
+		Pluck("id", &previous).
+		Error
+	if err != nil {
+		return 0, errors.Wrap(err, "plucking ids")
+	}
 	for _, prev := range previous {
 		if _, ok := s.seenTracks[prev]; !ok {
 			missing = append(missing, int64(prev))
 		}
 	}
-	s.db.WithTxChunked(missing, func(tx *gorm.DB, chunk []int64) {
-		tx.Where(chunk).Delete(&db.Track{})
+	err = s.db.WithTxChunked(missing, func(tx *gorm.DB, chunk []int64) error {
+		return tx.Where(chunk).Delete(&db.Track{}).Error
 	})
-	return len(missing), nil
+	return len(missing), err
 }
 
 func (s *Scanner) cleanFolders() (int, error) {
 	var previous []int
 	var missing []int64
-	s.db.Model(&db.Album{}).Pluck("id", &previous)
+	err := s.db.
+		Model(&db.Album{}).
+		Pluck("id", &previous).
+		Error
+	if err != nil {
+		return 0, errors.Wrap(err, "plucking ids")
+	}
 	for _, prev := range previous {
 		if _, ok := s.seenFolders[prev]; !ok {
 			missing = append(missing, int64(prev))
 		}
 	}
-	s.db.WithTxChunked(missing, func(tx *gorm.DB, chunk []int64) {
-		tx.Where(chunk).Delete(&db.Album{})
+	err = s.db.WithTxChunked(missing, func(tx *gorm.DB, chunk []int64) error {
+		return tx.Where(chunk).Delete(&db.Album{}).Error
 	})
-	return len(missing), nil
+	return len(missing), err
 }
 
 func (s *Scanner) cleanArtists() (int, error) {
@@ -153,6 +170,9 @@ func (s *Scanner) Start(opts ScanOptions) error {
 		PostChildrenCallback: s.callbackPost,
 		Unsorted:             true,
 		FollowSymbolicLinks:  true,
+		ErrorCallback: func(s string, err error) godirwalk.ErrorAction {
+			return
+		},
 	})
 	if err != nil {
 		return errors.Wrap(err, "walking filesystem")

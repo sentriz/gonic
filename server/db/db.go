@@ -108,7 +108,9 @@ func (db *DB) WithTx(cb func(*gorm.DB)) {
 	cb(tx)
 }
 
-func (db *DB) WithTxChunked(data []int64, cb func(*gorm.DB, []int64)) {
+type ChunkFunc func(*gorm.DB, []int64) error
+
+func (db *DB) WithTxChunked(data []int64, cb ChunkFunc) error {
 	// https://sqlite.org/limits.html
 	const size = 999
 	tx := db.Begin()
@@ -118,6 +120,9 @@ func (db *DB) WithTxChunked(data []int64, cb func(*gorm.DB, []int64)) {
 		if end > len(data) {
 			end = len(data)
 		}
-		cb(tx, data[i:end])
+		if err := cb(tx, data[i:end]); err != nil {
+			return err
+		}
 	}
+	return nil
 }
