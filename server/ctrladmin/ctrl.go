@@ -145,8 +145,10 @@ type Response struct {
 	err  string
 }
 
-type handlerAdmin func(r *http.Request) *Response
-type handlerAdminRaw func(w http.ResponseWriter, r *http.Request)
+type (
+	handlerAdmin    func(r *http.Request) *Response
+	handlerAdminRaw func(w http.ResponseWriter, r *http.Request)
+)
 
 //nolint:gocognit
 func (c *Controller) H(h handlerAdmin) http.Handler {

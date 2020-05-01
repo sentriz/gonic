@@ -81,8 +81,10 @@ func writeResp(w http.ResponseWriter, r *http.Request, resp *spec.Response) erro
 	return ew.err
 }
 
-type handlerSubsonic func(r *http.Request) *spec.Response
-type handlerSubsonicRaw func(w http.ResponseWriter, r *http.Request) *spec.Response
+type (
+	handlerSubsonic    func(r *http.Request) *spec.Response
+	handlerSubsonicRaw func(w http.ResponseWriter, r *http.Request) *spec.Response
+)
 
 func (c *Controller) H(h handlerSubsonic) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

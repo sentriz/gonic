@@ -74,13 +74,13 @@ func GetSession(apiKey, secret, token string) (string, error) {
 	return resp.Session.Key, nil
 }
 
-type ScrobbleOpts struct {
+type ScrobbleOptions struct {
 	Track      *db.Track
 	StampMili  int
 	Submission bool
 }
 
-func Scrobble(apiKey, secret, session string, opts ScrobbleOpts) error {
+func Scrobble(apiKey, secret, session string, opts ScrobbleOptions) error {
 	params := url.Values{}
 	if opts.Submission {
 		params.Add("method", "track.Scrobble")

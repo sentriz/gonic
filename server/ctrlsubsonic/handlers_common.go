@@ -55,7 +55,7 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 		Preload("Artist").
 		First(track, id)
 	// scrobble with above info
-	opts := lastfm.ScrobbleOpts{
+	opts := lastfm.ScrobbleOptions{
 		Track: track,
 		// clients will provide time in miliseconds, so use that or
 		// instead convert UnixNano to miliseconds

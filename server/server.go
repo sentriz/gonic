@@ -178,8 +178,10 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.NotFoundHandler = notFoundRoute.GetHandler()
 }
 
-type funcExecute func() error
-type funcInterrupt func(error)
+type (
+	funcExecute   func() error
+	funcInterrupt func(error)
+)
 
 func (s *Server) StartHTTP(listenAddr string) (funcExecute, funcInterrupt) {
 	list := &http.Server{
