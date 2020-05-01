@@ -74,11 +74,8 @@ type Scanner struct {
 
 func New(musicPath string, db *db.DB) *Scanner {
 	return &Scanner{
-		db:          db,
-		musicPath:   musicPath,
-		seenTracks:  map[int]struct{}{},
-		seenFolders: map[int]struct{}{},
-		curFolders:  &stack.Stack{},
+		db:        db,
+		musicPath: musicPath,
 	}
 }
 
@@ -129,22 +126,25 @@ func (s *Scanner) cleanArtists() (int, error) {
 // ## begin entries
 // ## begin entries
 
-func (s *Scanner) Start(isFull bool) error {
+type ScanOptions struct {
+	IsFull bool
+	Path   string // TODO
+}
+
+func (s *Scanner) Start(opts ScanOptions) error {
 	if IsScanning() {
 		return errors.New("already scanning")
 	}
 	unSet := SetScanning()
 	defer unSet()
-	// reset tracking variables when finished
-	defer func() {
-		s.seenTracks = map[int]struct{}{}
-		s.seenFolders = map[int]struct{}{}
-		s.curFolders = &stack.Stack{}
-		s.seenTracksNew = 0
-		s.seenTracksErr = 0
-	}()
+	// reset state vars for the new scan
+	s.isFull = opts.IsFull
+	s.seenTracks = map[int]struct{}{}
+	s.seenFolders = map[int]struct{}{}
+	s.curFolders = &stack.Stack{}
+	s.seenTracksNew = 0
+	s.seenTracksErr = 0
 	// ** begin being walking
-	s.isFull = isFull
 	start := time.Now()
 	err := godirwalk.Walk(s.musicPath, &godirwalk.Options{
 		Callback:             s.callbackItem,
@@ -180,14 +180,6 @@ func (s *Scanner) Start(isFull bool) error {
 	strNow := strconv.FormatInt(time.Now().Unix(), 10)
 	s.db.SetSetting("last_scan_time", strNow)
 	return nil
-}
-
-func (s *Scanner) StartInc() error {
-	return s.Start(false)
-}
-
-func (s *Scanner) StartFull() error {
-	return s.Start(true)
 }
 
 // items are passed to the handle*() functions

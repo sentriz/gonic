@@ -40,17 +40,17 @@ func resetTablesPause(db *db.DB, b *testing.B) {
 func BenchmarkScanFresh(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		resetTablesPause(testScanner.db, b)
-		testScanner.StartInc()
+		testScanner.Start(ScanOptions{})
 	}
 }
 
 func BenchmarkScanIncremental(b *testing.B) {
 	// do a full scan and reset
-	testScanner.StartInc()
+	testScanner.Start(ScanOptions{})
 	b.ResetTimer()
 	// do the inc scans
 	for n := 0; n < b.N; n++ {
-		testScanner.StartInc()
+		testScanner.Start(ScanOptions{})
 	}
 }
 
