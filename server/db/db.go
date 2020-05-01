@@ -102,8 +102,22 @@ func (db *DB) GetUserFromName(name string) *User {
 	return user
 }
 
-func (db *DB) WithTx(cb func(tx *gorm.DB)) {
+func (db *DB) WithTx(cb func(*gorm.DB)) {
 	tx := db.Begin()
 	defer tx.Commit()
 	cb(tx)
+}
+
+func (db *DB) WithTxChunked(data []int64, cb func(*gorm.DB, []int64)) {
+	// https://sqlite.org/limits.html
+	const size = 999
+	tx := db.Begin()
+	defer tx.Commit()
+	for i := 0; i < len(data); i += size {
+		end := i + size
+		if end > len(data) {
+			end = len(data)
+		}
+		cb(tx, data[i:end])
+	}
 }

@@ -21,6 +21,20 @@ import (
 	"go.senan.xyz/gonic/server/scanner/tags"
 )
 
+func durSince(t time.Time) time.Duration {
+	return time.Since(t).Truncate(10 * time.Microsecond)
+}
+
+// decoded converts a string to it's latin equivalent. it will
+// be used by the model's *UDec fields, and is only set if it
+// differs from the original. the fields are used for searching
+func decoded(in string) string {
+	if u := unidecode.Unidecode(in); u != in {
+		return u
+	}
+	return ""
+}
+
 // isScanning acts as an atomic boolean semaphore. we don't
 // want to have more than one scan going on at a time
 var isScanning int32
@@ -62,11 +76,58 @@ func New(musicPath string, db *db.DB) *Scanner {
 	return &Scanner{
 		db:          db,
 		musicPath:   musicPath,
-		seenTracks:  make(map[int]struct{}),
-		seenFolders: make(map[int]struct{}),
+		seenTracks:  map[int]struct{}{},
+		seenFolders: map[int]struct{}{},
 		curFolders:  &stack.Stack{},
 	}
 }
+
+// ## begin clean funcs
+// ## begin clean funcs
+// ## begin clean funcs
+
+func (s *Scanner) cleanTracks() (int, error) {
+	var previous []int
+	var missing []int64
+	s.db.Model(&db.Track{}).Pluck("id", &previous)
+	for _, prev := range previous {
+		if _, ok := s.seenTracks[prev]; !ok {
+			missing = append(missing, int64(prev))
+		}
+	}
+	s.db.WithTxChunked(missing, func(tx *gorm.DB, chunk []int64) {
+		tx.Where(chunk).Delete(&db.Track{})
+	})
+	return len(missing), nil
+}
+
+func (s *Scanner) cleanFolders() (int, error) {
+	var previous []int
+	var missing []int64
+	s.db.Model(&db.Album{}).Pluck("id", &previous)
+	for _, prev := range previous {
+		if _, ok := s.seenFolders[prev]; !ok {
+			missing = append(missing, int64(prev))
+		}
+	}
+	s.db.WithTxChunked(missing, func(tx *gorm.DB, chunk []int64) {
+		tx.Where(chunk).Delete(&db.Album{})
+	})
+	return len(missing), nil
+}
+
+func (s *Scanner) cleanArtists() (int, error) {
+	q := s.db.Exec(`
+		DELETE FROM artists
+		WHERE NOT EXISTS ( SELECT 1 FROM albums
+		                   WHERE albums.tag_artist_id=artists.id )
+	`)
+	return int(q.RowsAffected), q.Error
+}
+
+// ## begin entries
+// ## begin entries
+// ## begin entries
 
 func (s *Scanner) Start(isFull bool) error {
 	if IsScanning() {
@@ -76,8 +137,8 @@ func (s *Scanner) Start(isFull bool) error {
 	defer unSet()
 	// reset tracking variables when finished
 	defer func() {
-		s.seenTracks = make(map[int]struct{})
-		s.seenFolders = make(map[int]struct{})
+		s.seenTracks = map[int]struct{}{}
+		s.seenFolders = map[int]struct{}{}
 		s.curFolders = &stack.Stack{}
 		s.seenTracksNew = 0
 		s.seenTracksErr = 0
@@ -95,56 +156,29 @@ func (s *Scanner) Start(isFull bool) error {
 		return errors.Wrap(err, "walking filesystem")
 	}
 	log.Printf("finished scan in %s, +%d/%d tracks (%d err)\n",
-		time.Since(start),
+		durSince(start),
 		s.seenTracksNew,
 		len(s.seenTracks),
 		s.seenTracksErr,
 	)
 	// ** begin cleaning
-	start = time.Now()
-	var deleted uint
-	// delete tracks not on filesystem
-	s.db.WithTx(func(tx *gorm.DB) {
-		var tracks []*db.Track
-		tx.Select("id").Find(&tracks)
-		for _, track := range tracks {
-			if _, ok := s.seenTracks[track.ID]; !ok {
-				tx.Delete(track)
-				deleted++
-			}
-		}
-	})
-	// delete folders not on filesystem
-	s.db.WithTx(func(tx *gorm.DB) {
-		var folders []*db.Album
-		tx.Select("id").Find(&folders)
-		for _, folder := range folders {
-			if _, ok := s.seenFolders[folder.ID]; !ok {
-				tx.Delete(folder)
-			}
-		}
-	})
-	// delete albums without tracks
-	s.db.Exec(`
-		DELETE FROM albums
-		WHERE tag_artist_id NOT NULL
-		AND NOT EXISTS ( SELECT 1 FROM tracks
-		                 WHERE tracks.album_id=albums.id
-		)`)
-	// delete artists without albums
-	s.db.Exec(`
-		DELETE FROM artists
-		WHERE NOT EXISTS ( SELECT 1 from albums
-		                   WHERE albums.tag_artist_id=artists.id
-		)`)
+	cleanFuncs := []struct {
+		name string
+		f    func() (int, error)
+	}{
+		{name: "tracks", f: s.cleanTracks},
+		{name: "folders", f: s.cleanFolders},
+		{name: "artists", f: s.cleanArtists},
+	}
+	for _, clean := range cleanFuncs {
+		start = time.Now()
+		deleted, _ := clean.f()
+		log.Printf("finished clean %s in %s, %d removed",
+			clean.name, durSince(start), deleted)
+	}
 	// finish up
 	strNow := strconv.FormatInt(time.Now().Unix(), 10)
 	s.db.SetSetting("last_scan_time", strNow)
-	//
-	log.Printf("finished clean in %s, -%d tracks\n",
-		time.Since(start),
-		deleted,
-	)
 	return nil
 }
 
@@ -246,17 +280,6 @@ func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
 	return nil
 }
 
-// decoded converts a string to it's latin equivalent. it will
-// be used by the model's *UDec fields, and is only set if it
-// differs from the original. the fields are used for searching
-func decoded(in string) string {
-	result := unidecode.Unidecode(in)
-	if result == in {
-		return ""
-	}
-	return result
-}
-
 // ## begin handlers
 // ## begin handlers
 // ## begin handlers
@@ -284,8 +307,8 @@ func (s *Scanner) handleFolder(it *item) error {
 		}).
 		First(folder).
 		Error
-	if !s.isFull && (!gorm.IsRecordNotFoundError(err) &&
-		it.stat.ModTime().Before(folder.UpdatedAt)) {
+	if !gorm.IsRecordNotFoundError(err) &&
+		it.stat.ModTime().Before(folder.UpdatedAt) {
 		// we found the record but it hasn't changed
 		return nil
 	}
@@ -305,6 +328,11 @@ func (s *Scanner) handleTrack(it *item) error {
 	}
 	// ** begin set track basics
 	track := &db.Track{}
+	defer func() {
+		// folder's id will come from early return
+		// or save at the end
+		s.seenTracks[track.ID] = struct{}{}
+	}()
 	err := s.trTx.
 		Select("id, updated_at").
 		Where(db.Track{
@@ -313,10 +341,9 @@ func (s *Scanner) handleTrack(it *item) error {
 		}).
 		First(track).
 		Error
-	if !s.isFull && !gorm.IsRecordNotFoundError(err) &&
+	if !gorm.IsRecordNotFoundError(err) &&
 		it.stat.ModTime().Before(track.UpdatedAt) {
 		// we found the record but it hasn't changed
-		s.seenTracks[track.ID] = struct{}{}
 		return nil
 	}
 	track.Filename = it.filename
@@ -382,7 +409,6 @@ func (s *Scanner) handleTrack(it *item) error {
 	track.TagGenreID = genre.ID
 	// ** begin save the track
 	s.trTx.Save(track)
-	s.seenTracks[track.ID] = struct{}{}
 	s.seenTracksNew++
 	// ** begin set album if this is the first track in the folder
 	folder := s.curFolders.Peek()
