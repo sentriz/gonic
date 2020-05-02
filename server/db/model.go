@@ -1,3 +1,4 @@
+// Package db provides database helpers and models
 //nolint:lll
 package db
 

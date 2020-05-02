@@ -23,17 +23,18 @@ import (
 )
 
 var (
-	ErrStatingItem = errors.New("stating item")
-	ErrReadingTags = errors.New("reading tags")
+	ErrAlreadyScanning = errors.New("already scanning")
+	ErrStatingItem     = errors.New("could not stat item")
+	ErrReadingTags     = errors.New("could not read tags")
 )
 
 func durSince(t time.Time) time.Duration {
 	return time.Since(t).Truncate(10 * time.Microsecond)
 }
 
-// decoded converts a string to it's latin equivalent. it will
-// be used by the model's *UDec fields, and is only set if it
-// differs from the original. the fields are used for searching
+// decoded converts a string to it's latin equivalent.
+// it will be used by the model's *UDec fields, and is only set if it
+// differs from the original. the fields are used for searching.
 func decoded(in string) string {
 	if u := unidecode.Unidecode(in); u != in {
 		return u
@@ -236,7 +237,7 @@ var coverFilenames = map[string]struct{}{
 func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
 	stat, err := os.Stat(fullPath)
 	if err != nil {
-		return fmt.Errorf("stating: %w", err)
+		return fmt.Errorf("%w: %v", ErrStatingItem, err)
 	}
 	relPath, err := filepath.Rel(s.musicPath, fullPath)
 	if err != nil {

@@ -92,6 +92,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	return sub
 }
 
+// ServeGetAlbumList handles the getAlbumList view.
 // changes to this function should be reflected in in _by_tags.go's
 // getAlbumListTwo() function
 func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {

@@ -55,7 +55,7 @@ func NewResponse() *Response {
 	}
 }
 
-// spec errors:
+// Error represents a typed error
 //  0  a generic error
 // 10  required parameter is missing
 // 20  incompatible subsonic rest protocol version. client must upgrade

@@ -1,3 +1,4 @@
+// Package ctrlsubsonic provides HTTP handlers for subsonic api
 package ctrlsubsonic
 
 import (

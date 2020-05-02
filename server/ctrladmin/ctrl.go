@@ -1,7 +1,9 @@
+// Package ctrladmin provides HTTP handlers for admin UI
 package ctrladmin
 
 import (
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"html/template"
 	"log"
@@ -150,7 +152,6 @@ type (
 	handlerAdminRaw func(w http.ResponseWriter, r *http.Request)
 )
 
-//nolint:gocognit
 func (c *Controller) H(h handlerAdmin) http.Handler {
 	// TODO: break this up a bit
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -272,26 +273,33 @@ func sessLogSave(s *sessions.Session, w http.ResponseWriter, r *http.Request) {
 // ## begin validation
 // ## begin validation
 
+var (
+	errValiNoUsername        = errors.New("please enter the password twice")
+	errValiPasswordAllFields = errors.New("please enter the password twice")
+	errValiPasswordsNotSame  = errors.New("passwords entered were not the same")
+	errValiKeysAllFields     = errors.New("please enter the api key and secret")
+)
+
 func validateUsername(username string) error {
 	if username == "" {
-		return fmt.Errorf("please enter the username")
+		return errValiNoUsername
 	}
 	return nil
 }
 
 func validatePasswords(pOne, pTwo string) error {
 	if pOne == "" || pTwo == "" {
-		return fmt.Errorf("please enter the password twice")
+		return errValiPasswordAllFields
 	}
 	if !(pOne == pTwo) {
-		return fmt.Errorf("the two passwords entered were not the same")
+		return errValiPasswordsNotSame
 	}
 	return nil
 }
 
 func validateAPIKey(apiKey, secret string) error {
 	if apiKey == "" || secret == "" {
-		return fmt.Errorf("please enter both the api key and secret")
+		return errValiKeysAllFields
 	}
 	return nil
 }

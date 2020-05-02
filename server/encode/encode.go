@@ -49,7 +49,7 @@ func writeCmdOutput(out, cache io.Writer, pipeReader io.ReadCloser) {
 	for {
 		n, err := pipeReader.Read(buffer)
 		if err != nil {
-			pipeReader.Close()
+			_ = pipeReader.Close()
 			break
 		}
 		data := buffer[0:n]
@@ -91,7 +91,7 @@ func ffmpegCommand(filePath string, profile *Profile, bitrate string) *exec.Cmd 
 		)
 	}
 	args = append(args, "-f", profile.Format, "-")
-	return exec.Command("/usr/bin/ffmpeg", args...)
+	return exec.Command("/usr/bin/ffmpeg", args...) //nolint:gosec
 }
 
 func Encode(out io.Writer, trackPath, cachePath string, profile *Profile, bitrate string) error {
@@ -116,22 +116,22 @@ func Encode(out io.Writer, trackPath, cachePath string, profile *Profile, bitrat
 		return fmt.Errorf("running ffmpeg: %w", err)
 	}
 	// close all pipes and flush cache file
-	pipeWriter.Close()
+	_ = pipeWriter.Close()
 	if err := cacheFile.Sync(); err != nil {
 		return fmt.Errorf("flushing %q: %w", cachePath, err)
 	}
-	cacheFile.Close()
+	_ = cacheFile.Close()
 	return nil
 }
 
-// generate cache key (file name). for, you know, encoded tracks cache
+// CacheKey generates the filename for the new transcode save
 func CacheKey(sourcePath string, profile, bitrate string) string {
 	format := Profiles[profile].Format
 	hash := xxhash.Sum64String(sourcePath)
 	return fmt.Sprintf("%x-%s-%s.%s", hash, profile, bitrate, format)
 }
 
-// check if client forces bitrate lower than set in profile
+// GetBitrate checks if the client forces bitrate lower than set in profile
 func GetBitrate(clientBitrate int, profile *Profile) string {
 	bitrate := profile.Bitrate
 	if clientBitrate != 0 && clientBitrate < bitrate {

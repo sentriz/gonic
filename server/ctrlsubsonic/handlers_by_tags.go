@@ -92,6 +92,7 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 	return sub
 }
 
+// ServeGetAlbumListTwo handles the getAlbumList2 view.
 // changes to this function should be reflected in in _by_folder.go's
 // getAlbumList() function
 func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {

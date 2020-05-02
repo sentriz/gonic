@@ -2,6 +2,7 @@ package ctrladmin
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"mime/multipart"
 	"net/http"
@@ -10,6 +11,10 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/server/db"
+)
+
+var (
+	errPlaylistNoMatch = errors.New("couldn't match track")
 )
 
 func playlistParseLine(c *Controller, path string) (int, error) {
@@ -25,7 +30,7 @@ func playlistParseLine(c *Controller, path string) (int, error) {
 	err := query.First(&track).Error
 	switch {
 	case gorm.IsRecordNotFoundError(err):
-		return 0, fmt.Errorf("couldn't match track %q", path)
+		return 0, fmt.Errorf("%v: %w", err, errPlaylistNoMatch)
 	case err != nil:
 		return 0, fmt.Errorf("while matching: %w", err)
 	default:

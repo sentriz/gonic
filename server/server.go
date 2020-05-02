@@ -179,11 +179,11 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 }
 
 type (
-	funcExecute   func() error
-	funcInterrupt func(error)
+	FuncExecute   func() error
+	FuncInterrupt func(error)
 )
 
-func (s *Server) StartHTTP(listenAddr string) (funcExecute, funcInterrupt) {
+func (s *Server) StartHTTP(listenAddr string) (FuncExecute, FuncInterrupt) {
 	list := &http.Server{
 		Addr:         listenAddr,
 		Handler:      s.router,
@@ -196,11 +196,11 @@ func (s *Server) StartHTTP(listenAddr string) (funcExecute, funcInterrupt) {
 			return list.ListenAndServe()
 		}, func(_ error) {
 			// stop job
-			list.Close()
+			_ = list.Close()
 		}
 }
 
-func (s *Server) StartScanTicker(dur time.Duration) (funcExecute, funcInterrupt) {
+func (s *Server) StartScanTicker(dur time.Duration) (FuncExecute, FuncInterrupt) {
 	ticker := time.NewTicker(dur)
 	done := make(chan struct{})
 	waitFor := func() error {
@@ -225,7 +225,7 @@ func (s *Server) StartScanTicker(dur time.Duration) (funcExecute, funcInterrupt)
 		}
 }
 
-func (s *Server) StartJukebox() (funcExecute, funcInterrupt) {
+func (s *Server) StartJukebox() (FuncExecute, FuncInterrupt) {
 	return func() error {
 			log.Printf("starting job 'jukebox'\n")
 			return s.jukebox.Listen()

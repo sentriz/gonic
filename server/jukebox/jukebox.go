@@ -4,6 +4,7 @@ package jukebox
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"sync"
@@ -89,7 +90,9 @@ func (j *Jukebox) Listen() error {
 		case update := <-j.updates:
 			j.doUpdate(update)
 		case speaker := <-j.speaker:
-			j.doUpdateSpeaker(speaker)
+			if err := j.doUpdateSpeaker(speaker); err != nil {
+				log.Printf("error in jukebox: %v", err)
+			}
 		}
 	}
 }

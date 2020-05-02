@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -19,6 +20,7 @@ var (
 	client  = &http.Client{
 		Timeout: 10 * time.Second,
 	}
+	ErrLastFM = errors.New("last.fm error")
 )
 
 // TODO: remove this package's dependency on models/db
@@ -54,7 +56,7 @@ func makeRequest(method string, params url.Values) (LastFM, error) {
 		return LastFM{}, fmt.Errorf("decoding: %w", err)
 	}
 	if lastfm.Error.Code != 0 {
-		return LastFM{}, fmt.Errorf("parsing: %v", lastfm.Error.Value)
+		return LastFM{}, fmt.Errorf("%v: %w", lastfm.Error.Value, ErrLastFM)
 	}
 	return lastfm, nil
 }
