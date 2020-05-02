@@ -5,11 +5,9 @@ embed_bin_path=/tmp/gonicembed
 assets_path=server/assets
 
 # only build once for some slightly faster live page reloading
-if [[ ! -e "$embed_bin_path" ]]; then
-    go build \
-        -o "$embed_bin_path" \
-        cmd/gonicembed/main.go
-fi
+test ! -e "$embed_bin_path" && go build \
+    -o "$embed_bin_path" \
+    cmd/gonicembed/main.go
 
 find $assets_path/ \
     -type f \
