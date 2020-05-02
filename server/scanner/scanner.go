@@ -76,7 +76,6 @@ type Scanner struct {
 	seenTracks    map[int]struct{} // set of p keys
 	seenFolders   map[int]struct{} // set of p keys
 	seenTracksNew int              // n tracks not seen before
-	seenTracksErr int              // n tracks we we couldn't scan
 }
 
 func New(musicPath string, db *db.DB) *Scanner {
@@ -153,7 +152,7 @@ type ScanOptions struct {
 
 func (s *Scanner) Start(opts ScanOptions) error {
 	if IsScanning() {
-		return errors.New("already scanning")
+		return ErrAlreadyScanning
 	}
 	unSet := SetScanning()
 	defer unSet()
@@ -163,16 +162,18 @@ func (s *Scanner) Start(opts ScanOptions) error {
 	s.seenFolders = map[int]struct{}{}
 	s.curFolders = &stack.Stack{}
 	s.seenTracksNew = 0
-	s.seenTracksErr = 0
 	// ** begin being walking
 	log.Println("starting scan")
+	var errCount int
 	start := time.Now()
 	err := godirwalk.Walk(s.musicPath, &godirwalk.Options{
 		Callback:             s.callbackItem,
 		PostChildrenCallback: s.callbackPost,
 		Unsorted:             true,
 		FollowSymbolicLinks:  true,
-		ErrorCallback: func(s string, err error) godirwalk.ErrorAction {
+		ErrorCallback: func(path string, err error) godirwalk.ErrorAction {
+			log.Printf("error processing %q: %v", path, err)
+			errCount++
 			return godirwalk.SkipNode
 		},
 	})
@@ -183,7 +184,7 @@ func (s *Scanner) Start(opts ScanOptions) error {
 		durSince(start),
 		s.seenTracksNew,
 		len(s.seenTracks),
-		s.seenTracksErr,
+		errCount,
 	)
 	// ** begin cleaning
 	cleanFuncs := []struct {
@@ -196,7 +197,12 @@ func (s *Scanner) Start(opts ScanOptions) error {
 	}
 	for _, clean := range cleanFuncs {
 		start = time.Now()
-		deleted, _ := clean.f()
+		deleted, err := clean.f()
+		if err != nil {
+			log.Printf("finished clean %s in %s with error: %v",
+				clean.name, durSince(start), err)
+			continue
+		}
 		log.Printf("finished clean %s in %s, %d removed",
 			clean.name, durSince(start), deleted)
 	}
@@ -300,11 +306,11 @@ func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
 // ## begin handlers
 // ## begin handlers
 
-func (s *Scanner) itemUnchanged(stat, updated time.Time) bool {
+func (s *Scanner) itemUnchanged(statModTime, updatedInDB time.Time) bool {
 	if s.isFull {
 		return false
 	}
-	return stat.Before(updated)
+	return statModTime.Before(updatedInDB)
 }
 
 func (s *Scanner) handleFolder(it *item) error {
@@ -375,12 +381,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	track.AlbumID = s.curFolders.PeekID()
 	trTags, err := tags.New(it.fullPath)
 	if err != nil {
-		// not returning the error here because we don't want
-		// the entire walk to stop if we can't read the tags
-		// of a single file
-		log.Printf("error reading tags `%s`: %v", it.relPath, err)
-		s.seenTracksErr++
-		return nil
+		return ErrReadingTags
 	}
 	track.TagTitle = trTags.Title()
 	track.TagTitleUDec = decoded(trTags.Title())
