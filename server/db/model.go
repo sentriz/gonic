@@ -2,6 +2,9 @@
 //nolint:lll
 package db
 
+// see this db fiddle to mess around with the schema
+// https://www.db-fiddle.com/f/wJ7z8L7mu6ZKaYmWk1xr1p/5
+
 import (
 	"path"
 	"strconv"

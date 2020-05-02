@@ -132,11 +132,14 @@ func (s *Scanner) cleanFolders() (int, error) {
 }
 
 func (s *Scanner) cleanArtists() (int, error) {
-	q := s.db.Exec(`
-		DELETE FROM artists
-		WHERE NOT EXISTS ( SELECT 1 FROM albums
-		                   WHERE albums.tag_artist_id=artists.id )
-	`)
+	sub := s.db.
+		Select("1").
+		Model(&db.Album{}).
+		Where("albums.tag_artist_id=artists.id").
+		SubQuery()
+	q := s.db.
+		Where("NOT EXISTS ?", sub).
+		Delete(&db.Artist{})
 	return int(q.RowsAffected), q.Error
 }
 
