@@ -295,7 +295,9 @@ func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
 	}
 	folder.ParentID = s.curFolders.PeekID()
 	folder.Cover = s.curCover
-	s.db.Save(folder)
+	if err := s.db.Save(folder).Error; err != nil {
+		return fmt.Errorf("writing albums table: %w", err)
+	}
 	// we only log changed folders
 	log.Printf("processed folder `%s`\n",
 		path.Join(folder.LeftPath, folder.RightPath))
@@ -345,7 +347,9 @@ func (s *Scanner) handleFolder(it *item) error {
 	folder.RightPath = it.filename
 	folder.RightPathUDec = decoded(it.filename)
 	folder.ModifiedAt = it.stat.ModTime()
-	s.db.Save(folder)
+	if err := s.db.Save(folder).Error; err != nil {
+		return fmt.Errorf("writing albums table: %w", err)
+	}
 	folder.ReceivedPaths = true
 	return nil
 }
@@ -410,7 +414,9 @@ func (s *Scanner) handleTrack(it *item) error {
 	if gorm.IsRecordNotFoundError(err) {
 		artist.Name = artistName
 		artist.NameUDec = decoded(artistName)
-		s.trTx.Save(artist)
+		if err := s.trTx.Save(artist).Error; err != nil {
+			return fmt.Errorf("writing artists table: %w", err)
+		}
 	}
 	track.ArtistID = artist.ID
 	// ** begin set genre
@@ -428,11 +434,15 @@ func (s *Scanner) handleTrack(it *item) error {
 		Error
 	if gorm.IsRecordNotFoundError(err) {
 		genre.Name = genreName
-		s.trTx.Save(genre)
+		if err := s.trTx.Save(genre).Error; err != nil {
+			return fmt.Errorf("writing genres table: %w", err)
+		}
 	}
 	track.TagGenreID = genre.ID
 	// ** begin save the track
-	s.trTx.Save(track)
+	if err := s.trTx.Save(track).Error; err != nil {
+		return fmt.Errorf("writing track table: %w", err)
+	}
 	s.seenTracksNew++
 	// ** begin set album if this is the first track in the folder
 	folder := s.curFolders.Peek()
