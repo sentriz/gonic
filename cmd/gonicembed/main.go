@@ -6,13 +6,39 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/peterbourgon/ff"
 
 	"go.senan.xyz/gonic/version"
 )
+
+type errWriter struct {
+	w   io.Writer
+	err error
+}
+
+func (ew *errWriter) write(buf []byte) {
+	if ew.err != nil {
+		return
+	}
+	_, ew.err = ew.w.Write(buf)
+}
+
+func (ew *errWriter) printf(format string, a ...interface{}) {
+	if ew.err != nil {
+		return
+	}
+	_, ew.err = fmt.Fprintf(ew.w, format, a...)
+}
+
+func (ew *errWriter) println(a ...interface{}) {
+	if ew.err != nil {
+		return
+	}
+	_, ew.err = fmt.Fprintln(ew.w, a...)
+}
 
 // once i had this written with ~100% text/template but it was very
 // slow. now this thing is not nice on the eyes or easy to change
@@ -21,8 +47,7 @@ import (
 const (
 	byteCols = 24
 	// ** begin file template
-	fileHeader = `// file generated with embed tool
-// do not edit
+	fileHeader = `// file generated with embed tool; DO NOT EDIT.
 // %s
 package %s
 import "time"
@@ -50,69 +75,60 @@ type config struct {
 	assetPathPrefix string
 }
 
-type file struct {
-	data    io.ReadSeeker
-	path    string
-	modTime time.Time
-}
-
-//nolint:errcheck
-func processAsset(c *config, f *file, out io.Writer) {
-	out.Write([]byte(fmt.Sprintf(assetHeader,
-		strings.TrimPrefix(f.path, c.assetPathPrefix),
-		f.modTime.Unix(),
+func processAsset(c config, ew *errWriter, path string) error {
+	info, err := os.Stat(path)
+	if err != nil {
+		return fmt.Errorf("stating asset: %w", err)
+	}
+	if info.IsDir() {
+		return nil
+	}
+	data, err := os.Open(filepath.Clean(path))
+	if err != nil {
+		return fmt.Errorf("opening asset: %w", err)
+	}
+	defer data.Close()
+	ew.write([]byte(fmt.Sprintf(assetHeader,
+		strings.TrimPrefix(path, c.assetPathPrefix),
+		info.ModTime().Unix(),
 	)))
-	defer out.Write([]byte(assetFooter))
 	buffer := make([]byte, byteCols)
 	for {
-		read, err := f.data.Read(buffer)
+		read, err := data.Read(buffer)
 		for i := 0; i < read; i++ {
-			fmt.Fprintf(out, "0x%02x,", buffer[i])
+			ew.printf("0x%02x,", buffer[i])
 		}
 		if err != nil {
 			break
 		}
-		fmt.Fprintln(out)
+		ew.println()
 	}
+	ew.write([]byte(assetFooter))
+	return ew.err
 }
 
 //nolint:errcheck
-func processAssets(c *config, files []string) error {
-	outWriter, err := os.Create(c.outPath)
+func processAssets(c config, files []string) error {
+	out, err := os.Create(c.outPath)
 	if err != nil {
 		return fmt.Errorf("creating out path: %w", err)
 	}
+	ew := &errWriter{w: out}
 	if c.tagList != "" {
 		c.tagList = fmt.Sprintf("+build %s", c.tagList)
 	}
-	outWriter.Write([]byte(fmt.Sprintf(fileHeader,
+	ew.write([]byte(fmt.Sprintf(fileHeader,
 		c.tagList,
 		c.packageName,
 		c.assetsVarName,
 	)))
-	defer outWriter.Write([]byte(fileFooter))
+	defer ew.write([]byte(fileFooter))
 	for _, path := range files {
-		info, err := os.Stat(path)
-		if err != nil {
-			return fmt.Errorf("stating asset: %w", err)
+		if err := processAsset(c, ew, path); err != nil {
+			return fmt.Errorf("processing asset: %w", err)
 		}
-		if info.IsDir() {
-			continue
-		}
-		data, err := os.Open(path)
-		if err != nil {
-			return fmt.Errorf("opening asset: %w", err)
-		}
-		defer data.Close()
-		processAsset(c, &file{
-			data:    data,
-			path:    path,
-			modTime: info.ModTime(),
-		},
-			outWriter,
-		)
 	}
-	return nil
+	return ew.err
 }
 
 func main() {
@@ -128,7 +144,7 @@ func main() {
 	if *outPath == "" {
 		log.Fatalln("invalid arguments. see -h")
 	}
-	c := &config{
+	c := config{
 		packageName:     *pkgName,
 		outPath:         *outPath,
 		tagList:         *tagList,
