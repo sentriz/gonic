@@ -30,15 +30,15 @@ import (
 	"net/url"
 	"strconv"
 
-	"go.senan.xyz/gonic/server/ids"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
 // some thin wrappers
 // may be needed when cleaning up parse() below
-func parseStr(in string) (string, error) { return in, nil }
-func parseInt(in string) (int, error)    { return strconv.Atoi(in) }
-func parseID(in string) (ids.IDV, error) { return ids.Parse(in) }
-func parseBool(in string) (bool, error)  { return strconv.ParseBool(in) }
+func parseStr(in string) (string, error)   { return in, nil }
+func parseInt(in string) (int, error)      { return strconv.Atoi(in) }
+func parseID(in string) (specid.ID, error) { return specid.New(in) }
+func parseBool(in string) (bool, error)    { return strconv.ParseBool(in) }
 
 func parse(values []string, i interface{}) error {
 	if len(values) == 0 {
@@ -50,7 +50,7 @@ func parse(values []string, i interface{}) error {
 		*v, err = parseStr(values[0])
 	case *int:
 		*v, err = parseInt(values[0])
-	case *ids.IDV:
+	case *specid.ID:
 		*v, err = parseID(values[0])
 	case *bool:
 		*v, err = parseBool(values[0])
@@ -70,7 +70,7 @@ func parse(values []string, i interface{}) error {
 			}
 			*v = append(*v, parsed)
 		}
-	case *[]ids.IDV:
+	case *[]specid.ID:
 		for _, value := range values {
 			parsed, err := parseID(value)
 			if err != nil {
@@ -229,56 +229,56 @@ func (p Params) GetFirstOrIntList(or []int, keys ...string) []int {
 	return or
 }
 
-// ** begin ids.IDV {get, get first, get or, get first or}
+// ** begin specid.ID {get, get first, get or, get first or}
 
-func (p Params) GetID(key string) (ids.IDV, error) {
-	var ret ids.IDV
+func (p Params) GetID(key string) (specid.ID, error) {
+	var ret specid.ID
 	return ret, parse(p.get(key), &ret)
 }
 
-func (p Params) GetFirstID(keys ...string) (ids.IDV, error) {
-	var ret ids.IDV
+func (p Params) GetFirstID(keys ...string) (specid.ID, error) {
+	var ret specid.ID
 	return ret, parse(p.getFirst(keys), &ret)
 }
 
-func (p Params) GetOrID(key string, or ids.IDV) ids.IDV {
-	var ret ids.IDV
+func (p Params) GetOrID(key string, or specid.ID) specid.ID {
+	var ret specid.ID
 	if err := parse(p.get(key), &ret); err == nil {
 		return ret
 	}
 	return or
 }
 
-func (p Params) GetFirstOrID(or ids.IDV, keys ...string) ids.IDV {
-	var ret ids.IDV
+func (p Params) GetFirstOrID(or specid.ID, keys ...string) specid.ID {
+	var ret specid.ID
 	if err := parse(p.getFirst(keys), &ret); err == nil {
 		return ret
 	}
 	return or
 }
 
-// ** begin []ids.IDV {get, get first, get or, get first or}
+// ** begin []specid.ID {get, get first, get or, get first or}
 
-func (p Params) GetIDList(key string) ([]ids.IDV, error) {
-	var ret []ids.IDV
+func (p Params) GetIDList(key string) ([]specid.ID, error) {
+	var ret []specid.ID
 	return ret, parse(p.get(key), &ret)
 }
 
-func (p Params) GetFirstIDList(keys ...string) ([]ids.IDV, error) {
-	var ret []ids.IDV
+func (p Params) GetFirstIDList(keys ...string) ([]specid.ID, error) {
+	var ret []specid.ID
 	return ret, parse(p.getFirst(keys), &ret)
 }
 
-func (p Params) GetOrIDList(key string, or []ids.IDV) []ids.IDV {
-	var ret []ids.IDV
+func (p Params) GetOrIDList(key string, or []specid.ID) []specid.ID {
+	var ret []specid.ID
 	if err := parse(p.get(key), &ret); err == nil {
 		return ret
 	}
 	return or
 }
 
-func (p Params) GetFirstOrIDList(or []ids.IDV, keys ...string) []ids.IDV {
-	var ret []ids.IDV
+func (p Params) GetFirstOrIDList(or []specid.ID, keys ...string) []specid.ID {
+	var ret []specid.ID
 	if err := parse(p.getFirst(keys), &ret); err == nil {
 		return ret
 	}

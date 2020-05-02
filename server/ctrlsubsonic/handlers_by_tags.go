@@ -9,6 +9,7 @@ import (
 
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/lastfm"
 )
@@ -263,9 +264,11 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		if gorm.IsRecordNotFoundError(err) && !inclNotPresent {
 			continue
 		}
-		similar := &spec.SimilarArtist{ID: -1}
+		similar := &spec.SimilarArtist{
+			ID: specid.ID{Type: specid.Artist, Value: -1},
+		}
 		if artist.ID != 0 {
-			similar.ID = artist.ID
+			similar.ID = artist.SID()
 		}
 		similar.Name = similarInfo.Name
 		similar.AlbumCount = artist.AlbumCount

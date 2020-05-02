@@ -3,42 +3,41 @@ package spec
 import (
 	"path"
 
-	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/db"
 )
 
 func NewAlbumByFolder(f *db.Album) *Album {
 	a := &Album{
 		Artist:     f.Parent.RightPath,
-		ID:         params.IDAlbum(f.ID),
+		ID:         f.SID(),
 		IsDir:      true,
-		ParentID:   params.IDAlbum(f.ParentID),
+		ParentID:   f.ParentSID(),
 		Title:      f.RightPath,
 		TrackCount: f.ChildCount,
 	}
 	if f.Cover != "" {
-		a.CoverID = f.ID
+		a.CoverID = f.SID()
 	}
 	return a
 }
 
 func NewTCAlbumByFolder(f *db.Album) *TrackChild {
 	trCh := &TrackChild{
-		ID:        params.IDAlbum(f.ID),
+		ID:        f.SID(),
 		IsDir:     true,
 		Title:     f.RightPath,
-		ParentID:  params.IDAlbum(f.ParentID),
+		ParentID:  f.ParentSID(),
 		CreatedAt: f.UpdatedAt,
 	}
 	if f.Cover != "" {
-		trCh.CoverID = f.ID
+		trCh.CoverID = f.SID()
 	}
 	return trCh
 }
 
 func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 	trCh := &TrackChild{
-		ID:          params.IDTrack(t.ID),
+		ID:          t.SID(),
 		ContentType: t.MIME(),
 		Suffix:      t.Ext(),
 		Size:        t.Size,
@@ -51,7 +50,7 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 			parent.RightPath,
 			t.Filename,
 		),
-		ParentID:  params.IDAlbum(parent.ID),
+		ParentID:  parent.SID(),
 		Duration:  t.Length,
 		Bitrate:   t.Bitrate,
 		IsDir:     false,
@@ -59,7 +58,7 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 		CreatedAt: t.CreatedAt,
 	}
 	if parent.Cover != "" {
-		trCh.CoverID = parent.ID
+		trCh.CoverID = parent.SID()
 	}
 	if t.Album != nil {
 		trCh.Album = t.Album.RightPath
@@ -73,7 +72,7 @@ func NewArtistByFolder(f *db.Album) *Artist {
 	// from an "album" where
 	// maybe TODO: rename the Album model to Folder
 	return &Artist{
-		ID:         params.IDAlbum(f.ID),
+		ID:         f.SID(),
 		Name:       f.RightPath,
 		AlbumCount: f.ChildCount,
 	}
@@ -81,13 +80,13 @@ func NewArtistByFolder(f *db.Album) *Artist {
 
 func NewDirectoryByFolder(f *db.Album, children []*TrackChild) *Directory {
 	dir := &Directory{
-		ID:       f.ID,
+		ID:       f.SID(),
 		Name:     f.RightPath,
 		Children: children,
 	}
 	// don't show the root dir as a parent
 	if f.ParentID != 1 {
-		dir.ParentID = f.ParentID
+		dir.ParentID = f.ParentSID()
 	}
 	return dir
 }

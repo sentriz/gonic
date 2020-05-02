@@ -11,6 +11,9 @@ import (
 	"strings"
 	"time"
 
+	// TODO: remove this dep
+
+	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"go.senan.xyz/gonic/server/mime"
 )
 
@@ -44,6 +47,10 @@ type Artist struct {
 	NameUDec   string   `sql:"default: null"`
 	Albums     []*Album `gorm:"foreignkey:TagArtistID"`
 	AlbumCount int      `sql:"-"`
+}
+
+func (a *Artist) SID() specid.ID {
+	return specid.ID{Type: specid.Artist, Value: a.ID}
 }
 
 func (a *Artist) IndexName() string {
@@ -83,6 +90,18 @@ type Track struct {
 	TagGenre       *Genre
 	TagGenreID     int    `sql:"default: null; type:int REFERENCES genres(id)"`
 	TagBrainzID    string `sql:"default: null"`
+}
+
+func (t *Track) SID() specid.ID {
+	return specid.ID{Type: specid.Track, Value: t.ID}
+}
+
+func (t *Track) AlbumSID() specid.ID {
+	return specid.ID{Type: specid.Album, Value: t.AlbumID}
+}
+
+func (t *Track) ArtistSID() specid.ID {
+	return specid.ID{Type: specid.Artist, Value: t.ArtistID}
 }
 
 func (t *Track) Ext() string {
@@ -155,6 +174,14 @@ type Album struct {
 	ChildCount    int  `sql:"-"`
 	ReceivedPaths bool `gorm:"-"`
 	ReceivedTags  bool `gorm:"-"`
+}
+
+func (a *Album) SID() specid.ID {
+	return specid.ID{Type: specid.Album, Value: a.ID}
+}
+
+func (a *Album) ParentSID() specid.ID {
+	return specid.ID{Type: specid.Album, Value: a.ParentID}
 }
 
 func (a *Album) IndexRightPath() string {
