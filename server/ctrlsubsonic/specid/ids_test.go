@@ -1,14 +1,14 @@
-package ids
+package specid
 
 import (
 	"errors"
 	"testing"
 )
 
-func TestParse(t *testing.T) {
+func TestParseID(t *testing.T) {
 	tcases := []struct {
 		param    string
-		expType  ID
+		expType  IDT
 		expValue int
 		expErr   error
 	}{
@@ -19,8 +19,9 @@ func TestParse(t *testing.T) {
 		{param: "al-howdy", expErr: ErrNotAnInt},
 	}
 	for _, tcase := range tcases {
+		tcase := tcase // pin
 		t.Run(tcase.param, func(t *testing.T) {
-			act, err := Parse(tcase.param)
+			act, err := New(tcase.param)
 			if !errors.Is(err, tcase.expErr) {
 				t.Fatalf("expected err %q, got %q", tcase.expErr, err)
 			}
