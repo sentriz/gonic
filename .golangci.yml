@@ -1,20 +1,52 @@
 run:
-  skip-files:
-    - server/assets/assets_gen.go
+  skip-dirs:
+  - server/assets
+  skip-dirs-use-default: true
+
 linters:
-  enable-all: true
-  disable:
-    - gochecknoglobals
-    - gochecknoinits
-    - gomnd
-    - godox
-    - funlen
-    - wsl
+  disable-all: true
+  enable:
+  - bodyclose
+  - deadcode
+  - depguard
+  - dogsled
+  - errcheck
+  - goconst
+  - gocritic
+  - gocyclo
+  - goerr113
+  - golint
+  - goprintffuncname
+  - gosec
+  - gosimple
+  - govet
+  - ineffassign
+  - interfacer
+  - lll
+  - misspell
+  - nakedret
+  - rowserrcheck
+  - scopelint
+  - staticcheck
+  - structcheck
+  - stylecheck
+  - typecheck
+  - unconvert
+  - varcheck
+
 issues:
   exclude-rules:
-    - path: _test\.go
-      linters:
-        - errcheck
-    - text: "weak cryptographic primitive"
-      linters:
-        - gosec
+  - path: _test\.go
+    linters:
+    - errcheck
+  - text: "weak cryptographic primitive"
+    linters:
+    - gosec
+
+  # TODO: fix these
+  - text: "should have comment"
+    linters:
+    - golint
+  - text: "at least one file in a package should have a package comment"
+    linters:
+    - stylecheck
