@@ -13,7 +13,7 @@ find $assets_path/ \
     -type f \
     ! -name '*.go' \
     -exec "$embed_bin_path" \
-        -out-path $assets_path/assets_gen.go \
+        -out-path $assets_path/assets.gen.go \
         -package-name assets \
         -assets-var-name Bytes \
         -asset-path-prefix $assets_path/ \
