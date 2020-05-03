@@ -49,8 +49,8 @@ type Artist struct {
 	AlbumCount int      `sql:"-"`
 }
 
-func (a *Artist) SID() specid.ID {
-	return specid.ID{Type: specid.Artist, Value: a.ID}
+func (a *Artist) SID() *specid.ID {
+	return &specid.ID{Type: specid.Artist, Value: a.ID}
 }
 
 func (a *Artist) IndexName() string {
@@ -92,16 +92,16 @@ type Track struct {
 	TagBrainzID    string `sql:"default: null"`
 }
 
-func (t *Track) SID() specid.ID {
-	return specid.ID{Type: specid.Track, Value: t.ID}
+func (t *Track) SID() *specid.ID {
+	return &specid.ID{Type: specid.Track, Value: t.ID}
 }
 
-func (t *Track) AlbumSID() specid.ID {
-	return specid.ID{Type: specid.Album, Value: t.AlbumID}
+func (t *Track) AlbumSID() *specid.ID {
+	return &specid.ID{Type: specid.Album, Value: t.AlbumID}
 }
 
-func (t *Track) ArtistSID() specid.ID {
-	return specid.ID{Type: specid.Artist, Value: t.ArtistID}
+func (t *Track) ArtistSID() *specid.ID {
+	return &specid.ID{Type: specid.Artist, Value: t.ArtistID}
 }
 
 func (t *Track) Ext() string {
@@ -176,12 +176,12 @@ type Album struct {
 	ReceivedTags  bool `gorm:"-"`
 }
 
-func (a *Album) SID() specid.ID {
-	return specid.ID{Type: specid.Album, Value: a.ID}
+func (a *Album) SID() *specid.ID {
+	return &specid.ID{Type: specid.Album, Value: a.ID}
 }
 
-func (a *Album) ParentSID() specid.ID {
-	return specid.ID{Type: specid.Album, Value: a.ParentID}
+func (a *Album) ParentSID() *specid.ID {
+	return &specid.ID{Type: specid.Album, Value: a.ParentID}
 }
 
 func (a *Album) IndexRightPath() string {

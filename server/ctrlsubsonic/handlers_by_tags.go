@@ -265,7 +265,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 			continue
 		}
 		similar := &spec.SimilarArtist{
-			ID: specid.ID{Type: specid.Artist, Value: -1},
+			ID: &specid.ID{Type: specid.Artist, Value: -1},
 		}
 		if artist.ID != 0 {
 			similar.ID = artist.SID()
