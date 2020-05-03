@@ -3,6 +3,7 @@ package scanner
 import (
 	"io/ioutil"
 	"log"
+	"os"
 	"testing"
 
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -11,17 +12,6 @@ import (
 )
 
 var testScanner *Scanner
-
-func init() {
-	db, err := db.NewMock()
-	if err != nil {
-		log.Fatalf("error opening database: %v\n", err)
-	}
-	// benchmarks aren't real code are they? >:)
-	// here is an absolute path to my music directory
-	testScanner = New("/home/senan/music", db)
-	log.SetOutput(ioutil.Discard)
-}
 
 func resetTables(db *db.DB) {
 	tx := db.Begin()
@@ -52,6 +42,18 @@ func BenchmarkScanIncremental(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		_ = testScanner.Start(ScanOptions{})
 	}
+}
+
+func TestMain(m *testing.M) {
+	db, err := db.NewMock()
+	if err != nil {
+		log.Fatalf("error opening database: %v\n", err)
+	}
+	// benchmarks aren't real code are they? >:)
+	// here is an absolute path to my music directory
+	testScanner = New("/home/senan/music", db)
+	log.SetOutput(ioutil.Discard)
+	os.Exit(m.Run())
 }
 
 // RESULTS fresh

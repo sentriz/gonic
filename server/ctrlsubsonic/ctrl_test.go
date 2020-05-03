@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"path"
 	"regexp"
 	"strings"
@@ -24,16 +25,6 @@ var (
 	testDBPath     = path.Join(testDataDir, "db")
 	testController *Controller
 )
-
-func init() {
-	db, err := db.New(testDBPath)
-	if err != nil {
-		log.Fatalf("error opening database: %v\n", err)
-	}
-	testController = &Controller{
-		Controller: &ctrlbase.Controller{DB: db},
-	}
-}
 
 type queryCase struct {
 	params     url.Values
@@ -85,4 +76,15 @@ func runQueryCases(t *testing.T, h handlerSubsonic, cases []*queryCase) {
 			t.Errorf("\u001b[31;1mdiffering json\u001b[0m\n%s", diff.Render())
 		})
 	}
+}
+
+func TestMain(m *testing.M) {
+	db, err := db.New(testDBPath)
+	if err != nil {
+		log.Fatalf("error opening database: %v\n", err)
+	}
+	testController = &Controller{
+		Controller: &ctrlbase.Controller{DB: db},
+	}
+	os.Exit(m.Run())
 }

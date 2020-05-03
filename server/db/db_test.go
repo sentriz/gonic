@@ -3,20 +3,13 @@ package db
 import (
 	"log"
 	"math/rand"
+	"os"
 	"testing"
 
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
 var testDB *DB
-
-func init() {
-	var err error
-	testDB, err = NewMock()
-	if err != nil {
-		log.Fatalf("error opening database: %v\n", err)
-	}
-}
 
 func randKey() string {
 	letters := []rune("abcdef0123456789")
@@ -43,4 +36,13 @@ func TestGetSetting(t *testing.T) {
 	if actual != expected {
 		t.Errorf("expected %q, got %q", expected, actual)
 	}
+}
+
+func TestMain(m *testing.M) {
+	var err error
+	testDB, err = NewMock()
+	if err != nil {
+		log.Fatalf("error opening database: %v\n", err)
+	}
+	os.Exit(m.Run())
 }
