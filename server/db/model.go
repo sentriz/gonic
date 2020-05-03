@@ -94,8 +94,8 @@ func (t *Track) Ext() string {
 }
 
 func (t *Track) MIME() string {
-	ext := t.Ext()
-	return mime.Types[ext]
+	v, _ := mime.FromExtension(t.Ext())
+	return v
 }
 
 func (t *Track) RelPath() string {

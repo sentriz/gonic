@@ -7,7 +7,7 @@ import (
 	"go.senan.xyz/gonic/version"
 )
 
-var (
+const (
 	apiVersion = "1.9.0"
 	xmlns      = "http://subsonic.org/restapi"
 )

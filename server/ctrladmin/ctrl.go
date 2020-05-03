@@ -236,6 +236,7 @@ type Flash struct {
 	Type    FlashType
 }
 
+//nolint:gochecknoinits
 func init() {
 	gob.Register(&Flash{})
 }

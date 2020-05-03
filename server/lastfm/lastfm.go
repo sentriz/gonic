@@ -10,16 +10,15 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
-	"time"
 
 	"go.senan.xyz/gonic/server/db"
 )
 
-var (
+const (
 	baseURL = "https://ws.audioscrobbler.com/2.0/"
-	client  = &http.Client{
-		Timeout: 10 * time.Second,
-	}
+)
+
+var (
 	ErrLastFM = errors.New("last.fm error")
 )
 
@@ -27,7 +26,7 @@ var (
 
 func getParamSignature(params url.Values, secret string) string {
 	// the parameters must be in order before hashing
-	paramKeys := make([]string, 0)
+	paramKeys := make([]string, 0, len(params))
 	for k := range params {
 		paramKeys = append(paramKeys, k)
 	}
@@ -45,7 +44,7 @@ func getParamSignature(params url.Values, secret string) string {
 func makeRequest(method string, params url.Values) (LastFM, error) {
 	req, _ := http.NewRequest(method, baseURL, nil)
 	req.URL.RawQuery = params.Encode()
-	resp, err := client.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return LastFM{}, fmt.Errorf("get: %w", err)
 	}

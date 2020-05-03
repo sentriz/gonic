@@ -72,7 +72,7 @@ func serveTrackRaw(w http.ResponseWriter, r *http.Request, opts serveTrackOption
 }
 
 func serveTrackEncode(w http.ResponseWriter, r *http.Request, opts serveTrackOptions) {
-	profile := encode.Profiles[opts.pref.Profile]
+	profile := encode.Profiles()[opts.pref.Profile]
 	bitrate := encode.GetBitrate(opts.maxBitrate, profile)
 	trackPath := path.Join(opts.musicPath, opts.track.RelPath())
 	cacheKey := encode.CacheKey(trackPath, opts.pref.Profile, bitrate)

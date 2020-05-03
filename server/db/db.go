@@ -31,9 +31,8 @@ func wrapMigrations(migrs ...gormigrate.Migration) []*gormigrate.Migration {
 	return ret
 }
 
-var (
-	dbMaxOpenConns = 1
-	dbOptions      = url.Values{
+func defaultOptions() url.Values {
+	return url.Values{
 		// with this, multiple connections share a single data and schema cache.
 		// see https://www.sqlite.org/sharedcache.html
 		"cache": {"shared"},
@@ -43,7 +42,7 @@ var (
 		"_journal_mode": {"WAL"},
 		"_foreign_keys": {"true"},
 	}
-)
+}
 
 type DB struct {
 	*gorm.DB
@@ -55,13 +54,13 @@ func New(path string) (*DB, error) {
 		Scheme: "file",
 		Opaque: path,
 	}
-	url.RawQuery = dbOptions.Encode()
+	url.RawQuery = defaultOptions().Encode()
 	db, err := gorm.Open("sqlite3", url.String())
 	if err != nil {
 		return nil, fmt.Errorf("with gorm: %w", err)
 	}
 	db.SetLogger(log.New(os.Stdout, "gorm ", 0))
-	db.DB().SetMaxOpenConns(dbMaxOpenConns)
+	db.DB().SetMaxOpenConns(1)
 	migrOptions := &gormigrate.Options{
 		TableName:      "migrations",
 		IDColumnName:   "id",
@@ -69,13 +68,13 @@ func New(path string) (*DB, error) {
 		UseTransaction: false,
 	}
 	migr := gormigrate.New(db, migrOptions, wrapMigrations(
-		migrationInitSchema,
-		migrationCreateInitUser,
-		migrationMergePlaylist,
-		migrationCreateTranscode,
-		migrationAddGenre,
-		migrationUpdateTranscodePrefIDX,
-		migrationAddAlbumIDX,
+		migrateInitSchema(),
+		migrateCreateInitUser(),
+		migrateMergePlaylist(),
+		migrateCreateTranscode(),
+		migrateAddGenre(),
+		migrateUpdateTranscodePrefIDX(),
+		migrateAddAlbumIDX(),
 	))
 	if err = migr.Migrate(); err != nil {
 		return nil, fmt.Errorf("migrating to latest version: %w", err)

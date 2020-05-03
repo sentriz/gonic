@@ -44,7 +44,7 @@ func decoded(in string) string {
 
 // isScanning acts as an atomic boolean semaphore. we don't
 // want to have more than one scan going on at a time
-var isScanning int32
+var isScanning int32 //nolint:gochecknoglobals
 
 func IsScanning() bool {
 	return atomic.LoadInt32(&isScanning) == 1
@@ -224,19 +224,23 @@ type item struct {
 	stat      os.FileInfo
 }
 
-var coverFilenames = map[string]struct{}{
-	"cover.png":   {},
-	"cover.jpg":   {},
-	"cover.jpeg":  {},
-	"folder.png":  {},
-	"folder.jpg":  {},
-	"folder.jpeg": {},
-	"album.png":   {},
-	"album.jpg":   {},
-	"album.jpeg":  {},
-	"front.png":   {},
-	"front.jpg":   {},
-	"front.jpeg":  {},
+func isCover(filename string) bool {
+	known := map[string]struct{}{
+		"cover.png":   {},
+		"cover.jpg":   {},
+		"cover.jpeg":  {},
+		"folder.png":  {},
+		"folder.jpg":  {},
+		"folder.jpeg": {},
+		"album.png":   {},
+		"album.jpg":   {},
+		"album.jpeg":  {},
+		"front.png":   {},
+		"front.jpg":   {},
+		"front.jpeg":  {},
+	}
+	_, ok := known[filename]
+	return ok
 }
 
 // ## begin callbacks
@@ -267,8 +271,8 @@ func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
 	if isDir {
 		return s.handleFolder(it)
 	}
-	lowerFilename := strings.ToLower(filename)
-	if _, ok := coverFilenames[lowerFilename]; ok {
+	filenameLow := strings.ToLower(filename)
+	if isCover(filenameLow) {
 		s.curCover = filename
 		return nil
 	}
@@ -276,7 +280,7 @@ func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
 	if ext == "" {
 		return nil
 	}
-	if _, ok := mime.Types[ext[1:]]; ok {
+	if _, ok := mime.FromExtension(ext[1:]); ok {
 		return s.handleTrack(it)
 	}
 	return nil

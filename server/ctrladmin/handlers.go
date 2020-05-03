@@ -82,7 +82,7 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	c.DB.
 		Where("user_id=?", user.ID).
 		Find(&data.TranscodePreferences)
-	for profile := range encode.Profiles {
+	for profile := range encode.Profiles() {
 		data.TranscodeProfiles = append(data.TranscodeProfiles, profile)
 	}
 	//

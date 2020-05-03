@@ -13,6 +13,10 @@ import (
 	"github.com/cespare/xxhash"
 )
 
+const (
+	buffLen = 4096
+)
+
 type Profile struct {
 	Format        string
 	Bitrate       int
@@ -20,15 +24,14 @@ type Profile struct {
 	forceRG       bool
 }
 
-var (
-	Profiles = map[string]*Profile{
+func Profiles() map[string]Profile {
+	return map[string]Profile{
 		"mp3":     {"mp3", 128, []string{"-c:a", "libmp3lame"}, false},
 		"mp3_rg":  {"mp3", 128, []string{"-c:a", "libmp3lame"}, true},
 		"opus":    {"opus", 96, []string{"-c:a", "libopus", "-vbr", "constrained"}, false},
 		"opus_rg": {"opus", 96, []string{"-c:a", "libopus", "-vbr", "constrained"}, true},
 	}
-	bufLen = 4096
-)
+}
 
 // copy command output to http response body using io.copy (simpler, but may increase ttfb)
 //nolint:deadcode,unused
@@ -45,7 +48,7 @@ func copyCmdOutput(out, cache io.Writer, pipeReader io.Reader) {
 // copy command output to http response manually with a buffer (should reduce ttfb)
 //nolint:deadcode,unused
 func writeCmdOutput(out, cache io.Writer, pipeReader io.ReadCloser) {
-	buffer := make([]byte, bufLen)
+	buffer := make([]byte, buffLen)
 	for {
 		n, err := pipeReader.Read(buffer)
 		if err != nil {
@@ -70,7 +73,7 @@ func writeCmdOutput(out, cache io.Writer, pipeReader io.ReadCloser) {
 }
 
 // pre-format the ffmpeg command with needed options
-func ffmpegCommand(filePath string, profile *Profile, bitrate string) *exec.Cmd {
+func ffmpegCommand(filePath string, profile Profile, bitrate string) *exec.Cmd {
 	args := []string{
 		"-v", "0",
 		"-i", filePath,
@@ -94,7 +97,7 @@ func ffmpegCommand(filePath string, profile *Profile, bitrate string) *exec.Cmd 
 	return exec.Command("/usr/bin/ffmpeg", args...) //nolint:gosec
 }
 
-func Encode(out io.Writer, trackPath, cachePath string, profile *Profile, bitrate string) error {
+func Encode(out io.Writer, trackPath, cachePath string, profile Profile, bitrate string) error {
 	// prepare the command and file descriptors
 	cmd := ffmpegCommand(trackPath, profile, bitrate)
 	pipeReader, pipeWriter := io.Pipe()
@@ -126,13 +129,13 @@ func Encode(out io.Writer, trackPath, cachePath string, profile *Profile, bitrat
 
 // CacheKey generates the filename for the new transcode save
 func CacheKey(sourcePath string, profile, bitrate string) string {
-	format := Profiles[profile].Format
+	format := Profiles()[profile].Format
 	hash := xxhash.Sum64String(sourcePath)
 	return fmt.Sprintf("%x-%s-%s.%s", hash, profile, bitrate, format)
 }
 
 // GetBitrate checks if the client forces bitrate lower than set in profile
-func GetBitrate(clientBitrate int, profile *Profile) string {
+func GetBitrate(clientBitrate int, profile Profile) string {
 	bitrate := profile.Bitrate
 	if clientBitrate != 0 && clientBitrate < bitrate {
 		bitrate = clientBitrate
