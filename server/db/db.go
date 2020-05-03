@@ -11,12 +11,13 @@ import (
 	"gopkg.in/gormigrate.v1"
 )
 
-func addMigrationLog(migrs ...gormigrate.Migration) []*gormigrate.Migration {
+// wrapMigrations wraps a list of migrations to add logging and transactions
+func wrapMigrations(migrs ...gormigrate.Migration) []*gormigrate.Migration {
 	log := func(i int, mig gormigrate.MigrateFunc, name string) gormigrate.MigrateFunc {
-		return func(tx *gorm.DB) error {
+		return func(db *gorm.DB) error {
 			// print that we're on the ith out of n migrations
 			defer log.Printf("migration (%d/%d) '%s' finished", i+1, len(migrs), name)
-			return mig(tx)
+			return db.Transaction(mig)
 		}
 	}
 	ret := make([]*gormigrate.Migration, 0, len(migrs))
@@ -61,7 +62,13 @@ func New(path string) (*DB, error) {
 	}
 	db.SetLogger(log.New(os.Stdout, "gorm ", 0))
 	db.DB().SetMaxOpenConns(dbMaxOpenConns)
-	migr := gormigrate.New(db, gormigrate.DefaultOptions, addMigrationLog(
+	migrOptions := &gormigrate.Options{
+		TableName:      "migrations",
+		IDColumnName:   "id",
+		IDColumnSize:   255,
+		UseTransaction: false,
+	}
+	migr := gormigrate.New(db, migrOptions, wrapMigrations(
 		migrationInitSchema,
 		migrationCreateInitUser,
 		migrationMergePlaylist,
