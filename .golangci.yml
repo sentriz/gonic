@@ -11,6 +11,8 @@ linters:
   - depguard
   - dogsled
   - errcheck
+  - gochecknoglobals
+  - gochecknoinits
   - goconst
   - gocritic
   - gocyclo
@@ -39,6 +41,7 @@ issues:
   - path: _test\.go
     linters:
     - errcheck
+    - gochecknoglobals
   - text: "weak cryptographic primitive"
     linters:
     - gosec
