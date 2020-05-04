@@ -57,3 +57,7 @@ func (i ID) String() string {
 func (i ID) MarshalJSON() ([]byte, error) {
 	return json.Marshal(i.String())
 }
+
+func (i ID) MarshalText() ([]byte, error) {
+	return []byte(i.String()), nil
+}
