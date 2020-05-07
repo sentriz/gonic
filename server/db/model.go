@@ -1,5 +1,5 @@
 // Package db provides database helpers and models
-//nolint:lll
+//nolint:lll // struct tags get very long and can't be split
 package db
 
 // see this db fiddle to mess around with the schema
@@ -15,7 +15,7 @@ import (
 )
 
 func splitInt(in, sep string) []int {
-	if len(in) == 0 {
+	if in == "" {
 		return []int{}
 	}
 	parts := strings.Split(in, sep)

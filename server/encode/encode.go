@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	buffLen = 4096
+	buffLen    = 4096
+	ffmpegPath = "/usr/bin/ffmpeg"
 )
 
 type Profile struct {
@@ -34,7 +35,7 @@ func Profiles() map[string]Profile {
 }
 
 // copy command output to http response body using io.copy (simpler, but may increase ttfb)
-//nolint:deadcode,unused
+//nolint:deadcode,unused // function may be switched later
 func copyCmdOutput(out, cache io.Writer, pipeReader io.Reader) {
 	// set up a multiwriter to feed the command output
 	// to both cache file and http response
@@ -46,7 +47,7 @@ func copyCmdOutput(out, cache io.Writer, pipeReader io.Reader) {
 }
 
 // copy command output to http response manually with a buffer (should reduce ttfb)
-//nolint:deadcode,unused
+//nolint:deadcode,unused // function may be switched later
 func writeCmdOutput(out, cache io.Writer, pipeReader io.ReadCloser) {
 	buffer := make([]byte, buffLen)
 	for {
@@ -94,7 +95,8 @@ func ffmpegCommand(filePath string, profile Profile, bitrate string) *exec.Cmd {
 		)
 	}
 	args = append(args, "-f", profile.Format, "-")
-	return exec.Command("/usr/bin/ffmpeg", args...) //nolint:gosec
+	return exec.Command(ffmpegPath, args...) //nolint:gosec // can't see a way for this be abused
+	// but please do let me know if you see otherwise
 }
 
 func Encode(out io.Writer, trackPath, cachePath string, profile Profile, bitrate string) error {

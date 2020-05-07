@@ -180,15 +180,13 @@ func (j *Jukebox) doUpdateSpeaker(su updateSpeaker) error {
 		return err
 	}
 	j.Lock()
-	{
-		j.info = &strmInfo{}
-		j.info.strm = streamer.(beep.StreamSeekCloser)
-		j.info.ctrlStrmr.Streamer = beep.Resample(
-			4, format.SampleRate,
-			j.sr, j.info.strm,
-		)
-		j.info.format = format
-	}
+	j.info = &strmInfo{}
+	j.info.strm = streamer.(beep.StreamSeekCloser)
+	j.info.ctrlStrmr.Streamer = beep.Resample(
+		4, format.SampleRate,
+		j.sr, j.info.strm,
+	)
+	j.info.format = format
 	j.Unlock()
 	speaker.Play(beep.Seq(&j.info.ctrlStrmr, beep.Callback(func() {
 		j.speaker <- updateSpeaker{su.index + 1}

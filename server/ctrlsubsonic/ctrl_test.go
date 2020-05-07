@@ -53,7 +53,7 @@ func runQueryCases(t *testing.T, h handlerSubsonic, cases []*queryCase) {
 			// convert test name to query case path
 			snake := testCamelExpr.ReplaceAllString(t.Name(), "${1}_${2}")
 			lower := strings.ToLower(snake)
-			relPath := strings.Replace(lower, "/", "_", -1)
+			relPath := strings.ReplaceAll(lower, "/", "_")
 			absExpPath := path.Join(testDataDir, relPath)
 			// read case to differ with handler result
 			expected, err := jd.ReadJsonFile(absExpPath)

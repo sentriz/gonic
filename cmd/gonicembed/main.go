@@ -75,7 +75,7 @@ type config struct {
 	assetPathPrefix string
 }
 
-func processAsset(c config, ew *errWriter, path string) error {
+func processAsset(c *config, ew *errWriter, path string) error {
 	info, err := os.Stat(path)
 	if err != nil {
 		return fmt.Errorf("stating asset: %w", err)
@@ -107,8 +107,7 @@ func processAsset(c config, ew *errWriter, path string) error {
 	return ew.err
 }
 
-//nolint:errcheck
-func processAssets(c config, files []string) error {
+func processAssets(c *config, files []string) error {
 	out, err := os.Create(c.outPath)
 	if err != nil {
 		return fmt.Errorf("creating out path: %w", err)
@@ -144,7 +143,7 @@ func main() {
 	if *outPath == "" {
 		log.Fatalln("invalid arguments. see -h")
 	}
-	c := config{
+	c := &config{
 		packageName:     *pkgName,
 		outPath:         *outPath,
 		tagList:         *tagList,

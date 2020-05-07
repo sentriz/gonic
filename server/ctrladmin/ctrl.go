@@ -236,7 +236,8 @@ type Flash struct {
 	Type    FlashType
 }
 
-//nolint:gochecknoinits
+//nolint:gochecknoinits // for now I think it's nice that our types and their
+// gob registrations are next to each other, in case there's more added later)
 func init() {
 	gob.Register(&Flash{})
 }

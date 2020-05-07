@@ -82,7 +82,7 @@ func (c *Controller) ServeUploadPlaylist(r *http.Request) *Response {
 }
 
 func (c *Controller) ServeUploadPlaylistDo(r *http.Request) *Response {
-	if err := r.ParseMultipartForm((1 << 10) * 24); nil != err {
+	if err := r.ParseMultipartForm((1 << 10) * 24); err != nil {
 		return &Response{
 			err:  "couldn't parse mutlipart",
 			code: 500,
