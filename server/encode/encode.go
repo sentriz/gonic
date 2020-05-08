@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 
 	"github.com/cespare/xxhash"
 )
@@ -25,6 +26,14 @@ type Profile struct {
 	forceRG       bool
 }
 
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
+}
+
 func Profiles() map[string]Profile {
 	return map[string]Profile{
 		"mp3":     {"mp3", 128, []string{"-c:a", "libmp3lame"}, false},
@@ -34,9 +43,10 @@ func Profiles() map[string]Profile {
 	}
 }
 
-// copy command output to http response body using io.copy (simpler, but may increase ttfb)
+// copy command output to http response body using io.copy
+// (it's simpler, but may increase ttfb)
 //nolint:deadcode,unused // function may be switched later
-func copyCmdOutput(out, cache io.Writer, pipeReader io.Reader) {
+func cmdOutputCopy(out, cache io.Writer, pipeReader io.Reader) {
 	// set up a multiwriter to feed the command output
 	// to both cache file and http response
 	w := io.MultiWriter(out, cache)
@@ -48,7 +58,7 @@ func copyCmdOutput(out, cache io.Writer, pipeReader io.Reader) {
 
 // copy command output to http response manually with a buffer (should reduce ttfb)
 //nolint:deadcode,unused // function may be switched later
-func writeCmdOutput(out, cache io.Writer, pipeReader io.ReadCloser) {
+func cmdOutputWrite(out, cache io.Writer, pipeReader io.ReadCloser) {
 	buffer := make([]byte, buffLen)
 	for {
 		n, err := pipeReader.Read(buffer)
@@ -74,13 +84,13 @@ func writeCmdOutput(out, cache io.Writer, pipeReader io.ReadCloser) {
 }
 
 // pre-format the ffmpeg command with needed options
-func ffmpegCommand(filePath string, profile Profile, bitrate string) *exec.Cmd {
+func ffmpegCommand(filePath string, profile Profile) *exec.Cmd {
 	args := []string{
 		"-v", "0",
 		"-i", filePath,
 		"-map", "0:0",
 		"-vn",
-		"-b:a", bitrate,
+		"-b:a", fmt.Sprintf("%dk", profile.Bitrate),
 	}
 	args = append(args, profile.ffmpegOptions...)
 	if profile.forceRG {
@@ -99,9 +109,9 @@ func ffmpegCommand(filePath string, profile Profile, bitrate string) *exec.Cmd {
 	// but please do let me know if you see otherwise
 }
 
-func Encode(out io.Writer, trackPath, cachePath string, profile Profile, bitrate string) error {
+func encode(out io.Writer, trackPath, cachePath string, profile Profile) error {
 	// prepare the command and file descriptors
-	cmd := ffmpegCommand(trackPath, profile, bitrate)
+	cmd := ffmpegCommand(trackPath, profile)
 	pipeReader, pipeWriter := io.Pipe()
 	cmd.Stdout = pipeWriter
 	cmd.Stderr = pipeWriter
@@ -110,12 +120,12 @@ func Encode(out io.Writer, trackPath, cachePath string, profile Profile, bitrate
 	if err != nil {
 		return fmt.Errorf("writing to cache file %q: %v: %w", cachePath, err, err)
 	}
-	// still unsure if buffer version (writeCmdOutput) is any better than io.Copy-based one (copyCmdOutput)
+	// still unsure if buffer version (cmdOutputWrite) is any better than io.Copy-based one (cmdOutputCopy)
 	// initial goal here is to start streaming response asap, with smallest ttfb. more testing needed
 	// -- @spijet
 	//
 	// start up writers for cache file and http response
-	go writeCmdOutput(out, cacheFile, pipeReader)
+	go cmdOutputWrite(out, cacheFile, pipeReader)
 	// run ffmpeg
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("running ffmpeg: %w", err)
@@ -129,18 +139,54 @@ func Encode(out io.Writer, trackPath, cachePath string, profile Profile, bitrate
 	return nil
 }
 
-// CacheKey generates the filename for the new transcode save
-func CacheKey(sourcePath string, profile, bitrate string) string {
-	format := Profiles()[profile].Format
-	hash := xxhash.Sum64String(sourcePath)
-	return fmt.Sprintf("%x-%s-%s.%s", hash, profile, bitrate, format)
+// cacheKey generates the filename for the new transcode save
+func cacheKey(sourcePath string, profileName string, profile Profile) string {
+	return fmt.Sprintf("%x-%s-%dk.%s",
+		xxhash.Sum64String(sourcePath), profileName, profile.Bitrate, profile.Format,
+	)
 }
 
-// GetBitrate checks if the client forces bitrate lower than set in profile
-func GetBitrate(clientBitrate int, profile Profile) string {
-	bitrate := profile.Bitrate
-	if clientBitrate != 0 && clientBitrate < bitrate {
-		bitrate = clientBitrate
+// getBitrate checks if the client forces bitrate lower than set in profile
+func getBitrate(preferred, defined int) int {
+	if preferred != 0 && preferred < defined {
+		return preferred
 	}
-	return fmt.Sprintf("%dk", bitrate)
+	return defined
+}
+
+type (
+	OnInvalidProfileFunc func() error
+	OnCacheHitFunc       func(Profile, string) error
+	OnCacheMissFunc      func(Profile) (io.Writer, error)
+)
+
+type Options struct {
+	TrackPath        string
+	CachePath        string
+	ProfileName      string
+	PreferredBitrate int
+	OnInvalidProfile OnInvalidProfileFunc
+	OnCacheHit       OnCacheHitFunc
+	OnCacheMiss      OnCacheMissFunc
+}
+
+func Encode(opts Options) error {
+	profile, ok := Profiles()[opts.ProfileName]
+	if !ok {
+		return opts.OnInvalidProfile()
+	}
+	profile.Bitrate = getBitrate(opts.PreferredBitrate, profile.Bitrate)
+	cacheKey := cacheKey(opts.TrackPath, opts.ProfileName, profile)
+	cachePath := path.Join(opts.CachePath, cacheKey)
+	if fileExists(cachePath) {
+		return opts.OnCacheHit(profile, cachePath)
+	}
+	writer, err := opts.OnCacheMiss(profile)
+	if err != nil {
+		return fmt.Errorf("starting cache serve: %w", err)
+	}
+	if err := encode(writer, opts.TrackPath, cachePath, profile); err != nil {
+		return fmt.Errorf("starting transcode: %w", err)
+	}
+	return nil
 }

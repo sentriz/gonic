@@ -1,9 +1,9 @@
 package ctrlsubsonic
 
 import (
+	"io"
 	"log"
 	"net/http"
-	"os"
 	"path"
 	"time"
 
@@ -20,6 +20,38 @@ import (
 //   a) write to response writer
 //   b) return a non-nil spec.Response
 //  _but not both_
+
+func streamGetTransPref(dbc *db.DB, userID int, client string) db.TranscodePreference {
+	pref := db.TranscodePreference{}
+	dbc.
+		Where("user_id=?", userID).
+		Where("client COLLATE NOCASE IN (?)", []string{"*", client}).
+		Order("client DESC"). // ensure "*" is last if it's there
+		First(&pref)
+	return pref
+}
+
+func streamGetTrack(dbc *db.DB, trackID int) (*db.Track, error) {
+	track := db.Track{}
+	err := dbc.
+		Preload("Album").
+		First(&track, trackID).
+		Error
+	return &track, err
+}
+
+func streamUpdateStats(dbc *db.DB, userID, albumID int) {
+	play := db.Play{
+		AlbumID: albumID,
+		UserID:  userID,
+	}
+	dbc.
+		Where(play).
+		First(&play)
+	play.Time = time.Now() // for getAlbumList?type=recent
+	play.Count++           // for getAlbumList?type=frequent
+	dbc.Save(&play)
+}
 
 func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
@@ -48,96 +80,50 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 	return nil
 }
 
-func fileExists(filename string) bool {
-	info, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		return false
-	}
-	return !info.IsDir()
-}
-
-type serveTrackOptions struct {
-	track      *db.Track
-	pref       *db.TranscodePreference
-	maxBitrate int
-	cachePath  string
-	musicPath  string
-}
-
-func serveTrackRaw(w http.ResponseWriter, r *http.Request, opts serveTrackOptions) {
-	log.Printf("serving raw %q\n", opts.track.Filename)
-	w.Header().Set("Content-Type", opts.track.MIME())
-	trackPath := path.Join(opts.musicPath, opts.track.RelPath())
-	http.ServeFile(w, r, trackPath)
-}
-
-func serveTrackEncode(w http.ResponseWriter, r *http.Request, opts serveTrackOptions) {
-	profile := encode.Profiles()[opts.pref.Profile]
-	bitrate := encode.GetBitrate(opts.maxBitrate, profile)
-	trackPath := path.Join(opts.musicPath, opts.track.RelPath())
-	cacheKey := encode.CacheKey(trackPath, opts.pref.Profile, bitrate)
-	cacheFile := path.Join(opts.cachePath, cacheKey)
-	if fileExists(cacheFile) {
-		log.Printf("serving transcode `%s`: cache [%s/%s] hit!\n", opts.track.Filename, profile.Format, bitrate)
-		http.ServeFile(w, r, cacheFile)
-		return
-	}
-	log.Printf("serving transcode `%s`: cache [%s/%s] miss!\n", opts.track.Filename, profile.Format, bitrate)
-	if err := encode.Encode(w, trackPath, cacheFile, profile, bitrate); err != nil {
-		log.Printf("error encoding %q: %v\n", trackPath, err)
-		return
-	}
-	log.Printf("serving transcode `%s`: encoded to [%s/%s] successfully\n",
-		opts.track.Filename, profile.Format, bitrate)
-}
-
 func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	id, err := params.GetInt("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	track := &db.Track{}
-	err = c.DB.
-		Preload("Album").
-		First(track, id).
-		Error
-	if gorm.IsRecordNotFoundError(err) {
+	track, err := streamGetTrack(c.DB, id)
+	if err != nil {
 		return spec.NewError(70, "media with id `%d` was not found", id)
 	}
 	user := r.Context().Value(CtxUser).(*db.User)
-	defer func() {
-		play := db.Play{
-			AlbumID: track.Album.ID,
-			UserID:  user.ID,
-		}
-		c.DB.
-			Where(play).
-			First(&play)
-		play.Time = time.Now() // for getAlbumList?type=recent
-		play.Count++           // for getAlbumList?type=frequent
-		c.DB.Save(&play)
-	}()
-	client := params.Get("c")
-	servOpts := serveTrackOptions{
-		track:     track,
-		musicPath: c.MusicPath,
-	}
-	pref := &db.TranscodePreference{}
-	err = c.DB.
-		Where("user_id=?", user.ID).
-		Where("client COLLATE NOCASE IN (?)", []string{"*", client}).
-		Order("client DESC"). // ensure "*" is last if it's there
-		First(pref).
-		Error
-	if gorm.IsRecordNotFoundError(err) {
-		serveTrackRaw(w, r, servOpts)
+	defer streamUpdateStats(c.DB, user.ID, track.Album.ID)
+	pref := streamGetTransPref(c.DB, user.ID, params.Get("c"))
+	trackPath := path.Join(c.MusicPath, track.RelPath())
+	//
+	onInvalidProfile := func() error {
+		log.Printf("serving raw %q\n", track.Filename)
+		w.Header().Set("Content-Type", track.MIME())
+		http.ServeFile(w, r, trackPath)
 		return nil
 	}
-	servOpts.pref = pref
-	servOpts.maxBitrate = params.GetIntOr("maxBitRate", 0)
-	servOpts.cachePath = c.CachePath
-	serveTrackEncode(w, r, servOpts)
+	onCacheHit := func(profile encode.Profile, path string) error {
+		log.Printf("serving transcode `%s`: cache [%s/%dk] hit!\n",
+			track.Filename, profile.Format, profile.Bitrate)
+		http.ServeFile(w, r, path)
+		return nil
+	}
+	onCacheMiss := func(profile encode.Profile) (io.Writer, error) {
+		log.Printf("serving transcode `%s`: cache [%s/%dk] miss!\n",
+			track.Filename, profile.Format, profile.Bitrate)
+		return w, nil
+	}
+	encodeOptions := encode.Options{
+		TrackPath:        trackPath,
+		CachePath:        c.CachePath,
+		ProfileName:      pref.Profile,
+		PreferredBitrate: params.GetIntOr("maxBitRate", 0),
+		OnInvalidProfile: onInvalidProfile,
+		OnCacheHit:       onCacheHit,
+		OnCacheMiss:      onCacheMiss,
+	}
+	if err := encode.Encode(encodeOptions); err != nil {
+		log.Printf("serving transcode `%s`: error: %v\n", track.Filename, err)
+	}
 	return nil
 }
 
@@ -147,17 +133,13 @@ func (c *Controller) ServeDownload(w http.ResponseWriter, r *http.Request) *spec
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	track := &db.Track{}
-	err = c.DB.
-		Preload("Album").
-		First(track, id).
-		Error
-	if gorm.IsRecordNotFoundError(err) {
+	track, err := streamGetTrack(c.DB, id)
+	if err != nil {
 		return spec.NewError(70, "media with id `%d` was not found", id)
 	}
-	serveTrackRaw(w, r, serveTrackOptions{
-		track:     track,
-		musicPath: c.MusicPath,
-	})
+	log.Printf("serving raw %q\n", track.Filename)
+	w.Header().Set("Content-Type", track.MIME())
+	trackPath := path.Join(c.MusicPath, track.RelPath())
+	http.ServeFile(w, r, trackPath)
 	return nil
 }

@@ -25,6 +25,7 @@ require (
 	github.com/peterbourgon/ff v1.2.0
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
 	github.com/wader/gormstore v0.0.0-20190302154359-acb787ba3755
+	golang.org/x/crypto v0.0.0-20200406173513-056763e48d71 // indirect
 	golang.org/x/exp v0.0.0-20190121172915-509febef88a4 // indirect
 	google.golang.org/appengine v1.6.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
