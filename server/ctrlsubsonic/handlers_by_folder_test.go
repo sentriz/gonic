@@ -15,8 +15,8 @@ func TestGetIndexes(t *testing.T) {
 
 func TestGetMusicDirectory(t *testing.T) {
 	runQueryCases(t, testController.ServeGetMusicDirectory, []*queryCase{
-		{url.Values{"id": {"2"}}, "without_tracks", false},
-		{url.Values{"id": {"3"}}, "with_tracks", false},
+		{url.Values{"id": {"al-2"}}, "without_tracks", false},
+		{url.Values{"id": {"al-3"}}, "with_tracks", false},
 	})
 }
 

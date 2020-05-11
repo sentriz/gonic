@@ -54,17 +54,17 @@ func (c *Controller) ServeGetIndexes(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	id, err := params.GetInt("id")
+	id, err := params.GetID("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 	childrenObj := []*spec.TrackChild{}
 	folder := &db.Album{}
-	c.DB.First(folder, id)
+	c.DB.First(folder, id.Value)
 	// ** begin start looking for child childFolders in the current dir
 	var childFolders []*db.Album
 	c.DB.
-		Where("parent_id=?", id).
+		Where("parent_id=?", id.Value).
 		Order("albums.right_path COLLATE NOCASE").
 		Find(&childFolders)
 	for _, c := range childFolders {
@@ -73,7 +73,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	// ** begin start looking for child childTracks in the current dir
 	var childTracks []*db.Track
 	c.DB.
-		Where("album_id=?", id).
+		Where("album_id=?", id.Value).
 		Preload("Album").
 		Order("filename").
 		Find(&childTracks)

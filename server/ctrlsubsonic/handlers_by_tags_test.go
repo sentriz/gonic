@@ -13,16 +13,16 @@ func TestGetArtists(t *testing.T) {
 
 func TestGetArtist(t *testing.T) {
 	runQueryCases(t, testController.ServeGetArtist, []*queryCase{
-		{url.Values{"id": {"1"}}, "id_one", false},
-		{url.Values{"id": {"2"}}, "id_two", false},
-		{url.Values{"id": {"3"}}, "id_three", false},
+		{url.Values{"id": {"ar-1"}}, "id_one", false},
+		{url.Values{"id": {"ar-2"}}, "id_two", false},
+		{url.Values{"id": {"ar-3"}}, "id_three", false},
 	})
 }
 
 func TestGetAlbum(t *testing.T) {
 	runQueryCases(t, testController.ServeGetAlbum, []*queryCase{
-		{url.Values{"id": {"2"}}, "without_cover", false},
-		{url.Values{"id": {"3"}}, "with_cover", false},
+		{url.Values{"id": {"al-2"}}, "without_cover", false},
+		{url.Values{"id": {"al-3"}}, "with_cover", false},
 	})
 }
 

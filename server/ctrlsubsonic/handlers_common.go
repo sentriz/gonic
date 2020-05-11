@@ -38,7 +38,7 @@ func (c *Controller) ServePing(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	id, err := params.GetInt("id")
+	id, err := params.GetID("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
@@ -52,7 +52,7 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 	c.DB.
 		Preload("Album").
 		Preload("Artist").
-		First(track, id)
+		First(track, id.Value)
 	// scrobble with above info
 	opts := lastfm.ScrobbleOptions{
 		Track: track,
@@ -251,9 +251,13 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeSavePlayQueue(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	tracks, err := params.GetIntList("id")
+	tracks, err := params.GetIDList("id")
 	if err != nil {
 		return spec.NewError(10, "please provide some `id` parameters")
+	}
+	trackIDs := make([]int, 0, len(tracks))
+	for _, id := range tracks {
+		trackIDs = append(trackIDs, id.Value)
 	}
 	user := r.Context().Value(CtxUser).(*db.User)
 	queue := &db.PlayQueue{UserID: user.ID}
@@ -261,20 +265,20 @@ func (c *Controller) ServeSavePlayQueue(r *http.Request) *spec.Response {
 	queue.Current = params.GetOrInt("current", 0)
 	queue.Position = params.GetOrInt("position", 0)
 	queue.ChangedBy = params.GetOr("c", "") // must exist, middleware checks
-	queue.SetItems(tracks)
+	queue.SetItems(trackIDs)
 	c.DB.Save(queue)
 	return spec.NewResponse()
 }
 
 func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	id, err := params.GetInt("id")
+	id, err := params.GetID("id")
 	if err != nil {
 		return spec.NewError(10, "provide an `id` parameter")
 	}
 	track := &db.Track{}
 	err = c.DB.
-		Where("id=?", id).
+		Where("id=?", id.Value).
 		Preload("Album").
 		First(track).
 		Error
@@ -326,7 +330,7 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response {
 		}
 		for _, id := range ids {
 			track := &db.Track{}
-			c.DB.Preload("Album").First(track, id)
+			c.DB.Preload("Album").First(track, id.Value)
 			if track.ID != 0 {
 				tracks = append(tracks, track)
 			}

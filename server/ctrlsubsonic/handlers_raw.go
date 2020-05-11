@@ -55,14 +55,14 @@ func streamUpdateStats(dbc *db.DB, userID, albumID int) {
 
 func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	id, err := params.GetInt("id")
+	id, err := params.GetID("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 	folder := &db.Album{}
 	err = c.DB.
 		Select("id, left_path, right_path, cover").
-		First(folder, id).
+		First(folder, id.Value).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
 		return spec.NewError(10, "could not find a cover with that id")
@@ -86,13 +86,13 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	track, err := streamGetTrack(c.DB, id)
+	track, err := streamGetTrack(c.DB, id.Value)
 	if err != nil {
-		return spec.NewError(70, "media with id `%d` was not found", id)
+		return spec.NewError(70, "media with id `%d` was not found", id.Value)
 	}
 	user := r.Context().Value(CtxUser).(*db.User)
 	defer streamUpdateStats(c.DB, user.ID, track.Album.ID)
-	pref := streamGetTransPref(c.DB, user.ID, params.Get("c"))
+	pref := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
 	trackPath := path.Join(c.MusicPath, track.RelPath())
 	//
 	onInvalidProfile := func() error {
@@ -116,7 +116,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		TrackPath:        trackPath,
 		CachePath:        c.CachePath,
 		ProfileName:      pref.Profile,
-		PreferredBitrate: params.GetIntOr("maxBitRate", 0),
+		PreferredBitrate: params.GetOrInt("maxBitRate", 0),
 		OnInvalidProfile: onInvalidProfile,
 		OnCacheHit:       onCacheHit,
 		OnCacheMiss:      onCacheMiss,
@@ -129,13 +129,13 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 
 func (c *Controller) ServeDownload(w http.ResponseWriter, r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	id, err := params.GetInt("id")
+	id, err := params.GetID("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	track, err := streamGetTrack(c.DB, id)
+	track, err := streamGetTrack(c.DB, id.Value)
 	if err != nil {
-		return spec.NewError(70, "media with id `%d` was not found", id)
+		return spec.NewError(70, "media with id `%s` was not found", id)
 	}
 	log.Printf("serving raw %q\n", track.Filename)
 	w.Header().Set("Content-Type", track.MIME())
