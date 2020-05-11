@@ -48,14 +48,14 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	id, err := params.GetInt("id")
+	id, err := params.GetID("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 	artist := &db.Artist{}
 	c.DB.
 		Preload("Albums").
-		First(artist, id)
+		First(artist, id.Value)
 	sub := spec.NewResponse()
 	sub.Artist = spec.NewArtistByTags(artist)
 	sub.Artist.Albums = make([]*spec.Album, len(artist.Albums))
@@ -68,7 +68,7 @@ func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	id, err := params.GetInt("id")
+	id, err := params.GetID("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
@@ -79,7 +79,7 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 		Preload("Tracks", func(db *gorm.DB) *gorm.DB {
 			return db.Order("tracks.tag_disc_number, tracks.tag_track_number")
 		}).
-		First(album, id).
+		First(album, id.Value).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
 		return spec.NewError(10, "couldn't find an album with that id")
@@ -211,7 +211,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	id, err := params.GetInt("id")
+	id, err := params.GetID("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
@@ -221,11 +221,11 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	}
 	artist := &db.Artist{}
 	err = c.DB.
-		Where("id=?", id).
+		Where("id=?", id.Value).
 		Find(artist).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
-		return spec.NewError(70, "artist with id `%d` not found", id)
+		return spec.NewError(70, "artist with id `%s` not found", id)
 	}
 	info, err := lastfm.ArtistGetInfo(apiKey, artist)
 	if err != nil {
