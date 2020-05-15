@@ -18,8 +18,8 @@
  - written in [go](https://golang.org/), so lightweight and suitable for a raspberry pi, etc.  
  - newer salt and token auth  
  - tested on [dsub](https://f-droid.org/en/packages/github.daneren2005.dsub/), [jamstash](http://jamstash.com/), [sublime music](https://gitlab.com/sumner/sublime-music/), and [soundwaves](https://apps.apple.com/us/app/soundwaves/id736139596)  
- 
- 
+
+
 ## installation
 
 the default login is **admin**/**admin**.  
@@ -63,6 +63,51 @@ services:
 ```
 
 then start with `docker-compose up -d`
+
+**Installation with systemd** (on ubuntu 18.04)
+
+Prerequisites:
+
+```bash
+Add a repository with the latest Version of golang and install the prerequisites:
+sudo add-apt-repository ppa:longsleep/golang-backports
+sudo apt update && sudo apt upgrade
+sudo apt install build-essential git sqlite libtag1-dev ffmpeg libasound-dev golang
+```
+
+Download and compile gonic in the home directory  
+
+```bash
+go get go.senan.xyz/gonic/cmd/gonic
+```
+
+Add a gonic user and create a directory for the server:
+
+```bash
+sudo mkdir -p /var/gonic/
+sudo adduser --disabled-login --gecos "" gonic
+sudo mv go/* /var/gonic/
+sudo wget https://raw.githubusercontent.com/sentriz/gonic/master/contrib/config -O /var/gonic/config
+sudo chmod -R 750 /var/gonic/
+sudo chown -R gonic:gonic /var/gonic/
+```
+
+Add your music-path to the config file
+
+```bash
+sudo nano /var/gonic/config
+```
+
+Setup systemd service:
+
+```bash
+sudo wget https://raw.githubusercontent.com/sentriz/gonic/master/contrib/gonic.service -O /etc/systemd/system/gonic.service
+sudo systemctl daemon-reload
+sudo systemctl start gonic
+sudo systemctl enable gonic
+```
+
+
 
 ## configuration options
 
