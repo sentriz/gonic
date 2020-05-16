@@ -103,8 +103,7 @@ Setup systemd service:
 ```bash
 sudo wget https://raw.githubusercontent.com/sentriz/gonic/master/contrib/gonic.service -O /etc/systemd/system/gonic.service
 sudo systemctl daemon-reload
-sudo systemctl start gonic
-sudo systemctl enable gonic
+sudo systemctl enable --now gonic
 ```
 
 
