@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/gorilla/securecookie"
 	"github.com/jinzhu/gorm"
 
 	"gopkg.in/gormigrate.v1"
@@ -101,6 +102,15 @@ func (db *DB) SetSetting(key, value string) {
 		FirstOrCreate(&Setting{})
 }
 
+func (db *DB) GetOrCreateKey(key string) string {
+	value := db.GetSetting(key)
+	if value == "" {
+		value = string(securecookie.GenerateRandomKey(32))
+		db.SetSetting(key, value)
+	}
+	return value
+}
+
 func (db *DB) GetUserFromName(name string) *User {
 	user := &User{}
 	err := db.
@@ -113,27 +123,21 @@ func (db *DB) GetUserFromName(name string) *User {
 	return user
 }
 
-func (db *DB) WithTx(cb func(*gorm.DB)) {
-	tx := db.Begin()
-	defer tx.Commit()
-	cb(tx)
-}
-
 type ChunkFunc func(*gorm.DB, []int64) error
 
-func (db *DB) WithTxChunked(data []int64, cb ChunkFunc) error {
+func (db *DB) TransactionChunked(data []int64, cb ChunkFunc) error {
 	// https://sqlite.org/limits.html
 	const size = 999
-	tx := db.Begin()
-	defer tx.Commit()
-	for i := 0; i < len(data); i += size {
-		end := i + size
-		if end > len(data) {
-			end = len(data)
+	return db.Transaction(func(tx *gorm.DB) error {
+		for i := 0; i < len(data); i += size {
+			end := i + size
+			if end > len(data) {
+				end = len(data)
+			}
+			if err := cb(tx, data[i:end]); err != nil {
+				return err
+			}
 		}
-		if err := cb(tx, data[i:end]); err != nil {
-			return err
-		}
-	}
-	return nil
+		return nil
+	})
 }

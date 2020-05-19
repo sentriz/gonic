@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/wader/gormstore"
 
 	"go.senan.xyz/gonic/server/assets"
 	"go.senan.xyz/gonic/server/ctrladmin"
@@ -30,6 +31,7 @@ type Server struct {
 	scanner *scanner.Scanner
 	jukebox *jukebox.Jukebox
 	router  *mux.Router
+	sessDB  *gormstore.Store
 }
 
 func New(opts Options) *Server {
@@ -51,7 +53,13 @@ func New(opts Options) *Server {
 	r := mux.NewRouter()
 	r.Use(base.WithLogging)
 	r.Use(base.WithCORS)
-	ctrlAdmin := ctrladmin.New(base)
+	//
+	sessKey := opts.DB.GetOrCreateKey("session_key")
+	sessDB := gormstore.New(opts.DB.DB, []byte(sessKey))
+	sessDB.SessionOpts.HttpOnly = true
+	sessDB.SessionOpts.SameSite = http.SameSiteLaxMode
+	//
+	ctrlAdmin := ctrladmin.New(base, sessDB)
 	ctrlSubsonic := &ctrlsubsonic.Controller{
 		Controller: base,
 		CachePath:  opts.CachePath,
@@ -65,6 +73,7 @@ func New(opts Options) *Server {
 		scanner: scanner,
 		jukebox: jukebox,
 		router:  r,
+		sessDB:  sessDB,
 	}
 }
 
@@ -232,5 +241,28 @@ func (s *Server) StartJukebox() (FuncExecute, FuncInterrupt) {
 		}, func(_ error) {
 			// stop job
 			s.jukebox.Quit()
+		}
+}
+
+func (s *Server) StartSessionClean(dur time.Duration) (FuncExecute, FuncInterrupt) {
+	ticker := time.NewTicker(dur)
+	done := make(chan struct{})
+	waitFor := func() error {
+		for {
+			select {
+			case <-done:
+				return nil
+			case <-ticker.C:
+				s.sessDB.Cleanup()
+			}
+		}
+	}
+	return func() error {
+			log.Printf("starting job 'session clean'\n")
+			return waitFor()
+		}, func(_ error) {
+			// stop job
+			ticker.Stop()
+			done <- struct{}{}
 		}
 }

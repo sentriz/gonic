@@ -15,7 +15,6 @@ import (
 
 	"github.com/Masterminds/sprig"
 	"github.com/dustin/go-humanize"
-	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/oxtoacart/bpool"
 	"github.com/wader/gormstore"
@@ -85,12 +84,7 @@ type Controller struct {
 	sessDB    *gormstore.Store
 }
 
-func New(b *ctrlbase.Controller) *Controller {
-	sessionKey := []byte(b.DB.GetSetting("session_key"))
-	if len(sessionKey) == 0 {
-		sessionKey = securecookie.GenerateRandomKey(32)
-		b.DB.SetSetting("session_key", string(sessionKey))
-	}
+func New(b *ctrlbase.Controller, sessDB *gormstore.Store) *Controller {
 	tmplBase := template.
 		New("layout").
 		Funcs(sprig.FuncMap()).
@@ -100,9 +94,6 @@ func New(b *ctrlbase.Controller) *Controller {
 		})
 	tmplBase = extendFromPaths(tmplBase, prefixPartials)
 	tmplBase = extendFromPaths(tmplBase, prefixLayouts)
-	sessDB := gormstore.New(b.DB.DB, sessionKey)
-	sessDB.SessionOpts.HttpOnly = true
-	sessDB.SessionOpts.SameSite = http.SameSiteLaxMode
 	return &Controller{
 		Controller: b,
 		buffPool:   bpool.NewBufferPool(64),

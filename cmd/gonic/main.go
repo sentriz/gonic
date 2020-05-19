@@ -70,6 +70,7 @@ func main() {
 	})
 	var g run.Group
 	g.Add(server.StartHTTP(*listenAddr))
+	g.Add(server.StartSessionClean(10 * time.Minute))
 	if *scanInterval > 0 {
 		tickerDur := time.Duration(*scanInterval) * time.Minute
 		g.Add(server.StartScanTicker(tickerDur))

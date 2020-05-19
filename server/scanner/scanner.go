@@ -104,7 +104,7 @@ func (s *Scanner) cleanTracks() (int, error) {
 			missing = append(missing, int64(prev))
 		}
 	}
-	err = s.db.WithTxChunked(missing, func(tx *gorm.DB, chunk []int64) error {
+	err = s.db.TransactionChunked(missing, func(tx *gorm.DB, chunk []int64) error {
 		return tx.Where(chunk).Delete(&db.Track{}).Error
 	})
 	return len(missing), err
@@ -125,7 +125,7 @@ func (s *Scanner) cleanFolders() (int, error) {
 			missing = append(missing, int64(prev))
 		}
 	}
-	err = s.db.WithTxChunked(missing, func(tx *gorm.DB, chunk []int64) error {
+	err = s.db.TransactionChunked(missing, func(tx *gorm.DB, chunk []int64) error {
 		return tx.Where(chunk).Delete(&db.Album{}).Error
 	})
 	return len(missing), err
