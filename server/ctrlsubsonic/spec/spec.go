@@ -95,12 +95,12 @@ type Album struct {
 	ArtistID int    `xml:"artistId,attr,omitempty" json:"artistId,omitempty,string"`
 	Artist   string `xml:"artist,attr,omitempty"   json:"artist,omitempty"`
 	// browsing by folder (eg. getAlbumList)
-	Title    string `xml:"title,attr,omitempty"  json:"title,omitempty"`
-	Album    string `xml:"album,attr,omitempty"  json:"album,omitempty"`
+	Title    string `xml:"title,attr"            json:"title"`
+	Album    string `xml:"album,attr"            json:"album"`
 	ParentID int    `xml:"parent,attr,omitempty" json:"parent,omitempty,string"`
 	IsDir    bool   `xml:"isDir,attr,omitempty"  json:"isDir,omitempty"`
 	// browsing by tags (eg. getAlbumList2)
-	Name       string        `xml:"name,attr,omitempty"    json:"name,omitempty"`
+	Name       string        `xml:"name,attr"              json:"name"`
 	TrackCount int           `xml:"songCount,attr"         json:"songCount"`
 	Duration   int           `xml:"duration,attr"          json:"duration"`
 	Created    time.Time     `xml:"created,attr,omitempty" json:"created,omitempty"`
