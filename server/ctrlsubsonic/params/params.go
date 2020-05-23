@@ -50,6 +50,7 @@ func parse(values []string, i interface{}) error {
 	}
 	var err error
 	switch v := i.(type) {
+	// ** begin *T
 	case *string:
 		*v, err = parseStr(values[0])
 	case *int:
@@ -58,6 +59,7 @@ func parse(values []string, i interface{}) error {
 		*v, err = parseID(values[0])
 	case *bool:
 		*v, err = parseBool(values[0])
+	// ** begin *[]T
 	case *[]string:
 		for _, value := range values {
 			parsed, err := parseStr(value)
