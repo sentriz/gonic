@@ -36,7 +36,8 @@ $ gonic -h # or see "configuration options below"
 **note:** unfortunately if you do this above, you'll be compiling gonic locally on your machine
 (if someone knows how I can statically link sqlite3 and taglib, please let me know so I can distribute static binaries)  
 
-or else you can run in docker, available on dockerhub as `sentriz/gonic`
+or else you can run in docker, available on dockerhub as [sentriz/gonic](https://hub.docker.com/r/sentriz/gonic)  
+(for an ARM / raspberrypi image, please see [ugeek/gonic](https://hub.docker.com/r/ugeek/gonic))
 
 ```yaml
 # example docker-compose.yml
