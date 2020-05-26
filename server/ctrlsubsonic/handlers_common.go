@@ -162,10 +162,15 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 	sub.Playlist.List = make([]*spec.TrackChild, len(trackIDs))
 	for i, id := range trackIDs {
 		track := db.Track{}
-		c.DB.
+		err := c.DB.
 			Where("id=?", id).
 			Preload("Album").
-			Find(&track)
+			Find(&track).
+			Error
+		if gorm.IsRecordNotFoundError(err) {
+			log.Printf("wasn't able to find track with id %d", id)
+			continue
+		}
 		sub.Playlist.List[i] = spec.NewTCTrackByFolder(&track, track.Album)
 	}
 	return sub
