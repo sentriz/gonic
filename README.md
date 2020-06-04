@@ -1,25 +1,30 @@
- <p align="center"><img width="500" src="https://github.com/sentriz/gonic/blob/master/.github/logo.png?raw=true"></p>
- <h4 align="center">FLOSS alternative to <a href="http://www.subsonic.org/">subsonic</a>, supporting its many clients</h4>
- <p align="center"><a href="http://hub.docker.com/r/sentriz/gonic"><img src="https://img.shields.io/docker/pulls/sentriz/gonic.svg"></a> <a href="https://microbadger.com/images/sentriz/gonic" title="Get your own image badge on microbadger.com"><img src="https://images.microbadger.com/badges/image/sentriz/gonic.svg"></a> <img src="https://img.shields.io/github/issues/sentriz/gonic.svg"> <img src="https://img.shields.io/github/issues-pr/sentriz/gonic.svg"></p>
+<p align="center"><img width="500" src="https://github.com/sentriz/gonic/blob/master/.github/logo.png?raw=true"></p>
+<h4 align="center">FLOSS alternative to <a href="http://www.subsonic.org/">subsonic</a>, supporting its many clients</h4>
+<p align="center">
+  <a href="http://hub.docker.com/r/sentriz/gonic"><img src="https://img.shields.io/docker/pulls/sentriz/gonic.svg"></a>
+  <a href="https://microbadger.com/images/sentriz/gonic" title="Get your own image badge on microbadger.com"><img src="https://images.microbadger.com/badges/image/sentriz/gonic.svg"></a>
+  <a href="https://github.com/sentriz/gonic/issues"><img src="https://img.shields.io/github/issues/sentriz/gonic.svg"></a>
+  <a href="https://github.com/sentriz/gonic/pulls"><img src="https://img.shields.io/github/issues-pr/sentriz/gonic.svg"></a>
+</p>
 
 
- ## features
+## features
 
- - browsing by folder (keeping your full tree intact)  
- - browsing by tags (using [taglib](https://taglib.org/) - supports mp3, opus, flac, ape, m4a, wav, etc.)  
- - on-the-fly audio transcoding and caching (requires [ffmpeg](https://ffmpeg.org/)) (thank you [spijet](https://github.com/spijet/))
- - jukebox mode (thank you [AlexKraak](https://github.com/AlexKraak/))
- - pretty fast scanning (with my library of ~27k tracks, initial scan takes about 10m, and about 5s after incrementally)  
- - multiple users, each with their own transcoding preferences, playlists, top tracks, top artists, etc.
- - [last.fm](https://www.last.fm/) scrobbling  
- - artist similarities and biographies from the last.fm api  
- - a web interface for configuration (set up last.fm, manage users, start scans, etc.)  
- - support for the [album-artist](https://mkoby.com/2007/02/18/artist-versus-album-artist/) tag, to not clutter your artist list with compilation album appearances  
- - written in [go](https://golang.org/), so lightweight and suitable for a raspberry pi, etc.  
- - newer salt and token auth  
- - tested on [dsub](https://f-droid.org/en/packages/github.daneren2005.dsub/), [jamstash](http://jamstash.com/), [sublime music](https://gitlab.com/sumner/sublime-music/), and [soundwaves](https://apps.apple.com/us/app/soundwaves/id736139596)  
- 
- 
+- browsing by folder (keeping your full tree intact)  
+- browsing by tags (using [taglib](https://taglib.org/) - supports mp3, opus, flac, ape, m4a, wav, etc.)  
+- on-the-fly audio transcoding and caching (requires [ffmpeg](https://ffmpeg.org/)) (thank you [spijet](https://github.com/spijet/))
+- jukebox mode (thank you [AlexKraak](https://github.com/AlexKraak/))
+- pretty fast scanning (with my library of ~27k tracks, initial scan takes about 10m, and about 5s after incrementally)  
+- multiple users, each with their own transcoding preferences, playlists, top tracks, top artists, etc.
+- [last.fm](https://www.last.fm/) scrobbling  
+- artist similarities and biographies from the last.fm api  
+- a web interface for configuration (set up last.fm, manage users, start scans, etc.)  
+- support for the [album-artist](https://mkoby.com/2007/02/18/artist-versus-album-artist/) tag, to not clutter your artist list with compilation album appearances  
+- written in [go](https://golang.org/), so lightweight and suitable for a raspberry pi, etc.  
+- newer salt and token auth  
+- tested on [dsub](https://f-droid.org/en/packages/github.daneren2005.dsub/), [jamstash](http://jamstash.com/), [sublime music](https://gitlab.com/sumner/sublime-music/), and [soundwaves](https://apps.apple.com/us/app/soundwaves/id736139596)  
+
+
 ## installation
 
 the default login is **admin**/**admin**.  
