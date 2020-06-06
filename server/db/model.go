@@ -54,7 +54,7 @@ func (a *Artist) IndexName() string {
 }
 
 type Genre struct {
-	ID         int      `gorm:"primary_ket"`
+	ID         int      `gorm:"primary_key"`
 	Name       string   `gorm:"not null; unique_index"`
 	Albums     []*Album `gorm:"foreignkey:TagGenreID"`
 	AlbumCount int      `sql:"-"`
