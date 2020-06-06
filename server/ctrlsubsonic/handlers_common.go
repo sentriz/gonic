@@ -187,10 +187,10 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 		FirstOrCreate(&playlist)
 	// ** begin update meta info
 	playlist.UserID = user.ID
-	if val, err := params.Get("name"); err != nil {
+	if val, err := params.Get("name"); err == nil {
 		playlist.Name = val
 	}
-	if val, err := params.Get("comment"); err != nil {
+	if val, err := params.Get("comment"); err == nil {
 		playlist.Comment = val
 	}
 	trackIDs := playlist.GetItems()
@@ -202,8 +202,10 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 		}
 	}
 	// ** begin add items
-	if p, err := params.GetFirstIntList("songId", "songIdToAdd"); err == nil {
-		trackIDs = append(trackIDs, p...)
+	if p, err := params.GetFirstIDList("songId", "songIdToAdd"); err == nil {
+		for _, i := range p {
+			trackIDs = append(trackIDs, i.Value)
+		}
 	}
 	//
 	playlist.SetItems(trackIDs)
