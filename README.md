@@ -86,7 +86,7 @@ Add a gonic user and create a directory for the server:
 ```bash
 sudo mkdir -p /var/gonic/
 sudo adduser --disabled-login --gecos "" gonic
-sudo mv go/* /var/gonic/
+sudo mv go/bin/gonic /var/gonic/
 sudo wget https://raw.githubusercontent.com/sentriz/gonic/master/contrib/config -O /var/gonic/config
 sudo chmod -R 750 /var/gonic/
 sudo chown -R gonic:gonic /var/gonic/
