@@ -1,9 +1,9 @@
 {
   "subsonic-response": {
     "status": "ok",
-    "version": "1.9.0",
+    "version": "1.15.0",
     "type": "gonic",
-    "gonicVersion": "v0.9.0",
+    "gonicVersion": "v0.9.1",
     "albumList": {
       "album": [
         {
@@ -29,70 +29,6 @@
           "isDir": true,
           "name": "",
           "songCount": 18,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "al-6",
-          "artist": "A Certain Ratio",
-          "title": "(1981) To EachOTHER.",
-          "album": "",
-          "parent": "al-4",
-          "isDir": true,
-          "name": "",
-          "songCount": 9,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "al-3",
-          "coverArt": "al-3",
-          "artist": "Jah Wobble, The Edge, Holger Czukay",
-          "title": "(1983) Snake Charmer",
-          "album": "",
-          "parent": "al-2",
-          "isDir": true,
-          "name": "",
-          "songCount": 5,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "al-16",
-          "coverArt": "al-16",
-          "artist": "Swell Maps",
-          "title": "(1980) Jane From Occupied Europe",
-          "album": "",
-          "parent": "al-15",
-          "isDir": true,
-          "name": "",
-          "songCount": 16,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "al-5",
-          "coverArt": "al-5",
-          "artist": "A Certain Ratio",
-          "title": "(1994) The Graveyard and the Ballroom",
-          "album": "",
-          "parent": "al-4",
-          "isDir": true,
-          "name": "",
-          "songCount": 14,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "al-9",
-          "coverArt": "al-9",
-          "artist": "13th Floor Lowervators",
-          "title": "(1966) The Psychedelic Sounds of the 13th Floor Elevators",
-          "album": "",
-          "parent": "al-7",
-          "isDir": true,
-          "name": "",
-          "songCount": 21,
           "duration": 0,
           "created": "0001-01-01T00:00:00Z"
         },
@@ -132,6 +68,70 @@
           "isDir": true,
           "name": "",
           "songCount": 15,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "al-3",
+          "coverArt": "al-3",
+          "artist": "Jah Wobble, The Edge, Holger Czukay",
+          "title": "(1983) Snake Charmer",
+          "album": "",
+          "parent": "al-2",
+          "isDir": true,
+          "name": "",
+          "songCount": 5,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "al-5",
+          "coverArt": "al-5",
+          "artist": "A Certain Ratio",
+          "title": "(1994) The Graveyard and the Ballroom",
+          "album": "",
+          "parent": "al-4",
+          "isDir": true,
+          "name": "",
+          "songCount": 14,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "al-6",
+          "artist": "A Certain Ratio",
+          "title": "(1981) To EachOTHER.",
+          "album": "",
+          "parent": "al-4",
+          "isDir": true,
+          "name": "",
+          "songCount": 9,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "al-9",
+          "coverArt": "al-9",
+          "artist": "13th Floor Lowervators",
+          "title": "(1966) The Psychedelic Sounds of the 13th Floor Elevators",
+          "album": "",
+          "parent": "al-7",
+          "isDir": true,
+          "name": "",
+          "songCount": 21,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "al-16",
+          "coverArt": "al-16",
+          "artist": "Swell Maps",
+          "title": "(1980) Jane From Occupied Europe",
+          "album": "",
+          "parent": "al-15",
+          "isDir": true,
+          "name": "",
+          "songCount": 16,
           "duration": 0,
           "created": "0001-01-01T00:00:00Z"
         }

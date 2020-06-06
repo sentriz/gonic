@@ -1,9 +1,9 @@
 {
   "subsonic-response": {
     "status": "ok",
-    "version": "1.9.0",
+    "version": "1.15.0",
     "type": "gonic",
-    "gonicVersion": "v0.9.0",
+    "gonicVersion": "v0.9.1",
     "artists": {
       "ignoredArticles": "",
       "index": [
