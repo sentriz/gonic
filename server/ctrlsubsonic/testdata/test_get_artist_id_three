@@ -5,15 +5,17 @@
     "type": "gonic",
     "gonicVersion": "v0.8.8",
     "artist": {
-      "id": "3",
+      "id": "ar-3",
       "name": "13th Floor Elevators",
       "albumCount": 2,
       "album": [
         {
-          "id": "8",
-          "coverArt": "8",
-          "artistId": "3",
+          "id": "al-8",
+          "coverArt": "al-8",
+          "artistId": "ar-3",
           "artist": "13th Floor Elevators",
+          "title": "",
+          "album": "",
           "name": "Easter Everywhere",
           "songCount": 0,
           "duration": 0,
@@ -21,10 +23,12 @@
           "year": 1967
         },
         {
-          "id": "9",
-          "coverArt": "9",
-          "artistId": "3",
+          "id": "al-9",
+          "coverArt": "al-9",
+          "artistId": "ar-3",
           "artist": "13th Floor Elevators",
+          "title": "",
+          "album": "",
           "name": "The Psychedelic Sounds of the 13th Floor Elevators",
           "songCount": 0,
           "duration": 0,

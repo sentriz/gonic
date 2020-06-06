@@ -5,15 +5,17 @@
     "type": "gonic",
     "gonicVersion": "v0.8.8",
     "artist": {
-      "id": "2",
+      "id": "ar-2",
       "name": "A Certain Ratio",
       "albumCount": 2,
       "album": [
         {
-          "id": "5",
-          "coverArt": "5",
-          "artistId": "2",
+          "id": "al-5",
+          "coverArt": "al-5",
+          "artistId": "ar-2",
           "artist": "A Certain Ratio",
+          "title": "",
+          "album": "",
           "name": "The Graveyard and the Ballroom",
           "songCount": 0,
           "duration": 0,
@@ -21,9 +23,11 @@
           "year": 1994
         },
         {
-          "id": "6",
-          "artistId": "2",
+          "id": "al-6",
+          "artistId": "ar-2",
           "artist": "A Certain Ratio",
+          "title": "",
+          "album": "",
           "name": "To Each...",
           "songCount": 0,
           "duration": 0,

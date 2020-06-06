@@ -12,12 +12,12 @@
           "name": "#",
           "artist": [
             {
-              "id": "7",
+              "id": "al-7",
               "name": "13th Floor Lowervators",
               "albumCount": 2
             },
             {
-              "id": "10",
+              "id": "al-10",
               "name": "___Anika",
               "albumCount": 2
             }
@@ -27,7 +27,7 @@
           "name": "a",
           "artist": [
             {
-              "id": "4",
+              "id": "al-4",
               "name": "A Certain Ratio",
               "albumCount": 2
             }
@@ -37,7 +37,7 @@
           "name": "c",
           "artist": [
             {
-              "id": "20",
+              "id": "al-20",
               "name": "Captain Beefheart",
               "albumCount": 1
             }
@@ -47,7 +47,7 @@
           "name": "j",
           "artist": [
             {
-              "id": "2",
+              "id": "al-2",
               "name": "Jah Wobble, The Edge, Holger Czukay",
               "albumCount": 1
             }
@@ -57,7 +57,7 @@
           "name": "s",
           "artist": [
             {
-              "id": "15",
+              "id": "al-15",
               "name": "Swell Maps",
               "albumCount": 2
             }
@@ -67,7 +67,7 @@
           "name": "t",
           "artist": [
             {
-              "id": "18",
+              "id": "al-18",
               "name": "Ten Years After",
               "albumCount": 1
             }
