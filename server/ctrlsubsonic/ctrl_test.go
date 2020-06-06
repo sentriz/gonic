@@ -32,31 +32,41 @@ type queryCase struct {
 	listSet    bool
 }
 
+func makeGoldenPath(test string) string {
+	// convert test name to query case path
+	snake := testCamelExpr.ReplaceAllString(test, "${1}_${2}")
+	lower := strings.ToLower(snake)
+	relPath := strings.ReplaceAll(lower, "/", "_")
+	return path.Join(testDataDir, relPath)
+}
+
+func makeHTTPMock(query url.Values) (*httptest.ResponseRecorder, *http.Request) {
+	// ensure the handlers give us json
+	query.Add("f", "json")
+	// request from the handler in question
+	req, _ := http.NewRequest("", "", nil)
+	req.URL.RawQuery = query.Encode()
+	subParams := params.New(req)
+	withParams := context.WithValue(req.Context(), CtxParams, subParams)
+	rr := httptest.NewRecorder()
+	req = req.WithContext(withParams)
+	return rr, req
+}
+
 func runQueryCases(t *testing.T, h handlerSubsonic, cases []*queryCase) {
 	for _, qc := range cases {
 		qc := qc // pin
 		t.Run(qc.expectPath, func(t *testing.T) {
 			t.Parallel()
-			// ensure the handlers give us json
-			qc.params.Add("f", "json")
-			// request from the handler in question
-			req, _ := http.NewRequest("", "?"+qc.params.Encode(), nil)
-			params := params.New(req)
-			withParams := context.WithValue(req.Context(), CtxParams, params)
-			req = req.WithContext(withParams)
-			rr := httptest.NewRecorder()
+			rr, req := makeHTTPMock(qc.params)
 			testController.H(h).ServeHTTP(rr, req)
 			body := rr.Body.String()
 			if status := rr.Code; status != http.StatusOK {
 				t.Fatalf("didn't give a 200\n%s", body)
 			}
-			// convert test name to query case path
-			snake := testCamelExpr.ReplaceAllString(t.Name(), "${1}_${2}")
-			lower := strings.ToLower(snake)
-			relPath := strings.ReplaceAll(lower, "/", "_")
-			absExpPath := path.Join(testDataDir, relPath)
+			goldenPath := makeGoldenPath(t.Name())
 			// read case to differ with handler result
-			expected, err := jd.ReadJsonFile(absExpPath)
+			expected, err := jd.ReadJsonFile(goldenPath)
 			if err != nil {
 				t.Fatalf("parsing expected: %v", err)
 			}
