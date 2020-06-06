@@ -1,0 +1,11 @@
+# syntax=docker/dockerfile:experimental
+
+FROM golang:1.14-alpine AS builder
+RUN apk add -U --no-cache \
+    build-base \
+    ca-certificates \
+    git \
+    sqlite \
+    taglib-dev \
+    alsa-lib-dev
+WORKDIR /src
