@@ -51,6 +51,9 @@ func New(in string) (ID, error) {
 }
 
 func (i ID) String() string {
+	if i.Value == 0 {
+		return "-1"
+	}
 	return fmt.Sprintf("%s%s%d", i.Type, separator, i.Value)
 }
 
