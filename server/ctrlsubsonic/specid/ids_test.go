@@ -15,7 +15,9 @@ func TestParseID(t *testing.T) {
 		{param: "al-45", expType: Album, expValue: 45},
 		{param: "ar-2", expType: Artist, expValue: 2},
 		{param: "tr-43", expType: Track, expValue: 43},
+		{param: "al-3", expType: Album, expValue: 3},
 		{param: "xx-1", expErr: ErrBadPrefix},
+		{param: "1", expErr: ErrBadSeparator},
 		{param: "al-howdy", expErr: ErrNotAnInt},
 	}
 	for _, tcase := range tcases {
