@@ -7,17 +7,19 @@
     "searchResult3": {
       "artist": [
         {
-          "id": "3",
+          "id": "ar-3",
           "name": "13th Floor Elevators",
           "albumCount": 0
         }
       ],
       "album": [
         {
-          "id": "9",
-          "coverArt": "9",
-          "artistId": "3",
+          "id": "al-9",
+          "coverArt": "al-9",
+          "artistId": "ar-3",
           "artist": "13th Floor Elevators",
+          "title": "",
+          "album": "",
           "name": "The Psychedelic Sounds of the 13th Floor Elevators",
           "songCount": 0,
           "duration": 0,
