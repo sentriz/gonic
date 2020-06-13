@@ -3,9 +3,22 @@
     "status": "ok",
     "version": "1.15.0",
     "type": "gonic",
-    "gonicVersion": "v0.9.1",
+    "gonicVersion": "v0.9.2",
     "albumList": {
       "album": [
+        {
+          "id": "al-21",
+          "coverArt": "al-21",
+          "artist": "Captain Beefheart",
+          "title": "(1970) Lick My Decals Off, Bitch",
+          "album": "",
+          "parent": "al-20",
+          "isDir": true,
+          "name": "",
+          "songCount": 15,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
         {
           "id": "al-13",
           "coverArt": "al-13",
@@ -33,38 +46,25 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
+          "id": "al-16",
+          "coverArt": "al-16",
+          "artist": "Swell Maps",
+          "title": "(1980) Jane From Occupied Europe",
+          "album": "",
+          "parent": "al-15",
+          "isDir": true,
+          "name": "",
+          "songCount": 16,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
           "id": "al-19",
           "coverArt": "al-19",
           "artist": "Ten Years After",
           "title": "(1967) Ten Years After",
           "album": "",
           "parent": "al-18",
-          "isDir": true,
-          "name": "",
-          "songCount": 15,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "al-8",
-          "coverArt": "al-8",
-          "artist": "13th Floor Lowervators",
-          "title": "(1967) Easter Nowhere",
-          "album": "",
-          "parent": "al-7",
-          "isDir": true,
-          "name": "",
-          "songCount": 10,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "al-21",
-          "coverArt": "al-21",
-          "artist": "Captain Beefheart",
-          "title": "(1970) Lick My Decals Off, Bitch",
-          "album": "",
-          "parent": "al-20",
           "isDir": true,
           "name": "",
           "songCount": 15,
@@ -85,6 +85,18 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
+          "id": "al-6",
+          "artist": "A Certain Ratio",
+          "title": "(1981) To EachOTHER.",
+          "album": "",
+          "parent": "al-4",
+          "isDir": true,
+          "name": "",
+          "songCount": 9,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
           "id": "al-5",
           "coverArt": "al-5",
           "artist": "A Certain Ratio",
@@ -94,18 +106,6 @@
           "isDir": true,
           "name": "",
           "songCount": 14,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "al-6",
-          "artist": "A Certain Ratio",
-          "title": "(1981) To EachOTHER.",
-          "album": "",
-          "parent": "al-4",
-          "isDir": true,
-          "name": "",
-          "songCount": 9,
           "duration": 0,
           "created": "0001-01-01T00:00:00Z"
         },
@@ -123,15 +123,15 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
-          "id": "al-16",
-          "coverArt": "al-16",
-          "artist": "Swell Maps",
-          "title": "(1980) Jane From Occupied Europe",
+          "id": "al-8",
+          "coverArt": "al-8",
+          "artist": "13th Floor Lowervators",
+          "title": "(1967) Easter Nowhere",
           "album": "",
-          "parent": "al-15",
+          "parent": "al-7",
           "isDir": true,
           "name": "",
-          "songCount": 16,
+          "songCount": 10,
           "duration": 0,
           "created": "0001-01-01T00:00:00Z"
         }
