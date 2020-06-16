@@ -217,7 +217,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	}
 	apiKey := c.DB.GetSetting("lastfm_api_key")
 	if apiKey == "" {
-		return spec.NewError(0, "please set ask your admin to set the last.fm api key")
+		return spec.NewError(0, "please ask your admin to set the last.fm api key")
 	}
 	artist := &db.Artist{}
 	err = c.DB.
