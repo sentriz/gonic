@@ -38,6 +38,7 @@ func playlistRender(c *Controller, playlist *db.Playlist) *spec.Playlist {
 			continue
 		}
 		resp.List[i] = spec.NewTCTrackByFolder(&track, track.Album)
+		resp.Duration += track.Length
 	}
 	return resp
 }
