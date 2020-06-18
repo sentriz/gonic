@@ -16,9 +16,13 @@ func playlistRender(c *Controller, playlist *db.Playlist) *spec.Playlist {
 	user := &db.User{}
 	c.DB.Where("id=?", playlist.UserID).Find(user)
 	//
-	resp := spec.NewPlaylist(playlist)
-	resp.Owner = user.Name
-	resp.SongCount = playlist.TrackCount
+	resp := &spec.Playlist{
+		ID:        playlist.ID,
+		Name:      playlist.Name,
+		Comment:   playlist.Comment,
+		Created:   playlist.CreatedAt,
+		SongCount: playlist.TrackCount,
+	}
 	//
 	trackIDs := playlist.GetItems()
 	resp.List = make([]*spec.TrackChild, len(trackIDs))
