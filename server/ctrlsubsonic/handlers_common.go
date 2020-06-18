@@ -140,7 +140,7 @@ func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	playlistID, err := params.GetInt("id")
+	playlistID, err := params.GetFirstInt("id", "playlistId")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
@@ -175,6 +175,38 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 	return sub
 }
 
+func (c *Controller) ServeCreatePlaylist(r *http.Request) *spec.Response {
+	user := r.Context().Value(CtxUser).(*db.User)
+	params := r.Context().Value(CtxParams).(params.Params)
+	playlistID := params.GetFirstOrInt( /* default */ 0, "id", "playlistId")
+	// playlistID may be 0 from above. in that case we get a new playlist
+	// as intended
+	var playlist db.Playlist
+	c.DB.
+		Where("id=?", playlistID).
+		FirstOrCreate(&playlist)
+	// ** begin update meta info
+	playlist.UserID = user.ID
+	if val, err := params.Get("name"); err == nil {
+		playlist.Name = val
+	}
+
+	// ** begin replace song IDs
+	trackIDs := []int{}
+        if p, err := params.GetIDList("songId"); err == nil {
+		for _, i := range p {
+			trackIDs = append(trackIDs, i.Value)
+		}
+	}
+
+	// Set the items of the playlist
+	playlist.SetItems(trackIDs)
+	c.DB.Save(playlist)
+
+	// Return the created/updated playlist.
+	return c.ServeGetPlaylist(r)
+}
+
 func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	params := r.Context().Value(CtxParams).(params.Params)
@@ -202,7 +234,7 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 		}
 	}
 	// ** begin add items
-	if p, err := params.GetFirstIDList("songId", "songIdToAdd"); err == nil {
+	if p, err := params.GetIDList("songIdToAdd"); err == nil {
 		for _, i := range p {
 			trackIDs = append(trackIDs, i.Value)
 		}
