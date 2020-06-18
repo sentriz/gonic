@@ -3,33 +3,21 @@
     "status": "ok",
     "version": "1.15.0",
     "type": "gonic",
-    "gonicVersion": "v0.9.2",
+    "gonicVersion": "v0.9.3",
     "albumList2": {
       "album": [
         {
-          "id": "al-6",
-          "artistId": "ar-2",
-          "artist": "A Certain Ratio",
+          "id": "al-21",
+          "coverArt": "al-21",
+          "artistId": "ar-7",
+          "artist": "Captain Beefheart & His Magic Band",
           "title": "",
           "album": "",
-          "name": "To Each...",
-          "songCount": 9,
+          "name": "Lick My Decals Off, Baby",
+          "songCount": 15,
           "duration": 0,
-          "created": "2019-05-23T15:12:02.921473302+01:00",
-          "year": 1981
-        },
-        {
-          "id": "al-17",
-          "coverArt": "al-17",
-          "artistId": "ar-5",
-          "artist": "Swell Maps",
-          "title": "",
-          "album": "",
-          "name": "A Trip to Marineville",
-          "songCount": 18,
-          "duration": 0,
-          "created": "2019-04-30T16:48:48+01:00",
-          "year": 1979
+          "created": "2019-06-10T19:26:30.944742894+01:00",
+          "year": 1970
         },
         {
           "id": "al-16",
@@ -45,19 +33,6 @@
           "year": 1980
         },
         {
-          "id": "al-13",
-          "coverArt": "al-13",
-          "artistId": "ar-4",
-          "artist": "Anikas",
-          "title": "",
-          "album": "",
-          "name": "Anika",
-          "songCount": 9,
-          "duration": 0,
-          "created": "2019-05-23T15:12:02.921473302+01:00",
-          "year": 2010
-        },
-        {
           "id": "al-5",
           "coverArt": "al-5",
           "artistId": "ar-2",
@@ -71,30 +46,17 @@
           "year": 1994
         },
         {
-          "id": "al-19",
-          "coverArt": "al-19",
-          "artistId": "ar-6",
-          "artist": "Ten Years After",
+          "id": "al-13",
+          "coverArt": "al-13",
+          "artistId": "ar-4",
+          "artist": "Anikas",
           "title": "",
           "album": "",
-          "name": "Ten Years After",
-          "songCount": 15,
+          "name": "Anika",
+          "songCount": 9,
           "duration": 0,
-          "created": "2019-04-30T16:48:30+01:00",
-          "year": 1967
-        },
-        {
-          "id": "al-21",
-          "coverArt": "al-21",
-          "artistId": "ar-7",
-          "artist": "Captain Beefheart & His Magic Band",
-          "title": "",
-          "album": "",
-          "name": "Lick My Decals Off, Baby",
-          "songCount": 15,
-          "duration": 0,
-          "created": "2019-06-10T19:26:30.944742894+01:00",
-          "year": 1970
+          "created": "2019-05-23T15:12:02.921473302+01:00",
+          "year": 2010
         },
         {
           "id": "al-3",
@@ -110,17 +72,17 @@
           "year": 1983
         },
         {
-          "id": "al-8",
-          "coverArt": "al-8",
-          "artistId": "ar-3",
-          "artist": "13th Floor Elevators",
+          "id": "al-17",
+          "coverArt": "al-17",
+          "artistId": "ar-5",
+          "artist": "Swell Maps",
           "title": "",
           "album": "",
-          "name": "Easter Everywhere",
-          "songCount": 10,
+          "name": "A Trip to Marineville",
+          "songCount": 18,
           "duration": 0,
-          "created": "2019-06-13T12:57:28.850090338+01:00",
-          "year": 1967
+          "created": "2019-04-30T16:48:48+01:00",
+          "year": 1979
         },
         {
           "id": "al-9",
@@ -134,6 +96,44 @@
           "duration": 0,
           "created": "2019-06-13T12:57:24.306717554+01:00",
           "year": 1966
+        },
+        {
+          "id": "al-6",
+          "artistId": "ar-2",
+          "artist": "A Certain Ratio",
+          "title": "",
+          "album": "",
+          "name": "To Each...",
+          "songCount": 9,
+          "duration": 0,
+          "created": "2019-05-23T15:12:02.921473302+01:00",
+          "year": 1981
+        },
+        {
+          "id": "al-8",
+          "coverArt": "al-8",
+          "artistId": "ar-3",
+          "artist": "13th Floor Elevators",
+          "title": "",
+          "album": "",
+          "name": "Easter Everywhere",
+          "songCount": 10,
+          "duration": 0,
+          "created": "2019-06-13T12:57:28.850090338+01:00",
+          "year": 1967
+        },
+        {
+          "id": "al-19",
+          "coverArt": "al-19",
+          "artistId": "ar-6",
+          "artist": "Ten Years After",
+          "title": "",
+          "album": "",
+          "name": "Ten Years After",
+          "songCount": 15,
+          "duration": 0,
+          "created": "2019-04-30T16:48:30+01:00",
+          "year": 1967
         }
       ]
     }

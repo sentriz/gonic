@@ -3,35 +3,9 @@
     "status": "ok",
     "version": "1.15.0",
     "type": "gonic",
-    "gonicVersion": "v0.9.2",
+    "gonicVersion": "v0.9.3",
     "albumList": {
       "album": [
-        {
-          "id": "al-21",
-          "coverArt": "al-21",
-          "artist": "Captain Beefheart",
-          "title": "(1970) Lick My Decals Off, Bitch",
-          "album": "",
-          "parent": "al-20",
-          "isDir": true,
-          "name": "",
-          "songCount": 15,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "al-13",
-          "coverArt": "al-13",
-          "artist": "There",
-          "title": "(2010) Anika",
-          "album": "",
-          "parent": "al-12",
-          "isDir": true,
-          "name": "",
-          "songCount": 9,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
         {
           "id": "al-17",
           "coverArt": "al-17",
@@ -59,6 +33,45 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
+          "id": "al-3",
+          "coverArt": "al-3",
+          "artist": "Jah Wobble, The Edge, Holger Czukay",
+          "title": "(1983) Snake Charmer",
+          "album": "",
+          "parent": "al-2",
+          "isDir": true,
+          "name": "",
+          "songCount": 5,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "al-9",
+          "coverArt": "al-9",
+          "artist": "13th Floor Lowervators",
+          "title": "(1966) The Psychedelic Sounds of the 13th Floor Elevators",
+          "album": "",
+          "parent": "al-7",
+          "isDir": true,
+          "name": "",
+          "songCount": 21,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "al-13",
+          "coverArt": "al-13",
+          "artist": "There",
+          "title": "(2010) Anika",
+          "album": "",
+          "parent": "al-12",
+          "isDir": true,
+          "name": "",
+          "songCount": 9,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
           "id": "al-19",
           "coverArt": "al-19",
           "artist": "Ten Years After",
@@ -72,15 +85,15 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
-          "id": "al-3",
-          "coverArt": "al-3",
-          "artist": "Jah Wobble, The Edge, Holger Czukay",
-          "title": "(1983) Snake Charmer",
+          "id": "al-21",
+          "coverArt": "al-21",
+          "artist": "Captain Beefheart",
+          "title": "(1970) Lick My Decals Off, Bitch",
           "album": "",
-          "parent": "al-2",
+          "parent": "al-20",
           "isDir": true,
           "name": "",
-          "songCount": 5,
+          "songCount": 15,
           "duration": 0,
           "created": "0001-01-01T00:00:00Z"
         },
@@ -106,19 +119,6 @@
           "isDir": true,
           "name": "",
           "songCount": 14,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "al-9",
-          "coverArt": "al-9",
-          "artist": "13th Floor Lowervators",
-          "title": "(1966) The Psychedelic Sounds of the 13th Floor Elevators",
-          "album": "",
-          "parent": "al-7",
-          "isDir": true,
-          "name": "",
-          "songCount": 21,
           "duration": 0,
           "created": "0001-01-01T00:00:00Z"
         },
