@@ -30,7 +30,9 @@
 the default login is **admin**/**admin**.  
 password can then be changed from the web interface
 
-```
+###  ...from source
+
+```bash
 $ apt install build-essential git sqlite libtag1-dev ffmpeg libasound-dev # for debian like
 $ pacman -S base-devel git sqlite taglib ffmpeg alsa-lib                  # for arch like
 $ go get go.senan.xyz/gonic/cmd/gonic
@@ -39,10 +41,11 @@ $ gonic -h # or see "configuration options below"
 ```
 
 **note:** unfortunately if you do this above, you'll be compiling gonic locally on your machine
-(if someone knows how I can statically link sqlite3 and taglib, please let me know so I can distribute static binaries)  
+(if someone knows how I can statically link sqlite3 and taglib, please let me know so I can distribute static binaries) 
 
-or else you can run in docker, available on dockerhub as [sentriz/gonic](https://hub.docker.com/r/sentriz/gonic)  
-(for an ARM / raspberrypi image, please see [ugeek/gonic](https://hub.docker.com/r/ugeek/gonic))
+###  ...with docker `x86_64`
+
+the image is available on dockerhub as [sentriz/gonic](https://hub.docker.com/r/sentriz/gonic) 
 
 ```yaml
 # example docker-compose.yml
@@ -70,49 +73,52 @@ services:
 
 then start with `docker-compose up -d`
 
-**Installation with systemd** (on ubuntu 18.04)
+###  ...with docker `arm / raspberry pi`
 
-Prerequisites:
+please see [ugeek/gonic](https://hub.docker.com/r/ugeek/gonic)
 
-```bash
-Add a repository with the latest Version of golang and install the prerequisites:
-sudo add-apt-repository ppa:longsleep/golang-backports
-sudo apt update && sudo apt upgrade
-sudo apt install build-essential git sqlite libtag1-dev ffmpeg libasound-dev golang
-```
+###  ...with systemd
 
-Download and compile gonic in the home directory  
+example by @IUCCA, tested on Ubuntu 18.04
+
+1. add a repository with the latest Version of golang and install the prerequisites
 
 ```bash
-go get go.senan.xyz/gonic/cmd/gonic
+$ sudo add-apt-repository ppa:longsleep/golang-backports
+$ sudo apt update && sudo apt upgrade
+$ sudo apt install build-essential git sqlite libtag1-dev ffmpeg libasound-dev golang
 ```
 
-Add a gonic user and create a directory for the server:
+2. download and compile gonic in the home directory  
 
 ```bash
-sudo mkdir -p /var/gonic/
-sudo adduser --disabled-login --gecos "" gonic
-sudo mv go/bin/gonic /var/gonic/
-sudo wget https://raw.githubusercontent.com/sentriz/gonic/master/contrib/config -O /var/gonic/config
-sudo chmod -R 750 /var/gonic/
-sudo chown -R gonic:gonic /var/gonic/
+$ go get go.senan.xyz/gonic/cmd/gonic
 ```
 
-Add your music-path to the config file
+3. add a gonic user and create a directory for the server
 
 ```bash
-sudo nano /var/gonic/config
+$ sudo mkdir -p /var/gonic/
+$ sudo adduser --disabled-login --gecos "" gonic
+$ sudo mv go/bin/gonic /var/gonic/
+$ sudo wget https://raw.githubusercontent.com/sentriz/gonic/master/contrib/config -O /var/gonic/config
+$ sudo chmod -R 750 /var/gonic/
+$ sudo chown -R gonic:gonic /var/gonic/
 ```
 
-Setup systemd service:
+4. add your `music-path` to the config file
 
 ```bash
-sudo wget https://raw.githubusercontent.com/sentriz/gonic/master/contrib/gonic.service -O /etc/systemd/system/gonic.service
-sudo systemctl daemon-reload
-sudo systemctl enable --now gonic
+$ sudo nano /var/gonic/config
 ```
 
+5. setup systemd service
 
+```bash
+$ sudo wget https://raw.githubusercontent.com/sentriz/gonic/master/contrib/gonic.service -O /etc/systemd/system/gonic.service
+$ sudo systemctl daemon-reload
+$ sudo systemctl enable --now gonic
+```
 
 ## configuration options
 
