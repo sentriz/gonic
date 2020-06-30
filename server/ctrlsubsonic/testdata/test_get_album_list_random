@@ -3,19 +3,19 @@
     "status": "ok",
     "version": "1.15.0",
     "type": "gonic",
-    "gonicVersion": "v0.9.3",
+    "gonicVersion": "v0.9.4",
     "albumList": {
       "album": [
         {
-          "id": "al-17",
-          "coverArt": "al-17",
-          "artist": "Swell Maps",
-          "title": "(1979) A Trip to Marineville",
+          "id": "al-5",
+          "coverArt": "al-5",
+          "artist": "A Certain Ratio",
+          "title": "(1994) The Graveyard and the Ballroom",
           "album": "",
-          "parent": "al-15",
+          "parent": "al-4",
           "isDir": true,
           "name": "",
-          "songCount": 18,
+          "songCount": 14,
           "duration": 0,
           "created": "0001-01-01T00:00:00Z"
         },
@@ -33,19 +33,6 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
-          "id": "al-3",
-          "coverArt": "al-3",
-          "artist": "Jah Wobble, The Edge, Holger Czukay",
-          "title": "(1983) Snake Charmer",
-          "album": "",
-          "parent": "al-2",
-          "isDir": true,
-          "name": "",
-          "songCount": 5,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
           "id": "al-9",
           "coverArt": "al-9",
           "artist": "13th Floor Lowervators",
@@ -59,28 +46,15 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
-          "id": "al-13",
-          "coverArt": "al-13",
-          "artist": "There",
-          "title": "(2010) Anika",
+          "id": "al-3",
+          "coverArt": "al-3",
+          "artist": "Jah Wobble, The Edge, Holger Czukay",
+          "title": "(1983) Snake Charmer",
           "album": "",
-          "parent": "al-12",
+          "parent": "al-2",
           "isDir": true,
           "name": "",
-          "songCount": 9,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "al-19",
-          "coverArt": "al-19",
-          "artist": "Ten Years After",
-          "title": "(1967) Ten Years After",
-          "album": "",
-          "parent": "al-18",
-          "isDir": true,
-          "name": "",
-          "songCount": 15,
+          "songCount": 5,
           "duration": 0,
           "created": "0001-01-01T00:00:00Z"
         },
@@ -98,6 +72,32 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
+          "id": "al-19",
+          "coverArt": "al-19",
+          "artist": "Ten Years After",
+          "title": "(1967) Ten Years After",
+          "album": "",
+          "parent": "al-18",
+          "isDir": true,
+          "name": "",
+          "songCount": 15,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "al-17",
+          "coverArt": "al-17",
+          "artist": "Swell Maps",
+          "title": "(1979) A Trip to Marineville",
+          "album": "",
+          "parent": "al-15",
+          "isDir": true,
+          "name": "",
+          "songCount": 18,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
           "id": "al-6",
           "artist": "A Certain Ratio",
           "title": "(1981) To EachOTHER.",
@@ -106,19 +106,6 @@
           "isDir": true,
           "name": "",
           "songCount": 9,
-          "duration": 0,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "al-5",
-          "coverArt": "al-5",
-          "artist": "A Certain Ratio",
-          "title": "(1994) The Graveyard and the Ballroom",
-          "album": "",
-          "parent": "al-4",
-          "isDir": true,
-          "name": "",
-          "songCount": 14,
           "duration": 0,
           "created": "0001-01-01T00:00:00Z"
         },
@@ -132,6 +119,19 @@
           "isDir": true,
           "name": "",
           "songCount": 10,
+          "duration": 0,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "al-13",
+          "coverArt": "al-13",
+          "artist": "There",
+          "title": "(2010) Anika",
+          "album": "",
+          "parent": "al-12",
+          "isDir": true,
+          "name": "",
+          "songCount": 9,
           "duration": 0,
           "created": "0001-01-01T00:00:00Z"
         }
