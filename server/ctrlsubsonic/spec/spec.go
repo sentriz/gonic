@@ -265,7 +265,7 @@ type Genre struct {
 }
 
 type PlayQueue struct {
-	Current   int           `xml:"current,attr,omitempty"  json:"current,omitempty"`
+	Current   *specid.ID    `xml:"current,attr,omitempty"  json:"current,omitempty"`
 	Position  int           `xml:"position,attr,omitempty" json:"position,omitempty"`
 	Username  string        `xml:"username,attr"           json:"username"`
 	Changed   time.Time     `xml:"changed,attr"            json:"changed"`

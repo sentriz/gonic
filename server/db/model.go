@@ -224,6 +224,10 @@ type PlayQueue struct {
 	Items     string
 }
 
+func (p *PlayQueue) CurrentSID() *specid.ID {
+	return &specid.ID{Type: specid.Track, Value: p.Current}
+}
+
 func (p *PlayQueue) GetItems() []int {
 	return splitInt(p.Items, ",")
 }

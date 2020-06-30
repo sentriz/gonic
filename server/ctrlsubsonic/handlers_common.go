@@ -10,6 +10,7 @@ import (
 
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/lastfm"
 	"go.senan.xyz/gonic/server/scanner"
@@ -135,7 +136,7 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 	sub.PlayQueue = &spec.PlayQueue{}
 	sub.PlayQueue.Username = user.Name
 	sub.PlayQueue.Position = queue.Position
-	sub.PlayQueue.Current = queue.Current
+	sub.PlayQueue.Current = queue.CurrentSID()
 	sub.PlayQueue.Changed = queue.UpdatedAt
 	sub.PlayQueue.ChangedBy = queue.ChangedBy
 	trackIDs := queue.GetItems()
@@ -164,7 +165,7 @@ func (c *Controller) ServeSavePlayQueue(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	queue := &db.PlayQueue{UserID: user.ID}
 	c.DB.Where(queue).First(queue)
-	queue.Current = params.GetOrInt("current", 0)
+	queue.Current = params.GetOrID("current", specid.ID{}).Value
 	queue.Position = params.GetOrInt("position", 0)
 	queue.ChangedBy = params.GetOr("c", "") // must exist, middleware checks
 	queue.SetItems(trackIDs)
