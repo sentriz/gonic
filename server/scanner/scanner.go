@@ -225,19 +225,23 @@ type item struct {
 }
 
 func isCover(filename string) bool {
+	filename = strings.ToLower(filename)
 	known := map[string]struct{}{
-		"cover.png":   {},
-		"cover.jpg":   {},
-		"cover.jpeg":  {},
-		"folder.png":  {},
-		"folder.jpg":  {},
-		"folder.jpeg": {},
-		"album.png":   {},
-		"album.jpg":   {},
-		"album.jpeg":  {},
-		"front.png":   {},
-		"front.jpg":   {},
-		"front.jpeg":  {},
+		"cover.png":     {},
+		"cover.jpg":     {},
+		"cover.jpeg":    {},
+		"folder.png":    {},
+		"folder.jpg":    {},
+		"folder.jpeg":   {},
+		"album.png":     {},
+		"album.jpg":     {},
+		"album.jpeg":    {},
+		"albumart.png":  {},
+		"albumart.jpg":  {},
+		"albumart.jpeg": {},
+		"front.png":     {},
+		"front.jpg":     {},
+		"front.jpeg":    {},
 	}
 	_, ok := known[filename]
 	return ok
@@ -271,8 +275,7 @@ func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
 	if isDir {
 		return s.handleFolder(it)
 	}
-	filenameLow := strings.ToLower(filename)
-	if isCover(filenameLow) {
+	if isCover(filename) {
 		s.curCover = filename
 		return nil
 	}
