@@ -38,6 +38,17 @@ func playlistParseLine(c *Controller, path string) (int, error) {
 	}
 }
 
+func playlistCheckContentType(contentType string) bool {
+	contentType = strings.ToLower(contentType)
+	known := map[string]struct{}{
+		"audio/x-mpegurl":          {},
+		"audio/mpegurl":            {},
+		"application/octet-stream": {},
+	}
+	_, ok := known[contentType]
+	return ok
+}
+
 func playlistParseUpload(c *Controller, userID int, header *multipart.FileHeader) ([]string, bool) {
 	file, err := header.Open()
 	if err != nil {
@@ -48,7 +59,7 @@ func playlistParseUpload(c *Controller, userID int, header *multipart.FileHeader
 		return []string{fmt.Sprintf("invalid filename %q", header.Filename)}, false
 	}
 	contentType := header.Header.Get("Content-Type")
-	if !(contentType == "audio/x-mpegurl" || contentType == "application/octet-stream") {
+	if !playlistCheckContentType(contentType) {
 		return []string{fmt.Sprintf("invalid content-type %q", contentType)}, false
 	}
 	var trackIDs []int
