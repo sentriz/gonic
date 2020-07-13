@@ -28,5 +28,3 @@ jobs:
         version: v1.28
     - name: Test
       run: go test ./...
-      env:
-        GOPATH: /tmp/gopath
