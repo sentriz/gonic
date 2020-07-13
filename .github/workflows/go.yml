@@ -22,11 +22,16 @@ jobs:
       run: |
         sudo apt update
         sudo apt install build-essential git sqlite libtag1-dev ffmpeg libasound-dev
+    - name: Cache Go modules
+      uses: actions/cache@v2
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-${{ matrix.platform }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.platform }}-go-${{ matrix.go-version }}-
     - name: Lint
       uses: golangci/golangci-lint-action@v1
       with:
         version: v1.28
     - name: Test
       run: go test ./...
-      env:
-        GOPATH: /tmp/gopath
