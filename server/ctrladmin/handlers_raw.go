@@ -16,7 +16,7 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 		return
 	}
-	user := c.DB.GetUserFromName(username)
+	user := c.DB.GetUserByName(username)
 	if user == nil || password != user.Password {
 		sessAddFlashW(session, []string{"invalid username / password"})
 		sessLogSave(session, w, r)
@@ -26,7 +26,7 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 	// put the user name into the session. future endpoints after this one
 	// are wrapped with WithUserSession() which will get the name from the
 	// session and put the row into the request context
-	session.Values["user"] = user.Name
+	session.Values["user"] = user.ID
 	sessLogSave(session, w, r)
 	http.Redirect(w, r, c.Path("/admin/home"), http.StatusSeeOther)
 }

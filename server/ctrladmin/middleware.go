@@ -21,7 +21,7 @@ func (c *Controller) WithUserSession(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// session exists at this point
 		session := r.Context().Value(CtxSession).(*sessions.Session)
-		username, ok := session.Values["user"].(string)
+		userID, ok := session.Values["user"].(int)
 		if !ok {
 			sessAddFlashW(session, []string{"you are not authenticated"})
 			sessLogSave(session, w, r)
@@ -29,7 +29,7 @@ func (c *Controller) WithUserSession(next http.Handler) http.Handler {
 			return
 		}
 		// take username from sesion and add the user row to the context
-		user := c.DB.GetUserFromName(username)
+		user := c.DB.GetUserByID(userID)
 		if user == nil {
 			// the username in the client's session no longer relates to a
 			// user in the database (maybe the user was deleted)

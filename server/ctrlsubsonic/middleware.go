@@ -67,7 +67,7 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 				"please provide `t` and `s`, or just `p`"))
 			return
 		}
-		user := c.DB.GetUserFromName(username)
+		user := c.DB.GetUserByName(username)
 		if user == nil {
 			_ = writeResp(w, r, spec.NewError(40,
 				"invalid username `%s`", username))

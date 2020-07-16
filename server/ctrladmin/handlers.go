@@ -151,7 +151,7 @@ func (c *Controller) ServeChangePassword(r *http.Request) *Response {
 			code: 400,
 		}
 	}
-	user := c.DB.GetUserFromName(username)
+	user := c.DB.GetUserByName(username)
 	if user == nil {
 		return &Response{
 			err:  "couldn't find a user with that name",
@@ -176,7 +176,7 @@ func (c *Controller) ServeChangePasswordDo(r *http.Request) *Response {
 			flashW:   []string{err.Error()},
 		}
 	}
-	user := c.DB.GetUserFromName(username)
+	user := c.DB.GetUserByName(username)
 	user.Password = passwordOne
 	c.DB.Save(user)
 	return &Response{redirect: "/admin/home"}
@@ -190,7 +190,7 @@ func (c *Controller) ServeDeleteUser(r *http.Request) *Response {
 			code: 400,
 		}
 	}
-	user := c.DB.GetUserFromName(username)
+	user := c.DB.GetUserByName(username)
 	if user == nil {
 		return &Response{
 			err:  "couldn't find a user with that name",
@@ -207,7 +207,7 @@ func (c *Controller) ServeDeleteUser(r *http.Request) *Response {
 
 func (c *Controller) ServeDeleteUserDo(r *http.Request) *Response {
 	username := r.URL.Query().Get("user")
-	user := c.DB.GetUserFromName(username)
+	user := c.DB.GetUserByName(username)
 	if user.IsAdmin {
 		return &Response{
 			redirect: "/admin/home",

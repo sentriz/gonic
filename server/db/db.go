@@ -111,7 +111,19 @@ func (db *DB) GetOrCreateKey(key string) string {
 	return value
 }
 
-func (db *DB) GetUserFromName(name string) *User {
+func (db *DB) GetUserByID(id int) *User {
+	user := &User{}
+	err := db.
+		Where("id=?", id).
+		First(user).
+		Error
+	if gorm.IsRecordNotFoundError(err) {
+		return nil
+	}
+	return user
+}
+
+func (db *DB) GetUserByName(name string) *User {
 	user := &User{}
 	err := db.
 		Where("name=?", name).
