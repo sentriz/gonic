@@ -2,6 +2,7 @@ package ctrladmin
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/sessions"
@@ -11,7 +12,11 @@ import (
 
 func (c *Controller) WithSession(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		session, _ := c.sessDB.Get(r, "gonic")
+		session, err := c.sessDB.Get(r, "gonic")
+		if err != nil {
+			http.Error(w, fmt.Sprintf("error getting session: %s", err), 500)
+			return
+		}
 		withSession := context.WithValue(r.Context(), CtxSession, session)
 		next.ServeHTTP(w, r.WithContext(withSession))
 	})
