@@ -61,7 +61,9 @@
             <i>{{ $user.Name }}</i>
             <span class="text-light no-small">{{ $user.CreatedAt | date }}</span>
             <span class="text-light">&#124;</span>
-            <a href="{{ printf "/admin/change_password?user=%s" $user.Name | path }}">change password&#8230;</a>
+            <a href="{{ printf "/admin/change_username?user=%s" $user.Name | path }}">username&#8230;</a>
+            <span class="text-light">&#124;</span>
+            <a href="{{ printf "/admin/change_password?user=%s" $user.Name | path }}">password&#8230;</a>
             <span class="text-light">&#124;</span>
             {{ if $user.IsAdmin }}
                 <span class="text-light">delete&#8230;</span>
@@ -78,6 +80,8 @@
             <i class="mdi mdi-account"></i> your account
         </div>
         <div class="text-right">
+            <a href="{{ path "/admin/change_own_username" }}" class="button">change username&#8230;</a>
+            <span class="text-light">&#124;</span>
             <a href="{{ path "/admin/change_own_password" }}" class="button">change password&#8230;</a>
         </div>
     {{ end }}

@@ -92,6 +92,24 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	}
 }
 
+func (c *Controller) ServeChangeOwnUsername(r *http.Request) *Response {
+	return &Response{template: "change_own_username.tmpl"}
+}
+
+func (c *Controller) ServeChangeOwnUsernameDo(r *http.Request) *Response {
+	username := r.FormValue("username")
+	if err := validateUsername(username); err != nil {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{err.Error()},
+		}
+	}
+	user := r.Context().Value(CtxUser).(*db.User)
+	user.Name = username
+	c.DB.Save(user)
+	return &Response{redirect: "/admin/home"}
+}
+
 func (c *Controller) ServeChangeOwnPassword(r *http.Request) *Response {
 	return &Response{template: "change_own_password.tmpl"}
 }
@@ -140,6 +158,44 @@ func (c *Controller) ServeUnlinkLastFMDo(r *http.Request) *Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	user.LastFMSession = ""
 	c.DB.Save(&user)
+	return &Response{redirect: "/admin/home"}
+}
+
+func (c *Controller) ServeChangeUsername(r *http.Request) *Response {
+	username := r.URL.Query().Get("user")
+	if username == "" {
+		return &Response{
+			err:  "please provide a username",
+			code: 400,
+		}
+	}
+	user := c.DB.GetUserByName(username)
+	if user == nil {
+		return &Response{
+			err:  "couldn't find a user with that name",
+			code: 400,
+		}
+	}
+	data := &templateData{}
+	data.SelectedUser = user
+	return &Response{
+		template: "change_username.tmpl",
+		data:     data,
+	}
+}
+
+func (c *Controller) ServeChangeUsernameDo(r *http.Request) *Response {
+	username := r.URL.Query().Get("user")
+	usernameNew := r.FormValue("username")
+	if err := validateUsername(usernameNew); err != nil {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{err.Error()},
+		}
+	}
+	user := c.DB.GetUserByName(username)
+	user.Name = usernameNew
+	c.DB.Save(user)
 	return &Response{redirect: "/admin/home"}
 }
 

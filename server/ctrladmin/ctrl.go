@@ -267,7 +267,7 @@ func sessLogSave(s *sessions.Session, w http.ResponseWriter, r *http.Request) {
 // ## begin validation
 
 var (
-	errValiNoUsername        = errors.New("please enter the password twice")
+	errValiNoUsername        = errors.New("please enter a username")
 	errValiPasswordAllFields = errors.New("please enter the password twice")
 	errValiPasswordsNotSame  = errors.New("passwords entered were not the same")
 	errValiKeysAllFields     = errors.New("please enter the api key and secret")

@@ -112,6 +112,8 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	routUser.Use(ctrl.WithUserSession)
 	routUser.Handle("/logout", ctrl.HR(ctrl.ServeLogout)) // "raw" handler, updates session
 	routUser.Handle("/home", ctrl.H(ctrl.ServeHome))
+	routUser.Handle("/change_own_username", ctrl.H(ctrl.ServeChangeOwnUsername))
+	routUser.Handle("/change_own_username_do", ctrl.H(ctrl.ServeChangeOwnUsernameDo))
 	routUser.Handle("/change_own_password", ctrl.H(ctrl.ServeChangeOwnPassword))
 	routUser.Handle("/change_own_password_do", ctrl.H(ctrl.ServeChangeOwnPasswordDo))
 	routUser.Handle("/link_lastfm_do", ctrl.H(ctrl.ServeLinkLastFMDo))
@@ -122,6 +124,8 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	// ** begin admin routes (if session is valid, and is admin)
 	routAdmin := routUser.NewRoute().Subrouter()
 	routAdmin.Use(ctrl.WithAdminSession)
+	routAdmin.Handle("/change_username", ctrl.H(ctrl.ServeChangeUsername))
+	routAdmin.Handle("/change_username_do", ctrl.H(ctrl.ServeChangeUsernameDo))
 	routAdmin.Handle("/change_password", ctrl.H(ctrl.ServeChangePassword))
 	routAdmin.Handle("/change_password_do", ctrl.H(ctrl.ServeChangePasswordDo))
 	routAdmin.Handle("/delete_user", ctrl.H(ctrl.ServeDeleteUser))
