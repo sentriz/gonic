@@ -3,9 +3,22 @@
     "status": "ok",
     "version": "1.15.0",
     "type": "gonic",
-    "gonicVersion": "v0.10.0",
+    "gonicVersion": "v0.10.1",
     "albumList2": {
       "album": [
+        {
+          "id": "al-3",
+          "coverArt": "al-3",
+          "artistId": "ar-1",
+          "artist": "Jah Wobble, The Edge & Holger Czukay",
+          "title": "",
+          "album": "",
+          "name": "Snake Charmer",
+          "songCount": 5,
+          "duration": 0,
+          "created": "2019-05-16T22:10:52+01:00",
+          "year": 1983
+        },
         {
           "id": "al-21",
           "coverArt": "al-21",
@@ -18,44 +31,6 @@
           "duration": 0,
           "created": "2019-06-10T19:26:30.944742894+01:00",
           "year": 1970
-        },
-        {
-          "id": "al-13",
-          "coverArt": "al-13",
-          "artistId": "ar-4",
-          "artist": "Anikas",
-          "title": "",
-          "album": "",
-          "name": "Anika",
-          "songCount": 9,
-          "duration": 0,
-          "created": "2019-05-23T15:12:02.921473302+01:00",
-          "year": 2010
-        },
-        {
-          "id": "al-16",
-          "coverArt": "al-16",
-          "artistId": "ar-5",
-          "artist": "Swell Maps",
-          "title": "",
-          "album": "",
-          "name": "Jane From Occupied Europe",
-          "songCount": 16,
-          "duration": 0,
-          "created": "2019-04-30T16:48:48+01:00",
-          "year": 1980
-        },
-        {
-          "id": "al-6",
-          "artistId": "ar-2",
-          "artist": "A Certain Ratio",
-          "title": "",
-          "album": "",
-          "name": "To Each...",
-          "songCount": 9,
-          "duration": 0,
-          "created": "2019-05-23T15:12:02.921473302+01:00",
-          "year": 1981
         },
         {
           "id": "al-17",
@@ -71,17 +46,17 @@
           "year": 1979
         },
         {
-          "id": "al-3",
-          "coverArt": "al-3",
-          "artistId": "ar-1",
-          "artist": "Jah Wobble, The Edge & Holger Czukay",
+          "id": "al-8",
+          "coverArt": "al-8",
+          "artistId": "ar-3",
+          "artist": "13th Floor Elevators",
           "title": "",
           "album": "",
-          "name": "Snake Charmer",
-          "songCount": 5,
+          "name": "Easter Everywhere",
+          "songCount": 10,
           "duration": 0,
-          "created": "2019-05-16T22:10:52+01:00",
-          "year": 1983
+          "created": "2019-06-13T12:57:28.850090338+01:00",
+          "year": 1967
         },
         {
           "id": "al-9",
@@ -97,6 +72,19 @@
           "year": 1966
         },
         {
+          "id": "al-16",
+          "coverArt": "al-16",
+          "artistId": "ar-5",
+          "artist": "Swell Maps",
+          "title": "",
+          "album": "",
+          "name": "Jane From Occupied Europe",
+          "songCount": 16,
+          "duration": 0,
+          "created": "2019-04-30T16:48:48+01:00",
+          "year": 1980
+        },
+        {
           "id": "al-5",
           "coverArt": "al-5",
           "artistId": "ar-2",
@@ -110,6 +98,31 @@
           "year": 1994
         },
         {
+          "id": "al-13",
+          "coverArt": "al-13",
+          "artistId": "ar-4",
+          "artist": "Anikas",
+          "title": "",
+          "album": "",
+          "name": "Anika",
+          "songCount": 9,
+          "duration": 0,
+          "created": "2019-05-23T15:12:02.921473302+01:00",
+          "year": 2010
+        },
+        {
+          "id": "al-6",
+          "artistId": "ar-2",
+          "artist": "A Certain Ratio",
+          "title": "",
+          "album": "",
+          "name": "To Each...",
+          "songCount": 9,
+          "duration": 0,
+          "created": "2019-05-23T15:12:02.921473302+01:00",
+          "year": 1981
+        },
+        {
           "id": "al-19",
           "coverArt": "al-19",
           "artistId": "ar-6",
@@ -120,19 +133,6 @@
           "songCount": 15,
           "duration": 0,
           "created": "2019-04-30T16:48:30+01:00",
-          "year": 1967
-        },
-        {
-          "id": "al-8",
-          "coverArt": "al-8",
-          "artistId": "ar-3",
-          "artist": "13th Floor Elevators",
-          "title": "",
-          "album": "",
-          "name": "Easter Everywhere",
-          "songCount": 10,
-          "duration": 0,
-          "created": "2019-06-13T12:57:28.850090338+01:00",
           "year": 1967
         }
       ]
