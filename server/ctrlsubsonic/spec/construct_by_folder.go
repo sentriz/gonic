@@ -57,6 +57,9 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 		Type:      "music",
 		CreatedAt: t.CreatedAt,
 	}
+	if trCh.Title == "" {
+		trCh.Title = t.Filename
+	}
 	if parent.Cover != "" {
 		trCh.CoverID = parent.SID()
 	}
