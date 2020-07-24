@@ -5,6 +5,7 @@ require (
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/cespare/xxhash v1.1.0
+	github.com/disintegration/imaging v1.6.2
 	github.com/dustin/go-humanize v1.0.0
 	github.com/faiface/beep v1.0.2
 	github.com/google/uuid v1.1.1 // indirect
