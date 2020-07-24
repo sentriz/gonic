@@ -14,6 +14,7 @@ func NewAlbumByFolder(f *db.Album) *Album {
 		ParentID:   f.ParentSID(),
 		Title:      f.RightPath,
 		TrackCount: f.ChildCount,
+		Duration:   f.Duration,
 	}
 	if f.Cover != "" {
 		a.CoverID = f.SID()
