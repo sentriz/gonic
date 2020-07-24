@@ -172,6 +172,7 @@ type Album struct {
 	TagYear       int    `sql:"default: null"`
 	Tracks        []*Track
 	ChildCount    int  `sql:"-"`
+	Duration      int  `sql:"-"`
 	ReceivedPaths bool `gorm:"-"`
 	ReceivedTags  bool `gorm:"-"`
 }

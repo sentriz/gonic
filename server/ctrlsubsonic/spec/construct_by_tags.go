@@ -13,6 +13,7 @@ func NewAlbumByTags(a *db.Album, artist *db.Artist) *Album {
 		Name:       a.TagTitle,
 		Year:       a.TagYear,
 		TrackCount: a.ChildCount,
+		Duration:   a.Duration,
 	}
 	if a.TagGenre != nil {
 		ret.Genre = a.TagGenre.Name
