@@ -1,12 +1,15 @@
 package ctrlsubsonic
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"path"
 	"time"
 
+	"github.com/disintegration/imaging"
 	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
@@ -53,30 +56,61 @@ func streamUpdateStats(dbc *db.DB, userID, albumID int) {
 	dbc.Save(&play)
 }
 
+const (
+	coverDefaultSize = 600
+	coverCacheFormat = "png"
+)
+
 func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	id, err := params.GetID("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	folder := &db.Album{}
-	err = c.DB.
-		Select("id, left_path, right_path, cover").
-		First(folder, id.Value).
-		Error
-	if gorm.IsRecordNotFoundError(err) {
-		return spec.NewError(10, "could not find a cover with that id")
+	size := params.GetOrInt("size", coverDefaultSize)
+	cacheFile := fmt.Sprintf("%s/%s-%d.%s", c.CachePath, id.String(), size,
+		coverCacheFormat)
+	_, err = os.Stat(cacheFile)
+	if os.IsNotExist(err) {
+		log.Printf("serving cover `%s`: cache [%s/%d] miss!\n",
+			cacheFile, coverCacheFormat, size)
+		folder := &db.Album{}
+		err = c.DB.
+			Select("id, left_path, right_path, cover").
+			First(folder, id.Value).
+			Error
+		if gorm.IsRecordNotFoundError(err) {
+			return spec.NewError(10, "could not find a cover with that id")
+		}
+		if folder.Cover == "" {
+			return spec.NewError(10, "no cover found for that folder")
+		}
+		absPath := path.Join(
+			c.MusicPath,
+			folder.LeftPath,
+			folder.RightPath,
+			folder.Cover,
+		)
+		src, err := imaging.Open(absPath)
+		if err != nil {
+			log.Printf("resizing cover `%s`: error: %v\n", absPath, err)
+			return nil
+		}
+		width := size
+		if width > src.Bounds().Dx() {
+			// don't upscale images
+			width = src.Bounds().Dx()
+		}
+		err = imaging.Save(imaging.Resize(src, width, 0, imaging.Lanczos), cacheFile)
+		if err != nil {
+			log.Printf("caching cover `%s`: error: %v\n", cacheFile, err)
+			return nil
+		}
+	} else {
+		log.Printf("serving cover `%s`: cache [%s/%d] hit!\n",
+			cacheFile, coverCacheFormat, size)
 	}
-	if folder.Cover == "" {
-		return spec.NewError(10, "no cover found for that folder")
-	}
-	absPath := path.Join(
-		c.MusicPath,
-		folder.LeftPath,
-		folder.RightPath,
-		folder.Cover,
-	)
-	http.ServeFile(w, r, absPath)
+	http.ServeFile(w, r, cacheFile)
 	return nil
 }
 
