@@ -15,7 +15,7 @@
           "album": "",
           "name": "A Trip to Marineville",
           "songCount": 18,
-          "duration": 0,
+          "duration": 3266,
           "created": "2019-04-30T16:48:48+01:00",
           "year": 1979
         },
@@ -28,7 +28,7 @@
           "album": "",
           "name": "Anika",
           "songCount": 9,
-          "duration": 0,
+          "duration": 2169,
           "created": "2019-05-23T15:12:02.921473302+01:00",
           "year": 2010
         },
@@ -41,7 +41,7 @@
           "album": "",
           "name": "Easter Everywhere",
           "songCount": 10,
-          "duration": 0,
+          "duration": 2609,
           "created": "2019-06-13T12:57:28.850090338+01:00",
           "year": 1967
         },
@@ -54,7 +54,7 @@
           "album": "",
           "name": "Jane From Occupied Europe",
           "songCount": 16,
-          "duration": 0,
+          "duration": 3040,
           "created": "2019-04-30T16:48:48+01:00",
           "year": 1980
         },
@@ -67,7 +67,7 @@
           "album": "",
           "name": "Lick My Decals Off, Baby",
           "songCount": 15,
-          "duration": 0,
+          "duration": 2324,
           "created": "2019-06-10T19:26:30.944742894+01:00",
           "year": 1970
         },
@@ -80,7 +80,7 @@
           "album": "",
           "name": "Snake Charmer",
           "songCount": 5,
-          "duration": 0,
+          "duration": 1871,
           "created": "2019-05-16T22:10:52+01:00",
           "year": 1983
         },
@@ -93,7 +93,7 @@
           "album": "",
           "name": "Ten Years After",
           "songCount": 15,
-          "duration": 0,
+          "duration": 3812,
           "created": "2019-04-30T16:48:30+01:00",
           "year": 1967
         },
@@ -106,7 +106,7 @@
           "album": "",
           "name": "The Graveyard and the Ballroom",
           "songCount": 14,
-          "duration": 0,
+          "duration": 2738,
           "created": "2019-06-05T17:46:37.675917974+01:00",
           "year": 1994
         },
@@ -119,7 +119,7 @@
           "album": "",
           "name": "The Psychedelic Sounds of the 13th Floor Elevators",
           "songCount": 21,
-          "duration": 0,
+          "duration": 4222,
           "created": "2019-06-13T12:57:24.306717554+01:00",
           "year": 1966
         },
@@ -131,7 +131,7 @@
           "album": "",
           "name": "To Each...",
           "songCount": 9,
-          "duration": 0,
+          "duration": 2801,
           "created": "2019-05-23T15:12:02.921473302+01:00",
           "year": 1981
         }
