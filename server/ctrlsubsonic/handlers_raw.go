@@ -68,8 +68,10 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 	size := params.GetOrInt("size", coverDefaultSize)
-	cacheFile := fmt.Sprintf("%s/%s-%d.%s", c.CachePath, id.String(), size,
-		coverCacheFormat)
+	cacheFile := path.Join(
+		c.CachePath,
+		fmt.Sprintf("%s-%d.%s", id.String(), size, coverCacheFormat),
+	)
 	_, err = os.Stat(cacheFile)
 	if os.IsNotExist(err) {
 		log.Printf("serving cover `%s`: cache [%s/%d] miss!\n",
