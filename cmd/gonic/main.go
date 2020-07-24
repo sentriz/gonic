@@ -60,7 +60,7 @@ func main() {
 			log.Fatalf("couldn't create cache path: %v\n", err)
 		}
 	}
-	coverCachePath := path.Join(*cachePath, "covers")
+	coverCachePath := path.Join(*cachePath, coverCachePrefix)
 	if _, err := os.Stat(coverCachePath); os.IsNotExist(err) {
 		if err := os.MkdirAll(coverCachePath, os.ModePerm); err != nil {
 			log.Fatalf("couldn't create cover cache path: %v\n", err)
