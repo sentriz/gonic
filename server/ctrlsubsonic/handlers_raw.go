@@ -106,7 +106,7 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 	}
 	size := params.GetOrInt("size", coverDefaultSize)
 	cachePath := path.Join(
-		c.CachePath,
+		c.CoverCachePath,
 		fmt.Sprintf("%s-%d.%s", id.String(), size, coverCacheFormat),
 	)
 	_, err = os.Stat(cachePath)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"regexp"
 	"time"
 
@@ -15,6 +16,11 @@ import (
 	"go.senan.xyz/gonic/server"
 	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/version"
+)
+
+const (
+	cleanTimeDuration = 10 * time.Minute
+	coverCachePrefix  = "covers"
 )
 
 func main() {
@@ -45,12 +51,19 @@ func main() {
 	set.VisitAll(func(f *flag.Flag) {
 		log.Printf("    %-15s %s\n", f.Name, f.Value)
 	})
+	//
 	if _, err := os.Stat(*musicPath); os.IsNotExist(err) {
 		log.Fatal("please provide a valid music directory")
 	}
 	if _, err := os.Stat(*cachePath); os.IsNotExist(err) {
 		if err := os.MkdirAll(*cachePath, os.ModePerm); err != nil {
 			log.Fatalf("couldn't create cache path: %v\n", err)
+		}
+	}
+	coverCachePath := path.Join(*cachePath, "covers")
+	if _, err := os.Stat(coverCachePath); os.IsNotExist(err) {
+		if err := os.MkdirAll(coverCachePath, os.ModePerm); err != nil {
+			log.Fatalf("couldn't create cover cache path: %v\n", err)
 		}
 	}
 	db, err := db.New(*dbPath)
@@ -63,14 +76,15 @@ func main() {
 	*proxyPrefix = proxyPrefixExpr.ReplaceAllString(*proxyPrefix, `/$1`)
 	//
 	server := server.New(server.Options{
-		DB:          db,
-		MusicPath:   *musicPath,
-		CachePath:   *cachePath,
-		ProxyPrefix: *proxyPrefix,
+		DB:             db,
+		MusicPath:      *musicPath,
+		CachePath:      *cachePath,
+		CoverCachePath: coverCachePath,
+		ProxyPrefix:    *proxyPrefix,
 	})
 	var g run.Group
 	g.Add(server.StartHTTP(*listenAddr))
-	g.Add(server.StartSessionClean(10 * time.Minute))
+	g.Add(server.StartSessionClean(cleanTimeDuration))
 	if *scanInterval > 0 {
 		tickerDur := time.Duration(*scanInterval) * time.Minute
 		g.Add(server.StartScanTicker(tickerDur))
