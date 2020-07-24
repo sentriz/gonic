@@ -1,6 +1,7 @@
 package ctrlsubsonic
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -61,6 +62,11 @@ const (
 	coverCacheFormat = "png"
 )
 
+var (
+	errCoverNotFound = errors.New("could not find a cover with that id")
+	errCoverEmpty    = errors.New("no cover found for that folder")
+)
+
 func coverGetPath(dbc *db.DB, musicPath string, id int) (string, error) {
 	folder := &db.Album{}
 	err := dbc.DB.
@@ -68,10 +74,10 @@ func coverGetPath(dbc *db.DB, musicPath string, id int) (string, error) {
 		First(folder, id).
 		Error
 	if gorm.IsRecordNotFoundError(err) {
-		return "", fmt.Errorf("could not find a cover with that id")
+		return "", errCoverNotFound
 	}
 	if folder.Cover == "" {
-		return "", fmt.Errorf("no cover found for that folder")
+		return "", errCoverEmpty
 	}
 	return path.Join(
 		musicPath,
@@ -84,7 +90,7 @@ func coverGetPath(dbc *db.DB, musicPath string, id int) (string, error) {
 func coverScaleAndSave(absPath, cachePath string, size int) error {
 	src, err := imaging.Open(absPath)
 	if err != nil {
-		return fmt.Errorf("resizing `%s`: %v", absPath, err)
+		return fmt.Errorf("resizing `%s`: %w", absPath, err)
 	}
 	width := size
 	if width > src.Bounds().Dx() {
@@ -93,7 +99,7 @@ func coverScaleAndSave(absPath, cachePath string, size int) error {
 	}
 	err = imaging.Save(imaging.Resize(src, width, 0, imaging.Lanczos), cachePath)
 	if err != nil {
-		return fmt.Errorf("caching `%s`: %v", cachePath, err)
+		return fmt.Errorf("caching `%s`: %w", cachePath, err)
 	}
 	return nil
 }
