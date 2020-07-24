@@ -21,10 +21,11 @@ import (
 )
 
 type Options struct {
-	DB          *db.DB
-	MusicPath   string
-	CachePath   string
-	ProxyPrefix string
+	DB             *db.DB
+	MusicPath      string
+	CachePath      string
+	CoverCachePath string
+	ProxyPrefix    string
 }
 
 type Server struct {
@@ -61,9 +62,10 @@ func New(opts Options) *Server {
 	//
 	ctrlAdmin := ctrladmin.New(base, sessDB)
 	ctrlSubsonic := &ctrlsubsonic.Controller{
-		Controller: base,
-		CachePath:  opts.CachePath,
-		Jukebox:    jukebox,
+		Controller:     base,
+		CachePath:      opts.CachePath,
+		CoverCachePath: opts.CoverCachePath,
+		Jukebox:        jukebox,
 	}
 	setupMisc(r, base)
 	setupAdmin(r.PathPrefix("/admin").Subrouter(), ctrlAdmin)

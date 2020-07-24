@@ -25,8 +25,9 @@ const (
 
 type Controller struct {
 	*ctrlbase.Controller
-	CachePath string
-	Jukebox   *jukebox.Jukebox
+	CachePath      string
+	CoverCachePath string
+	Jukebox        *jukebox.Jukebox
 }
 
 type metaResponse struct {
