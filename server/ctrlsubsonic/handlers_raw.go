@@ -61,6 +61,43 @@ const (
 	coverCacheFormat = "png"
 )
 
+func coverGetPath(dbc *db.DB, musicPath string, id int) (string, error) {
+	folder := &db.Album{}
+	err := dbc.DB.
+		Select("id, left_path, right_path, cover").
+		First(folder, id).
+		Error
+	if gorm.IsRecordNotFoundError(err) {
+		return "", fmt.Errorf("could not find a cover with that id")
+	}
+	if folder.Cover == "" {
+		return "", fmt.Errorf("no cover found for that folder")
+	}
+	return path.Join(
+		musicPath,
+		folder.LeftPath,
+		folder.RightPath,
+		folder.Cover,
+	), nil
+}
+
+func coverScaleAndSave(absPath, cachePath string, size int) error {
+	src, err := imaging.Open(absPath)
+	if err != nil {
+		return fmt.Errorf("resizing `%s`: %v", absPath, err)
+	}
+	width := size
+	if width > src.Bounds().Dx() {
+		// don't upscale images
+		width = src.Bounds().Dx()
+	}
+	err = imaging.Save(imaging.Resize(src, width, 0, imaging.Lanczos), cachePath)
+	if err != nil {
+		return fmt.Errorf("caching `%s`: %v", cachePath, err)
+	}
+	return nil
+}
+
 func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	id, err := params.GetID("id")
@@ -68,51 +105,26 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 	size := params.GetOrInt("size", coverDefaultSize)
-	cacheFile := path.Join(
+	cachePath := path.Join(
 		c.CachePath,
 		fmt.Sprintf("%s-%d.%s", id.String(), size, coverCacheFormat),
 	)
-	_, err = os.Stat(cacheFile)
-	if os.IsNotExist(err) {
-		log.Printf("serving cover `%s`: cache [%s/%d] miss!\n",
-			cacheFile, coverCacheFormat, size)
-		folder := &db.Album{}
-		err = c.DB.
-			Select("id, left_path, right_path, cover").
-			First(folder, id.Value).
-			Error
-		if gorm.IsRecordNotFoundError(err) {
-			return spec.NewError(10, "could not find a cover with that id")
-		}
-		if folder.Cover == "" {
-			return spec.NewError(10, "no cover found for that folder")
-		}
-		absPath := path.Join(
-			c.MusicPath,
-			folder.LeftPath,
-			folder.RightPath,
-			folder.Cover,
-		)
-		src, err := imaging.Open(absPath)
+	_, err = os.Stat(cachePath)
+	switch {
+	case os.IsNotExist(err):
+		coverPath, err := coverGetPath(c.DB, c.MusicPath, id.Value)
 		if err != nil {
-			log.Printf("resizing cover `%s`: error: %v\n", absPath, err)
+			return spec.NewError(10, "couldn't find cover %q: %v", id, err)
+		}
+		if err := coverScaleAndSave(coverPath, cachePath, size); err != nil {
+			log.Printf("error scaling cover: %v", err)
 			return nil
 		}
-		width := size
-		if width > src.Bounds().Dx() {
-			// don't upscale images
-			width = src.Bounds().Dx()
-		}
-		err = imaging.Save(imaging.Resize(src, width, 0, imaging.Lanczos), cacheFile)
-		if err != nil {
-			log.Printf("caching cover `%s`: error: %v\n", cacheFile, err)
-			return nil
-		}
-	} else {
-		log.Printf("serving cover `%s`: cache [%s/%d] hit!\n",
-			cacheFile, coverCacheFormat, size)
+	case err != nil:
+		log.Printf("error stating `%s`: %v", cachePath, err)
+		return nil
 	}
-	http.ServeFile(w, r, cacheFile)
+	http.ServeFile(w, r, cachePath)
 	return nil
 }
 
