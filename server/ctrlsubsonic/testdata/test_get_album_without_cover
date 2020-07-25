@@ -3,7 +3,7 @@
     "status": "ok",
     "version": "1.15.0",
     "type": "gonic",
-    "gonicVersion": "v0.10.3",
+    "gonicVersion": "v0.11.0",
     "album": {
       "id": "al-2",
       "title": "",
