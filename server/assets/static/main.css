@@ -36,12 +36,13 @@ select,
 button,
 textarea {
   border-radius: 0;
-  border: 1px solid #ccc;
   box-sizing: border-box;
-  margin: 1px 0;
+  margin: 0;
   padding: 0;
-  height: calc(var(--size) * 1.25);
-  vertical-align: bottom;
+  border: none;
+  outline: 1px solid #ccc;
+  height: var(--size);
+  vertical-align: middle;
 }
 
 input[type] {
