@@ -121,6 +121,10 @@ $ sudo systemctl daemon-reload
 $ sudo systemctl enable --now gonic
 ```
 
+###  ...elsewhere
+
+[![](https://repology.org/badge/vertical-allrepos/gonic.svg)](https://repology.org/project/gonic/versions)
+
 ## configuration options
 
 |env var|command line arg|description|
