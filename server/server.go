@@ -121,6 +121,7 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	routUser.Handle("/link_lastfm_do", ctrl.H(ctrl.ServeLinkLastFMDo))
 	routUser.Handle("/unlink_lastfm_do", ctrl.H(ctrl.ServeUnlinkLastFMDo))
 	routUser.Handle("/upload_playlist_do", ctrl.H(ctrl.ServeUploadPlaylistDo))
+	routUser.Handle("/delete_playlist_do", ctrl.H(ctrl.ServeDeletePlaylistDo))
 	routUser.Handle("/create_transcode_pref_do", ctrl.H(ctrl.ServeCreateTranscodePrefDo))
 	routUser.Handle("/delete_transcode_pref_do", ctrl.H(ctrl.ServeDeleteTranscodePrefDo))
 	// ** begin admin routes (if session is valid, and is admin)

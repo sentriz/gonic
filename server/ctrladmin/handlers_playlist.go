@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"mime/multipart"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/jinzhu/gorm"
@@ -115,5 +116,22 @@ func (c *Controller) ServeUploadPlaylistDo(r *http.Request) *Response {
 		redirect: "/admin/home",
 		flashN:   []string{fmt.Sprintf("%d playlist(s) created", playlistCount)},
 		flashW:   errors,
+	}
+}
+
+func (c *Controller) ServeDeletePlaylistDo(r *http.Request) *Response {
+	user := r.Context().Value(CtxUser).(*db.User)
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil {
+		return &Response{
+			err:  "please provide a valid id",
+			code: 400,
+		}
+	}
+	c.DB.
+		Where("user_id=? AND id=?", user.ID, id).
+		Delete(db.Playlist{})
+	return &Response{
+		redirect: "/admin/home",
 	}
 }

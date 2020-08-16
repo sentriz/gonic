@@ -160,11 +160,13 @@
             <span class="text-light">no playlists yet</span>
         {{ end }}
         <table id="recent-playlists">
-        {{ range $playlist := .Playlists }}
+        {{ range $i, $playlist := .Playlists }}
             <tr>
+            <form id="recent-playlists-{{ $i }}" action="{{ printf "/admin/delete_playlist_do?id=%d" $playlist.ID | path }}" method="post"></form>
             <td class="text-right">{{ $playlist.Name }}</td>
             <td><span class="text-light">({{ $playlist.TrackCount }} tracks)</span></td>
             <td class="no-small"><span class="text-light" title="{{ $playlist.CreatedAt }}">{{ $playlist.CreatedAt | dateHuman }}</span></td>
+            <td><input form="recent-playlists-{{ $i }}" type="submit" value="delete"></td>
             </tr>
         {{ end }}
         </table>
