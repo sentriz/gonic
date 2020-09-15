@@ -43,10 +43,57 @@
             <p class="text-light">api key not set</p>
             {{ if not .User.IsAdmin }}
                 <p class="text-light">please ask your admin to set it</p>
-	    {{ end }}
+            {{ end }}
         {{ end }}
         {{ if .User.IsAdmin }}
             <p><a href="{{ path "/admin/update_lastfm_api_key" }}">update api key&#8230;</a></p>
+        {{ end }}
+    </div>
+</div>
+<div class="padded box">
+    <div class="box-title">
+        <i class="mdi mdi-brain"></i> ListenBrainz
+    </div>
+    <div class="box-description text-light">
+        <p>gonic can scrobble to <a href="https://listenbrainz.org/" target="_blank">ListenBrainz</a> and compatible sites.</p>
+    </div>
+    <div class="text-right">
+        {{ if .ListenBrainzEnabled }}
+            <span class="text-light">current status</span>
+            {{ if .User.ListenBrainzToken }}
+                linked to <code>{{ .User.ListenBrainzURL  }}</code>
+                <span class="text-light">&#124;</span>
+                <form action="{{ path "/admin/unlink_listenbrainz_do" }}" method="post">
+                    <input type="submit" value="unlink">
+                </form>
+            {{ else }}
+                <span class="angry">unlinked</span>
+
+                <table id="listenbrainz-pref">
+                <form id="listenbrainz-pref-set" action="{{ path "/admin/link_listenbrainz_do" }}" method="post"></form>
+                <tr>
+                    <td><label for="listenbrainz-token">Token:</label></td>
+                    <td><input form="listenbrainz-pref-set" id="listenbrainz-token" type="text" name="token" value="{{ default "" .User.ListenBrainzToken }}"></td>
+                </tr>
+                {{ if .ListenBrainzCustomURLEnabled }}
+                <tr>
+                  <td><label for="listenbrainz-url">Custom URL:</label></td>
+                  <td><input form="listenbrainz-pref-set" id="listenbrainz-url" type="text" name="custom_url" value="{{ default "https://api.listenbrainz.org" .User.ListenBrainzURL }}"></td>
+                </tr>
+                {{ end }}
+                <tr>
+                <td colspan="2"><input form="listenbrainz-pref-set" type="submit" value="save"></td>
+                </tr>
+                </table>
+            {{ end }}
+        {{ else }}
+            <p class="text-light">not enabled</p>
+            {{ if not .User.IsAdmin }}
+                <p class="text-light">please ask your admin to enable it</p>
+	          {{ end }}
+        {{ end }}
+        {{ if .User.IsAdmin }}
+            <p><a href="{{ path "/admin/update_listenbrainz_settings" }}">update global settings&#8230;</a></p>
         {{ end }}
     </div>
 </div>

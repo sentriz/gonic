@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"strconv"
 
 	"github.com/gorilla/securecookie"
 	"github.com/jinzhu/gorm"
@@ -76,6 +77,7 @@ func New(path string) (*DB, error) {
 		migrateAddGenre(),
 		migrateUpdateTranscodePrefIDX(),
 		migrateAddAlbumIDX(),
+		migrateAddListenBrainz(),
 	))
 	if err = migr.Migrate(); err != nil {
 		return nil, fmt.Errorf("migrating to latest version: %w", err)
@@ -100,6 +102,18 @@ func (db *DB) SetSetting(key, value string) {
 		Where(Setting{Key: key}).
 		Assign(Setting{Value: value}).
 		FirstOrCreate(&Setting{})
+}
+
+func (db *DB) GetBoolSetting(key string, fallback bool) bool {
+	value, err := strconv.ParseBool(db.GetSetting(key))
+	if err != nil {
+		return fallback
+	}
+	return value
+}
+
+func (db *DB) SetBoolSetting(key string, value bool) {
+	db.SetSetting(key, strconv.FormatBool(value))
 }
 
 func (db *DB) GetOrCreateKey(key string) string {

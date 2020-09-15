@@ -173,3 +173,12 @@ a:hover {
 .angry {
   background-color: #f4433669;
 }
+
+#listenbrainz-pref {
+  width: 100%;
+}
+
+#listenbrainz-token,
+#listenbrainz-url {
+  width: 90%;
+}

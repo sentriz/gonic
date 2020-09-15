@@ -58,6 +58,8 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	)
 	data.RequestRoot = fmt.Sprintf("%s://%s", scheme, host)
 	data.CurrentLastFMAPIKey = c.DB.GetSetting("lastfm_api_key")
+	data.ListenBrainzEnabled = c.DB.GetBoolSetting("listenbrainz_enabled", false)
+	data.ListenBrainzCustomURLEnabled = c.DB.GetBoolSetting("listenbrainz_custom_url_enabled", false)
 	// ** begin users box
 	c.DB.Find(&data.AllUsers)
 	// ** begin recent folders box
@@ -157,6 +159,41 @@ func (c *Controller) ServeLinkLastFMDo(r *http.Request) *Response {
 func (c *Controller) ServeUnlinkLastFMDo(r *http.Request) *Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	user.LastFMSession = ""
+	c.DB.Save(&user)
+	return &Response{redirect: "/admin/home"}
+}
+
+func (c *Controller) ServeLinkListenBrainzDo(r *http.Request) *Response {
+	token := r.FormValue("token")
+	if token == "" {
+		return &Response{
+			err:  "please provide a token",
+			code: 400,
+		}
+	}
+	custom_url_enabled := c.DB.GetBoolSetting("listenbrainz_custom_url_enabled", false)
+	custom_url := r.FormValue("custom_url")
+	if custom_url_enabled && custom_url == "" {
+		return &Response{
+			err:  "please provide a custom_url, even if it is the default one",
+			code: 400,
+		}
+	}
+	user := r.Context().Value(CtxUser).(*db.User)
+	user.ListenBrainzToken = token
+	if custom_url_enabled {
+		user.ListenBrainzURL = custom_url
+	} else {
+		user.ListenBrainzURL = ""
+	}
+	c.DB.Save(&user)
+	return &Response{redirect: "/admin/home"}
+}
+
+func (c *Controller) ServeUnlinkListenBrainzDo(r *http.Request) *Response {
+	user := r.Context().Value(CtxUser).(*db.User)
+	user.ListenBrainzToken = ""
+	user.ListenBrainzURL = ""
 	c.DB.Save(&user)
 	return &Response{redirect: "/admin/home"}
 }
@@ -330,6 +367,24 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(r *http.Request) *Response {
 	}
 	c.DB.SetSetting("lastfm_api_key", apiKey)
 	c.DB.SetSetting("lastfm_secret", secret)
+	return &Response{redirect: "/admin/home"}
+}
+
+func (c *Controller) ServeUpdateListenBrainzSettings(r *http.Request) *Response {
+	data := &templateData{}
+	data.ListenBrainzEnabled = c.DB.GetBoolSetting("listenbrainz_enabled", false)
+	data.ListenBrainzCustomURLEnabled = c.DB.GetBoolSetting("listenbrainz_custom_url_enabled", false)
+	return &Response{
+		template: "update_listenbrainz_settings.tmpl",
+		data:     data,
+	}
+}
+
+func (c *Controller) ServeUpdateListenBrainzSettingsDo(r *http.Request) *Response {
+	enabled := r.FormValue("enabled") == "on"
+	customUrlEnabled := r.FormValue("custom_url_enabled") == "on"
+	c.DB.SetBoolSetting("listenbrainz_enabled", enabled)
+	c.DB.SetBoolSetting("listenbrainz_custom_url_enabled", customUrlEnabled)
 	return &Response{redirect: "/admin/home"}
 }
 

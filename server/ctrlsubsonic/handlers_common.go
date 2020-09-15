@@ -13,6 +13,7 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/lastfm"
+	"go.senan.xyz/gonic/server/listenbrainz"
 	"go.senan.xyz/gonic/server/scanner"
 )
 
@@ -36,6 +37,47 @@ func (c *Controller) ServePing(r *http.Request) *spec.Response {
 	return spec.NewResponse()
 }
 
+func (c *Controller) scrobbleLastFM(user *db.User, track *db.Track, params params.Params) *spec.Response {
+	opts := lastfm.ScrobbleOptions{
+		Track: track,
+		// clients will provide time in miliseconds, so use that or
+		// instead convert UnixNano to miliseconds
+		StampMili:  params.GetOrInt("time", int(time.Now().UnixNano()/1e6)),
+		Submission: params.GetOrBool("submission", true),
+	}
+	err := lastfm.Scrobble(
+		c.DB.GetSetting("lastfm_api_key"),
+		c.DB.GetSetting("lastfm_secret"),
+		user.LastFMSession,
+		opts,
+	)
+	if err != nil {
+		return spec.NewError(0, "error when submitting: %v", err)
+	}
+
+	return nil
+}
+
+func (c *Controller) scrobbleListenBrainz(user *db.User, track *db.Track, params params.Params) *spec.Response {
+	opts := listenbrainz.ScrobbleOptions{
+		Track: track,
+		UnixTimestampS:  params.GetOrInt("time", int(time.Now().Unix())),
+		Submission: params.GetOrBool("submission", true),
+	}
+	err := listenbrainz.Scrobble(
+		c.DB.GetBoolSetting("listenbrainz_enabled", false),
+		c.DB.GetBoolSetting("listenbrainz_custom_url_enabled", false),
+		user.ListenBrainzToken,
+		user.ListenBrainzURL,
+		opts,
+	)
+	if err != nil {
+		return spec.NewError(0, "error when submitting: %v", err)
+	}
+
+	return nil
+}
+
 func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	id, err := params.GetID("id")
@@ -44,8 +86,10 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 	}
 	// fetch user to get lastfm session
 	user := r.Context().Value(CtxUser).(*db.User)
-	if user.LastFMSession == "" {
-		return spec.NewError(0, "you don't have a last.fm session")
+	lastfm_usable := user.LastFMSession != ""
+	listenbrainz_usable := c.DB.GetBoolSetting("listenbrainz_enabled", false) && user.ListenBrainzToken != ""
+	if !lastfm_usable && !listenbrainz_usable {
+		return spec.NewError(0, "you don't have a last.fm/listenbrainz session")
 	}
 	// fetch track for getting info to send to last.fm function
 	track := &db.Track{}
@@ -53,22 +97,19 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 		Preload("Album").
 		Preload("Artist").
 		First(track, id.Value)
-	// scrobble with above info
-	opts := lastfm.ScrobbleOptions{
-		Track: track,
-		// clients will provide time in miliseconds, so use that or
-		// instead convert UnixNano to miliseconds
-		StampMili:  params.GetOrInt("time", int(time.Now().UnixNano()/1e6)),
-		Submission: params.GetOrBool("submission", true),
+	// scrobble with above info to lastfm
+	if lastfm_usable {
+		fail := c.scrobbleLastFM(user, track, params)
+		if fail != nil {
+			return fail
+		}
 	}
-	err = lastfm.Scrobble(
-		c.DB.GetSetting("lastfm_api_key"),
-		c.DB.GetSetting("lastfm_secret"),
-		user.LastFMSession,
-		opts,
-	)
-	if err != nil {
-		return spec.NewError(0, "error when submitting: %v", err)
+	// scrobble to listenbrainz
+	if listenbrainz_usable {
+			fail := c.scrobbleListenBrainz(user, track, params)
+			if fail != nil {
+				return fail
+			}
 	}
 	return spec.NewResponse()
 }

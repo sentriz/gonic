@@ -120,9 +120,11 @@ type templateData struct {
 	TranscodePreferences []*db.TranscodePreference
 	TranscodeProfiles    []string
 	//
-	CurrentLastFMAPIKey    string
-	CurrentLastFMAPISecret string
-	SelectedUser           *db.User
+	CurrentLastFMAPIKey          string
+	CurrentLastFMAPISecret       string
+	ListenBrainzEnabled          bool
+	ListenBrainzCustomURLEnabled bool
+	SelectedUser                 *db.User
 }
 
 type Response struct {

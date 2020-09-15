@@ -153,3 +153,16 @@ func migrateAddAlbumIDX() gormigrate.Migration {
 		},
 	}
 }
+
+func migrateAddListenBrainz() gormigrate.Migration {
+	return gormigrate.Migration{
+		ID: "202009131937",
+		Migrate: func(tx *gorm.DB) error {
+			return tx.AutoMigrate(
+				User{},
+				Setting{},
+			).
+				Error
+		},
+	}
+}

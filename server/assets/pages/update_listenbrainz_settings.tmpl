@@ -1,0 +1,17 @@
+{{ define "user" }}
+<div class="padded box">
+    <div class="box-title">
+        <i class="mdi mdi-key-change"></i> ListenBrainz settings
+    </div>
+    <div class="box-description text-light">
+        <p>you can enable ListenBrainz support here. if custom URLs are allowed the user may set an API endpoint different from the default <code>https://api.listenbrainz.org</code>.</p>
+    </div>
+    <form class="block" action="{{ path "/admin/update_listenbrainz_settings_do" }}" method="post">
+        <label for="enabled">Allow users to use ListenBrainz</label>
+        <input type="checkbox" id="enabled" name="enabled" {{ ternary "checked" "" .ListenBrainzEnabled }}>
+        <label for="custom_url_enabled">Allow users to set a custom API endpoint</label>
+        <input type="checkbox" id="custom_url_enabled" name="custom_url_enabled" {{ ternary "checked" "" .ListenBrainzCustomURLEnabled }}>
+        <input type="submit" value="update">
+    </form>
+</div>
+{{ end }}
