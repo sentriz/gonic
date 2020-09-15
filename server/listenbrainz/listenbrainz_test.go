@@ -1,23 +1,59 @@
 package listenbrainz
 
 import (
-	"crypto/md5"
-	"fmt"
-	"net/url"
 	"testing"
+
+	"go.senan.xyz/gonic/server/db"
 )
 
-func TestGetParamSignature(t *testing.T) {
-	params := url.Values{}
-	params.Add("ccc", "CCC")
-	params.Add("bbb", "BBB")
-	params.Add("aaa", "AAA")
-	params.Add("ddd", "DDD")
-	actual := getParamSignature(params, "secret")
-	expected := fmt.Sprintf("%x", md5.Sum([]byte(
-		"aaaAAAbbbBBBcccCCCdddDDDsecret",
-	)))
-	if actual != expected {
-		t.Errorf("expected %x, got %s", expected, actual)
+func TestScrobbleDisabled(t *testing.T) {
+	err := Scrobble(false, false, "", "", ScrobbleOptions{})
+	if err != nil {
+		t.Errorf("expected error, got %s", err)
+	}
+}
+
+func TestScrobbleTrackNil(t *testing.T) {
+	url := "foo"
+	token := "foo"
+	opts := ScrobbleOptions{
+		Track: nil,
+	}
+	err := Scrobble(true, true, url, token, opts)
+	if err == nil {
+		t.Errorf("expected error, got %s", err)
+	}
+}
+
+func TestScrobble(t *testing.T) {
+	url := "http://127.0.0.1:0"
+	token := "foo"
+	track := db.Track{}
+	opts := ScrobbleOptions{
+		Track:      &track,
+		Submission: false,
+	}
+	err := Scrobble(true, true, url, token, opts)
+	if err == nil {
+		t.Errorf("expected error, got %s", err)
+	}
+	opts.UnixTimestampS = 1234567890
+	opts.Submission = true
+	err = Scrobble(true, true, url, token, opts)
+	if err == nil {
+		t.Errorf("expected error, got %s", err)
+	}
+	track.TagTrackNumber = 23
+	track.TagBrainzID = "23"
+	track.Length = 23
+	track.Album = &db.Album{
+		TagTitle: "foo",
+	}
+	track.Artist = &db.Artist{
+		Name: "foo",
+	}
+	err = Scrobble(true, true, url, token, opts)
+	if err == nil {
+		t.Errorf("expected error, got %s", err)
 	}
 }
