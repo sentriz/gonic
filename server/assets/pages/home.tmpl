@@ -43,7 +43,7 @@
             <p class="text-light">api key not set</p>
             {{ if not .User.IsAdmin }}
                 <p class="text-light">please ask your admin to set it</p>
-	          {{ end }}
+            {{ end }}
         {{ end }}
         {{ if .User.IsAdmin }}
             <p><a href="{{ path "/admin/update_lastfm_api_key" }}">update api key&#8230;</a></p>
@@ -90,7 +90,7 @@
             <p class="text-light">not enabled</p>
             {{ if not .User.IsAdmin }}
                 <p class="text-light">please ask your admin to enable it</p>
-	          {{ end }}
+            {{ end }}
         {{ end }}
         {{ if .User.IsAdmin }}
             <p><a href="{{ path "/admin/update_listenbrainz_settings" }}">update global settings&#8230;</a></p>
