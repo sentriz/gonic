@@ -27,6 +27,7 @@ html {
 
 body {
   max-width: var(--width-body);
+  line-height: initial;
   margin: 0 auto;
   overflow-y: scroll;
 }
@@ -37,23 +38,28 @@ button,
 textarea {
   border-radius: 0;
   box-sizing: border-box;
-  margin: 0;
+  margin: calc(var(--size)*0.33) 0 0 0;
   padding: 0;
-  border: none;
-  outline: 1px solid #ccc;
-  height: var(--size);
+  border: 1px solid #ccc;
   vertical-align: middle;
 }
 
 input[type] {
   width: calc(var(--size) * 9);
   background-color: white;
-  cursor: pointer;
 }
 
 input[type="text"],
 input[type="password"] {
   width: 100%;
+}
+
+input[type="checkbox"] {
+  outline: none;
+}
+
+input[type="submit"]:hover {
+  background: #eee;
 }
 
 form {
@@ -68,6 +74,14 @@ form.block {
   flex-direction: column;
   align-items: flex-end;
   text-align: right;
+}
+
+form.block .row {
+  margin-bottom: calc(var(--size)*0.5);
+}
+
+form.block .row input[type="checkbox"] {
+  width: unset;
 }
 
 form > * {
@@ -176,9 +190,6 @@ a:hover {
 
 #listenbrainz-pref {
   width: 100%;
+  margin: calc(var(--size)*0.5) 0;
 }
 
-#listenbrainz-token,
-#listenbrainz-url {
-  width: 90%;
-}

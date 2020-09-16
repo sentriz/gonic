@@ -43,7 +43,7 @@
             <p class="text-light">api key not set</p>
             {{ if not .User.IsAdmin }}
                 <p class="text-light">please ask your admin to set it</p>
-            {{ end }}
+	          {{ end }}
         {{ end }}
         {{ if .User.IsAdmin }}
             <p><a href="{{ path "/admin/update_lastfm_api_key" }}">update api key&#8230;</a></p>
@@ -69,8 +69,8 @@
             {{ else }}
                 <span class="angry">unlinked</span>
 
-                <table id="listenbrainz-pref">
                 <form id="listenbrainz-pref-set" action="{{ path "/admin/link_listenbrainz_do" }}" method="post"></form>
+                <table id="listenbrainz-pref">
                 <tr>
                     <td><label for="listenbrainz-token">Token:</label></td>
                     <td><input form="listenbrainz-pref-set" id="listenbrainz-token" type="text" name="token" value="{{ default "" .User.ListenBrainzToken }}"></td>
