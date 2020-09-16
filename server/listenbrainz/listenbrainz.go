@@ -18,6 +18,7 @@ func Scrobble(listenbrainzEnabled, customURLEnabled bool, token, customURL strin
 		return nil
 	}
 	api := listenbrainz.GetDefaultAPI()
+	api.Token = token
 	if customURLEnabled && customURL != "" {
 		api.URL = customURL
 	}

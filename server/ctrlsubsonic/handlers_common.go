@@ -60,9 +60,9 @@ func (c *Controller) scrobbleLastFM(user *db.User, track *db.Track, params param
 
 func (c *Controller) scrobbleListenBrainz(user *db.User, track *db.Track, params params.Params) *spec.Response {
 	opts := listenbrainz.ScrobbleOptions{
-		Track: track,
-		UnixTimestampS:  params.GetOrInt("time", int(time.Now().Unix())),
-		Submission: params.GetOrBool("submission", true),
+		Track:          track,
+		UnixTimestampS: int64(params.GetOrInt("time", int(time.Now().Unix()))),
+		Submission:     params.GetOrBool("submission", true),
 	}
 	err := listenbrainz.Scrobble(
 		c.DB.GetBoolSetting("listenbrainz_enabled", false),
@@ -106,10 +106,10 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 	}
 	// scrobble to listenbrainz
 	if listenbrainz_usable {
-			fail := c.scrobbleListenBrainz(user, track, params)
-			if fail != nil {
-				return fail
-			}
+		fail := c.scrobbleListenBrainz(user, track, params)
+		if fail != nil {
+			return fail
+		}
 	}
 	return spec.NewResponse()
 }
