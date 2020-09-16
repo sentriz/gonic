@@ -86,9 +86,9 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 	}
 	// fetch user to get lastfm session
 	user := r.Context().Value(CtxUser).(*db.User)
-	lastfm_usable := user.LastFMSession != ""
-	listenbrainz_usable := c.DB.GetBoolSetting("listenbrainz_enabled", false) && user.ListenBrainzToken != ""
-	if !lastfm_usable && !listenbrainz_usable {
+	lastfmUsable := user.LastFMSession != ""
+	listenbrainzUsable := c.DB.GetBoolSetting("listenbrainz_enabled", false) && user.ListenBrainzToken != ""
+	if !lastfmUsable && !listenbrainzUsable {
 		return spec.NewError(0, "you don't have a last.fm/listenbrainz session")
 	}
 	// fetch track for getting info to send to last.fm function
@@ -98,14 +98,14 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 		Preload("Artist").
 		First(track, id.Value)
 	// scrobble with above info to lastfm
-	if lastfm_usable {
+	if lastfmUsable {
 		fail := c.scrobbleLastFM(user, track, params)
 		if fail != nil {
 			return fail
 		}
 	}
 	// scrobble to listenbrainz
-	if listenbrainz_usable {
+	if listenbrainzUsable {
 		fail := c.scrobbleListenBrainz(user, track, params)
 		if fail != nil {
 			return fail

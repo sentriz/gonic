@@ -171,9 +171,9 @@ func (c *Controller) ServeLinkListenBrainzDo(r *http.Request) *Response {
 			code: 400,
 		}
 	}
-	custom_url_enabled := c.DB.GetBoolSetting("listenbrainz_custom_url_enabled", false)
-	custom_url := r.FormValue("custom_url")
-	if custom_url_enabled && custom_url == "" {
+	customURLEnabled := c.DB.GetBoolSetting("listenbrainz_custom_url_enabled", false)
+	customURL := r.FormValue("custom_url")
+	if customURLEnabled && customURL == "" {
 		return &Response{
 			err:  "please provide a custom_url, even if it is the default one",
 			code: 400,
@@ -181,8 +181,8 @@ func (c *Controller) ServeLinkListenBrainzDo(r *http.Request) *Response {
 	}
 	user := r.Context().Value(CtxUser).(*db.User)
 	user.ListenBrainzToken = token
-	if custom_url_enabled {
-		user.ListenBrainzURL = custom_url
+	if customURLEnabled {
+		user.ListenBrainzURL = customURL
 	} else {
 		user.ListenBrainzURL = ""
 	}
@@ -382,9 +382,9 @@ func (c *Controller) ServeUpdateListenBrainzSettings(r *http.Request) *Response 
 
 func (c *Controller) ServeUpdateListenBrainzSettingsDo(r *http.Request) *Response {
 	enabled := r.FormValue("enabled") == "on"
-	customUrlEnabled := r.FormValue("custom_url_enabled") == "on"
+	customURLEnabled := r.FormValue("custom_url_enabled") == "on"
 	c.DB.SetBoolSetting("listenbrainz_enabled", enabled)
-	c.DB.SetBoolSetting("listenbrainz_custom_url_enabled", customUrlEnabled)
+	c.DB.SetBoolSetting("listenbrainz_custom_url_enabled", customURLEnabled)
 	return &Response{redirect: "/admin/home"}
 }
 

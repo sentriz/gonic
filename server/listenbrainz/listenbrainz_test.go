@@ -15,7 +15,7 @@ func TestScrobbleDisabled(t *testing.T) {
 
 func TestScrobbleTrackNil(t *testing.T) {
 	url := "foo"
-	token := "foo"
+	token := "bar"
 	opts := ScrobbleOptions{
 		Track: nil,
 	}
@@ -27,7 +27,7 @@ func TestScrobbleTrackNil(t *testing.T) {
 
 func TestScrobble(t *testing.T) {
 	url := "http://127.0.0.1:0"
-	token := "foo"
+	token := "baz"
 	track := db.Track{}
 	opts := ScrobbleOptions{
 		Track:      &track,
@@ -47,10 +47,10 @@ func TestScrobble(t *testing.T) {
 	track.TagBrainzID = "23"
 	track.Length = 23
 	track.Album = &db.Album{
-		TagTitle: "foo",
+		TagTitle: "foobar",
 	}
 	track.Artist = &db.Artist{
-		Name: "foo",
+		Name: "barfoo",
 	}
 	err = Scrobble(true, true, url, token, opts)
 	if err == nil {
