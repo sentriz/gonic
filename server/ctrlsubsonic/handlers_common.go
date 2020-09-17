@@ -60,11 +60,17 @@ func (c *Controller) scrobbleLastFM(user *db.User, track *db.Track, params param
 
 func (c *Controller) scrobbleListenBrainz(user *db.User, track *db.Track, params params.Params) *spec.Response {
 	opts := listenbrainz.ScrobbleOptions{
-		Track:          track,
-		UnixTimestampS: int64(params.GetOrInt("time", int(time.Now().Unix()))),
-		Submission:     params.GetOrBool("submission", true),
+		Track:      track,
+		Submission: params.GetOrBool("submission", true),
 	}
-	err := listenbrainz.Scrobble(
+	// Subsonic docs say: "The time (in milliseconds since 1 Jan 1970) at which the song was listened to."
+	timeMs, err := params.GetInt("time")
+	if err == nil {
+		opts.UnixTimestampS = int64(timeMs / 1e3)
+	} else {
+		opts.UnixTimestampS = time.Now().Unix()
+	}
+	err = listenbrainz.Scrobble(
 		c.DB.GetBoolSetting("listenbrainz_enabled", false),
 		c.DB.GetBoolSetting("listenbrainz_custom_url_enabled", false),
 		user.ListenBrainzToken,
