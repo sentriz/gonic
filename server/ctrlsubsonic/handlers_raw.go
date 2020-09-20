@@ -168,6 +168,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	}
 	encodeOptions := encode.Options{
 		TrackPath:        trackPath,
+		TrackBitrate:     track.Bitrate,
 		CachePath:        c.CachePath,
 		ProfileName:      pref.Profile,
 		PreferredBitrate: params.GetOrInt("maxBitRate", 0),
