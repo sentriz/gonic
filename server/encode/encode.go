@@ -168,21 +168,19 @@ func Encode(opts Options) error {
 	if !ok {
 		return opts.OnInvalidProfile()
 	}
-
 	switch {
 	case opts.PreferredBitrate != 0 && opts.PreferredBitrate >= opts.TrackBitrate:
-		log.Printf("Not transcoding, requested bitrate larger or equal to track bitrate \n")
+		log.Printf("not transcoding, requested bitrate larger or equal to track bitrate\n")
 		return opts.OnInvalidProfile()
 	case opts.PreferredBitrate != 0 && opts.PreferredBitrate < opts.TrackBitrate:
 		profile.Bitrate = opts.PreferredBitrate
-		log.Printf("Transcoding according to client request of %dk \n", profile.Bitrate)
+		log.Printf("transcoding according to client request of %dk \n", profile.Bitrate)
 	case opts.PreferredBitrate == 0 && profile.Bitrate >= opts.TrackBitrate:
-		log.Printf("Not transcoding, profile bitrate larger or equal to track bitrate \n")
+		log.Printf("not transcoding, profile bitrate larger or equal to track bitrate\n")
 		return opts.OnInvalidProfile()
 	case opts.PreferredBitrate == 0 && profile.Bitrate < opts.TrackBitrate:
-		log.Printf("Transcoding according to transcoding profile of %dk \n", profile.Bitrate)
+		log.Printf("transcoding according to transcoding profile of %dk\n", profile.Bitrate)
 	}
-
 	cacheKey := cacheKey(opts.TrackPath, opts.ProfileName, profile)
 	cachePath := path.Join(opts.CachePath, cacheKey)
 	if fileExists(cachePath) {
