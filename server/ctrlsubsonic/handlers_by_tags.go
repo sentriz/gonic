@@ -330,3 +330,34 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 	}
 	return sub
 }
+
+func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
+    params := r.Context().Value(CtxParams).(params.Params)
+    id, err := params.GetID("id")
+    if err != nil {
+      return spec.NewError(10, "please provide an `id` parameter")
+    }
+    rating, err := params.GetInt("rating")
+    if err != nil {
+      return spec.NewError(10, "please provide a valid `rating` parameter")
+    }
+    if rating > 5 || rating < 0 {
+      return spec.NewError(10, "`rating` parameter must be between 0-5 inclusive")
+    }
+
+    switch id.Type {
+    case specid.Artist:
+      return spec.NewError(10, "artist rating is not supported.")
+    case specid.Album:
+      return spec.NewError(10, "album rating is not supported.")
+    case specid.Track:
+      track := &db.Track{}
+      result := c.DB.First(track, id.Value)
+      if result.Error != nil {
+        return spec.NewError(10, fmt.Sprintf("track %s was not found: %s", id, result.Error))
+      }
+      track.TagRating = rating
+	    c.DB.Save(track)
+    }
+	  return spec.NewResponse()
+}

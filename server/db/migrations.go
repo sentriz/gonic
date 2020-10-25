@@ -153,3 +153,15 @@ func migrateAddAlbumIDX() gormigrate.Migration {
 		},
 	}
 }
+
+func migrateAddTrackRating() gormigrate.Migration {
+	return gormigrate.Migration{
+		ID: "202010241712",
+		Migrate: func(tx *gorm.DB) error {
+			return tx.AutoMigrate(
+				Track{},
+			).
+				Error
+		},
+	}
+}

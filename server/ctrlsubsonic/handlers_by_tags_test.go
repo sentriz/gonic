@@ -42,3 +42,10 @@ func TestSearchThree(t *testing.T) {
 		{url.Values{"query": {"cert"}}, "q_cert", false},
 	})
 }
+
+func TestSetRating(t *testing.T) {
+	runQueryCases(t, testController.ServeSetRating, []*queryCase{
+    {url.Values{"id": {"ar-1"}, "rating": {"6"}}, "validate_range", false},
+    {url.Values{"id": {"tr-1"}, "rating": {"2"}}, "success", false},
+	})
+}

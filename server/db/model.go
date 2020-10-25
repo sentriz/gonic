@@ -87,6 +87,7 @@ type Track struct {
 	TagTrackArtist string `sql:"default: null"`
 	TagTrackNumber int    `sql:"default: null"`
 	TagDiscNumber  int    `sql:"default: null"`
+	TagRating      int    `sql:"default: 0"`
 	TagGenre       *Genre
 	TagGenreID     int    `sql:"default: null; type:int REFERENCES genres(id)"`
 	TagBrainzID    string `sql:"default: null"`

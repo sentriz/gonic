@@ -46,6 +46,7 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 			t.Filename,
 		),
 		Album:    album.TagTitle,
+		Rating:   t.TagRating,
 		AlbumID:  album.SID(),
 		Duration: t.Length,
 		Bitrate:  t.Bitrate,

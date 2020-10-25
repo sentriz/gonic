@@ -46,6 +46,7 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 		Title:       t.TagTitle,
 		TrackNumber: t.TagTrackNumber,
 		DiscNumber:  t.TagDiscNumber,
+		Rating:      t.TagRating,
 		Path: path.Join(
 			parent.LeftPath,
 			parent.RightPath,
