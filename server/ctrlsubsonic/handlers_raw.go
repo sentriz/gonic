@@ -28,7 +28,7 @@ import (
 func streamGetTransPref(dbc *db.DB, userID int, client string) db.TranscodePreference {
 	pref := db.TranscodePreference{}
 	dbc.
-		Where("user_id=?", userID).
+		Where("user_id=1 OR user_id=?", userID).
 		Where("client COLLATE NOCASE IN (?)", []string{"*", client}).
 		Order("client DESC"). // ensure "*" is last if it's there
 		First(&pref)
