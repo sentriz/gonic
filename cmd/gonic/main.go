@@ -1,3 +1,5 @@
+// Package main is the gonic server entrypoint
+//nolint:lll // flags help strings
 package main
 
 import (
@@ -25,15 +27,16 @@ const (
 
 func main() {
 	set := flag.NewFlagSet(version.NAME, flag.ExitOnError)
-	listenAddr := set.String("listen-addr", "0.0.0.0:4747", "listen address (optional)")
-	musicPath := set.String("music-path", "", "path to music")
-	cachePath := set.String("cache-path", "/tmp/gonic_cache", "path to cache")
-	dbPath := set.String("db-path", "gonic.db", "path to database (optional)")
-	scanInterval := set.Int("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
-	jukeboxEnabled := set.Bool("jukebox-enabled", false, "whether the subsonic jukebox api should be enabled (optional)")
-	proxyPrefix := set.String("proxy-prefix", "", "url path prefix to use if behind proxy. eg '/gonic' (optional)")
+	confListenAddr := set.String("listen-addr", "0.0.0.0:4747", "listen address (optional)")
+	confMusicPath := set.String("music-path", "", "path to music")
+	confCachePath := set.String("cache-path", "/tmp/gonic_cache", "path to cache")
+	confDBPath := set.String("db-path", "gonic.db", "path to database (optional)")
+	confScanInterval := set.Int("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
+	confJukeboxEnabled := set.Bool("jukebox-enabled", false, "whether the subsonic jukebox api should be enabled (optional)")
+	confProxyPrefix := set.String("proxy-prefix", "", "url path prefix to use if behind proxy. eg '/gonic' (optional)")
+	confShowVersion := set.Bool("version", false, "show gonic version")
 	_ = set.String("config-path", "", "path to config (optional)")
-	showVersion := set.Bool("version", false, "show gonic version")
+
 	if err := ff.Parse(set, os.Args[1:],
 		ff.WithConfigFileFlag("config-path"),
 		ff.WithConfigFileParser(ff.PlainParser),
@@ -41,55 +44,57 @@ func main() {
 	); err != nil {
 		log.Fatalf("error parsing args: %v\n", err)
 	}
-	//
-	if *showVersion {
+
+	if *confShowVersion {
 		fmt.Println(version.VERSION)
 		os.Exit(0)
 	}
+
 	log.Printf("starting gonic %s\n", version.VERSION)
 	log.Printf("provided config\n")
 	set.VisitAll(func(f *flag.Flag) {
 		log.Printf("    %-15s %s\n", f.Name, f.Value)
 	})
-	//
-	if _, err := os.Stat(*musicPath); os.IsNotExist(err) {
+
+	if _, err := os.Stat(*confMusicPath); os.IsNotExist(err) {
 		log.Fatal("please provide a valid music directory")
 	}
-	if _, err := os.Stat(*cachePath); os.IsNotExist(err) {
-		if err := os.MkdirAll(*cachePath, os.ModePerm); err != nil {
+	if _, err := os.Stat(*confCachePath); os.IsNotExist(err) {
+		if err := os.MkdirAll(*confCachePath, os.ModePerm); err != nil {
 			log.Fatalf("couldn't create cache path: %v\n", err)
 		}
 	}
-	coverCachePath := path.Join(*cachePath, coverCachePrefix)
+	coverCachePath := path.Join(*confCachePath, coverCachePrefix)
 	if _, err := os.Stat(coverCachePath); os.IsNotExist(err) {
 		if err := os.MkdirAll(coverCachePath, os.ModePerm); err != nil {
 			log.Fatalf("couldn't create cover cache path: %v\n", err)
 		}
 	}
-	db, err := db.New(*dbPath)
+
+	db, err := db.New(*confDBPath)
 	if err != nil {
 		log.Fatalf("error opening database: %v\n", err)
 	}
 	defer db.Close()
-	//
+
 	proxyPrefixExpr := regexp.MustCompile(`^\/*(.*?)\/*$`)
-	*proxyPrefix = proxyPrefixExpr.ReplaceAllString(*proxyPrefix, `/$1`)
-	//
+	*confProxyPrefix = proxyPrefixExpr.ReplaceAllString(*confProxyPrefix, `/$1`)
 	server := server.New(server.Options{
 		DB:             db,
-		MusicPath:      *musicPath,
-		CachePath:      *cachePath,
+		MusicPath:      *confMusicPath,
+		CachePath:      *confCachePath,
 		CoverCachePath: coverCachePath,
-		ProxyPrefix:    *proxyPrefix,
+		ProxyPrefix:    *confProxyPrefix,
 	})
+
 	var g run.Group
-	g.Add(server.StartHTTP(*listenAddr))
+	g.Add(server.StartHTTP(*confListenAddr))
 	g.Add(server.StartSessionClean(cleanTimeDuration))
-	if *scanInterval > 0 {
-		tickerDur := time.Duration(*scanInterval) * time.Minute
+	if *confScanInterval > 0 {
+		tickerDur := time.Duration(*confScanInterval) * time.Minute
 		g.Add(server.StartScanTicker(tickerDur))
 	}
-	if *jukeboxEnabled {
+	if *confJukeboxEnabled {
 		g.Add(server.StartJukebox())
 	}
 	if err := g.Run(); err != nil {
