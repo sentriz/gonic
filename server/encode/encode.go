@@ -87,7 +87,7 @@ func cmdOutputWrite(out, cache io.Writer, pipeReader io.ReadCloser) {
 func ffmpegCommand(filePath string, profile Profile) *exec.Cmd {
 	args := []string{
 		"-v", "0",
-		"-i", filePath,
+		"-i", fmt.Sprintf("'%s'", filePath),
 		"-map", "0:0",
 		"-vn",
 		"-b:a", fmt.Sprintf("%dk", profile.Bitrate),
