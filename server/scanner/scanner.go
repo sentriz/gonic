@@ -341,7 +341,6 @@ func (s *Scanner) handleFolder(it *item) error {
 		s.curFolders.Push(folder)
 	}()
 	err := s.db.
-		Select("id, updated_at").
 		Where(db.Album{
 			LeftPath:  it.directory,
 			RightPath: it.filename,
