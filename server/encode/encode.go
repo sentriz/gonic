@@ -110,13 +110,15 @@ func ffmpegCommand(filePath string, profile Profile) *exec.Cmd {
 }
 
 func encode(out io.Writer, trackPath, cachePath string, profile Profile) error {
+	// prepare cache part file path
+	cachePartPath := fmt.Sprintf("%s.part", cachePath)
 	// prepare the command and file descriptors
 	cmd := ffmpegCommand(trackPath, profile)
 	pipeReader, pipeWriter := io.Pipe()
 	cmd.Stdout = pipeWriter
 	cmd.Stderr = pipeWriter
-	// create cache file
-	cacheFile, err := os.Create(cachePath)
+	// create cache part file
+	cacheFile, err := os.Create(cachePartPath)
 	if err != nil {
 		return fmt.Errorf("writing to cache file %q: %v: %w", cachePath, err, err)
 	}
@@ -130,12 +132,14 @@ func encode(out io.Writer, trackPath, cachePath string, profile Profile) error {
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("running ffmpeg: %w", err)
 	}
-	// close all pipes and flush cache file
+	// close all pipes and flush cache part file
 	_ = pipeWriter.Close()
 	if err := cacheFile.Sync(); err != nil {
 		return fmt.Errorf("flushing %q: %w", cachePath, err)
 	}
 	_ = cacheFile.Close()
+	// rename cache part file to mark it as valid cache file
+	os.Rename(cachePartPath, cachePath)
 	return nil
 }
 
