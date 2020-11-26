@@ -139,7 +139,7 @@ func encode(out io.Writer, trackPath, cachePath string, profile Profile) error {
 	}
 	_ = cacheFile.Close()
 	// rename cache part file to mark it as valid cache file
-	os.Rename(cachePartPath, cachePath)
+	_ = os.Rename(cachePartPath, cachePath)
 	return nil
 }
 
