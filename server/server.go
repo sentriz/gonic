@@ -83,7 +83,7 @@ func setupMisc(r *mux.Router, ctrl *ctrlbase.Controller) {
 	r.HandleFunc("/",
 		func(w http.ResponseWriter, r *http.Request) {
 			// make the admin page the default
-			http.Redirect(w, r, ctrl.Path("/admin/home"), http.StatusMovedPermanently)
+			http.Redirect(w, r, ctrl.Path("/admin/home"), http.StatusSeeOther)
 		})
 	r.HandleFunc("/musicFolderSettings.view",
 		func(w http.ResponseWriter, r *http.Request) {
@@ -92,7 +92,7 @@ func setupMisc(r *mux.Router, ctrl *ctrlbase.Controller) {
 			// custom handler, middleware. etc setup that we've got in `SetupSubsonic()`.
 			// instead lets redirect to down there and use the scan endpoint
 			redirectTo := fmt.Sprintf("/rest/startScan.view?%s", r.URL.Query().Encode())
-			http.Redirect(w, r, ctrl.Path(redirectTo), http.StatusMovedPermanently)
+			http.Redirect(w, r, ctrl.Path(redirectTo), http.StatusSeeOther)
 		})
 }
 
