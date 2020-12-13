@@ -11,7 +11,7 @@
 
 ## features
 
-- browsing by folder (keeping your full tree intact)  
+- browsing by folder (keeping your full tree intact) [see here](#directory-structure)  
 - browsing by tags (using [taglib](https://taglib.org/) - supports mp3, opus, flac, ape, m4a, wav, etc.)  
 - on-the-fly audio transcoding and caching (requires [ffmpeg](https://ffmpeg.org/)) (thank you [spijet](https://github.com/spijet/))
 - jukebox mode (thank you [AlexKraak](https://github.com/AlexKraak/))
@@ -153,4 +153,33 @@ $ sudo systemctl enable --now gonic
       # set "X-Forwarded-Host" header for last.fm connection callback
       proxy_set_header X-Forwarded-Host $host;
   }
+```
+
+## directory structure
+
+when browsing by folder, any arbitrary and nested folder layout is supported. with one exception: _albums must be contained in a single folder_  
+
+please see [here](https://github.com/sentriz/gonic/issues/89) for more context  
+
+```
+music
+├── drum and bass
+│   └── Photek
+│       └── (1997) Modus Operandi
+│           ├── 01.10 The Hidden Camera.flac
+│           ├── 02.10 Smoke Rings.flac
+│           ├── 03.10 Minotaur.flac
+│           └── folder.jpg
+└── experimental
+    └── Alan Vega
+        ├── (1980) Alan Vega
+        │   ├── 01.08 Jukebox Babe.flac
+        │   ├── 02.08 Fireball.flac
+        │   ├── 03.08 Kung Foo Cowboy.flac
+        │   └── folder.jpg
+        └── (1990) Deuce Avenue
+            ├── 01.13 Body Bop Jive.flac
+            ├── 02.13 Sneaker Gun Fire.flac
+            ├── 03.13 Jab Gee.flac
+            └── folder.jpg
 ```
