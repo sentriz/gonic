@@ -45,6 +45,9 @@ issues:
   - text: "weak cryptographic primitive"
     linters:
     - gosec
+  - text: "weak random number generator"
+    linters:
+    - gosec
 
   # TODO: fix these
   - text: "should have comment"

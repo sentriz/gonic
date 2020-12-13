@@ -9,7 +9,7 @@ jobs:
   test:
     strategy:
       matrix:
-        go-version: [1.12.x, 1.13.x, 1.14.x]
+        go-version: [1.13.x, 1.14.x, 1.15.x]
         platform: [ubuntu-latest]
     runs-on: ${{ matrix.platform }}
     steps:
@@ -24,8 +24,8 @@ jobs:
         sudo apt update
         sudo apt install build-essential git sqlite libtag1-dev ffmpeg libasound-dev
     - name: Lint
-      uses: golangci/golangci-lint-action@v1
+      uses: golangci/golangci-lint-action@v2
       with:
-        version: v1.28
+        version: v1.33
     - name: Test
       run: go test ./...
