@@ -42,12 +42,16 @@ func New(in string) (ID, error) {
 	if err != nil {
 		return ID{}, fmt.Errorf("%q: %w", partValue, ErrNotAnInt)
 	}
-	for _, acc := range []IDT{Artist, Album, Track} {
-		if partType == string(acc) {
-			return ID{Type: acc, Value: val}, nil
-		}
+	switch IDT(partType) {
+	case Artist:
+		return ID{Type: Artist, Value: val}, nil
+	case Album:
+		return ID{Type: Album, Value: val}, nil
+	case Track:
+		return ID{Type: Track, Value: val}, nil
+	default:
+		return ID{}, fmt.Errorf("%q: %w", partType, ErrBadPrefix)
 	}
-	return ID{}, fmt.Errorf("%q: %w", partType, ErrBadPrefix)
 }
 
 func (i ID) String() string {

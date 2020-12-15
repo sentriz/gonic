@@ -2,6 +2,7 @@ package spec
 
 import (
 	"path"
+	"strings"
 
 	"go.senan.xyz/gonic/server/db"
 )
@@ -13,10 +14,8 @@ func NewAlbumByTags(a *db.Album, artist *db.Artist) *Album {
 		Name:       a.TagTitle,
 		Year:       a.TagYear,
 		TrackCount: a.ChildCount,
+		Genre:      strings.Join(a.GenreStrings(), ", "),
 		Duration:   a.Duration,
-	}
-	if a.TagGenre != nil {
-		ret.Genre = a.TagGenre.Name
 	}
 	if a.Cover != "" {
 		ret.CoverID = a.SID()
@@ -47,6 +46,7 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 		),
 		Album:    album.TagTitle,
 		AlbumID:  album.SID(),
+		Genre:    strings.Join(t.GenreStrings(), ", "),
 		Duration: t.Length,
 		Bitrate:  t.Bitrate,
 		Type:     "music",

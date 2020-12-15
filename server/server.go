@@ -26,6 +26,7 @@ type Options struct {
 	CachePath      string
 	CoverCachePath string
 	ProxyPrefix    string
+	GenreSplit     string
 }
 
 type Server struct {
@@ -40,7 +41,7 @@ func New(opts Options) *Server {
 	opts.MusicPath = filepath.Clean(opts.MusicPath)
 	opts.CachePath = filepath.Clean(opts.CachePath)
 	// ** begin controllers
-	scanner := scanner.New(opts.MusicPath, opts.DB)
+	scanner := scanner.New(opts.MusicPath, opts.DB, opts.GenreSplit)
 	jukebox := jukebox.New(opts.MusicPath)
 	// the base controller, it's fields/middlewares are embedded/used by the
 	// other two admin ui and subsonic controllers
