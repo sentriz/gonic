@@ -34,6 +34,7 @@ func main() {
 	confScanInterval := set.Int("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
 	confJukeboxEnabled := set.Bool("jukebox-enabled", false, "whether the subsonic jukebox api should be enabled (optional)")
 	confProxyPrefix := set.String("proxy-prefix", "", "url path prefix to use if behind proxy. eg '/gonic' (optional)")
+	confGenreSplit := set.String("genre-split", "\n", "character or string to split genre tag data on (optional)")
 	confShowVersion := set.Bool("version", false, "show gonic version")
 	_ = set.String("config-path", "", "path to config (optional)")
 
@@ -85,6 +86,7 @@ func main() {
 		CachePath:      *confCachePath,
 		CoverCachePath: coverCachePath,
 		ProxyPrefix:    *confProxyPrefix,
+		GenreSplit:     *confGenreSplit,
 	})
 
 	var g run.Group

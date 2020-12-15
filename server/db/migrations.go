@@ -61,14 +61,14 @@ func migrateMergePlaylist() gormigrate.Migration {
 				return nil
 			}
 			return tx.Exec(`
-			UPDATE playlists
-			SET items=( SELECT group_concat(track_id) FROM (
-				SELECT track_id
-				FROM playlist_items
-				WHERE playlist_items.playlist_id=playlists.id
-				ORDER BY created_at
-			) );
-			DROP TABLE playlist_items;`,
+				UPDATE playlists
+				SET items=( SELECT group_concat(track_id) FROM (
+					SELECT track_id
+					FROM playlist_items
+					WHERE playlist_items.playlist_id=playlists.id
+					ORDER BY created_at
+				) );
+				DROP TABLE playlist_items;`,
 			).
 				Error
 		},
@@ -117,8 +117,8 @@ func migrateUpdateTranscodePrefIDX() gormigrate.Migration {
 				return nil
 			}
 			step := tx.Exec(`
-			ALTER TABLE transcode_preferences RENAME TO transcode_preferences_orig;
-		`)
+				ALTER TABLE transcode_preferences RENAME TO transcode_preferences_orig;
+			`)
 			if err := step.Error; err != nil {
 				return fmt.Errorf("step rename: %w", err)
 			}
@@ -129,11 +129,11 @@ func migrateUpdateTranscodePrefIDX() gormigrate.Migration {
 				return fmt.Errorf("step create: %w", err)
 			}
 			step = tx.Exec(`
-			INSERT INTO transcode_preferences (user_id, client, profile)
-				SELECT user_id, client, profile
-				FROM transcode_preferences_orig;
-			DROP TABLE transcode_preferences_orig;
-		`)
+				INSERT INTO transcode_preferences (user_id, client, profile)
+					SELECT user_id, client, profile
+					FROM transcode_preferences_orig;
+				DROP TABLE transcode_preferences_orig;
+			`)
 			if err := step.Error; err != nil {
 				return fmt.Errorf("step copy: %w", err)
 			}
@@ -148,6 +148,22 @@ func migrateAddAlbumIDX() gormigrate.Migration {
 		Migrate: func(tx *gorm.DB) error {
 			return tx.AutoMigrate(
 				Album{},
+			).
+				Error
+		},
+	}
+}
+
+func migrateMultiGenre() gormigrate.Migration {
+	return gormigrate.Migration{
+		ID: "202012151806",
+		Migrate: func(tx *gorm.DB) error {
+			return tx.AutoMigrate(
+				Track{},
+				Album{},
+				Genre{},
+				TrackGenre{},
+				AlbumGenre{},
 			).
 				Error
 		},

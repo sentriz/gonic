@@ -82,7 +82,7 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 		Select("albums.*, count(tracks.id) child_count, sum(tracks.length) duration").
 		Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
 		Preload("TagArtist").
-		Preload("TagGenre").
+		Preload("Genres").
 		Preload("Tracks", func(db *gorm.DB) *gorm.DB {
 			return db.Order("tracks.tag_disc_number, tracks.tag_track_number")
 		}).
@@ -123,8 +123,9 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 			params.GetOrInt("toYear", 2200))
 		q = q.Order("tag_year")
 	case "byGenre":
-		q = q.Joins("JOIN genres ON albums.tag_genre_id=genres.id AND genres.name=?",
-			params.GetOr("genre", "Unknown Genre"))
+		genre, _ := params.Get("genre")
+		q = q.Joins("JOIN album_genres ON album_genres.album_id=albums.id")
+		q = q.Joins("JOIN genres ON genres.id=album_genres.genre_id AND genres.name=?", genre)
 	case "frequent":
 		user := r.Context().Value(CtxUser).(*db.User)
 		q = q.Joins("JOIN plays ON albums.id=plays.album_id AND plays.user_id=?",
@@ -291,8 +292,8 @@ func (c *Controller) ServeGetGenres(r *http.Request) *spec.Response {
 	var genres []*db.Genre
 	c.DB.
 		Select(`*,
-			(SELECT count(id) FROM albums WHERE tag_genre_id=genres.id) album_count,
-			(SELECT count(id) FROM tracks WHERE tag_genre_id=genres.id) track_count`).
+			(SELECT count(1) FROM album_genres WHERE genre_id=genres.id) album_count,
+			(SELECT count(1) FROM track_genres WHERE genre_id=genres.id) track_count`).
 		Group("genres.id").
 		Find(&genres)
 	sub := spec.NewResponse()
@@ -316,7 +317,8 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 	var tracks []*db.Track
 	c.DB.
 		Joins("JOIN albums ON tracks.album_id=albums.id").
-		Joins("JOIN genres ON tracks.tag_genre_id=genres.id AND genres.name=?", genre).
+		Joins("JOIN track_genres ON track_genres.track_id=tracks.id").
+		Joins("JOIN genres ON track_genres.genre_id=genres.id AND genres.name=?", genre).
 		Preload("Album").
 		Offset(params.GetOrInt("offset", 0)).
 		Limit(params.GetOrInt("count", 10)).

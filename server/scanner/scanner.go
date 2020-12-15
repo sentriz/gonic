@@ -58,9 +58,10 @@ func SetScanning() func() {
 }
 
 type Scanner struct {
-	db        *db.DB
-	musicPath string
-	isFull    bool
+	db         *db.DB
+	musicPath  string
+	isFull     bool
+	genreSplit string
 	// these two are for the transaction we do for every folder.
 	// the boolean is there so we dont begin or commit multiple
 	// times in the handle folder or post children callback
@@ -78,10 +79,11 @@ type Scanner struct {
 	seenTracksNew int              // n tracks not seen before
 }
 
-func New(musicPath string, db *db.DB) *Scanner {
+func New(musicPath string, db *db.DB, genreSplit string) *Scanner {
 	return &Scanner{
-		db:        db,
-		musicPath: musicPath,
+		db:         db,
+		musicPath:  musicPath,
+		genreSplit: genreSplit,
 	}
 }
 
@@ -368,6 +370,7 @@ func (s *Scanner) handleTrack(it *item) error {
 		s.trTx = s.db.Begin()
 		s.trTxOpen = true
 	}
+
 	// ** begin set track basics
 	track := &db.Track{}
 	defer func() {
@@ -404,16 +407,9 @@ func (s *Scanner) handleTrack(it *item) error {
 	track.TagBrainzID = trTags.BrainzID()
 	track.Length = trTags.Length()   // these two should be calculated
 	track.Bitrate = trTags.Bitrate() // ...from the file instead of tags
+
 	// ** begin set album artist basics
-	artistName := func() string {
-		if r := trTags.AlbumArtist(); r != "" {
-			return r
-		}
-		if r := trTags.Artist(); r != "" {
-			return r
-		}
-		return "Unknown Artist"
-	}()
+	artistName := firstTag("Unknown Artist", trTags.AlbumArtist, trTags.Artist)
 	artist := &db.Artist{}
 	err = s.trTx.
 		Select("id").
@@ -428,43 +424,66 @@ func (s *Scanner) handleTrack(it *item) error {
 		}
 	}
 	track.ArtistID = artist.ID
+
 	// ** begin set genre
-	genreName := func() string {
-		if r := trTags.Genre(); r != "" {
-			return r
+	genreTag := firstTag("Unknown Genre", trTags.Genre)
+	genres := strings.Split(genreTag, s.genreSplit)
+	genreIDs := []int{}
+	for _, genreName := range genres {
+		// TODO insert or ignore
+		genre := &db.Genre{}
+		err = s.trTx.
+			Select("id").
+			Where("name=?", genreName).
+			First(genre).
+			Error
+		if gorm.IsRecordNotFoundError(err) {
+			genre.Name = genreName
+			if err := s.trTx.Save(genre).Error; err != nil {
+				return fmt.Errorf("writing genres table: %w", err)
+			}
 		}
-		return "Unknown Genre"
-	}()
-	genre := &db.Genre{}
-	err = s.trTx.
-		Select("id").
-		Where("name=?", genreName).
-		First(genre).
-		Error
-	if gorm.IsRecordNotFoundError(err) {
-		genre.Name = genreName
-		if err := s.trTx.Save(genre).Error; err != nil {
-			return fmt.Errorf("writing genres table: %w", err)
-		}
+		genreIDs = append(genreIDs, genre.ID)
 	}
-	track.TagGenreID = genre.ID
+
 	// ** begin save the track
 	if err := s.trTx.Save(track).Error; err != nil {
 		return fmt.Errorf("writing track table: %w", err)
 	}
+	for _, genreID := range genreIDs {
+		trackGenre := &db.TrackGenre{TrackID: track.ID, GenreID: genreID}
+		if err := s.trTx.Save(trackGenre).Error; err != nil {
+			return fmt.Errorf("writing track table: %w", err)
+		}
+	}
 	s.seenTracksNew++
+
 	// ** begin set album if this is the first track in the folder
 	folder := s.curFolders.Peek()
 	if !folder.ReceivedPaths || folder.ReceivedTags {
 		// the folder hasn't been modified or already has it's tags
 		return nil
 	}
+	for _, genreID := range genreIDs {
+		albumGenre := &db.AlbumGenre{AlbumID: folder.ID, GenreID: genreID}
+		if err := s.trTx.Save(albumGenre).Error; err != nil {
+			return fmt.Errorf("writing album table: %w", err)
+		}
+	}
 	folder.TagTitle = trTags.Album()
 	folder.TagTitleUDec = decoded(trTags.Album())
 	folder.TagBrainzID = trTags.AlbumBrainzID()
 	folder.TagYear = trTags.Year()
 	folder.TagArtistID = artist.ID
-	folder.TagGenreID = genre.ID
 	folder.ReceivedTags = true
 	return nil
+}
+
+func firstTag(fallback string, tags ...func() string) string {
+	for _, f := range tags {
+		if tag := f(); tag != "" {
+			return tag
+		}
+	}
+	return fallback
 }
