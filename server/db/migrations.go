@@ -158,14 +158,37 @@ func migrateMultiGenre() gormigrate.Migration {
 	return gormigrate.Migration{
 		ID: "202012151806",
 		Migrate: func(tx *gorm.DB) error {
-			return tx.AutoMigrate(
+			step := tx.AutoMigrate(
 				Track{},
 				Album{},
 				Genre{},
 				TrackGenre{},
 				AlbumGenre{},
-			).
-				Error
+			)
+			if err := step.Error; err != nil {
+				return fmt.Errorf("step auto migrate: %w", err)
+			}
+			step = tx.Exec(`
+				INSERT INTO track_genres (track_id, genre_id)
+					SELECT id, tag_genre_id
+					FROM tracks
+					WHERE tag_genre_id IS NOT NULL;
+				UPDATE tracks SET tag_genre_id=NULL;
+			`)
+			if err := step.Error; err != nil {
+				return fmt.Errorf("step migrate track genres: %w", err)
+			}
+			step = tx.Exec(`
+				INSERT INTO album_genres (album_id, genre_id)
+					SELECT id, tag_genre_id
+					FROM albums
+					WHERE tag_genre_id IS NOT NULL;
+				UPDATE albums SET tag_genre_id=NULL;
+			`)
+			if err := step.Error; err != nil {
+				return fmt.Errorf("step migrate album genres: %w", err)
+			}
+			return nil
 		},
 	}
 }
