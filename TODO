@@ -1,0 +1,7 @@
+- gorm v2
+  - preload joins
+	- insert or ignore
+  - bulk inserts (eg. track_genres, album_genres)
+- db package with queries encapsulated 
+- add newlines
+- scanner tests and refactor
