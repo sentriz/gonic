@@ -136,6 +136,7 @@ $ sudo systemctl enable --now gonic
 |`GONIC_PROXY_PREFIX`|`-proxy-prefix`|**optional** url path prefix to use if behind reverse proxy. eg `/gonic` (see example configs below)|
 |`GONIC_SCAN_INTERVAL`|`-scan-interval`|**optional** interval (in minutes) to check for new music (automatic scanning disabled if omitted)|
 |`GONIC_JUKEBOX_ENABLED`|`-jukebox-enabled`|**optional** whether the subsonic [jukebox api](https://airsonic.github.io/docs/jukebox/) should be enabled|
+|`GONIC_GENRE_SPLIT`|`-genre-split`|**optional** a string or character to split genre tags on for multi-genre support (eg. `;`)|
 
 ## screenshots
 
