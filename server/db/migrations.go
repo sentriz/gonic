@@ -43,6 +43,7 @@ func migrateCreateInitUser() gormigrate.Migration {
 			if !gorm.IsRecordNotFoundError(err) {
 				return nil
 			}
+
 			return tx.Create(&User{
 				Name:     initUsername,
 				Password: initPassword,
@@ -60,6 +61,7 @@ func migrateMergePlaylist() gormigrate.Migration {
 			if !tx.HasTable("playlist_items") {
 				return nil
 			}
+
 			return tx.Exec(`
 				UPDATE playlists
 				SET items=( SELECT group_concat(track_id) FROM (
@@ -116,18 +118,21 @@ func migrateUpdateTranscodePrefIDX() gormigrate.Migration {
 				// index already exists
 				return nil
 			}
+
 			step := tx.Exec(`
 				ALTER TABLE transcode_preferences RENAME TO transcode_preferences_orig;
 			`)
 			if err := step.Error; err != nil {
 				return fmt.Errorf("step rename: %w", err)
 			}
+
 			step = tx.AutoMigrate(
 				TranscodePreference{},
 			)
 			if err := step.Error; err != nil {
 				return fmt.Errorf("step create: %w", err)
 			}
+
 			step = tx.Exec(`
 				INSERT INTO transcode_preferences (user_id, client, profile)
 					SELECT user_id, client, profile
@@ -165,6 +170,14 @@ func migrateMultiGenre() gormigrate.Migration {
 				TrackGenre{},
 				AlbumGenre{},
 			)
+			var genreCount int
+			tx.
+				Model(Genre{}).
+				Count(&genreCount)
+			if genreCount == 0 {
+				return nil
+			}
+
 			if err := step.Error; err != nil {
 				return fmt.Errorf("step auto migrate: %w", err)
 			}
@@ -175,6 +188,7 @@ func migrateMultiGenre() gormigrate.Migration {
 					WHERE tag_genre_id IS NOT NULL;
 				UPDATE tracks SET tag_genre_id=NULL;
 			`)
+
 			if err := step.Error; err != nil {
 				return fmt.Errorf("step migrate track genres: %w", err)
 			}
