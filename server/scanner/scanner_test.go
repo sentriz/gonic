@@ -51,7 +51,7 @@ func TestMain(m *testing.M) {
 	}
 	// benchmarks aren't real code are they? >:)
 	// here is an absolute path to my music directory
-	testScanner = New("/home/senan/music", db)
+	testScanner = New("/home/senan/music", db, "\n")
 	log.SetOutput(ioutil.Discard)
 	os.Exit(m.Run())
 }
