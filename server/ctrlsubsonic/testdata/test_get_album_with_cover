@@ -37,7 +37,8 @@
           "title": "Snake Charmer",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 1983
         },
         {
           "album": "Snake Charmer",
@@ -59,7 +60,8 @@
           "title": "Hold On to Your Dreams",
           "track": 2,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 1983
         },
         {
           "album": "Snake Charmer",
@@ -81,7 +83,8 @@
           "title": "It Was a Camel",
           "track": 3,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 1983
         },
         {
           "album": "Snake Charmer",
@@ -103,7 +106,8 @@
           "title": "Sleazy",
           "track": 4,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 1983
         },
         {
           "album": "Snake Charmer",
@@ -125,7 +129,8 @@
           "title": "Snake Charmer (reprise)",
           "track": 5,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 1983
         }
       ]
     }
