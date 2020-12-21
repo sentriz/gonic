@@ -140,6 +140,7 @@ type TrackChild struct {
 	TrackNumber int        `xml:"track,attr,omitempty"       json:"track,omitempty"`
 	DiscNumber  int        `xml:"discNumber,attr,omitempty"  json:"discNumber,omitempty"`
 	Type        string     `xml:"type,attr,omitempty"        json:"type,omitempty"`
+	Year        int        `xml:"year,attr,omitempty"        json:"year,omitempty"`
 }
 
 type Artists struct {

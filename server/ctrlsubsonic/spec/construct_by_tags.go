@@ -50,6 +50,7 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 		Duration: t.Length,
 		Bitrate:  t.Bitrate,
 		Type:     "music",
+		Year:     album.TagYear,
 	}
 	if album.Cover != "" {
 		ret.CoverID = album.SID()
