@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/securecookie"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 // wrapMigrations wraps a list of migrations to add logging and transactions
@@ -57,7 +58,10 @@ func New(path string) (*DB, error) {
 		Opaque: path,
 	}
 	url.RawQuery = defaultOptions().Encode()
-	db, err := gorm.Open(sqlite.Open(url.String()), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(url.String()), &gorm.Config{
+		DisableAutomaticPing: true,
+		Logger:               logger.Default.LogMode(logger.Warn),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("with gorm: %w", err)
 	}
