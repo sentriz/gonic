@@ -47,6 +47,7 @@ func defaultOptions() url.Values {
 
 type DB struct {
 	*gorm.DB
+	Close func() error
 }
 
 func New(path string) (*DB, error) {
@@ -84,7 +85,10 @@ func New(path string) (*DB, error) {
 	if err = migr.Migrate(); err != nil {
 		return nil, fmt.Errorf("migrating to latest version: %w", err)
 	}
-	return &DB{DB: db}, nil
+	return &DB{
+		DB:    db,
+		Close: sqlDB.Close,
+	}, nil
 }
 
 func NewMock() (*DB, error) {

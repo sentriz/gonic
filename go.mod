@@ -4,6 +4,7 @@ require (
 	github.com/Masterminds/goutils v1.1.0 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible
+	github.com/Tedyst/gormstore v0.0.0-20201208101936-a978cf1cc9c4
 	github.com/cespare/xxhash v1.1.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/dustin/go-humanize v1.0.0

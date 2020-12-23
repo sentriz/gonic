@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/wader/gormstore"
+	"github.com/Tedyst/gormstore"
 
 	"go.senan.xyz/gonic/server/assets"
 	"go.senan.xyz/gonic/server/ctrladmin"
