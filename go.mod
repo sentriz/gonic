@@ -18,7 +18,6 @@ require (
 	github.com/hajimehoshi/oto v0.6.1 // indirect
 	github.com/huandu/xstrings v1.3.1 // indirect
 	github.com/imdario/mergo v0.3.9 // indirect
-	github.com/jinzhu/gorm v1.9.12
 	github.com/josephburnett/jd v0.0.0-20191228205456-aa1a7c66b42f
 	github.com/karrick/godirwalk v1.15.6
 	github.com/mewkiz/flac v1.0.6 // indirect
@@ -31,7 +30,6 @@ require (
 	github.com/peterbourgon/ff v1.7.0
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
-	github.com/wader/gormstore v0.0.0-20200328121358-65a111a20c23
 	golang.org/x/exp v0.0.0-20200513190911-00229845015e // indirect
 	golang.org/x/image v0.0.0-20200430140353-33d19683fad8 // indirect
 	golang.org/x/mobile v0.0.0-20200329125638-4c31acba0007 // indirect
