@@ -73,7 +73,7 @@ func coverGetPath(dbc *db.DB, musicPath string, id int) (string, error) {
 		Select("id, left_path, right_path, cover").
 		First(folder, id).
 		Error
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return "", errCoverNotFound
 	}
 	if folder.Cover == "" {

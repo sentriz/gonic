@@ -1,6 +1,7 @@
 package ctrlsubsonic
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"time"
@@ -93,14 +94,14 @@ func (c *Controller) ServeStartScan(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeGetScanStatus(r *http.Request) *spec.Response {
-	var trackCount int
+	var trackCount int64
 	c.DB.
 		Model(db.Track{}).
 		Count(&trackCount)
 	sub := spec.NewResponse()
 	sub.ScanStatus = &spec.ScanStatus{
 		Scanning: scanner.IsScanning(),
-		Count:    trackCount,
+		Count:    int(trackCount),
 	}
 	return sub
 }
@@ -129,7 +130,7 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 		Where("user_id=?", user.ID).
 		Find(&queue).
 		Error
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewResponse()
 	}
 	sub := spec.NewResponse()
@@ -185,7 +186,7 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 		Preload("Album").
 		First(track).
 		Error
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewError(10, "couldn't find a track with that id")
 	}
 	sub := spec.NewResponse()

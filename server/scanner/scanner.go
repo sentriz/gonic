@@ -12,9 +12,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"gorm.io/gorm"
 	"github.com/karrick/godirwalk"
 	"github.com/rainycape/unidecode"
+	"gorm.io/gorm"
 
 	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/mime"
@@ -137,10 +137,9 @@ func (s *Scanner) cleanArtists() (int, error) {
 	sub := s.db.
 		Select("1").
 		Model(&db.Album{}).
-		Where("albums.tag_artist_id=artists.id").
-		SubQuery()
+		Where("albums.tag_artist_id=artists.id")
 	q := s.db.
-		Where("NOT EXISTS ?", sub).
+		Where("NOT EXISTS (?)", sub).
 		Delete(&db.Artist{})
 	return int(q.RowsAffected), q.Error
 }
@@ -349,7 +348,7 @@ func (s *Scanner) handleFolder(it *item) error {
 		}).
 		First(folder).
 		Error
-	if !gorm.IsRecordNotFoundError(err) &&
+	if !errors.Is(err, gorm.ErrRecordNotFound) &&
 		s.itemUnchanged(it.stat.ModTime(), folder.UpdatedAt) {
 		// we found the record but it hasn't changed
 		return nil
@@ -386,7 +385,7 @@ func (s *Scanner) handleTrack(it *item) error {
 		}).
 		First(track).
 		Error
-	if !gorm.IsRecordNotFoundError(err) &&
+	if !errors.Is(err, gorm.ErrRecordNotFound) &&
 		s.itemUnchanged(it.stat.ModTime(), track.UpdatedAt) {
 		// we found the record but it hasn't changed
 		return nil
@@ -416,7 +415,7 @@ func (s *Scanner) handleTrack(it *item) error {
 		Where("name=?", artistName).
 		First(artist).
 		Error
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		artist.Name = artistName
 		artist.NameUDec = decoded(artistName)
 		if err := s.trTx.Save(artist).Error; err != nil {
@@ -437,7 +436,7 @@ func (s *Scanner) handleTrack(it *item) error {
 			Where("name=?", genreName).
 			First(genre).
 			Error
-		if gorm.IsRecordNotFoundError(err) {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			genre.Name = genreName
 			if err := s.trTx.Save(genre).Error; err != nil {
 				return fmt.Errorf("writing genres table: %w", err)

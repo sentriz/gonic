@@ -1,6 +1,7 @@
 package ctrlsubsonic
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -88,7 +89,7 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 		}).
 		First(album, id.Value).
 		Error
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewError(10, "couldn't find an album with that id")
 	}
 	sub := spec.NewResponse()
@@ -234,7 +235,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		Where("id=?", id.Value).
 		Find(artist).
 		Error
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewError(70, "artist with id `%s` not found", id)
 	}
 	info, err := lastfm.ArtistGetInfo(apiKey, artist)
@@ -271,7 +272,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 			Group("artists.id").
 			Find(artist).
 			Error
-		if gorm.IsRecordNotFoundError(err) && !inclNotPresent {
+		if errors.Is(err, gorm.ErrRecordNotFound) && !inclNotPresent {
 			continue
 		}
 		similar := &spec.SimilarArtist{

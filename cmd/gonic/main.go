@@ -11,9 +11,9 @@ import (
 	"regexp"
 	"time"
 
-	_ "gorm.io/driver/sqlite"
 	"github.com/oklog/run"
 	"github.com/peterbourgon/ff"
+	_ "gorm.io/driver/sqlite"
 
 	"go.senan.xyz/gonic/server"
 	"go.senan.xyz/gonic/server/db"

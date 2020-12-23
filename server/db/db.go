@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -99,7 +100,6 @@ func (db *DB) GetSetting(key string) string {
 }
 
 func (db *DB) SetSetting(key, value string) {
-	gorm.ErrRecordNotFound
 	db.
 		Where(Setting{Key: key}).
 		Assign(Setting{Value: value}).
@@ -121,7 +121,7 @@ func (db *DB) GetUserByID(id int) *User {
 		Where("id=?", id).
 		First(user).
 		Error
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil
 	}
 	return user
@@ -133,7 +133,7 @@ func (db *DB) GetUserByName(name string) *User {
 		Where("name=?", name).
 		First(user).
 		Error
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil
 	}
 	return user

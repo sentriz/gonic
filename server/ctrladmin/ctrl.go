@@ -108,9 +108,9 @@ type templateData struct {
 	User    *db.User
 	Version string
 	// home
-	AlbumCount           int
-	ArtistCount          int
-	TrackCount           int
+	AlbumCount           int64
+	ArtistCount          int64
+	TrackCount           int64
 	RequestRoot          string
 	RecentFolders        []*db.Album
 	AllUsers             []*db.User
@@ -267,7 +267,7 @@ func sessLogSave(s *sessions.Session, w http.ResponseWriter, r *http.Request) {
 // ## begin validation
 
 var (
-	errValiNoUsername        = errors.New("please enter a username")
+	errValiNoUsername        = errors.New("please enter the password twice")
 	errValiPasswordAllFields = errors.New("please enter the password twice")
 	errValiPasswordsNotSame  = errors.New("passwords entered were not the same")
 	errValiKeysAllFields     = errors.New("please enter the api key and secret")

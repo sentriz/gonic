@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/go-gormigrate/gormigrate/v2"
@@ -22,8 +23,7 @@ func migrateInitSchema() gormigrate.Migration {
 				Album{},
 				Playlist{},
 				PlayQueue{},
-			).
-				Error
+			)
 		},
 	}
 }
@@ -40,7 +40,7 @@ func migrateCreateInitUser() gormigrate.Migration {
 				Where("name=?", initUsername).
 				First(&User{}).
 				Error
-			if !gorm.IsRecordNotFoundError(err) {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
 				return nil
 			}
 
@@ -58,21 +58,30 @@ func migrateMergePlaylist() gormigrate.Migration {
 	return gormigrate.Migration{
 		ID: "202002192222",
 		Migrate: func(tx *gorm.DB) error {
-			if !tx.HasTable("playlist_items") {
+			if !tx.Migrator().HasTable("playlist_items") {
 				return nil
 			}
 
-			return tx.Exec(`
+			err := tx.Exec(`
 				UPDATE playlists
 				SET items=( SELECT group_concat(track_id) FROM (
 					SELECT track_id
 					FROM playlist_items
 					WHERE playlist_items.playlist_id=playlists.id
 					ORDER BY created_at
-				) );
-				DROP TABLE playlist_items;`,
+				) );`,
 			).
 				Error
+			if err != nil {
+				return fmt.Errorf("step migrate: %w", err)
+			}
+
+			err = tx.Migrator().DropTable("playlist_items")
+			if err != nil {
+				return fmt.Errorf("step drop: %w", err)
+			}
+
+			return nil
 		},
 	}
 }
@@ -83,8 +92,7 @@ func migrateCreateTranscode() gormigrate.Migration {
 		Migrate: func(tx *gorm.DB) error {
 			return tx.AutoMigrate(
 				TranscodePreference{},
-			).
-				Error
+			)
 		},
 	}
 }
@@ -97,8 +105,7 @@ func migrateAddGenre() gormigrate.Migration {
 				Genre{},
 				Album{},
 				Track{},
-			).
-				Error
+			)
 		},
 	}
 }
@@ -107,40 +114,34 @@ func migrateUpdateTranscodePrefIDX() gormigrate.Migration {
 	return gormigrate.Migration{
 		ID: "202003241509",
 		Migrate: func(tx *gorm.DB) error {
-			var hasIDX int
-			tx.
-				Select("1").
-				Table("sqlite_master").
-				Where("type = ?", "index").
-				Where("name = ?", "idx_user_id_client").
-				Count(&hasIDX)
-			if hasIDX == 1 {
-				// index already exists
+			if tx.Migrator().HasIndex(&TranscodePreference{}, "idx_user_id_client") {
 				return nil
 			}
 
-			step := tx.Exec(`
-				ALTER TABLE transcode_preferences RENAME TO transcode_preferences_orig;
-			`)
-			if err := step.Error; err != nil {
+			err := tx.Migrator().RenameTable("transcode_preferences", "transcode_preferences_orig")
+			if err != nil {
 				return fmt.Errorf("step rename: %w", err)
 			}
 
-			step = tx.AutoMigrate(
+			err = tx.AutoMigrate(
 				TranscodePreference{},
 			)
-			if err := step.Error; err != nil {
+			if err != nil {
 				return fmt.Errorf("step create: %w", err)
 			}
 
-			step = tx.Exec(`
+			step := tx.Exec(`
 				INSERT INTO transcode_preferences (user_id, client, profile)
 					SELECT user_id, client, profile
 					FROM transcode_preferences_orig;
-				DROP TABLE transcode_preferences_orig;
 			`)
 			if err := step.Error; err != nil {
 				return fmt.Errorf("step copy: %w", err)
+			}
+
+			err = tx.Migrator().DropTable("transcode_preferences_orig")
+			if err != nil {
+				return fmt.Errorf("step drop orig: %w", err)
 			}
 			return nil
 		},
@@ -153,8 +154,7 @@ func migrateAddAlbumIDX() gormigrate.Migration {
 		Migrate: func(tx *gorm.DB) error {
 			return tx.AutoMigrate(
 				Album{},
-			).
-				Error
+			)
 		},
 	}
 }
@@ -163,14 +163,18 @@ func migrateMultiGenre() gormigrate.Migration {
 	return gormigrate.Migration{
 		ID: "202012151806",
 		Migrate: func(tx *gorm.DB) error {
-			step := tx.AutoMigrate(
+			err := tx.AutoMigrate(
 				Track{},
 				Album{},
 				Genre{},
 				TrackGenre{},
 				AlbumGenre{},
 			)
-			var genreCount int
+			if err != nil {
+				return fmt.Errorf("step auto migrate: %w", err)
+			}
+
+			var genreCount int64
 			tx.
 				Model(Genre{}).
 				Count(&genreCount)
@@ -178,29 +182,38 @@ func migrateMultiGenre() gormigrate.Migration {
 				return nil
 			}
 
-			if err := step.Error; err != nil {
-				return fmt.Errorf("step auto migrate: %w", err)
-			}
-			step = tx.Exec(`
+			step := tx.Exec(`
 				INSERT INTO track_genres (track_id, genre_id)
 					SELECT id, tag_genre_id
 					FROM tracks
 					WHERE tag_genre_id IS NOT NULL;
-				UPDATE tracks SET tag_genre_id=NULL;
 			`)
-
 			if err := step.Error; err != nil {
 				return fmt.Errorf("step migrate track genres: %w", err)
 			}
+
+			step = tx.Exec(`
+				UPDATE tracks SET tag_genre_id=NULL;
+			`)
+			if err := step.Error; err != nil {
+				return fmt.Errorf("step set tracks tag_genre_id null: %w", err)
+			}
+
 			step = tx.Exec(`
 				INSERT INTO album_genres (album_id, genre_id)
 					SELECT id, tag_genre_id
 					FROM albums
 					WHERE tag_genre_id IS NOT NULL;
-				UPDATE albums SET tag_genre_id=NULL;
 			`)
 			if err := step.Error; err != nil {
 				return fmt.Errorf("step migrate album genres: %w", err)
+			}
+
+			step = tx.Exec(`
+				UPDATE albums SET tag_genre_id=NULL;
+			`)
+			if err := step.Error; err != nil {
+				return fmt.Errorf("step set albums tag_genre_id null: %w", err)
 			}
 			return nil
 		},
