@@ -42,10 +42,10 @@ func joinInt(in []int, sep string) string {
 }
 
 type Artist struct {
-	ID         int      `gorm:"primary_key"`
-	Name       string   `gorm:"not null; unique_index"`
+	ID         int      `gorm:"primaryKey"`
+	Name       string   `gorm:"not null; uniqueIndex"`
 	NameUDec   string   `sql:"default: null"`
-	Albums     []*Album `gorm:"foreignkey:TagArtistID"`
+	Albums     []*Album `gorm:"foreignKey:TagArtistID"`
 	AlbumCount int      `sql:"-"`
 }
 
@@ -61,20 +61,20 @@ func (a *Artist) IndexName() string {
 }
 
 type Genre struct {
-	ID         int    `gorm:"primary_key"`
-	Name       string `gorm:"not null; unique_index"`
+	ID         int    `gorm:"primaryKey"`
+	Name       string `gorm:"not null; uniqueIndex"`
 	AlbumCount int    `sql:"-"`
 	TrackCount int    `sql:"-"`
 }
 
 type Track struct {
-	ID             int `gorm:"primary_key"`
+	ID             int `gorm:"primaryKey"`
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
-	Filename       string `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null"`
+	Filename       string `gorm:"not null; uniqueIndex:idx_folder_filename" sql:"default: null"`
 	FilenameUDec   string `sql:"default: null"`
 	Album          *Album
-	AlbumID        int `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	AlbumID        int `gorm:"not null; uniqueIndex:idx_folder_filename" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Artist         *Artist
 	ArtistID       int      `gorm:"not null" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
 	Genres         []*Genre `gorm:"many2many:track_genres"`
@@ -134,21 +134,21 @@ func (t *Track) GenreStrings() []string {
 }
 
 type User struct {
-	ID            int `gorm:"primary_key"`
+	ID            int `gorm:"primaryKey"`
 	CreatedAt     time.Time
-	Name          string `gorm:"not null; unique_index" sql:"default: null"`
+	Name          string `gorm:"not null; uniqueIndex" sql:"default: null"`
 	Password      string `gorm:"not null" sql:"default: null"`
 	LastFMSession string `sql:"default: null"`
 	IsAdmin       bool   `sql:"default: null"`
 }
 
 type Setting struct {
-	Key   string `gorm:"not null; primary_key; auto_increment:false" sql:"default: null"`
+	Key   string `gorm:"not null; primaryKey; auto_increment:false" sql:"default: null"`
 	Value string `sql:"default: null"`
 }
 
 type Play struct {
-	ID      int `gorm:"primary_key"`
+	ID      int `gorm:"primaryKey"`
 	User    *User
 	UserID  int `gorm:"not null; index" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
 	Album   *Album
@@ -158,11 +158,11 @@ type Play struct {
 }
 
 type Album struct {
-	ID            int `gorm:"primary_key"`
+	ID            int `gorm:"primaryKey"`
 	UpdatedAt     time.Time
 	ModifiedAt    time.Time
-	LeftPath      string `gorm:"unique_index:idx_left_path_right_path"`
-	RightPath     string `gorm:"not null; unique_index:idx_left_path_right_path" sql:"default: null"`
+	LeftPath      string `gorm:"uniqueIndex:idx_left_path_right_path"`
+	RightPath     string `gorm:"not null; uniqueIndex:idx_left_path_right_path" sql:"default: null"`
 	RightPathUDec string `sql:"default: null"`
 	Parent        *Album
 	ParentID      int      `sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
@@ -205,7 +205,7 @@ func (a *Album) GenreStrings() []string {
 }
 
 type Playlist struct {
-	ID         int `gorm:"primary_key"`
+	ID         int `gorm:"primaryKey"`
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 	User       *User
@@ -226,7 +226,7 @@ func (p *Playlist) SetItems(items []int) {
 }
 
 type PlayQueue struct {
-	ID        int `gorm:"primary_key"`
+	ID        int `gorm:"primaryKey"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	User      *User
@@ -251,21 +251,21 @@ func (p *PlayQueue) SetItems(items []int) {
 
 type TranscodePreference struct {
 	User    *User
-	UserID  int    `gorm:"not null; unique_index:idx_user_id_client" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
-	Client  string `gorm:"not null; unique_index:idx_user_id_client" sql:"default: null"`
+	UserID  int    `gorm:"not null; uniqueIndex:idx_user_id_client" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
+	Client  string `gorm:"not null; uniqueIndex:idx_user_id_client" sql:"default: null"`
 	Profile string `gorm:"not null" sql:"default: null"`
 }
 
 type TrackGenre struct {
 	Track   *Track
-	TrackID int `gorm:"not null; unique_index:idx_track_id_genre_id" sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
+	TrackID int `gorm:"not null; uniqueIndex:idx_track_id_genre_id" sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
 	Genre   *Genre
-	GenreID int `gorm:"not null; unique_index:idx_track_id_genre_id" sql:"default: null; type:int REFERENCES genres(id) ON DELETE CASCADE"`
+	GenreID int `gorm:"not null; uniqueIndex:idx_track_id_genre_id" sql:"default: null; type:int REFERENCES genres(id) ON DELETE CASCADE"`
 }
 
 type AlbumGenre struct {
 	Album   *Album
-	AlbumID int `gorm:"not null; unique_index:idx_album_id_genre_id" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	AlbumID int `gorm:"not null; uniqueIndex:idx_album_id_genre_id" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Genre   *Genre
-	GenreID int `gorm:"not null; unique_index:idx_album_id_genre_id" sql:"default: null; type:int REFERENCES genres(id) ON DELETE CASCADE"`
+	GenreID int `gorm:"not null; uniqueIndex:idx_album_id_genre_id" sql:"default: null; type:int REFERENCES genres(id) ON DELETE CASCADE"`
 }

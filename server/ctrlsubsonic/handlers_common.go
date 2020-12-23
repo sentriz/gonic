@@ -6,7 +6,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"

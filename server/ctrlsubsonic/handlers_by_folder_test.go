@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"testing"
 
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	_ "gorm.io/driver/sqlite"
 )
 
 func TestGetIndexes(t *testing.T) {

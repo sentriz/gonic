@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	_ "gorm.io/driver/sqlite"
 
 	"go.senan.xyz/gonic/server/scanner/tags"
 )

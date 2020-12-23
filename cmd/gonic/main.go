@@ -11,7 +11,7 @@ import (
 	"regexp"
 	"time"
 
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	_ "gorm.io/driver/sqlite"
 	"github.com/oklog/run"
 	"github.com/peterbourgon/ff"
 

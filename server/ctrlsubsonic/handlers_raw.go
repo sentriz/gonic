@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/disintegration/imaging"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"

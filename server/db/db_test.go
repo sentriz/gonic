@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	_ "gorm.io/driver/sqlite"
 )
 
 var testDB *DB

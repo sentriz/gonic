@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"log"
 	"net/url"
-	"os"
 
+	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/gorilla/securecookie"
-	"github.com/jinzhu/gorm"
-
-	"gopkg.in/gormigrate.v1"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 // wrapMigrations wraps a list of migrations to add logging and transactions
@@ -56,12 +55,15 @@ func New(path string) (*DB, error) {
 		Opaque: path,
 	}
 	url.RawQuery = defaultOptions().Encode()
-	db, err := gorm.Open("sqlite3", url.String())
+	db, err := gorm.Open(sqlite.Open(url.String()), &gorm.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("with gorm: %w", err)
 	}
-	db.SetLogger(log.New(os.Stdout, "gorm ", 0))
-	db.DB().SetMaxOpenConns(1)
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, fmt.Errorf("get raw db: %w", err)
+	}
+	sqlDB.SetMaxOpenConns(1)
 	migrOptions := &gormigrate.Options{
 		TableName:      "migrations",
 		IDColumnName:   "id",
@@ -97,6 +99,7 @@ func (db *DB) GetSetting(key string) string {
 }
 
 func (db *DB) SetSetting(key, value string) {
+	gorm.ErrRecordNotFound
 	db.
 		Where(Setting{Key: key}).
 		Assign(Setting{Value: value}).
