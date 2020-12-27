@@ -135,7 +135,7 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	case "newest":
 		q = q.Order("modified_at DESC")
 	case "random":
-		q = q.Order(gorm.Expr("random()"))
+		q = q.Clauses(orderByRandom)
 	case "recent":
 		user := r.Context().Value(CtxUser).(*db.User)
 		q = q.Joins("JOIN plays ON albums.id=plays.album_id AND plays.user_id=?",

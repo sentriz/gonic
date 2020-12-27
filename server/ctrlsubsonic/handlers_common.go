@@ -8,6 +8,7 @@ import (
 	"unicode"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
@@ -16,6 +17,10 @@ import (
 	"go.senan.xyz/gonic/server/lastfm"
 	"go.senan.xyz/gonic/server/scanner"
 )
+
+var orderByRandom = clause.OrderBy{
+	Expression: clause.Expr{SQL: "random()"},
+}
 
 func lowerUDecOrHash(in string) string {
 	lower := unicode.ToLower(rune(in[0]))
@@ -201,7 +206,7 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 		Limit(params.GetOrInt("size", 10)).
 		Preload("Album").
 		Joins("JOIN albums ON tracks.album_id=albums.id").
-		Order(gorm.Expr("random()"))
+		Clauses(orderByRandom)
 	if year, err := params.GetInt("fromYear"); err == nil {
 		q = q.Where("albums.tag_year >= ?", year)
 	}

@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"strings"
 
-	"gorm.io/gorm"
-
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/db"
@@ -116,7 +114,7 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 	case "newest":
 		q = q.Order("modified_at DESC")
 	case "random":
-		q = q.Order(gorm.Expr("random()"))
+		q = q.Clauses(orderByRandom)
 	case "recent":
 		user := r.Context().Value(CtxUser).(*db.User)
 		q = q.Joins(`
