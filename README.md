@@ -19,6 +19,7 @@
 - multiple users, each with their own transcoding preferences, playlists, top tracks, top artists, etc.
 - [last.fm](https://www.last.fm/) scrobbling  
 - artist similarities and biographies from the last.fm api  
+- multiple genre support (see `GONIC_GENRE_SPLIT` to split tag strings on a character, eg. `;`, and browse them individually)
 - a web interface for configuration (set up last.fm, manage users, start scans, etc.)  
 - support for the [album-artist](https://mkoby.com/2007/02/18/artist-versus-album-artist/) tag, to not clutter your artist list with compilation album appearances  
 - written in [go](https://golang.org/), so lightweight and suitable for a raspberry pi, etc.  
