@@ -1,11 +1,11 @@
-FROM golang:1.14-alpine AS builder
+FROM golang:1.15-alpine AS builder
 RUN apk add -U --no-cache \
-    build-base \
-    ca-certificates \
-    git \
-    sqlite \
-    taglib-dev \
-    alsa-lib-dev
+  build-base \
+  ca-certificates \
+  git \
+  sqlite \
+  taglib-dev \
+  alsa-lib-dev
 WORKDIR /src
 COPY go.mod .
 COPY go.sum .
@@ -13,18 +13,18 @@ RUN go mod download
 COPY . .
 RUN ./_do_build_server
 
-FROM alpine:3.9
+FROM alpine:3.12.3
 RUN apk add -U --no-cache \
-    ffmpeg \
-    ca-certificates
+  ffmpeg \
+  ca-certificates
 COPY --from=builder \
-    /usr/lib/libgcc_s.so.1 \
-    /usr/lib/libstdc++.so.6 \
-    /usr/lib/libtag.so.1 \
-    /usr/lib/
+  /usr/lib/libgcc_s.so.1 \
+  /usr/lib/libstdc++.so.6 \
+  /usr/lib/libtag.so.1 \
+  /usr/lib/
 COPY --from=builder \
-    /src/gonic \
-    /bin/
+  /src/gonic \
+  /bin/
 VOLUME ["/data", "/music", "/cache"]
 EXPOSE 80
 ENV GONIC_DB_PATH /data/gonic.db
