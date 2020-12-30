@@ -177,8 +177,7 @@ type Album struct {
 	Tracks        []*Track
 	ChildCount    int  `sql:"-"`
 	Duration      int  `sql:"-"`
-	ReceivedPaths bool `gorm:"-"`
-	ReceivedTags  bool `gorm:"-"`
+	ShouldSave    bool `sql:"-"`
 }
 
 func (a *Album) SID() *specid.ID {
