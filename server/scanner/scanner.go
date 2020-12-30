@@ -145,6 +145,28 @@ func (s *Scanner) cleanArtists() (int, error) {
 	return int(q.RowsAffected), q.Error
 }
 
+func (s *Scanner) cleanGenres() (int, error) {
+	subTrack := s.db.
+		Select("genres.id").
+		Model(&db.Genre{}).
+		Joins("JOIN track_genres ON track_genres.genre_id=genres.id").
+		Joins("LEFT JOIN tracks ON tracks.id=track_genres.track_id").
+		Where("tracks.id IS NULL").
+		SubQuery()
+	subAlbum := s.db.
+		Select("genres.id").
+		Model(&db.Genre{}).
+		Joins("JOIN album_genres ON album_genres.genre_id=genres.id").
+		Joins("LEFT JOIN albums ON albums.id=album_genres.album_id").
+		Where("albums.id IS NULL").
+		SubQuery()
+	q := s.db.
+		Where("genres.id IN ?", subTrack).
+		Or("genres.id IN ?", subAlbum).
+		Delete(&db.Genre{})
+	return int(q.RowsAffected), q.Error
+}
+
 // ## begin entries
 // ## begin entries
 // ## begin entries
@@ -199,6 +221,7 @@ func (s *Scanner) Start(opts ScanOptions) error {
 		{name: "tracks", f: s.cleanTracks},
 		{name: "folders", f: s.cleanFolders},
 		{name: "artists", f: s.cleanArtists},
+		{name: "genres", f: s.cleanGenres},
 	}
 	for _, clean := range cleanFuncs {
 		start = time.Now()

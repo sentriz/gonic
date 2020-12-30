@@ -14,8 +14,11 @@ func migrateInitSchema() gormigrate.Migration {
 		ID: "202002192100",
 		Migrate: func(tx *gorm.DB) error {
 			return tx.AutoMigrate(
-				Artist{},
+				Genre{},
+				TrackGenre{},
+				AlbumGenre{},
 				Track{},
+				Artist{},
 				User{},
 				Setting{},
 				Play{},
@@ -170,6 +173,10 @@ func migrateMultiGenre() gormigrate.Migration {
 				TrackGenre{},
 				AlbumGenre{},
 			)
+			if err := step.Error; err != nil {
+				return fmt.Errorf("step auto migrate: %w", err)
+			}
+
 			var genreCount int
 			tx.
 				Model(Genre{}).
@@ -178,9 +185,6 @@ func migrateMultiGenre() gormigrate.Migration {
 				return nil
 			}
 
-			if err := step.Error; err != nil {
-				return fmt.Errorf("step auto migrate: %w", err)
-			}
 			step = tx.Exec(`
 				INSERT INTO track_genres (track_id, genre_id)
 					SELECT id, tag_genre_id
@@ -188,10 +192,10 @@ func migrateMultiGenre() gormigrate.Migration {
 					WHERE tag_genre_id IS NOT NULL;
 				UPDATE tracks SET tag_genre_id=NULL;
 			`)
-
 			if err := step.Error; err != nil {
 				return fmt.Errorf("step migrate track genres: %w", err)
 			}
+
 			step = tx.Exec(`
 				INSERT INTO album_genres (album_id, genre_id)
 					SELECT id, tag_genre_id
