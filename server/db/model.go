@@ -126,7 +126,7 @@ func (t *Track) RelPath() string {
 }
 
 func (t *Track) GenreStrings() []string {
-	var strs []string
+	strs := make([]string, 0, len(t.Genres))
 	for _, genre := range t.Genres {
 		strs = append(strs, genre.Name)
 	}
@@ -197,7 +197,7 @@ func (a *Album) IndexRightPath() string {
 }
 
 func (a *Album) GenreStrings() []string {
-	var strs []string
+	strs := make([]string, 0, len(a.Genres))
 	for _, genre := range a.Genres {
 		strs = append(strs, genre.Name)
 	}
