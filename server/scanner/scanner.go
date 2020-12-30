@@ -459,6 +459,13 @@ func (s *Scanner) handleTrack(it *item) error {
 	if err := s.trTx.Save(track).Error; err != nil {
 		return fmt.Errorf("writing track table: %w", err)
 	}
+	err = s.trTx.
+		Where("track_id=?", track.ID).
+		Delete(db.TrackGenre{}).
+		Error
+	if err != nil {
+		return fmt.Errorf("delete old track genre records: %w", err)
+	}
 	err = s.trTx.InsertBulkLeftMany(
 		"track_genres",
 		[]string{"track_id", "genre_id"},
@@ -475,6 +482,13 @@ func (s *Scanner) handleTrack(it *item) error {
 	if !folder.ReceivedPaths || folder.ReceivedTags {
 		// the folder hasn't been modified or already has it's tags
 		return nil
+	}
+	err = s.trTx.
+		Where("album_id=?", folder.ID).
+		Delete(db.AlbumGenre{}).
+		Error
+	if err != nil {
+		return fmt.Errorf("delete old album genre records: %w", err)
 	}
 	err = s.trTx.InsertBulkLeftMany(
 		"album_genres",
