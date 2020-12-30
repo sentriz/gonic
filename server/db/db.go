@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/gorilla/securecookie"
 	"github.com/jinzhu/gorm"
@@ -112,6 +113,21 @@ func (db *DB) GetOrCreateKey(key string) string {
 	return value
 }
 
+func (db *DB) InsertBulkLeftMany(table string, head []string, left int, col []int) error {
+	var rows []string
+	var values []interface{}
+	for _, c := range col {
+		rows = append(rows, "(?, ?)")
+		values = append(values, left, c)
+	}
+	q := fmt.Sprintf("INSERT OR IGNORE INTO %q (%s) VALUES %s",
+		table,
+		strings.Join(head, ", "),
+		strings.Join(rows, ", "),
+	)
+	return db.Exec(q, values...).Error
+}
+
 func (db *DB) GetUserByID(id int) *User {
 	user := &User{}
 	err := db.
@@ -134,6 +150,10 @@ func (db *DB) GetUserByName(name string) *User {
 		return nil
 	}
 	return user
+}
+
+func (db *DB) Begin() *DB {
+	return &DB{DB: db.DB.Begin()}
 }
 
 type ChunkFunc func(*gorm.DB, []int64) error
