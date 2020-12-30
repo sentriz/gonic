@@ -65,7 +65,7 @@ type Scanner struct {
 	// these two are for the transaction we do for every folder.
 	// the boolean is there so we dont begin or commit multiple
 	// times in the handle folder or post children callback
-	trTx     *gorm.DB
+	trTx     *db.DB
 	trTxOpen bool
 	// these two are for keeping state between noted in the tree.
 	// eg. keep track of a parents folder or the path to a cover
@@ -411,38 +411,24 @@ func (s *Scanner) handleTrack(it *item) error {
 	// ** begin set album artist basics
 	artistName := firstTag("Unknown Artist", trTags.AlbumArtist, trTags.Artist)
 	artist := &db.Artist{}
-	err = s.trTx.
-		Select("id").
+	s.trTx.
 		Where("name=?", artistName).
-		First(artist).
-		Error
-	if gorm.IsRecordNotFoundError(err) {
-		artist.Name = artistName
-		artist.NameUDec = decoded(artistName)
-		if err := s.trTx.Save(artist).Error; err != nil {
-			return fmt.Errorf("writing artists table: %w", err)
-		}
-	}
+		Assign(db.Artist{
+			Name:     artistName,
+			NameUDec: decoded(artistName),
+		}).
+		FirstOrCreate(artist)
 	track.ArtistID = artist.ID
 
 	// ** begin set genre
 	genreTag := firstTag("Unknown Genre", trTags.Genre)
-	genres := strings.Split(genreTag, s.genreSplit)
+	genreNames := strings.Split(genreTag, s.genreSplit)
 	genreIDs := []int{}
-	for _, genreName := range genres {
-		// TODO insert or ignore
+	for _, genreName := range genreNames {
 		genre := &db.Genre{}
-		err = s.trTx.
-			Select("id").
-			Where("name=?", genreName).
-			First(genre).
-			Error
-		if gorm.IsRecordNotFoundError(err) {
-			genre.Name = genreName
-			if err := s.trTx.Save(genre).Error; err != nil {
-				return fmt.Errorf("writing genres table: %w", err)
-			}
-		}
+		s.trTx.FirstOrCreate(genre, db.Genre{
+			Name: genreName,
+		})
 		genreIDs = append(genreIDs, genre.ID)
 	}
 
@@ -450,11 +436,14 @@ func (s *Scanner) handleTrack(it *item) error {
 	if err := s.trTx.Save(track).Error; err != nil {
 		return fmt.Errorf("writing track table: %w", err)
 	}
-	for _, genreID := range genreIDs {
-		trackGenre := &db.TrackGenre{TrackID: track.ID, GenreID: genreID}
-		if err := s.trTx.Save(trackGenre).Error; err != nil {
-			return fmt.Errorf("writing track table: %w", err)
-		}
+	err = s.trTx.InsertBulkLeftMany(
+		"track_genres",
+		[]string{"track_id", "genre_id"},
+		track.ID,
+		genreIDs,
+	)
+	if err != nil {
+		return fmt.Errorf("insert bulk track genres: %w", err)
 	}
 	s.seenTracksNew++
 
@@ -464,11 +453,14 @@ func (s *Scanner) handleTrack(it *item) error {
 		// the folder hasn't been modified or already has it's tags
 		return nil
 	}
-	for _, genreID := range genreIDs {
-		albumGenre := &db.AlbumGenre{AlbumID: folder.ID, GenreID: genreID}
-		if err := s.trTx.Save(albumGenre).Error; err != nil {
-			return fmt.Errorf("writing album table: %w", err)
-		}
+	err = s.trTx.InsertBulkLeftMany(
+		"album_genres",
+		[]string{"album_id", "genre_id"},
+		folder.ID,
+		genreIDs,
+	)
+	if err != nil {
+		return fmt.Errorf("insert bulk album genres: %w", err)
 	}
 	folder.TagTitle = trTags.Album()
 	folder.TagTitleUDec = decoded(trTags.Album())
