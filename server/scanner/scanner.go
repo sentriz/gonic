@@ -199,7 +199,7 @@ func (s *Scanner) Start(opts ScanOptions) error {
 		Unsorted:             true,
 		FollowSymbolicLinks:  true,
 		ErrorCallback: func(path string, err error) godirwalk.ErrorAction {
-			log.Printf("error processing %q: %v", path, err)
+			log.Printf("error processing `%s`: %v", path, err)
 			errCount++
 			return godirwalk.SkipNode
 		},

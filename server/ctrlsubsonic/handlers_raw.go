@@ -120,7 +120,7 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 	case os.IsNotExist(err):
 		coverPath, err := coverGetPath(c.DB, c.MusicPath, id.Value)
 		if err != nil {
-			return spec.NewError(10, "couldn't find cover %q: %v", id, err)
+			return spec.NewError(10, "couldn't find cover `%s`: %v", id, err)
 		}
 		if err := coverScaleAndSave(coverPath, cachePath, size); err != nil {
 			log.Printf("error scaling cover: %v", err)
@@ -150,7 +150,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	trackPath := path.Join(c.MusicPath, track.RelPath())
 	//
 	onInvalidProfile := func() error {
-		log.Printf("serving raw %q\n", track.Filename)
+		log.Printf("serving raw `%s`\n", track.Filename)
 		w.Header().Set("Content-Type", track.MIME())
 		http.ServeFile(w, r, trackPath)
 		return nil
@@ -192,7 +192,7 @@ func (c *Controller) ServeDownload(w http.ResponseWriter, r *http.Request) *spec
 	if err != nil {
 		return spec.NewError(70, "media with id `%s` was not found", id)
 	}
-	log.Printf("serving raw %q\n", track.Filename)
+	log.Printf("serving raw `%s`\n", track.Filename)
 	w.Header().Set("Content-Type", track.MIME())
 	trackPath := path.Join(c.MusicPath, track.RelPath())
 	http.ServeFile(w, r, trackPath)
