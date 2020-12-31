@@ -135,12 +135,13 @@ func (s *Scanner) cleanFolders() (int, error) {
 
 func (s *Scanner) cleanArtists() (int, error) {
 	sub := s.db.
-		Select("1").
-		Model(&db.Album{}).
-		Where("albums.tag_artist_id=artists.id").
+		Select("artists.id").
+		Model(&db.Artist{}).
+		Joins("LEFT JOIN albums ON albums.tag_artist_id=artists.id").
+		Where("albums.id IS NULL").
 		SubQuery()
 	q := s.db.
-		Where("NOT EXISTS ?", sub).
+		Where("artists.id IN ?", sub).
 		Delete(&db.Artist{})
 	return int(q.RowsAffected), q.Error
 }
