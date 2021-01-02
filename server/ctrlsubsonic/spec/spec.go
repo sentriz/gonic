@@ -44,6 +44,7 @@ type Response struct {
 	PlayQueue         *PlayQueue         `xml:"playQueue"         json:"playQueue,omitempty"`
 	JukeboxStatus     *JukeboxStatus     `xml:"jukeboxStatus"     json:"jukeboxStatus,omitempty"`
 	JukeboxPlaylist   *JukeboxPlaylist   `xml:"jukeboxPlaylist"   json:"jukeboxPlaylist,omitempty"`
+	Podcasts          *Podcasts          `xml:"podcasts"         json:"podcasts,omitempty"`
 }
 
 func NewResponse() *Response {
@@ -284,4 +285,8 @@ type JukeboxStatus struct {
 type JukeboxPlaylist struct {
 	List []*TrackChild `xml:"entry,omitempty" json:"entry,omitempty"`
 	JukeboxStatus
+}
+
+type Podcasts struct {
+	List []struct{} `xml:"channel" json:"channel"`
 }
