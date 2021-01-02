@@ -167,11 +167,11 @@ func migrateMultiGenre() gormigrate.Migration {
 		ID: "202012151806",
 		Migrate: func(tx *gorm.DB) error {
 			step := tx.AutoMigrate(
-				Track{},
-				Album{},
 				Genre{},
 				TrackGenre{},
 				AlbumGenre{},
+				Track{},
+				Album{},
 			)
 			if err := step.Error; err != nil {
 				return fmt.Errorf("step auto migrate: %w", err)
