@@ -44,9 +44,6 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 	}
 	// fetch user to get lastfm session
 	user := r.Context().Value(CtxUser).(*db.User)
-	if user.LastFMSession == "" {
-		return spec.NewError(0, "you don't have a last.fm session")
-	}
 	// fetch track for getting info to send to last.fm function
 	track := &db.Track{}
 	c.DB.

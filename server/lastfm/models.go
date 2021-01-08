@@ -2,10 +2,13 @@ package lastfm
 
 import (
 	"encoding/xml"
+
+	"go.senan.xyz/gonic/server/db"
 )
 
 type Scrobbler interface {
-	Scrobble(interface{}, ScrobbleOptions) error
+	Scrobble(*db.User, ScrobbleOptions) error
+	Enabled(*db.User) bool
 }
 
 type LastFM struct {
@@ -59,4 +62,25 @@ type ArtistBio struct {
 	Published string `xml:"published"`
 	Summary   string `xml:"summary"`
 	Content   string `xml:"content"`
+}
+
+type ListenBrainzAdditionalInfo struct {
+	TrackNumber int `json:"tracknumber"`
+}
+
+type ListenBrainzTrackMetadata struct {
+	AdditionalInfo ListenBrainzAdditionalInfo `json:"additional_info"`
+	ArtistName     string                     `json:"artist_name"`
+	TrackName      string                     `json:"track_name"`
+	ReleaseName    string                     `json:"release_name"`
+}
+
+type ListenBrainzPayload struct {
+	ListenedAt    int                       `json:"listened_at"`
+	TrackMetadata ListenBrainzTrackMetadata `json:"track_metadata"`
+}
+
+type ListenBrainzScrobble struct {
+	ListenType string                `json:"listen_type"`
+	Payload    []ListenBrainzPayload `json:"payload"`
 }

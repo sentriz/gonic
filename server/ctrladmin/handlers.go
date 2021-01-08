@@ -161,6 +161,27 @@ func (c *Controller) ServeUnlinkLastFMDo(r *http.Request) *Response {
 	return &Response{redirect: "/admin/home"}
 }
 
+func (c *Controller) ServeLinkListenBrainzDo(r *http.Request) *Response {
+	token := r.FormValue("token")
+	if token == "" {
+		return &Response{
+			err:  "please provide a token",
+			code: 400,
+		}
+	}
+	user := r.Context().Value(CtxUser).(*db.User)
+	user.ListenBrainzSession = token
+	c.DB.Save(&user)
+	return &Response{redirect: "/admin/home"}
+}
+
+func (c *Controller) ServeUnlinkListenBrainzDo(r *http.Request) *Response {
+	user := r.Context().Value(CtxUser).(*db.User)
+	user.ListenBrainzSession = ""
+	c.DB.Save(&user)
+	return &Response{redirect: "/admin/home"}
+}
+
 func (c *Controller) ServeChangeUsername(r *http.Request) *Response {
 	username := r.URL.Query().Get("user")
 	if username == "" {
