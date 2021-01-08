@@ -37,11 +37,9 @@ button,
 textarea {
   border-radius: 0;
   box-sizing: border-box;
-  margin: 0;
+  margin: calc(var(--size)*0.33) 0 0 0;;
+  border: 1px solid #ccc;
   padding: 0;
-  border: none;
-  outline: 1px solid #ccc;
-  height: var(--size);
   vertical-align: middle;
 }
 
@@ -172,4 +170,9 @@ a:hover {
 
 .angry {
   background-color: #f4433669;
+}
+
+#listenbrainz-pref {
+  width: 100%;
+  margin: calc(var(--size)*0.5) 0;
 }

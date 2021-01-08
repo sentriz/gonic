@@ -1,8 +1,10 @@
 package lastfm
 
 import (
+	"bytes"
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -16,11 +18,12 @@ import (
 
 const (
 	lastfmBaseURL = "https://ws.audioscrobbler.com/2.0/"
-	lbBaseURL = "https://api.listenbrainz.org"
+	lbBaseURL     = "https://api.listenbrainz.org"
 )
 
 var (
-	ErrLastFM = errors.New("last.fm error")
+	ErrLastFM       = errors.New("last.fm error")
+	ErrListenBrainz = errors.New("listenbrainz error")
 )
 
 // TODO: remove this package's dependency on models/db
@@ -84,11 +87,10 @@ type LastfmScrobbler struct { //nolint
 	DB *db.DB
 }
 
-func (lfm *LastfmScrobbler) Scrobble(reqUser interface{}, opts ScrobbleOptions) error {
+func (lfm *LastfmScrobbler) Scrobble(user *db.User, opts ScrobbleOptions) error {
 	apiKey := lfm.DB.GetSetting("lastfm_api_key")
 	secret := lfm.DB.GetSetting("lastfm_secret")
 	// fetch user to get lastfm session
-	user := reqUser.(*db.User)
 	if user.LastFMSession == "" {
 		return fmt.Errorf("you don't have a last.fm session: %w", ErrLastFM)
 	}
@@ -113,6 +115,10 @@ func (lfm *LastfmScrobbler) Scrobble(reqUser interface{}, opts ScrobbleOptions) 
 	return err
 }
 
+func (lfm *LastfmScrobbler) Enabled(user *db.User) bool {
+	return user.LastFMSession != ""
+}
+
 func ArtistGetInfo(apiKey string, artist *db.Artist) (Artist, error) {
 	params := url.Values{}
 	params.Add("method", "artist.getInfo")
@@ -123,4 +129,49 @@ func ArtistGetInfo(apiKey string, artist *db.Artist) (Artist, error) {
 		return Artist{}, fmt.Errorf("making artist GET: %w", err)
 	}
 	return resp.Artist, nil
+}
+
+type ListenBrainzScrobbler struct {
+	DB *db.DB
+}
+
+func (lb *ListenBrainzScrobbler) Scrobble(user *db.User, opts ScrobbleOptions) error {
+	listenType := "single"
+	if !opts.Submission {
+		listenType = "playing_now"
+	}
+	scrobble := ListenBrainzScrobble{
+		ListenType: listenType,
+		Payload: []ListenBrainzPayload{{
+			ListenedAt: opts.StampMili / 1e3,
+			TrackMetadata: ListenBrainzTrackMetadata{
+				AdditionalInfo: ListenBrainzAdditionalInfo{
+					TrackNumber: opts.Track.TagTrackNumber,
+				},
+				ArtistName:  opts.Track.TagTrackArtist,
+				TrackName:   opts.Track.TagTitle,
+				ReleaseName: opts.Track.Album.TagTitle,
+			},
+		}},
+	}
+	payloadBuf := bytes.Buffer{}
+	if err := json.NewEncoder(&payloadBuf).Encode(scrobble); err != nil {
+		return err
+	}
+	req, _ := http.NewRequest("POST", lbBaseURL+"/1/submit-listens", &payloadBuf)
+	req.Header.Add("Authorization", "Token "+user.ListenBrainzSession)
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	if res.StatusCode == http.StatusUnauthorized {
+		return fmt.Errorf("unathorized error scrobbling to listenbrainz %w",
+			ErrListenBrainz)
+	}
+	res.Body.Close()
+	return nil
+}
+
+func (lb *ListenBrainzScrobbler) Enabled(user *db.User) bool {
+	return user.ListenBrainzSession != ""
 }

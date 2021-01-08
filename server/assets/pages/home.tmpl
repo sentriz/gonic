@@ -51,6 +51,36 @@
     </div>
 </div>
 <div class="padded box">
+    <div class="box-title">
+        <i class="mdi mdi-brain"></i> ListenBrainz
+    </div>
+    <div class="box-description text-light">
+        <p>gonic can scrobble to <a href="https://listenbrainz.org/" target="_blank">ListenBrainz</a> and compatible sites.</p>
+    </div>
+    <div class="text-right">
+            <span class="text-light">current status</span>
+            {{ if .User.ListenBrainzSession }}
+                linked
+                <span class="text-light">&#124;</span>
+                <form action="{{ path "/admin/unlink_listenbrainz_do" }}" method="post">
+                    <input type="submit" value="unlink">
+                </form>
+            {{ else }}
+                <span class="angry">unlinked</span>
+                <form id="listenbrainz-pref-set" action="{{ path "/admin/link_listenbrainz_do" }}" method="post"></form>
+                <table id="listenbrainz-pref">
+                <tr>
+                    <td><label for="listenbrainz-token">Token:</label></td>
+                    <td><input form="listenbrainz-pref-set" id="listenbrainz-token" type="text" name="token" value="{{ default "" .User.ListenBrainzSession }}"></td>
+                </tr>
+                <tr>
+                <td colspan="2"><input form="listenbrainz-pref-set" type="submit" value="save"></td>
+                </tr>
+                </table>
+            {{ end }}
+    </div>
+</div>
+<div class="padded box">
     {{ if .User.IsAdmin }}
         {{/* admin panel to manage all users */}}
         <div class="box-title">

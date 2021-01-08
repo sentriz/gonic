@@ -210,3 +210,18 @@ func migrateMultiGenre() gormigrate.Migration {
 		},
 	}
 }
+
+func migrateListenBrainz() gormigrate.Migration {
+	return gormigrate.Migration{
+		ID: "202101081149",
+		Migrate: func(tx *gorm.DB) error {
+			step := tx.AutoMigrate(
+				User{},
+			)
+			if err := step.Error; err != nil {
+				return fmt.Errorf("step auto migrate: %w", err)
+			}
+			return nil
+		},
+	}
+}

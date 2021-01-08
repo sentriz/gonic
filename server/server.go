@@ -64,8 +64,10 @@ func New(opts Options) *Server {
 	//
 	ctrlAdmin := ctrladmin.New(base, sessDB)
 	lastfmScrobbler := &lastfm.LastfmScrobbler{DB: opts.DB}
+	listenbrainzScrobbler := &lastfm.ListenBrainzScrobbler{DB: opts.DB}
 	scrobblers := []lastfm.Scrobbler{
 		lastfmScrobbler,
+		listenbrainzScrobbler,
 	}
 	ctrlSubsonic := &ctrlsubsonic.Controller{
 		Controller:     base,
@@ -127,6 +129,8 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	routUser.Handle("/change_own_password_do", ctrl.H(ctrl.ServeChangeOwnPasswordDo))
 	routUser.Handle("/link_lastfm_do", ctrl.H(ctrl.ServeLinkLastFMDo))
 	routUser.Handle("/unlink_lastfm_do", ctrl.H(ctrl.ServeUnlinkLastFMDo))
+	routUser.Handle("/link_listenbrainz_do", ctrl.H(ctrl.ServeLinkListenBrainzDo))
+	routUser.Handle("/unlink_listenbrainz_do", ctrl.H(ctrl.ServeUnlinkListenBrainzDo))
 	routUser.Handle("/upload_playlist_do", ctrl.H(ctrl.ServeUploadPlaylistDo))
 	routUser.Handle("/delete_playlist_do", ctrl.H(ctrl.ServeDeletePlaylistDo))
 	routUser.Handle("/create_transcode_pref_do", ctrl.H(ctrl.ServeCreateTranscodePrefDo))
