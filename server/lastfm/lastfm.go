@@ -15,7 +15,8 @@ import (
 )
 
 const (
-	baseURL = "https://ws.audioscrobbler.com/2.0/"
+	lastfmBaseURL = "https://ws.audioscrobbler.com/2.0/"
+	lbBaseURL = "https://api.listenbrainz.org"
 )
 
 var (
@@ -42,7 +43,7 @@ func getParamSignature(params url.Values, secret string) string {
 }
 
 func makeRequest(method string, params url.Values) (LastFM, error) {
-	req, _ := http.NewRequest(method, baseURL, nil)
+	req, _ := http.NewRequest(method, lastfmBaseURL, nil)
 	req.URL.RawQuery = params.Encode()
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -79,7 +80,18 @@ type ScrobbleOptions struct {
 	Submission bool
 }
 
-func Scrobble(apiKey, secret, session string, opts ScrobbleOptions) error {
+type LastfmScrobbler struct { //nolint
+	DB *db.DB
+}
+
+func (lfm *LastfmScrobbler) Scrobble(reqUser interface{}, opts ScrobbleOptions) error {
+	apiKey := lfm.DB.GetSetting("lastfm_api_key")
+	secret := lfm.DB.GetSetting("lastfm_secret")
+	// fetch user to get lastfm session
+	user := reqUser.(*db.User)
+	if user.LastFMSession == "" {
+		return fmt.Errorf("you don't have a last.fm session: %w", ErrLastFM)
+	}
 	params := url.Values{}
 	if opts.Submission {
 		params.Add("method", "track.Scrobble")
@@ -89,7 +101,7 @@ func Scrobble(apiKey, secret, session string, opts ScrobbleOptions) error {
 		params.Add("method", "track.updateNowPlaying")
 	}
 	params.Add("api_key", apiKey)
-	params.Add("sk", session)
+	params.Add("sk", user.LastFMSession)
 	params.Add("artist", opts.Track.TagTrackArtist)
 	params.Add("track", opts.Track.TagTitle)
 	params.Add("trackNumber", strconv.Itoa(opts.Track.TagTrackNumber))

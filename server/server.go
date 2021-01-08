@@ -17,6 +17,7 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic"
 	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/jukebox"
+	"go.senan.xyz/gonic/server/lastfm"
 	"go.senan.xyz/gonic/server/scanner"
 )
 
@@ -62,11 +63,16 @@ func New(opts Options) *Server {
 	sessDB.SessionOpts.SameSite = http.SameSiteLaxMode
 	//
 	ctrlAdmin := ctrladmin.New(base, sessDB)
+	lastfmScrobbler := &lastfm.LastfmScrobbler{DB: opts.DB}
+	scrobblers := []lastfm.Scrobbler{
+		lastfmScrobbler,
+	}
 	ctrlSubsonic := &ctrlsubsonic.Controller{
 		Controller:     base,
 		CachePath:      opts.CachePath,
 		CoverCachePath: opts.CoverCachePath,
 		Jukebox:        jukebox,
+		Scrobblers:     scrobblers,
 	}
 	setupMisc(r, base)
 	setupAdmin(r.PathPrefix("/admin").Subrouter(), ctrlAdmin)
