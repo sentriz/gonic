@@ -4,6 +4,10 @@ import (
 	"encoding/xml"
 )
 
+type Scrobbler interface {
+	Scrobble(interface{}, ScrobbleOptions) error
+}
+
 type LastFM struct {
 	XMLName xml.Name `xml:"lfm"`
 	Status  string   `xml:"status,attr"`

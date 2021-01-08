@@ -61,14 +61,16 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 		StampMili:  params.GetOrInt("time", int(time.Now().UnixNano()/1e6)),
 		Submission: params.GetOrBool("submission", true),
 	}
-	err = lastfm.Scrobble(
-		c.DB.GetSetting("lastfm_api_key"),
-		c.DB.GetSetting("lastfm_secret"),
-		user.LastFMSession,
-		opts,
-	)
-	if err != nil {
-		return spec.NewError(0, "error when submitting: %v", err)
+	scrobbleErrs := []error{}
+	for _, scrobbler := range c.Scrobblers {
+		if !scrobbler.Enabled(user) {
+			continue
+		}
+		err = scrobbler.Scrobble(user, opts)
+		scrobbleErrs = append(scrobbleErrs, err)
+	}
+	if len(scrobbleErrs) != 0 {
+		return spec.NewError(0, "error when submitting: %v", scrobbleErrs)
 	}
 	return spec.NewResponse()
 }
