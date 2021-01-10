@@ -9,8 +9,8 @@ import (
 
 	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/encode"
-	"go.senan.xyz/gonic/server/lastfm"
 	"go.senan.xyz/gonic/server/scanner"
+	"go.senan.xyz/gonic/server/scrobble/lastfm"
 )
 
 func firstExisting(or string, strings ...string) string {

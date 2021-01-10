@@ -17,8 +17,10 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic"
 	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/jukebox"
-	"go.senan.xyz/gonic/server/lastfm"
 	"go.senan.xyz/gonic/server/scanner"
+	"go.senan.xyz/gonic/server/scrobble"
+	"go.senan.xyz/gonic/server/scrobble/lastfm"
+	"go.senan.xyz/gonic/server/scrobble/listenbrainz"
 )
 
 type Options struct {
@@ -63,11 +65,9 @@ func New(opts Options) *Server {
 	sessDB.SessionOpts.SameSite = http.SameSiteLaxMode
 	//
 	ctrlAdmin := ctrladmin.New(base, sessDB)
-	lastfmScrobbler := &lastfm.LastfmScrobbler{DB: opts.DB}
-	listenbrainzScrobbler := &lastfm.ListenBrainzScrobbler{DB: opts.DB}
-	scrobblers := []lastfm.Scrobbler{
-		lastfmScrobbler,
-		listenbrainzScrobbler,
+	scrobblers := []scrobble.Scrobbler{
+		&lastfm.Scrobbler{DB: opts.DB},
+		&listenbrainz.Scrobbler{},
 	}
 	ctrlSubsonic := &ctrlsubsonic.Controller{
 		Controller:     base,

@@ -11,7 +11,7 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"go.senan.xyz/gonic/server/db"
-	"go.senan.xyz/gonic/server/lastfm"
+	"go.senan.xyz/gonic/server/scrobble/lastfm"
 )
 
 func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
