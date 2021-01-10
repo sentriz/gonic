@@ -12,7 +12,6 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"go.senan.xyz/gonic/server/db"
-	"go.senan.xyz/gonic/server/lastfm"
 	"go.senan.xyz/gonic/server/scanner"
 )
 
@@ -50,20 +49,13 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 		Preload("Album").
 		Preload("Artist").
 		First(track, id.Value)
-	// scrobble with above info
-	opts := lastfm.ScrobbleOptions{
-		Track: track,
-		// clients will provide time in miliseconds, so use that or
-		// instead convert UnixNano to miliseconds
-		StampMili:  params.GetOrInt("time", int(time.Now().UnixNano()/1e6)),
-		Submission: params.GetOrBool("submission", true),
-	}
+	// clients will provide time in miliseconds, so use that or
+	// instead convert UnixNano to miliseconds
+	optStampMili := params.GetOrInt("time", int(time.Now().UnixNano()/1e6))
+	optSubmission := params.GetOrBool("submission", true)
 	scrobbleErrs := []error{}
 	for _, scrobbler := range c.Scrobblers {
-		if !scrobbler.Enabled(user) {
-			continue
-		}
-		err = scrobbler.Scrobble(user, opts)
+		err = scrobbler.Scrobble(user, track, optStampMili, optSubmission)
 		scrobbleErrs = append(scrobbleErrs, err)
 	}
 	if len(scrobbleErrs) != 0 {
