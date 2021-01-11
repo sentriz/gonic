@@ -170,6 +170,30 @@
 </div>
 <div class="padded box">
     <div class="box-title">
+        <i class="mdi mdi-rss-box"></i> podcasts
+    </div>
+    <div class="box-description text-light">
+        <p>you can add podcasts rss feeds here</p>
+    </div>
+    <div class="block-right">
+        <table id="podcast-preferences">
+        {{ range $pref := .Podcasts }}
+            <tr>
+                <form id="podcast-{{ $pref.ID }}" action="{{ printf "/admin/delete_podcast_do?id=%d" $pref.ID | path }}" method="post"></form>
+                <td>{{ $pref.Title }}</td>
+                <td><input form="podcast-{{ $pref.ID }}" type="submit" value="delete"></td>
+            </tr>
+        {{ end }}
+        <tr>
+            <form id="podcast-add" action="{{ path "/admin/add_podcast_do" }}" method="post"></form>
+            <td><input form="podcast-add" type="text" name="feed" placeholder="rss feed url"></td>
+            <td><input form="podcast-add" type="submit" value="save"></td>
+        </tr>
+        </table>
+    </div>
+</div>
+<div class="padded box">
+    <div class="box-title">
         <i class="mdi mdi-playlist-music"></i> playlists
     </div>
     <div class="block-right text-right">

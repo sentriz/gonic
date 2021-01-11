@@ -288,24 +288,24 @@ type JukeboxPlaylist struct {
 }
 
 type Podcasts struct {
-	List []PodcastChannel `xml:"channel" json:"channel"`
+	List []*PodcastChannel `xml:"channel" json:"channel"`
 }
 
 type PodcastChannel struct {
-	ID               specid.ID        `xml:"id,attr" json:"id"`
+	ID               *specid.ID        `xml:"id,attr" json:"id"`
 	URL              string           `xml:"url,attr" json:"url"`
 	Title            string           `xml:"title,attr" json:"title"`
 	Description      string           `xml:"description,attr" json:"description"`
-	CoverArt         specid.ID        `xml:"coverArt,attr" json:"coverArt,omitempty"`
+	CoverArt         *specid.ID        `xml:"coverArt,attr" json:"coverArt,omitempty"`
 	OriginalImageURL string           `xml:"originalImageUrl,attr" json:"originalImageUrl,omitempty"`
 	Status           string           `xml:"status,attr" json:"status"`
-	Episode          []PodcastEpisode `xml:"episode" json:"episode,omitempty"`
+	Episode          []*PodcastEpisode `xml:"episode" json:"episode,omitempty"`
 }
 
 type PodcastEpisode struct {
-	ID          specid.ID `xml:"id,attr" json:"id"`
-	StreamID    specid.ID `xml:"streamId,attr" json:"streamId"`
-	ChannelID   specid.ID `xml:"channelId,attr" json:"channelId"`
+	ID          *specid.ID `xml:"id,attr" json:"id"`
+	StreamID    *specid.ID `xml:"streamId,attr" json:"streamId"`
+	ChannelID   *specid.ID `xml:"channelId,attr" json:"channelId"`
 	Title       string    `xml:"title,attr" json:"title"`
 	Description string    `xml:"description,attr" json:"description"`
 	PublishDate time.Time `xml:"publishDate,attr" json:"publishDate"`
@@ -314,7 +314,7 @@ type PodcastEpisode struct {
 	IsDir       bool      `xml:"isDir,attr" json:"isDir"`
 	Year        int       `xml:"year,attr" json:"year"`
 	Genre       string    `xml:"genre,attr" json:"genre"`
-	CoverArt    specid.ID `xml:"coverArt,attr" json:"coverArt"`
+	CoverArt    *specid.ID `xml:"coverArt,attr" json:"coverArt"`
 	Size        int       `xml:"size,attr" json:"size"`
 	ContentType string    `xml:"contentType,attr" json:"contentType"`
 	Suffix      string    `xml:"suffix,attr" json:"suffix"`

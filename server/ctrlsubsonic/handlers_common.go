@@ -38,11 +38,8 @@ func (c *Controller) ServePing(r *http.Request) *spec.Response {
 func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	id, err := params.GetID("id")
-	if err != nil {
-		return spec.NewError(10, "please provide an `id` parameter")
-	}
-	if id.Type == specid.Podcast || id.Type == specid.PodcastEpisode {
-		return spec.NewError(10, "please provide a valid track id")
+	if err != nil || id.Type != specid.Track {
+		return spec.NewError(10, "please provide an valid `id` track parameter")
 	}
 	// fetch user to get lastfm session
 	user := r.Context().Value(CtxUser).(*db.User)
@@ -109,8 +106,8 @@ func (c *Controller) ServeGetUser(r *http.Request) *spec.Response {
 		Username:          user.Name,
 		AdminRole:         user.IsAdmin,
 		JukeboxRole:       true,
+		PodcastRole:       true,
 		ScrobblingEnabled: hasLastFM || hasListenBrainz,
-		PodcastRole:       c.Podcasts.PodcastBasePath != "",
 		Folder:            []int{1},
 	}
 	return sub

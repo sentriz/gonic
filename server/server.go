@@ -291,7 +291,7 @@ func (s *Server) StartPodcastRefresher(dur time.Duration) (FuncExecute, FuncInte
 			case <-done:
 				return nil
 			case <-ticker.C:
-				if err := s.podcast.RefreshPodcasts(0, true); err != nil {
+				if err := s.podcast.RefreshPodcasts(); err != nil {
 					log.Printf("failed to refresh some feeds: %s", err)
 				}
 			}

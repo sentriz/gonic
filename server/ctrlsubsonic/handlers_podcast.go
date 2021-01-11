@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/mmcdole/gofeed"
+
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
@@ -12,21 +13,19 @@ import (
 
 func (c *Controller) ServeGetPodcasts(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	isIncludeEpisodes := true
-	if ie, err := params.GetBool("includeEpisodes"); !ie && err == nil {
-		isIncludeEpisodes = false
+	isIncludeEpisodes := params.GetOrBool("includeEpisodes", true)
+	user := r.Context().Value(CtxUser).(*db.User)
+	id, _ := params.GetID("id")
+	podcasts, err := c.Podcasts.GetPodcastOrAll(user.ID, id.Value, isIncludeEpisodes)
+	if err != nil {
+		return spec.NewError(10, "failed get podcast(s): %s", err)
 	}
 	sub := spec.NewResponse()
-	user := r.Context().Value(CtxUser).(*db.User)
-	id, err := params.GetID("id")
-	if err != nil {
-		sub.Podcasts, err = c.Podcasts.GetAllPodcasts(user.ID, isIncludeEpisodes)
-		if err != nil {
-			return spec.NewError(10, "Failed to retrieve podcasts: %s", err)
-		}
-		return sub
+	sub.Podcasts = &spec.Podcasts{}
+	for _, podcast := range podcasts {
+		channel := spec.NewPodcastChannel(podcast)
+		sub.Podcasts.List = append(sub.Podcasts.List, channel)
 	}
-	sub.Podcasts, _ = c.Podcasts.GetPodcast(id.Value, user.ID, isIncludeEpisodes)
 	return sub
 }
 
@@ -34,10 +33,10 @@ func (c *Controller) ServeDownloadPodcastEpisode(r *http.Request) *spec.Response
 	params := r.Context().Value(CtxParams).(params.Params)
 	id, err := params.GetID("id")
 	if err != nil || id.Type != specid.PodcastEpisode {
-		return spec.NewError(10, "Please provide a valid podcast episode id")
+		return spec.NewError(10, "please provide a valid podcast episode id")
 	}
 	if err := c.Podcasts.DownloadEpisode(id.Value); err != nil {
-		return spec.NewError(10, "Failed to download episode: %s", err)
+		return spec.NewError(10, "failed to download episode: %s", err)
 	}
 	return spec.NewResponse()
 }
@@ -49,20 +48,18 @@ func (c *Controller) ServeCreatePodcastChannel(r *http.Request) *spec.Response {
 	fp := gofeed.NewParser()
 	feed, err := fp.ParseURL(rssURL)
 	if err != nil {
-		return spec.NewError(10, "Failed to parse feed: %s", err)
+		return spec.NewError(10, "failed to parse feed: %s", err)
 	}
-	_, err = c.Podcasts.AddNewPodcast(feed, user.ID)
-	if err != nil {
-		return spec.NewError(10, "Failed to add feed: %s", err)
+	if _, err = c.Podcasts.AddNewPodcast(feed, user.ID); err != nil {
+		return spec.NewError(10, "failed to add feed: %s", err)
 	}
 	return spec.NewResponse()
 }
 
 func (c *Controller) ServeRefreshPodcasts(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
-	err := c.Podcasts.RefreshPodcasts(user.ID, false)
-	if err != nil {
-		return spec.NewError(10, "Failed to refresh feeds: %s", err)
+	if err := c.Podcasts.RefreshPodcastsForUser(user.ID); err != nil {
+		return spec.NewError(10, "failed to refresh feeds: %s", err)
 	}
 	return spec.NewResponse()
 }
@@ -72,11 +69,10 @@ func (c *Controller) ServeDeletePodcastChannel(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	id, err := params.GetID("id")
 	if err != nil || id.Type != specid.Podcast {
-		return spec.NewError(10, "Please provide a valid podcast ID")
+		return spec.NewError(10, "please provide a valid podcast id")
 	}
-	err = c.Podcasts.DeletePodcast(user.ID, id.Value)
-	if err != nil {
-		return spec.NewError(10, "Failed to delete podcast: %s", err)
+	if err := c.Podcasts.DeletePodcast(user.ID, id.Value); err != nil {
+		return spec.NewError(10, "failed to delete podcast: %s", err)
 	}
 	return spec.NewResponse()
 }
@@ -85,11 +81,10 @@ func (c *Controller) ServeDeletePodcastEpisode(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	id, err := params.GetID("id")
 	if err != nil || id.Type != specid.PodcastEpisode {
-		return spec.NewError(10, "Please provide a valid podcast episode ID")
+		return spec.NewError(10, "please provide a valid podcast episode id")
 	}
-	err = c.Podcasts.DeletePodcastEpisode(id.Value)
-	if err != nil {
-		return spec.NewError(10, "Failed to delete podcast: %s", err)
+	if err := c.Podcasts.DeletePodcastEpisode(id.Value); err != nil {
+		return spec.NewError(10, "failed to delete podcast: %s", err)
 	}
 	return spec.NewResponse()
 }

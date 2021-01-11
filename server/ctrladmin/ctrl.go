@@ -128,7 +128,6 @@ type templateData struct {
 	DefaultListenBrainzURL string
 	SelectedUser           *db.User
 	//
-	PodcastsEnabled bool
 	Podcasts        []*db.Podcast
 }
 
