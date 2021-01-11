@@ -5,15 +5,9 @@
     </div>
     <div class="block-right">
         <table id="stats" class="text-right">
-            <tr>
-                <td>artists:</td> <td>{{ .ArtistCount }}</td>
-            </tr>
-            <tr>
-                <td>albums:</td> <td>{{ .AlbumCount }}</td>
-            </tr>
-            <tr>
-                <td>tracks:</td> <td>{{ .TrackCount }}</td>
-            </tr>
+            <tr><td>artists:</td> <td>{{ .ArtistCount }}</td></tr>
+            <tr><td>albums:</td> <td>{{ .AlbumCount }}</td></tr>
+            <tr><td>tracks:</td> <td>{{ .TrackCount }}</td></tr>
         </table>
     </div>
 </div>
@@ -28,13 +22,12 @@
         {{ if .CurrentLastFMAPIKey }}
             <span class="text-light">current status</span>
             {{ if .User.LastFMSession }}
-                linked
-                <span class="text-light">&#124;</span>
+                <span>linked</span><br/>
                 <form action="{{ path "/admin/unlink_lastfm_do" }}" method="post">
                     <input type="submit" value="unlink">
                 </form>
             {{ else }}
-                <span class="angry">unlinked</span>
+                <span class="angry">unlinked</span><br/>
                 {{ $cbPath := path "/admin/link_lastfm_do" }}
                 {{ $cbURL := printf "%s%s" .RequestRoot $cbPath }}
                 <a href="https://www.last.fm/api/auth/?api_key={{ .CurrentLastFMAPIKey }}&cb={{ $cbURL }}">link&#8230;</a>
@@ -43,7 +36,7 @@
             <p class="text-light">api key not set</p>
             {{ if not .User.IsAdmin }}
                 <p class="text-light">please ask your admin to set it</p>
-	    {{ end }}
+            {{ end }}
         {{ end }}
         {{ if .User.IsAdmin }}
             <p><a href="{{ path "/admin/update_lastfm_api_key" }}">update api key&#8230;</a></p>
@@ -52,32 +45,26 @@
 </div>
 <div class="padded box">
     <div class="box-title">
-        <i class="mdi mdi-brain"></i> ListenBrainz
+        <i class="mdi mdi-brain"></i> listenbrainz
     </div>
     <div class="box-description text-light">
-        <p>gonic can scrobble to <a href="https://listenbrainz.org/" target="_blank">ListenBrainz</a> and compatible sites.</p>
+        <p>gonic can scrobble to <a href="https://listenbrainz.org/" target="_blank">listenbrainz</a> and compatible sites</p>
     </div>
     <div class="text-right">
-            <span class="text-light">current status</span>
-            {{ if .User.ListenBrainzSession }}
-                linked
-                <span class="text-light">&#124;</span>
-                <form action="{{ path "/admin/unlink_listenbrainz_do" }}" method="post">
-                    <input type="submit" value="unlink">
-                </form>
-            {{ else }}
-                <span class="angry">unlinked</span>
-                <form id="listenbrainz-pref-set" action="{{ path "/admin/link_listenbrainz_do" }}" method="post"></form>
-                <table id="listenbrainz-pref">
-                <tr>
-                    <td><label for="listenbrainz-token">Token:</label></td>
-                    <td><input form="listenbrainz-pref-set" id="listenbrainz-token" type="text" name="token" value="{{ default "" .User.ListenBrainzSession }}"></td>
-                </tr>
-                <tr>
-                <td colspan="2"><input form="listenbrainz-pref-set" type="submit" value="save"></td>
-                </tr>
-                </table>
-            {{ end }}
+        <span class="text-light">current status</span>
+        {{ if .User.ListenBrainzToken }}
+            <span>linked</span><br/>
+            <form action="{{ path "/admin/unlink_listenbrainz_do" }}" method="post">
+                <input type="submit" value="unlink">
+            </form>
+        {{ else }}
+            <span class="angry">unlinked</span>
+            <form class="block" action="{{ path "/admin/link_listenbrainz_do" }}" method="post">
+                <input type="text" name="url" placeholder="server addr" value="{{ default .DefaultListenBrainzURL .User.ListenBrainzURL }}">
+                <input type="text" name="token" placeholder="e199b311abd01f0d" value="{{ .User.ListenBrainzToken }}">
+                <input type="submit" value="update">
+            </form>
+        {{ end }}
     </div>
 </div>
 <div class="padded box">
@@ -131,8 +118,8 @@
         </colgroup>
         {{ range $folder := .RecentFolders }}
             <tr>
-            <td class="text-right text-trunc">{{ $folder.RightPath }}</td>
-            <td><span class="text-light" title="{{ $folder.ModifiedAt }}">{{ $folder.ModifiedAt | dateHuman }}</span></td>
+                <td class="text-right text-trunc">{{ $folder.RightPath }}</td>
+                <td><span class="text-light" title="{{ $folder.ModifiedAt }}">{{ $folder.ModifiedAt | dateHuman }}</span></td>
             </tr>
         {{ end }}
         </table>
@@ -141,7 +128,7 @@
                 <p class="text-light" title="{{ .LastScanTime }}">scanned {{ .LastScanTime | dateHuman }}</p>
             {{ end }}
             <form action="{{ path "/admin/start_scan_inc_do" }}" method="post">
-                <input type="submit" title="start a incremental scan" value="scan now"><br/>
+                <input type="submit" title="start a incremental scan" value="scan now">
             </form>
             <form action="{{ path "/admin/start_scan_full_do" }}" method="post">
                 <input type="submit" title="start a full scan (takes longer, and shouldn&#39;t usually be necessary)" value="scan full (!)">
@@ -192,11 +179,11 @@
         <table id="recent-playlists">
         {{ range $i, $playlist := .Playlists }}
             <tr>
-            <form id="recent-playlists-{{ $i }}" action="{{ printf "/admin/delete_playlist_do?id=%d" $playlist.ID | path }}" method="post"></form>
-            <td class="text-right">{{ $playlist.Name }}</td>
-            <td><span class="text-light">({{ $playlist.TrackCount }} tracks)</span></td>
-            <td class="no-small"><span class="text-light" title="{{ $playlist.CreatedAt }}">{{ $playlist.CreatedAt | dateHuman }}</span></td>
-            <td><input form="recent-playlists-{{ $i }}" type="submit" value="delete"></td>
+                <form id="recent-playlists-{{ $i }}" action="{{ printf "/admin/delete_playlist_do?id=%d" $playlist.ID | path }}" method="post"></form>
+                <td class="text-right">{{ $playlist.Name }}</td>
+                <td><span class="text-light">({{ $playlist.TrackCount }} tracks)</span></td>
+                <td class="no-small"><span class="text-light" title="{{ $playlist.CreatedAt }}">{{ $playlist.CreatedAt | dateHuman }}</span></td>
+                <td><input form="recent-playlists-{{ $i }}" type="submit" value="delete"></td>
             </tr>
         {{ end }}
         </table>

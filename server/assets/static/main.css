@@ -23,6 +23,7 @@ html {
   font-family: monospace;
   font-size: var(--size);
   color: black;
+  line-height: 1;
 }
 
 body {
@@ -37,10 +38,12 @@ button,
 textarea {
   border-radius: 0;
   box-sizing: border-box;
-  margin: calc(var(--size)*0.33) 0 0 0;;
-  border: 1px solid #ccc;
+  margin: 0;
   padding: 0;
-  vertical-align: middle;
+  border: none;
+  outline: 1px solid #ccc;
+  height: var(--size);
+  vertical-align: bottom;
 }
 
 input[type] {
@@ -52,10 +55,6 @@ input[type] {
 input[type="text"],
 input[type="password"] {
   width: 100%;
-}
-
-form {
-  display: inline;
 }
 
 form.block {
@@ -170,9 +169,4 @@ a:hover {
 
 .angry {
   background-color: #f4433669;
-}
-
-#listenbrainz-pref {
-  width: 100%;
-  margin: calc(var(--size)*0.5) 0;
 }

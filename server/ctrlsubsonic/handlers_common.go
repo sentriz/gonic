@@ -55,8 +55,9 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 	optSubmission := params.GetOrBool("submission", true)
 	scrobbleErrs := []error{}
 	for _, scrobbler := range c.Scrobblers {
-		err = scrobbler.Scrobble(user, track, optStampMili, optSubmission)
-		scrobbleErrs = append(scrobbleErrs, err)
+		if err := scrobbler.Scrobble(user, track, optStampMili, optSubmission); err != nil {
+			scrobbleErrs = append(scrobbleErrs, err)
+		}
 	}
 	if len(scrobbleErrs) != 0 {
 		return spec.NewError(0, "error when submitting: %v", scrobbleErrs)

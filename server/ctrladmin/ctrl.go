@@ -122,6 +122,7 @@ type templateData struct {
 	//
 	CurrentLastFMAPIKey    string
 	CurrentLastFMAPISecret string
+	DefaultListenBrainzURL string
 	SelectedUser           *db.User
 }
 
