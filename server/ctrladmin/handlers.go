@@ -11,6 +11,7 @@ import (
 	"go.senan.xyz/gonic/server/encode"
 	"go.senan.xyz/gonic/server/scanner"
 	"go.senan.xyz/gonic/server/scrobble/lastfm"
+	"go.senan.xyz/gonic/server/scrobble/listenbrainz"
 )
 
 func firstExisting(or string, strings ...string) string {
@@ -58,6 +59,7 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	)
 	data.RequestRoot = fmt.Sprintf("%s://%s", scheme, host)
 	data.CurrentLastFMAPIKey = c.DB.GetSetting("lastfm_api_key")
+	data.DefaultListenBrainzURL = listenbrainz.BaseURL
 	// ** begin users box
 	c.DB.Find(&data.AllUsers)
 	// ** begin recent folders box
@@ -163,21 +165,24 @@ func (c *Controller) ServeUnlinkLastFMDo(r *http.Request) *Response {
 
 func (c *Controller) ServeLinkListenBrainzDo(r *http.Request) *Response {
 	token := r.FormValue("token")
-	if token == "" {
+	url := r.FormValue("url")
+	if token == "" || url == "" {
 		return &Response{
-			err:  "please provide a token",
-			code: 400,
+			redirect: r.Referer(),
+			flashW:   []string{"please provide a url and token"},
 		}
 	}
 	user := r.Context().Value(CtxUser).(*db.User)
-	user.ListenBrainzSession = token
+	user.ListenBrainzURL = url
+	user.ListenBrainzToken = token
 	c.DB.Save(&user)
 	return &Response{redirect: "/admin/home"}
 }
 
 func (c *Controller) ServeUnlinkListenBrainzDo(r *http.Request) *Response {
 	user := r.Context().Value(CtxUser).(*db.User)
-	user.ListenBrainzSession = ""
+	user.ListenBrainzURL = ""
+	user.ListenBrainzToken = ""
 	c.DB.Save(&user)
 	return &Response{redirect: "/admin/home"}
 }

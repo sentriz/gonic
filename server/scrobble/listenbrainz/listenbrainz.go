@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	baseURL    = "https://api.listenbrainz.org"
-	submitPath = "/1/submit-listens"
+	BaseURL = "https://api.listenbrainz.org"
 
+	submitPath           = "/1/submit-listens"
 	listenTypeSingle     = "single"
 	listenTypePlayingNow = "playing_now"
 )
@@ -47,7 +47,7 @@ type Scrobble struct {
 type Scrobbler struct{}
 
 func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stampMili int, submission bool) error {
-	if user.ListenBrainzSession == "" {
+	if user.ListenBrainzURL == "" || user.ListenBrainzToken == "" {
 		return nil
 	}
 	payload := Payload{
@@ -72,9 +72,9 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stampMili int, subm
 	if err := json.NewEncoder(&payloadBuf).Encode(scrobble); err != nil {
 		return err
 	}
-	submitURL := fmt.Sprintf("%s%s", baseURL, submitPath)
-	authHeader := fmt.Sprintf("Token %s", user.ListenBrainzSession)
-	req, _ := http.NewRequest("POST", submitURL, &payloadBuf)
+	submitURL := fmt.Sprintf("%s%s", user.ListenBrainzURL, submitPath)
+	authHeader := fmt.Sprintf("Token %s", user.ListenBrainzToken)
+	req, _ := http.NewRequest(http.MethodPost, submitURL, &payloadBuf)
 	req.Header.Add("Authorization", authHeader)
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
