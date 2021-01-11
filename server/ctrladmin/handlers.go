@@ -46,10 +46,6 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	c.DB.Table("artists").Count(&data.ArtistCount)
 	c.DB.Table("albums").Count(&data.AlbumCount)
 	c.DB.Table("tracks").Count(&data.TrackCount)
-	data.PodcastsEnabled = c.Podcasts.PodcastBasePath != ""
-	if data.PodcastsEnabled {
-		c.DB.Find(&data.Podcasts)
-	}
 	// ** begin lastfm box
 	scheme := firstExisting(
 		"http", // fallback
@@ -92,6 +88,8 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	for profile := range encode.Profiles() {
 		data.TranscodeProfiles = append(data.TranscodeProfiles, profile)
 	}
+	// ** begin podcasts box
+	c.DB.Find(&data.Podcasts)
 	//
 	return &Response{
 		template: "home.tmpl",

@@ -22,7 +22,8 @@ import (
 
 const (
 	cleanTimeDuration = 10 * time.Minute
-	coverCachePrefix  = "covers"
+	cachePrefixAudio  = "audio"
+	cachePrefixCovers = "covers"
 )
 
 func main() {
@@ -30,7 +31,7 @@ func main() {
 	confListenAddr := set.String("listen-addr", "0.0.0.0:4747", "listen address (optional)")
 	confMusicPath := set.String("music-path", "", "path to music")
 	confPodcastPath := set.String("podcast-path", "", "path to podcasts")
-	confCachePath := set.String("cache-path", "/tmp/gonic_cache", "path to cache")
+	confCachePath := set.String("cache-path", "", "path to cache")
 	confDBPath := set.String("db-path", "gonic.db", "path to database (optional)")
 	confScanInterval := set.Int("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
 	confJukeboxEnabled := set.Bool("jukebox-enabled", false, "whether the subsonic jukebox api should be enabled (optional)")
@@ -61,18 +62,24 @@ func main() {
 	if _, err := os.Stat(*confMusicPath); os.IsNotExist(err) {
 		log.Fatal("please provide a valid music directory")
 	}
-	if _, err := os.Stat(*confPodcastPath); *confPodcastPath != "" && os.IsNotExist(err) {
+	if _, err := os.Stat(*confPodcastPath); os.IsNotExist(err) {
 		log.Fatal("please provide a valid podcast directory")
 	}
 	if _, err := os.Stat(*confCachePath); os.IsNotExist(err) {
-		if err := os.MkdirAll(*confCachePath, os.ModePerm); err != nil {
-			log.Fatalf("couldn't create cache path: %v\n", err)
+		log.Fatal("please provide a valid cache directory")
+	}
+
+	cacheDirAudio := path.Join(*confCachePath, cachePrefixAudio)
+	cacheDirCovers := path.Join(*confCachePath, cachePrefixCovers)
+
+	if _, err := os.Stat(cacheDirAudio); os.IsNotExist(err) {
+		if err := os.MkdirAll(cacheDirAudio, os.ModePerm); err != nil {
+			log.Fatalf("couldn't create audio cache path: %v\n", err)
 		}
 	}
-	coverCachePath := path.Join(*confCachePath, coverCachePrefix)
-	if _, err := os.Stat(coverCachePath); os.IsNotExist(err) {
-		if err := os.MkdirAll(coverCachePath, os.ModePerm); err != nil {
-			log.Fatalf("couldn't create cover cache path: %v\n", err)
+	if _, err := os.Stat(cacheDirCovers); os.IsNotExist(err) {
+		if err := os.MkdirAll(cacheDirCovers, os.ModePerm); err != nil {
+			log.Fatalf("couldn't create covers cache path: %v\n", err)
 		}
 	}
 
@@ -87,8 +94,8 @@ func main() {
 	server := server.New(server.Options{
 		DB:             db,
 		MusicPath:      *confMusicPath,
-		CachePath:      *confCachePath,
-		CoverCachePath: coverCachePath,
+		CachePath:      cacheDirAudio,
+		CoverCachePath: cacheDirCovers,
 		ProxyPrefix:    *confProxyPrefix,
 		GenreSplit:     *confGenreSplit,
 		PodcastPath:    *confPodcastPath,
@@ -97,15 +104,13 @@ func main() {
 	var g run.Group
 	g.Add(server.StartHTTP(*confListenAddr))
 	g.Add(server.StartSessionClean(cleanTimeDuration))
+	g.Add(server.StartPodcastRefresher(time.Hour))
 	if *confScanInterval > 0 {
 		tickerDur := time.Duration(*confScanInterval) * time.Minute
 		g.Add(server.StartScanTicker(tickerDur))
 	}
 	if *confJukeboxEnabled {
 		g.Add(server.StartJukebox())
-	}
-	if *confProxyPrefix != "" {
-		g.Add(server.StartPodcastRefresher(time.Hour))
 	}
 
 	if err := g.Run(); err != nil {

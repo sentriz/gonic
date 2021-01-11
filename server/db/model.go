@@ -300,6 +300,7 @@ type Podcast struct {
 	ImageURL    string
 	ImagePath   string
 	Error       string
+	Episodes     []*PodcastEpisode
 }
 
 func (p *Podcast) Fullpath(podcastPath string) string {

@@ -17,8 +17,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/mmcdole/gofeed"
-	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
-	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
+
 	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/scanner/tags"
 )
@@ -34,95 +33,38 @@ const (
 	episodeDeleted     = "deleted"
 )
 
-func (p *Podcasts) GetAllPodcasts(userID int, includeEpisodes bool) (*spec.Podcasts, error) {
+func (p *Podcasts) GetPodcastOrAll(userID int, id int, includeEpisodes bool) ([]*db.Podcast, error) {
 	podcasts := []*db.Podcast{}
-	err := p.DB.Where("user_id=?", userID).Order("").Find(&podcasts).Error
-	if err != nil {
-		return nil, err
+	q := p.DB.Where("user_id=?", userID)
+	if id != 0 {
+		q = q.Where("id=?", id)
 	}
-	channels := []spec.PodcastChannel{}
+	if err := q.Find(&podcasts).Error; err != nil {
+		return nil, fmt.Errorf("finding podcasts: %w", err)
+	}
+	if !includeEpisodes {
+		return podcasts, nil
+	}
 	for _, c := range podcasts {
-		channel := spec.PodcastChannel{
-			ID:               *c.SID(),
-			OriginalImageURL: c.ImageURL,
-			Title:            c.Title,
-			Description:      c.Description,
-			URL:              c.URL,
-			Status:           episodeSkipped,
+		episodes, err := p.GetPodcastEpisodes(id)
+		if err != nil {
+			return nil, fmt.Errorf("finding podcast episodes: %w", err)
 		}
-		if includeEpisodes {
-			channel.Episode, err = p.GetPodcastEpisodes(*c.SID())
-			if err != nil {
-				return nil, err
-			}
-		}
-		channels = append(channels, channel)
+		c.Episodes = episodes
 	}
-	return &spec.Podcasts{List: channels}, nil
+	return podcasts, nil
 }
 
-func (p *Podcasts) GetPodcast(podcastID, userID int, includeEpisodes bool) (*spec.Podcasts, error) {
-	podcasts := []*db.Podcast{}
-	err := p.DB.Where("user_id=? AND id=?", userID, podcastID).
-		Order("title DESC").
-		Find(&podcasts).Error
-	if err != nil {
-		return nil, err
-	}
-
-	channels := []spec.PodcastChannel{}
-	for _, c := range podcasts {
-		channel := spec.PodcastChannel{
-			ID:               *c.SID(),
-			OriginalImageURL: c.ImageURL,
-			CoverArt:         *c.SID(),
-			Title:            c.Title,
-			Description:      c.Description,
-			URL:              c.URL,
-			Status:           episodeSkipped,
-		}
-		if includeEpisodes {
-			channel.Episode, err = p.GetPodcastEpisodes(*c.SID())
-			if err != nil {
-				return nil, err
-			}
-		}
-		channels = append(channels, channel)
-	}
-	return &spec.Podcasts{List: channels}, nil
-}
-
-func (p *Podcasts) GetPodcastEpisodes(podcastID specid.ID) ([]spec.PodcastEpisode, error) {
-	dbEpisodes := []*db.PodcastEpisode{}
-	if err := p.DB.
-		Where("podcast_id=?", podcastID.Value).
+func (p *Podcasts) GetPodcastEpisodes(podcastID int) ([]*db.PodcastEpisode, error) {
+	episodes := []*db.PodcastEpisode{}
+	err := p.DB.
+		Where("podcast_id=?", podcastID).
 		Order("publish_date DESC").
-		Find(&dbEpisodes).Error; err != nil {
-		return nil, err
+		Find(&episodes).
+		Error
+	if err != nil {
+		return nil, fmt.Errorf("find episodes by podcast id: %w", err)
 	}
-	episodes := []spec.PodcastEpisode{}
-	for _, dbe := range dbEpisodes {
-		episodes = append(episodes, spec.PodcastEpisode{
-			ID:          *dbe.SID(),
-			StreamID:    *dbe.SID(),
-			ContentType: dbe.MIME(),
-			ChannelID:   podcastID,
-			Title:       dbe.Title,
-			Description: dbe.Description,
-			Status:      dbe.Status,
-			CoverArt:    podcastID,
-			PublishDate: *dbe.PublishDate,
-			Genre:       "Podcast",
-			Duration:    dbe.Length,
-			Year:        dbe.PublishDate.Year(),
-			Suffix:      dbe.Ext(),
-			BitRate:     dbe.Bitrate,
-			IsDir:       false,
-			Path:        dbe.Path,
-			Size:        dbe.Size,
-		})
-	}
-
 	return episodes, nil
 }
 
@@ -142,11 +84,14 @@ func (p *Podcasts) AddNewPodcast(feed *gofeed.Feed, userID int) (*db.Podcast, er
 	if err := p.DB.Save(&podcast).Error; err != nil {
 		return &podcast, err
 	}
-	if err := p.AddNewEpisodes(userID, podcast.ID, feed.Items); err != nil {
+	if err := p.AddNewEpisodes(podcast.ID, feed.Items); err != nil {
 		return nil, err
 	}
-	go p.downloadPodcastCover(podPath, &podcast)
-
+	go func() {
+		if err := p.downloadPodcastCover(podPath, &podcast); err != nil {
+			log.Printf("error downloading podcast cover: %v", err)
+		}
+	}()
 	return &podcast, nil
 }
 
@@ -161,7 +106,7 @@ func getEntriesAfterDate(feed []*gofeed.Item, after time.Time) []*gofeed.Item {
 	return items
 }
 
-func (p *Podcasts) AddNewEpisodes(userID int, podcastID int, items []*gofeed.Item) error {
+func (p *Podcasts) AddNewEpisodes(podcastID int, items []*gofeed.Item) error {
 	podcastEpisode := db.PodcastEpisode{}
 	err := p.DB.
 		Where("podcast_id=?", podcastID).
@@ -246,43 +191,65 @@ func (p *Podcasts) AddEpisode(podcastID int, item *gofeed.Item) error {
 	return nil
 }
 
-func (p *Podcasts) RefreshPodcasts(userID int, serverWide bool) error {
+func (p *Podcasts) RefreshPodcasts() error {
 	podcasts := []*db.Podcast{}
-	var err error
-	if serverWide {
-		err = p.DB.Find(&podcasts).Error
-	} else {
-		err = p.DB.Where("user_id=?", userID).Find(&podcasts).Error
+	if err := p.DB.Find(&podcasts).Error; err != nil {
+		return fmt.Errorf("find podcasts: %w", err)
 	}
-	if err != nil {
-		return err
+	if errs := p.refreshPodcasts(podcasts); len(errs) > 0 {
+		return fmt.Errorf("refresh podcasts: %v", errs)
 	}
+	return nil
+}
 
+func (p *Podcasts) RefreshPodcastsForUser(userID int) error {
+	podcasts := []*db.Podcast{}
+	err := p.DB.
+		Where("user_id=?", userID).
+		Find(&podcasts).
+		Error
+	if err != nil {
+		return fmt.Errorf("find podcasts: %w", err)
+	}
+	if errs := p.refreshPodcasts(podcasts); len(errs) > 0 {
+		return fmt.Errorf("refresh podcasts: %v", errs)
+	}
+	return nil
+}
+
+func (p *Podcasts) refreshPodcasts(podcasts []*db.Podcast) []error {
+	var errs []error
 	for _, podcast := range podcasts {
 		fp := gofeed.NewParser()
 		feed, err := fp.ParseURL(podcast.URL)
 		if err != nil {
-			log.Printf("Error refreshing podcast with url %s: %s", podcast.URL, err)
+			errs = append(errs, fmt.Errorf("refreshing podcast with url %q: %w", podcast.URL, err))
 			continue
 		}
-		err = p.AddNewEpisodes(userID, podcast.ID, feed.Items)
-		if err != nil {
-			log.Printf("Error adding episodes: %s", err)
+		if err = p.AddNewEpisodes(podcast.ID, feed.Items); err != nil {
+			errs = append(errs, fmt.Errorf("adding episodes: %w", err))
+			continue
 		}
 	}
-	return nil
+	return errs
 }
 
 func (p *Podcasts) DownloadEpisode(episodeID int) error {
 	podcastEpisode := db.PodcastEpisode{}
 	podcast := db.Podcast{}
-	err := p.DB.Where("id=?", episodeID).First(&podcastEpisode).Error
+	err := p.DB.
+		Where("id=?", episodeID).
+		First(&podcastEpisode).
+		Error
 	if err != nil {
-		return err
+		return fmt.Errorf("get podcast episode by id: %w", err)
 	}
-	err = p.DB.Where("id=?", podcastEpisode.PodcastID).First(&podcast).Error
+	err = p.DB.
+		Where("id=?", podcastEpisode.PodcastID).
+		First(&podcast).
+		Error
 	if err != nil {
-		return err
+		return fmt.Errorf("get podcast by id: %w", err)
 	}
 	if podcastEpisode.Status == episodeDownloading {
 		log.Printf("Already downloading podcast episode with id %d", episodeID)
@@ -293,25 +260,29 @@ func (p *Podcasts) DownloadEpisode(episodeID int) error {
 	// nolint: bodyclose
 	resp, err := http.Get(podcastEpisode.AudioURL)
 	if err != nil {
-		return err
+		return fmt.Errorf("fetch podcast audio: %w", err)
 	}
 	filename, ok := getContentDispositionFilename(resp.Header.Get("content-disposition"))
 	if !ok {
 		audioURL, err := url.Parse(podcastEpisode.AudioURL)
 		if err != nil {
-			return err
+			return fmt.Errorf("parse podcast audio url: %w", err)
 		}
 		filename = path.Base(audioURL.Path)
 	}
 	filename = p.findUniqueEpisodeName(&podcast, &podcastEpisode, filename)
 	audioFile, err := os.Create(path.Join(podcast.Fullpath(p.PodcastBasePath), filename))
 	if err != nil {
-		return err
+		return fmt.Errorf("create audio file: %w", err)
 	}
 	podcastEpisode.Filename = filename
 	podcastEpisode.Path = path.Join(filepath.Clean(podcast.Title), filename)
 	p.DB.Save(&podcastEpisode)
-	go p.doPodcastDownload(&podcastEpisode, audioFile, resp.Body)
+	go func() {
+		if err := p.doPodcastDownload(&podcastEpisode, audioFile, resp.Body); err != nil {
+			log.Printf("error downloading podcast: %v", err)
+		}
+	}()
 	return nil
 }
 
@@ -319,14 +290,13 @@ func (p *Podcasts) findUniqueEpisodeName(
 	podcast *db.Podcast,
 	podcastEpisode *db.PodcastEpisode,
 	filename string) string {
-	fp := path.Join(podcast.Fullpath(p.PodcastBasePath), filename)
-	if _, err := os.Stat(fp); os.IsNotExist(err) {
+	podcastPath := path.Join(podcast.Fullpath(p.PodcastBasePath), filename)
+	if _, err := os.Stat(podcastPath); os.IsNotExist(err) {
 		return filename
 	}
-	titlePath := fmt.Sprintf("%s%s", podcastEpisode.Title,
-		filepath.Ext(filename))
-	fp = path.Join(podcast.Fullpath(p.PodcastBasePath), titlePath)
-	if _, err := os.Stat(fp); os.IsNotExist(err) {
+	titlePath := fmt.Sprintf("%s%s", podcastEpisode.Title, filepath.Ext(filename))
+	podcastPath = path.Join(podcast.Fullpath(p.PodcastBasePath), titlePath)
+	if _, err := os.Stat(podcastPath); os.IsNotExist(err) {
 		return titlePath
 	}
 	// try to find a filename like FILENAME (1).mp3 incrementing
@@ -335,8 +305,8 @@ func (p *Podcasts) findUniqueEpisodeName(
 
 func findEpisode(base, filename string, count int) string {
 	testFile := fmt.Sprintf("%s (%d)%s", filename, count, filepath.Ext(filename))
-	fp := path.Join(base, testFile)
-	if _, err := os.Stat(fp); os.IsNotExist(err) {
+	podcastPath := path.Join(base, testFile)
+	if _, err := os.Stat(podcastPath); os.IsNotExist(err) {
 		return testFile
 	}
 	return findEpisode(base, filename, count+1)
@@ -348,92 +318,99 @@ func getContentDispositionFilename(header string) (string, bool) {
 	return filename, ok
 }
 
-func (p *Podcasts) downloadPodcastCover(podPath string, podcast *db.Podcast) {
+func (p *Podcasts) downloadPodcastCover(podPath string, podcast *db.Podcast) error {
 	imageURL, err := url.Parse(podcast.ImageURL)
 	if err != nil {
-		return
+		return fmt.Errorf("parse image url: %w", err)
 	}
 	ext := path.Ext(imageURL.Path)
 	resp, err := http.Get(podcast.ImageURL)
 	if err != nil {
-		return
+		return fmt.Errorf("fetch image url: %w", err)
 	}
 	defer resp.Body.Close()
 	if ext == "" {
-		filename, _ := getContentDispositionFilename(resp.Header.Get("content-disposition"))
+		contentHeader := resp.Header.Get("content-disposition")
+		filename, _ := getContentDispositionFilename(contentHeader)
 		ext = path.Ext(filename)
 	}
 	coverPath := path.Join(podPath, "cover"+ext)
 	coverFile, err := os.Create(coverPath)
 	if err != nil {
-		log.Printf("Error creating podcast cover: %s", err)
-		return
+		return fmt.Errorf("creating podcast cover: %w", err)
 	}
 	if _, err := io.Copy(coverFile, resp.Body); err != nil {
-		log.Printf("Error while writing cover: %s", err)
-		return
+		return fmt.Errorf("writing podcast cover: %w", err)
 	}
-	podcast.ImagePath = path.Join(filepath.Clean(podcast.Title), "cover"+ext)
-	p.DB.Save(podcast)
+	podcastPath := filepath.Clean(podcast.Title)
+	podcastFilename := fmt.Sprintf("cover%s", ext)
+	podcast.ImagePath = path.Join(podcastPath, podcastFilename)
+	if err := p.DB.Save(podcast).Error; err != nil {
+		return fmt.Errorf("save podcast: %w", err)
+	}
+	return nil
 }
 
-func (p *Podcasts) doPodcastDownload(podcastEpisode *db.PodcastEpisode, pdFile *os.File, src io.Reader) {
-	_, err := io.Copy(pdFile, src)
+func (p *Podcasts) doPodcastDownload(podcastEpisode *db.PodcastEpisode, file *os.File, src io.Reader) error {
+	if _, err := io.Copy(file, src); err != nil {
+		return fmt.Errorf("writing podcast episode: %w", err)
+	}
+	defer file.Close()
+	stat, _ := file.Stat()
+	podcastPath := path.Join(p.PodcastBasePath, podcastEpisode.Path)
+	podcastTags, err := tags.New(podcastPath)
 	if err != nil {
-		log.Printf("Error while writing podcast episode: %s", err)
+		log.Printf("error parsing podcast: %e", err)
 		podcastEpisode.Status = "error"
 		p.DB.Save(podcastEpisode)
-		return
+		return nil
 	}
-	defer pdFile.Close()
-	stat, _ := pdFile.Stat()
-	podTags, err := tags.New(path.Join(p.PodcastBasePath, podcastEpisode.Path))
-	if err != nil {
-		log.Printf("Error parsing podcast: %e", err)
-		podcastEpisode.Status = "error"
-		p.DB.Save(podcastEpisode)
-		return
-	}
-	podcastEpisode.Bitrate = podTags.Bitrate()
+	podcastEpisode.Bitrate = podcastTags.Bitrate()
 	podcastEpisode.Status = "completed"
-	podcastEpisode.Length = podTags.Length()
+	podcastEpisode.Length = podcastTags.Length()
 	podcastEpisode.Size = int(stat.Size())
-	p.DB.Save(podcastEpisode)
+	return p.DB.Save(podcastEpisode).Error
 }
 
 func (p *Podcasts) DeletePodcast(userID, podcastID int) error {
 	podcast := db.Podcast{}
-	err := p.DB.Where("id=? AND user_id=?", podcastID, userID).First(&podcast).Error
+	err := p.DB.
+		Where("id=? AND user_id=?", podcastID, userID).
+		First(&podcast).
+		Error
 	if err != nil {
 		return err
 	}
-	userCount := 0
-	p.DB.Model(&db.Podcast{}).Where("title=?", podcast.Title).Count(&userCount)
+	var userCount int
+	p.DB.
+		Model(&db.Podcast{}).
+		Where("title=?", podcast.Title).
+		Count(&userCount)
 	if userCount == 1 {
 		// only delete the folder if there are not multiple listeners
-		err = os.RemoveAll(podcast.Fullpath(p.PodcastBasePath))
-		if err != nil {
-			return err
+		if err = os.RemoveAll(podcast.Fullpath(p.PodcastBasePath)); err != nil {
+			return fmt.Errorf("delete podcast directory: %w", err)
 		}
 	}
 	err = p.DB.
 		Where("id=? AND user_id=?", podcastID, userID).
-		Delete(db.Podcast{}).Error
+		Delete(db.Podcast{}).
+		Error
 	if err != nil {
-		return err
+		return fmt.Errorf("delete podcast row: %w", err)
 	}
 	return nil
 }
 
 func (p *Podcasts) DeletePodcastEpisode(podcastEpisodeID int) error {
-	podcastEp := db.PodcastEpisode{}
-	err := p.DB.First(&podcastEp, podcastEpisodeID).Error
+	episode := db.PodcastEpisode{}
+	err := p.DB.First(&episode, podcastEpisodeID).Error
 	if err != nil {
 		return err
 	}
-	podcastEp.Status = episodeDeleted
-	p.DB.Save(&podcastEp)
-	if err := os.Remove(filepath.Join(p.PodcastBasePath, podcastEp.Path)); err != nil {
+	episode.Status = episodeDeleted
+	p.DB.Save(&episode)
+	if err := os.Remove(filepath.Join(p.PodcastBasePath, episode.Path)); err != nil {
 		return err
 	}
 	return err

@@ -13,8 +13,8 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/jukebox"
-	"go.senan.xyz/gonic/server/scrobble"
 	"go.senan.xyz/gonic/server/podcasts"
+	"go.senan.xyz/gonic/server/scrobble"
 )
 
 type CtxKey int
