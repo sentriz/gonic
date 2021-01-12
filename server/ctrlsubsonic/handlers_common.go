@@ -99,12 +99,14 @@ func (c *Controller) ServeGetScanStatus(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetUser(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
+	hasLastFM := user.LastFMSession != ""
+	hasListenBrainz := user.ListenBrainzToken != ""
 	sub := spec.NewResponse()
 	sub.User = &spec.User{
 		Username:          user.Name,
 		AdminRole:         user.IsAdmin,
 		JukeboxRole:       true,
-		ScrobblingEnabled: user.LastFMSession != "",
+		ScrobblingEnabled: hasLastFM || hasListenBrainz,
 		Folder:            []int{1},
 	}
 	return sub
