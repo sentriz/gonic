@@ -282,8 +282,7 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response {
 	}
 	// all actions except get are expected to return a status
 	sub := spec.NewResponse()
-	sub.JukeboxPlaylist = &spec.JukeboxPlaylist{
-		JukeboxStatus: getStatus(),
-	}
+	status := getStatus()
+	sub.JukeboxStatus = &status
 	return sub
 }
