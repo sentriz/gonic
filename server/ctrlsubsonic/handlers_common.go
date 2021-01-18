@@ -271,7 +271,8 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response {
 		if err != nil {
 			return spec.NewError(10, "please provide an index for skip actions")
 		}
-		c.Jukebox.Skip(index)
+		offset, _ := params.GetInt("offset")
+		c.Jukebox.Skip(index, offset)
 	case "get":
 		sub := spec.NewResponse()
 		sub.JukeboxPlaylist = &spec.JukeboxPlaylist{
