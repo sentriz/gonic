@@ -59,13 +59,15 @@ const (
 )
 
 type update struct {
-	action updateType
-	index  int
-	tracks []*db.Track
+	action     updateType
+	index      int
+	tracks     []*db.Track
+	skipOffset int
 }
 
 type updateSpeaker struct {
-	index int
+	index  int
+	offset int
 }
 
 func New(musicPath string) *Jukebox {
@@ -117,14 +119,14 @@ func (j *Jukebox) doUpdate(u update) {
 		j.index = u.index
 		j.playing = true
 		j.Unlock()
-		j.speaker <- updateSpeaker{j.index}
+		j.speaker <- updateSpeaker{index: j.index, offset: u.skipOffset}
 	case add:
 		if len(j.playlist) == 0 {
 			j.playlist = u.tracks
 			j.playing = true
 			j.index = 0
 			j.Unlock()
-			j.speaker <- updateSpeaker{0}
+			j.speaker <- updateSpeaker{index: 0}
 			return
 		}
 		j.playlist = append(j.playlist, u.tracks...)
@@ -182,6 +184,12 @@ func (j *Jukebox) doUpdateSpeaker(su updateSpeaker) error {
 	j.Lock()
 	j.info = &strmInfo{}
 	j.info.strm = streamer.(beep.StreamSeekCloser)
+	if su.offset != 0 {
+		samples := format.SampleRate.N(time.Second * time.Duration(su.offset))
+		if err := j.info.strm.Seek(samples); err != nil {
+			return err
+		}
+	}
 	j.info.ctrlStrmr.Streamer = beep.Resample(
 		4, format.SampleRate,
 		j.sr, j.info.strm,
@@ -189,7 +197,7 @@ func (j *Jukebox) doUpdateSpeaker(su updateSpeaker) error {
 	j.info.format = format
 	j.Unlock()
 	speaker.Play(beep.Seq(&j.info.ctrlStrmr, beep.Callback(func() {
-		j.speaker <- updateSpeaker{su.index + 1}
+		j.speaker <- updateSpeaker{index: su.index + 1}
 	})))
 	return nil
 }
@@ -215,10 +223,11 @@ func (j *Jukebox) RemoveTrack(i int) {
 	}
 }
 
-func (j *Jukebox) Skip(i int) {
+func (j *Jukebox) Skip(i int, offset int) {
 	j.updates <- update{
-		action: skip,
-		index:  i,
+		action:     skip,
+		index:      i,
+		skipOffset: offset,
 	}
 }
 
