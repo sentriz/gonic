@@ -16,7 +16,8 @@ RUN ./_do_build_server
 FROM alpine:3.12.3
 RUN apk add -U --no-cache \
   ffmpeg \
-  ca-certificates
+  ca-certificates \
+  tzdata
 COPY --from=builder \
   /usr/lib/libgcc_s.so.1 \
   /usr/lib/libstdc++.so.6 \
@@ -27,6 +28,7 @@ COPY --from=builder \
   /bin/
 VOLUME ["/data", "/music", "/cache"]
 EXPOSE 80
+ENV TZ
 ENV GONIC_DB_PATH /data/gonic.db
 ENV GONIC_LISTEN_ADDR :80
 ENV GONIC_MUSIC_PATH /music
