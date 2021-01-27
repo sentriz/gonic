@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	buffLen    = 4096
-	ffmpegPath = "/usr/bin/ffmpeg"
+	buffLen = 4096
+	ffmpeg  = "ffmpeg"
 )
 
 type Profile struct {
@@ -84,7 +84,7 @@ func cmdOutputWrite(out, cache io.Writer, pipeReader io.ReadCloser) {
 }
 
 // pre-format the ffmpeg command with needed options
-func ffmpegCommand(filePath string, profile Profile) *exec.Cmd {
+func ffmpegCommand(filePath string, profile Profile) (*exec.Cmd, error) {
 	args := []string{
 		"-v", "0",
 		"-i", filePath,
@@ -105,7 +105,12 @@ func ffmpegCommand(filePath string, profile Profile) *exec.Cmd {
 		)
 	}
 	args = append(args, "-f", profile.Format, "-")
-	return exec.Command(ffmpegPath, args...) //nolint:gosec // can't see a way for this be abused
+	ffmpegPath, err := exec.LookPath(ffmpeg)
+	if err != nil {
+		return nil, fmt.Errorf("find ffmpeg binary path: %w", err)
+	}
+	return exec.Command(ffmpegPath, args...), nil //nolint:gosec
+	// can't see a way for this be abused
 	// but please do let me know if you see otherwise
 }
 
@@ -113,7 +118,10 @@ func encode(out io.Writer, trackPath, cachePath string, profile Profile) error {
 	// prepare cache part file path
 	cachePartPath := fmt.Sprintf("%s.part", cachePath)
 	// prepare the command and file descriptors
-	cmd := ffmpegCommand(trackPath, profile)
+	cmd, err := ffmpegCommand(trackPath, profile)
+	if err != nil {
+		return fmt.Errorf("generate ffmpeg command: %w", err)
+	}
 	pipeReader, pipeWriter := io.Pipe()
 	cmd.Stdout = pipeWriter
 	cmd.Stderr = pipeWriter
