@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/mmcdole/gofeed"
+
 	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/encode"
 	"go.senan.xyz/gonic/server/scanner"
@@ -430,8 +431,7 @@ func (c *Controller) ServePodcastAddDo(r *http.Request) *Response {
 			flashW:   []string{fmt.Sprintf("could not create feed: %v", err)},
 		}
 	}
-	_, err = c.Podcasts.AddNewPodcast(feed, user.ID)
-	if err != nil {
+	if _, err = c.Podcasts.AddNewPodcast(feed, user.ID); err != nil {
 		return &Response{
 			redirect: "/admin/home",
 			flashW:   []string{fmt.Sprintf("could not create feed: %v", err)},
