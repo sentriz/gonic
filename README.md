@@ -13,13 +13,15 @@
 
 - browsing by folder (keeping your full tree intact) [see here](#directory-structure)  
 - browsing by tags (using [taglib](https://taglib.org/) - supports mp3, opus, flac, ape, m4a, wav, etc.)  
-- on-the-fly audio transcoding and caching (requires [ffmpeg](https://ffmpeg.org/)) (thank you [spijet](https://github.com/spijet/))
-- jukebox mode (thank you [AlexKraak](https://github.com/AlexKraak/))
+- on-the-fly audio transcoding and caching (requires [ffmpeg](https://ffmpeg.org/)) (thank you [spijet](https://github.com/spijet/))  
+- jukebox mode (thank you [lxea](https://github.com/lxea/))  
+- support for per-user podcasts (thank you [lxea](https://github.com/lxea/))  
 - pretty fast scanning (with my library of ~27k tracks, initial scan takes about 10m, and about 5s after incrementally)  
-- multiple users, each with their own transcoding preferences, playlists, top tracks, top artists, etc.
+- multiple users, each with their own transcoding preferences, playlists, top tracks, top artists, etc.  
 - [last.fm](https://www.last.fm/) scrobbling  
+- [listenbrainz](https://listenbrainz.org/) scrobbling (thank you [spezifisch](https://github.com/spezifisch), [lxea](https://github.com/lxea))
 - artist similarities and biographies from the last.fm api  
-- multiple genre support (see `GONIC_GENRE_SPLIT` to split tag strings on a character, eg. `;`, and browse them individually)
+- multiple genre support (see `GONIC_GENRE_SPLIT` to split tag strings on a character, eg. `;`, and browse them individually)  
 - a web interface for configuration (set up last.fm, manage users, start scans, etc.)  
 - support for the [album-artist](https://mkoby.com/2007/02/18/artist-versus-album-artist/) tag, to not clutter your artist list with compilation album appearances  
 - written in [go](https://golang.org/), so lightweight and suitable for a raspberry pi, etc.  
@@ -62,9 +64,10 @@ services:
     expose:
     - 80
     volumes:
-    - ./data:/data             # gonic db etc
-    - /path/to/music:/music:ro # your music
-    - /path/to/cache:/cache    # transcode cache dir
+    - ./data:/data                # gonic db etc
+    - /path/to/music:/music:ro    # your music
+    - /path/to/podcasts:/podcasts # your music
+    - /path/to/cache:/cache       # transcode / covers / etc cache dir
 
     # set the following two sections if you've enabled jukebox
     group_add:
@@ -131,7 +134,8 @@ $ sudo systemctl enable --now gonic
 |env var|command line arg|description|
 |---|---|---|
 |`GONIC_MUSIC_PATH`|`-music-path`|path to your music collection|
-|`GONIC_CACHE_PATH`|`-cache-path`|**optional** path to store audio transcodes (*default* `/tmp/gonic_cache`)|
+|`GONIC_PODCAST_PATH`|`-podcast-path`|path to a podcasts directory|
+|`GONIC_CACHE_PATH`|`-cache-path`|path to store audio transcodes, covers, etc|
 |`GONIC_DB_PATH`|`-db-path`|**optional** path to database file|
 |`GONIC_LISTEN_ADDR`|`-listen-addr`|**optional** host and port to listen on (eg. `0.0.0.0:4747`, `127.0.0.1:4747`) (*default* `0.0.0.0:4747`)|
 |`GONIC_PROXY_PREFIX`|`-proxy-prefix`|**optional** url path prefix to use if behind reverse proxy. eg `/gonic` (see example configs below)|
