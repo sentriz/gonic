@@ -25,6 +25,8 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Set release version
+        run: echo "RELEASE_VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
       - name: Build and Push
         uses: docker/build-push-action@v2
         with:
@@ -34,4 +36,4 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY_IMAGE }}:latest
-            ${{ env.REGISTRY_IMAGE }}:${GITHUB_REF##*/}
+            ${{ env.REGISTRY_IMAGE }}:${{ env.RELEASE_VERSION }}
