@@ -3,7 +3,7 @@
     "status": "ok",
     "version": "1.15.0",
     "type": "gonic",
-    "gonicVersion": "v0.11.1",
+    "gonicVersion": "v0.12.0",
     "album": {
       "id": "al-3",
       "coverArt": "al-3",
@@ -18,6 +18,7 @@
       "year": 1983,
       "song": [
         {
+          "id": "tr-1",
           "album": "Snake Charmer",
           "albumId": "al-3",
           "artist": "Jah Wobble, The Edge & Holger Czukay",
@@ -27,7 +28,6 @@
           "coverArt": "al-3",
           "created": "2019-07-08T21:49:40.978045401+01:00",
           "duration": 372,
-          "id": "tr-1",
           "isDir": false,
           "isVideo": false,
           "parent": "al-3",
@@ -41,6 +41,7 @@
           "year": 1983
         },
         {
+          "id": "tr-3",
           "album": "Snake Charmer",
           "albumId": "al-3",
           "artist": "Jah Wobble, The Edge & Holger Czukay",
@@ -50,7 +51,6 @@
           "coverArt": "al-3",
           "created": "2019-07-08T21:49:40.981605306+01:00",
           "duration": 523,
-          "id": "tr-3",
           "isDir": false,
           "isVideo": false,
           "parent": "al-3",
@@ -64,6 +64,7 @@
           "year": 1983
         },
         {
+          "id": "tr-2",
           "album": "Snake Charmer",
           "albumId": "al-3",
           "artist": "Jah Wobble, The Edge & Holger Czukay",
@@ -73,7 +74,6 @@
           "coverArt": "al-3",
           "created": "2019-07-08T21:49:40.979981084+01:00",
           "duration": 331,
-          "id": "tr-2",
           "isDir": false,
           "isVideo": false,
           "parent": "al-3",
@@ -87,6 +87,7 @@
           "year": 1983
         },
         {
+          "id": "tr-5",
           "album": "Snake Charmer",
           "albumId": "al-3",
           "artist": "Jah Wobble, The Edge & Holger Czukay",
@@ -96,7 +97,6 @@
           "coverArt": "al-3",
           "created": "2019-07-08T21:49:40.984853203+01:00",
           "duration": 227,
-          "id": "tr-5",
           "isDir": false,
           "isVideo": false,
           "parent": "al-3",
@@ -110,6 +110,7 @@
           "year": 1983
         },
         {
+          "id": "tr-4",
           "album": "Snake Charmer",
           "albumId": "al-3",
           "artist": "Jah Wobble, The Edge & Holger Czukay",
@@ -119,7 +120,6 @@
           "coverArt": "al-3",
           "created": "2019-07-08T21:49:40.983301328+01:00",
           "duration": 418,
-          "id": "tr-4",
           "isDir": false,
           "isVideo": false,
           "parent": "al-3",

@@ -3,7 +3,7 @@
     "status": "ok",
     "version": "1.15.0",
     "type": "gonic",
-    "gonicVersion": "v0.11.1",
+    "gonicVersion": "v0.12.0",
     "searchResult2": {
       "artist": [
         {
@@ -13,9 +13,9 @@
       ],
       "album": [
         {
+          "id": "al-9",
           "coverArt": "al-9",
           "created": "2019-07-08T21:49:41.246041678+01:00",
-          "id": "al-9",
           "isDir": true,
           "isVideo": false,
           "parent": "al-7",
@@ -24,6 +24,7 @@
       ],
       "song": [
         {
+          "id": "tr-6",
           "album": "(1994) The Graveyard and the Ballroom",
           "artist": "A Certain Ratio",
           "bitRate": 894,
@@ -31,7 +32,6 @@
           "coverArt": "al-5",
           "created": "2019-07-08T21:49:41.037683099+01:00",
           "duration": 332,
-          "id": "tr-6",
           "isDir": false,
           "isVideo": false,
           "parent": "al-5",
@@ -44,6 +44,7 @@
           "type": "music"
         },
         {
+          "id": "tr-40",
           "album": "(1966) The Psychedelic Sounds of the 13th Floor Elevators",
           "artist": "13th Floor Elevators",
           "bitRate": 244,
@@ -51,7 +52,6 @@
           "coverArt": "al-9",
           "created": "2019-07-08T21:49:41.209108272+01:00",
           "duration": 154,
-          "id": "tr-40",
           "isDir": false,
           "isVideo": false,
           "parent": "al-9",
@@ -64,6 +64,7 @@
           "type": "music"
         },
         {
+          "id": "tr-76",
           "album": "(1980) Jane From Occupied Europe",
           "artist": "Swell Maps",
           "bitRate": 1204,
@@ -71,7 +72,6 @@
           "coverArt": "al-16",
           "created": "2019-07-08T21:49:41.43457798+01:00",
           "duration": 220,
-          "id": "tr-76",
           "isDir": false,
           "isVideo": false,
           "parent": "al-16",
@@ -84,6 +84,7 @@
           "type": "music"
         },
         {
+          "id": "tr-93",
           "album": "(1979) A Trip to Marineville",
           "artist": "Swell Maps",
           "bitRate": 295,
@@ -91,7 +92,6 @@
           "coverArt": "al-17",
           "created": "2019-07-08T21:49:41.493347193+01:00",
           "duration": 463,
-          "id": "tr-93",
           "isDir": false,
           "isVideo": false,
           "parent": "al-17",
@@ -104,6 +104,7 @@
           "type": "music"
         },
         {
+          "id": "tr-107",
           "album": "(1967) Ten Years After",
           "artist": "Ten Years After",
           "bitRate": 192,
@@ -111,7 +112,6 @@
           "coverArt": "al-19",
           "created": "2019-07-08T21:49:41.573811068+01:00",
           "duration": 433,
-          "id": "tr-107",
           "isDir": false,
           "isVideo": false,
           "parent": "al-19",
@@ -124,6 +124,7 @@
           "type": "music"
         },
         {
+          "id": "tr-129",
           "album": "(1970) Lick My Decals Off, Bitch",
           "artist": "Captain Beefheart & His Magic Band",
           "bitRate": 160,
@@ -131,7 +132,6 @@
           "coverArt": "al-21",
           "created": "2019-07-08T21:49:41.687805489+01:00",
           "duration": 152,
-          "id": "tr-129",
           "isDir": false,
           "isVideo": false,
           "parent": "al-21",

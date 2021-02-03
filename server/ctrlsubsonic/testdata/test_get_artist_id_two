@@ -3,7 +3,7 @@
     "status": "ok",
     "version": "1.15.0",
     "type": "gonic",
-    "gonicVersion": "v0.11.1",
+    "gonicVersion": "v0.12.0",
     "artist": {
       "id": "ar-2",
       "name": "A Certain Ratio",

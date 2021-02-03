@@ -3,7 +3,7 @@
     "status": "ok",
     "version": "1.15.0",
     "type": "gonic",
-    "gonicVersion": "v0.11.1",
+    "gonicVersion": "v0.12.0",
     "albumList": {
       "album": [
         {
@@ -20,16 +20,16 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
-          "id": "al-19",
-          "coverArt": "al-19",
-          "artist": "Ten Years After",
-          "title": "(1967) Ten Years After",
+          "id": "al-3",
+          "coverArt": "al-3",
+          "artist": "Jah Wobble, The Edge, Holger Czukay",
+          "title": "(1983) Snake Charmer",
           "album": "",
-          "parent": "al-18",
+          "parent": "al-2",
           "isDir": true,
           "name": "",
-          "songCount": 15,
-          "duration": 3812,
+          "songCount": 5,
+          "duration": 1871,
           "created": "0001-01-01T00:00:00Z"
         },
         {
@@ -46,19 +46,6 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
-          "id": "al-3",
-          "coverArt": "al-3",
-          "artist": "Jah Wobble, The Edge, Holger Czukay",
-          "title": "(1983) Snake Charmer",
-          "album": "",
-          "parent": "al-2",
-          "isDir": true,
-          "name": "",
-          "songCount": 5,
-          "duration": 1871,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
           "id": "al-16",
           "coverArt": "al-16",
           "artist": "Swell Maps",
@@ -69,19 +56,6 @@
           "name": "",
           "songCount": 16,
           "duration": 3040,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "al-8",
-          "coverArt": "al-8",
-          "artist": "13th Floor Lowervators",
-          "title": "(1967) Easter Nowhere",
-          "album": "",
-          "parent": "al-7",
-          "isDir": true,
-          "name": "",
-          "songCount": 10,
-          "duration": 2609,
           "created": "0001-01-01T00:00:00Z"
         },
         {
@@ -98,6 +72,19 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
+          "id": "al-8",
+          "coverArt": "al-8",
+          "artist": "13th Floor Lowervators",
+          "title": "(1967) Easter Nowhere",
+          "album": "",
+          "parent": "al-7",
+          "isDir": true,
+          "name": "",
+          "songCount": 10,
+          "duration": 2609,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
           "id": "al-13",
           "coverArt": "al-13",
           "artist": "There",
@@ -108,6 +95,19 @@
           "name": "",
           "songCount": 9,
           "duration": 2169,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "al-9",
+          "coverArt": "al-9",
+          "artist": "13th Floor Lowervators",
+          "title": "(1966) The Psychedelic Sounds of the 13th Floor Elevators",
+          "album": "",
+          "parent": "al-7",
+          "isDir": true,
+          "name": "",
+          "songCount": 21,
+          "duration": 4222,
           "created": "0001-01-01T00:00:00Z"
         },
         {
@@ -123,16 +123,16 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
-          "id": "al-9",
-          "coverArt": "al-9",
-          "artist": "13th Floor Lowervators",
-          "title": "(1966) The Psychedelic Sounds of the 13th Floor Elevators",
+          "id": "al-19",
+          "coverArt": "al-19",
+          "artist": "Ten Years After",
+          "title": "(1967) Ten Years After",
           "album": "",
-          "parent": "al-7",
+          "parent": "al-18",
           "isDir": true,
           "name": "",
-          "songCount": 21,
-          "duration": 4222,
+          "songCount": 15,
+          "duration": 3812,
           "created": "0001-01-01T00:00:00Z"
         }
       ]

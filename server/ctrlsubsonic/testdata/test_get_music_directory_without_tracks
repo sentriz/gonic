@@ -3,15 +3,15 @@
     "status": "ok",
     "version": "1.15.0",
     "type": "gonic",
-    "gonicVersion": "v0.11.1",
+    "gonicVersion": "v0.12.0",
     "directory": {
       "id": "al-2",
       "name": "Jah Wobble, The Edge, Holger Czukay",
       "child": [
         {
+          "id": "al-3",
           "coverArt": "al-3",
           "created": "2019-07-08T21:49:40.995905275+01:00",
-          "id": "al-3",
           "isDir": true,
           "isVideo": false,
           "parent": "al-2",
