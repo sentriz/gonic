@@ -5,3 +5,4 @@ jukebox-enabled   false
 listen-addr       127.0.0.1:4747
 proxy-prefix      /gonic
 scan-interval     0
+podcast-path      

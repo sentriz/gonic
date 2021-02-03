@@ -24,6 +24,7 @@ require (
 	github.com/mewkiz/pkg v0.0.0-20200702171441-dd47075182ea // indirect
 	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.1 // indirect
+	github.com/mmcdole/gofeed v1.1.0
 	github.com/nicksellen/audiotags v0.0.0-20160226222119-94015fa599bd
 	github.com/oklog/run v1.1.0
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c

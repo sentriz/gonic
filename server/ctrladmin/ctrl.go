@@ -22,6 +22,7 @@ import (
 	"go.senan.xyz/gonic/server/assets"
 	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/db"
+	"go.senan.xyz/gonic/server/podcasts"
 	"go.senan.xyz/gonic/version"
 )
 
@@ -82,9 +83,10 @@ type Controller struct {
 	buffPool  *bpool.BufferPool
 	templates map[string]*template.Template
 	sessDB    *gormstore.Store
+	Podcasts  *podcasts.Podcasts
 }
 
-func New(b *ctrlbase.Controller, sessDB *gormstore.Store) *Controller {
+func New(b *ctrlbase.Controller, sessDB *gormstore.Store, podcasts *podcasts.Podcasts) *Controller {
 	tmplBase := template.
 		New("layout").
 		Funcs(sprig.FuncMap()).
@@ -99,6 +101,7 @@ func New(b *ctrlbase.Controller, sessDB *gormstore.Store) *Controller {
 		buffPool:   bpool.NewBufferPool(64),
 		templates:  pagesFromPaths(tmplBase, prefixPages),
 		sessDB:     sessDB,
+		Podcasts:   podcasts,
 	}
 }
 
@@ -124,6 +127,9 @@ type templateData struct {
 	CurrentLastFMAPISecret string
 	DefaultListenBrainzURL string
 	SelectedUser           *db.User
+	//
+	PodcastsEnabled bool
+	Podcasts        []*db.Podcast
 }
 
 type Response struct {

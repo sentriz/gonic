@@ -29,6 +29,7 @@ func main() {
 	set := flag.NewFlagSet(version.NAME, flag.ExitOnError)
 	confListenAddr := set.String("listen-addr", "0.0.0.0:4747", "listen address (optional)")
 	confMusicPath := set.String("music-path", "", "path to music")
+	confPodcastPath := set.String("podcast-path", "", "path to podcasts")
 	confCachePath := set.String("cache-path", "/tmp/gonic_cache", "path to cache")
 	confDBPath := set.String("db-path", "gonic.db", "path to database (optional)")
 	confScanInterval := set.Int("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
@@ -60,6 +61,9 @@ func main() {
 	if _, err := os.Stat(*confMusicPath); os.IsNotExist(err) {
 		log.Fatal("please provide a valid music directory")
 	}
+	if _, err := os.Stat(*confPodcastPath); *confPodcastPath != "" && os.IsNotExist(err) {
+		log.Fatal("please provide a valid podcast directory")
+	}
 	if _, err := os.Stat(*confCachePath); os.IsNotExist(err) {
 		if err := os.MkdirAll(*confCachePath, os.ModePerm); err != nil {
 			log.Fatalf("couldn't create cache path: %v\n", err)
@@ -87,6 +91,7 @@ func main() {
 		CoverCachePath: coverCachePath,
 		ProxyPrefix:    *confProxyPrefix,
 		GenreSplit:     *confGenreSplit,
+		PodcastPath:    *confPodcastPath,
 	})
 
 	var g run.Group
@@ -99,6 +104,10 @@ func main() {
 	if *confJukeboxEnabled {
 		g.Add(server.StartJukebox())
 	}
+	if *confProxyPrefix != "" {
+		g.Add(server.StartPodcastRefresher(time.Hour))
+	}
+
 	if err := g.Run(); err != nil {
 		log.Printf("error in job: %v", err)
 	}

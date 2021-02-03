@@ -41,6 +41,9 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
+	if id.Type == specid.Podcast || id.Type == specid.PodcastEpisode {
+		return spec.NewError(10, "please provide a valid track id")
+	}
 	// fetch user to get lastfm session
 	user := r.Context().Value(CtxUser).(*db.User)
 	// fetch track for getting info to send to last.fm function
@@ -107,6 +110,7 @@ func (c *Controller) ServeGetUser(r *http.Request) *spec.Response {
 		AdminRole:         user.IsAdmin,
 		JukeboxRole:       true,
 		ScrobblingEnabled: hasLastFM || hasListenBrainz,
+		PodcastRole:       c.Podcasts.PodcastBasePath != "",
 		Folder:            []int{1},
 	}
 	return sub
