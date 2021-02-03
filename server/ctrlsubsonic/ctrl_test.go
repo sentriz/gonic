@@ -70,7 +70,7 @@ func runQueryCases(t *testing.T, h handlerSubsonic, cases []*queryCase) {
 			if err != nil {
 				t.Fatalf("parsing expected: %v", err)
 			}
-			actual, _ := jd.ReadJsonString(body)
+			actual, err := jd.ReadJsonString(body)
 			if err != nil {
 				t.Fatalf("parsing actual: %v", err)
 			}
