@@ -300,7 +300,7 @@ type Podcast struct {
 	ImageURL    string
 	ImagePath   string
 	Error       string
-	Episodes     []*PodcastEpisode
+	Episodes    []*PodcastEpisode
 }
 
 func (p *Podcast) Fullpath(podcastPath string) string {
@@ -353,4 +353,16 @@ func (pe *PodcastEpisode) MIME() string {
 
 func (pe *PodcastEpisode) AudioBitrate() int {
 	return pe.Bitrate
+}
+
+type Bookmark struct {
+	ID          int `gorm:"primary_key"`
+	User        *User
+	UserID      int `sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
+	Position    int
+	Comment     string
+	EntryIDType string
+	EntryID     int
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }

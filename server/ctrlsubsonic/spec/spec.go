@@ -44,7 +44,8 @@ type Response struct {
 	PlayQueue         *PlayQueue         `xml:"playQueue"         json:"playQueue,omitempty"`
 	JukeboxStatus     *JukeboxStatus     `xml:"jukeboxStatus"     json:"jukeboxStatus,omitempty"`
 	JukeboxPlaylist   *JukeboxPlaylist   `xml:"jukeboxPlaylist"   json:"jukeboxPlaylist,omitempty"`
-	Podcasts          *Podcasts          `xml:"podcasts"         json:"podcasts,omitempty"`
+	Podcasts          *Podcasts          `xml:"podcasts"          json:"podcasts,omitempty"`
+	Bookmarks         *Bookmarks         `xml:"bookmarks"         json:"bookmarks,omitempty"`
 }
 
 func NewResponse() *Response {
@@ -120,6 +121,7 @@ type TracksByGenre struct {
 }
 
 type TrackChild struct {
+	ID          *specid.ID `xml:"id,attr,omitempty"          json:"id,omitempty"`
 	Album       string     `xml:"album,attr,omitempty"       json:"album,omitempty"`
 	AlbumID     *specid.ID `xml:"albumId,attr,omitempty"     json:"albumId,omitempty"`
 	Artist      string     `xml:"artist,attr,omitempty"      json:"artist,omitempty"`
@@ -130,7 +132,6 @@ type TrackChild struct {
 	CreatedAt   time.Time  `xml:"created,attr,omitempty"     json:"created,omitempty"`
 	Duration    int        `xml:"duration,attr,omitempty"    json:"duration,omitempty"`
 	Genre       string     `xml:"genre,attr,omitempty"       json:"genre,omitempty"`
-	ID          *specid.ID `xml:"id,attr,omitempty"          json:"id,omitempty"`
 	IsDir       bool       `xml:"isDir,attr"                 json:"isDir"`
 	IsVideo     bool       `xml:"isVideo,attr"               json:"isVideo"`
 	ParentID    *specid.ID `xml:"parent,attr,omitempty"      json:"parent,omitempty"`
@@ -292,33 +293,51 @@ type Podcasts struct {
 }
 
 type PodcastChannel struct {
-	ID               *specid.ID        `xml:"id,attr" json:"id"`
-	URL              string           `xml:"url,attr" json:"url"`
-	Title            string           `xml:"title,attr" json:"title"`
-	Description      string           `xml:"description,attr" json:"description"`
-	CoverArt         *specid.ID        `xml:"coverArt,attr" json:"coverArt,omitempty"`
-	OriginalImageURL string           `xml:"originalImageUrl,attr" json:"originalImageUrl,omitempty"`
-	Status           string           `xml:"status,attr" json:"status"`
-	Episode          []*PodcastEpisode `xml:"episode" json:"episode,omitempty"`
+	ID               *specid.ID        `xml:"id,attr"               json:"id"`
+	URL              string            `xml:"url,attr"              json:"url"`
+	Title            string            `xml:"title,attr"            json:"title"`
+	Description      string            `xml:"description,attr"      json:"description"`
+	CoverArt         *specid.ID        `xml:"coverArt,attr"         json:"coverArt,omitempty"`
+	OriginalImageURL string            `xml:"originalImageUrl,attr" json:"originalImageUrl,omitempty"`
+	Status           string            `xml:"status,attr"           json:"status"`
+	Episode          []*PodcastEpisode `xml:"episode"               json:"episode,omitempty"`
 }
 
 type PodcastEpisode struct {
-	ID          *specid.ID `xml:"id,attr" json:"id"`
-	StreamID    *specid.ID `xml:"streamId,attr" json:"streamId"`
-	ChannelID   *specid.ID `xml:"channelId,attr" json:"channelId"`
-	Title       string    `xml:"title,attr" json:"title"`
-	Description string    `xml:"description,attr" json:"description"`
-	PublishDate time.Time `xml:"publishDate,attr" json:"publishDate"`
-	Status      string    `xml:"status,attr" json:"status"`
-	Parent      string    `xml:"parent,attr" json:"parent"`
-	IsDir       bool      `xml:"isDir,attr" json:"isDir"`
-	Year        int       `xml:"year,attr" json:"year"`
-	Genre       string    `xml:"genre,attr" json:"genre"`
-	CoverArt    *specid.ID `xml:"coverArt,attr" json:"coverArt"`
-	Size        int       `xml:"size,attr" json:"size"`
-	ContentType string    `xml:"contentType,attr" json:"contentType"`
-	Suffix      string    `xml:"suffix,attr" json:"suffix"`
-	Duration    int       `xml:"duration,attr" json:"duration"`
-	BitRate     int       `xml:"bitRate,attr" json:"bitrate"`
-	Path        string    `xml:"path,attr" json:"path"`
+	ID          *specid.ID `xml:"id,attr"          json:"id"`
+	StreamID    *specid.ID `xml:"streamId,attr"    json:"streamId"`
+	ChannelID   *specid.ID `xml:"channelId,attr"   json:"channelId"`
+	Title       string     `xml:"title,attr"       json:"title"`
+	Description string     `xml:"description,attr" json:"description"`
+	PublishDate time.Time  `xml:"publishDate,attr" json:"publishDate"`
+	Status      string     `xml:"status,attr"      json:"status"`
+	Parent      string     `xml:"parent,attr"      json:"parent"`
+	IsDir       bool       `xml:"isDir,attr"       json:"isDir"`
+	Year        int        `xml:"year,attr"        json:"year"`
+	Genre       string     `xml:"genre,attr"       json:"genre"`
+	CoverArt    *specid.ID `xml:"coverArt,attr"    json:"coverArt"`
+	Size        int        `xml:"size,attr"        json:"size"`
+	ContentType string     `xml:"contentType,attr" json:"contentType"`
+	Suffix      string     `xml:"suffix,attr"      json:"suffix"`
+	Duration    int        `xml:"duration,attr"    json:"duration"`
+	BitRate     int        `xml:"bitRate,attr"     json:"bitrate"`
+	Path        string     `xml:"path,attr"        json:"path"`
+}
+
+type Bookmarks struct {
+	List []*Bookmark `xml:"bookmark" json:"bookmark"`
+}
+
+type Bookmark struct {
+	Entries  []*BookmarkEntry `xml:"entry,omitempty" json:"entry,omitempty"`
+	Username string           `xml:"username,attr"   json:"username"`
+	Position int              `xml:"position,attr"   json:"position"`
+	Comment  string           `xml:"comment,attr"    json:"comment"`
+	Created  time.Time        `xml:"created,attr"    json:"created"`
+	Changed  time.Time        `xml:"changed,attr"    json:"changed"`
+}
+
+type BookmarkEntry struct {
+	ID   *specid.ID `xml:"id,attr"   json:"id"`
+	Type string     `xml:"type,attr" json:"type"`
 }

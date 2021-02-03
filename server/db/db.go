@@ -80,6 +80,7 @@ func New(path string) (*DB, error) {
 		migrateMultiGenre(),
 		migrateListenBrainz(),
 		migratePodcast(),
+		migrateBookmarks(),
 	))
 	if err = migr.Migrate(); err != nil {
 		return nil, fmt.Errorf("migrating to latest version: %w", err)

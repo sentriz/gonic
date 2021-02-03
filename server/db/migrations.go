@@ -211,7 +211,6 @@ func migrateMultiGenre() gormigrate.Migration {
 	}
 }
 
-
 func migrateListenBrainz() gormigrate.Migration {
 	return gormigrate.Migration{
 		ID: "202101081149",
@@ -231,11 +230,23 @@ func migratePodcast() gormigrate.Migration {
 	return gormigrate.Migration{
 		ID: "202101111537",
 		Migrate: func(tx *gorm.DB) error {
-			step := tx.AutoMigrate(
+			return tx.AutoMigrate(
 				Podcast{},
 				PodcastEpisode{},
-			)
-			return step.Error
+			).
+				Error
+		},
+	}
+}
+
+func migrateBookmarks() gormigrate.Migration {
+	return gormigrate.Migration{
+		ID: "202102032210",
+		Migrate: func(tx *gorm.DB) error {
+			return tx.AutoMigrate(
+				Bookmark{},
+			).
+				Error
 		},
 	}
 }

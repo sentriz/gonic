@@ -153,9 +153,12 @@ func (c *Controller) ServeSavePlayQueue(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide some `id` parameters")
 	}
+	// TODO: support other play queue entries other than tracks
 	trackIDs := make([]int, 0, len(tracks))
 	for _, id := range tracks {
-		trackIDs = append(trackIDs, id.Value)
+		if id.Type == specid.Track {
+			trackIDs = append(trackIDs, id.Value)
+		}
 	}
 	user := r.Context().Value(CtxUser).(*db.User)
 	queue := &db.PlayQueue{UserID: user.ID}

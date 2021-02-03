@@ -191,6 +191,9 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/getRandomSongs{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetRandomSongs))
 	r.Handle("/getSongsByGenre{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetSongsByGenre))
 	r.Handle("/jukeboxControl{_:(?:\\.view)?}", ctrl.H(ctrl.ServeJukebox))
+	r.Handle("/getBookmarks{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetBookmarks))
+	r.Handle("/createBookmark{_:(?:\\.view)?}", ctrl.H(ctrl.ServeCreateBookmark))
+	r.Handle("/deleteBookmark{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDeleteBookmark))
 	// ** begin raw
 	r.Handle("/download{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeDownload))
 	r.Handle("/getCoverArt{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeGetCoverArt))
@@ -210,14 +213,12 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/getGenres{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetGenres))
 	r.Handle("/getArtistInfo{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtistInfo))
 	// ** begin podcasts
-	if ctrl.Podcasts.PodcastBasePath != "" {
-		r.Handle("/getPodcasts{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetPodcasts))
-		r.Handle("/downloadPodcastEpisode{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDownloadPodcastEpisode))
-		r.Handle("/createPodcastChannel{_:(?:\\.view)?}", ctrl.H(ctrl.ServeCreatePodcastChannel))
-		r.Handle("/refreshPodcasts{_:(?:\\.view)?}", ctrl.H(ctrl.ServeRefreshPodcasts))
-		r.Handle("/deletePodcastChannel{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDeletePodcastChannel))
-		r.Handle("/deletePodcastEpisode{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDeletePodcastEpisode))
-	}
+	r.Handle("/getPodcasts{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetPodcasts))
+	r.Handle("/downloadPodcastEpisode{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDownloadPodcastEpisode))
+	r.Handle("/createPodcastChannel{_:(?:\\.view)?}", ctrl.H(ctrl.ServeCreatePodcastChannel))
+	r.Handle("/refreshPodcasts{_:(?:\\.view)?}", ctrl.H(ctrl.ServeRefreshPodcasts))
+	r.Handle("/deletePodcastChannel{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDeletePodcastChannel))
+	r.Handle("/deletePodcastEpisode{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDeletePodcastEpisode))
 	// middlewares should be run for not found handler
 	// https://github.com/gorilla/mux/issues/416
 	notFoundHandler := ctrl.H(ctrl.ServeNotFound)
