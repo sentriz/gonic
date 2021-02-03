@@ -451,8 +451,7 @@ func (c *Controller) ServePodcastDeleteDo(r *http.Request) *Response {
 			code: 400,
 		}
 	}
-	err = c.Podcasts.DeletePodcast(user.ID, id)
-	if err != nil {
+	if err := c.Podcasts.DeletePodcast(user.ID, id); err != nil {
 		return &Response{
 			err:  "please provide a valid podcast id",
 			code: 400,
