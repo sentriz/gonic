@@ -28,7 +28,7 @@ COPY --from=builder \
   /bin/
 VOLUME ["/data", "/music", "/cache"]
 EXPOSE 80
-ENV TZ
+ENV TZ ""
 ENV GONIC_DB_PATH /data/gonic.db
 ENV GONIC_LISTEN_ADDR :80
 ENV GONIC_MUSIC_PATH /music
