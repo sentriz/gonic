@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:cc="http://web.resource.org/cc/" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:media="http://search.yahoo.com/mrss/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+	<channel>
+		<atom:link href="https://internetbox.libsyn.com/rss" rel="self" type="application/rss+xml"/>
+		<title>Internet Box</title>
+		<pubDate>Mon, 01 Apr 2019 04:35:43 +0000</pubDate>
+		<lastBuildDate>Sun, 10 Jan 2021 00:07:33 +0000</lastBuildDate>
+		<generator>Libsyn WebEngine 2.0</generator>
+		<link>https://internetboxpodcast.com</link>
+		<language>en</language>
+		<copyright><![CDATA[]]></copyright>
+		<docs>https://internetboxpodcast.com</docs>
+		<managingEditor>admin@internetboxpodcast.com (admin@internetboxpodcast.com)</managingEditor>
+		<itunes:summary><![CDATA[Michael, Mike, Barbara, Ray, Andrew, Dylon, Lindsay, and Kerry from the AH community talk about various subjects.]]></itunes:summary>
+		<image>
+			<url>https://ssl-static.libsyn.com/p/assets/d/d/3/3/dd338b309838f617/iTunes.png</url>
+			<title>Internet Box</title>
+			<link><![CDATA[https://internetboxpodcast.com]]></link>
+		</image>
+		<itunes:author>Internet Box Crew</itunes:author>
+		<itunes:keywords>achievement,box,friendship,hunter,internet,is,little,magic,mlp,my,pony,rooster,teeth</itunes:keywords>
+		<itunes:category text="Leisure">
+			<itunes:category text="Video Games"/>
+		</itunes:category>
+		<itunes:category text="Comedy"/>
+		<itunes:image href="https://ssl-static.libsyn.com/p/assets/d/d/3/3/dd338b309838f617/iTunes.png" />
+		<itunes:explicit>yes</itunes:explicit>
+		<itunes:owner>
+			<itunes:name><![CDATA[Mike]]></itunes:name>
+			<itunes:email>admin@internetboxpodcast.com</itunes:email>
+		</itunes:owner>
+		<description><![CDATA[Michael, Mike, Barbara, Ray, Andrew, Dylon, Lindsay, and Kerry from the AH community talk about various subjects.]]></description>
+		<itunes:subtitle><![CDATA[Various members from the AH community discuss games, ponies, and life in general.]]></itunes:subtitle>
+		<itunes:type>episodic</itunes:type>
+		
+
+
+
+		<item>
+			<title>Episode 128</title>
+			<pubDate>Mon, 01 Apr 2019 04:35:43 +0000</pubDate>
+			<guid isPermaLink="false"><![CDATA[c60f174610d44b408901d6a8d98366b4]]></guid>
+			<link><![CDATA[https://internetboxpodcast.com/episode-128/]]></link>
+			<itunes:image href="https://ssl-static.libsyn.com/p/assets/d/d/3/3/dd338b309838f617/iTunes.png" />
+			<description><![CDATA[<p> </p> <p>The Internet Box is fooling around this week!</p> <p> </p>]]></description>
+			<content:encoded><![CDATA[<p> </p> <p>The Internet Box is fooling around this week!</p> <p> </p>]]></content:encoded>
+			<enclosure length="14637384" type="audio/mpeg" url="https://traffic.libsyn.com/secure/internetbox/InternetBoxEpisode128.mp3?dest-id=79492" />
+			<itunes:duration>44:41</itunes:duration>
+			<itunes:explicit>yes</itunes:explicit>
+			<itunes:keywords>box,meme,fools,april,reddit,copypaste,inernet</itunes:keywords>
+			<itunes:subtitle><![CDATA[  The Internet Box is fooling around this week!  ]]></itunes:subtitle>
+			<itunes:episodeType>full</itunes:episodeType>
+		</item>
+		<item>
+			<title>Episode 127</title>
+			<pubDate>Sat, 06 Aug 2016 04:46:28 +0000</pubDate>
+			<guid isPermaLink="false"><![CDATA[99b830789a90b2b6a712382fe4bffc6b]]></guid>
+			<link><![CDATA[http://internetboxpodcast.com/episode-127/]]></link>
+			<itunes:image href="https://ssl-static.libsyn.com/p/assets/d/d/3/3/dd338b309838f617/iTunes.png" />
+			<description><![CDATA[<p>The Internet Box is a national treasure this week!</p>]]></description>
+			<content:encoded><![CDATA[<p>The Internet Box is a national treasure this week!</p>]]></content:encoded>
+			<enclosure length="152364335" type="audio/mpeg" url="https://traffic.libsyn.com/secure/internetbox/InternetBoxEpisode127.mp3?dest-id=79492" />
+			<itunes:duration>01:45:48</itunes:duration>
+			<itunes:explicit>yes</itunes:explicit>
+			<itunes:keywords>box,2,internet,cage,movies,national,go,season,treasure,nic,bane,pokemon</itunes:keywords>
+			<itunes:subtitle><![CDATA[The Internet Box is a national treasure this week!]]></itunes:subtitle>
+		</item>
+		<item>
+			<title>Episode 126</title>
+			<pubDate>Mon, 27 Jun 2016 06:33:43 +0000</pubDate>
+			<guid isPermaLink="false"><![CDATA[d5113fc98b7baf005bf66b225b166ee0]]></guid>
+			<link><![CDATA[http://internetboxpodcast.com/episode-126/]]></link>
+			<itunes:image href="https://ssl-static.libsyn.com/p/assets/d/d/3/3/dd338b309838f617/iTunes.png" />
+			<description><![CDATA[<p>The Internet Box is clicking this week!</p>]]></description>
+			<content:encoded><![CDATA[<p>The Internet Box is clicking this week!</p>]]></content:encoded>
+			<enclosure length="66139165" type="audio/mpeg" url="https://traffic.libsyn.com/secure/internetbox/InternetBoxEpisode126.mp3?dest-id=79492" />
+			<itunes:duration>01:20:42</itunes:duration>
+			<itunes:explicit>yes</itunes:explicit>
+			<itunes:keywords>box,2,factory,internet,pizza,future,robots,season,farts,cake,via,reddit,313,vorarephilia</itunes:keywords>
+			<itunes:subtitle><![CDATA[The Internet Box is clicking this week!]]></itunes:subtitle>
+		</item>
+	</channel>
+</rss>

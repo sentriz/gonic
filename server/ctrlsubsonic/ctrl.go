@@ -14,6 +14,7 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/jukebox"
 	"go.senan.xyz/gonic/server/scrobble"
+	"go.senan.xyz/gonic/server/podcasts"
 )
 
 type CtxKey int
@@ -30,6 +31,7 @@ type Controller struct {
 	CoverCachePath string
 	Jukebox        *jukebox.Jukebox
 	Scrobblers     []scrobble.Scrobbler
+	Podcasts       *podcasts.Podcasts
 }
 
 type metaResponse struct {

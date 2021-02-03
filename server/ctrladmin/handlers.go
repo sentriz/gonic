@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/mmcdole/gofeed"
 	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/encode"
 	"go.senan.xyz/gonic/server/scanner"
@@ -45,6 +46,10 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	c.DB.Table("artists").Count(&data.ArtistCount)
 	c.DB.Table("albums").Count(&data.AlbumCount)
 	c.DB.Table("tracks").Count(&data.TrackCount)
+	data.PodcastsEnabled = c.Podcasts.PodcastBasePath != ""
+	if data.PodcastsEnabled {
+		c.DB.Find(&data.Podcasts)
+	}
 	// ** begin lastfm box
 	scheme := firstExisting(
 		"http", // fallback
@@ -411,6 +416,50 @@ func (c *Controller) ServeDeleteTranscodePrefDo(r *http.Request) *Response {
 	c.DB.
 		Where("user_id=? AND client=?", user.ID, client).
 		Delete(db.TranscodePreference{})
+	return &Response{
+		redirect: "/admin/home",
+	}
+}
+
+func (c *Controller) ServePodcastAddDo(r *http.Request) *Response {
+	user := r.Context().Value(CtxUser).(*db.User)
+	rssURL := r.FormValue("feed")
+	fp := gofeed.NewParser()
+	feed, err := fp.ParseURL(rssURL)
+	if err != nil {
+		return &Response{
+			redirect: "/admin/home",
+			flashW:   []string{fmt.Sprintf("could not create feed: %v", err)},
+		}
+	}
+	_, err = c.Podcasts.AddNewPodcast(feed, user.ID)
+	if err != nil {
+		return &Response{
+			redirect: "/admin/home",
+			flashW:   []string{fmt.Sprintf("could not create feed: %v", err)},
+		}
+	}
+	return &Response{
+		redirect: "/admin/home",
+	}
+}
+
+func (c *Controller) ServePodcastDeleteDo(r *http.Request) *Response {
+	user := r.Context().Value(CtxUser).(*db.User)
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil {
+		return &Response{
+			err:  "please provide a valid podcast id",
+			code: 400,
+		}
+	}
+	err = c.Podcasts.DeletePodcast(user.ID, id)
+	if err != nil {
+		return &Response{
+			err:  "please provide a valid podcast id",
+			code: 400,
+		}
+	}
 	return &Response{
 		redirect: "/admin/home",
 	}

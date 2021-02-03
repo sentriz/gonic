@@ -7,6 +7,7 @@ package db
 
 import (
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -67,6 +68,15 @@ type Genre struct {
 	TrackCount int    `sql:"-"`
 }
 
+// AudioFile is used to avoid some duplication in handlers_raw.go
+// between Track and Podcast
+type AudioFile interface {
+	AudioFilename() string
+	Ext() string
+	MIME() string
+	AudioBitrate() int
+}
+
 type Track struct {
 	ID             int `gorm:"primary_key"`
 	CreatedAt      time.Time
@@ -107,6 +117,14 @@ func (t *Track) Ext() string {
 		return ""
 	}
 	return longExt[1:]
+}
+
+func (t *Track) AudioFilename() string {
+	return t.Filename
+}
+
+func (t *Track) AudioBitrate() int {
+	return t.Bitrate
 }
 
 func (t *Track) MIME() string {
@@ -269,4 +287,69 @@ type AlbumGenre struct {
 	AlbumID int `gorm:"not null; unique_index:idx_album_id_genre_id" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Genre   *Genre
 	GenreID int `gorm:"not null; unique_index:idx_album_id_genre_id" sql:"default: null; type:int REFERENCES genres(id) ON DELETE CASCADE"`
+}
+
+type Podcast struct {
+	ID          int `gorm:"primary_key"`
+	UpdatedAt   time.Time
+	ModifiedAt  time.Time
+	UserID      int `sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
+	URL         string
+	Title       string
+	Description string
+	ImageURL    string
+	ImagePath   string
+	Error       string
+}
+
+func (p *Podcast) Fullpath(podcastPath string) string {
+	return filepath.Join(podcastPath, filepath.Clean(p.Title))
+}
+
+func (p *Podcast) SID() *specid.ID {
+	return &specid.ID{Type: specid.Podcast, Value: p.ID}
+}
+
+type PodcastEpisode struct {
+	ID          int `gorm:"primary_key"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	ModifiedAt  time.Time
+	PodcastID   int `gorm:"not null" sql:"default: null; type:int REFERENCES podcasts(id) ON DELETE CASCADE"`
+	Title       string
+	Description string
+	PublishDate *time.Time
+	AudioURL    string
+	Bitrate     int
+	Length      int
+	Size        int
+	Path        string
+	Filename    string
+	Status      string
+	Error       string
+}
+
+func (pe *PodcastEpisode) SID() *specid.ID {
+	return &specid.ID{Type: specid.PodcastEpisode, Value: pe.ID}
+}
+
+func (pe *PodcastEpisode) AudioFilename() string {
+	return pe.Filename
+}
+
+func (pe *PodcastEpisode) Ext() string {
+	longExt := path.Ext(pe.Filename)
+	if len(longExt) < 1 {
+		return ""
+	}
+	return longExt[1:]
+}
+
+func (pe *PodcastEpisode) MIME() string {
+	v, _ := mime.FromExtension(pe.Ext())
+	return v
+}
+
+func (pe *PodcastEpisode) AudioBitrate() int {
+	return pe.Bitrate
 }

@@ -15,6 +15,7 @@ import (
 
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/encode"
 )
@@ -44,6 +45,12 @@ func streamGetTrack(dbc *db.DB, trackID int) (*db.Track, error) {
 	return &track, err
 }
 
+func streamGetPodcast(dbc *db.DB, podcastID int) (*db.PodcastEpisode, error) {
+	podcast := db.PodcastEpisode{}
+	err := dbc.First(&podcast, podcastID).Error
+	return &podcast, err
+}
+
 func streamUpdateStats(dbc *db.DB, userID, albumID int) {
 	play := db.Play{
 		AlbumID: albumID,
@@ -67,24 +74,51 @@ var (
 	errCoverEmpty    = errors.New("no cover found for that folder")
 )
 
-func coverGetPath(dbc *db.DB, musicPath string, id int) (string, error) {
-	folder := &db.Album{}
-	err := dbc.DB.
-		Select("id, left_path, right_path, cover").
-		First(folder, id).
-		Error
+func coverGetPath(dbc *db.DB, musicPath, podcastPath string, id specid.ID) (string, error) {
+	var err error
+	coverPath := ""
+	switch id.Type {
+	case specid.Album:
+		folder := &db.Album{}
+		err = dbc.DB.
+			Select("id, left_path, right_path, cover").
+			First(folder, id.Value).
+			Error
+		coverPath = path.Join(
+			musicPath,
+			folder.LeftPath,
+			folder.RightPath,
+			folder.Cover,
+		)
+		if folder.Cover == "" {
+			return "", errCoverEmpty
+		}
+	case specid.Podcast:
+		podcast := &db.Podcast{}
+		err = dbc.First(podcast, id.Value).Error
+
+		if podcast.ImagePath == "" {
+			return "", errCoverEmpty
+		}
+		coverPath = path.Join(podcastPath, podcast.ImagePath)
+	case specid.PodcastEpisode:
+		podcastEp := &db.PodcastEpisode{}
+		err = dbc.First(podcastEp, id.Value).Error
+		if gorm.IsRecordNotFoundError(err) {
+			return "", errCoverNotFound
+		}
+		podcast := &db.Podcast{}
+		err = dbc.First(podcast, podcastEp.PodcastID).Error
+		if podcast.ImagePath == "" {
+			return "", errCoverEmpty
+		}
+		coverPath = path.Join(podcastPath, podcast.ImagePath)
+	default:
+	}
 	if gorm.IsRecordNotFoundError(err) {
 		return "", errCoverNotFound
 	}
-	if folder.Cover == "" {
-		return "", errCoverEmpty
-	}
-	return path.Join(
-		musicPath,
-		folder.LeftPath,
-		folder.RightPath,
-		folder.Cover,
-	), nil
+	return coverPath, nil
 }
 
 func coverScaleAndSave(absPath, cachePath string, size int) error {
@@ -118,7 +152,7 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 	_, err = os.Stat(cachePath)
 	switch {
 	case os.IsNotExist(err):
-		coverPath, err := coverGetPath(c.DB, c.MusicPath, id.Value)
+		coverPath, err := coverGetPath(c.DB, c.MusicPath, c.Podcasts.PodcastBasePath, id)
 		if err != nil {
 			return spec.NewError(10, "couldn't find cover `%s`: %v", id, err)
 		}
@@ -140,35 +174,53 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	track, err := streamGetTrack(c.DB, id.Value)
-	if err != nil {
+	var audioFile db.AudioFile
+	var audioPath string
+	if id.Type == specid.Track {
+		track, _ := streamGetTrack(c.DB, id.Value)
+		audioFile = track
+		audioPath = path.Join(c.MusicPath, track.RelPath())
+		if err != nil {
+			return spec.NewError(70, "track with id `%s` was not found", id)
+		}
+	} else if id.Type == specid.PodcastEpisode {
+		podcast, err := streamGetPodcast(c.DB, id.Value)
+		audioFile = podcast
+		audioPath = path.Join(c.Podcasts.PodcastBasePath, podcast.Path)
+		if err != nil {
+			return spec.NewError(70, "track with id `%s` was not found", id)
+		}
+	}
+
+	if err != nil && id.Type != specid.Podcast {
 		return spec.NewError(70, "media with id `%d` was not found", id.Value)
 	}
 	user := r.Context().Value(CtxUser).(*db.User)
-	defer streamUpdateStats(c.DB, user.ID, track.Album.ID)
+	if id.Type == specid.Track {
+		defer streamUpdateStats(c.DB, user.ID, audioFile.(*db.Track).Album.ID)
+	}
 	pref := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
-	trackPath := path.Join(c.MusicPath, track.RelPath())
 	//
 	onInvalidProfile := func() error {
-		log.Printf("serving raw `%s`\n", track.Filename)
-		w.Header().Set("Content-Type", track.MIME())
-		http.ServeFile(w, r, trackPath)
+		log.Printf("serving raw `%s`\n", audioFile.AudioFilename())
+		w.Header().Set("Content-Type", audioFile.MIME())
+		http.ServeFile(w, r, audioPath)
 		return nil
 	}
 	onCacheHit := func(profile encode.Profile, path string) error {
 		log.Printf("serving transcode `%s`: cache [%s/%dk] hit!\n",
-			track.Filename, profile.Format, profile.Bitrate)
+			audioFile.AudioFilename(), profile.Format, profile.Bitrate)
 		http.ServeFile(w, r, path)
 		return nil
 	}
 	onCacheMiss := func(profile encode.Profile) (io.Writer, error) {
 		log.Printf("serving transcode `%s`: cache [%s/%dk] miss!\n",
-			track.Filename, profile.Format, profile.Bitrate)
+			audioFile.AudioFilename(), profile.Format, profile.Bitrate)
 		return w, nil
 	}
 	encodeOptions := encode.Options{
-		TrackPath:        trackPath,
-		TrackBitrate:     track.Bitrate,
+		TrackPath:        audioPath,
+		TrackBitrate:     audioFile.AudioBitrate(),
 		CachePath:        c.CachePath,
 		ProfileName:      pref.Profile,
 		PreferredBitrate: params.GetOrInt("maxBitRate", 0),
@@ -177,7 +229,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		OnCacheMiss:      onCacheMiss,
 	}
 	if err := encode.Encode(encodeOptions); err != nil {
-		log.Printf("serving transcode `%s`: error: %v\n", track.Filename, err)
+		log.Printf("serving transcode `%s`: error: %v\n", audioFile.AudioFilename(), err)
 	}
 	return nil
 }
@@ -188,13 +240,25 @@ func (c *Controller) ServeDownload(w http.ResponseWriter, r *http.Request) *spec
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	track, err := streamGetTrack(c.DB, id.Value)
-	if err != nil {
-		return spec.NewError(70, "media with id `%s` was not found", id)
+	var filePath string
+	var audioFile db.AudioFile
+	if id.Type == specid.Track {
+		track, _ := streamGetTrack(c.DB, id.Value)
+		audioFile = track
+		filePath = path.Join(c.MusicPath, track.RelPath())
+		if err != nil {
+			return spec.NewError(70, "track with id `%s` was not found", id)
+		}
+	} else if id.Type == specid.PodcastEpisode {
+		podcast, err := streamGetPodcast(c.DB, id.Value)
+		audioFile = podcast
+		filePath = path.Join(c.Podcasts.PodcastBasePath, podcast.Path)
+		if err != nil {
+			return spec.NewError(70, "podcast with id `%s` was not found", id)
+		}
 	}
-	log.Printf("serving raw `%s`\n", track.Filename)
-	w.Header().Set("Content-Type", track.MIME())
-	trackPath := path.Join(c.MusicPath, track.RelPath())
-	http.ServeFile(w, r, trackPath)
+	log.Printf("serving raw `%s`\n", audioFile.AudioFilename())
+	w.Header().Set("Content-Type", audioFile.MIME())
+	http.ServeFile(w, r, filePath)
 	return nil
 }

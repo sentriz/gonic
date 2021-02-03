@@ -20,10 +20,12 @@ var (
 type IDT string
 
 const (
-	Artist    IDT = "ar"
-	Album     IDT = "al"
-	Track     IDT = "tr"
-	separator     = "-"
+	Artist         IDT = "ar"
+	Album          IDT = "al"
+	Track          IDT = "tr"
+	Podcast        IDT = "pd"
+	PodcastEpisode IDT = "pe"
+	separator          = "-"
 )
 
 type ID struct {
@@ -49,6 +51,10 @@ func New(in string) (ID, error) {
 		return ID{Type: Album, Value: val}, nil
 	case Track:
 		return ID{Type: Track, Value: val}, nil
+	case Podcast:
+		return ID{Type: Podcast, Value: val}, nil
+	case PodcastEpisode:
+		return ID{Type: PodcastEpisode, Value: val}, nil
 	default:
 		return ID{}, fmt.Errorf("%q: %w", partType, ErrBadPrefix)
 	}
