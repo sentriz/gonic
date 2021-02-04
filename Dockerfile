@@ -17,7 +17,8 @@ FROM alpine:3.12.3
 RUN apk add -U --no-cache \
   ffmpeg \
   ca-certificates \
-  tzdata
+  tzdata \
+  tini
 COPY --from=builder \
   /usr/lib/libgcc_s.so.1 \
   /usr/lib/libstdc++.so.6 \
@@ -34,4 +35,5 @@ ENV GONIC_LISTEN_ADDR :80
 ENV GONIC_MUSIC_PATH /music
 ENV GONIC_PODCAST_PATH /podcasts
 ENV GONIC_CACHE_PATH /cache
+ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["gonic"]
