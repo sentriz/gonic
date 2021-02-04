@@ -66,7 +66,7 @@ services:
     volumes:
     - ./data:/data                # gonic db etc
     - /path/to/music:/music:ro    # your music
-    - /path/to/podcasts:/podcasts # your music
+    - /path/to/podcasts:/podcasts # your podcasts
     - /path/to/cache:/cache       # transcode / covers / etc cache dir
 
     # set the following two sections if you've enabled jukebox
