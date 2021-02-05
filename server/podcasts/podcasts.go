@@ -20,6 +20,7 @@ import (
 
 	"go.senan.xyz/gonic/multierr"
 	"go.senan.xyz/gonic/server/db"
+	gmime "go.senan.xyz/gonic/server/mime"
 	"go.senan.xyz/gonic/server/scanner/tags"
 )
 
@@ -170,26 +171,70 @@ func (p *Podcasts) AddEpisode(podcastID int, item *gofeed.Item) error {
 		duration = getSecondsFromString(item.ITunesExt.Duration)
 	}
 
+	if episode, ok := p.findEnclosureAudio(podcastID, duration, item); ok {
+		if err := p.DB.Save(episode).Error; err != nil {
+			return err
+		}
+		return nil
+	}
+	if episode, ok := p.findMediaAudio(podcastID, duration, item); ok {
+		if err := p.DB.Save(episode).Error; err != nil {
+			return err
+		}
+		return nil
+	}
+	// hopefully shouldnt reach here
+	log.Println("failed to find audio in feed item, skipping")
+	return nil
+}
+
+func isAudio(mediaType, url string) bool {
+	if mediaType != "" && strings.HasPrefix(mediaType, "audio") {
+		return true
+	}
+	_, ok := gmime.FromExtension(filepath.Ext(url)[1:])
+	return ok
+}
+
+func itemToEpisode(podcastID, size, duration int, audio string,
+	item *gofeed.Item) *db.PodcastEpisode {
+	return &db.PodcastEpisode{
+		PodcastID:   podcastID,
+		Description: item.Description,
+		Title:       item.Title,
+		Length:      duration,
+		Size:        size,
+		PublishDate: item.PublishedParsed,
+		AudioURL:    audio,
+		Status:      episodeSkipped,
+	}
+}
+
+func (p *Podcasts) findEnclosureAudio(podcastID, duration int,
+	item *gofeed.Item) (*db.PodcastEpisode, bool) {
 	for _, enc := range item.Enclosures {
-		if !strings.HasPrefix(enc.Type, "audio") {
+		if !isAudio(enc.Type, enc.URL) {
 			continue
 		}
 		size, _ := strconv.Atoi(enc.Length)
-		podcastEpisode := db.PodcastEpisode{
-			PodcastID:   podcastID,
-			Description: item.Description,
-			Title:       item.Title,
-			Length:      duration,
-			Size:        size,
-			PublishDate: item.PublishedParsed,
-			AudioURL:    enc.URL,
-			Status:      episodeSkipped,
-		}
-		if err := p.DB.Save(&podcastEpisode).Error; err != nil {
-			return err
-		}
+		return itemToEpisode(podcastID, size, duration, enc.URL, item), true
 	}
-	return nil
+	return nil, false
+}
+
+func (p *Podcasts) findMediaAudio(podcastID, duration int,
+	item *gofeed.Item) (*db.PodcastEpisode, bool) {
+	extensions, ok := item.Extensions["media"]["content"]
+	if !ok {
+		return nil, false
+	}
+	for _, ext := range extensions {
+		if !isAudio(ext.Attrs["type"], ext.Attrs["url"]) {
+			continue
+		}
+		return itemToEpisode(podcastID, 0, duration, ext.Attrs["url"], item), true
+	}
+	return nil, false
 }
 
 func (p *Podcasts) RefreshPodcasts() error {
