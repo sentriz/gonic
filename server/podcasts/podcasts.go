@@ -48,7 +48,7 @@ func (p *Podcasts) GetPodcastOrAll(userID int, id int, includeEpisodes bool) ([]
 		return podcasts, nil
 	}
 	for _, c := range podcasts {
-		episodes, err := p.GetPodcastEpisodes(id)
+		episodes, err := p.GetPodcastEpisodes(c.ID)
 		if err != nil {
 			return nil, fmt.Errorf("finding podcast episodes: %w", err)
 		}
