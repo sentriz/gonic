@@ -50,7 +50,7 @@ func (c *Controller) ServeCreatePodcastChannel(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "failed to parse feed: %s", err)
 	}
-	if _, err = c.Podcasts.AddNewPodcast(feed, user.ID); err != nil {
+	if _, err = c.Podcasts.AddNewPodcast(rssURL, feed, user.ID); err != nil {
 		return spec.NewError(10, "failed to add feed: %s", err)
 	}
 	return spec.NewResponse()

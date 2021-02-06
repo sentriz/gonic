@@ -431,7 +431,7 @@ func (c *Controller) ServePodcastAddDo(r *http.Request) *Response {
 			flashW:   []string{fmt.Sprintf("could not create feed: %v", err)},
 		}
 	}
-	if _, err = c.Podcasts.AddNewPodcast(feed, user.ID); err != nil {
+	if _, err = c.Podcasts.AddNewPodcast(rssURL, feed, user.ID); err != nil {
 		return &Response{
 			redirect: "/admin/home",
 			flashW:   []string{fmt.Sprintf("could not create feed: %v", err)},
