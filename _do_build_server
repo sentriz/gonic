@@ -1,5 +1,4 @@
 #!/bin/sh
 # using sh, is run from alpine
 
-./_do_gen_assets
 go build -o gonic cmd/gonic/main.go

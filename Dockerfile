@@ -11,6 +11,7 @@ COPY go.mod .
 COPY go.sum .
 RUN go mod download
 COPY . .
+RUN ./_do_gen_assets
 RUN ./_do_build_server
 
 FROM alpine:3.12.3
