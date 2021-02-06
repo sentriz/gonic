@@ -70,13 +70,14 @@ func (p *Podcasts) GetPodcastEpisodes(podcastID int) ([]*db.PodcastEpisode, erro
 	return episodes, nil
 }
 
-func (p *Podcasts) AddNewPodcast(feed *gofeed.Feed, userID int) (*db.Podcast, error) {
+func (p *Podcasts) AddNewPodcast(rssURL string, feed *gofeed.Feed,
+	userID int) (*db.Podcast, error) {
 	podcast := db.Podcast{
 		Description: feed.Description,
 		ImageURL:    feed.Image.URL,
 		UserID:      userID,
 		Title:       feed.Title,
-		URL:         feed.FeedLink,
+		URL:         rssURL,
 	}
 	podPath := podcast.Fullpath(p.PodcastBasePath)
 	err := os.Mkdir(podPath, 0755)
