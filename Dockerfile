@@ -1,4 +1,4 @@
-FROM golang:1.15-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.15-alpine AS builder
 RUN apk add -U --no-cache \
   build-base \
   ca-certificates \
@@ -14,7 +14,7 @@ COPY . .
 RUN ./_do_gen_assets
 RUN ./_do_build_server
 
-FROM alpine:3.12.3
+FROM --platform=$BUILDPLATFORM alpine:3.12.3
 RUN apk add -U --no-cache \
   ffmpeg \
   ca-certificates \
