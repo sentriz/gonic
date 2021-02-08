@@ -11,6 +11,9 @@ COPY go.mod .
 COPY go.sum .
 RUN go mod download
 COPY . .
+
+ARG TARGETOS
+ARG TARGETARCH
 RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} ./_do_gen_assets
 RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} ./_do_build_server
 
