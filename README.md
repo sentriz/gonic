@@ -24,7 +24,7 @@
 - multiple genre support (see `GONIC_GENRE_SPLIT` to split tag strings on a character, eg. `;`, and browse them individually)  
 - a web interface for configuration (set up last.fm, manage users, start scans, etc.)  
 - support for the [album-artist](https://mkoby.com/2007/02/18/artist-versus-album-artist/) tag, to not clutter your artist list with compilation album appearances  
-- written in [go](https://golang.org/), so lightweight and suitable for a raspberry pi, etc.  
+- written in [go](https://golang.org/), so lightweight and suitable for a raspberry pi, etc. (see ARM images below)  
 - newer salt and token auth  
 - tested on [dsub](https://f-droid.org/en/packages/github.daneren2005.dsub/), [jamstash](http://jamstash.com/), [sublime music](https://gitlab.com/sumner/sublime-music/), [soundwaves](https://apps.apple.com/us/app/soundwaves/id736139596), and [stmp](https://github.com/wildeyedskies/stmp)  
 
@@ -47,9 +47,15 @@ $ gonic -h # or see "configuration options below"
 **note:** unfortunately if you do this above, you'll be compiling gonic locally on your machine
 (if someone knows how I can statically link sqlite3 and taglib, please let me know so I can distribute static binaries) 
 
-###  ...with docker `x86_64`
+###  ...with docker
 
-the image is available on dockerhub as [sentriz/gonic](https://hub.docker.com/r/sentriz/gonic) 
+the image is available on dockerhub as [sentriz/gonic](https://hub.docker.com/r/sentriz/gonic)  
+
+available architectures are
+- `linux/amd64`
+- `linux/arm/v6`
+- `linux/arm/v7`
+- `linux/arm64`
 
 ```yaml
 # example docker-compose.yml
@@ -77,10 +83,6 @@ services:
 ```
 
 then start with `docker-compose up -d`
-
-###  ...with docker `arm / raspberry pi`
-
-please see [ugeek/gonic](https://hub.docker.com/r/ugeek/gonic)
 
 ###  ...with systemd
 
