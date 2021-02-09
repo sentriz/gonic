@@ -1,23 +1,21 @@
-FROM --platform=${BUILDPLATFORM} golang:1.15-alpine AS builder
+FROM alpine:3.13.1 AS builder
 RUN apk add -U --no-cache \
   build-base \
   ca-certificates \
   git \
   sqlite \
   taglib-dev \
-  alsa-lib-dev
+  alsa-lib-dev \
+  go
 WORKDIR /src
 COPY go.mod .
 COPY go.sum .
 RUN go mod download
 COPY . .
+RUN ./_do_gen_assets
+RUN ./_do_build_server
 
-ARG TARGETOS
-ARG TARGETARCH
-RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} ./_do_gen_assets
-RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} ./_do_build_server
-
-FROM --platform=${BUILDPLATFORM} alpine:3.12.3
+FROM alpine:3.13.1
 RUN apk add -U --no-cache \
   ffmpeg \
   ca-certificates \
