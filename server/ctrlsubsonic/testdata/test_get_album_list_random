@@ -3,35 +3,9 @@
     "status": "ok",
     "version": "1.15.0",
     "type": "gonic",
-    "gonicVersion": "v0.12.0",
+    "gonicVersion": "v0.12.1",
     "albumList": {
       "album": [
-        {
-          "id": "al-5",
-          "coverArt": "al-5",
-          "artist": "A Certain Ratio",
-          "title": "(1994) The Graveyard and the Ballroom",
-          "album": "",
-          "parent": "al-4",
-          "isDir": true,
-          "name": "",
-          "songCount": 14,
-          "duration": 2738,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "al-3",
-          "coverArt": "al-3",
-          "artist": "Jah Wobble, The Edge, Holger Czukay",
-          "title": "(1983) Snake Charmer",
-          "album": "",
-          "parent": "al-2",
-          "isDir": true,
-          "name": "",
-          "songCount": 5,
-          "duration": 1871,
-          "created": "0001-01-01T00:00:00Z"
-        },
         {
           "id": "al-21",
           "coverArt": "al-21",
@@ -46,29 +20,16 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
-          "id": "al-16",
-          "coverArt": "al-16",
-          "artist": "Swell Maps",
-          "title": "(1980) Jane From Occupied Europe",
+          "id": "al-5",
+          "coverArt": "al-5",
+          "artist": "A Certain Ratio",
+          "title": "(1994) The Graveyard and the Ballroom",
           "album": "",
-          "parent": "al-15",
+          "parent": "al-4",
           "isDir": true,
           "name": "",
-          "songCount": 16,
-          "duration": 3040,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "al-17",
-          "coverArt": "al-17",
-          "artist": "Swell Maps",
-          "title": "(1979) A Trip to Marineville",
-          "album": "",
-          "parent": "al-15",
-          "isDir": true,
-          "name": "",
-          "songCount": 18,
-          "duration": 3266,
+          "songCount": 14,
+          "duration": 2738,
           "created": "0001-01-01T00:00:00Z"
         },
         {
@@ -85,16 +46,15 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
-          "id": "al-13",
-          "coverArt": "al-13",
-          "artist": "There",
-          "title": "(2010) Anika",
+          "id": "al-6",
+          "artist": "A Certain Ratio",
+          "title": "(1981) To EachOTHER.",
           "album": "",
-          "parent": "al-12",
+          "parent": "al-4",
           "isDir": true,
           "name": "",
           "songCount": 9,
-          "duration": 2169,
+          "duration": 2801,
           "created": "0001-01-01T00:00:00Z"
         },
         {
@@ -111,18 +71,6 @@
           "created": "0001-01-01T00:00:00Z"
         },
         {
-          "id": "al-6",
-          "artist": "A Certain Ratio",
-          "title": "(1981) To EachOTHER.",
-          "album": "",
-          "parent": "al-4",
-          "isDir": true,
-          "name": "",
-          "songCount": 9,
-          "duration": 2801,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
           "id": "al-19",
           "coverArt": "al-19",
           "artist": "Ten Years After",
@@ -133,6 +81,58 @@
           "name": "",
           "songCount": 15,
           "duration": 3812,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "al-16",
+          "coverArt": "al-16",
+          "artist": "Swell Maps",
+          "title": "(1980) Jane From Occupied Europe",
+          "album": "",
+          "parent": "al-15",
+          "isDir": true,
+          "name": "",
+          "songCount": 16,
+          "duration": 3040,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "al-13",
+          "coverArt": "al-13",
+          "artist": "There",
+          "title": "(2010) Anika",
+          "album": "",
+          "parent": "al-12",
+          "isDir": true,
+          "name": "",
+          "songCount": 9,
+          "duration": 2169,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "al-17",
+          "coverArt": "al-17",
+          "artist": "Swell Maps",
+          "title": "(1979) A Trip to Marineville",
+          "album": "",
+          "parent": "al-15",
+          "isDir": true,
+          "name": "",
+          "songCount": 18,
+          "duration": 3266,
+          "created": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "al-3",
+          "coverArt": "al-3",
+          "artist": "Jah Wobble, The Edge, Holger Czukay",
+          "title": "(1983) Snake Charmer",
+          "album": "",
+          "parent": "al-2",
+          "isDir": true,
+          "name": "",
+          "songCount": 5,
+          "duration": 1871,
           "created": "0001-01-01T00:00:00Z"
         }
       ]
