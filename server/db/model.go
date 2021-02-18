@@ -304,7 +304,8 @@ type Podcast struct {
 }
 
 func (p *Podcast) Fullpath(podcastPath string) string {
-	return filepath.Join(podcastPath, filepath.Clean(p.Title))
+	sanitizedTitle := strings.ReplaceAll(p.Title, "/", "_")
+	return filepath.Join(podcastPath, filepath.Clean(sanitizedTitle))
 }
 
 func (p *Podcast) SID() *specid.ID {
