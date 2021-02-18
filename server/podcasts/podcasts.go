@@ -343,7 +343,8 @@ func (p *Podcasts) findUniqueEpisodeName(
 	if _, err := os.Stat(podcastPath); os.IsNotExist(err) {
 		return filename
 	}
-	titlePath := fmt.Sprintf("%s%s", podcastEpisode.Title, filepath.Ext(filename))
+	sanitizedTitle := strings.ReplaceAll(podcastEpisode.Title, "/", "_")
+	titlePath := fmt.Sprintf("%s%s", sanitizedTitle, filepath.Ext(filename))
 	podcastPath = path.Join(podcast.Fullpath(p.PodcastBasePath), titlePath)
 	if _, err := os.Stat(podcastPath); os.IsNotExist(err) {
 		return titlePath
@@ -353,7 +354,8 @@ func (p *Podcasts) findUniqueEpisodeName(
 }
 
 func findEpisode(base, filename string, count int) string {
-	testFile := fmt.Sprintf("%s (%d)%s", filename, count, filepath.Ext(filename))
+	noExt := strings.TrimSuffix(filename, filepath.Ext(filename))
+	testFile := fmt.Sprintf("%s (%d)%s", noExt, count, filepath.Ext(filename))
 	podcastPath := path.Join(base, testFile)
 	if _, err := os.Stat(podcastPath); os.IsNotExist(err) {
 		return testFile
