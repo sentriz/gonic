@@ -325,7 +325,8 @@ func (p *Podcasts) DownloadEpisode(episodeID int) error {
 		return fmt.Errorf("create audio file: %w", err)
 	}
 	podcastEpisode.Filename = filename
-	podcastEpisode.Path = path.Join(filepath.Clean(podcast.Title), filename)
+	sanTitle := strings.ReplaceAll(podcast.Title, "/", "_")
+	podcastEpisode.Path = path.Join(sanTitle, filename)
 	p.DB.Save(&podcastEpisode)
 	go func() {
 		if err := p.doPodcastDownload(&podcastEpisode, audioFile, resp.Body); err != nil {
