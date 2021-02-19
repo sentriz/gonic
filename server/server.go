@@ -145,10 +145,10 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	routUser.Handle("/delete_playlist_do", ctrl.H(ctrl.ServeDeletePlaylistDo))
 	routUser.Handle("/create_transcode_pref_do", ctrl.H(ctrl.ServeCreateTranscodePrefDo))
 	routUser.Handle("/delete_transcode_pref_do", ctrl.H(ctrl.ServeDeleteTranscodePrefDo))
-	if ctrl.Podcasts.PodcastBasePath != "" {
-		routUser.Handle("/add_podcast_do", ctrl.H(ctrl.ServePodcastAddDo))
-		routUser.Handle("/delete_podcast_do", ctrl.H(ctrl.ServePodcastDeleteDo))
-	}
+	routUser.Handle("/add_podcast_do", ctrl.H(ctrl.ServePodcastAddDo))
+	routUser.Handle("/delete_podcast_do", ctrl.H(ctrl.ServePodcastDeleteDo))
+	routUser.Handle("/download_podcast_do", ctrl.H(ctrl.ServePodcastDownloadDo))
+	routUser.Handle("/update_podcast_do", ctrl.H(ctrl.ServePodcastUpdateDo))
 	// ** begin admin routes (if session is valid, and is admin)
 	routAdmin := routUser.NewRoute().Subrouter()
 	routAdmin.Use(ctrl.WithAdminSession)

@@ -442,6 +442,47 @@ func (c *Controller) ServePodcastAddDo(r *http.Request) *Response {
 	}
 }
 
+func (c *Controller) ServePodcastDownloadDo(r *http.Request) *Response {
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil {
+		return &Response{
+			err:  "please provide a valid podcast id",
+			code: 400,
+		}
+	}
+	if err := c.Podcasts.DownloadPodcastAll(id); err != nil {
+		return &Response{
+			err:  "please provide a valid podcast id",
+			code: 400,
+		}
+	}
+	return &Response{
+		redirect: "/admin/home",
+		flashN:   []string{"started downloading podcast episodes"},
+	}
+}
+
+func (c *Controller) ServePodcastUpdateDo(r *http.Request) *Response {
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil {
+		return &Response{
+			err:  "please provide a valid podcast id",
+			code: 400,
+		}
+	}
+	autoDlSetting := r.FormValue("auto_dl")
+	if err := c.Podcasts.SetAutoDownload(id, autoDlSetting); err != nil {
+		return &Response{
+			err:  "please provide a valid podcast id and dl setting",
+			code: 400,
+		}
+	}
+	return &Response{
+		redirect: "/admin/home",
+		flashN:   []string{"future podcast episodes will be automatically downloaded"},
+	}
+}
+
 func (c *Controller) ServePodcastDeleteDo(r *http.Request) *Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))

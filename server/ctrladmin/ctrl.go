@@ -128,7 +128,7 @@ type templateData struct {
 	DefaultListenBrainzURL string
 	SelectedUser           *db.User
 	//
-	Podcasts        []*db.Podcast
+	Podcasts []*db.Podcast
 }
 
 type Response struct {

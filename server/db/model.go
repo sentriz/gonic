@@ -290,17 +290,18 @@ type AlbumGenre struct {
 }
 
 type Podcast struct {
-	ID          int `gorm:"primary_key"`
-	UpdatedAt   time.Time
-	ModifiedAt  time.Time
-	UserID      int `sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
-	URL         string
-	Title       string
-	Description string
-	ImageURL    string
-	ImagePath   string
-	Error       string
-	Episodes    []*PodcastEpisode
+	ID           int `gorm:"primary_key"`
+	UpdatedAt    time.Time
+	ModifiedAt   time.Time
+	UserID       int `sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
+	URL          string
+	Title        string
+	Description  string
+	ImageURL     string
+	ImagePath    string
+	Error        string
+	Episodes     []*PodcastEpisode
+	AutoDownload string
 }
 
 func (p *Podcast) Fullpath(podcastPath string) string {
