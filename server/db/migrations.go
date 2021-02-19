@@ -250,3 +250,15 @@ func migrateBookmarks() gormigrate.Migration {
 		},
 	}
 }
+
+func migratePodcastAutoDownload() gormigrate.Migration {
+	return gormigrate.Migration{
+		ID: "202102191448",
+		Migrate: func(tx *gorm.DB) error {
+			return tx.AutoMigrate(
+				Podcast{},
+			).
+				Error
+		},
+	}
+}

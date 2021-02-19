@@ -33,6 +33,10 @@ const (
 	episodeDownloading = "downloading"
 	episodeSkipped     = "skipped"
 	episodeDeleted     = "deleted"
+	episodeCompleted   = "completed"
+
+	autoDlLatest = "dl_latest"
+	autoDlNone   = "dl_none"
 )
 
 func (p *Podcasts) GetPodcastOrAll(userID int, id int, includeEpisodes bool) ([]*db.Podcast, error) {
@@ -87,7 +91,7 @@ func (p *Podcasts) AddNewPodcast(rssURL string, feed *gofeed.Feed,
 	if err := p.DB.Save(&podcast).Error; err != nil {
 		return &podcast, err
 	}
-	if err := p.AddNewEpisodes(podcast.ID, feed.Items); err != nil {
+	if err := p.AddNewEpisodes(&podcast, feed.Items); err != nil {
 		return nil, err
 	}
 	go func() {
@@ -96,6 +100,28 @@ func (p *Podcasts) AddNewPodcast(rssURL string, feed *gofeed.Feed,
 		}
 	}()
 	return &podcast, nil
+}
+
+var errNoSuchAutoDlOption = errors.New("invalid autodownload setting")
+
+func (p *Podcasts) SetAutoDownload(podcastID int, setting string) error {
+	podcast := db.Podcast{}
+	err := p.DB.
+		Where("id=?", podcastID).
+		First(&podcast).
+		Error
+	if err != nil {
+		return err
+	}
+	switch setting {
+	case autoDlLatest:
+		podcast.AutoDownload = autoDlLatest
+		return p.DB.Save(&podcast).Error
+	case autoDlNone:
+		podcast.AutoDownload = autoDlNone
+		return p.DB.Save(&podcast).Error
+	}
+	return errNoSuchAutoDlOption
 }
 
 func getEntriesAfterDate(feed []*gofeed.Item, after time.Time) []*gofeed.Item {
@@ -109,10 +135,10 @@ func getEntriesAfterDate(feed []*gofeed.Item, after time.Time) []*gofeed.Item {
 	return items
 }
 
-func (p *Podcasts) AddNewEpisodes(podcastID int, items []*gofeed.Item) error {
+func (p *Podcasts) AddNewEpisodes(podcast *db.Podcast, items []*gofeed.Item) error {
 	podcastEpisode := db.PodcastEpisode{}
 	err := p.DB.
-		Where("podcast_id=?", podcastID).
+		Where("podcast_id=?", podcast.ID).
 		Order("publish_date DESC").
 		First(&podcastEpisode).Error
 	itemFound := true
@@ -123,15 +149,22 @@ func (p *Podcasts) AddNewEpisodes(podcastID int, items []*gofeed.Item) error {
 	}
 	if !itemFound {
 		for _, item := range items {
-			if err := p.AddEpisode(podcastID, item); err != nil {
+			if _, err := p.AddEpisode(podcast.ID, item); err != nil {
 				return err
 			}
 		}
 		return nil
 	}
 	for _, item := range getEntriesAfterDate(items, *podcastEpisode.PublishDate) {
-		if err := p.AddEpisode(podcastID, item); err != nil {
+		episode, err := p.AddEpisode(podcast.ID, item)
+		if err != nil {
 			return err
+		}
+		if podcast.AutoDownload == autoDlLatest &&
+			(episode.Status != episodeCompleted && episode.Status != episodeDownloading) {
+			if err := p.DownloadEpisode(episode.ID); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -157,7 +190,7 @@ func getSecondsFromString(time string) int {
 	return 0
 }
 
-func (p *Podcasts) AddEpisode(podcastID int, item *gofeed.Item) error {
+func (p *Podcasts) AddEpisode(podcastID int, item *gofeed.Item) (*db.PodcastEpisode, error) {
 	duration := 0
 	// if it has the media extension use it
 	for _, content := range item.Extensions["media"]["content"] {
@@ -174,19 +207,19 @@ func (p *Podcasts) AddEpisode(podcastID int, item *gofeed.Item) error {
 
 	if episode, ok := p.findEnclosureAudio(podcastID, duration, item); ok {
 		if err := p.DB.Save(episode).Error; err != nil {
-			return err
+			return nil, err
 		}
-		return nil
+		return episode, nil
 	}
 	if episode, ok := p.findMediaAudio(podcastID, duration, item); ok {
 		if err := p.DB.Save(episode).Error; err != nil {
-			return err
+			return nil, err
 		}
-		return nil
+		return episode, nil
 	}
 	// hopefully shouldnt reach here
 	log.Println("failed to find audio in feed item, skipping")
-	return nil
+	return nil, nil
 }
 
 func isAudio(mediaType, url string) bool {
@@ -275,12 +308,36 @@ func (p *Podcasts) refreshPodcasts(podcasts []*db.Podcast) error {
 			errs.Add(fmt.Errorf("refreshing podcast with url %q: %w", podcast.URL, err))
 			continue
 		}
-		if err = p.AddNewEpisodes(podcast.ID, feed.Items); err != nil {
+		if err = p.AddNewEpisodes(podcast, feed.Items); err != nil {
 			errs.Add(fmt.Errorf("adding episodes: %w", err))
 			continue
 		}
 	}
 	return errs
+}
+
+func (p *Podcasts) DownloadPodcastAll(podcastID int) error {
+	podcastEpisodes := []db.PodcastEpisode{}
+	err := p.DB.
+		Where("podcast_id=?", podcastID).
+		Find(&podcastEpisodes).
+		Error
+	if err != nil {
+		return fmt.Errorf("get episodes by podcast id: %w", err)
+	}
+	go func() {
+		for _, episode := range podcastEpisodes {
+			if episode.Status == episodeDownloading || episode.Status == episodeCompleted {
+				log.Println("skipping episode is in progress or already downloaded")
+				continue
+			}
+			if err := p.DownloadEpisode(episode.ID); err != nil {
+				log.Println(err)
+			}
+			log.Printf("Finished downloading episode: \"%s\"", episode.Title)
+		}
+	}()
+	return nil
 }
 
 func (p *Podcasts) DownloadEpisode(episodeID int) error {
@@ -412,13 +469,13 @@ func (p *Podcasts) doPodcastDownload(podcastEpisode *db.PodcastEpisode, file *os
 	podcastPath := path.Join(p.PodcastBasePath, podcastEpisode.Path)
 	podcastTags, err := tags.New(podcastPath)
 	if err != nil {
-		log.Printf("error parsing podcast: %e", err)
+		log.Printf("error parsing podcast audio: %e", err)
 		podcastEpisode.Status = "error"
 		p.DB.Save(podcastEpisode)
 		return nil
 	}
 	podcastEpisode.Bitrate = podcastTags.Bitrate()
-	podcastEpisode.Status = "completed"
+	podcastEpisode.Status = episodeCompleted
 	podcastEpisode.Length = podcastTags.Length()
 	podcastEpisode.Size = int(stat.Size())
 	return p.DB.Save(podcastEpisode).Error
