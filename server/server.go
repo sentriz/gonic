@@ -32,6 +32,7 @@ type Options struct {
 	CoverCachePath string
 	ProxyPrefix    string
 	GenreSplit     string
+	HTTPLog        bool
 }
 
 type Server struct {
@@ -60,7 +61,9 @@ func New(opts Options) *Server {
 	}
 	// router with common wares for admin / subsonic
 	r := mux.NewRouter()
-	r.Use(base.WithLogging)
+	if opts.HTTPLog {
+		r.Use(base.WithLogging)
+	}
 	r.Use(base.WithCORS)
 	//
 	sessKey := opts.DB.GetOrCreateKey("session_key")
