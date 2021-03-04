@@ -24,20 +24,12 @@ import (
 	"go.senan.xyz/gonic/server/scanner/tags"
 )
 
+const DownloadAllWaitInterval = 3 * time.Second
+
 type Podcasts struct {
 	DB              *db.DB
 	PodcastBasePath string
 }
-
-const (
-	episodeDownloading = "downloading"
-	episodeSkipped     = "skipped"
-	episodeDeleted     = "deleted"
-	episodeCompleted   = "completed"
-
-	autoDlLatest = "dl_latest"
-	autoDlNone   = "dl_none"
-)
 
 func (p *Podcasts) GetPodcastOrAll(userID int, id int, includeEpisodes bool) ([]*db.Podcast, error) {
 	podcasts := []*db.Podcast{}
@@ -102,9 +94,7 @@ func (p *Podcasts) AddNewPodcast(rssURL string, feed *gofeed.Feed,
 	return &podcast, nil
 }
 
-var errNoSuchAutoDlOption = errors.New("invalid autodownload setting")
-
-func (p *Podcasts) SetAutoDownload(podcastID int, setting string) error {
+func (p *Podcasts) SetAutoDownload(podcastID int, setting db.PodcastAutoDownload) error {
 	podcast := db.Podcast{}
 	err := p.DB.
 		Where("id=?", podcastID).
@@ -113,15 +103,11 @@ func (p *Podcasts) SetAutoDownload(podcastID int, setting string) error {
 	if err != nil {
 		return err
 	}
-	switch setting {
-	case autoDlLatest:
-		podcast.AutoDownload = autoDlLatest
-		return p.DB.Save(&podcast).Error
-	case autoDlNone:
-		podcast.AutoDownload = autoDlNone
-		return p.DB.Save(&podcast).Error
+	podcast.AutoDownload = setting
+	if err := p.DB.Save(&podcast).Error; err != nil {
+		return fmt.Errorf("save setting: %w", err)
 	}
-	return errNoSuchAutoDlOption
+	return nil
 }
 
 func getEntriesAfterDate(feed []*gofeed.Item, after time.Time) []*gofeed.Item {
@@ -160,8 +146,8 @@ func (p *Podcasts) AddNewEpisodes(podcast *db.Podcast, items []*gofeed.Item) err
 		if err != nil {
 			return err
 		}
-		if podcast.AutoDownload == autoDlLatest &&
-			(episode.Status != episodeCompleted && episode.Status != episodeDownloading) {
+		if podcast.AutoDownload == db.PodcastAutoDownloadLatest &&
+			(episode.Status != db.PodcastEpisodeStatusCompleted && episode.Status != db.PodcastEpisodeStatusDownloading) {
 			if err := p.DownloadEpisode(episode.ID); err != nil {
 				return err
 			}
@@ -240,7 +226,7 @@ func itemToEpisode(podcastID, size, duration int, audio string,
 		Size:        size,
 		PublishDate: item.PublishedParsed,
 		AudioURL:    audio,
-		Status:      episodeSkipped,
+		Status:      db.PodcastEpisodeStatusSkipped,
 	}
 }
 
@@ -327,14 +313,16 @@ func (p *Podcasts) DownloadPodcastAll(podcastID int) error {
 	}
 	go func() {
 		for _, episode := range podcastEpisodes {
-			if episode.Status == episodeDownloading || episode.Status == episodeCompleted {
+			if episode.Status == db.PodcastEpisodeStatusDownloading || episode.Status == db.PodcastEpisodeStatusCompleted {
 				log.Println("skipping episode is in progress or already downloaded")
 				continue
 			}
 			if err := p.DownloadEpisode(episode.ID); err != nil {
-				log.Println(err)
+				log.Printf("error downloading episode: %v", err)
+				continue
 			}
-			log.Printf("Finished downloading episode: \"%s\"", episode.Title)
+			log.Printf("finished downloading episode: %q", episode.Title)
+			time.Sleep(DownloadAllWaitInterval)
 		}
 	}()
 	return nil
@@ -357,11 +345,11 @@ func (p *Podcasts) DownloadEpisode(episodeID int) error {
 	if err != nil {
 		return fmt.Errorf("get podcast by id: %w", err)
 	}
-	if podcastEpisode.Status == episodeDownloading {
+	if podcastEpisode.Status == db.PodcastEpisodeStatusDownloading {
 		log.Printf("Already downloading podcast episode with id %d", episodeID)
 		return nil
 	}
-	podcastEpisode.Status = episodeDownloading
+	podcastEpisode.Status = db.PodcastEpisodeStatusDownloading
 	p.DB.Save(&podcastEpisode)
 	// nolint: bodyclose
 	resp, err := http.Get(podcastEpisode.AudioURL)
@@ -470,12 +458,12 @@ func (p *Podcasts) doPodcastDownload(podcastEpisode *db.PodcastEpisode, file *os
 	podcastTags, err := tags.New(podcastPath)
 	if err != nil {
 		log.Printf("error parsing podcast audio: %e", err)
-		podcastEpisode.Status = "error"
+		podcastEpisode.Status = db.PodcastEpisodeStatusError
 		p.DB.Save(podcastEpisode)
 		return nil
 	}
 	podcastEpisode.Bitrate = podcastTags.Bitrate()
-	podcastEpisode.Status = episodeCompleted
+	podcastEpisode.Status = db.PodcastEpisodeStatusCompleted
 	podcastEpisode.Length = podcastTags.Length()
 	podcastEpisode.Size = int(stat.Size())
 	return p.DB.Save(podcastEpisode).Error
@@ -517,7 +505,7 @@ func (p *Podcasts) DeletePodcastEpisode(podcastEpisodeID int) error {
 	if err != nil {
 		return err
 	}
-	episode.Status = episodeDeleted
+	episode.Status = db.PodcastEpisodeStatusDeleted
 	p.DB.Save(&episode)
 	if err := os.Remove(filepath.Join(p.PodcastBasePath, episode.Path)); err != nil {
 		return err
