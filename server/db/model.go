@@ -289,6 +289,13 @@ type AlbumGenre struct {
 	GenreID int `gorm:"not null; unique_index:idx_album_id_genre_id" sql:"default: null; type:int REFERENCES genres(id) ON DELETE CASCADE"`
 }
 
+type PodcastAutoDownload string
+
+const (
+	PodcastAutoDownloadLatest PodcastAutoDownload = "latest"
+	PodcastAutoDownloadNone   PodcastAutoDownload = "none"
+)
+
 type Podcast struct {
 	ID           int `gorm:"primary_key"`
 	UpdatedAt    time.Time
@@ -301,7 +308,7 @@ type Podcast struct {
 	ImagePath    string
 	Error        string
 	Episodes     []*PodcastEpisode
-	AutoDownload string
+	AutoDownload PodcastAutoDownload
 }
 
 func (p *Podcast) Fullpath(podcastPath string) string {
@@ -312,6 +319,15 @@ func (p *Podcast) Fullpath(podcastPath string) string {
 func (p *Podcast) SID() *specid.ID {
 	return &specid.ID{Type: specid.Podcast, Value: p.ID}
 }
+
+type PodcastEpisodeStatus string
+
+const (
+	PodcastEpisodeStatusDownloading PodcastEpisodeStatus = "downloading"
+	PodcastEpisodeStatusSkipped     PodcastEpisodeStatus = "skipped"
+	PodcastEpisodeStatusDeleted     PodcastEpisodeStatus = "deleted"
+	PodcastEpisodeStatusCompleted   PodcastEpisodeStatus = "completed"
+)
 
 type PodcastEpisode struct {
 	ID          int `gorm:"primary_key"`
@@ -328,7 +344,7 @@ type PodcastEpisode struct {
 	Size        int
 	Path        string
 	Filename    string
-	Status      string
+	Status      PodcastEpisodeStatus
 	Error       string
 }
 

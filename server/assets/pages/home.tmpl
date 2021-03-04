@@ -179,21 +179,21 @@
         <table id="podcast-preferences">
         {{ range $pref := .Podcasts }}
             <tr>
-                <form id="podcast-{{ $pref.ID }}-delete" action="{{ printf "/admin/delete_podcast_do?id=%d" $pref.ID | path }}" method="post"></form>
                 <form id="podcast-{{ $pref.ID }}-download" action="{{ printf "/admin/download_podcast_do?id=%d" $pref.ID | path }}" method="post"></form>
-                <form id="podcast-{{ $pref.ID }}-autodl" action="{{ printf "/admin/update_podcast_do?id=%d" $pref.ID | path }}" method="post"></form>
+                <form id="podcast-{{ $pref.ID }}-auto-download" action="{{ printf "/admin/update_podcast_do?id=%d" $pref.ID | path }}" method="post"></form>
+                <form id="podcast-{{ $pref.ID }}-delete" action="{{ printf "/admin/delete_podcast_do?id=%d" $pref.ID | path }}" method="post"></form>
                 <td>{{ $pref.Title }}</td>
-                <td><select form="podcast-{{ $pref.ID }}-autodl" name="auto_dl">
-                    {{ if eq $pref.AutoDownload "dl_latest" }}
-                      <option value="dl_latest" selected="selected">download latest</option>
-                      <option value="dl_none">no auto download</option>
+                <td><select form="podcast-{{ $pref.ID }}-auto-download" name="setting">
+                    {{ if eq $pref.AutoDownload "latest" }}
+                      <option value="latest" selected="selected">download latest</option>
+                      <option value="none">no auto download</option>
                     {{ else }}
-                      <option value="dl_none" selected="selected" >no auto download</option>
-                      <option value="dl_latest">download latest</option>
+                      <option value="none" selected="selected" >no auto download</option>
+                      <option value="latest">download latest</option>
                     {{ end }}
                 </select></td>
                 <td><input form="podcast-{{ $pref.ID }}-download" type="submit" value="download all"></td>
-                <td><input form="podcast-{{ $pref.ID }}-autodl" type="submit" value="save"></td>
+                <td><input form="podcast-{{ $pref.ID }}-auto-download" type="submit" value="save"></td>
                 <td><input form="podcast-{{ $pref.ID }}-delete" type="submit" value="delete"></td>
             </tr>
         {{ end }}
