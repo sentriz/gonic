@@ -458,7 +458,7 @@ func (p *Podcasts) doPodcastDownload(podcastEpisode *db.PodcastEpisode, file *os
 	podcastTags, err := tags.New(podcastPath)
 	if err != nil {
 		log.Printf("error parsing podcast audio: %e", err)
-		podcastEpisode.Status = "error"
+		podcastEpisode.Status = db.PodcastEpisodeStatusError
 		p.DB.Save(podcastEpisode)
 		return nil
 	}
