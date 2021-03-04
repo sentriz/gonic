@@ -327,6 +327,7 @@ const (
 	PodcastEpisodeStatusSkipped     PodcastEpisodeStatus = "skipped"
 	PodcastEpisodeStatusDeleted     PodcastEpisodeStatus = "deleted"
 	PodcastEpisodeStatusCompleted   PodcastEpisodeStatus = "completed"
+	PodcastEpisodeStatusError       PodcastEpisodeStatus = "error"
 )
 
 type PodcastEpisode struct {
