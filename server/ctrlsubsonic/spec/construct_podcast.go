@@ -30,7 +30,7 @@ func NewPodcastEpisode(p *db.Podcast, e *db.PodcastEpisode) *PodcastEpisode {
 		ChannelID:   p.SID(),
 		Title:       e.Title,
 		Description: e.Description,
-		Status:      e.Status,
+		Status:      string(e.Status),
 		CoverArt:    p.SID(),
 		PublishDate: *e.PublishDate,
 		Genre:       "Podcast",

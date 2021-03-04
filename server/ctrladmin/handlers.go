@@ -470,16 +470,28 @@ func (c *Controller) ServePodcastUpdateDo(r *http.Request) *Response {
 			code: 400,
 		}
 	}
-	autoDlSetting := r.FormValue("auto_dl")
-	if err := c.Podcasts.SetAutoDownload(id, autoDlSetting); err != nil {
+	setting := db.PodcastAutoDownload(r.FormValue("setting"))
+	var message string
+	switch setting {
+	case db.PodcastAutoDownloadLatest:
+		message = "future podcast episodes will be automatically downloaded"
+	case db.PodcastAutoDownloadNone:
+		message = "future podcast episodes will not be downloaded"
+	default:
 		return &Response{
-			err:  "please provide a valid podcast id and dl setting",
+			err:  "please provide a valid podcast download type",
 			code: 400,
+		}
+	}
+	if err := c.Podcasts.SetAutoDownload(id, setting); err != nil {
+		return &Response{
+			flashW: []string{fmt.Sprintf("could not update auto download setting: %v", err)},
+			code:   400,
 		}
 	}
 	return &Response{
 		redirect: "/admin/home",
-		flashN:   []string{"future podcast episodes will be automatically downloaded"},
+		flashN:   []string{message},
 	}
 }
 
