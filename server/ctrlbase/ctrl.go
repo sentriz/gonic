@@ -63,7 +63,13 @@ func (c *Controller) WithLogging(next http.Handler) http.Handler {
 		// other middlewares and the custom ResponseWriter has been written
 		sw := &statusWriter{ResponseWriter: w}
 		next.ServeHTTP(sw, r)
-		log.Printf("response %s for `%s`", statusToBlock(sw.status), r.URL)
+
+		// sanitise password
+		if q := r.URL.Query(); q.Get("p") != "" {
+			q.Set("p", "REDACTED")
+			r.URL.RawQuery = q.Encode()
+		}
+		log.Printf("response %s for `%v`", statusToBlock(sw.status), r.URL)
 	})
 }
 
