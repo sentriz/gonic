@@ -187,7 +187,7 @@ func (p *Podcasts) AddEpisode(podcastID int, item *gofeed.Item) (*db.PodcastEpis
 		}
 	}
 	// if the itunes extension is available, use AddEpisode
-	if duration == 0 {
+	if duration == 0 && item.ITunesExt != nil {
 		duration = getSecondsFromString(item.ITunesExt.Duration)
 	}
 
@@ -439,7 +439,7 @@ func (p *Podcasts) downloadPodcastCover(podPath string, podcast *db.Podcast) err
 	if _, err := io.Copy(coverFile, resp.Body); err != nil {
 		return fmt.Errorf("writing podcast cover: %w", err)
 	}
-	podcastPath := filepath.Clean(podcast.Title)
+	podcastPath := filepath.Clean(strings.ReplaceAll(podcast.Title, "/", "_"))
 	podcastFilename := fmt.Sprintf("cover%s", ext)
 	podcast.ImagePath = path.Join(podcastPath, podcastFilename)
 	if err := p.DB.Save(podcast).Error; err != nil {
