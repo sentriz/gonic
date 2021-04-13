@@ -27,5 +27,10 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: v1.33
+      - name: Update version.go
+        run: |
+          _version=v$(cat version.txt)
+          sed -Ei "s/VERSION = \"v0.0.0\"/VERSION = \"${_version}-nightly\"/g" version/version.go
+          ./_do_gen_handler_tests
       - name: Test
         run: go test ./...
