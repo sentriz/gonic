@@ -105,8 +105,8 @@ func (c *Controller) ServeGetUser(r *http.Request) *spec.Response {
 	sub.User = &spec.User{
 		Username:          user.Name,
 		AdminRole:         user.IsAdmin,
-		JukeboxRole:       true,
-		PodcastRole:       true,
+		JukeboxRole:       c.Jukebox != nil,
+		PodcastRole:       c.Podcasts != nil,
 		ScrobblingEnabled: hasLastFM || hasListenBrainz,
 		Folder:            []int{1},
 	}

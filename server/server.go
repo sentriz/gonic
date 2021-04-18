@@ -33,6 +33,7 @@ type Options struct {
 	ProxyPrefix    string
 	GenreSplit     string
 	HTTPLog        bool
+	JukeboxEnabled bool
 }
 
 type Server struct {
@@ -44,58 +45,61 @@ type Server struct {
 }
 
 func New(opts Options) *Server {
-	// ** begin sanitation
 	opts.MusicPath = filepath.Clean(opts.MusicPath)
 	opts.CachePath = filepath.Clean(opts.CachePath)
 	opts.PodcastPath = filepath.Clean(opts.PodcastPath)
-	// ** begin controllers
+
 	scanner := scanner.New(opts.MusicPath, opts.DB, opts.GenreSplit)
-	jukebox := jukebox.New(opts.MusicPath)
-	// the base controller, it's fields/middlewares are embedded/used by the
-	// other two admin ui and subsonic controllers
 	base := &ctrlbase.Controller{
 		DB:          opts.DB,
 		MusicPath:   opts.MusicPath,
 		ProxyPrefix: opts.ProxyPrefix,
 		Scanner:     scanner,
 	}
+
 	// router with common wares for admin / subsonic
 	r := mux.NewRouter()
 	if opts.HTTPLog {
 		r.Use(base.WithLogging)
 	}
 	r.Use(base.WithCORS)
-	//
+
 	sessKey := opts.DB.GetOrCreateKey("session_key")
 	sessDB := gormstore.New(opts.DB.DB, []byte(sessKey))
 	sessDB.SessionOpts.HttpOnly = true
 	sessDB.SessionOpts.SameSite = http.SameSiteLaxMode
-	//
-	pcInit := &podcasts.Podcasts{DB: opts.DB, PodcastBasePath: opts.PodcastPath}
-	ctrlAdmin := ctrladmin.New(base, sessDB, pcInit)
-	scrobblers := []scrobble.Scrobbler{
-		&lastfm.Scrobbler{DB: opts.DB},
-		&listenbrainz.Scrobbler{},
-	}
+
+	podcast := &podcasts.Podcasts{DB: opts.DB, PodcastBasePath: opts.PodcastPath}
+	ctrlAdmin := ctrladmin.New(base, sessDB, podcast)
 	ctrlSubsonic := &ctrlsubsonic.Controller{
 		Controller:     base,
 		CachePath:      opts.CachePath,
 		CoverCachePath: opts.CoverCachePath,
-		Jukebox:        jukebox,
-		Scrobblers:     scrobblers,
-		Podcasts:       pcInit,
+		Scrobblers: []scrobble.Scrobbler{
+			&lastfm.Scrobbler{DB: opts.DB},
+			&listenbrainz.Scrobbler{},
+		},
+		Podcasts: podcast,
 	}
+
 	setupMisc(r, base)
 	setupAdmin(r.PathPrefix("/admin").Subrouter(), ctrlAdmin)
 	setupSubsonic(r.PathPrefix("/rest").Subrouter(), ctrlSubsonic)
-	//
-	return &Server{
+
+	server := &Server{
 		scanner: scanner,
-		jukebox: jukebox,
 		router:  r,
 		sessDB:  sessDB,
-		podcast: &podcasts.Podcasts{DB: opts.DB, PodcastBasePath: opts.PodcastPath},
+		podcast: podcast,
 	}
+
+	if opts.JukeboxEnabled {
+		jukebox := jukebox.New(opts.MusicPath)
+		ctrlSubsonic.Jukebox = jukebox
+		server.jukebox = jukebox
+	}
+
+	return server
 }
 
 func setupMisc(r *mux.Router, ctrl *ctrlbase.Controller) {

@@ -101,6 +101,7 @@ func main() {
 		GenreSplit:     *confGenreSplit,
 		PodcastPath:    *confPodcastPath,
 		HTTPLog:        *confHTTPLog,
+		JukeboxEnabled: *confJukeboxEnabled,
 	})
 
 	var g run.Group
