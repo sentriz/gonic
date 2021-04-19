@@ -52,5 +52,5 @@ func (t *Tags) Bitrate() int          { return t.props.Bitrate }
 
 func (t *Tags) Year() int {
 	// eg. 2019-6-11
-	return intSep(t.firstTag("original_date", "original_year", "date", "year"), "-")
+	return intSep(t.firstTag("originaldate", "date", "year"), "-")
 }
