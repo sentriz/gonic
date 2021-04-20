@@ -324,7 +324,7 @@ func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
 	// begin taking the current folder off the stack and add it's
 	// parent, cover that we found, etc.
 	folder := s.curFolders.Pop()
-	if !folder.ShouldSave {
+	if folder.ParentID != 0 {
 		return nil
 	}
 	folder.ParentID = s.curFolders.PeekID()
@@ -477,7 +477,7 @@ func (s *Scanner) handleTrack(it *item) error {
 
 	// ** begin set album if this is the first track in the folder
 	folder := s.curFolders.Peek()
-	if folder.ShouldSave {
+	if folder.TagTitle != "" {
 		return nil
 	}
 	err = s.trTx.
@@ -501,7 +501,6 @@ func (s *Scanner) handleTrack(it *item) error {
 	folder.TagBrainzID = trTags.AlbumBrainzID()
 	folder.TagYear = trTags.Year()
 	folder.TagArtistID = artist.ID
-	folder.ShouldSave = true
 	return nil
 }
 

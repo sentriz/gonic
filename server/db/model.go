@@ -195,9 +195,8 @@ type Album struct {
 	TagBrainzID   string `sql:"default: null"`
 	TagYear       int    `sql:"default: null"`
 	Tracks        []*Track
-	ChildCount    int  `sql:"-"`
-	Duration      int  `sql:"-"`
-	ShouldSave    bool `sql:"-"`
+	ChildCount    int `sql:"-"`
+	Duration      int `sql:"-"`
 }
 
 func (a *Album) SID() *specid.ID {
