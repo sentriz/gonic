@@ -16,6 +16,7 @@ RUN ./_do_gen_assets
 RUN ./_do_build_server
 
 FROM alpine:3.13.1
+LABEL org.opencontainers.image.source https://github.com/sentriz/gonic
 RUN apk add -U --no-cache \
   ffmpeg \
   ca-certificates \

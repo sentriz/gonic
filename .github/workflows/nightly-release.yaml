@@ -4,24 +4,59 @@ on:
     - cron: '0 0 * * *'
   workflow_dispatch: {}
 jobs:
+  test:
+    name: Lint and test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16.x
+      - name: Install dependencies
+        run: |
+          sudo apt update -qq
+          sudo apt install -y -qq build-essential git sqlite libtag1-dev ffmpeg libasound-dev
+      - name: Lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: latest
+          skip-go-installation: true
+      - name: Test
+        run: go test ./...
   build-release:
     name: Build and release Docker image
     runs-on: ubuntu-latest
+    needs: [test]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-      - name: Update version.go
-        run: |
-          _version=v$(cat version.txt)
-          sed -Ei "s/VERSION = \"v0.0.0\"/VERSION = \"${_version}-nightly\"/g" version/version.go
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+        with:
+          image: tonistiigi/binfmt:latest
+          platforms: all
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          install: true
+          version: latest
+          driver-opts: image=moby/buildkit:master
+      - name: Login into DockerHub
+        run: echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
       - name: Login into GitHub Container Registry
-        run: echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
-      - name: Build Docker image
-        run: |
-          docker build \
-          -t "ghcr.io/${GITHUB_REPOSITORY}:${GITHUB_SHA:0:7}" \
-          -t "ghcr.io/${GITHUB_REPOSITORY}:nightly" .
-      - name: Release Docker image
-        run: |
-          docker push "ghcr.io/${GITHUB_REPOSITORY}:${GITHUB_SHA:0:7}"
-          docker push "ghcr.io/${GITHUB_REPOSITORY}:nightly"
+        run: echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Build and Push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${{ github.repository }}:nightly
+            ${{ github.repository }}:${{ github.sha }}
+            ${{ github.repository }}:nightly
