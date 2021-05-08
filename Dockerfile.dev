@@ -12,7 +12,7 @@ WORKDIR /src
 COPY . .
 RUN --mount=type=cache,target=/go/pkg/mod \
   --mount=type=cache,target=/root/.cache/go-build \
-  ./_do_build_server
+  GOOS=linux go build -o gonic cmd/gonic/gonic.go
 
 FROM alpine:3.12.3
 RUN apk add -U --no-cache \

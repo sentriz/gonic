@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 	"net/http"
@@ -44,7 +43,7 @@ type Server struct {
 	podcast *podcasts.Podcasts
 }
 
-func New(opts Options) *Server {
+func New(opts Options) (*Server, error) {
 	opts.MusicPath = filepath.Clean(opts.MusicPath)
 	opts.CachePath = filepath.Clean(opts.CachePath)
 	opts.PodcastPath = filepath.Clean(opts.PodcastPath)
@@ -70,7 +69,11 @@ func New(opts Options) *Server {
 	sessDB.SessionOpts.SameSite = http.SameSiteLaxMode
 
 	podcast := &podcasts.Podcasts{DB: opts.DB, PodcastBasePath: opts.PodcastPath}
-	ctrlAdmin := ctrladmin.New(base, sessDB, podcast)
+
+	ctrlAdmin, err := ctrladmin.New(base, sessDB, podcast)
+	if err != nil {
+		return nil, fmt.Errorf("create admin controller: %w", err)
+	}
 	ctrlSubsonic := &ctrlsubsonic.Controller{
 		Controller:     base,
 		CachePath:      opts.CachePath,
@@ -99,7 +102,7 @@ func New(opts Options) *Server {
 		server.jukebox = jukebox
 	}
 
-	return server
+	return server, nil
 }
 
 func setupMisc(r *mux.Router, ctrl *ctrlbase.Controller) {
@@ -124,14 +127,10 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	r.Use(ctrl.WithSession)
 	r.Handle("/login", ctrl.H(ctrl.ServeLogin))
 	r.Handle("/login_do", ctrl.HR(ctrl.ServeLoginDo)) // "raw" handler, updates session
-	assets.PrefixDo("static", func(path string, asset *assets.EmbeddedAsset) {
-		_, name := filepath.Split(path)
-		route := filepath.Join("/static", name)
-		reader := bytes.NewReader(asset.Bytes)
-		r.HandleFunc(route, func(w http.ResponseWriter, r *http.Request) {
-			http.ServeContent(w, r, name, asset.ModTime, reader)
-		})
-	})
+
+	staticHandler := http.StripPrefix("/admin", http.FileServer(http.FS(assets.Static)))
+	r.PathPrefix("/static").Handler(staticHandler)
+
 	// ** begin user routes (if session is valid)
 	routUser := r.NewRoute().Subrouter()
 	routUser.Use(ctrl.WithUserSession)
@@ -153,6 +152,7 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	routUser.Handle("/delete_podcast_do", ctrl.H(ctrl.ServePodcastDeleteDo))
 	routUser.Handle("/download_podcast_do", ctrl.H(ctrl.ServePodcastDownloadDo))
 	routUser.Handle("/update_podcast_do", ctrl.H(ctrl.ServePodcastUpdateDo))
+
 	// ** begin admin routes (if session is valid, and is admin)
 	routAdmin := routUser.NewRoute().Subrouter()
 	routAdmin.Use(ctrl.WithAdminSession)
@@ -168,6 +168,7 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	routAdmin.Handle("/update_lastfm_api_key_do", ctrl.H(ctrl.ServeUpdateLastFMAPIKeyDo))
 	routAdmin.Handle("/start_scan_inc_do", ctrl.H(ctrl.ServeStartScanIncDo))
 	routAdmin.Handle("/start_scan_full_do", ctrl.H(ctrl.ServeStartScanFullDo))
+
 	// middlewares should be run for not found handler
 	// https://github.com/gorilla/mux/issues/416
 	notFoundHandler := ctrl.H(ctrl.ServeNotFound)
@@ -179,6 +180,7 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Use(ctrl.WithParams)
 	r.Use(ctrl.WithRequiredParams)
 	r.Use(ctrl.WithUser)
+
 	// ** begin common
 	r.Handle("/getLicense{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetLicence))
 	r.Handle("/getMusicFolders{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetMusicFolders))
@@ -201,10 +203,12 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/getBookmarks{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetBookmarks))
 	r.Handle("/createBookmark{_:(?:\\.view)?}", ctrl.H(ctrl.ServeCreateBookmark))
 	r.Handle("/deleteBookmark{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDeleteBookmark))
+
 	// ** begin raw
 	r.Handle("/download{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeDownload))
 	r.Handle("/getCoverArt{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeGetCoverArt))
 	r.Handle("/stream{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeStream))
+
 	// ** begin browse by tag
 	r.Handle("/getAlbum{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetAlbum))
 	r.Handle("/getAlbumList2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetAlbumListTwo))
@@ -212,6 +216,7 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/getArtists{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtists))
 	r.Handle("/search3{_:(?:\\.view)?}", ctrl.H(ctrl.ServeSearchThree))
 	r.Handle("/getArtistInfo2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtistInfoTwo))
+
 	// ** begin browse by folder
 	r.Handle("/getIndexes{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetIndexes))
 	r.Handle("/getMusicDirectory{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetMusicDirectory))
@@ -219,6 +224,7 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/search2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeSearchTwo))
 	r.Handle("/getGenres{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetGenres))
 	r.Handle("/getArtistInfo{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtistInfo))
+
 	// ** begin podcasts
 	r.Handle("/getPodcasts{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetPodcasts))
 	r.Handle("/downloadPodcastEpisode{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDownloadPodcastEpisode))
@@ -226,6 +232,7 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/refreshPodcasts{_:(?:\\.view)?}", ctrl.H(ctrl.ServeRefreshPodcasts))
 	r.Handle("/deletePodcastChannel{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDeletePodcastChannel))
 	r.Handle("/deletePodcastEpisode{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDeletePodcastEpisode))
+
 	// middlewares should be run for not found handler
 	// https://github.com/gorilla/mux/issues/416
 	notFoundHandler := ctrl.H(ctrl.ServeNotFound)

@@ -1,15 +1,18 @@
+//nolint:gochecknoglobals,golint,stylecheck
 package assets
 
 import (
-	"strings"
+	"embed"
 )
 
-// PrefixDo runs a given callback for every path in our assets with
-// the given prefix
-func PrefixDo(pre string, cb func(path string, asset *EmbeddedAsset)) {
-	for path, asset := range Bytes {
-		if strings.HasPrefix(path, pre) {
-			cb(path, asset)
-		}
-	}
-}
+//go:embed layouts
+var Layouts embed.FS
+
+//go:embed pages
+var Pages embed.FS
+
+//go:embed partials
+var Partials embed.FS
+
+//go:embed static
+var Static embed.FS
