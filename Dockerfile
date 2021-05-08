@@ -1,4 +1,4 @@
-FROM alpine:3.13.1 AS builder
+FROM golang:1.16-alpine AS builder
 RUN apk add -U --no-cache \
   build-base \
   ca-certificates \
@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 RUN GOOS=linux go build -o gonic cmd/gonic/gonic.go
 
-FROM alpine:3.13.1
+FROM alpine:3.13.5
 LABEL org.opencontainers.image.source https://github.com/sentriz/gonic
 RUN apk add -U --no-cache \
   ffmpeg \
