@@ -104,7 +104,8 @@ func main() {
 		JukeboxEnabled: *confJukeboxEnabled,
 	})
 	if err != nil {
-		log.Fatalf("error creating server: %v\n", err)
+		log.Printf("error creating server: %v\n", err)
+		return
 	}
 
 	var g run.Group
