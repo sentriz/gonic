@@ -18,7 +18,6 @@ type Response struct {
 	Version           string             `xml:"version,attr"      json:"version"`
 	XMLNS             string             `xml:"xmlns,attr"        json:"-"`
 	Type              string             `xml:"type,attr"         json:"type"`
-	GonicVersion      string             `xml:"gonicVersion,attr" json:"gonicVersion"`
 	Error             *Error             `xml:"error"             json:"error,omitempty"`
 	Albums            *Albums            `xml:"albumList"         json:"albumList,omitempty"`
 	AlbumsTwo         *Albums            `xml:"albumList2"        json:"albumList2,omitempty"`
@@ -50,11 +49,10 @@ type Response struct {
 
 func NewResponse() *Response {
 	return &Response{
-		Status:       "ok",
-		XMLNS:        xmlns,
-		Version:      apiVersion,
-		Type:         gonic.Name,
-		GonicVersion: gonic.Version,
+		Status:  "ok",
+		XMLNS:   xmlns,
+		Version: apiVersion,
+		Type:    gonic.Name,
 	}
 }
 
@@ -82,8 +80,7 @@ func NewError(code int, message string, a ...interface{}) *Response {
 			Code:    code,
 			Message: fmt.Sprintf(message, a...),
 		},
-		Type:         gonic.Name,
-		GonicVersion: gonic.Version,
+		Type: gonic.Name,
 	}
 }
 
