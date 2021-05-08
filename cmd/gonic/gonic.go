@@ -15,9 +15,9 @@ import (
 	"github.com/oklog/run"
 	"github.com/peterbourgon/ff"
 
+	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/server"
 	"go.senan.xyz/gonic/server/db"
-	"go.senan.xyz/gonic/version"
 )
 
 const (
@@ -27,7 +27,7 @@ const (
 )
 
 func main() {
-	set := flag.NewFlagSet(version.NAME, flag.ExitOnError)
+	set := flag.NewFlagSet(gonic.Version, flag.ExitOnError)
 	confListenAddr := set.String("listen-addr", "0.0.0.0:4747", "listen address (optional)")
 	confMusicPath := set.String("music-path", "", "path to music")
 	confPodcastPath := set.String("podcast-path", "", "path to podcasts")
@@ -44,17 +44,17 @@ func main() {
 	if err := ff.Parse(set, os.Args[1:],
 		ff.WithConfigFileFlag("config-path"),
 		ff.WithConfigFileParser(ff.PlainParser),
-		ff.WithEnvVarPrefix(version.NAME_UPPER),
+		ff.WithEnvVarPrefix(gonic.NameUpper),
 	); err != nil {
 		log.Fatalf("error parsing args: %v\n", err)
 	}
 
 	if *confShowVersion {
-		fmt.Println(version.VERSION)
+		fmt.Println(gonic.Version)
 		os.Exit(0)
 	}
 
-	log.Printf("starting gonic %s\n", version.VERSION)
+	log.Printf("starting gonic %s\n", gonic.Version)
 	log.Printf("provided config\n")
 	set.VisitAll(func(f *flag.Flag) {
 		log.Printf("    %-15s %s\n", f.Name, f.Value)
@@ -92,7 +92,7 @@ func main() {
 
 	proxyPrefixExpr := regexp.MustCompile(`^\/*(.*?)\/*$`)
 	*confProxyPrefix = proxyPrefixExpr.ReplaceAllString(*confProxyPrefix, `/$1`)
-	server := server.New(server.Options{
+	server, err := server.New(server.Options{
 		DB:             db,
 		MusicPath:      *confMusicPath,
 		CachePath:      cacheDirAudio,
@@ -103,6 +103,9 @@ func main() {
 		HTTPLog:        *confHTTPLog,
 		JukeboxEnabled: *confJukeboxEnabled,
 	})
+	if err != nil {
+		log.Fatalf("error creating server: %v\n", err)
+	}
 
 	var g run.Group
 	g.Add(server.StartHTTP(*confListenAddr))

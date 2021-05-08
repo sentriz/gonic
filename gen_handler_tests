@@ -10,7 +10,7 @@ test_cache_path="$(mktemp -d)"
 
 mkdir "$test_music_path" 2>/dev/null
 echo "waiting for server to start"
-./_do_run_server \
+go run cmd/gonic/gonic.go \
     -music-path "$test_music_path" \
     -podcast-path "$test_podcast_path" \
     -cache-path "$test_cache_path" \
