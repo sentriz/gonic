@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"log"
 	"net/http"
 	"net/url"
@@ -19,11 +20,11 @@ import (
 	"github.com/oxtoacart/bpool"
 	"github.com/wader/gormstore"
 
+	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/server/assets"
 	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/podcasts"
-	"go.senan.xyz/gonic/version"
 )
 
 type CtxKey int
@@ -33,41 +34,12 @@ const (
 	CtxSession
 )
 
-// extendFromPaths /extends/ the given template for every asset
-// with given prefix
-func extendFromPaths(b *template.Template, p string) *template.Template {
-	assets.PrefixDo(p, func(_ string, asset *assets.EmbeddedAsset) {
-		tmplStr := string(asset.Bytes)
-		b = template.Must(b.Parse(tmplStr))
-	})
-	return b
-}
-
-// extendFromPaths /clones/ the given template for every asset
-// with given prefix, extends it, and insert it into a new map
-func pagesFromPaths(b *template.Template, p string) map[string]*template.Template {
-	ret := map[string]*template.Template{}
-	assets.PrefixDo(p, func(path string, asset *assets.EmbeddedAsset) {
-		tmplKey := filepath.Base(path)
-		clone := template.Must(b.Clone())
-		tmplStr := string(asset.Bytes)
-		ret[tmplKey] = template.Must(clone.Parse(tmplStr))
-	})
-	return ret
-}
-
-const (
-	prefixPartials = "partials"
-	prefixLayouts  = "layouts"
-	prefixPages    = "pages"
-)
-
 func funcMap() template.FuncMap {
 	return template.FuncMap{
 		"noCache": func(in string) string {
 			parsed, _ := url.Parse(in)
 			params := parsed.Query()
-			params.Set("v", version.VERSION)
+			params.Set("v", gonic.Version)
 			parsed.RawQuery = params.Encode()
 			return parsed.String()
 		},
@@ -86,23 +58,45 @@ type Controller struct {
 	Podcasts  *podcasts.Podcasts
 }
 
-func New(b *ctrlbase.Controller, sessDB *gormstore.Store, podcasts *podcasts.Podcasts) *Controller {
-	tmplBase := template.
+func New(b *ctrlbase.Controller, sessDB *gormstore.Store, podcasts *podcasts.Podcasts) (*Controller, error) {
+	tmpl := template.
 		New("layout").
 		Funcs(sprig.FuncMap()).
 		Funcs(funcMap()).       // static
 		Funcs(template.FuncMap{ // from base
 			"path": b.Path,
 		})
-	tmplBase = extendFromPaths(tmplBase, prefixPartials)
-	tmplBase = extendFromPaths(tmplBase, prefixLayouts)
+
+	var err error
+	tmpl, err = tmpl.ParseFS(assets.Partials, "**/*.tmpl")
+	if err != nil {
+		return nil, fmt.Errorf("extend partials: %w", err)
+	}
+	tmpl, err = tmpl.ParseFS(assets.Layouts, "**/*.tmpl")
+	if err != nil {
+		return nil, fmt.Errorf("extend layouts: %w", err)
+	}
+
+	pagePaths, err := fs.Glob(assets.Pages, "**/*.tmpl")
+	if err != nil {
+		return nil, fmt.Errorf("parse pages: %w", err)
+	}
+	pages := map[string]*template.Template{}
+	for _, pagePath := range pagePaths {
+		pageBytes, _ := assets.Pages.ReadFile(pagePath)
+		page, _ := tmpl.Clone()
+		page, _ = page.Parse(string(pageBytes))
+		pageName := filepath.Base(pagePath)
+		pages[pageName] = page
+	}
+
 	return &Controller{
 		Controller: b,
 		buffPool:   bpool.NewBufferPool(64),
-		templates:  pagesFromPaths(tmplBase, prefixPages),
+		templates:  pages,
 		sessDB:     sessDB,
 		Podcasts:   podcasts,
-	}
+	}, nil
 }
 
 type templateData struct {
@@ -178,10 +172,11 @@ func (c *Controller) H(h handlerAdmin) http.Handler {
 			http.Error(w, "useless handler return", 500)
 			return
 		}
+
 		if resp.data == nil {
 			resp.data = &templateData{}
 		}
-		resp.data.Version = version.VERSION
+		resp.data.Version = gonic.Version
 		if session != nil {
 			resp.data.Flashes = session.Flashes()
 			if err := session.Save(r, w); err != nil {
@@ -192,6 +187,7 @@ func (c *Controller) H(h handlerAdmin) http.Handler {
 		if user, ok := r.Context().Value(CtxUser).(*db.User); ok {
 			resp.data.User = user
 		}
+
 		buff := c.buffPool.Get()
 		defer c.buffPool.Put(buff)
 		tmpl, ok := c.templates[resp.template]
@@ -203,6 +199,7 @@ func (c *Controller) H(h handlerAdmin) http.Handler {
 			http.Error(w, fmt.Sprintf("executing template: %v", err), 500)
 			return
 		}
+
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		if resp.code != 0 {
 			w.WriteHeader(resp.code)

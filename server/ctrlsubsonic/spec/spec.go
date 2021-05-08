@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
-	"go.senan.xyz/gonic/version"
 )
 
 const (
@@ -53,8 +53,8 @@ func NewResponse() *Response {
 		Status:       "ok",
 		XMLNS:        xmlns,
 		Version:      apiVersion,
-		Type:         version.NAME,
-		GonicVersion: version.VERSION,
+		Type:         gonic.Name,
+		GonicVersion: gonic.Version,
 	}
 }
 
@@ -82,8 +82,8 @@ func NewError(code int, message string, a ...interface{}) *Response {
 			Code:    code,
 			Message: fmt.Sprintf(message, a...),
 		},
-		Type:         version.NAME,
-		GonicVersion: version.VERSION,
+		Type:         gonic.Name,
+		GonicVersion: gonic.Version,
 	}
 }
 
