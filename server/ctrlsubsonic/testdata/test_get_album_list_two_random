@@ -3,59 +3,33 @@
     "status": "ok",
     "version": "1.15.0",
     "type": "gonic",
-    "gonicVersion": "v0.12.3",
     "albumList2": {
       "album": [
         {
-          "id": "al-19",
-          "coverArt": "al-19",
-          "artistId": "ar-6",
-          "artist": "Ten Years After",
+          "id": "al-17",
+          "coverArt": "al-17",
+          "artistId": "ar-5",
+          "artist": "Swell Maps",
           "title": "",
           "album": "",
-          "name": "Ten Years After",
-          "songCount": 15,
-          "duration": 3812,
-          "created": "2019-04-30T16:48:30+01:00",
-          "year": 1967
+          "name": "A Trip to Marineville",
+          "songCount": 18,
+          "duration": 3266,
+          "created": "2019-04-30T16:48:48+01:00",
+          "year": 1979
         },
         {
-          "id": "al-6",
-          "artistId": "ar-2",
-          "artist": "A Certain Ratio",
+          "id": "al-16",
+          "coverArt": "al-16",
+          "artistId": "ar-5",
+          "artist": "Swell Maps",
           "title": "",
           "album": "",
-          "name": "To Each...",
-          "songCount": 9,
-          "duration": 2801,
-          "created": "2019-05-23T15:12:02.921473302+01:00",
-          "year": 1981
-        },
-        {
-          "id": "al-5",
-          "coverArt": "al-5",
-          "artistId": "ar-2",
-          "artist": "A Certain Ratio",
-          "title": "",
-          "album": "",
-          "name": "The Graveyard and the Ballroom",
-          "songCount": 14,
-          "duration": 2738,
-          "created": "2019-06-05T17:46:37.675917974+01:00",
-          "year": 1994
-        },
-        {
-          "id": "al-9",
-          "coverArt": "al-9",
-          "artistId": "ar-3",
-          "artist": "13th Floor Elevators",
-          "title": "",
-          "album": "",
-          "name": "The Psychedelic Sounds of the 13th Floor Elevators",
-          "songCount": 21,
-          "duration": 4222,
-          "created": "2019-06-13T12:57:24.306717554+01:00",
-          "year": 1966
+          "name": "Jane From Occupied Europe",
+          "songCount": 16,
+          "duration": 3040,
+          "created": "2019-04-30T16:48:48+01:00",
+          "year": 1980
         },
         {
           "id": "al-21",
@@ -84,30 +58,55 @@
           "year": 1967
         },
         {
-          "id": "al-17",
-          "coverArt": "al-17",
-          "artistId": "ar-5",
-          "artist": "Swell Maps",
+          "id": "al-19",
+          "coverArt": "al-19",
+          "artistId": "ar-6",
+          "artist": "Ten Years After",
           "title": "",
           "album": "",
-          "name": "A Trip to Marineville",
-          "songCount": 18,
-          "duration": 3266,
-          "created": "2019-04-30T16:48:48+01:00",
-          "year": 1979
+          "name": "Ten Years After",
+          "songCount": 15,
+          "duration": 3812,
+          "created": "2019-04-30T16:48:30+01:00",
+          "year": 1967
         },
         {
-          "id": "al-16",
-          "coverArt": "al-16",
-          "artistId": "ar-5",
-          "artist": "Swell Maps",
+          "id": "al-6",
+          "artistId": "ar-2",
+          "artist": "A Certain Ratio",
           "title": "",
           "album": "",
-          "name": "Jane From Occupied Europe",
-          "songCount": 16,
-          "duration": 3040,
-          "created": "2019-04-30T16:48:48+01:00",
-          "year": 1980
+          "name": "To Each...",
+          "songCount": 9,
+          "duration": 2801,
+          "created": "2019-05-23T15:12:02.921473302+01:00",
+          "year": 1981
+        },
+        {
+          "id": "al-9",
+          "coverArt": "al-9",
+          "artistId": "ar-3",
+          "artist": "13th Floor Elevators",
+          "title": "",
+          "album": "",
+          "name": "The Psychedelic Sounds of the 13th Floor Elevators",
+          "songCount": 21,
+          "duration": 4222,
+          "created": "2019-06-13T12:57:24.306717554+01:00",
+          "year": 1966
+        },
+        {
+          "id": "al-13",
+          "coverArt": "al-13",
+          "artistId": "ar-4",
+          "artist": "Anikas",
+          "title": "",
+          "album": "",
+          "name": "Anika",
+          "songCount": 9,
+          "duration": 2169,
+          "created": "2019-05-23T15:12:02.921473302+01:00",
+          "year": 2010
         },
         {
           "id": "al-3",
@@ -123,17 +122,17 @@
           "year": 1983
         },
         {
-          "id": "al-13",
-          "coverArt": "al-13",
-          "artistId": "ar-4",
-          "artist": "Anikas",
+          "id": "al-5",
+          "coverArt": "al-5",
+          "artistId": "ar-2",
+          "artist": "A Certain Ratio",
           "title": "",
           "album": "",
-          "name": "Anika",
-          "songCount": 9,
-          "duration": 2169,
-          "created": "2019-05-23T15:12:02.921473302+01:00",
-          "year": 2010
+          "name": "The Graveyard and the Ballroom",
+          "songCount": 14,
+          "duration": 2738,
+          "created": "2019-06-05T17:46:37.675917974+01:00",
+          "year": 1994
         }
       ]
     }

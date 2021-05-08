@@ -3,7 +3,6 @@
     "status": "ok",
     "version": "1.15.0",
     "type": "gonic",
-    "gonicVersion": "v0.12.3",
     "albumList": {
       "album": [
         {

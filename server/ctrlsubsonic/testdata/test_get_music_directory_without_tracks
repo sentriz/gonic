@@ -3,7 +3,6 @@
     "status": "ok",
     "version": "1.15.0",
     "type": "gonic",
-    "gonicVersion": "v0.12.3",
     "directory": {
       "id": "al-2",
       "name": "Jah Wobble, The Edge, Holger Czukay",
