@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-
-./_do_gen_assets
-go run cmd/gonic/main.go $@

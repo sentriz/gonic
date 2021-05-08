@@ -1,4 +1,0 @@
-#!/bin/sh
-# using sh, is run from alpine
-
-go build -o gonic cmd/gonic/main.go

@@ -12,8 +12,7 @@ COPY go.mod .
 COPY go.sum .
 RUN go mod download
 COPY . .
-RUN ./_do_gen_assets
-RUN ./_do_build_server
+RUN GOOS=linux go build -o gonic cmd/gonic/gonic.go
 
 FROM alpine:3.13.1
 RUN apk add -U --no-cache \
@@ -21,6 +20,7 @@ RUN apk add -U --no-cache \
   ca-certificates \
   tzdata \
   tini
+
 COPY --from=builder \
   /usr/lib/libgcc_s.so.1 \
   /usr/lib/libstdc++.so.6 \
