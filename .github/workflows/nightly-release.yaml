@@ -48,6 +48,10 @@ jobs:
         run: echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
       - name: Login into GitHub Container Registry
         run: echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Generate short hash
+        run: |
+          _short_hash=${{ github.sha }}
+          echo "SHORT_HASH=${_short_hash:7}" >> $GITHUB_ENV
       - name: Build and Push
         uses: docker/build-push-action@v2
         with:
@@ -56,7 +60,7 @@ jobs:
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${{ github.repository }}:${{ env.SHORT_HASH }}
             ghcr.io/${{ github.repository }}:nightly
-            ${{ github.repository }}:${{ github.sha }}
+            ${{ github.repository }}:${{ env.SHORT_HASH }}
             ${{ github.repository }}:nightly
