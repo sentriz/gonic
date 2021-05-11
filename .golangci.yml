@@ -11,6 +11,7 @@ linters:
   - depguard
   - dogsled
   - errcheck
+  - exportloopref
   - gochecknoglobals
   - gochecknoinits
   - goconst
@@ -23,12 +24,10 @@ linters:
   - gosimple
   - govet
   - ineffassign
-  - interfacer
   - lll
   - misspell
   - nakedret
   - rowserrcheck
-  - scopelint
   - staticcheck
   - structcheck
   - stylecheck
