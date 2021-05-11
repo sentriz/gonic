@@ -28,7 +28,7 @@ const (
 )
 
 func main() {
-	set := flag.NewFlagSet(gonic.Version, flag.ExitOnError)
+	set := flag.NewFlagSet(gonic.Name, flag.ExitOnError)
 	confListenAddr := set.String("listen-addr", "0.0.0.0:4747", "listen address (optional)")
 	confMusicPath := set.String("music-path", "", "path to music")
 	confPodcastPath := set.String("podcast-path", "", "path to podcasts")
