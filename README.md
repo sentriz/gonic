@@ -86,46 +86,60 @@ then start with `docker-compose up -d`
 
 ###  ...with systemd
 
-example by @IUCCA, tested on Ubuntu 18.04
+tested on Ubuntu 21.04
 
-1. add a repository with the latest Version of golang and install the prerequisites
+1. install **go 1.16 or newer**, check version, and install dependencies
 
-```bash
-$ sudo add-apt-repository ppa:longsleep/golang-backports
-$ sudo apt update && sudo apt upgrade
-$ sudo apt install build-essential git sqlite libtag1-dev ffmpeg libasound-dev golang
+```shell
+$ sudo apt update
+$ sudo apt install golang
+
+$ go version
+go version go1.16.2 linux/amd64
+
+$ sudo apt install build-essential git sqlite libtag1-dev ffmpeg libasound-dev
 ```
 
-2. download and compile gonic in the home directory  
+2. install / compile gonic globally, and check version
 
-```bash
-$ go get go.senan.xyz/gonic/cmd/gonic
+```shell
+$ sudo GOBIN=/usr/local/bin go install go.senan.xyz/gonic/cmd/gonic@latest
+
+$ gonic -version
+v0.14.0
 ```
 
-3. add a gonic user and create a directory for the server
+3. add a gonic user, create a data directory, and install a config file
 
-```bash
-$ sudo mkdir -p /var/gonic/
-$ sudo adduser --disabled-login --gecos "" gonic
-$ sudo mv go/bin/gonic /var/gonic/
-$ sudo wget https://raw.githubusercontent.com/sentriz/gonic/master/contrib/config -O /var/gonic/config
-$ sudo chmod -R 750 /var/gonic/
-$ sudo chown -R gonic:gonic /var/gonic/
+```shell
+$ sudo adduser --system --no-create-home --group gonic
+$ sudo mkdir -p /var/lib/gonic/ /etc/gonic/
+$ sudo chown -R gonic:gonic /var/lib/gonic/
+$ sudo wget https://raw.githubusercontent.com/sentriz/gonic/master/contrib/config -O /etc/gonic/config
 ```
 
-4. add your `music-path` to the config file
+4. update the config with your `music-path`, `podcast-path`, etc
 
-```bash
-$ sudo nano /var/gonic/config
+```shell
+$ sudo nano /etc/gonic/config
+music-path        <path to your music dir>
+podcast-path      <path to your podcasts dir>
+cache-path        <path to cache dir>
 ```
 
-5. setup systemd service
+5. install the systemd service, check status or logs
 
-```bash
+```shell
 $ sudo wget https://raw.githubusercontent.com/sentriz/gonic/master/contrib/gonic.service -O /etc/systemd/system/gonic.service
 $ sudo systemctl daemon-reload
 $ sudo systemctl enable --now gonic
+
+$ systemctl status gonic            # check status, should be active (running)
+$ journalctl --follow --unit gonic  # check logs
 ```
+
+should be installed and running on boot now 👍  
+view the admin UI at http://localhost:4747
 
 ###  ...elsewhere
 
