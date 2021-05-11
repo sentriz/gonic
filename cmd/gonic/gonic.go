@@ -68,13 +68,13 @@ func main() {
 	if _, err := os.Stat(*confPodcastPath); os.IsNotExist(err) {
 		log.Fatal("please provide a valid podcast directory")
 	}
-	if _, err := os.Stat(*confCachePath); os.IsNotExist(err) {
-		log.Fatal("please provide a valid cache directory")
+
+	if *confCachePath == "" {
+		log.Fatal("please provide a cache directory")
 	}
 
 	cacheDirAudio := path.Join(*confCachePath, cachePrefixAudio)
 	cacheDirCovers := path.Join(*confCachePath, cachePrefixCovers)
-
 	if _, err := os.Stat(cacheDirAudio); os.IsNotExist(err) {
 		if err := os.MkdirAll(cacheDirAudio, os.ModePerm); err != nil {
 			log.Fatalf("couldn't create audio cache path: %v\n", err)
