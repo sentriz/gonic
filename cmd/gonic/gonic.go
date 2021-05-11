@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"strings"
 	"time"
 
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -57,7 +58,8 @@ func main() {
 	log.Printf("starting gonic %s\n", gonic.Version)
 	log.Printf("provided config\n")
 	set.VisitAll(func(f *flag.Flag) {
-		log.Printf("    %-15s %s\n", f.Name, f.Value)
+		value := strings.ReplaceAll(f.Value.String(), "\n", "")
+		log.Printf("    %-15s %s\n", f.Name, value)
 	})
 
 	if _, err := os.Stat(*confMusicPath); os.IsNotExist(err) {
