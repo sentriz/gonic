@@ -39,7 +39,7 @@ jobs:
         uses: google-github-actions/release-please-action@v2
         id: release
         with:
-          token: ${{ secrets.CR_PAT }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           release-type: simple
           changelog-path: CHANGELOG.md
           package-name: gonic
