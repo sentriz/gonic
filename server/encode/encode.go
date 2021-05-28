@@ -88,7 +88,7 @@ func ffmpegCommand(filePath string, profile Profile) (*exec.Cmd, error) {
 	args := []string{
 		"-v", "0",
 		"-i", filePath,
-		"-map", "0:0",
+		"-map", "0:a:0",
 		"-vn",
 		"-b:a", fmt.Sprintf("%dk", profile.Bitrate),
 	}
