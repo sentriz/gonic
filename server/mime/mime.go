@@ -12,6 +12,7 @@ func FromExtension(ext string) (string, bool) {
 		"m4b":  "audio/m4b",
 		"ogg":  "audio/ogg",
 		"opus": "audio/ogg",
+		"wma":  "audio/x-ms-wma",
 	}
 	v, ok := types[ext]
 	return v, ok
