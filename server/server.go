@@ -269,8 +269,10 @@ func (s *Server) StartScanTicker(dur time.Duration) (FuncExecute, FuncInterrupt)
 		for {
 			select {
 			case <-done:
+				log.Printf("+++ tick done %v\n", dur)
 				return nil
 			case <-ticker.C:
+				log.Printf("+++ tick scanner %v\n", dur)
 				if err := s.scanner.Start(scanner.ScanOptions{}); err != nil {
 					log.Printf("error scanning: %v", err)
 				}

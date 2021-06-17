@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -51,8 +52,10 @@ func IsScanning() bool {
 }
 
 func SetScanning() func() {
+	log.Printf("+++ atomic set scanning\n")
 	atomic.StoreInt32(&isScanning, 1)
 	return func() {
+		log.Printf("+++ atomic unset scanning\n")
 		atomic.StoreInt32(&isScanning, 0)
 	}
 }
@@ -178,10 +181,14 @@ type ScanOptions struct {
 
 func (s *Scanner) Start(opts ScanOptions) error {
 	if IsScanning() {
+		log.Printf("+++ not scanning\n")
 		return ErrAlreadyScanning
 	}
 	unSet := SetScanning()
 	defer unSet()
+
+	debug.PrintStack()
+
 	// reset state vars for the new scan
 	s.isFull = opts.IsFull
 	s.seenTracks = map[int]struct{}{}
@@ -189,6 +196,7 @@ func (s *Scanner) Start(opts ScanOptions) error {
 	s.curFolders = &stack.Stack{}
 	s.seenTracksNew = 0
 	// ** begin being walking
+	log.Printf("+++ starting normal scan\n")
 	log.Println("starting scan")
 	var errCount int
 	start := time.Now()
@@ -234,6 +242,7 @@ func (s *Scanner) Start(opts ScanOptions) error {
 			clean.name, durSince(start), deleted)
 	}
 	// finish up
+	log.Printf("+++ finished scanning\n")
 	strNow := strconv.FormatInt(time.Now().Unix(), 10)
 	s.db.SetSetting("last_scan_time", strNow)
 	return nil

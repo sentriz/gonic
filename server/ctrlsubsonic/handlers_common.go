@@ -76,7 +76,9 @@ func (c *Controller) ServeGetMusicFolders(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeStartScan(r *http.Request) *spec.Response {
+	log.Printf("+++ pre scanning from subsonic controller\n")
 	go func() {
+		log.Printf("+++ scanning from subsonic controller\n")
 		if err := c.Scanner.Start(scanner.ScanOptions{}); err != nil {
 			log.Printf("error while scanning: %v\n", err)
 		}

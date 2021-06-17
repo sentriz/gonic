@@ -26,7 +26,9 @@ func firstExisting(or string, strings ...string) string {
 }
 
 func doScan(scanner *scanner.Scanner, opts scanner.ScanOptions) {
+	log.Printf("+++ admin scan b\n")
 	go func() {
+		log.Printf("+++ admin scan c\n")
 		if err := scanner.Start(opts); err != nil {
 			log.Printf("error while scanning: %v\n", err)
 		}
@@ -364,6 +366,7 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(r *http.Request) *Response {
 }
 
 func (c *Controller) ServeStartScanIncDo(r *http.Request) *Response {
+	log.Printf("+++ admin scan a\n")
 	defer doScan(c.Scanner, scanner.ScanOptions{})
 	return &Response{
 		redirect: "/admin/home",
@@ -372,6 +375,7 @@ func (c *Controller) ServeStartScanIncDo(r *http.Request) *Response {
 }
 
 func (c *Controller) ServeStartScanFullDo(r *http.Request) *Response {
+	log.Printf("+++ admin full scan a\n")
 	defer doScan(c.Scanner, scanner.ScanOptions{IsFull: true})
 	return &Response{
 		redirect: "/admin/home",
