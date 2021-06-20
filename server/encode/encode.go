@@ -102,6 +102,8 @@ func ffmpegCommand(filePath string, profile Profile) (*exec.Cmd, error) {
 			"-metadata", "replaygain_album_peak=",
 			"-metadata", "replaygain_track_gain=",
 			"-metadata", "replaygain_track_peak=",
+			"-metadata", "r128_album_gain=",
+			"-metadata", "r128_track_gain=",
 		)
 	}
 	args = append(args, "-f", profile.Format, "-")
