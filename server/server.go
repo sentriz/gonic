@@ -271,11 +271,14 @@ func (s *Server) StartScanTicker(dur time.Duration) (FuncExecute, FuncInterrupt)
 			case <-done:
 				log.Printf("+++ tick done %v\n", dur)
 				return nil
-			case <-ticker.C:
-				log.Printf("+++ tick scanner %v\n", dur)
-				if err := s.scanner.Start(scanner.ScanOptions{}); err != nil {
-					log.Printf("error scanning: %v", err)
-				}
+			case t := <-ticker.C:
+				log.Printf("+++ tick scanner %v | %v\n", dur, t)
+				go func() {
+					if err := s.scanner.Start(scanner.ScanOptions{}); err != nil {
+						log.Printf("error scanning: %v", err)
+					}
+				}()
+				log.Printf("+++ end tick scanner %v | %v\n", dur, t)
 			}
 		}
 	}
