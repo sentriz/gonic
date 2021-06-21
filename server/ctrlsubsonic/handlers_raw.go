@@ -237,7 +237,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 
 		cacheFile, err := os.Stat(path)
 		if err != nil {
-			return fmt.Errorf("failed to stat cache file `%s`: %v", path, err)
+			return fmt.Errorf("failed to stat cache file `%s`: %w", path, err)
 		}
 		contentLength := fmt.Sprintf("%d", cacheFile.Size())
 		w.Header().Set("Content-Length", contentLength)
