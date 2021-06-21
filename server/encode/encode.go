@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 
 	"github.com/cespare/xxhash"
 )
@@ -24,6 +25,8 @@ type Profile struct {
 	Bitrate       int
 	ffmpegOptions []string
 	forceRG       bool
+	hiGainRG      bool
+	upsample      bool
 }
 
 func fileExists(filename string) bool {
@@ -36,10 +39,11 @@ func fileExists(filename string) bool {
 
 func Profiles() map[string]Profile {
 	return map[string]Profile{
-		"mp3":     {"mp3", 128, []string{"-c:a", "libmp3lame"}, false},
-		"mp3_rg":  {"mp3", 128, []string{"-c:a", "libmp3lame"}, true},
-		"opus":    {"opus", 96, []string{"-c:a", "libopus", "-vbr", "constrained"}, false},
-		"opus_rg": {"opus", 96, []string{"-c:a", "libopus", "-vbr", "constrained"}, true},
+		"mp3":      {"mp3", 128, []string{"-c:a", "libmp3lame"}, false, false, false},
+		"mp3_rg":   {"mp3", 128, []string{"-c:a", "libmp3lame"}, true, false, false},
+		"opus":     {"opus", 96, []string{"-c:a", "libopus", "-vbr", "constrained"}, false, false, false},
+		"opus_rg":  {"opus", 96, []string{"-c:a", "libopus", "-vbr", "constrained"}, true, false, false},
+		"opus_car": {"opus", 96, []string{"-c:a", "libopus", "-vbr", "constrained"}, true, true, true},
 	}
 }
 
@@ -94,9 +98,33 @@ func ffmpegCommand(filePath string, profile Profile) (*exec.Cmd, error) {
 	}
 	args = append(args, profile.ffmpegOptions...)
 	if profile.forceRG {
+		aBaselineGain := 6
+		if profile.hiGainRG {
+			// This baseline gain results in final track being +3~5dB louder
+			// than Foobar2000's default ReplayGain target volume.
+			// This makes it easier to listen to music in a car, where all other
+			// sources are usually ten thousand times louder than RG-adjusted music.
+			// -- @spijet
+			aBaselineGain = 15
+		}
+		aFilters := []string{
+			fmt.Sprintf("volume=replaygain=track:replaygain_preamp=%ddB:replaygain_noclip=0", aBaselineGain),
+			"alimiter=level=disabled",
+			"asidedata=mode=delete:type=REPLAYGAIN",
+		}
+
+		// opus always forces output to 48kHz sampling rate, but we can still use upsampling
+		// to increase RG and alimiter's peak limiting precision, which is desirable in some
+		// cases. ffmpeg's `soxr` resampler is quite fast on x86-64: it takes around 5 seconds
+		// on my Ryzen 3600 to transcode an 8-minute FLAC with 2x upsample and RG applied.
+		// -- @spijet
+		if profile.upsample {
+			aFilters = append([]string{"aresample=96000:resampler=soxr"}, aFilters...)
+		}
+		aFilterString := strings.Join(aFilters, ", ")
 		args = append(args,
 			// set up replaygain processing
-			"-af", "volume=replaygain=track:replaygain_preamp=6dB:replaygain_noclip=0, alimiter=level=disabled",
+			"-af", aFilterString,
 			// drop redundant replaygain tags
 			"-metadata", "replaygain_album_gain=",
 			"-metadata", "replaygain_album_peak=",
