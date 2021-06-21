@@ -235,13 +235,12 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		cacheMime, _ := mime.FromExtension(profile.Format)
 		w.Header().Set("Content-Type", cacheMime)
 
-		cacheFile, cfErr := os.Stat(path)
-		if cfErr != nil {
-			log.Printf("failed to stat cache file `%s`: %v", path, cfErr)
-		} else {
-			contentLength := fmt.Sprintf("%d", cacheFile.Size())
-			w.Header().Set("Content-Length", contentLength)
+		cacheFile, err := os.Stat(path)
+		if err != nil {
+			return fmt.Errorf("failed to stat cache file `%s`: %v", path, err)
 		}
+		contentLength := fmt.Sprintf("%d", cacheFile.Size())
+		w.Header().Set("Content-Length", contentLength)
 		http.ServeFile(w, r, path)
 		return nil
 	}
