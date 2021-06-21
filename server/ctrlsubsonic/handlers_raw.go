@@ -17,6 +17,7 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/encode"
+	"go.senan.xyz/gonic/server/mime"
 )
 
 // "raw" handlers are ones that don't always return a spec response.
@@ -231,12 +232,24 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	onCacheHit := func(profile encode.Profile, path string) error {
 		log.Printf("serving transcode `%s`: cache [%s/%dk] hit!\n",
 			audioFile.AudioFilename(), profile.Format, profile.Bitrate)
+		cacheMime, _ := mime.FromExtension(profile.Format)
+		w.Header().Set("Content-Type", cacheMime)
+
+		cacheFile, cfErr := os.Stat(path)
+		if cfErr != nil {
+			log.Printf("failed to stat cache file `%s`: %v", path, cfErr)
+		} else {
+			contentLength := fmt.Sprintf("%d", cacheFile.Size())
+			w.Header().Set("Content-Length", contentLength)
+		}
 		http.ServeFile(w, r, path)
 		return nil
 	}
 	onCacheMiss := func(profile encode.Profile) (io.Writer, error) {
 		log.Printf("serving transcode `%s`: cache [%s/%dk] miss!\n",
 			audioFile.AudioFilename(), profile.Format, profile.Bitrate)
+		encodeMime, _ := mime.FromExtension(profile.Format)
+		w.Header().Set("Content-Type", encodeMime)
 		return w, nil
 	}
 	encodeOptions := encode.Options{
