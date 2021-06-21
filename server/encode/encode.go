@@ -41,9 +41,9 @@ func Profiles() map[string]Profile {
 	return map[string]Profile{
 		"mp3":      {"mp3", 128, []string{"-c:a", "libmp3lame"}, false, false, false},
 		"mp3_rg":   {"mp3", 128, []string{"-c:a", "libmp3lame"}, true, false, false},
-		"opus":     {"opus", 96, []string{"-c:a", "libopus", "-vbr", "constrained"}, false, false, false},
-		"opus_rg":  {"opus", 96, []string{"-c:a", "libopus", "-vbr", "constrained"}, true, false, false},
-		"opus_car": {"opus", 96, []string{"-c:a", "libopus", "-vbr", "constrained"}, true, true, true},
+		"opus":     {"opus", 96, []string{"-c:a", "libopus", "-vbr", "on"}, false, false, false},
+		"opus_rg":  {"opus", 96, []string{"-c:a", "libopus", "-vbr", "on"}, true, false, false},
+		"opus_car": {"opus", 96, []string{"-c:a", "libopus", "-vbr", "on"}, true, true, true},
 	}
 }
 
