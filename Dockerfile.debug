@@ -5,5 +5,6 @@ RUN apk add -U --no-cache \
     git \
     sqlite \
     taglib-dev \
-    alsa-lib-dev
+    alsa-lib-dev \
+    zlib-dev
 WORKDIR /src

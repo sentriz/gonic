@@ -6,6 +6,7 @@ RUN apk add -U --no-cache \
   sqlite \
   taglib-dev \
   alsa-lib-dev \
+  zlib-dev \
   go
 WORKDIR /src
 COPY go.mod .
