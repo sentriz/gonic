@@ -106,6 +106,12 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 		q = q.Order("parent_albums.right_path")
 	case "alphabeticalByName":
 		q = q.Order("right_path")
+	case "byYear":
+		q = q.Where(
+			"tag_year BETWEEN ? AND ?",
+			params.GetOrInt("toYear", 2200),
+			params.GetOrInt("fromYear", 1800))
+		q = q.Order("tag_year")
 	case "frequent":
 		user := r.Context().Value(CtxUser).(*db.User)
 		q = q.Joins(`
