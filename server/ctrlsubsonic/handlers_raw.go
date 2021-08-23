@@ -212,17 +212,16 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		if err != nil {
 			return spec.NewError(70, "podcast with id `%s` was not found", id)
 		}
+	default:
+		return spec.NewError(70, "media type of `%s` was not found", id.Type)
 	}
 
-	if err != nil && id.Type != specid.Podcast {
-		return spec.NewError(70, "media with id `%d` was not found", id.Value)
-	}
 	user := r.Context().Value(CtxUser).(*db.User)
 	if track, ok := audioFile.(*db.Track); ok {
 		defer streamUpdateStats(c.DB, user.ID, track.Album.ID)
 	}
+
 	pref := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
-	//
 	onInvalidProfile := func() error {
 		log.Printf("serving raw `%s`\n", audioFile.AudioFilename())
 		w.Header().Set("Content-Type", audioFile.MIME())
