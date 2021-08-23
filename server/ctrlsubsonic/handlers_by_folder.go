@@ -112,6 +112,10 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 			params.GetOrInt("toYear", 2200),
 			params.GetOrInt("fromYear", 1800))
 		q = q.Order("tag_year")
+	case "byGenre":
+		genre, _ := params.Get("genre")
+		q = q.Joins("JOIN album_genres ON album_genres.album_id=albums.id")
+		q = q.Joins("JOIN genres ON genres.id=album_genres.genre_id AND genres.name=?", genre)
 	case "frequent":
 		user := r.Context().Value(CtxUser).(*db.User)
 		q = q.Joins(`
