@@ -91,7 +91,8 @@ func New(musicPath string, db *db.DB, genreSplit string) *Scanner {
 // ## begin clean funcs
 // ## begin clean funcs
 
-func (s *Scanner) cleanTracks() (int, error) {
+func (s *Scanner) cleanTracks() error {
+	start := time.Now()
 	var previous []int
 	var missing []int64
 	err := s.db.
@@ -99,7 +100,7 @@ func (s *Scanner) cleanTracks() (int, error) {
 		Pluck("id", &previous).
 		Error
 	if err != nil {
-		return 0, fmt.Errorf("plucking ids: %w", err)
+		return fmt.Errorf("plucking ids: %w", err)
 	}
 	for _, prev := range previous {
 		if _, ok := s.seenTracks[prev]; !ok {
@@ -109,10 +110,15 @@ func (s *Scanner) cleanTracks() (int, error) {
 	err = s.db.TransactionChunked(missing, func(tx *gorm.DB, chunk []int64) error {
 		return tx.Where(chunk).Delete(&db.Track{}).Error
 	})
-	return len(missing), err
+	if err != nil {
+		return err
+	}
+	log.Printf("finished clean tracks in %s, %d removed", durSince(start), len(missing))
+	return nil
 }
 
-func (s *Scanner) cleanFolders() (int, error) {
+func (s *Scanner) cleanFolders() error {
+	start := time.Now()
 	var previous []int
 	var missing []int64
 	err := s.db.
@@ -120,7 +126,7 @@ func (s *Scanner) cleanFolders() (int, error) {
 		Pluck("id", &previous).
 		Error
 	if err != nil {
-		return 0, fmt.Errorf("plucking ids: %w", err)
+		return fmt.Errorf("plucking ids: %w", err)
 	}
 	for _, prev := range previous {
 		if _, ok := s.seenFolders[prev]; !ok {
@@ -130,10 +136,15 @@ func (s *Scanner) cleanFolders() (int, error) {
 	err = s.db.TransactionChunked(missing, func(tx *gorm.DB, chunk []int64) error {
 		return tx.Where(chunk).Delete(&db.Album{}).Error
 	})
-	return len(missing), err
+	if err != nil {
+		return err
+	}
+	log.Printf("finished clean folders in %s, %d removed", durSince(start), len(missing))
+	return nil
 }
 
-func (s *Scanner) cleanArtists() (int, error) {
+func (s *Scanner) cleanArtists() error {
+	start := time.Now()
 	sub := s.db.
 		Select("artists.id").
 		Model(&db.Artist{}).
@@ -143,10 +154,15 @@ func (s *Scanner) cleanArtists() (int, error) {
 	q := s.db.
 		Where("artists.id IN ?", sub).
 		Delete(&db.Artist{})
-	return int(q.RowsAffected), q.Error
+	if err := q.Error; err != nil {
+		return err
+	}
+	log.Printf("finished clean artists in %s, %d removed", durSince(start), q.RowsAffected)
+	return nil
 }
 
-func (s *Scanner) cleanGenres() (int, error) {
+func (s *Scanner) cleanGenres() error {
+	start := time.Now()
 	subTrack := s.db.
 		Select("genres.id").
 		Model(&db.Genre{}).
@@ -163,7 +179,8 @@ func (s *Scanner) cleanGenres() (int, error) {
 		Where("genres.id IN ?", subTrack).
 		Or("genres.id IN ?", subAlbum).
 		Delete(&db.Genre{})
-	return int(q.RowsAffected), q.Error
+	log.Printf("finished clean genres in %s, %d removed", durSince(start), q.RowsAffected)
+	return nil
 }
 
 // ## begin entries
@@ -182,13 +199,15 @@ func (s *Scanner) Start(opts ScanOptions) error {
 	}
 	unSet := SetScanning()
 	defer unSet()
+
 	// reset state vars for the new scan
 	s.isFull = opts.IsFull
 	s.seenTracks = map[int]struct{}{}
 	s.seenFolders = map[int]struct{}{}
 	s.curFolders = &stack.Stack{}
 	s.seenTracksNew = 0
-	// ** begin being walking
+
+	// begin walking
 	log.Println("starting scan")
 	var errCount int
 	start := time.Now()
@@ -212,27 +231,20 @@ func (s *Scanner) Start(opts ScanOptions) error {
 		len(s.seenTracks),
 		errCount,
 	)
-	// ** begin cleaning
-	cleanFuncs := []struct {
-		name string
-		f    func() (int, error)
-	}{
-		{name: "tracks", f: s.cleanTracks},
-		{name: "folders", f: s.cleanFolders},
-		{name: "artists", f: s.cleanArtists},
-		{name: "genres", f: s.cleanGenres},
+
+	if err := s.cleanTracks(); err != nil {
+		return fmt.Errorf("clean tracks: %w", err)
 	}
-	for _, clean := range cleanFuncs {
-		start = time.Now()
-		deleted, err := clean.f()
-		if err != nil {
-			log.Printf("finished clean %s in %s with error: %v",
-				clean.name, durSince(start), err)
-			continue
-		}
-		log.Printf("finished clean %s in %s, %d removed",
-			clean.name, durSince(start), deleted)
+	if err := s.cleanFolders(); err != nil {
+		return fmt.Errorf("clean folders: %w", err)
 	}
+	if err := s.cleanArtists(); err != nil {
+		return fmt.Errorf("clean artists: %w", err)
+	}
+	if err := s.cleanGenres(); err != nil {
+		return fmt.Errorf("clean genres: %w", err)
+	}
+
 	// finish up
 	strNow := strconv.FormatInt(time.Now().Unix(), 10)
 	s.db.SetSetting("last_scan_time", strNow)
@@ -392,7 +404,7 @@ func (s *Scanner) handleTrack(it *item) error {
 		s.trTxOpen = true
 	}
 
-	// ** begin set track basics
+	// set track basics
 	track := &db.Track{}
 	defer func() {
 		// folder's id will come from early return
@@ -429,7 +441,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	track.Length = trTags.Length()   // these two should be calculated
 	track.Bitrate = trTags.Bitrate() // ...from the file instead of tags
 
-	// ** begin set album artist basics
+	// set album artist basics
 	artistName := firstTag("Unknown Artist", trTags.AlbumArtist, trTags.Artist)
 	artist := &db.Artist{}
 	s.trTx.
@@ -441,7 +453,7 @@ func (s *Scanner) handleTrack(it *item) error {
 		FirstOrCreate(artist)
 	track.ArtistID = artist.ID
 
-	// ** begin set genre
+	// set genre
 	genreTag := firstTag("Unknown Genre", trTags.Genre)
 	genreNames := strings.Split(genreTag, s.genreSplit)
 	genreIDs := []int{}
@@ -453,10 +465,10 @@ func (s *Scanner) handleTrack(it *item) error {
 		genreIDs = append(genreIDs, genre.ID)
 	}
 
-	// ** begin save the track
 	if err := s.trTx.Save(track).Error; err != nil {
 		return fmt.Errorf("writing track table: %w", err)
 	}
+
 	err = s.trTx.
 		Where("track_id=?", track.ID).
 		Delete(db.TrackGenre{}).
@@ -475,7 +487,7 @@ func (s *Scanner) handleTrack(it *item) error {
 	}
 	s.seenTracksNew++
 
-	// ** begin set album if this is the first track in the folder
+	// set album if this is the first track in the folder
 	folder := s.curFolders.Peek()
 	if folder.TagTitle != "" {
 		return nil
