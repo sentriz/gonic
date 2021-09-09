@@ -62,20 +62,20 @@ type Scanner struct {
 	musicPath  string
 	isFull     bool
 	genreSplit string
-	// these two are for the transaction we do for every folder.
+	// these two are for the transaction we do for every album.
 	// the boolean is there so we dont begin or commit multiple
-	// times in the handle folder or post children callback
+	// times in the handle album or post children callback
 	trTx     *db.DB
 	trTxOpen bool
 	// these two are for keeping state between noted in the tree.
-	// eg. keep track of a parents folder or the path to a cover
+	// eg. keep track of a parents album or the path to a cover
 	// we just saw that we need to commit in the post children
 	// callback
-	curFolders *stack.Stack
-	curCover   string
+	curAlbums *stack.Stack
+	curCover  string
 	// then the rest are for stats and cleanup at the very end
 	seenTracks    map[int]struct{} // set of p keys
-	seenFolders   map[int]struct{} // set of p keys
+	seenAlbums    map[int]struct{} // set of p keys
 	seenTracksNew int              // n tracks not seen before
 }
 
@@ -117,7 +117,7 @@ func (s *Scanner) cleanTracks() error {
 	return nil
 }
 
-func (s *Scanner) cleanFolders() error {
+func (s *Scanner) cleanAlbums() error {
 	start := time.Now()
 	var previous []int
 	var missing []int64
@@ -129,7 +129,7 @@ func (s *Scanner) cleanFolders() error {
 		return fmt.Errorf("plucking ids: %w", err)
 	}
 	for _, prev := range previous {
-		if _, ok := s.seenFolders[prev]; !ok {
+		if _, ok := s.seenAlbums[prev]; !ok {
 			missing = append(missing, int64(prev))
 		}
 	}
@@ -139,7 +139,7 @@ func (s *Scanner) cleanFolders() error {
 	if err != nil {
 		return err
 	}
-	log.Printf("finished clean folders in %s, %d removed", durSince(start), len(missing))
+	log.Printf("finished clean albums in %s, %d removed", durSince(start), len(missing))
 	return nil
 }
 
@@ -203,8 +203,8 @@ func (s *Scanner) Start(opts ScanOptions) error {
 	// reset state vars for the new scan
 	s.isFull = opts.IsFull
 	s.seenTracks = map[int]struct{}{}
-	s.seenFolders = map[int]struct{}{}
-	s.curFolders = &stack.Stack{}
+	s.seenAlbums = map[int]struct{}{}
+	s.curAlbums = &stack.Stack{}
 	s.seenTracksNew = 0
 
 	// begin walking
@@ -235,8 +235,8 @@ func (s *Scanner) Start(opts ScanOptions) error {
 	if err := s.cleanTracks(); err != nil {
 		return fmt.Errorf("clean tracks: %w", err)
 	}
-	if err := s.cleanFolders(); err != nil {
-		return fmt.Errorf("clean folders: %w", err)
+	if err := s.cleanAlbums(); err != nil {
+		return fmt.Errorf("clean albums: %w", err)
 	}
 	if err := s.cleanArtists(); err != nil {
 		return fmt.Errorf("clean artists: %w", err)
@@ -309,7 +309,7 @@ func (s *Scanner) callbackItem(fullPath string, info *godirwalk.Dirent) error {
 		return fmt.Errorf("stating link to dir: %w", err)
 	}
 	if isDir {
-		return s.handleFolder(it)
+		return s.handleAlbum(it)
 	}
 	if isCover(filename) {
 		s.curCover = filename
@@ -333,20 +333,20 @@ func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
 		s.trTx.Commit()
 		s.trTxOpen = false
 	}
-	// begin taking the current folder off the stack and add it's
+	// begin taking the current album off the stack and add it's
 	// parent, cover that we found, etc.
-	folder := s.curFolders.Pop()
-	if folder.ParentID != 0 {
+	album := s.curAlbums.Pop()
+	if album.ParentID != 0 {
 		return nil
 	}
-	folder.ParentID = s.curFolders.PeekID()
-	folder.Cover = s.curCover
-	if err := s.db.Save(folder).Error; err != nil {
+	album.ParentID = s.curAlbums.PeekID()
+	album.Cover = s.curCover
+	if err := s.db.Save(album).Error; err != nil {
 		return fmt.Errorf("writing albums table: %w", err)
 	}
-	// we only log changed folders
+	// we only log changed albums
 	log.Printf("processed folder `%s`\n",
-		path.Join(folder.LeftPath, folder.RightPath))
+		path.Join(album.LeftPath, album.RightPath))
 	return nil
 }
 
@@ -361,38 +361,38 @@ func (s *Scanner) itemUnchanged(statModTime, updatedInDB time.Time) bool {
 	return statModTime.Before(updatedInDB)
 }
 
-func (s *Scanner) handleFolder(it *item) error {
+func (s *Scanner) handleAlbum(it *item) error {
 	if s.trTxOpen {
-		// a transaction still being open when we handle a folder can
-		// happen if there is a folder that contains /both/ tracks and
-		// sub folders
+		// a transaction still being open when we handle an album can
+		// happen if there is a album that contains /both/ tracks and
+		// sub albums
 		s.trTx.Commit()
 		s.trTxOpen = false
 	}
-	folder := &db.Album{}
+	album := &db.Album{}
 	defer func() {
-		// folder's id will come from early return
+		// album's id will come from early return
 		// or save at the end
-		s.seenFolders[folder.ID] = struct{}{}
-		s.curFolders.Push(folder)
+		s.seenAlbums[album.ID] = struct{}{}
+		s.curAlbums.Push(album)
 	}()
 	err := s.db.
 		Where(db.Album{
 			LeftPath:  it.directory,
 			RightPath: it.filename,
 		}).
-		First(folder).
+		First(album).
 		Error
 	if !gorm.IsRecordNotFoundError(err) &&
-		s.itemUnchanged(it.stat.ModTime(), folder.UpdatedAt) {
+		s.itemUnchanged(it.stat.ModTime(), album.UpdatedAt) {
 		// we found the record but it hasn't changed
 		return nil
 	}
-	folder.LeftPath = it.directory
-	folder.RightPath = it.filename
-	folder.RightPathUDec = decoded(it.filename)
-	folder.ModifiedAt = it.stat.ModTime()
-	if err := s.db.Save(folder).Error; err != nil {
+	album.LeftPath = it.directory
+	album.RightPath = it.filename
+	album.RightPathUDec = decoded(it.filename)
+	album.ModifiedAt = it.stat.ModTime()
+	if err := s.db.Save(album).Error; err != nil {
 		return fmt.Errorf("writing albums table: %w", err)
 	}
 	return nil
@@ -404,78 +404,127 @@ func (s *Scanner) handleTrack(it *item) error {
 		s.trTxOpen = true
 	}
 
-	// set track basics
-	track := &db.Track{}
+	// init empty track and mark its ID (from lookup or save)
+	// for later cleanup later
+	var track db.Track
 	defer func() {
-		// folder's id will come from early return
-		// or save at the end
 		s.seenTracks[track.ID] = struct{}{}
 	}()
+
+	album := s.curAlbums.Peek()
 	err := s.trTx.
 		Select("id, updated_at").
 		Where(db.Track{
-			AlbumID:  s.curFolders.PeekID(),
+			AlbumID:  album.ID,
 			Filename: it.filename,
 		}).
-		First(track).
+		First(&track).
 		Error
 	if !gorm.IsRecordNotFoundError(err) &&
 		s.itemUnchanged(it.stat.ModTime(), track.UpdatedAt) {
 		// we found the record but it hasn't changed
 		return nil
 	}
-	track.Filename = it.filename
-	track.FilenameUDec = decoded(it.filename)
-	track.Size = int(it.stat.Size())
-	track.AlbumID = s.curFolders.PeekID()
-	trTags, err := tags.New(it.fullPath)
+
+	trags, err := tags.New(it.fullPath)
 	if err != nil {
 		return ErrReadingTags
 	}
-	track.TagTitle = trTags.Title()
-	track.TagTitleUDec = decoded(trTags.Title())
-	track.TagTrackArtist = trTags.Artist()
-	track.TagTrackNumber = trTags.TrackNumber()
-	track.TagDiscNumber = trTags.DiscNumber()
-	track.TagBrainzID = trTags.BrainzID()
-	track.Length = trTags.Length()   // these two should be calculated
-	track.Bitrate = trTags.Bitrate() // ...from the file instead of tags
 
-	// set album artist basics
-	artistName := firstTag("Unknown Artist", trTags.AlbumArtist, trTags.Artist)
-	artist := &db.Artist{}
-	s.trTx.
+	genreIDs, err := s.populateGenres(&track, trags)
+	if err != nil {
+		return fmt.Errorf("populate genres: %w", err)
+	}
+
+	// create album and album artist records for first track in album
+	if album.TagTitle == "" {
+		albumArtist, err := s.populateAlbumArtist(trags)
+		if err != nil {
+			return fmt.Errorf("populate artist: %w", err)
+		}
+
+		albumName := trags.SomeAlbum()
+		album.TagTitle = albumName
+		album.TagTitleUDec = decoded(albumName)
+		album.TagBrainzID = trags.AlbumBrainzID()
+		album.TagYear = trags.Year()
+		album.TagArtistID = albumArtist.ID
+
+		if err := s.populateAlbumGenres(album, genreIDs); err != nil {
+			return fmt.Errorf("populate album genres: %w", err)
+		}
+	}
+
+	track.Filename = it.filename
+	track.FilenameUDec = decoded(it.filename)
+	track.Size = int(it.stat.Size())
+	track.AlbumID = album.ID
+	track.ArtistID = album.TagArtistID
+
+	track.TagTitle = trags.Title()
+	track.TagTitleUDec = decoded(trags.Title())
+	track.TagTrackArtist = trags.Artist()
+	track.TagTrackNumber = trags.TrackNumber()
+	track.TagDiscNumber = trags.DiscNumber()
+	track.TagBrainzID = trags.BrainzID()
+
+	track.Length = trags.Length()   // these two should be calculated
+	track.Bitrate = trags.Bitrate() // ...from the file instead of tags
+
+	if err := s.trTx.Save(&track).Error; err != nil {
+		return fmt.Errorf("writing track table: %w", err)
+	}
+	s.seenTracksNew++
+
+	if err := s.populateTrackGenres(&track, genreIDs); err != nil {
+		return fmt.Errorf("populating track genres : %w", err)
+	}
+
+	return nil
+}
+
+func (s *Scanner) populateAlbumArtist(trags *tags.Tags) (*db.Artist, error) {
+	var artist db.Artist
+	artistName := trags.SomeAlbumArtist()
+	err := s.trTx.
 		Where("name=?", artistName).
 		Assign(db.Artist{
 			Name:     artistName,
 			NameUDec: decoded(artistName),
 		}).
-		FirstOrCreate(artist)
-	track.ArtistID = artist.ID
+		FirstOrCreate(&artist).
+		Error
+	if err != nil {
+		return nil, fmt.Errorf("find or create artist: %w", err)
+	}
+	return &artist, nil
+}
 
-	// set genre
-	genreTag := firstTag("Unknown Genre", trTags.Genre)
-	genreNames := strings.Split(genreTag, s.genreSplit)
-	genreIDs := []int{}
+func (s *Scanner) populateGenres(track *db.Track, trags *tags.Tags) ([]int, error) {
+	var genreIDs []int
+	genreNames := strings.Split(trags.SomeGenre(), s.genreSplit)
 	for _, genreName := range genreNames {
 		genre := &db.Genre{}
-		s.trTx.FirstOrCreate(genre, db.Genre{
+		q := s.trTx.FirstOrCreate(genre, db.Genre{
 			Name: genreName,
 		})
+		if err := q.Error; err != nil {
+			return nil, err
+		}
 		genreIDs = append(genreIDs, genre.ID)
 	}
+	return genreIDs, nil
+}
 
-	if err := s.trTx.Save(track).Error; err != nil {
-		return fmt.Errorf("writing track table: %w", err)
-	}
-
-	err = s.trTx.
+func (s *Scanner) populateTrackGenres(track *db.Track, genreIDs []int) error {
+	err := s.trTx.
 		Where("track_id=?", track.ID).
 		Delete(db.TrackGenre{}).
 		Error
 	if err != nil {
 		return fmt.Errorf("delete old track genre records: %w", err)
 	}
+
 	err = s.trTx.InsertBulkLeftMany(
 		"track_genres",
 		[]string{"track_id", "genre_id"},
@@ -485,15 +534,12 @@ func (s *Scanner) handleTrack(it *item) error {
 	if err != nil {
 		return fmt.Errorf("insert bulk track genres: %w", err)
 	}
-	s.seenTracksNew++
+	return nil
+}
 
-	// set album if this is the first track in the folder
-	folder := s.curFolders.Peek()
-	if folder.TagTitle != "" {
-		return nil
-	}
-	err = s.trTx.
-		Where("album_id=?", folder.ID).
+func (s *Scanner) populateAlbumGenres(album *db.Album, genreIDs []int) error {
+	err := s.trTx.
+		Where("album_id=?", album.ID).
 		Delete(db.AlbumGenre{}).
 		Error
 	if err != nil {
@@ -502,25 +548,11 @@ func (s *Scanner) handleTrack(it *item) error {
 	err = s.trTx.InsertBulkLeftMany(
 		"album_genres",
 		[]string{"album_id", "genre_id"},
-		folder.ID,
+		album.ID,
 		genreIDs,
 	)
 	if err != nil {
 		return fmt.Errorf("insert bulk album genres: %w", err)
 	}
-	folder.TagTitle = trTags.Album()
-	folder.TagTitleUDec = decoded(trTags.Album())
-	folder.TagBrainzID = trTags.AlbumBrainzID()
-	folder.TagYear = trTags.Year()
-	folder.TagArtistID = artist.ID
 	return nil
-}
-
-func firstTag(fallback string, tags ...func() string) string {
-	for _, f := range tags {
-		if tag := f(); tag != "" {
-			return tag
-		}
-	}
-	return fallback
 }

@@ -49,8 +49,18 @@ func (t *Tags) TrackNumber() int      { return intSep(t.firstTag("tracknumber"),
 func (t *Tags) DiscNumber() int       { return intSep(t.firstTag("discnumber"), "/") }  // eg. 1/2
 func (t *Tags) Length() int           { return t.props.Length }
 func (t *Tags) Bitrate() int          { return t.props.Bitrate }
+func (t *Tags) Year() int             { return intSep(t.firstTag("originaldate", "date", "year"), "-") }
 
-func (t *Tags) Year() int {
-	// eg. 2019-6-11
-	return intSep(t.firstTag("originaldate", "date", "year"), "-")
+func (t *Tags) SomeAlbum() string       { return first("Unknown Album", t.Album()) }
+func (t *Tags) SomeArtist() string      { return first("Unknown Artist", t.Artist()) }
+func (t *Tags) SomeAlbumArtist() string { return first("Unknown Artist", t.AlbumArtist(), t.Artist()) }
+func (t *Tags) SomeGenre() string       { return first("Unknown Genre", t.Genre()) }
+
+func first(or string, strs ...string) string {
+	for _, str := range strs {
+		if str != "" {
+			return str
+		}
+	}
+	return or
 }
