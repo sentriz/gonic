@@ -20,13 +20,20 @@ const (
 	ffmpeg  = "ffmpeg"
 )
 
+type replayGain int
+
+const (
+	rgForce replayGain = iota
+	rgHigh
+)
+
 type Profile struct {
-	Format        string
-	Bitrate       int
-	ffmpegOptions []string
-	forceRG       bool
-	hiGainRG      bool
-	upsample      bool
+	Format  string
+	Bitrate int
+
+	options    []string
+	replayGain replayGain
+	upsample   bool
 }
 
 func fileExists(filename string) bool {
@@ -39,11 +46,35 @@ func fileExists(filename string) bool {
 
 func Profiles() map[string]Profile {
 	return map[string]Profile{
-		"mp3":      {"mp3", 128, []string{"-c:a", "libmp3lame"}, false, false, false},
-		"mp3_rg":   {"mp3", 128, []string{"-c:a", "libmp3lame"}, true, false, false},
-		"opus":     {"opus", 96, []string{"-c:a", "libopus", "-vbr", "on"}, false, false, false},
-		"opus_rg":  {"opus", 96, []string{"-c:a", "libopus", "-vbr", "on"}, true, false, false},
-		"opus_car": {"opus", 96, []string{"-c:a", "libopus", "-vbr", "on"}, true, true, true},
+		"mp3": {
+			Format:  "mp3",
+			Bitrate: 128,
+			options: []string{"-c:a", "libmp3lame"},
+		},
+		"mp3_rg": {
+			Format:     "mp3",
+			Bitrate:    128,
+			options:    []string{"-c:a", "libmp3lame"},
+			replayGain: rgForce,
+		},
+		"opus": {
+			Format:  "opus",
+			Bitrate: 96,
+			options: []string{"-c:a", "libopus", "-vbr", "on"},
+		},
+		"opus_rg": {
+			Format:     "opus",
+			Bitrate:    96,
+			options:    []string{"-c:a", "libopus", "-vbr", "on"},
+			replayGain: rgForce,
+		},
+		"opus_car": {
+			Format:     "opus",
+			Bitrate:    96,
+			options:    []string{"-c:a", "libopus", "-vbr", "on"},
+			replayGain: rgHigh,
+			upsample:   true,
+		},
 	}
 }
 
@@ -96,45 +127,40 @@ func ffmpegCommand(filePath string, profile Profile) (*exec.Cmd, error) {
 		"-vn",
 		"-b:a", fmt.Sprintf("%dk", profile.Bitrate),
 	}
-	args = append(args, profile.ffmpegOptions...)
-	if profile.forceRG {
-		aBaselineGain := 6
-		if profile.hiGainRG {
-			// This baseline gain results in final track being +3~5dB louder
-			// than Foobar2000's default ReplayGain target volume.
-			// This makes it easier to listen to music in a car, where all other
-			// sources are usually ten thousand times louder than RG-adjusted music.
-			// -- @spijet
-			aBaselineGain = 15
-		}
-		aFilters := []string{
-			fmt.Sprintf("volume=replaygain=track:replaygain_preamp=%ddB:replaygain_noclip=0", aBaselineGain),
-			"alimiter=level=disabled",
-			"asidedata=mode=delete:type=REPLAYGAIN",
-		}
+	args = append(args, profile.options...)
 
-		// opus always forces output to 48kHz sampling rate, but we can still use upsampling
-		// to increase RG and alimiter's peak limiting precision, which is desirable in some
-		// cases. ffmpeg's `soxr` resampler is quite fast on x86-64: it takes around 5 seconds
-		// on my Ryzen 3600 to transcode an 8-minute FLAC with 2x upsample and RG applied.
-		// -- @spijet
-		if profile.upsample {
-			aFilters = append([]string{"aresample=96000:resampler=soxr"}, aFilters...)
-		}
-		aFilterString := strings.Join(aFilters, ", ")
-		args = append(args,
-			// set up replaygain processing
-			"-af", aFilterString,
-			// drop redundant replaygain tags
-			"-metadata", "replaygain_album_gain=",
-			"-metadata", "replaygain_album_peak=",
-			"-metadata", "replaygain_track_gain=",
-			"-metadata", "replaygain_track_peak=",
-			"-metadata", "r128_album_gain=",
-			"-metadata", "r128_track_gain=",
-		)
+	var aFilters []string
+	var aMetadata []string
+
+	// opus always forces output to 48kHz sampling rate, but we can still use upsampling
+	// to increase RG and alimiter's peak limiting precision, which is desirable in some
+	// cases. ffmpeg's `soxr` resampler is quite fast on x86-64: it takes around 5 seconds
+	// on my Ryzen 3600 to transcode an 8-minute FLAC with 2x upsample and RG applied.
+	// -- @spijet
+	if profile.upsample {
+		aFilters = append(aFilters, "aresample=96000:resampler=soxr")
 	}
+
+	switch profile.replayGain {
+	case rgForce:
+		aFilters = append(aFilters, ffmpegPreamp(6)...)
+		aMetadata = append(aMetadata, ffmpegStripRG()...)
+	case rgHigh:
+		// this baseline gain results in final track being +3~5dB louder
+		// than Foobar2000's default ReplayGain target volume.
+		// this makes it easier to listen to music in a car, where all other
+		// sources are usually ten thousand times louder than RG-adjusted music.
+		// -- @spijet
+		aFilters = append(aFilters, ffmpegPreamp(15)...)
+	}
+
+	if len(aFilters) > 0 {
+		args = append(args, "-af", strings.Join(aFilters, ", "))
+	}
+
+	args = append(args, aMetadata...)
 	args = append(args, "-f", profile.Format, "-")
+
 	ffmpegPath, err := exec.LookPath(ffmpeg)
 	if err != nil {
 		return nil, fmt.Errorf("find ffmpeg binary path: %w", err)
@@ -142,6 +168,25 @@ func ffmpegCommand(filePath string, profile Profile) (*exec.Cmd, error) {
 	return exec.Command(ffmpegPath, args...), nil //nolint:gosec
 	// can't see a way for this be abused
 	// but please do let me know if you see otherwise
+}
+
+func ffmpegPreamp(dB int) []string {
+	return []string{
+		fmt.Sprintf("volume=replaygain=track:replaygain_preamp=%ddB:replaygain_noclip=0", dB),
+		"alimiter=level=disabled",
+		"asidedata=mode=delete:type=REPLAYGAIN",
+	}
+}
+
+func ffmpegStripRG() []string {
+	return []string{
+		"-metadata", "replaygain_album_gain=",
+		"-metadata", "replaygain_album_peak=",
+		"-metadata", "replaygain_track_gain=",
+		"-metadata", "replaygain_track_peak=",
+		"-metadata", "r128_album_gain=",
+		"-metadata", "r128_track_gain=",
+	}
 }
 
 func encode(out io.Writer, trackPath, cachePath string, profile Profile) error {
