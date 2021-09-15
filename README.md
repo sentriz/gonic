@@ -38,7 +38,7 @@ password can then be changed from the web interface
 ```bash
 $ apt install build-essential git sqlite libtag1-dev ffmpeg libasound-dev # for debian like
 $ pacman -S base-devel git sqlite taglib ffmpeg alsa-lib                  # for arch like
-$ go get go.senan.xyz/gonic/cmd/gonic
+$ go install go.senan.xyz/gonic/cmd/gonic@latest
 $ export PATH=$PATH:$HOME/go/bin
 $ gonic -h # or see "configuration options below"
 ```
