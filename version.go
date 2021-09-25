@@ -9,7 +9,7 @@ import (
 
 //go:embed version.txt
 var version string
-var Version = fmt.Sprintf("v%s", strings.TrimSuffix(version, "\n"))
+var Version = fmt.Sprintf("v%s", strings.TrimSpace(version))
 
 const Name = "gonic"
 const NameUpper = "GONIC"
