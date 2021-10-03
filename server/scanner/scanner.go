@@ -336,7 +336,7 @@ func (s *Scanner) callbackPost(fullPath string, info *godirwalk.Dirent) error {
 	// begin taking the current album off the stack and add it's
 	// parent, cover that we found, etc.
 	album := s.curAlbums.Pop()
-	if album.ParentID != 0 {
+	if album.Cover == s.curCover && album.ParentID != 0 {
 		return nil
 	}
 	album.ParentID = s.curAlbums.PeekID()
