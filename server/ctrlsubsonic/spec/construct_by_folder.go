@@ -15,6 +15,7 @@ func NewAlbumByFolder(f *db.Album) *Album {
 		Title:      f.RightPath,
 		TrackCount: f.ChildCount,
 		Duration:   f.Duration,
+		Created:    f.CreatedAt,
 	}
 	if f.Cover != "" {
 		a.CoverID = f.SID()
@@ -28,7 +29,7 @@ func NewTCAlbumByFolder(f *db.Album) *TrackChild {
 		IsDir:     true,
 		Title:     f.RightPath,
 		ParentID:  f.ParentSID(),
-		CreatedAt: f.UpdatedAt,
+		CreatedAt: f.CreatedAt,
 	}
 	if f.Cover != "" {
 		trCh.CoverID = f.SID()

@@ -94,6 +94,7 @@ type Album struct {
 	CoverID  *specid.ID `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty"`
 	ArtistID *specid.ID `xml:"artistId,attr,omitempty" json:"artistId,omitempty"`
 	Artist   string     `xml:"artist,attr,omitempty"   json:"artist,omitempty"`
+	Created  time.Time  `xml:"created,attr,omitempty"  json:"created,omitempty"`
 	// browsing by folder (eg. getAlbumList)
 	Title    string     `xml:"title,attr,omitempty"  json:"title"`
 	Album    string     `xml:"album,attr,omitempty"  json:"album"`
@@ -103,7 +104,6 @@ type Album struct {
 	Name       string        `xml:"name,attr"              json:"name"`
 	TrackCount int           `xml:"songCount,attr"         json:"songCount"`
 	Duration   int           `xml:"duration,attr"          json:"duration"`
-	Created    time.Time     `xml:"created,attr,omitempty" json:"created,omitempty"`
 	Genre      string        `xml:"genre,attr,omitempty"   json:"genre,omitempty"`
 	Year       int           `xml:"year,attr,omitempty"    json:"year,omitempty"`
 	Tracks     []*TrackChild `xml:"song,omitempty"         json:"song,omitempty"`

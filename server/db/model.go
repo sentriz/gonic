@@ -179,6 +179,7 @@ type Play struct {
 
 type Album struct {
 	ID            int `gorm:"primary_key"`
+	CreatedAt     time.Time
 	UpdatedAt     time.Time
 	ModifiedAt    time.Time
 	LeftPath      string `gorm:"unique_index:idx_left_path_right_path"`
