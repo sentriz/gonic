@@ -9,7 +9,7 @@ import (
 
 func NewAlbumByTags(a *db.Album, artist *db.Artist) *Album {
 	ret := &Album{
-		Created:    a.ModifiedAt,
+		Created:    a.CreatedAt,
 		ID:         a.SID(),
 		Name:       a.TagTitle,
 		Year:       a.TagYear,

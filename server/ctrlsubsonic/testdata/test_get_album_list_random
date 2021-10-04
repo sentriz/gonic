@@ -6,19 +6,6 @@
     "albumList": {
       "album": [
         {
-          "id": "al-16",
-          "coverArt": "al-16",
-          "artist": "Swell Maps",
-          "title": "(1980) Jane From Occupied Europe",
-          "album": "",
-          "parent": "al-15",
-          "isDir": true,
-          "name": "",
-          "songCount": 16,
-          "duration": 3040,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
           "id": "al-19",
           "coverArt": "al-19",
           "artist": "Ten Years After",
@@ -29,33 +16,7 @@
           "name": "",
           "songCount": 15,
           "duration": 3812,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "al-17",
-          "coverArt": "al-17",
-          "artist": "Swell Maps",
-          "title": "(1979) A Trip to Marineville",
-          "album": "",
-          "parent": "al-15",
-          "isDir": true,
-          "name": "",
-          "songCount": 18,
-          "duration": 3266,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "al-3",
-          "coverArt": "al-3",
-          "artist": "Jah Wobble, The Edge, Holger Czukay",
-          "title": "(1983) Snake Charmer",
-          "album": "",
-          "parent": "al-2",
-          "isDir": true,
-          "name": "",
-          "songCount": 5,
-          "duration": 1871,
-          "created": "0001-01-01T00:00:00Z"
+          "created": "2019-04-30T16:48:30+01:00"
         },
         {
           "id": "al-21",
@@ -68,46 +29,20 @@
           "name": "",
           "songCount": 15,
           "duration": 2324,
-          "created": "0001-01-01T00:00:00Z"
+          "created": "2019-06-10T19:26:30.944742894+01:00"
         },
         {
-          "id": "al-5",
-          "coverArt": "al-5",
-          "artist": "A Certain Ratio",
-          "title": "(1994) The Graveyard and the Ballroom",
+          "id": "al-17",
+          "coverArt": "al-17",
+          "artist": "Swell Maps",
+          "title": "(1979) A Trip to Marineville",
           "album": "",
-          "parent": "al-4",
+          "parent": "al-15",
           "isDir": true,
           "name": "",
-          "songCount": 14,
-          "duration": 2738,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "al-8",
-          "coverArt": "al-8",
-          "artist": "13th Floor Lowervators",
-          "title": "(1967) Easter Nowhere",
-          "album": "",
-          "parent": "al-7",
-          "isDir": true,
-          "name": "",
-          "songCount": 10,
-          "duration": 2609,
-          "created": "0001-01-01T00:00:00Z"
-        },
-        {
-          "id": "al-9",
-          "coverArt": "al-9",
-          "artist": "13th Floor Lowervators",
-          "title": "(1966) The Psychedelic Sounds of the 13th Floor Elevators",
-          "album": "",
-          "parent": "al-7",
-          "isDir": true,
-          "name": "",
-          "songCount": 21,
-          "duration": 4222,
-          "created": "0001-01-01T00:00:00Z"
+          "songCount": 18,
+          "duration": 3266,
+          "created": "2019-04-30T16:48:48+01:00"
         },
         {
           "id": "al-6",
@@ -119,7 +54,7 @@
           "name": "",
           "songCount": 9,
           "duration": 2801,
-          "created": "0001-01-01T00:00:00Z"
+          "created": "2019-05-23T15:12:02.921473302+01:00"
         },
         {
           "id": "al-13",
@@ -132,7 +67,72 @@
           "name": "",
           "songCount": 9,
           "duration": 2169,
-          "created": "0001-01-01T00:00:00Z"
+          "created": "2019-05-23T15:12:02.921473302+01:00"
+        },
+        {
+          "id": "al-8",
+          "coverArt": "al-8",
+          "artist": "13th Floor Lowervators",
+          "title": "(1967) Easter Nowhere",
+          "album": "",
+          "parent": "al-7",
+          "isDir": true,
+          "name": "",
+          "songCount": 10,
+          "duration": 2609,
+          "created": "2019-06-13T12:57:28.850090338+01:00"
+        },
+        {
+          "id": "al-9",
+          "coverArt": "al-9",
+          "artist": "13th Floor Lowervators",
+          "title": "(1966) The Psychedelic Sounds of the 13th Floor Elevators",
+          "album": "",
+          "parent": "al-7",
+          "isDir": true,
+          "name": "",
+          "songCount": 21,
+          "duration": 4222,
+          "created": "2019-06-13T12:57:24.306717554+01:00"
+        },
+        {
+          "id": "al-5",
+          "coverArt": "al-5",
+          "artist": "A Certain Ratio",
+          "title": "(1994) The Graveyard and the Ballroom",
+          "album": "",
+          "parent": "al-4",
+          "isDir": true,
+          "name": "",
+          "songCount": 14,
+          "duration": 2738,
+          "created": "2019-06-05T17:46:37.675917974+01:00"
+        },
+        {
+          "id": "al-16",
+          "coverArt": "al-16",
+          "artist": "Swell Maps",
+          "title": "(1980) Jane From Occupied Europe",
+          "album": "",
+          "parent": "al-15",
+          "isDir": true,
+          "name": "",
+          "songCount": 16,
+          "duration": 3040,
+          "created": "2019-04-30T16:48:48+01:00"
+        },
+        {
+          "id": "al-3",
+          "coverArt": "al-3",
+          "artist": "Jah Wobble, The Edge, Holger Czukay",
+          "title": "(1983) Snake Charmer",
+          "album": "",
+          "parent": "al-2",
+          "isDir": true,
+          "name": "",
+          "songCount": 5,
+          "duration": 1871,
+          "created": "2019-05-16T22:10:52+01:00"
         }
       ]
     }

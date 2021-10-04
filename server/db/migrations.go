@@ -262,3 +262,24 @@ func migratePodcastAutoDownload() gormigrate.Migration {
 		},
 	}
 }
+
+func migrateAlbumCreatedAt() gormigrate.Migration {
+	return gormigrate.Migration{
+		ID: "202110041330",
+		Migrate: func(tx *gorm.DB) error {
+			step := tx.AutoMigrate(
+				Album{},
+			)
+			if err := step.Error; err != nil {
+				return fmt.Errorf("step auto migrate: %w", err)
+			}
+			step = tx.Exec(`
+				UPDATE albums SET created_at=modified_at;
+			`)
+			if err := step.Error; err != nil {
+				return fmt.Errorf("step migrate album created_at: %w", err)
+			}
+			return nil
+		},
+	}
+}
