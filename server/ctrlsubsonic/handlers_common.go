@@ -8,6 +8,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 
+	"go.senan.xyz/gonic/multierr"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
@@ -53,13 +54,14 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 	// instead convert UnixNano to miliseconds
 	optStampMili := params.GetOrInt("time", int(time.Now().UnixNano()/1e6))
 	optSubmission := params.GetOrBool("submission", true)
-	scrobbleErrs := []error{}
+	var scrobbleErrs multierr.Err
 	for _, scrobbler := range c.Scrobblers {
 		if err := scrobbler.Scrobble(user, track, optStampMili, optSubmission); err != nil {
-			scrobbleErrs = append(scrobbleErrs, err)
+			scrobbleErrs.Add(err)
 		}
 	}
-	if len(scrobbleErrs) != 0 {
+	if scrobbleErrs.Len() > 0 {
+		log.Printf("error when submitting: %v", scrobbleErrs)
 		return spec.NewError(0, "error when submitting: %v", scrobbleErrs)
 	}
 	return spec.NewResponse()

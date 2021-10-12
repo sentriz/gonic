@@ -1,18 +1,15 @@
 package multierr
 
-import (
-	"strings"
-)
+import "strings"
 
 type Err []error
 
 func (me Err) Error() string {
-	var s strings.Builder
+	var strs []string
 	for _, err := range me {
-		s.WriteString("\n")
-		s.WriteString(err.Error())
+		strs = append(strs, err.Error())
 	}
-	return s.String()
+	return strings.Join(strs, "\n")
 }
 
 func (me Err) Len() int {
