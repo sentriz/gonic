@@ -52,11 +52,11 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 		First(track, id.Value)
 	// clients will provide time in miliseconds, so use that or
 	// instead convert UnixNano to miliseconds
-	optStampMili := params.GetOrInt("time", int(time.Now().UnixNano()/1e6))
+	optStamp := params.GetOrTime("time", time.Now())
 	optSubmission := params.GetOrBool("submission", true)
 	var scrobbleErrs multierr.Err
 	for _, scrobbler := range c.Scrobblers {
-		if err := scrobbler.Scrobble(user, track, optStampMili, optSubmission); err != nil {
+		if err := scrobbler.Scrobble(user, track, optStamp, optSubmission); err != nil {
 			scrobbleErrs.Add(err)
 		}
 	}

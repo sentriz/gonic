@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
+	"time"
 
 	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/scrobble"
@@ -141,7 +142,7 @@ type Scrobbler struct {
 	DB *db.DB
 }
 
-func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stampMili int, submission bool) error {
+func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, submission bool) error {
 	if user.LastFMSession == "" {
 		return nil
 	}
@@ -155,7 +156,7 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stampMili int, subm
 	if submission {
 		params.Add("method", "track.Scrobble")
 		// last.fm wants the timestamp in seconds
-		params.Add("timestamp", strconv.Itoa(stampMili/1e3))
+		params.Add("timestamp", strconv.Itoa(int(stamp.Unix())))
 	} else {
 		params.Add("method", "track.updateNowPlaying")
 	}

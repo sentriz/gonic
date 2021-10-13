@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/scrobble"
@@ -48,12 +49,12 @@ type Scrobble struct {
 
 type Scrobbler struct{}
 
-func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stampMili int, submission bool) error {
+func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, submission bool) error {
 	if user.ListenBrainzURL == "" || user.ListenBrainzToken == "" {
 		return nil
 	}
 	payload := Payload{
-		ListenedAt: stampMili / 1e3,
+		ListenedAt: int(stamp.Unix()),
 		TrackMetadata: TrackMetadata{
 			AdditionalInfo: AdditionalInfo{
 				TrackNumber: track.TagTrackNumber,
