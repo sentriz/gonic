@@ -1,7 +1,7 @@
 // package params provides methods on url.Values for parsing params for the subsonic api
 //
 // the format of the functions are:
-//     `Get[First|Or|FirstOr][Int|ID|Bool][List]`
+//     `Get[First|Or|FirstOr][Int|ID|Bool|TimeMs][List]`
 //
 // first component (key selection):
 //     ""        -> lookup the key as usual, err if not found
@@ -29,6 +29,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
@@ -43,6 +44,15 @@ func parseStr(in string) (string, error)   { return in, nil }
 func parseInt(in string) (int, error)      { return strconv.Atoi(in) }
 func parseID(in string) (specid.ID, error) { return specid.New(in) }
 func parseBool(in string) (bool, error)    { return strconv.ParseBool(in) }
+
+func parseTime(in string) (time.Time, error) {
+	ms, err := strconv.Atoi(in)
+	if err != nil {
+		return time.Time{}, err
+	}
+	ns := int64(ms) * 1e6
+	return time.Unix(0, ns), nil
+}
 
 func parse(values []string, i interface{}) error {
 	if len(values) == 0 {
@@ -59,6 +69,8 @@ func parse(values []string, i interface{}) error {
 		*v, err = parseID(values[0])
 	case *bool:
 		*v, err = parseBool(values[0])
+	case *time.Time:
+		*v, err = parseTime(values[0])
 	// ** begin *[]T
 	case *[]string:
 		for _, value := range values {
@@ -87,6 +99,14 @@ func parse(values []string, i interface{}) error {
 	case *[]bool:
 		for _, value := range values {
 			parsed, err := parseBool(value)
+			if err != nil {
+				return err
+			}
+			*v = append(*v, parsed)
+		}
+	case *[]time.Time:
+		for _, value := range values {
+			parsed, err := parseTime(value)
 			if err != nil {
 				return err
 			}
@@ -341,6 +361,34 @@ func (p Params) GetOrBoolList(key string, or []bool) []bool {
 
 func (p Params) GetFirstOrBoolList(or []bool, keys ...string) []bool {
 	var ret []bool
+	if err := parse(p.getFirst(keys), &ret); err == nil {
+		return ret
+	}
+	return or
+}
+
+// ** begin time {get, get first, get or, get first or}
+
+func (p Params) GetTime(key string) (time.Time, error) {
+	var ret time.Time
+	return ret, parse(p.get(key), &ret)
+}
+
+func (p Params) GetFirstTime(keys ...string) (time.Time, error) {
+	var ret time.Time
+	return ret, parse(p.getFirst(keys), &ret)
+}
+
+func (p Params) GetOrTime(key string, or time.Time) time.Time {
+	var ret time.Time
+	if err := parse(p.get(key), &ret); err == nil {
+		return ret
+	}
+	return or
+}
+
+func (p Params) GetFirstOrTime(or time.Time, keys ...string) time.Time {
+	var ret time.Time
 	if err := parse(p.getFirst(keys), &ret); err == nil {
 		return ret
 	}
