@@ -48,12 +48,6 @@ func New(musicPaths []string, sorted bool, db *db.DB, genreSplit string, tagger 
 	}
 }
 
-type ScanOptions struct {
-	IsFull bool
-	// TODO https://github.com/sentriz/gonic/issues/64
-	Path string
-}
-
 func (s *Scanner) IsScanning() bool {
 	return atomic.LoadInt32(s.scanning) == 1
 }

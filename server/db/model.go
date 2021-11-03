@@ -132,6 +132,18 @@ func (t *Track) MIME() string {
 	return v
 }
 
+func (t *Track) AbsPath() string {
+	if t.Album == nil {
+		return ""
+	}
+	return path.Join(
+		t.Album.RootDir,
+		t.Album.LeftPath,
+		t.Album.RightPath,
+		t.Filename,
+	)
+}
+
 func (t *Track) RelPath() string {
 	if t.Album == nil {
 		return ""
@@ -182,11 +194,12 @@ type Album struct {
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 	ModifiedAt    time.Time
-	LeftPath      string `gorm:"unique_index:idx_left_path_right_path"`
-	RightPath     string `gorm:"not null; unique_index:idx_left_path_right_path" sql:"default: null"`
+	LeftPath      string `gorm:"unique_index:idx_album_abs_path"`
+	RightPath     string `gorm:"not null; unique_index:idx_album_abs_path" sql:"default: null"`
 	RightPathUDec string `sql:"default: null"`
 	Parent        *Album
 	ParentID      int      `sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	RootDir       string   `gorm:"unique_index:idx_album_abs_path" sql:"default: null"`
 	Genres        []*Genre `gorm:"many2many:album_genres"`
 	Cover         string   `sql:"default: null"`
 	TagArtist     *Artist

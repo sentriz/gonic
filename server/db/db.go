@@ -9,8 +9,6 @@ import (
 	"strings"
 
 	"github.com/jinzhu/gorm"
-
-	"gopkg.in/gormigrate.v1"
 )
 
 func DefaultOptions() url.Values {
@@ -49,30 +47,6 @@ func New(path string, options url.Values) (*DB, error) {
 	}
 	db.SetLogger(log.New(os.Stdout, "gorm ", 0))
 	db.DB().SetMaxOpenConns(1)
-	migrOptions := &gormigrate.Options{
-		TableName:      "migrations",
-		IDColumnName:   "id",
-		IDColumnSize:   255,
-		UseTransaction: false,
-	}
-	migr := gormigrate.New(db, migrOptions, wrapMigrations(
-		migrateInitSchema(),
-		migrateCreateInitUser(),
-		migrateMergePlaylist(),
-		migrateCreateTranscode(),
-		migrateAddGenre(),
-		migrateUpdateTranscodePrefIDX(),
-		migrateAddAlbumIDX(),
-		migrateMultiGenre(),
-		migrateListenBrainz(),
-		migratePodcast(),
-		migrateBookmarks(),
-		migratePodcastAutoDownload(),
-		migrateAlbumCreatedAt(),
-	))
-	if err = migr.Migrate(); err != nil {
-		return nil, fmt.Errorf("migrating to latest version: %w", err)
-	}
 	return &DB{DB: db}, nil
 }
 

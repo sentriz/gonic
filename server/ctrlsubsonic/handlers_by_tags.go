@@ -16,28 +16,32 @@ import (
 )
 
 func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
 	var artists []*db.Artist
-	c.DB.
+	q := c.DB.
 		Select("*, count(sub.id) album_count").
 		Joins("LEFT JOIN albums sub ON artists.id=sub.tag_artist_id").
 		Group("artists.id").
-		Order("artists.name COLLATE NOCASE").
-		Find(&artists)
+		Order("artists.name COLLATE NOCASE")
+	if m, _ := params.Get("musicFolderId"); m != "" {
+		q = q.Where("sub.root_dir=?", m)
+	}
+	if err := q.Find(&artists).Error; err != nil {
+		return spec.NewError(10, "error finding artists: %v", err)
+	}
 	// [a-z#] -> 27
 	indexMap := make(map[string]*spec.Index, 27)
 	resp := make([]*spec.Index, 0, 27)
 	for _, artist := range artists {
-		i := lowerUDecOrHash(artist.IndexName())
-		index, ok := indexMap[i]
-		if !ok {
-			index = &spec.Index{
-				Name:    i,
+		key := lowerUDecOrHash(artist.IndexName())
+		if _, ok := indexMap[key]; !ok {
+			indexMap[key] = &spec.Index{
+				Name:    key,
 				Artists: []*spec.Artist{},
 			}
-			indexMap[i] = index
-			resp = append(resp, index)
+			resp = append(resp, indexMap[key])
 		}
-		index.Artists = append(index.Artists,
+		indexMap[key].Artists = append(indexMap[key].Artists,
 			spec.NewArtistByTags(artist))
 	}
 	sub := spec.NewResponse()
@@ -144,6 +148,9 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	default:
 		return spec.NewError(10, "unknown value `%s` for parameter 'type'", listType)
 	}
+	if m, _ := params.Get("musicFolderId"); m != "" {
+		q = q.Where("root_dir=?", m)
+	}
 	var albums []*db.Album
 	// TODO: think about removing this extra join to count number
 	// of children. it might make sense to store that in the db
@@ -172,47 +179,63 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide a `query` parameter")
 	}
-	query = fmt.Sprintf("%%%s%%",
-		strings.TrimSuffix(query, "*"))
+	query = fmt.Sprintf("%%%s%%", strings.TrimSuffix(query, "*"))
 	results := &spec.SearchResultThree{}
+
 	// search "artists"
 	var artists []*db.Artist
-	c.DB.
-		Where("name LIKE ? OR name_u_dec LIKE ?",
-			query, query).
+	q := c.DB.
+		Where("name LIKE ? OR name_u_dec LIKE ?", query, query).
 		Offset(params.GetOrInt("artistOffset", 0)).
-		Limit(params.GetOrInt("artistCount", 20)).
-		Find(&artists)
-	for _, a := range artists {
-		results.Artists = append(results.Artists,
-			spec.NewArtistByTags(a))
+		Limit(params.GetOrInt("artistCount", 20))
+	if m, _ := params.Get("musicFolderId"); m != "" {
+		q = q.
+			Joins("JOIN albums ON albums.tag_artist_id=artists.id").
+			Where("albums.root_dir=?", m)
 	}
+	if err := q.Find(&artists).Error; err != nil {
+		return spec.NewError(0, "find artists: %v", err)
+	}
+	for _, a := range artists {
+		results.Artists = append(results.Artists, spec.NewArtistByTags(a))
+	}
+
 	// search "albums"
 	var albums []*db.Album
-	c.DB.
+	q = c.DB.
 		Preload("TagArtist").
-		Where("tag_title LIKE ? OR tag_title_u_dec LIKE ?",
-			query, query).
+		Where("tag_title LIKE ? OR tag_title_u_dec LIKE ?", query, query).
 		Offset(params.GetOrInt("albumOffset", 0)).
-		Limit(params.GetOrInt("albumCount", 20)).
-		Find(&albums)
-	for _, a := range albums {
-		results.Albums = append(results.Albums,
-			spec.NewAlbumByTags(a, a.TagArtist))
+		Limit(params.GetOrInt("albumCount", 20))
+	if m, _ := params.Get("musicFolderId"); m != "" {
+		q = q.Where("root_dir=?", m)
 	}
+	if err := q.Find(&albums).Error; err != nil {
+		return spec.NewError(0, "find albums: %v", err)
+	}
+	for _, a := range albums {
+		results.Albums = append(results.Albums, spec.NewAlbumByTags(a, a.TagArtist))
+	}
+
 	// search tracks
 	var tracks []*db.Track
-	c.DB.
+	q = c.DB.
 		Preload("Album").
-		Where("tag_title LIKE ? OR tag_title_u_dec LIKE ?",
-			query, query).
+		Where("tag_title LIKE ? OR tag_title_u_dec LIKE ?", query, query).
 		Offset(params.GetOrInt("songOffset", 0)).
-		Limit(params.GetOrInt("songCount", 20)).
-		Find(&tracks)
-	for _, t := range tracks {
-		results.Tracks = append(results.Tracks,
-			spec.NewTrackByTags(t, t.Album))
+		Limit(params.GetOrInt("songCount", 20))
+	if m, _ := params.Get("musicFolderId"); m != "" {
+		q = q.
+			Joins("JOIN albums ON albums.id=tracks.album_id").
+			Where("albums.root_dir=?", m)
 	}
+	if err := q.Find(&tracks).Error; err != nil {
+		return spec.NewError(0, "find tracks: %v", err)
+	}
+	for _, t := range tracks {
+		results.Tracks = append(results.Tracks, spec.NewTrackByTags(t, t.Album))
+	}
+
 	sub := spec.NewResponse()
 	sub.SearchResultThree = results
 	return sub
@@ -313,17 +336,20 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide an `genre` parameter")
 	}
-	// TODO: add musicFolderId parameter
-	// (since 1.12.0) only return albums in the music folder with the given id
 	var tracks []*db.Track
-	c.DB.
+	q := c.DB.
 		Joins("JOIN albums ON tracks.album_id=albums.id").
 		Joins("JOIN track_genres ON track_genres.track_id=tracks.id").
 		Joins("JOIN genres ON track_genres.genre_id=genres.id AND genres.name=?", genre).
 		Preload("Album").
 		Offset(params.GetOrInt("offset", 0)).
-		Limit(params.GetOrInt("count", 10)).
-		Find(&tracks)
+		Limit(params.GetOrInt("count", 10))
+	if m, _ := params.Get("musicFolderId"); m != "" {
+		q = q.Where("albums.root_dir=?", m)
+	}
+	if err := q.Find(&tracks).Error; err != nil {
+		return spec.NewError(0, "error finding tracks: %v", err)
+	}
 	sub := spec.NewResponse()
 	sub.TracksByGenre = &spec.TracksByGenre{
 		List: make([]*spec.TrackChild, len(tracks)),

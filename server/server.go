@@ -27,7 +27,7 @@ import (
 
 type Options struct {
 	DB             *db.DB
-	MusicPath      string
+	MusicPaths     []string
 	PodcastPath    string
 	CachePath      string
 	CoverCachePath string
@@ -46,7 +46,9 @@ type Server struct {
 }
 
 func New(opts Options) (*Server, error) {
-	opts.MusicPath = filepath.Clean(opts.MusicPath)
+	for i, musicPath := range opts.MusicPaths {
+		opts.MusicPaths[i] = filepath.Clean(musicPath)
+	}
 	opts.CachePath = filepath.Clean(opts.CachePath)
 	opts.PodcastPath = filepath.Clean(opts.PodcastPath)
 
@@ -55,7 +57,6 @@ func New(opts Options) (*Server, error) {
 	scanner := scanner.New(opts.MusicPaths, false, opts.DB, opts.GenreSplit, tagger)
 	base := &ctrlbase.Controller{
 		DB:          opts.DB,
-		MusicPath:   opts.MusicPath,
 		ProxyPrefix: opts.ProxyPrefix,
 		Scanner:     scanner,
 	}
@@ -109,7 +110,7 @@ func New(opts Options) (*Server, error) {
 	}
 
 	if opts.JukeboxEnabled {
-		jukebox := jukebox.New(opts.MusicPath)
+		jukebox := jukebox.New()
 		ctrlSubsonic.Jukebox = jukebox
 		server.jukebox = jukebox
 	}

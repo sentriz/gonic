@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path"
 	"sync"
 	"time"
 
@@ -26,11 +25,10 @@ type Status struct {
 }
 
 type Jukebox struct {
-	playlist  []*db.Track
-	musicPath string
-	index     int
-	playing   bool
-	sr        beep.SampleRate
+	playlist []*db.Track
+	index    int
+	playing  bool
+	sr       beep.SampleRate
 	// used to notify the player to re read the members
 	quit    chan struct{}
 	done    chan bool
@@ -50,13 +48,12 @@ type updateSpeaker struct {
 	offset int
 }
 
-func New(musicPath string) *Jukebox {
+func New() *Jukebox {
 	return &Jukebox{
-		musicPath: musicPath,
-		sr:        beep.SampleRate(48000),
-		speaker:   make(chan updateSpeaker, 1),
-		done:      make(chan bool),
-		quit:      make(chan struct{}),
+		sr:      beep.SampleRate(48000),
+		speaker: make(chan updateSpeaker, 1),
+		done:    make(chan bool),
+		quit:    make(chan struct{}),
 	}
 }
 
@@ -89,10 +86,7 @@ func (j *Jukebox) doUpdateSpeaker(su updateSpeaker) error {
 		return nil
 	}
 	j.index = su.index
-	f, err := os.Open(path.Join(
-		j.musicPath,
-		j.playlist[su.index].RelPath(),
-	))
+	f, err := os.Open(j.playlist[su.index].AbsPath())
 	if err != nil {
 		return err
 	}

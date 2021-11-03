@@ -1,9 +1,11 @@
 package scanner_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/jinzhu/gorm"

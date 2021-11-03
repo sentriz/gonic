@@ -84,14 +84,10 @@ func NewArtistByFolder(f *db.Album) *Artist {
 }
 
 func NewDirectoryByFolder(f *db.Album, children []*TrackChild) *Directory {
-	dir := &Directory{
+	return &Directory{
 		ID:       f.SID(),
 		Name:     f.RightPath,
 		Children: children,
+		ParentID: f.ParentSID(),
 	}
-	// don't show the root dir as a parent
-	if f.ParentID != 1 {
-		dir.ParentID = f.ParentSID()
-	}
-	return dir
 }

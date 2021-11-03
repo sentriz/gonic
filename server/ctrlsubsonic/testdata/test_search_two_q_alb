@@ -4,11 +4,6 @@
     "version": "1.15.0",
     "type": "gonic",
     "searchResult2": {
-      "artist": [
-        { "id": "al-2", "name": "album-0" },
-        { "id": "al-3", "name": "album-1" },
-        { "id": "al-4", "name": "album-2" }
-      ],
       "album": [
         {
           "id": "al-2",

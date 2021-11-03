@@ -5,6 +5,7 @@
     "type": "gonic",
     "directory": {
       "id": "al-2",
+      "parent": "al-1",
       "name": "album-0",
       "child": [
         {

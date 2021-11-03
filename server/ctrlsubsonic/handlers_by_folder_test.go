@@ -2,6 +2,7 @@ package ctrlsubsonic
 
 import (
 	"net/url"
+	"path/filepath"
 	"testing"
 
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -13,6 +14,8 @@ func TestGetIndexes(t *testing.T) {
 
 	runQueryCases(t, contr, contr.ServeGetIndexes, []*queryCase{
 		{url.Values{}, "no_args", false},
+		{url.Values{"musicFolderId": {filepath.Join(m.TmpDir(), "m-0")}}, "with_music_folder_1", false},
+		{url.Values{"musicFolderId": {filepath.Join(m.TmpDir(), "m-1")}}, "with_music_folder_2", false},
 	})
 }
 

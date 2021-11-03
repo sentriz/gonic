@@ -30,7 +30,6 @@ const (
 func main() {
 	set := flag.NewFlagSet(gonic.Name, flag.ExitOnError)
 	confListenAddr := set.String("listen-addr", "0.0.0.0:4747", "listen address (optional)")
-	confMusicPath := set.String("music-path", "", "path to music")
 	confPodcastPath := set.String("podcast-path", "", "path to podcasts")
 	confCachePath := set.String("cache-path", "", "path to cache")
 	confDBPath := set.String("db-path", "gonic.db", "path to database (optional)")
@@ -40,6 +39,10 @@ func main() {
 	confGenreSplit := set.String("genre-split", "\n", "character or string to split genre tag data on (optional)")
 	confHTTPLog := set.Bool("http-log", true, "http request logging (optional)")
 	confShowVersion := set.Bool("version", false, "show gonic version")
+
+	var confMusicPaths musicPaths
+	set.Var(&confMusicPaths, "music-path", "path to music")
+
 	_ = set.String("config-path", "", "path to config (optional)")
 
 	if err := ff.Parse(set, os.Args[1:],
@@ -62,8 +65,13 @@ func main() {
 		log.Printf("    %-15s %s\n", f.Name, value)
 	})
 
-	if _, err := os.Stat(*confMusicPath); os.IsNotExist(err) {
-		log.Fatal("please provide a valid music directory")
+	if len(confMusicPaths) == 0 {
+		log.Fatalf("please provide a music directory")
+	}
+	for _, confMusicPath := range confMusicPaths {
+		if _, err := os.Stat(confMusicPath); os.IsNotExist(err) {
+			log.Fatalf("music directory %q not found", confMusicPath)
+		}
 	}
 	if _, err := os.Stat(*confPodcastPath); os.IsNotExist(err) {
 		log.Fatal("please provide a valid podcast directory")
@@ -90,13 +98,20 @@ func main() {
 	if err != nil {
 		log.Fatalf("error opening database: %v\n", err)
 	}
-	defer db.Close()
+	defer dbc.Close()
+
+	err = dbc.Migrate(db.MigrationContext{
+		OriginalMusicPath: confMusicPaths[0],
+	})
+	if err != nil {
+		log.Panicf("error migrating database: %v\n", err)
+	}
 
 	proxyPrefixExpr := regexp.MustCompile(`^\/*(.*?)\/*$`)
 	*confProxyPrefix = proxyPrefixExpr.ReplaceAllString(*confProxyPrefix, `/$1`)
 	server, err := server.New(server.Options{
-		DB:             db,
-		MusicPath:      *confMusicPath,
+		DB:             dbc,
+		MusicPaths:     confMusicPaths,
 		CachePath:      cacheDirAudio,
 		CoverCachePath: cacheDirCovers,
 		ProxyPrefix:    *confProxyPrefix,
@@ -124,4 +139,15 @@ func main() {
 	if err := g.Run(); err != nil {
 		log.Panicf("error in job: %v", err)
 	}
+}
+
+type musicPaths []string
+
+func (m musicPaths) String() string {
+	return strings.Join(m, ", ")
+}
+
+func (m *musicPaths) Set(value string) error {
+	*m = append(*m, value)
+	return nil
 }

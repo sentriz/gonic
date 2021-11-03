@@ -12,18 +12,27 @@ import (
 	"go.senan.xyz/gonic/server/db"
 )
 
-// the subsonic spec metions "artist" a lot when talking about the
+// the subsonic spec mentions "artist" a lot when talking about the
 // browse by folder endpoints. but since we're not browsing by tag
 // we can't access artists. so instead we'll consider the artist of
 // an track to be the it's respective folder that comes directly
 // under the root directory
 
 func (c *Controller) ServeGetIndexes(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	rootQ := c.DB.
+		Select("id").
+		Model(&db.Album{}).
+		Where("parent_id IS NULL")
+	if m, _ := params.Get("musicFolderId"); m != "" {
+		rootQ = rootQ.
+			Where("root_dir=?", m)
+	}
 	var folders []*db.Album
 	c.DB.
 		Select("*, count(sub.id) child_count").
 		Joins("LEFT JOIN albums sub ON albums.id=sub.parent_id").
-		Where("albums.parent_id=1").
+		Where("albums.parent_id IN ?", rootQ.SubQuery()).
 		Group("albums.id").
 		Order("albums.right_path COLLATE NOCASE").
 		Find(&folders)
@@ -31,17 +40,15 @@ func (c *Controller) ServeGetIndexes(r *http.Request) *spec.Response {
 	indexMap := make(map[string]*spec.Index, 27)
 	resp := make([]*spec.Index, 0, 27)
 	for _, folder := range folders {
-		i := lowerUDecOrHash(folder.IndexRightPath())
-		index, ok := indexMap[i]
-		if !ok {
-			index = &spec.Index{
-				Name:    i,
+		key := lowerUDecOrHash(folder.IndexRightPath())
+		if _, ok := indexMap[key]; !ok {
+			indexMap[key] = &spec.Index{
+				Name:    key,
 				Artists: []*spec.Artist{},
 			}
-			indexMap[i] = index
-			resp = append(resp, index)
+			resp = append(resp, indexMap[key])
 		}
-		index.Artists = append(index.Artists,
+		indexMap[key].Artists = append(indexMap[key].Artists,
 			spec.NewArtistByFolder(folder))
 	}
 	sub := spec.NewResponse()
@@ -137,6 +144,10 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 	default:
 		return spec.NewError(10, "unknown value `%s` for parameter 'type'", v)
 	}
+
+	if m, _ := params.Get("musicFolderId"); m != "" {
+		q = q.Where("root_dir=?", m)
+	}
 	var folders []*db.Album
 	// TODO: think about removing this extra join to count number
 	// of children. it might make sense to store that in the db
@@ -166,50 +177,65 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide a `query` parameter")
 	}
 	query = fmt.Sprintf("%%%s%%", strings.TrimSuffix(query, "*"))
+
 	results := &spec.SearchResultTwo{}
+
 	// search "artists"
-	var artists []*db.Album
-	c.DB.
-		Where(`
-			parent_id=1
-			AND (	right_path LIKE ? OR
-					right_path_u_dec LIKE ?	)`,
-			query, query).
-		Offset(params.GetOrInt("artistOffset", 0)).
-		Limit(params.GetOrInt("artistCount", 20)).
-		Find(&artists)
-	for _, a := range artists {
-		results.Artists = append(results.Artists,
-			spec.NewDirectoryByFolder(a, nil))
+	rootQ := c.DB.
+		Select("id").
+		Model(&db.Album{}).
+		Where("parent_id IS NULL")
+	if m, _ := params.Get("musicFolderId"); m != "" {
+		rootQ = rootQ.Where("root_dir=?", m)
 	}
+
+	var artists []*db.Album
+	q := c.DB.
+		Where(`parent_id IN ? AND (right_path LIKE ? OR right_path_u_dec LIKE ?)`, rootQ.SubQuery(), query, query).
+		Offset(params.GetOrInt("artistOffset", 0)).
+		Limit(params.GetOrInt("artistCount", 20))
+	if err := q.Find(&artists).Error; err != nil {
+		return spec.NewError(0, "find artists: %v", err)
+	}
+	for _, a := range artists {
+		results.Artists = append(results.Artists, spec.NewDirectoryByFolder(a, nil))
+	}
+
 	// search "albums"
 	var albums []*db.Album
-	c.DB.
-		Where(`
-			tag_artist_id IS NOT NULL
-			AND (	right_path LIKE ? OR
-					right_path_u_dec LIKE ?	)`,
-			query, query).
+	q = c.DB.
+		Where(`tag_artist_id IS NOT NULL AND (right_path LIKE ? OR right_path_u_dec LIKE ?)`, query, query).
 		Offset(params.GetOrInt("albumOffset", 0)).
-		Limit(params.GetOrInt("albumCount", 20)).
-		Find(&albums)
+		Limit(params.GetOrInt("albumCount", 20))
+	if m, _ := params.Get("musicFolderId"); m != "" {
+		q = q.Where("root_dir=?", m)
+	}
+	if err := q.Find(&albums).Error; err != nil {
+		return spec.NewError(0, "find albums: %v", err)
+	}
 	for _, a := range albums {
 		results.Albums = append(results.Albums, spec.NewTCAlbumByFolder(a))
 	}
+
 	// search tracks
 	var tracks []*db.Track
-	c.DB.
+	q = c.DB.
 		Preload("Album").
-		Where("filename LIKE ? OR filename_u_dec LIKE ?",
-			query, query).
+		Where("filename LIKE ? OR filename_u_dec LIKE ?", query, query).
 		Offset(params.GetOrInt("songOffset", 0)).
-		Limit(params.GetOrInt("songCount", 20)).
-		Find(&tracks)
-	for _, t := range tracks {
-		results.Tracks = append(results.Tracks,
-			spec.NewTCTrackByFolder(t, t.Album))
+		Limit(params.GetOrInt("songCount", 20))
+	if m, _ := params.Get("musicFolderId"); m != "" {
+		q = q.
+			Joins("JOIN albums ON albums.id=tracks.album_id").
+			Where("albums.root_dir=?", m)
 	}
-	//
+	if err := q.Find(&tracks).Error; err != nil {
+		return spec.NewError(0, "find tracks: %v", err)
+	}
+	for _, t := range tracks {
+		results.Tracks = append(results.Tracks, spec.NewTCTrackByFolder(t, t.Album))
+	}
+
 	sub := spec.NewResponse()
 	sub.SearchResultTwo = results
 	return sub

@@ -139,10 +139,7 @@ func (c *Controller) ServeChangeOwnPasswordDo(r *http.Request) *Response {
 func (c *Controller) ServeLinkLastFMDo(r *http.Request) *Response {
 	token := r.URL.Query().Get("token")
 	if token == "" {
-		return &Response{
-			err:  "please provide a token",
-			code: 400,
-		}
+		return &Response{code: 400, err: "please provide a token"}
 	}
 	apiKey, err := c.DB.GetSetting("lastfm_api_key")
 	if err != nil {
@@ -199,17 +196,11 @@ func (c *Controller) ServeUnlinkListenBrainzDo(r *http.Request) *Response {
 func (c *Controller) ServeChangeUsername(r *http.Request) *Response {
 	username := r.URL.Query().Get("user")
 	if username == "" {
-		return &Response{
-			err:  "please provide a username",
-			code: 400,
-		}
+		return &Response{code: 400, err: "please provide a username"}
 	}
 	user := c.DB.GetUserByName(username)
 	if user == nil {
-		return &Response{
-			err:  "couldn't find a user with that name",
-			code: 400,
-		}
+		return &Response{code: 400, err: "couldn't find a user with that name"}
 	}
 	data := &templateData{}
 	data.SelectedUser = user
@@ -237,17 +228,11 @@ func (c *Controller) ServeChangeUsernameDo(r *http.Request) *Response {
 func (c *Controller) ServeChangePassword(r *http.Request) *Response {
 	username := r.URL.Query().Get("user")
 	if username == "" {
-		return &Response{
-			err:  "please provide a username",
-			code: 400,
-		}
+		return &Response{code: 400, err: "please provide a username"}
 	}
 	user := c.DB.GetUserByName(username)
 	if user == nil {
-		return &Response{
-			err:  "couldn't find a user with that name",
-			code: 400,
-		}
+		return &Response{code: 400, err: "couldn't find a user with that name"}
 	}
 	data := &templateData{}
 	data.SelectedUser = user
@@ -276,17 +261,11 @@ func (c *Controller) ServeChangePasswordDo(r *http.Request) *Response {
 func (c *Controller) ServeDeleteUser(r *http.Request) *Response {
 	username := r.URL.Query().Get("user")
 	if username == "" {
-		return &Response{
-			err:  "please provide a username",
-			code: 400,
-		}
+		return &Response{code: 400, err: "please provide a username"}
 	}
 	user := c.DB.GetUserByName(username)
 	if user == nil {
-		return &Response{
-			err:  "couldn't find a user with that name",
-			code: 400,
-		}
+		return &Response{code: 400, err: "couldn't find a user with that name"}
 	}
 	data := &templateData{}
 	data.SelectedUser = user
@@ -421,10 +400,7 @@ func (c *Controller) ServeDeleteTranscodePrefDo(r *http.Request) *Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	client := r.URL.Query().Get("client")
 	if client == "" {
-		return &Response{
-			err:  "please provide a client",
-			code: 400,
-		}
+		return &Response{code: 400, err: "please provide a client"}
 	}
 	c.DB.
 		Where("user_id=? AND client=?", user.ID, client).
@@ -459,16 +435,10 @@ func (c *Controller) ServePodcastAddDo(r *http.Request) *Response {
 func (c *Controller) ServePodcastDownloadDo(r *http.Request) *Response {
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil {
-		return &Response{
-			err:  "please provide a valid podcast id",
-			code: 400,
-		}
+		return &Response{code: 400, err: "please provide a valid podcast id"}
 	}
 	if err := c.Podcasts.DownloadPodcastAll(id); err != nil {
-		return &Response{
-			err:  "please provide a valid podcast id",
-			code: 400,
-		}
+		return &Response{code: 400, err: "please provide a valid podcast id"}
 	}
 	return &Response{
 		redirect: "/admin/home",
@@ -479,10 +449,7 @@ func (c *Controller) ServePodcastDownloadDo(r *http.Request) *Response {
 func (c *Controller) ServePodcastUpdateDo(r *http.Request) *Response {
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil {
-		return &Response{
-			err:  "please provide a valid podcast id",
-			code: 400,
-		}
+		return &Response{code: 400, err: "please provide a valid podcast id"}
 	}
 	setting := db.PodcastAutoDownload(r.FormValue("setting"))
 	var message string
@@ -492,10 +459,7 @@ func (c *Controller) ServePodcastUpdateDo(r *http.Request) *Response {
 	case db.PodcastAutoDownloadNone:
 		message = "future podcast episodes will not be downloaded"
 	default:
-		return &Response{
-			err:  "please provide a valid podcast download type",
-			code: 400,
-		}
+		return &Response{code: 400, err: "please provide a valid podcast download type"}
 	}
 	if err := c.Podcasts.SetAutoDownload(id, setting); err != nil {
 		return &Response{
@@ -513,16 +477,10 @@ func (c *Controller) ServePodcastDeleteDo(r *http.Request) *Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil {
-		return &Response{
-			err:  "please provide a valid podcast id",
-			code: 400,
-		}
+		return &Response{code: 400, err: "please provide a valid podcast id"}
 	}
 	if err := c.Podcasts.DeletePodcast(user.ID, id); err != nil {
-		return &Response{
-			err:  "please provide a valid podcast id",
-			code: 400,
-		}
+		return &Response{code: 400, err: "please provide a valid podcast id"}
 	}
 	return &Response{
 		redirect: "/admin/home",

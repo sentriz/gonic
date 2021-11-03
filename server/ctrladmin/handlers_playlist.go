@@ -18,16 +18,16 @@ var (
 	errPlaylistNoMatch = errors.New("couldn't match track")
 )
 
-func playlistParseLine(c *Controller, path string) (int, error) {
-	if strings.HasPrefix(path, "#") || strings.TrimSpace(path) == "" {
+func playlistParseLine(c *Controller, absPath string) (int, error) {
+	if strings.HasPrefix(absPath, "#") || strings.TrimSpace(absPath) == "" {
 		return 0, nil
 	}
 	var track db.Track
 	query := c.DB.Raw(`
 		SELECT tracks.id FROM TRACKS
 		JOIN albums ON tracks.album_id=albums.id
-		WHERE (? || '/' || albums.left_path || albums.right_path || '/' || tracks.filename)=?`,
-		c.MusicPath, path)
+		WHERE (albums.root_dir || '/' || albums.left_path || albums.right_path || '/' || tracks.filename)=?`,
+		absPath)
 	err := query.First(&track).Error
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):
@@ -95,10 +95,7 @@ func (c *Controller) ServeUploadPlaylist(r *http.Request) *Response {
 
 func (c *Controller) ServeUploadPlaylistDo(r *http.Request) *Response {
 	if err := r.ParseMultipartForm((1 << 10) * 24); err != nil {
-		return &Response{
-			err:  "couldn't parse mutlipart",
-			code: 500,
-		}
+		return &Response{code: 500, err: "couldn't parse mutlipart"}
 	}
 	user := r.Context().Value(CtxUser).(*db.User)
 	var playlistCount int
@@ -123,10 +120,7 @@ func (c *Controller) ServeDeletePlaylistDo(r *http.Request) *Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil {
-		return &Response{
-			err:  "please provide a valid id",
-			code: 400,
-		}
+		return &Response{code: 400, err: "please provide a valid id"}
 	}
 	c.DB.
 		Where("user_id=? AND id=?", user.ID, id).

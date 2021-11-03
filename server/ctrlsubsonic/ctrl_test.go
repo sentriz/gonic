@@ -55,15 +55,14 @@ func makeHTTPMock(query url.Values) (*httptest.ResponseRecorder, *http.Request) 
 func runQueryCases(t *testing.T, contr *Controller, h handlerSubsonic, cases []*queryCase) {
 	t.Helper()
 	for _, qc := range cases {
-		qc := qc // pin
 		t.Run(qc.expectPath, func(t *testing.T) {
-			t.Parallel()
 			rr, req := makeHTTPMock(qc.params)
 			contr.H(h).ServeHTTP(rr, req)
 			body := rr.Body.String()
 			if status := rr.Code; status != http.StatusOK {
 				t.Fatalf("didn't give a 200\n%s", body)
 			}
+
 			goldenPath := makeGoldenPath(t.Name())
 			goldenRegen := os.Getenv("GONIC_REGEN")
 			if goldenRegen == "*" || (goldenRegen != "" && strings.HasPrefix(t.Name(), goldenRegen)) {
@@ -86,11 +85,10 @@ func runQueryCases(t *testing.T, contr *Controller, h handlerSubsonic, cases []*
 				diffOpts = append(diffOpts, jd.SET)
 			}
 			diff := expected.Diff(actual, diffOpts...)
-			// pass or fail
-			if len(diff) == 0 {
-				return
+
+			if len(diff) > 0 {
+				t.Errorf("\u001b[31;1mdiffering json\u001b[0m\n%s", diff.Render())
 			}
-			t.Errorf("\u001b[31;1mdiffering json\u001b[0m\n%s", diff.Render())
 		})
 	}
 }

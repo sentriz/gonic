@@ -2,16 +2,19 @@ package ctrlsubsonic
 
 import (
 	"net/url"
+	"path/filepath"
 	"testing"
 )
 
 func TestGetArtists(t *testing.T) {
 	t.Parallel()
-	contr, m := makeController(t)
+	contr, m := makeControllerRoots(t, []string{"m-0", "m-1"})
 	defer m.CleanUp()
 
 	runQueryCases(t, contr, contr.ServeGetArtists, []*queryCase{
 		{url.Values{}, "no_args", false},
+		{url.Values{"musicFolderId": {filepath.Join(m.TmpDir(), "m-0")}}, "with_music_folder_1", false},
+		{url.Values{"musicFolderId": {filepath.Join(m.TmpDir(), "m-1")}}, "with_music_folder_2", false},
 	})
 }
 

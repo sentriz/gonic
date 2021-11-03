@@ -11,11 +11,8 @@
           "name": "a",
           "artist": [
             { "id": "al-1", "name": "artist-0", "albumCount": 3 },
-            { "id": "al-14", "name": "artist-0", "albumCount": 3 },
             { "id": "al-6", "name": "artist-1", "albumCount": 3 },
-            { "id": "al-19", "name": "artist-1", "albumCount": 3 },
-            { "id": "al-10", "name": "artist-2", "albumCount": 3 },
-            { "id": "al-23", "name": "artist-2", "albumCount": 3 }
+            { "id": "al-10", "name": "artist-2", "albumCount": 3 }
           ]
         }
       ]

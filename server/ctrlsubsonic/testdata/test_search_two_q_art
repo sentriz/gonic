@@ -3,6 +3,12 @@
     "status": "ok",
     "version": "1.15.0",
     "type": "gonic",
-    "searchResult2": {}
+    "searchResult2": {
+      "artist": [
+        { "id": "al-1", "parent": "al-5", "name": "artist-0" },
+        { "id": "al-6", "parent": "al-5", "name": "artist-1" },
+        { "id": "al-10", "parent": "al-5", "name": "artist-2" }
+      ]
+    }
   }
 }

@@ -74,10 +74,10 @@ var (
 	errCoverEmpty    = errors.New("no cover found for that folder")
 )
 
-func coverGetPath(dbc *db.DB, musicPath, podcastPath string, id specid.ID) (string, error) {
+func coverGetPath(dbc *db.DB, podcastPath string, id specid.ID) (string, error) {
 	switch id.Type {
 	case specid.Album:
-		return coverGetPathAlbum(dbc, musicPath, id.Value)
+		return coverGetPathAlbum(dbc, id.Value)
 	case specid.Podcast:
 		return coverGetPathPodcast(dbc, podcastPath, id.Value)
 	case specid.PodcastEpisode:
@@ -87,10 +87,11 @@ func coverGetPath(dbc *db.DB, musicPath, podcastPath string, id specid.ID) (stri
 	}
 }
 
-func coverGetPathAlbum(dbc *db.DB, musicPath string, id int) (string, error) {
+func coverGetPathAlbum(dbc *db.DB, id int) (string, error) {
 	folder := &db.Album{}
 	err := dbc.DB.
-		Select("id, left_path, right_path, cover").
+		Preload("Parent").
+		Select("id, root_dir, left_path, right_path, cover").
 		First(folder, id).
 		Error
 	if err != nil {
@@ -100,7 +101,7 @@ func coverGetPathAlbum(dbc *db.DB, musicPath string, id int) (string, error) {
 		return "", errCoverEmpty
 	}
 	return path.Join(
-		musicPath,
+		folder.RootDir,
 		folder.LeftPath,
 		folder.RightPath,
 		folder.Cover,
@@ -201,7 +202,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	case specid.Track:
 		track, _ := streamGetTrack(c.DB, id.Value)
 		audioFile = track
-		audioPath = path.Join(c.MusicPath, track.RelPath())
+		audioPath = path.Join(track.AbsPath())
 		if err != nil {
 			return spec.NewError(70, "track with id `%s` was not found", id)
 		}
@@ -278,7 +279,7 @@ func (c *Controller) ServeDownload(w http.ResponseWriter, r *http.Request) *spec
 	case specid.Track:
 		track, _ := streamGetTrack(c.DB, id.Value)
 		audioFile = track
-		filePath = path.Join(c.MusicPath, track.RelPath())
+		filePath = track.AbsPath()
 		if err != nil {
 			return spec.NewError(70, "track with id `%s` was not found", id)
 		}
