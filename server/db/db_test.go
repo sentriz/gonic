@@ -1,15 +1,15 @@
 package db
 
 import (
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
 	"testing"
 
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"github.com/matryer/is"
 )
-
-var testDB *DB
 
 func randKey() string {
 	letters := []rune("abcdef0123456789")
@@ -22,27 +22,31 @@ func randKey() string {
 
 func TestGetSetting(t *testing.T) {
 	key := randKey()
-	// new key
-	expected := "hello"
-	testDB.SetSetting(key, expected)
-	actual := testDB.GetSetting(key)
-	if actual != expected {
-		t.Errorf("expected %q, got %q", expected, actual)
+	value := "howdy"
+
+	is := is.New(t)
+
+	testDB, err := NewMock()
+	if err != nil {
+		t.Fatalf("error creating db: %v", err)
 	}
-	// existing key
-	expected = "howdy"
-	testDB.SetSetting(key, expected)
-	actual = testDB.GetSetting(key)
-	if actual != expected {
-		t.Errorf("expected %q, got %q", expected, actual)
+	if err := testDB.Migrate(MigrationContext{}); err != nil {
+		t.Fatalf("error migrating db: %v", err)
 	}
+
+	is.NoErr(testDB.SetSetting(key, value))
+
+	actual, err := testDB.GetSetting(key)
+	is.NoErr(err)
+	is.Equal(actual, value)
+
+	is.NoErr(testDB.SetSetting(key, value))
+	actual, err = testDB.GetSetting(key)
+	is.NoErr(err)
+	is.Equal(actual, value)
 }
 
 func TestMain(m *testing.M) {
-	var err error
-	testDB, err = NewMock()
-	if err != nil {
-		log.Fatalf("error opening database: %v\n", err)
-	}
+	log.SetOutput(ioutil.Discard)
 	os.Exit(m.Run())
 }

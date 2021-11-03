@@ -27,7 +27,7 @@ func firstExisting(or string, strings ...string) string {
 
 func doScan(scanner *scanner.Scanner, opts scanner.ScanOptions) {
 	go func() {
-		if err := scanner.Start(opts); err != nil {
+		if err := scanner.ScanAndClean(opts); err != nil {
 			log.Printf("error while scanning: %v\n", err)
 		}
 	}()
@@ -43,11 +43,11 @@ func (c *Controller) ServeLogin(r *http.Request) *Response {
 
 func (c *Controller) ServeHome(r *http.Request) *Response {
 	data := &templateData{}
-	// ** begin stats box
-	c.DB.Table("artists").Count(&data.ArtistCount)
-	c.DB.Table("albums").Count(&data.AlbumCount)
+	// stats box
+	c.DB.Model(&db.Artist{}).Count(&data.ArtistCount)
+	c.DB.Model(&db.Album{}).Count(&data.AlbumCount)
 	c.DB.Table("tracks").Count(&data.TrackCount)
-	// ** begin lastfm box
+	// lastfm box
 	scheme := firstExisting(
 		"http", // fallback
 		r.Header.Get("X-Forwarded-Proto"),
@@ -60,36 +60,37 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 		r.Host,
 	)
 	data.RequestRoot = fmt.Sprintf("%s://%s", scheme, host)
-	data.CurrentLastFMAPIKey = c.DB.GetSetting("lastfm_api_key")
+	data.CurrentLastFMAPIKey, _ = c.DB.GetSetting("lastfm_api_key")
 	data.DefaultListenBrainzURL = listenbrainz.BaseURL
-	// ** begin users box
+	// users box
 	c.DB.Find(&data.AllUsers)
-	// ** begin recent folders box
+	// recent folders box
 	c.DB.
 		Where("tag_artist_id IS NOT NULL").
 		Order("modified_at DESC").
 		Limit(8).
 		Find(&data.RecentFolders)
-	data.IsScanning = scanner.IsScanning()
-	if tStr := c.DB.GetSetting("last_scan_time"); tStr != "" {
+	data.IsScanning = c.Scanner.IsScanning()
+	if tStr, err := c.DB.GetSetting("last_scan_time"); err != nil {
 		i, _ := strconv.ParseInt(tStr, 10, 64)
 		data.LastScanTime = time.Unix(i, 0)
 	}
-	//
+
 	user := r.Context().Value(CtxUser).(*db.User)
-	// ** begin playlists box
+
+	// playlists box
 	c.DB.
 		Where("user_id=?", user.ID).
 		Limit(20).
 		Find(&data.Playlists)
-	// ** begin transcoding box
+	// transcoding box
 	c.DB.
 		Where("user_id=?", user.ID).
 		Find(&data.TranscodePreferences)
 	for profile := range encode.Profiles() {
 		data.TranscodeProfiles = append(data.TranscodeProfiles, profile)
 	}
-	// ** begin podcasts box
+	// podcasts box
 	c.DB.Find(&data.Podcasts)
 	//
 	return &Response{
@@ -143,11 +144,15 @@ func (c *Controller) ServeLinkLastFMDo(r *http.Request) *Response {
 			code: 400,
 		}
 	}
-	sessionKey, err := lastfm.GetSession(
-		c.DB.GetSetting("lastfm_api_key"),
-		c.DB.GetSetting("lastfm_secret"),
-		token,
-	)
+	apiKey, err := c.DB.GetSetting("lastfm_api_key")
+	if err != nil {
+		return &Response{code: 500, err: fmt.Sprintf("couldn't get api key: %v", err)}
+	}
+	secret, err := c.DB.GetSetting("lastfm_secret")
+	if err != nil {
+		return &Response{code: 500, err: fmt.Sprintf("couldn't get secret: %v", err)}
+	}
+	sessionKey, err := lastfm.GetSession(apiKey, secret, token)
 	if err != nil {
 		return &Response{
 			redirect: "/admin/home",
@@ -341,8 +346,13 @@ func (c *Controller) ServeCreateUserDo(r *http.Request) *Response {
 
 func (c *Controller) ServeUpdateLastFMAPIKey(r *http.Request) *Response {
 	data := &templateData{}
-	data.CurrentLastFMAPIKey = c.DB.GetSetting("lastfm_api_key")
-	data.CurrentLastFMAPISecret = c.DB.GetSetting("lastfm_secret")
+	var err error
+	if data.CurrentLastFMAPIKey, err = c.DB.GetSetting("lastfm_api_key"); err != nil {
+		return &Response{code: 500, err: fmt.Sprintf("couldn't get api key: %v", err)}
+	}
+	if data.CurrentLastFMAPISecret, err = c.DB.GetSetting("lastfm_secret"); err != nil {
+		return &Response{code: 500, err: fmt.Sprintf("couldn't get secret: %v", err)}
+	}
 	return &Response{
 		template: "update_lastfm_api_key.tmpl",
 		data:     data,
@@ -358,8 +368,12 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(r *http.Request) *Response {
 			flashW:   []string{err.Error()},
 		}
 	}
-	c.DB.SetSetting("lastfm_api_key", apiKey)
-	c.DB.SetSetting("lastfm_secret", secret)
+	if err := c.DB.SetSetting("lastfm_api_key", apiKey); err != nil {
+		return &Response{code: 500, err: fmt.Sprintf("couldn't set api key: %v", err)}
+	}
+	if err := c.DB.SetSetting("lastfm_secret", secret); err != nil {
+		return &Response{code: 500, err: fmt.Sprintf("couldn't set secret: %v", err)}
+	}
 	return &Response{redirect: "/admin/home"}
 }
 

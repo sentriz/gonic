@@ -8,68 +8,11 @@
       "ignoredArticles": "",
       "index": [
         {
-          "name": "#",
-          "artist": [
-            {
-              "id": "al-7",
-              "name": "13th Floor Lowervators",
-              "albumCount": 2
-            },
-            {
-              "id": "al-10",
-              "name": "___Anika",
-              "albumCount": 2
-            }
-          ]
-        },
-        {
           "name": "a",
           "artist": [
-            {
-              "id": "al-4",
-              "name": "A Certain Ratio",
-              "albumCount": 2
-            }
-          ]
-        },
-        {
-          "name": "c",
-          "artist": [
-            {
-              "id": "al-20",
-              "name": "Captain Beefheart",
-              "albumCount": 1
-            }
-          ]
-        },
-        {
-          "name": "j",
-          "artist": [
-            {
-              "id": "al-2",
-              "name": "Jah Wobble, The Edge, Holger Czukay",
-              "albumCount": 1
-            }
-          ]
-        },
-        {
-          "name": "s",
-          "artist": [
-            {
-              "id": "al-15",
-              "name": "Swell Maps",
-              "albumCount": 2
-            }
-          ]
-        },
-        {
-          "name": "t",
-          "artist": [
-            {
-              "id": "al-18",
-              "name": "Ten Years After",
-              "albumCount": 1
-            }
+            { "id": "al-2", "name": "album-0", "albumCount": 0 },
+            { "id": "al-3", "name": "album-1", "albumCount": 0 },
+            { "id": "al-4", "name": "album-2", "albumCount": 0 }
           ]
         }
       ]

@@ -5,33 +5,47 @@
     "type": "gonic",
     "artist": {
       "id": "ar-2",
-      "name": "A Certain Ratio",
-      "albumCount": 2,
+      "name": "artist-1",
+      "albumCount": 3,
       "album": [
         {
-          "id": "al-5",
-          "coverArt": "al-5",
+          "id": "al-7",
+          "coverArt": "al-7",
           "artistId": "ar-2",
-          "artist": "A Certain Ratio",
+          "artist": "artist-1",
+          "created": "2019-11-30T00:00:00Z",
           "title": "",
           "album": "",
-          "name": "The Graveyard and the Ballroom",
-          "songCount": 14,
-          "duration": 2738,
-          "created": "2019-06-05T17:46:37.675917974+01:00",
-          "year": 1994
+          "name": "album-0",
+          "songCount": 3,
+          "duration": 300,
+          "year": 2021
         },
         {
-          "id": "al-6",
+          "id": "al-8",
+          "coverArt": "al-8",
           "artistId": "ar-2",
-          "artist": "A Certain Ratio",
+          "artist": "artist-1",
+          "created": "2019-11-30T00:00:00Z",
           "title": "",
           "album": "",
-          "name": "To Each...",
-          "songCount": 9,
-          "duration": 2801,
-          "created": "2019-05-23T15:12:02.921473302+01:00",
-          "year": 1981
+          "name": "album-1",
+          "songCount": 3,
+          "duration": 300,
+          "year": 2021
+        },
+        {
+          "id": "al-9",
+          "coverArt": "al-9",
+          "artistId": "ar-2",
+          "artist": "artist-1",
+          "created": "2019-11-30T00:00:00Z",
+          "title": "",
+          "album": "",
+          "name": "album-2",
+          "songCount": 3,
+          "duration": 300,
+          "year": 2021
         }
       ]
     }

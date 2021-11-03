@@ -1,39 +1,19 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
 	"os"
 	"strings"
 
-	"github.com/gorilla/securecookie"
 	"github.com/jinzhu/gorm"
 
 	"gopkg.in/gormigrate.v1"
 )
 
-// wrapMigrations wraps a list of migrations to add logging and transactions
-func wrapMigrations(migrs ...gormigrate.Migration) []*gormigrate.Migration {
-	log := func(i int, mig gormigrate.MigrateFunc, name string) gormigrate.MigrateFunc {
-		return func(db *gorm.DB) error {
-			// print that we're on the ith out of n migrations
-			defer log.Printf("migration (%d/%d) '%s' finished", i+1, len(migrs), name)
-			return db.Transaction(mig)
-		}
-	}
-	ret := make([]*gormigrate.Migration, 0, len(migrs))
-	for i, mig := range migrs {
-		ret = append(ret, &gormigrate.Migration{
-			ID:       mig.ID,
-			Rollback: mig.Rollback,
-			Migrate:  log(i, mig.Migrate, mig.ID),
-		})
-	}
-	return ret
-}
-
-func defaultOptions() url.Values {
+func DefaultOptions() url.Values {
 	return url.Values{
 		// with this, multiple connections share a single data and schema cache.
 		// see https://www.sqlite.org/sharedcache.html
@@ -46,17 +26,23 @@ func defaultOptions() url.Values {
 	}
 }
 
+func mockOptions() url.Values {
+	return url.Values{
+		"_foreign_keys": {"true"},
+	}
+}
+
 type DB struct {
 	*gorm.DB
 }
 
-func New(path string) (*DB, error) {
+func New(path string, options url.Values) (*DB, error) {
 	// https://github.com/mattn/go-sqlite3#connection-string
 	url := url.URL{
 		Scheme: "file",
 		Opaque: path,
 	}
-	url.RawQuery = defaultOptions().Encode()
+	url.RawQuery = options.Encode()
 	db, err := gorm.Open("sqlite3", url.String())
 	if err != nil {
 		return nil, fmt.Errorf("with gorm: %w", err)
@@ -91,34 +77,29 @@ func New(path string) (*DB, error) {
 }
 
 func NewMock() (*DB, error) {
-	return New(":memory:")
+	return New(":memory:", mockOptions())
 }
 
-func (db *DB) GetSetting(key string) string {
+func (db *DB) GetSetting(key string) (string, error) {
 	setting := &Setting{}
-	db.
-		Where("key=?", key).
-		First(setting)
-	return setting.Value
+	if err := db.Where("key=?", key).First(setting).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return "", err
+	}
+	return setting.Value, nil
 }
 
-func (db *DB) SetSetting(key, value string) {
-	db.
+func (db *DB) SetSetting(key, value string) error {
+	return db.
 		Where(Setting{Key: key}).
 		Assign(Setting{Value: value}).
-		FirstOrCreate(&Setting{})
-}
-
-func (db *DB) GetOrCreateKey(key string) string {
-	value := db.GetSetting(key)
-	if value == "" {
-		value = string(securecookie.GenerateRandomKey(32))
-		db.SetSetting(key, value)
-	}
-	return value
+		FirstOrCreate(&Setting{}).
+		Error
 }
 
 func (db *DB) InsertBulkLeftMany(table string, head []string, left int, col []int) error {
+	if len(col) == 0 {
+		return nil
+	}
 	var rows []string
 	var values []interface{}
 	for _, c := range col {
@@ -139,7 +120,7 @@ func (db *DB) GetUserByID(id int) *User {
 		Where("id=?", id).
 		First(user).
 		Error
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil
 	}
 	return user
@@ -151,7 +132,7 @@ func (db *DB) GetUserByName(name string) *User {
 		Where("name=?", name).
 		First(user).
 		Error
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil
 	}
 	return user
@@ -164,6 +145,9 @@ func (db *DB) Begin() *DB {
 type ChunkFunc func(*gorm.DB, []int64) error
 
 func (db *DB) TransactionChunked(data []int64, cb ChunkFunc) error {
+	if len(data) == 0 {
+		return nil
+	}
 	// https://sqlite.org/limits.html
 	const size = 999
 	return db.Transaction(func(tx *gorm.DB) error {

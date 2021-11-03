@@ -1,6 +1,7 @@
 package ctrlsubsonic
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/jinzhu/gorm"
@@ -18,7 +19,7 @@ func (c *Controller) ServeGetBookmarks(r *http.Request) *spec.Response {
 		Where("user_id=?", user.ID).
 		Find(&bookmarks).
 		Error
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewResponse()
 	}
 	sub := spec.NewResponse()

@@ -61,7 +61,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	childrenObj := []*spec.TrackChild{}
 	folder := &db.Album{}
 	c.DB.First(folder, id.Value)
-	// ** begin start looking for child childFolders in the current dir
+	// start looking for child childFolders in the current dir
 	var childFolders []*db.Album
 	c.DB.
 		Where("parent_id=?", id.Value).
@@ -70,7 +70,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	for _, c := range childFolders {
 		childrenObj = append(childrenObj, spec.NewTCAlbumByFolder(c))
 	}
-	// ** begin start looking for child childTracks in the current dir
+	// start looking for child childTracks in the current dir
 	var childTracks []*db.Track
 	c.DB.
 		Where("album_id=?", id.Value).
@@ -86,7 +86,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 		}
 		childrenObj = append(childrenObj, toAppend)
 	}
-	// ** begin respond section
+	// respond section
 	sub := spec.NewResponse()
 	sub.Directory = spec.NewDirectoryByFolder(folder, childrenObj)
 	return sub
@@ -167,7 +167,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	}
 	query = fmt.Sprintf("%%%s%%", strings.TrimSuffix(query, "*"))
 	results := &spec.SearchResultTwo{}
-	// ** begin search "artists"
+	// search "artists"
 	var artists []*db.Album
 	c.DB.
 		Where(`
@@ -182,7 +182,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 		results.Artists = append(results.Artists,
 			spec.NewDirectoryByFolder(a, nil))
 	}
-	// ** begin search "albums"
+	// search "albums"
 	var albums []*db.Album
 	c.DB.
 		Where(`
@@ -196,7 +196,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	for _, a := range albums {
 		results.Albums = append(results.Albums, spec.NewTCAlbumByFolder(a))
 	}
-	// ** begin search tracks
+	// search tracks
 	var tracks []*db.Track
 	c.DB.
 		Preload("Album").

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/jinzhu/gorm"
@@ -31,20 +32,14 @@ func migrateInitSchema() gormigrate.Migration {
 	}
 }
 
-func migrateCreateInitUser() gormigrate.Migration {
-	return gormigrate.Migration{
-		ID: "202002192019",
-		Migrate: func(tx *gorm.DB) error {
-			const (
-				initUsername = "admin"
-				initPassword = "admin"
-			)
-			err := tx.
-				Where("name=?", initUsername).
-				First(&User{}).
-				Error
-			if !gorm.IsRecordNotFoundError(err) {
-				return nil
+func construct(ctx MigrationContext, id string, f func(*gorm.DB, MigrationContext) error) *gormigrate.Migration {
+	return &gormigrate.Migration{
+		ID: id,
+		Migrate: func(db *gorm.DB) error {
+			tx := db.Begin()
+			defer tx.Commit()
+			if err := f(tx, ctx); err != nil {
+				return fmt.Errorf("%q: %w", id, err)
 			}
 
 			return tx.Create(&User{

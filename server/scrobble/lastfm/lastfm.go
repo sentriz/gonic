@@ -146,8 +146,15 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 	if user.LastFMSession == "" {
 		return nil
 	}
-	apiKey := s.DB.GetSetting("lastfm_api_key")
-	secret := s.DB.GetSetting("lastfm_secret")
+	apiKey, err := s.DB.GetSetting("lastfm_api_key")
+	if err != nil {
+		return fmt.Errorf("get api key: %w", err)
+	}
+	secret, err := s.DB.GetSetting("lastfm_secret")
+	if err != nil {
+		return fmt.Errorf("get secret: %w", err)
+	}
+
 	// fetch user to get lastfm session
 	if user.LastFMSession == "" {
 		return fmt.Errorf("you don't have a last.fm session: %w", ErrLastFM)
@@ -169,7 +176,7 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 	params.Add("mbid", track.TagBrainzID)
 	params.Add("albumArtist", track.Artist.Name)
 	params.Add("api_sig", getParamSignature(params, secret))
-	_, err := makeRequest("POST", params)
+	_, err = makeRequest("POST", params)
 	return err
 }
 

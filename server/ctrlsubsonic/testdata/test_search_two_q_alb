@@ -1,0 +1,97 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "searchResult2": {
+      "artist": [
+        { "id": "al-2", "name": "album-0" },
+        { "id": "al-3", "name": "album-1" },
+        { "id": "al-4", "name": "album-2" }
+      ],
+      "album": [
+        {
+          "id": "al-2",
+          "coverArt": "al-2",
+          "created": "2019-11-30T00:00:00Z",
+          "isDir": true,
+          "isVideo": false,
+          "parent": "al-1",
+          "title": "album-0"
+        },
+        {
+          "id": "al-3",
+          "coverArt": "al-3",
+          "created": "2019-11-30T00:00:00Z",
+          "isDir": true,
+          "isVideo": false,
+          "parent": "al-1",
+          "title": "album-1"
+        },
+        {
+          "id": "al-4",
+          "coverArt": "al-4",
+          "created": "2019-11-30T00:00:00Z",
+          "isDir": true,
+          "isVideo": false,
+          "parent": "al-1",
+          "title": "album-2"
+        },
+        {
+          "id": "al-7",
+          "coverArt": "al-7",
+          "created": "2019-11-30T00:00:00Z",
+          "isDir": true,
+          "isVideo": false,
+          "parent": "al-6",
+          "title": "album-0"
+        },
+        {
+          "id": "al-8",
+          "coverArt": "al-8",
+          "created": "2019-11-30T00:00:00Z",
+          "isDir": true,
+          "isVideo": false,
+          "parent": "al-6",
+          "title": "album-1"
+        },
+        {
+          "id": "al-9",
+          "coverArt": "al-9",
+          "created": "2019-11-30T00:00:00Z",
+          "isDir": true,
+          "isVideo": false,
+          "parent": "al-6",
+          "title": "album-2"
+        },
+        {
+          "id": "al-11",
+          "coverArt": "al-11",
+          "created": "2019-11-30T00:00:00Z",
+          "isDir": true,
+          "isVideo": false,
+          "parent": "al-10",
+          "title": "album-0"
+        },
+        {
+          "id": "al-12",
+          "coverArt": "al-12",
+          "created": "2019-11-30T00:00:00Z",
+          "isDir": true,
+          "isVideo": false,
+          "parent": "al-10",
+          "title": "album-1"
+        },
+        {
+          "id": "al-13",
+          "coverArt": "al-13",
+          "created": "2019-11-30T00:00:00Z",
+          "isDir": true,
+          "isVideo": false,
+          "parent": "al-10",
+          "title": "album-2"
+        }
+      ]
+    }
+  }
+}

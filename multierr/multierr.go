@@ -5,11 +5,12 @@ import "strings"
 type Err []error
 
 func (me Err) Error() string {
-	var strs []string
+	var builder strings.Builder
 	for _, err := range me {
-		strs = append(strs, err.Error())
+		builder.WriteString("\n")
+		builder.WriteString(err.Error())
 	}
-	return strings.Join(strs, "\n")
+	return builder.String()
 }
 
 func (me Err) Len() int {

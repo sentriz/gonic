@@ -88,7 +88,7 @@ type Track struct {
 	Artist         *Artist
 	ArtistID       int      `gorm:"not null" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
 	Genres         []*Genre `gorm:"many2many:track_genres"`
-	Size           int      `gorm:"not null" sql:"default: null"`
+	Size           int      `sql:"default: null"`
 	Length         int      `sql:"default: null"`
 	Bitrate        int      `sql:"default: null"`
 	TagTitle       string   `sql:"default: null"`

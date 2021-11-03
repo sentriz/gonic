@@ -2,6 +2,7 @@ package ctrlsubsonic
 
 import (
 	"context"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -16,14 +17,12 @@ import (
 
 	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
-	"go.senan.xyz/gonic/server/db"
+	"go.senan.xyz/gonic/server/mockfs"
 )
 
 var (
-	testDataDir    = "testdata"
-	testCamelExpr  = regexp.MustCompile("([a-z0-9])([A-Z])")
-	testDBPath     = path.Join(testDataDir, "db")
-	testController *Controller
+	testDataDir   = "testdata"
+	testCamelExpr = regexp.MustCompile("([a-z0-9])([A-Z])")
 )
 
 type queryCase struct {
@@ -53,18 +52,26 @@ func makeHTTPMock(query url.Values) (*httptest.ResponseRecorder, *http.Request) 
 	return rr, req
 }
 
-func runQueryCases(t *testing.T, h handlerSubsonic, cases []*queryCase) {
+func runQueryCases(t *testing.T, contr *Controller, h handlerSubsonic, cases []*queryCase) {
+	t.Helper()
 	for _, qc := range cases {
 		qc := qc // pin
 		t.Run(qc.expectPath, func(t *testing.T) {
 			t.Parallel()
 			rr, req := makeHTTPMock(qc.params)
-			testController.H(h).ServeHTTP(rr, req)
+			contr.H(h).ServeHTTP(rr, req)
 			body := rr.Body.String()
 			if status := rr.Code; status != http.StatusOK {
 				t.Fatalf("didn't give a 200\n%s", body)
 			}
 			goldenPath := makeGoldenPath(t.Name())
+			goldenRegen := os.Getenv("GONIC_REGEN")
+			if goldenRegen == "*" || (goldenRegen != "" && strings.HasPrefix(t.Name(), goldenRegen)) {
+				_ = os.WriteFile(goldenPath, []byte(body), 0600)
+				t.Logf("golden file %q regenerated for %s", goldenPath, t.Name())
+				t.SkipNow()
+			}
+
 			// read case to differ with handler result
 			expected, err := jd.ReadJsonFile(goldenPath)
 			if err != nil {
@@ -88,13 +95,26 @@ func runQueryCases(t *testing.T, h handlerSubsonic, cases []*queryCase) {
 	}
 }
 
+func makeController(t *testing.T) (*Controller, *mockfs.MockFS)                  { return makec(t, []string{""}) }
+func makeControllerRoots(t *testing.T, r []string) (*Controller, *mockfs.MockFS) { return makec(t, r) }
+
+func makec(t *testing.T, roots []string) (*Controller, *mockfs.MockFS) {
+	t.Helper()
+
+	m := mockfs.NewWithDirs(t, roots)
+	for _, root := range roots {
+		m.AddItemsPrefixWithCovers(root)
+	}
+
+	m.ScanAndClean()
+	m.ResetDates()
+	m.LogAlbums()
+
+	base := &ctrlbase.Controller{DB: m.DB()}
+	return &Controller{Controller: base}, m
+}
+
 func TestMain(m *testing.M) {
-	db, err := db.New(testDBPath)
-	if err != nil {
-		log.Fatalf("error opening database: %v\n", err)
-	}
-	testController = &Controller{
-		Controller: &ctrlbase.Controller{DB: db},
-	}
+	log.SetOutput(ioutil.Discard)
 	os.Exit(m.Run())
 }

@@ -30,7 +30,7 @@ func playlistParseLine(c *Controller, path string) (int, error) {
 		c.MusicPath, path)
 	err := query.First(&track).Error
 	switch {
-	case gorm.IsRecordNotFoundError(err):
+	case errors.Is(err, gorm.ErrRecordNotFound):
 		return 0, fmt.Errorf("%v: %w", err, errPlaylistNoMatch)
 	case err != nil:
 		return 0, fmt.Errorf("while matching: %w", err)

@@ -5,21 +5,47 @@
     "type": "gonic",
     "artist": {
       "id": "ar-1",
-      "name": "Jah Wobble, The Edge & Holger Czukay",
-      "albumCount": 1,
+      "name": "artist-0",
+      "albumCount": 3,
       "album": [
+        {
+          "id": "al-2",
+          "coverArt": "al-2",
+          "artistId": "ar-1",
+          "artist": "artist-0",
+          "created": "2019-11-30T00:00:00Z",
+          "title": "",
+          "album": "",
+          "name": "album-0",
+          "songCount": 3,
+          "duration": 300,
+          "year": 2021
+        },
         {
           "id": "al-3",
           "coverArt": "al-3",
           "artistId": "ar-1",
-          "artist": "Jah Wobble, The Edge & Holger Czukay",
+          "artist": "artist-0",
+          "created": "2019-11-30T00:00:00Z",
           "title": "",
           "album": "",
-          "name": "Snake Charmer",
-          "songCount": 5,
-          "duration": 1871,
-          "created": "2019-05-16T22:10:52+01:00",
-          "year": 1983
+          "name": "album-1",
+          "songCount": 3,
+          "duration": 300,
+          "year": 2021
+        },
+        {
+          "id": "al-4",
+          "coverArt": "al-4",
+          "artistId": "ar-1",
+          "artist": "artist-0",
+          "created": "2019-11-30T00:00:00Z",
+          "title": "",
+          "album": "",
+          "name": "album-2",
+          "songCount": 3,
+          "duration": 300,
+          "year": 2021
         }
       ]
     }

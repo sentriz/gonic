@@ -86,7 +86,7 @@ func main() {
 		}
 	}
 
-	db, err := db.New(*confDBPath)
+	dbc, err := db.New(*confDBPath, db.DefaultOptions())
 	if err != nil {
 		log.Fatalf("error opening database: %v\n", err)
 	}
@@ -106,8 +106,7 @@ func main() {
 		JukeboxEnabled: *confJukeboxEnabled,
 	})
 	if err != nil {
-		log.Printf("error creating server: %v\n", err)
-		return
+		log.Panicf("error creating server: %v\n", err)
 	}
 
 	var g run.Group
@@ -123,6 +122,6 @@ func main() {
 	}
 
 	if err := g.Run(); err != nil {
-		log.Printf("error in job: %v", err)
+		log.Panicf("error in job: %v", err)
 	}
 }

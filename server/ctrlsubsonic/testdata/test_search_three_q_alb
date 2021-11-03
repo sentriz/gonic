@@ -3,8 +3,21 @@
     "status": "ok",
     "version": "1.15.0",
     "type": "gonic",
-    "albumList2": {
+    "searchResult3": {
       "album": [
+        {
+          "id": "al-2",
+          "coverArt": "al-2",
+          "artistId": "ar-1",
+          "artist": "artist-0",
+          "created": "2019-11-30T00:00:00Z",
+          "title": "",
+          "album": "",
+          "name": "album-0",
+          "songCount": 0,
+          "duration": 0,
+          "year": 2021
+        },
         {
           "id": "al-3",
           "coverArt": "al-3",
@@ -14,21 +27,8 @@
           "title": "",
           "album": "",
           "name": "album-1",
-          "songCount": 3,
-          "duration": 300,
-          "year": 2021
-        },
-        {
-          "id": "al-11",
-          "coverArt": "al-11",
-          "artistId": "ar-3",
-          "artist": "artist-2",
-          "created": "2019-11-30T00:00:00Z",
-          "title": "",
-          "album": "",
-          "name": "album-0",
-          "songCount": 3,
-          "duration": 300,
+          "songCount": 0,
+          "duration": 0,
           "year": 2021
         },
         {
@@ -40,60 +40,8 @@
           "title": "",
           "album": "",
           "name": "album-2",
-          "songCount": 3,
-          "duration": 300,
-          "year": 2021
-        },
-        {
-          "id": "al-9",
-          "coverArt": "al-9",
-          "artistId": "ar-2",
-          "artist": "artist-1",
-          "created": "2019-11-30T00:00:00Z",
-          "title": "",
-          "album": "",
-          "name": "album-2",
-          "songCount": 3,
-          "duration": 300,
-          "year": 2021
-        },
-        {
-          "id": "al-2",
-          "coverArt": "al-2",
-          "artistId": "ar-1",
-          "artist": "artist-0",
-          "created": "2019-11-30T00:00:00Z",
-          "title": "",
-          "album": "",
-          "name": "album-0",
-          "songCount": 3,
-          "duration": 300,
-          "year": 2021
-        },
-        {
-          "id": "al-13",
-          "coverArt": "al-13",
-          "artistId": "ar-3",
-          "artist": "artist-2",
-          "created": "2019-11-30T00:00:00Z",
-          "title": "",
-          "album": "",
-          "name": "album-2",
-          "songCount": 3,
-          "duration": 300,
-          "year": 2021
-        },
-        {
-          "id": "al-8",
-          "coverArt": "al-8",
-          "artistId": "ar-2",
-          "artist": "artist-1",
-          "created": "2019-11-30T00:00:00Z",
-          "title": "",
-          "album": "",
-          "name": "album-1",
-          "songCount": 3,
-          "duration": 300,
+          "songCount": 0,
+          "duration": 0,
           "year": 2021
         },
         {
@@ -105,8 +53,47 @@
           "title": "",
           "album": "",
           "name": "album-0",
-          "songCount": 3,
-          "duration": 300,
+          "songCount": 0,
+          "duration": 0,
+          "year": 2021
+        },
+        {
+          "id": "al-8",
+          "coverArt": "al-8",
+          "artistId": "ar-2",
+          "artist": "artist-1",
+          "created": "2019-11-30T00:00:00Z",
+          "title": "",
+          "album": "",
+          "name": "album-1",
+          "songCount": 0,
+          "duration": 0,
+          "year": 2021
+        },
+        {
+          "id": "al-9",
+          "coverArt": "al-9",
+          "artistId": "ar-2",
+          "artist": "artist-1",
+          "created": "2019-11-30T00:00:00Z",
+          "title": "",
+          "album": "",
+          "name": "album-2",
+          "songCount": 0,
+          "duration": 0,
+          "year": 2021
+        },
+        {
+          "id": "al-11",
+          "coverArt": "al-11",
+          "artistId": "ar-3",
+          "artist": "artist-2",
+          "created": "2019-11-30T00:00:00Z",
+          "title": "",
+          "album": "",
+          "name": "album-0",
+          "songCount": 0,
+          "duration": 0,
           "year": 2021
         },
         {
@@ -118,8 +105,21 @@
           "title": "",
           "album": "",
           "name": "album-1",
-          "songCount": 3,
-          "duration": 300,
+          "songCount": 0,
+          "duration": 0,
+          "year": 2021
+        },
+        {
+          "id": "al-13",
+          "coverArt": "al-13",
+          "artistId": "ar-3",
+          "artist": "artist-2",
+          "created": "2019-11-30T00:00:00Z",
+          "title": "",
+          "album": "",
+          "name": "album-2",
+          "songCount": 0,
+          "duration": 0,
           "year": 2021
         }
       ]

@@ -1,6 +1,7 @@
 package ctrlsubsonic
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -88,7 +89,7 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 		}).
 		First(album, id.Value).
 		Error
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewError(10, "couldn't find an album with that id")
 	}
 	sub := spec.NewResponse()
@@ -174,7 +175,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	query = fmt.Sprintf("%%%s%%",
 		strings.TrimSuffix(query, "*"))
 	results := &spec.SearchResultThree{}
-	// ** begin search "artists"
+	// search "artists"
 	var artists []*db.Artist
 	c.DB.
 		Where("name LIKE ? OR name_u_dec LIKE ?",
@@ -186,7 +187,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		results.Artists = append(results.Artists,
 			spec.NewArtistByTags(a))
 	}
-	// ** begin search "albums"
+	// search "albums"
 	var albums []*db.Album
 	c.DB.
 		Preload("TagArtist").
@@ -199,7 +200,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		results.Albums = append(results.Albums,
 			spec.NewAlbumByTags(a, a.TagArtist))
 	}
-	// ** begin search tracks
+	// search tracks
 	var tracks []*db.Track
 	c.DB.
 		Preload("Album").
@@ -223,7 +224,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	apiKey := c.DB.GetSetting("lastfm_api_key")
+	apiKey, _ := c.DB.GetSetting("lastfm_api_key")
 	if apiKey == "" {
 		sub := spec.NewResponse()
 		sub.ArtistInfoTwo = &spec.ArtistInfo{}
@@ -234,7 +235,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		Where("id=?", id.Value).
 		Find(artist).
 		Error
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewError(70, "artist with id `%s` not found", id)
 	}
 	info, err := lastfm.ArtistGetInfo(apiKey, artist)
@@ -271,7 +272,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 			Group("artists.id").
 			Find(artist).
 			Error
-		if gorm.IsRecordNotFoundError(err) && !inclNotPresent {
+		if errors.Is(err, gorm.ErrRecordNotFound) && !inclNotPresent {
 			continue
 		}
 		similar := &spec.SimilarArtist{

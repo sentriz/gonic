@@ -173,7 +173,7 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 	_, err = os.Stat(cachePath)
 	switch {
 	case os.IsNotExist(err):
-		coverPath, err := coverGetPath(c.DB, c.MusicPath, c.Podcasts.PodcastBasePath, id)
+		coverPath, err := coverGetPath(c.DB, c.PodcastsPath, id)
 		if err != nil {
 			return spec.NewError(10, "couldn't find cover `%s`: %v", id, err)
 		}
@@ -208,7 +208,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	case specid.PodcastEpisode:
 		podcast, err := streamGetPodcast(c.DB, id.Value)
 		audioFile = podcast
-		audioPath = path.Join(c.Podcasts.PodcastBasePath, podcast.Path)
+		audioPath = path.Join(c.PodcastsPath, podcast.Path)
 		if err != nil {
 			return spec.NewError(70, "podcast with id `%s` was not found", id)
 		}
@@ -285,7 +285,7 @@ func (c *Controller) ServeDownload(w http.ResponseWriter, r *http.Request) *spec
 	case specid.PodcastEpisode:
 		podcast, err := streamGetPodcast(c.DB, id.Value)
 		audioFile = podcast
-		filePath = path.Join(c.Podcasts.PodcastBasePath, podcast.Path)
+		filePath = path.Join(c.PodcastsPath, podcast.Path)
 		if err != nil {
 			return spec.NewError(70, "podcast with id `%s` was not found", id)
 		}

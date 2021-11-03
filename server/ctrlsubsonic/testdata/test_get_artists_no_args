@@ -7,68 +7,11 @@
       "ignoredArticles": "",
       "index": [
         {
-          "name": "#",
-          "artist": [
-            {
-              "id": "ar-3",
-              "name": "13th Floor Elevators",
-              "albumCount": 2
-            }
-          ]
-        },
-        {
           "name": "a",
           "artist": [
-            {
-              "id": "ar-2",
-              "name": "A Certain Ratio",
-              "albumCount": 2
-            },
-            {
-              "id": "ar-4",
-              "name": "Anikas",
-              "albumCount": 1
-            }
-          ]
-        },
-        {
-          "name": "c",
-          "artist": [
-            {
-              "id": "ar-7",
-              "name": "Captain Beefheart & His Magic Band",
-              "albumCount": 1
-            }
-          ]
-        },
-        {
-          "name": "j",
-          "artist": [
-            {
-              "id": "ar-1",
-              "name": "Jah Wobble, The Edge & Holger Czukay",
-              "albumCount": 1
-            }
-          ]
-        },
-        {
-          "name": "s",
-          "artist": [
-            {
-              "id": "ar-5",
-              "name": "Swell Maps",
-              "albumCount": 2
-            }
-          ]
-        },
-        {
-          "name": "t",
-          "artist": [
-            {
-              "id": "ar-6",
-              "name": "Ten Years After",
-              "albumCount": 1
-            }
+            { "id": "ar-1", "name": "artist-0", "albumCount": 3 },
+            { "id": "ar-2", "name": "artist-1", "albumCount": 3 },
+            { "id": "ar-3", "name": "artist-2", "albumCount": 3 }
           ]
         }
       ]

@@ -1,6 +1,7 @@
 package ctrlsubsonic
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"time"
@@ -80,7 +81,7 @@ func (c *Controller) ServeGetMusicFolders(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeStartScan(r *http.Request) *spec.Response {
 	go func() {
-		if err := c.Scanner.Start(scanner.ScanOptions{}); err != nil {
+		if err := c.Scanner.ScanAndClean(scanner.ScanOptions{}); err != nil {
 			log.Printf("error while scanning: %v\n", err)
 		}
 	}()
@@ -95,7 +96,7 @@ func (c *Controller) ServeGetScanStatus(r *http.Request) *spec.Response {
 
 	sub := spec.NewResponse()
 	sub.ScanStatus = &spec.ScanStatus{
-		Scanning: scanner.IsScanning(),
+		Scanning: c.Scanner.IsScanning(),
 		Count:    trackCount,
 	}
 	return sub
@@ -129,7 +130,7 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 		Where("user_id=?", user.ID).
 		Find(&queue).
 		Error
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewResponse()
 	}
 	sub := spec.NewResponse()
@@ -188,7 +189,7 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 		Preload("Album").
 		First(track).
 		Error
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewError(10, "couldn't find a track with that id")
 	}
 	sub := spec.NewResponse()

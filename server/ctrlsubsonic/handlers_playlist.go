@@ -1,6 +1,7 @@
 package ctrlsubsonic
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"sort"
@@ -33,7 +34,7 @@ func playlistRender(c *Controller, playlist *db.Playlist) *spec.Playlist {
 			Preload("Album").
 			Find(&track).
 			Error
-		if gorm.IsRecordNotFoundError(err) {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Printf("wasn't able to find track with id %d", id)
 			continue
 		}
@@ -68,7 +69,7 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 		Where("id=?", playlistID).
 		Find(&playlist).
 		Error
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewError(70, "playlist with id `%d` not found", playlistID)
 	}
 	sub := spec.NewResponse()

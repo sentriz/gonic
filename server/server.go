@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/securecookie"
 	"github.com/wader/gormstore"
 
 	"go.senan.xyz/gonic/server/assets"
@@ -18,6 +19,7 @@ import (
 	"go.senan.xyz/gonic/server/jukebox"
 	"go.senan.xyz/gonic/server/podcasts"
 	"go.senan.xyz/gonic/server/scanner"
+	"go.senan.xyz/gonic/server/scanner/tags"
 	"go.senan.xyz/gonic/server/scrobble"
 	"go.senan.xyz/gonic/server/scrobble/lastfm"
 	"go.senan.xyz/gonic/server/scrobble/listenbrainz"
@@ -48,7 +50,9 @@ func New(opts Options) (*Server, error) {
 	opts.CachePath = filepath.Clean(opts.CachePath)
 	opts.PodcastPath = filepath.Clean(opts.PodcastPath)
 
-	scanner := scanner.New(opts.MusicPath, opts.DB, opts.GenreSplit)
+	tagger := &tags.TagReader{}
+
+	scanner := scanner.New(opts.MusicPaths, false, opts.DB, opts.GenreSplit, tagger)
 	base := &ctrlbase.Controller{
 		DB:          opts.DB,
 		MusicPath:   opts.MusicPath,
@@ -63,12 +67,21 @@ func New(opts Options) (*Server, error) {
 	}
 	r.Use(base.WithCORS)
 
-	sessKey := opts.DB.GetOrCreateKey("session_key")
+	sessKey, err := opts.DB.GetSetting("session_key")
+	if err != nil {
+		return nil, fmt.Errorf("get session key: %w", err)
+	}
+	if sessKey == "" {
+		if err := opts.DB.SetSetting("session_key", string(securecookie.GenerateRandomKey(32))); err != nil {
+			return nil, fmt.Errorf("set session key: %w", err)
+		}
+	}
+
 	sessDB := gormstore.New(opts.DB.DB, []byte(sessKey))
 	sessDB.SessionOpts.HttpOnly = true
 	sessDB.SessionOpts.SameSite = http.SameSiteLaxMode
 
-	podcast := &podcasts.Podcasts{DB: opts.DB, PodcastBasePath: opts.PodcastPath}
+	podcast := podcasts.New(opts.DB, opts.PodcastPath, tagger)
 
 	ctrlAdmin, err := ctrladmin.New(base, sessDB, podcast)
 	if err != nil {
@@ -78,11 +91,10 @@ func New(opts Options) (*Server, error) {
 		Controller:     base,
 		CachePath:      opts.CachePath,
 		CoverCachePath: opts.CoverCachePath,
-		Scrobblers: []scrobble.Scrobbler{
-			&lastfm.Scrobbler{DB: opts.DB},
-			&listenbrainz.Scrobbler{},
-		},
-		Podcasts: podcast,
+		PodcastsPath:   opts.PodcastPath,
+		Jukebox:        &jukebox.Jukebox{},
+		Scrobblers:     []scrobble.Scrobbler{&lastfm.Scrobbler{DB: opts.DB}, &listenbrainz.Scrobbler{}},
+		Podcasts:       podcast,
 	}
 
 	setupMisc(r, base)
@@ -272,7 +284,7 @@ func (s *Server) StartScanTicker(dur time.Duration) (FuncExecute, FuncInterrupt)
 				return nil
 			case <-ticker.C:
 				go func() {
-					if err := s.scanner.Start(scanner.ScanOptions{}); err != nil {
+					if err := s.scanner.ScanAndClean(scanner.ScanOptions{}); err != nil {
 						log.Printf("error scanning: %v", err)
 					}
 				}()

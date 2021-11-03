@@ -29,6 +29,7 @@ type Controller struct {
 	*ctrlbase.Controller
 	CachePath      string
 	CoverCachePath string
+	PodcastsPath   string
 	Jukebox        *jukebox.Jukebox
 	Scrobblers     []scrobble.Scrobbler
 	Podcasts       *podcasts.Podcasts

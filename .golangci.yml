@@ -1,57 +1,51 @@
 run:
   skip-dirs:
-  - server/assets
+    - server/assets
   skip-dirs-use-default: true
 
 linters:
   disable-all: true
   enable:
-  - bodyclose
-  - deadcode
-  - depguard
-  - dogsled
-  - errcheck
-  - exportloopref
-  - gochecknoglobals
-  - gochecknoinits
-  - goconst
-  - gocritic
-  - gocyclo
-  - goerr113
-  - golint
-  - goprintffuncname
-  - gosec
-  - gosimple
-  - govet
-  - ineffassign
-  - lll
-  - misspell
-  - nakedret
-  - rowserrcheck
-  - staticcheck
-  - structcheck
-  - stylecheck
-  - typecheck
-  - unconvert
-  - varcheck
+    - bodyclose
+    - deadcode
+    - depguard
+    - dogsled
+    - errcheck
+    - exportloopref
+    - gochecknoglobals
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - gocyclo
+    - goerr113
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - misspell
+    - nakedret
+    - revive
+    - rowserrcheck
+    - staticcheck
+    - structcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - varcheck
 
 issues:
   exclude-rules:
-  - path: _test\.go
-    linters:
-    - errcheck
-    - gochecknoglobals
-  - text: "weak cryptographic primitive"
-    linters:
-    - gosec
-  - text: "weak random number generator"
-    linters:
-    - gosec
-
-  # TODO: fix these
-  - text: "should have comment"
-    linters:
-    - golint
-  - text: "at least one file in a package should have a package comment"
-    linters:
-    - stylecheck
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gochecknoglobals
+    - text: "weak cryptographic primitive"
+      linters:
+        - gosec
+    - text: "weak random number generator"
+      linters:
+        - gosec
+    - text: "at least one file in a package should have a package comment"
+      linters:
+        - stylecheck
