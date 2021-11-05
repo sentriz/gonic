@@ -37,33 +37,34 @@ func (c *Controller) ServePing(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
+	user := r.Context().Value(CtxUser).(*db.User)
 	params := r.Context().Value(CtxParams).(params.Params)
+
 	id, err := params.GetID("id")
 	if err != nil || id.Type != specid.Track {
 		return spec.NewError(10, "please provide an valid `id` track parameter")
 	}
-	// fetch user to get lastfm session
-	user := r.Context().Value(CtxUser).(*db.User)
-	// fetch track for getting info to send to last.fm function
+
 	track := &db.Track{}
-	c.DB.
-		Preload("Album").
-		Preload("Artist").
-		First(track, id.Value)
-	// clients will provide time in miliseconds, so use that or
-	// instead convert UnixNano to miliseconds
+	if err := c.DB.Preload("Album").Preload("Artist").First(track, id.Value).Error; err != nil {
+		return spec.NewError(0, "error finding track: %v", err)
+	}
+
 	optStamp := params.GetOrTime("time", time.Now())
 	optSubmission := params.GetOrBool("submission", true)
+
 	var scrobbleErrs multierr.Err
 	for _, scrobbler := range c.Scrobblers {
 		if err := scrobbler.Scrobble(user, track, optStamp, optSubmission); err != nil {
 			scrobbleErrs.Add(err)
 		}
 	}
+
 	if scrobbleErrs.Len() > 0 {
 		log.Printf("error when submitting: %v", scrobbleErrs)
 		return spec.NewError(0, "error when submitting: %v", scrobbleErrs)
 	}
+
 	return spec.NewResponse()
 }
 
@@ -88,9 +89,10 @@ func (c *Controller) ServeStartScan(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetScanStatus(r *http.Request) *spec.Response {
 	var trackCount int
-	c.DB.
-		Model(db.Track{}).
-		Count(&trackCount)
+	if err := c.DB.Model(db.Track{}).Count(&trackCount).Error; err != nil {
+		return spec.NewError(0, "error finding track count: %v", err)
+	}
+
 	sub := spec.NewResponse()
 	sub.ScanStatus = &spec.ScanStatus{
 		Scanning: scanner.IsScanning(),
@@ -103,6 +105,7 @@ func (c *Controller) ServeGetUser(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	hasLastFM := user.LastFMSession != ""
 	hasListenBrainz := user.ListenBrainzToken != ""
+
 	sub := spec.NewResponse()
 	sub.User = &spec.User{
 		Username:          user.Name,

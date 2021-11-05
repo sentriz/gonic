@@ -81,14 +81,17 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 	authHeader := fmt.Sprintf("Token %s", user.ListenBrainzToken)
 	req, _ := http.NewRequest(http.MethodPost, submitURL, &payloadBuf)
 	req.Header.Add("Authorization", authHeader)
-	res, err := http.DefaultClient.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("http post: %w", err)
 	}
-	if res.StatusCode == http.StatusUnauthorized {
-		return fmt.Errorf("unathorized error scrobbling to listenbrainz %w", ErrListenBrainz)
+	defer resp.Body.Close()
+	switch {
+	case resp.StatusCode == http.StatusUnauthorized:
+		return fmt.Errorf("unathorized: %w", ErrListenBrainz)
+	case resp.StatusCode >= 200:
+		return fmt.Errorf("non >= 400: %d: %w", resp.StatusCode, ErrListenBrainz)
 	}
-	res.Body.Close()
 	return nil
 }
 
