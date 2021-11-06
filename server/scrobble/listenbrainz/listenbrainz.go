@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
+	"net/http/httputil"
 	"time"
 
 	"go.senan.xyz/gonic/server/db"
@@ -86,11 +88,14 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 		return fmt.Errorf("http post: %w", err)
 	}
 	defer resp.Body.Close()
+	respBytes, _ := httputil.DumpResponse(resp, true)
 	switch {
 	case resp.StatusCode == http.StatusUnauthorized:
 		return fmt.Errorf("unathorized: %w", ErrListenBrainz)
-	case resp.StatusCode >= 200:
-		return fmt.Errorf("non >= 400: %d: %w", resp.StatusCode, ErrListenBrainz)
+	case resp.StatusCode >= 400:
+		log.Println("received listenbrainz response")
+		log.Println(string(respBytes))
+		return fmt.Errorf(">= 400: %d: %w", resp.StatusCode, ErrListenBrainz)
 	}
 	return nil
 }
