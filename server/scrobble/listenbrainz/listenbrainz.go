@@ -27,26 +27,26 @@ var (
 )
 
 type AdditionalInfo struct {
-	TrackNumber int    `json:"tracknumber"`
-	TrackMBID   string `json:"track_mbid"`
-	TrackLength int    `json:"track_length"`
+	TrackNumber int    `json:"tracknumber,omitempty"`
+	TrackMBID   string `json:"track_mbid,omitempty"`
+	TrackLength int    `json:"track_length,omitempty"`
 }
 
 type TrackMetadata struct {
-	AdditionalInfo AdditionalInfo `json:"additional_info"`
-	ArtistName     string         `json:"artist_name"`
-	TrackName      string         `json:"track_name"`
-	ReleaseName    string         `json:"release_name"`
+	AdditionalInfo *AdditionalInfo `json:"additional_info"`
+	ArtistName     string          `json:"artist_name,omitempty"`
+	TrackName      string          `json:"track_name,omitempty"`
+	ReleaseName    string          `json:"release_name,omitempty"`
 }
 
 type Payload struct {
-	ListenedAt    int           `json:"listened_at"`
-	TrackMetadata TrackMetadata `json:"track_metadata"`
+	ListenedAt    int            `json:"listened_at,omitempty"`
+	TrackMetadata *TrackMetadata `json:"track_metadata"`
 }
 
 type Scrobble struct {
-	ListenType string    `json:"listen_type"`
-	Payload    []Payload `json:"payload"`
+	ListenType string     `json:"listen_type,omitempty"`
+	Payload    []*Payload `json:"payload"`
 }
 
 type Scrobbler struct{}
@@ -55,10 +55,9 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 	if user.ListenBrainzURL == "" || user.ListenBrainzToken == "" {
 		return nil
 	}
-	payload := Payload{
-		ListenedAt: int(stamp.Unix()),
-		TrackMetadata: TrackMetadata{
-			AdditionalInfo: AdditionalInfo{
+	payload := &Payload{
+		TrackMetadata: &TrackMetadata{
+			AdditionalInfo: &AdditionalInfo{
 				TrackNumber: track.TagTrackNumber,
 				TrackMBID:   track.TagBrainzID,
 				TrackLength: track.Length,
@@ -69,10 +68,12 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 		},
 	}
 	scrobble := Scrobble{
-		ListenType: listenTypeSingle,
-		Payload:    []Payload{payload},
+		Payload: []*Payload{payload},
 	}
-	if !submission {
+	if submission && len(scrobble.Payload) > 0 {
+		scrobble.ListenType = listenTypeSingle
+		scrobble.Payload[0].ListenedAt = int(stamp.Unix())
+	} else {
 		scrobble.ListenType = listenTypePlayingNow
 	}
 	payloadBuf := bytes.Buffer{}
