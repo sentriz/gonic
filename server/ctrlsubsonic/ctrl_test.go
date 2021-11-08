@@ -87,7 +87,9 @@ func runQueryCases(t *testing.T, contr *Controller, h handlerSubsonic, cases []*
 			diff := expected.Diff(actual, diffOpts...)
 
 			if len(diff) > 0 {
-				t.Errorf("\u001b[31;1mdiffering json\u001b[0m\n%s", diff.Render())
+				t.Errorf("\u001b[31;1mhandler json differs from test json\u001b[0m")
+				t.Errorf("\u001b[33;1mif you want to regenerate it, re-run with GONIC_REGEN=%s\u001b[0m\n", t.Name())
+				t.Error(diff.Render())
 			}
 		})
 	}
