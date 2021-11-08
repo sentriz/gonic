@@ -71,21 +71,11 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeGetMusicFolders(r *http.Request) *spec.Response {
-	var roots []string
-	err := c.DB.
-		Model(&db.Album{}).
-		Pluck("DISTINCT(root_dir)", &roots).
-		Where("parent_id IS NULL").
-		Error
-	if err != nil {
-		return spec.NewError(0, "error getting roots: %v", err)
-	}
-
 	sub := spec.NewResponse()
 	sub.MusicFolders = &spec.MusicFolders{}
-	sub.MusicFolders.List = make([]*spec.MusicFolder, len(roots))
-	for i, root := range roots {
-		sub.MusicFolders.List[i] = &spec.MusicFolder{ID: root, Name: filepath.Base(root)}
+	sub.MusicFolders.List = make([]*spec.MusicFolder, len(c.MusicPaths))
+	for i, path := range c.MusicPaths {
+		sub.MusicFolders.List[i] = &spec.MusicFolder{ID: i, Name: filepath.Base(path)}
 	}
 	return sub
 }
@@ -226,7 +216,7 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 		q = q.Joins("JOIN track_genres ON track_genres.track_id=tracks.id")
 		q = q.Joins("JOIN genres ON genres.id=track_genres.genre_id AND genres.name=?", genre)
 	}
-	if m, _ := params.Get("musicFolderId"); m != "" {
+	if m := c.getMusicFolder(params); m != "" {
 		q = q.Where("albums.root_dir=?", m)
 	}
 	q.Find(&tracks)

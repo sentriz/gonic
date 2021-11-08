@@ -30,6 +30,7 @@ type Controller struct {
 	CachePath      string
 	CoverCachePath string
 	PodcastsPath   string
+	MusicPaths     []string
 	Jukebox        *jukebox.Jukebox
 	Scrobblers     []scrobble.Scrobbler
 	Podcasts       *podcasts.Podcasts
@@ -115,4 +116,15 @@ func (c *Controller) HR(h handlerSubsonicRaw) http.Handler {
 			log.Printf("error writing subsonic response (raw handler): %v\n", err)
 		}
 	})
+}
+
+func (c *Controller) getMusicFolder(p params.Params) string {
+	idx, err := p.GetInt("musicFolderId")
+	if err != nil {
+		return ""
+	}
+	if idx < 0 || idx > len(c.MusicPaths) {
+		return ""
+	}
+	return c.MusicPaths[idx]
 }
