@@ -93,6 +93,7 @@ func New(opts Options) (*Server, error) {
 		CachePath:      opts.CachePath,
 		CoverCachePath: opts.CoverCachePath,
 		PodcastsPath:   opts.PodcastPath,
+		MusicPaths:     opts.MusicPaths,
 		Jukebox:        &jukebox.Jukebox{},
 		Scrobblers:     []scrobble.Scrobbler{&lastfm.Scrobbler{DB: opts.DB}, &listenbrainz.Scrobbler{}},
 		Podcasts:       podcast,

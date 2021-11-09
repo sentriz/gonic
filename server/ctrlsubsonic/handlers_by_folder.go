@@ -24,7 +24,7 @@ func (c *Controller) ServeGetIndexes(r *http.Request) *spec.Response {
 		Select("id").
 		Model(&db.Album{}).
 		Where("parent_id IS NULL")
-	if m, _ := params.Get("musicFolderId"); m != "" {
+	if m := c.getMusicFolder(params); m != "" {
 		rootQ = rootQ.
 			Where("root_dir=?", m)
 	}
@@ -145,7 +145,7 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 		return spec.NewError(10, "unknown value `%s` for parameter 'type'", v)
 	}
 
-	if m, _ := params.Get("musicFolderId"); m != "" {
+	if m := c.getMusicFolder(params); m != "" {
 		q = q.Where("root_dir=?", m)
 	}
 	var folders []*db.Album
@@ -185,7 +185,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 		Select("id").
 		Model(&db.Album{}).
 		Where("parent_id IS NULL")
-	if m, _ := params.Get("musicFolderId"); m != "" {
+	if m := c.getMusicFolder(params); m != "" {
 		rootQ = rootQ.Where("root_dir=?", m)
 	}
 
@@ -207,7 +207,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 		Where(`tag_artist_id IS NOT NULL AND (right_path LIKE ? OR right_path_u_dec LIKE ?)`, query, query).
 		Offset(params.GetOrInt("albumOffset", 0)).
 		Limit(params.GetOrInt("albumCount", 20))
-	if m, _ := params.Get("musicFolderId"); m != "" {
+	if m := c.getMusicFolder(params); m != "" {
 		q = q.Where("root_dir=?", m)
 	}
 	if err := q.Find(&albums).Error; err != nil {
@@ -224,7 +224,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 		Where("filename LIKE ? OR filename_u_dec LIKE ?", query, query).
 		Offset(params.GetOrInt("songOffset", 0)).
 		Limit(params.GetOrInt("songCount", 20))
-	if m, _ := params.Get("musicFolderId"); m != "" {
+	if m := c.getMusicFolder(params); m != "" {
 		q = q.
 			Joins("JOIN albums ON albums.id=tracks.album_id").
 			Where("albums.root_dir=?", m)

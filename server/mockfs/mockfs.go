@@ -52,6 +52,11 @@ func new(t *testing.T, dirs []string) *MockFS {
 	for _, dir := range dirs {
 		absDirs = append(absDirs, filepath.Join(tmpDir, dir))
 	}
+	for _, absDir := range absDirs {
+		if err := os.MkdirAll(absDir, os.ModePerm); err != nil {
+			t.Fatalf("mk abs dir: %v", err)
+		}
+	}
 
 	parser := &mreader{map[string]*Tags{}}
 	scanner := scanner.New(absDirs, true, dbc, ";", parser)
@@ -128,6 +133,7 @@ func (m *MockFS) RemoveAll(path string) {
 }
 
 func (m *MockFS) LogItems() {
+	m.t.Logf("\nitems")
 	var dirs int
 	err := filepath.Walk(m.dir, func(path string, info fs.FileInfo, err error) error {
 		m.t.Logf("item %q", path)
@@ -139,7 +145,7 @@ func (m *MockFS) LogItems() {
 	if err != nil {
 		m.t.Fatalf("error logging items: %v", err)
 	}
-	m.t.Logf("dirs: %d", dirs)
+	m.t.Logf("total %d", dirs)
 }
 
 func (m *MockFS) LogAlbums() {
@@ -150,7 +156,7 @@ func (m *MockFS) LogAlbums() {
 
 	m.t.Logf("\nalbums")
 	for _, album := range albums {
-		m.t.Logf("id %-3d root %-3s %-10s %-10s pid %-3d aid %-3d cov %-10s",
+		m.t.Logf("id %-3d root %-3s lr %-15s %-10s pid %-3d aid %-3d cov %-10s",
 			album.ID, album.RootDir, album.LeftPath, album.RightPath, album.ParentID, album.TagArtistID, album.Cover)
 	}
 	m.t.Logf("total %d", len(albums))

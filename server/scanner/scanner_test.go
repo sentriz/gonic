@@ -324,3 +324,49 @@ func TestNewAlbumForExistingArtist(t *testing.T) {
 	is.NoErr(m.DB().Find(&all).Error) // still only 3?
 	is.Equal(len(all), 3)             // still only 3?
 }
+
+func TestMultiFolderWithSharedArtist(t *testing.T) {
+	t.Parallel()
+	is := is.New(t)
+	m := mockfs.NewWithDirs(t, []string{"m-0", "m-1"})
+	defer m.CleanUp()
+
+	const artistName = "artist-a"
+
+	m.AddTrack(fmt.Sprintf("m-0/%s/album-a/track-1.flac", artistName))
+	m.SetTags(fmt.Sprintf("m-0/%s/album-a/track-1.flac", artistName), func(tags *mockfs.Tags) {
+		tags.RawArtist = artistName
+		tags.RawAlbumArtist = artistName
+		tags.RawAlbum = "album-a"
+		tags.RawTitle = "track-1"
+	})
+	m.ScanAndClean()
+
+	m.AddTrack(fmt.Sprintf("m-1/%s/album-a/track-1.flac", artistName))
+	m.SetTags(fmt.Sprintf("m-1/%s/album-a/track-1.flac", artistName), func(tags *mockfs.Tags) {
+		tags.RawArtist = artistName
+		tags.RawAlbumArtist = artistName
+		tags.RawAlbum = "album-a"
+		tags.RawTitle = "track-1"
+	})
+	m.ScanAndClean()
+
+	sq := func(db *gorm.DB) *gorm.DB {
+		return db.
+			Select("*, count(sub.id) child_count, sum(sub.length) duration").
+			Joins("LEFT JOIN tracks sub ON albums.id=sub.album_id").
+			Group("albums.id")
+	}
+
+	var artist db.Artist
+	is.NoErr(m.DB().Where("name=?", artistName).Preload("Albums", sq).First(&artist).Error)
+	is.Equal(artist.Name, artistName)
+	is.Equal(len(artist.Albums), 2)
+
+	for _, album := range artist.Albums {
+		is.True(album.TagYear > 0)
+		is.Equal(album.TagArtistID, artist.ID)
+		is.True(album.ChildCount > 0)
+		is.True(album.Duration > 0)
+	}
+}

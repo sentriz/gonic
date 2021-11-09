@@ -179,7 +179,7 @@ type MusicFolders struct {
 }
 
 type MusicFolder struct {
-	ID   string `xml:"id,attr,omitempty"   json:"id,omitempty"`
+	ID   int    `xml:"id,attr"             json:"id"`
 	Name string `xml:"name,attr,omitempty" json:"name,omitempty"`
 }
 

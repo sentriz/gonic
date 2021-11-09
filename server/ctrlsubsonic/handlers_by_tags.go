@@ -23,7 +23,7 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 		Joins("LEFT JOIN albums sub ON artists.id=sub.tag_artist_id").
 		Group("artists.id").
 		Order("artists.name COLLATE NOCASE")
-	if m, _ := params.Get("musicFolderId"); m != "" {
+	if m := c.getMusicFolder(params); m != "" {
 		q = q.Where("sub.root_dir=?", m)
 	}
 	if err := q.Find(&artists).Error; err != nil {
@@ -148,7 +148,7 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	default:
 		return spec.NewError(10, "unknown value `%s` for parameter 'type'", listType)
 	}
-	if m, _ := params.Get("musicFolderId"); m != "" {
+	if m := c.getMusicFolder(params); m != "" {
 		q = q.Where("root_dir=?", m)
 	}
 	var albums []*db.Album
@@ -188,7 +188,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		Where("name LIKE ? OR name_u_dec LIKE ?", query, query).
 		Offset(params.GetOrInt("artistOffset", 0)).
 		Limit(params.GetOrInt("artistCount", 20))
-	if m, _ := params.Get("musicFolderId"); m != "" {
+	if m := c.getMusicFolder(params); m != "" {
 		q = q.
 			Joins("JOIN albums ON albums.tag_artist_id=artists.id").
 			Where("albums.root_dir=?", m)
@@ -207,7 +207,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		Where("tag_title LIKE ? OR tag_title_u_dec LIKE ?", query, query).
 		Offset(params.GetOrInt("albumOffset", 0)).
 		Limit(params.GetOrInt("albumCount", 20))
-	if m, _ := params.Get("musicFolderId"); m != "" {
+	if m := c.getMusicFolder(params); m != "" {
 		q = q.Where("root_dir=?", m)
 	}
 	if err := q.Find(&albums).Error; err != nil {
@@ -224,7 +224,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		Where("tag_title LIKE ? OR tag_title_u_dec LIKE ?", query, query).
 		Offset(params.GetOrInt("songOffset", 0)).
 		Limit(params.GetOrInt("songCount", 20))
-	if m, _ := params.Get("musicFolderId"); m != "" {
+	if m := c.getMusicFolder(params); m != "" {
 		q = q.
 			Joins("JOIN albums ON albums.id=tracks.album_id").
 			Where("albums.root_dir=?", m)
@@ -344,7 +344,7 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 		Preload("Album").
 		Offset(params.GetOrInt("offset", 0)).
 		Limit(params.GetOrInt("count", 10))
-	if m, _ := params.Get("musicFolderId"); m != "" {
+	if m := c.getMusicFolder(params); m != "" {
 		q = q.Where("albums.root_dir=?", m)
 	}
 	if err := q.Find(&tracks).Error; err != nil {

@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -110,8 +111,13 @@ func makec(t *testing.T, roots []string) (*Controller, *mockfs.MockFS) {
 	m.ResetDates()
 	m.LogAlbums()
 
+	var absRoots []string
+	for _, root := range roots {
+		absRoots = append(absRoots, filepath.Join(m.TmpDir(), root))
+	}
+
 	base := &ctrlbase.Controller{DB: m.DB()}
-	return &Controller{Controller: base}, m
+	return &Controller{Controller: base, MusicPaths: absRoots}, m
 }
 
 func TestMain(m *testing.M) {
