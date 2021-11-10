@@ -92,6 +92,7 @@ func (s *Scanner) scan(c *collected, isFull bool) error {
 				return nil
 			},
 			PostChildrenCallback: func(itemPath string, _ *godirwalk.Dirent) error {
+				log.Printf("processing folder `%s`", itemPath)
 				return s.callback(c, isFull, musicPath, itemPath)
 			},
 			Unsorted:            !s.sorted,
