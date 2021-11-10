@@ -5,9 +5,9 @@
     "type": "gonic",
     "searchResult3": {
       "artist": [
-        { "id": "ar-1", "name": "artist-0", "albumCount": 0 },
-        { "id": "ar-2", "name": "artist-1", "albumCount": 0 },
-        { "id": "ar-3", "name": "artist-2", "albumCount": 0 }
+        { "id": "ar-1", "name": "artist-0", "albumCount": 3 },
+        { "id": "ar-2", "name": "artist-1", "albumCount": 3 },
+        { "id": "ar-3", "name": "artist-2", "albumCount": 3 }
       ]
     }
   }

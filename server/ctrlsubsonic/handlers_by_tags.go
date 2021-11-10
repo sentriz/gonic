@@ -185,13 +185,14 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	// search "artists"
 	var artists []*db.Artist
 	q := c.DB.
+		Select("*, count(albums.id) album_count").
+		Group("artists.id").
 		Where("name LIKE ? OR name_u_dec LIKE ?", query, query).
+		Joins("JOIN albums ON albums.tag_artist_id=artists.id").
 		Offset(params.GetOrInt("artistOffset", 0)).
 		Limit(params.GetOrInt("artistCount", 20))
 	if m := c.getMusicFolder(params); m != "" {
-		q = q.
-			Joins("JOIN albums ON albums.tag_artist_id=artists.id").
-			Where("albums.root_dir=?", m)
+		q = q.Where("albums.root_dir=?", m)
 	}
 	if err := q.Find(&artists).Error; err != nil {
 		return spec.NewError(0, "find artists: %v", err)
