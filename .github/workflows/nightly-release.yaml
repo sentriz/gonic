@@ -23,6 +23,7 @@ jobs:
         with:
           version: v1.42.1
           skip-go-installation: true
+          args: --timeout=5m
       - name: Test
         run: go test ./...
   build-release:
