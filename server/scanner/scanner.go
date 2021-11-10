@@ -57,20 +57,6 @@ type ScanOptions struct {
 }
 
 func (s *Scanner) ScanAndClean(opts ScanOptions) error {
-	c := &collected{
-		seenTracks: map[int]struct{}{},
-		seenAlbums: map[int]struct{}{},
-	}
-	if err := s.scan(c, opts.IsFull); err != nil {
-		return err
-	}
-	if err := s.clean(c); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *Scanner) scan(c *collected, isFull bool) error {
 	if s.IsScanning() {
 		return ErrAlreadyScanning
 	}
@@ -78,7 +64,11 @@ func (s *Scanner) scan(c *collected, isFull bool) error {
 	defer atomic.StoreInt32(s.scanning, 0)
 
 	start := time.Now()
-	itemErrs := multierr.Err{}
+	itemErrs := &multierr.Err{}
+	c := &collected{
+		seenTracks: map[int]struct{}{},
+		seenAlbums: map[int]struct{}{},
+	}
 
 	log.Println("starting scan")
 	defer func() {
@@ -87,24 +77,27 @@ func (s *Scanner) scan(c *collected, isFull bool) error {
 	}()
 
 	for _, musicPath := range s.musicPaths {
-		err := godirwalk.Walk(musicPath, &godirwalk.Options{
-			Callback: func(_ string, _ *godirwalk.Dirent) error {
-				return nil
-			},
-			PostChildrenCallback: func(itemPath string, _ *godirwalk.Dirent) error {
-				log.Printf("processing folder `%s`", itemPath)
-				return s.callback(c, isFull, musicPath, itemPath)
-			},
-			Unsorted:            !s.sorted,
-			FollowSymbolicLinks: true,
-			ErrorCallback: func(path string, err error) godirwalk.ErrorAction {
-				itemErrs.Add(fmt.Errorf("%q: %w", path, err))
-				return godirwalk.SkipNode
-			},
-		})
-		if err != nil {
-			return fmt.Errorf("walking filesystem: %w", err)
+		err := s.scanPath(c, opts.IsFull, musicPath)
+		var subItemErrs *multierr.Err
+		switch {
+		case errors.As(err, &subItemErrs):
+			itemErrs.Extend(subItemErrs.Errors())
+		case err != nil:
+			return fmt.Errorf("scan %q: %w", musicPath, err)
 		}
+	}
+
+	if err := s.cleanTracks(c.seenTracks); err != nil {
+		return fmt.Errorf("clean tracks: %w", err)
+	}
+	if err := s.cleanAlbums(c.seenAlbums); err != nil {
+		return fmt.Errorf("clean albums: %w", err)
+	}
+	if err := s.cleanArtists(); err != nil {
+		return fmt.Errorf("clean artists: %w", err)
+	}
+	if err := s.cleanGenres(); err != nil {
+		return fmt.Errorf("clean genres: %w", err)
 	}
 
 	if err := s.db.SetSetting("last_scan_time", strconv.FormatInt(time.Now().Unix(), 10)); err != nil {
@@ -118,28 +111,31 @@ func (s *Scanner) scan(c *collected, isFull bool) error {
 	return nil
 }
 
-func (s *Scanner) clean(c *collected) error {
-	if err := s.cleanTracks(c.seenTracks); err != nil {
-		return fmt.Errorf("clean tracks: %w", err)
-	}
-	if err := s.cleanAlbums(c.seenAlbums); err != nil {
-		return fmt.Errorf("clean albums: %w", err)
-	}
-	if err := s.cleanArtists(); err != nil {
-		return fmt.Errorf("clean artists: %w", err)
-	}
-	if err := s.cleanGenres(); err != nil {
-		return fmt.Errorf("clean genres: %w", err)
-	}
-	return nil
+func (s *Scanner) scanPath(c *collected, isFull bool, musicPath string) error {
+	itemErrs := multierr.Err{}
+	return godirwalk.Walk(musicPath, &godirwalk.Options{
+		Callback: func(_ string, _ *godirwalk.Dirent) error {
+			return nil
+		},
+		PostChildrenCallback: func(itemPath string, _ *godirwalk.Dirent) error {
+			return s.callback(c, isFull, musicPath, itemPath)
+		},
+		Unsorted:            !s.sorted,
+		FollowSymbolicLinks: true,
+		ErrorCallback: func(path string, err error) godirwalk.ErrorAction {
+			itemErrs.Add(fmt.Errorf("%q: %w", path, err))
+			return godirwalk.SkipNode
+		},
+	})
 }
 
 func (s *Scanner) callback(c *collected, isFull bool, rootAbsPath string, itemAbsPath string) error {
+	relpath, _ := filepath.Rel(rootAbsPath, itemAbsPath)
+	log.Printf("processing folder `%s`", relpath)
 	if rootAbsPath == itemAbsPath {
 		return nil
 	}
 
-	relpath, _ := filepath.Rel(rootAbsPath, itemAbsPath)
 	gs, err := godirwalk.NewScanner(itemAbsPath)
 	if err != nil {
 		return err
