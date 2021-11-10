@@ -295,7 +295,7 @@ func (p *Podcasts) RefreshPodcastsForUser(userID int) error {
 }
 
 func (p *Podcasts) refreshPodcasts(podcasts []*db.Podcast) error {
-	var errs multierr.Err
+	errs := &multierr.Err{}
 	for _, podcast := range podcasts {
 		fp := gofeed.NewParser()
 		feed, err := fp.ParseURL(podcast.URL)
