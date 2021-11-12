@@ -22,7 +22,6 @@ require (
 	github.com/jinzhu/gorm v1.9.16
 	github.com/josephburnett/jd v0.0.0-20191228205456-aa1a7c66b42f
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/karrick/godirwalk v1.16.1
 	github.com/matryer/is v1.4.0
 	github.com/mewkiz/pkg v0.0.0-20211102230744-16a6ce8f1b77 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect

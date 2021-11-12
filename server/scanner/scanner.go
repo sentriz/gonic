@@ -3,6 +3,7 @@ package scanner
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -13,7 +14,6 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
-	"github.com/karrick/godirwalk"
 	"github.com/rainycape/unidecode"
 
 	"go.senan.xyz/gonic/multierr"
@@ -30,18 +30,16 @@ var (
 
 type Scanner struct {
 	db         *db.DB
-	musicPaths []string
-	sorted     bool
+	musicDirs  []string
 	genreSplit string
 	tagger     tags.Reader
 	scanning   *int32
 }
 
-func New(musicPaths []string, sorted bool, db *db.DB, genreSplit string, tagger tags.Reader) *Scanner {
+func New(musicDirs []string, db *db.DB, genreSplit string, tagger tags.Reader) *Scanner {
 	return &Scanner{
 		db:         db,
-		musicPaths: musicPaths,
-		sorted:     sorted,
+		musicDirs:  musicDirs,
 		genreSplit: genreSplit,
 		tagger:     tagger,
 		scanning:   new(int32),
@@ -76,14 +74,37 @@ func (s *Scanner) ScanAndClean(opts ScanOptions) error {
 			durSince(start), c.seenTracksNew, len(c.seenTracks), itemErrs.Len())
 	}()
 
-	for _, musicPath := range s.musicPaths {
-		err := s.scanPath(c, opts.IsFull, musicPath)
-		var subItemErrs *multierr.Err
-		switch {
-		case errors.As(err, &subItemErrs):
-			itemErrs.Extend(subItemErrs.Errors())
-		case err != nil:
-			return fmt.Errorf("scan %q: %w", musicPath, err)
+	for _, dir := range s.musicDirs {
+		dirName := filepath.Base(dir)
+		err := filepath.WalkDir(dir, func(absPath string, d fs.DirEntry, err error) error {
+			if err != nil {
+				itemErrs.Add(err)
+				return nil
+			}
+			if !d.IsDir() {
+				return nil
+			}
+			if dir == absPath {
+				return nil
+			}
+
+			relPath, _ := filepath.Rel(dir, absPath)
+			log.Printf("processing folder `%s` `%s`", dirName, relPath)
+
+			tx := s.db.Begin()
+			if err := s.scanDir(tx, c, opts.IsFull, dir, relPath); err != nil {
+				itemErrs.Add(fmt.Errorf("%q: %w", absPath, err))
+				tx.Rollback()
+				return nil
+			}
+			if err := tx.Commit().Error; err != nil {
+				return fmt.Errorf("commit tx: %w", err)
+			}
+
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("walk %q: %w", dir, err)
 		}
 	}
 
@@ -111,67 +132,41 @@ func (s *Scanner) ScanAndClean(opts ScanOptions) error {
 	return nil
 }
 
-func (s *Scanner) scanPath(c *collected, isFull bool, musicPath string) error {
-	itemErrs := multierr.Err{}
-	return godirwalk.Walk(musicPath, &godirwalk.Options{
-		Callback: func(_ string, _ *godirwalk.Dirent) error {
-			return nil
-		},
-		PostChildrenCallback: func(itemPath string, _ *godirwalk.Dirent) error {
-			return s.callback(c, isFull, musicPath, itemPath)
-		},
-		Unsorted:            !s.sorted,
-		FollowSymbolicLinks: true,
-		ErrorCallback: func(path string, err error) godirwalk.ErrorAction {
-			itemErrs.Add(fmt.Errorf("%q: %w", path, err))
-			return godirwalk.SkipNode
-		},
-	})
-}
-
-func (s *Scanner) callback(c *collected, isFull bool, rootAbsPath string, itemAbsPath string) error {
-	relpath, _ := filepath.Rel(rootAbsPath, itemAbsPath)
-	log.Printf("processing folder `%s`", relpath)
-	if rootAbsPath == itemAbsPath {
-		return nil
-	}
-
-	gs, err := godirwalk.NewScanner(itemAbsPath)
+func (s *Scanner) scanDir(tx *db.DB, c *collected, isFull bool, musicDir string, relPath string) error {
+	absPath := filepath.Join(musicDir, relPath)
+	items, err := os.ReadDir(absPath)
 	if err != nil {
 		return err
 	}
 
 	var tracks []string
 	var cover string
-	for gs.Scan() {
-		if isCover(gs.Name()) {
-			cover = gs.Name()
+	for _, item := range items {
+		if isCover(item.Name()) {
+			cover = item.Name()
 			continue
 		}
-		if _, ok := mime.FromExtension(ext(gs.Name())); ok {
-			tracks = append(tracks, gs.Name())
+		if _, ok := mime.FromExtension(ext(item.Name())); ok {
+			tracks = append(tracks, item.Name())
 			continue
 		}
 	}
 
-	tx := s.db.Begin()
-	defer tx.Commit()
-
-	pdir, pbasename := filepath.Split(filepath.Dir(relpath))
+	pdir, pbasename := filepath.Split(filepath.Dir(relPath))
 	parent := &db.Album{}
-	if err := tx.Where(db.Album{RootDir: rootAbsPath, LeftPath: pdir, RightPath: pbasename}).FirstOrCreate(parent).Error; err != nil {
+	if err := tx.Where(db.Album{RootDir: musicDir, LeftPath: pdir, RightPath: pbasename}).FirstOrCreate(parent).Error; err != nil {
 		return fmt.Errorf("first or create parent: %w", err)
 	}
 
 	c.seenAlbums[parent.ID] = struct{}{}
 
-	dir, basename := filepath.Split(relpath)
+	dir, basename := filepath.Split(relPath)
 	album := &db.Album{}
-	if err := tx.Where(db.Album{RootDir: rootAbsPath, LeftPath: dir, RightPath: basename}).First(album).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	if err := tx.Where(db.Album{RootDir: musicDir, LeftPath: dir, RightPath: basename}).First(album).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return fmt.Errorf("find album: %w", err)
 	}
 
-	if err := populateAlbumBasics(tx, rootAbsPath, parent, album, dir, basename, cover); err != nil {
+	if err := populateAlbumBasics(tx, musicDir, parent, album, dir, basename, cover); err != nil {
 		return fmt.Errorf("populate album basics: %w", err)
 	}
 
@@ -179,7 +174,7 @@ func (s *Scanner) callback(c *collected, isFull bool, rootAbsPath string, itemAb
 
 	sort.Strings(tracks)
 	for i, basename := range tracks {
-		abspath := filepath.Join(itemAbsPath, basename)
+		abspath := filepath.Join(musicDir, relPath, basename)
 		if err := s.populateTrackAndAlbumArtists(tx, c, i, album, basename, abspath, isFull); err != nil {
 			return fmt.Errorf("process %q: %w", "", err)
 		}
@@ -188,7 +183,7 @@ func (s *Scanner) callback(c *collected, isFull bool, rootAbsPath string, itemAb
 	return nil
 }
 
-func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *collected, i int, album *db.Album, basename string, abspath string, isFull bool) error {
+func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *collected, i int, album *db.Album, basename string, absPath string, isFull bool) error {
 	track := &db.Track{AlbumID: album.ID, Filename: filepath.Base(basename)}
 	if err := tx.Where(track).First(track).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return fmt.Errorf("query track: %w", err)
@@ -196,7 +191,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *collected, i int, a
 
 	c.seenTracks[track.ID] = struct{}{}
 
-	stat, err := os.Stat(abspath)
+	stat, err := os.Stat(absPath)
 	if err != nil {
 		return fmt.Errorf("stating %q: %w", basename, err)
 	}
@@ -204,7 +199,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *collected, i int, a
 		return nil
 	}
 
-	trags, err := s.tagger.Read(abspath)
+	trags, err := s.tagger.Read(absPath)
 	if err != nil {
 		return fmt.Errorf("%v: %w", err, ErrReadingTags)
 	}
@@ -279,8 +274,8 @@ func populateAlbumBasics(tx *db.DB, rootAbsPath string, parent, album *db.Album,
 	return nil
 }
 
-func populateTrack(tx *db.DB, album *db.Album, albumArtist *db.Artist, track *db.Track, trags tags.Parser, abspath string, size int) error {
-	basename := filepath.Base(abspath)
+func populateTrack(tx *db.DB, album *db.Album, albumArtist *db.Artist, track *db.Track, trags tags.Parser, absPath string, size int) error {
+	basename := filepath.Base(absPath)
 	track.Filename = basename
 	track.FilenameUDec = decoded(basename)
 	track.Size = size

@@ -54,7 +54,7 @@ func New(opts Options) (*Server, error) {
 
 	tagger := &tags.TagReader{}
 
-	scanner := scanner.New(opts.MusicPaths, false, opts.DB, opts.GenreSplit, tagger)
+	scanner := scanner.New(opts.MusicPaths, opts.DB, opts.GenreSplit, tagger)
 	base := &ctrlbase.Controller{
 		DB:          opts.DB,
 		ProxyPrefix: opts.ProxyPrefix,
