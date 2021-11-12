@@ -6,13 +6,13 @@
     "albumList": {
       "album": [
         {
-          "id": "al-2",
-          "coverArt": "al-2",
+          "id": "al-3",
+          "coverArt": "al-3",
           "artist": "artist-0",
           "created": "2019-11-30T00:00:00Z",
           "title": "album-0",
           "album": "",
-          "parent": "al-1",
+          "parent": "al-2",
           "isDir": true,
           "name": "",
           "songCount": 3,
@@ -45,13 +45,13 @@
           "duration": 300
         },
         {
-          "id": "al-3",
-          "coverArt": "al-3",
+          "id": "al-4",
+          "coverArt": "al-4",
           "artist": "artist-0",
           "created": "2019-11-30T00:00:00Z",
           "title": "album-1",
           "album": "",
-          "parent": "al-1",
+          "parent": "al-2",
           "isDir": true,
           "name": "",
           "songCount": 3,
@@ -84,13 +84,13 @@
           "duration": 300
         },
         {
-          "id": "al-4",
-          "coverArt": "al-4",
+          "id": "al-5",
+          "coverArt": "al-5",
           "artist": "artist-0",
           "created": "2019-11-30T00:00:00Z",
           "title": "album-2",
           "album": "",
-          "parent": "al-1",
+          "parent": "al-2",
           "isDir": true,
           "name": "",
           "songCount": 3,

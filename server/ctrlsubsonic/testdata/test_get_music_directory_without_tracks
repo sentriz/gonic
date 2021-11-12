@@ -6,64 +6,34 @@
     "directory": {
       "id": "al-2",
       "parent": "al-1",
-      "name": "album-0",
+      "name": "artist-0",
       "child": [
         {
-          "id": "tr-1",
-          "album": "album-0",
-          "artist": "artist-0",
-          "bitRate": 100,
-          "contentType": "audio/x-flac",
-          "coverArt": "al-2",
+          "id": "al-3",
+          "coverArt": "al-3",
           "created": "2019-11-30T00:00:00Z",
-          "duration": 100,
-          "isDir": false,
+          "isDir": true,
           "isVideo": false,
           "parent": "al-2",
-          "path": "artist-0/album-0/track-0.flac",
-          "suffix": "flac",
-          "title": "title-0",
-          "track": 1,
-          "discNumber": 1,
-          "type": "music"
+          "title": "album-0"
         },
         {
-          "id": "tr-2",
-          "album": "album-0",
-          "artist": "artist-0",
-          "bitRate": 100,
-          "contentType": "audio/x-flac",
-          "coverArt": "al-2",
+          "id": "al-4",
+          "coverArt": "al-4",
           "created": "2019-11-30T00:00:00Z",
-          "duration": 100,
-          "isDir": false,
+          "isDir": true,
           "isVideo": false,
           "parent": "al-2",
-          "path": "artist-0/album-0/track-1.flac",
-          "suffix": "flac",
-          "title": "title-1",
-          "track": 1,
-          "discNumber": 1,
-          "type": "music"
+          "title": "album-1"
         },
         {
-          "id": "tr-3",
-          "album": "album-0",
-          "artist": "artist-0",
-          "bitRate": 100,
-          "contentType": "audio/x-flac",
-          "coverArt": "al-2",
+          "id": "al-5",
+          "coverArt": "al-5",
           "created": "2019-11-30T00:00:00Z",
-          "duration": 100,
-          "isDir": false,
+          "isDir": true,
           "isVideo": false,
           "parent": "al-2",
-          "path": "artist-0/album-0/track-2.flac",
-          "suffix": "flac",
-          "title": "title-2",
-          "track": 1,
-          "discNumber": 1,
-          "type": "music"
+          "title": "album-2"
         }
       ]
     }

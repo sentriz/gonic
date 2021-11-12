@@ -6,22 +6,13 @@
     "searchResult2": {
       "album": [
         {
-          "id": "al-2",
-          "coverArt": "al-2",
-          "created": "2019-11-30T00:00:00Z",
-          "isDir": true,
-          "isVideo": false,
-          "parent": "al-1",
-          "title": "album-0"
-        },
-        {
           "id": "al-3",
           "coverArt": "al-3",
           "created": "2019-11-30T00:00:00Z",
           "isDir": true,
           "isVideo": false,
-          "parent": "al-1",
-          "title": "album-1"
+          "parent": "al-2",
+          "title": "album-0"
         },
         {
           "id": "al-4",
@@ -29,7 +20,16 @@
           "created": "2019-11-30T00:00:00Z",
           "isDir": true,
           "isVideo": false,
-          "parent": "al-1",
+          "parent": "al-2",
+          "title": "album-1"
+        },
+        {
+          "id": "al-5",
+          "coverArt": "al-5",
+          "created": "2019-11-30T00:00:00Z",
+          "isDir": true,
+          "isVideo": false,
+          "parent": "al-2",
           "title": "album-2"
         },
         {
