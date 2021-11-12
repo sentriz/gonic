@@ -32,6 +32,7 @@ func playlistRender(c *Controller, playlist *db.Playlist) *spec.Playlist {
 		err := c.DB.
 			Where("id=?", id).
 			Preload("Album").
+			Preload("Album.TagArtist").
 			Find(&track).
 			Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {

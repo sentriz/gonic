@@ -343,6 +343,7 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 		Joins("JOIN track_genres ON track_genres.track_id=tracks.id").
 		Joins("JOIN genres ON track_genres.genre_id=genres.id AND genres.name=?", genre).
 		Preload("Album").
+		Preload("Album.TagArtist").
 		Offset(params.GetOrInt("offset", 0)).
 		Limit(params.GetOrInt("count", 10))
 	if m := c.getMusicFolder(params); m != "" {

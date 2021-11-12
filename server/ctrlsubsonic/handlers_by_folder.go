@@ -82,6 +82,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	c.DB.
 		Where("album_id=?", id.Value).
 		Preload("Album").
+		Preload("Album.TagArtist").
 		Order("filename").
 		Find(&childTracks)
 	for _, c := range childTracks {

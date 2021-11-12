@@ -188,6 +188,7 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 	err = c.DB.
 		Where("id=?", id.Value).
 		Preload("Album").
+		Preload("Album.TagArtist").
 		First(track).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -204,6 +205,7 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	q := c.DB.DB.
 		Limit(params.GetOrInt("size", 10)).
 		Preload("Album").
+		Preload("Album.TagArtist").
 		Joins("JOIN albums ON tracks.album_id=albums.id").
 		Order(gorm.Expr("random()"))
 	if year, err := params.GetInt("fromYear"); err == nil {
@@ -219,7 +221,9 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	if m := c.getMusicFolder(params); m != "" {
 		q = q.Where("albums.root_dir=?", m)
 	}
-	q.Find(&tracks)
+	if err := q.Find(&tracks).Error; err != nil {
+		return spec.NewError(10, "get random songs: %v", err)
+	}
 	sub := spec.NewResponse()
 	sub.RandomTracks = &spec.RandomTracks{}
 	sub.RandomTracks.List = make([]*spec.TrackChild, len(tracks))
