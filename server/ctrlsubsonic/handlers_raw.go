@@ -200,25 +200,25 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	var audioPath string
 	switch id.Type {
 	case specid.Track:
-		track, _ := streamGetTrack(c.DB, id.Value)
-		audioFile = track
-		audioPath = path.Join(track.AbsPath())
+		track, err := streamGetTrack(c.DB, id.Value)
 		if err != nil {
 			return spec.NewError(70, "track with id `%s` was not found", id)
 		}
+		audioFile = track
+		audioPath = path.Join(track.AbsPath())
 	case specid.PodcastEpisode:
 		podcast, err := streamGetPodcast(c.DB, id.Value)
-		audioFile = podcast
-		audioPath = path.Join(c.PodcastsPath, podcast.Path)
 		if err != nil {
 			return spec.NewError(70, "podcast with id `%s` was not found", id)
 		}
+		audioFile = podcast
+		audioPath = path.Join(c.PodcastsPath, podcast.Path)
 	default:
 		return spec.NewError(70, "media type of `%s` was not found", id.Type)
 	}
 
 	user := r.Context().Value(CtxUser).(*db.User)
-	if track, ok := audioFile.(*db.Track); ok {
+	if track, ok := audioFile.(*db.Track); ok && track.Album != nil {
 		defer streamUpdateStats(c.DB, user.ID, track.Album.ID)
 	}
 
