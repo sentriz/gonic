@@ -24,7 +24,6 @@ import (
 
 var (
 	ErrAlreadyScanning = errors.New("already scanning")
-	ErrStatingItem     = errors.New("could not stat item")
 	ErrReadingTags     = errors.New("could not read tags")
 )
 
