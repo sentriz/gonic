@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -18,22 +17,22 @@ import (
 var ErrPathNotFound = errors.New("path not found")
 
 type MockFS struct {
-	t       *testing.T
+	t       testing.TB
 	scanner *scanner.Scanner
 	dir     string
 	reader  *mreader
 	db      *db.DB
 }
 
-func New(t *testing.T) *MockFS {
+func New(t testing.TB) *MockFS {
 	return new(t, []string{""})
 }
 
-func NewWithDirs(t *testing.T, dirs []string) *MockFS {
+func NewWithDirs(t testing.TB, dirs []string) *MockFS {
 	return new(t, dirs)
 }
 
-func new(t *testing.T, dirs []string) *MockFS {
+func new(t testing.TB, dirs []string) *MockFS {
 	dbc, err := db.NewMock()
 	if err != nil {
 		t.Fatalf("create db: %v", err)
@@ -43,10 +42,7 @@ func new(t *testing.T, dirs []string) *MockFS {
 	}
 	dbc.LogMode(false)
 
-	tmpDir, err := ioutil.TempDir("", "gonic-test-")
-	if err != nil {
-		t.Fatalf("create tmp dir: %v", err)
-	}
+	tmpDir := t.TempDir()
 
 	var absDirs []string
 	for _, dir := range dirs {
@@ -92,9 +88,6 @@ func (m *MockFS) ResetDates() {
 func (m *MockFS) CleanUp() {
 	if err := m.db.Close(); err != nil {
 		m.t.Fatalf("close db: %v", err)
-	}
-	if err := os.RemoveAll(m.dir); err != nil {
-		m.t.Fatalf("remove all: %v", err)
 	}
 }
 
