@@ -1,13 +1,13 @@
-FROM golang:1.16-alpine AS builder
+FROM golang:1.17-alpine AS builder
 RUN apk add -U --no-cache \
-  build-base \
-  ca-certificates \
-  git \
-  sqlite \
-  taglib-dev \
-  alsa-lib-dev \
-  zlib-dev \
-  go
+    build-base \
+    ca-certificates \
+    git \
+    sqlite \
+    taglib-dev \
+    alsa-lib-dev \
+    zlib-dev \
+    go
 WORKDIR /src
 COPY go.mod .
 COPY go.sum .
@@ -15,22 +15,22 @@ RUN go mod download
 COPY . .
 RUN GOOS=linux go build -o gonic cmd/gonic/gonic.go
 
-FROM alpine:3.13.5
+FROM alpine:3.15
 LABEL org.opencontainers.image.source https://github.com/sentriz/gonic
 RUN apk add -U --no-cache \
-  ffmpeg \
-  ca-certificates \
-  tzdata \
-  tini
+    ffmpeg \
+    ca-certificates \
+    tzdata \
+    tini
 
 COPY --from=builder \
-  /usr/lib/libgcc_s.so.1 \
-  /usr/lib/libstdc++.so.6 \
-  /usr/lib/libtag.so.1 \
-  /usr/lib/
+    /usr/lib/libgcc_s.so.1 \
+    /usr/lib/libstdc++.so.6 \
+    /usr/lib/libtag.so.1 \
+    /usr/lib/
 COPY --from=builder \
-  /src/gonic \
-  /bin/
+    /src/gonic \
+    /bin/
 VOLUME ["/cache", "/data", "/music", "/podcasts"]
 EXPOSE 80
 ENV TZ ""
