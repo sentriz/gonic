@@ -445,6 +445,7 @@ func (p *Podcasts) downloadPodcastCover(podPath string, podcast *db.Podcast) err
 	if err != nil {
 		return fmt.Errorf("creating podcast cover: %w", err)
 	}
+	defer coverFile.Close()
 	if _, err := io.Copy(coverFile, resp.Body); err != nil {
 		return fmt.Errorf("writing podcast cover: %w", err)
 	}
