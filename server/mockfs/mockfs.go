@@ -206,9 +206,11 @@ func (m *MockFS) AddTrack(path string) {
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 		m.t.Fatalf("mkdir: %v", err)
 	}
-	if _, err := os.Create(abspath); err != nil {
+	f, err := os.Create(abspath)
+	if err != nil {
 		m.t.Fatalf("create track: %v", err)
 	}
+	defer f.Close()
 }
 
 func (m *MockFS) AddCover(path string) {
@@ -216,9 +218,11 @@ func (m *MockFS) AddCover(path string) {
 	if err := os.MkdirAll(filepath.Dir(abspath), os.ModePerm); err != nil {
 		m.t.Fatalf("mkdir: %v", err)
 	}
-	if _, err := os.Create(abspath); err != nil {
+	f, err := os.Create(abspath)
+	if err != nil {
 		m.t.Fatalf("create cover: %v", err)
 	}
+	defer f.Close()
 }
 
 func (m *MockFS) SetTags(path string, cb func(*Tags)) {
