@@ -148,7 +148,7 @@ view the admin UI at http://localhost:4747
 
 |env var|command line arg|description|
 |---|---|---|
-|`GONIC_MUSIC_PATH`|`-music-path`|path to your music collection|
+|`GONIC_MUSIC_PATH`|`-music-path`|path to your music collection (see also multi-folder support below)|
 |`GONIC_PODCAST_PATH`|`-podcast-path`|path to a podcasts directory|
 |`GONIC_CACHE_PATH`|`-cache-path`|path to store audio transcodes, covers, etc|
 |`GONIC_DB_PATH`|`-db-path`|**optional** path to database file|
@@ -163,6 +163,29 @@ view the admin UI at http://localhost:4747
 ||||||
 |:-:|:-:|:-:|:-:|:-:|
 ![](https://raw.githubusercontent.com/sentriz/gonic/master/.github/scrot_1.png)|![](https://raw.githubusercontent.com/sentriz/gonic/master/.github/scrot_2.png)|![](https://raw.githubusercontent.com/sentriz/gonic/master/.github/scrot_3.png)|![](https://raw.githubusercontent.com/sentriz/gonic/master/.github/scrot_4.png)|![](https://raw.githubusercontent.com/sentriz/gonic/master/.github/scrot_5.png)|
+
+## multiple folders support (v0.15+)
+
+gonic supports multiple music folders. this can be handy if you have your music separated by albums, compilations, singles. or maybe 70s, 80s, 90s. whatever.  
+
+if you're running gonic with the command line, stack the `-music-path` arg
+```shell
+$ gonic -music-path /path/to/albums -music-path /path/to/compilations
+```
+
+if you're running gonic with ENV_VARS, or docker, try separate with a comma
+```shell
+GONIC_MUSIC_PATH=/path/to/albums,/path/to/compilations
+```
+
+if you're running gonic with the config file, you can repeat the `music-path` option
+```shell
+music-path /path/to/albums
+music-path /path/to/compilations
+```
+
+after that, most subsonic clients should allow you to select which music folder to use. 
+queries like show me "recently played compilations" or "recently added albums" are possible for example.  
 
 ## example nginx config with `GONIC_PROXY_PREFIX`
 
