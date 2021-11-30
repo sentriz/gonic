@@ -370,3 +370,74 @@ func TestMultiFolderWithSharedArtist(t *testing.T) {
 		is.True(album.Duration > 0)
 	}
 }
+
+func TestSymlinkedAlbum(t *testing.T) {
+	t.Parallel()
+	is := is.New(t)
+	m := mockfs.NewWithDirs(t, []string{"scan"})
+	defer m.CleanUp()
+
+	m.AddItemsPrefixWithCovers("temp")
+
+	tempAlbum0 := filepath.Join(m.TmpDir(), "temp", "artist-0", "album-0")
+	scanAlbum0 := filepath.Join(m.TmpDir(), "scan", "artist-sym", "album-0")
+	m.Symlink(tempAlbum0, scanAlbum0)
+
+	m.ScanAndClean()
+	m.LogTracks()
+	m.LogAlbums()
+
+	var track db.Track
+	is.NoErr(m.DB().Preload("Album.Parent").Find(&track).Error) // track exists
+	is.True(track.Album != nil)                                 // track has album
+	is.True(track.Album.Cover != "")                            // album has cover
+	is.Equal(track.Album.Parent.RightPath, "artist-sym")        // artist is sym
+
+	info, err := os.Stat(track.AbsPath())
+	is.NoErr(err)                     // track resolves
+	is.True(!info.IsDir())            // track resolves
+	is.True(!info.ModTime().IsZero()) // track resolves
+}
+
+func TestSymlinkedSubdiscs(t *testing.T) {
+	t.Parallel()
+	is := is.New(t)
+	m := mockfs.NewWithDirs(t, []string{"scan"})
+	defer m.CleanUp()
+
+	addItem := func(prefix, artist, album, disc, track string) {
+		p := fmt.Sprintf("%s/%s/%s/%s/%s", prefix, artist, album, disc, track)
+		m.AddTrack(p)
+		m.SetTags(p, func(tags *mockfs.Tags) {
+			tags.RawArtist = artist
+			tags.RawAlbumArtist = artist
+			tags.RawAlbum = album
+			tags.RawTitle = track
+		})
+	}
+
+	addItem("temp", "artist-a", "album-a", "disc-1", "track-1.flac")
+	addItem("temp", "artist-a", "album-a", "disc-1", "track-2.flac")
+	addItem("temp", "artist-a", "album-a", "disc-1", "track-3.flac")
+	addItem("temp", "artist-a", "album-a", "disc-2", "track-1.flac")
+	addItem("temp", "artist-a", "album-a", "disc-2", "track-2.flac")
+	addItem("temp", "artist-a", "album-a", "disc-2", "track-3.flac")
+
+	tempAlbum0 := filepath.Join(m.TmpDir(), "temp", "artist-a", "album-a")
+	scanAlbum0 := filepath.Join(m.TmpDir(), "scan", "artist-a", "album-sym")
+	m.Symlink(tempAlbum0, scanAlbum0)
+
+	m.ScanAndClean()
+	m.LogTracks()
+	m.LogAlbums()
+
+	var track db.Track
+	is.NoErr(m.DB().Preload("Album.Parent").Find(&track).Error) // track exists
+	is.True(track.Album != nil)                                 // track has album
+	is.Equal(track.Album.Parent.RightPath, "album-sym")         // artist is sym
+
+	info, err := os.Stat(track.AbsPath())
+	is.NoErr(err)                     // track resolves
+	is.True(!info.IsDir())            // track resolves
+	is.True(!info.ModTime().IsZero()) // track resolves
+}
