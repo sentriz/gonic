@@ -3,9 +3,9 @@ package mockfs
 import (
 	"errors"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -24,13 +24,8 @@ type MockFS struct {
 	db      *db.DB
 }
 
-func New(t testing.TB) *MockFS {
-	return new(t, []string{""})
-}
-
-func NewWithDirs(t testing.TB, dirs []string) *MockFS {
-	return new(t, dirs)
-}
+func New(t testing.TB) *MockFS                        { return new(t, []string{""}) }
+func NewWithDirs(t testing.TB, dirs []string) *MockFS { return new(t, dirs) }
 
 func new(t testing.TB, dirs []string) *MockFS {
 	dbc, err := db.NewMock()
@@ -91,6 +86,11 @@ func (m *MockFS) CleanUp() {
 	}
 }
 
+func (m *MockFS) AddItems()                              { m.addItems("", false) }
+func (m *MockFS) AddItemsPrefix(prefix string)           { m.addItems(prefix, false) }
+func (m *MockFS) AddItemsWithCovers()                    { m.addItems("", true) }
+func (m *MockFS) AddItemsPrefixWithCovers(prefix string) { m.addItems(prefix, true) }
+
 func (m *MockFS) addItems(prefix string, covers bool) {
 	p := func(format string, a ...interface{}) string {
 		return filepath.Join(prefix, fmt.Sprintf(format, a...))
@@ -113,11 +113,6 @@ func (m *MockFS) addItems(prefix string, covers bool) {
 	}
 }
 
-func (m *MockFS) AddItems()                              { m.addItems("", false) }
-func (m *MockFS) AddItemsPrefix(prefix string)           { m.addItems(prefix, false) }
-func (m *MockFS) AddItemsWithCovers()                    { m.addItems("", true) }
-func (m *MockFS) AddItemsPrefixWithCovers(prefix string) { m.addItems(prefix, true) }
-
 func (m *MockFS) RemoveAll(path string) {
 	abspath := filepath.Join(m.dir, path)
 	if err := os.RemoveAll(abspath); err != nil {
@@ -125,20 +120,40 @@ func (m *MockFS) RemoveAll(path string) {
 	}
 }
 
+func (m *MockFS) Symlink(src, dest string) {
+	if err := os.MkdirAll(filepath.Dir(dest), os.ModePerm); err != nil {
+		m.t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.Symlink(src, dest); err != nil {
+		m.t.Fatalf("symlink: %v", err)
+	}
+	src = filepath.Clean(src)
+	dest = filepath.Clean(dest)
+	for k, v := range m.reader.tags {
+		m.reader.tags[strings.Replace(k, src, dest, 1)] = v
+	}
+}
+
 func (m *MockFS) LogItems() {
 	m.t.Logf("\nitems")
-	var dirs int
-	err := filepath.Walk(m.dir, func(path string, info fs.FileInfo, err error) error {
-		m.t.Logf("item %q", path)
-		if info.IsDir() {
-			dirs++
+	var items int
+	err := filepath.WalkDir(m.dir, func(path string, info os.DirEntry, err error) error {
+		if err != nil {
+			return err
 		}
+		switch info.Type() {
+		case os.ModeSymlink:
+			m.t.Logf("item %q [sym]", path)
+		default:
+			m.t.Logf("item %q", path)
+		}
+		items++
 		return nil
 	})
 	if err != nil {
 		m.t.Fatalf("error logging items: %v", err)
 	}
-	m.t.Logf("total %d", dirs)
+	m.t.Logf("total %d", items)
 }
 
 func (m *MockFS) LogAlbums() {
@@ -179,6 +194,7 @@ func (m *MockFS) LogTracks() {
 		m.t.Logf("id %-3d aid %-3d filename %-10s tagtitle %-10s",
 			track.ID, track.AlbumID, track.Filename, track.TagTitle)
 	}
+	m.t.Logf("total %d", len(tracks))
 }
 
 func (m *MockFS) LogTrackGenres() {
@@ -191,6 +207,7 @@ func (m *MockFS) LogTrackGenres() {
 	for _, tg := range tgs {
 		m.t.Logf("tid %-3d gid %-3d", tg.TrackID, tg.GenreID)
 	}
+	m.t.Logf("total %d", len(tgs))
 }
 
 func (m *MockFS) AddTrack(path string) {
