@@ -120,20 +120,19 @@ func New(opts Options) (*Server, error) {
 }
 
 func setupMisc(r *mux.Router, ctrl *ctrlbase.Controller) {
-	r.HandleFunc("/",
-		func(w http.ResponseWriter, r *http.Request) {
-			// make the admin page the default
-			http.Redirect(w, r, ctrl.Path("/admin/home"), http.StatusSeeOther)
-		})
-	r.HandleFunc("/musicFolderSettings.view",
-		func(w http.ResponseWriter, r *http.Request) {
-			// jamstash seems to call "musicFolderSettings.view" to start a scan. notice
-			// that there is no "/rest/" prefix, so i doesn't fit in with the nice router,
-			// custom handler, middleware. etc setup that we've got in `SetupSubsonic()`.
-			// instead lets redirect to down there and use the scan endpoint
-			redirectTo := fmt.Sprintf("/rest/startScan.view?%s", r.URL.Query().Encode())
-			http.Redirect(w, r, ctrl.Path(redirectTo), http.StatusSeeOther)
-		})
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		adminHome := ctrl.Path("/admin/home")
+		http.Redirect(w, r, adminHome, http.StatusSeeOther)
+	})
+	// misc subsonic routes without /rest prefix
+	r.HandleFunc("/settings.view", func(w http.ResponseWriter, r *http.Request) {
+		adminHome := ctrl.Path("/admin/home")
+		http.Redirect(w, r, adminHome, http.StatusSeeOther)
+	})
+	r.HandleFunc("/musicFolderSettings.view", func(w http.ResponseWriter, r *http.Request) {
+		restScan := ctrl.Path(fmt.Sprintf("/rest/startScan.view?%s", r.URL.Query().Encode()))
+		http.Redirect(w, r, restScan, http.StatusSeeOther)
+	})
 }
 
 func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
