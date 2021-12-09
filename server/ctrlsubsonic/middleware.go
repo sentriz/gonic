@@ -59,7 +59,7 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 		password, _ := params.Get("p")
 		token, _ := params.Get("t")
 		salt, _ := params.Get("s")
-		//
+
 		passwordAuth := token == "" && salt == ""
 		tokenAuth := password == ""
 		if tokenAuth == passwordAuth {
