@@ -136,7 +136,8 @@ func setupMisc(r *mux.Router, ctrl *ctrlbase.Controller) {
 }
 
 func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
-	// ** begin public routes (creates session)
+
+	// public routes (creates session)
 	r.Use(ctrl.WithSession)
 	r.Handle("/login", ctrl.H(ctrl.ServeLogin))
 	r.Handle("/login_do", ctrl.HR(ctrl.ServeLoginDo)) // "raw" handler, updates session
@@ -144,7 +145,7 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	staticHandler := http.StripPrefix("/admin", http.FileServer(http.FS(assets.Static)))
 	r.PathPrefix("/static").Handler(staticHandler)
 
-	// ** begin user routes (if session is valid)
+	// user routes (if session is valid)
 	routUser := r.NewRoute().Subrouter()
 	routUser.Use(ctrl.WithUserSession)
 	routUser.Handle("/logout", ctrl.HR(ctrl.ServeLogout)) // "raw" handler, updates session
@@ -166,7 +167,7 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	routUser.Handle("/download_podcast_do", ctrl.H(ctrl.ServePodcastDownloadDo))
 	routUser.Handle("/update_podcast_do", ctrl.H(ctrl.ServePodcastUpdateDo))
 
-	// ** begin admin routes (if session is valid, and is admin)
+	// admin routes (if session is valid, and is admin)
 	routAdmin := routUser.NewRoute().Subrouter()
 	routAdmin.Use(ctrl.WithAdminSession)
 	routAdmin.Handle("/change_username", ctrl.H(ctrl.ServeChangeUsername))
@@ -194,7 +195,7 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Use(ctrl.WithRequiredParams)
 	r.Use(ctrl.WithUser)
 
-	// ** begin common
+	// common
 	r.Handle("/getLicense{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetLicence))
 	r.Handle("/getMusicFolders{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetMusicFolders))
 	r.Handle("/getScanStatus{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetScanStatus))
@@ -217,12 +218,12 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/createBookmark{_:(?:\\.view)?}", ctrl.H(ctrl.ServeCreateBookmark))
 	r.Handle("/deleteBookmark{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDeleteBookmark))
 
-	// ** begin raw
+	// raw
 	r.Handle("/download{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeDownload))
 	r.Handle("/getCoverArt{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeGetCoverArt))
 	r.Handle("/stream{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeStream))
 
-	// ** begin browse by tag
+	// browse by tag
 	r.Handle("/getAlbum{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetAlbum))
 	r.Handle("/getAlbumList2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetAlbumListTwo))
 	r.Handle("/getArtist{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtist))
@@ -230,7 +231,7 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/search3{_:(?:\\.view)?}", ctrl.H(ctrl.ServeSearchThree))
 	r.Handle("/getArtistInfo2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtistInfoTwo))
 
-	// ** begin browse by folder
+	// browse by folder
 	r.Handle("/getIndexes{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetIndexes))
 	r.Handle("/getMusicDirectory{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetMusicDirectory))
 	r.Handle("/getAlbumList{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetAlbumList))
@@ -238,7 +239,7 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/getGenres{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetGenres))
 	r.Handle("/getArtistInfo{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtistInfo))
 
-	// ** begin podcasts
+	// podcasts
 	r.Handle("/getPodcasts{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetPodcasts))
 	r.Handle("/downloadPodcastEpisode{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDownloadPodcastEpisode))
 	r.Handle("/createPodcastChannel{_:(?:\\.view)?}", ctrl.H(ctrl.ServeCreatePodcastChannel))

@@ -1,24 +1,24 @@
 // package params provides methods on url.Values for parsing params for the subsonic api
-//
+
 // the format of the functions are:
 //     `Get[First|Or|FirstOr][Int|ID|Bool|TimeMs][List]`
-//
+
 // first component (key selection):
 //     ""        -> lookup the key as usual, err if not found
 //     "First"   -> lookup from a list of possible keys, err if none found
 //     "Or"      -> lookup the key as usual, return `or` if not found
 //     "FirstOr" -> lookup from a list of possible keys, return `or` if not found
-//
+
 // second component (type selection):
 //     ""     -> parse the value as a string
 //     "Int"  -> parse the value as an integer
 //     "ID"   -> parse the value as an artist, track, album etc id
 //     "Bool" -> parse the value as a boolean
-//
+
 // last component (list parsing with stacked keys, eg. `?a=1&a=2&a=3`):
 //     ""     -> return the first value, eg. `1`
 //     "List" -> return all values, eg. `{1, 2, 3}`
-//
+
 // note: these bulk of these funcs were generated with vim macros, so let me know if
 // you see something wrong :)
 
@@ -60,7 +60,8 @@ func parse(values []string, i interface{}) error {
 	}
 	var err error
 	switch v := i.(type) {
-	// ** begin *T
+
+	// *T
 	case *string:
 		*v, err = parseStr(values[0])
 	case *int:
@@ -71,7 +72,8 @@ func parse(values []string, i interface{}) error {
 		*v, err = parseBool(values[0])
 	case *time.Time:
 		*v, err = parseTime(values[0])
-	// ** begin *[]T
+
+		// *[]T
 	case *[]string:
 		for _, value := range values {
 			parsed, err := parseStr(value)
@@ -143,7 +145,7 @@ func (p Params) getFirst(keys []string) []string {
 	return nil
 }
 
-// ** begin str {get, get first, get or, get first or}
+// str {get, get first, get or, get first or}
 
 func (p Params) Get(key string) (string, error) {
 	var ret string
@@ -171,7 +173,7 @@ func (p Params) GetFirstOr(or string, keys ...string) string {
 	return or
 }
 
-// ** begin []str {get, get first, get or, get first or}
+// []str {get, get first, get or, get first or}
 
 func (p Params) GetList(key string) ([]string, error) {
 	var ret []string
@@ -199,7 +201,7 @@ func (p Params) GetFirstOrList(or []string, keys ...string) []string {
 	return or
 }
 
-// ** begin int {get, get first, get or, get first or}
+// int {get, get first, get or, get first or}
 
 func (p Params) GetInt(key string) (int, error) {
 	var ret int
@@ -227,7 +229,7 @@ func (p Params) GetFirstOrInt(or int, keys ...string) int {
 	return or
 }
 
-// ** begin []int {get, get first, get or, get first or}
+// []int {get, get first, get or, get first or}
 
 func (p Params) GetIntList(key string) ([]int, error) {
 	var ret []int
@@ -255,7 +257,7 @@ func (p Params) GetFirstOrIntList(or []int, keys ...string) []int {
 	return or
 }
 
-// ** begin specid.ID {get, get first, get or, get first or}
+// specid.ID {get, get first, get or, get first or}
 
 func (p Params) GetID(key string) (specid.ID, error) {
 	var ret specid.ID
@@ -283,7 +285,7 @@ func (p Params) GetFirstOrID(or specid.ID, keys ...string) specid.ID {
 	return or
 }
 
-// ** begin []specid.ID {get, get first, get or, get first or}
+// []specid.ID {get, get first, get or, get first or}
 
 func (p Params) GetIDList(key string) ([]specid.ID, error) {
 	var ret []specid.ID
@@ -311,7 +313,7 @@ func (p Params) GetFirstOrIDList(or []specid.ID, keys ...string) []specid.ID {
 	return or
 }
 
-// ** begin bool {get, get first, get or, get first or}
+// bool {get, get first, get or, get first or}
 
 func (p Params) GetBool(key string) (bool, error) {
 	var ret bool
@@ -339,7 +341,7 @@ func (p Params) GetFirstOrBool(or bool, keys ...string) bool {
 	return or
 }
 
-// ** begin []bool {get, get first, get or, get first or}
+// []bool {get, get first, get or, get first or}
 
 func (p Params) GetBoolList(key string) ([]bool, error) {
 	var ret []bool
@@ -367,7 +369,7 @@ func (p Params) GetFirstOrBoolList(or []bool, keys ...string) []bool {
 	return or
 }
 
-// ** begin time {get, get first, get or, get first or}
+// time {get, get first, get or, get first or}
 
 func (p Params) GetTime(key string) (time.Time, error) {
 	var ret time.Time

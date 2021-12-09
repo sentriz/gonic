@@ -116,12 +116,12 @@ type templateData struct {
 	Playlists            []*db.Playlist
 	TranscodePreferences []*db.TranscodePreference
 	TranscodeProfiles    []string
-	//
+
 	CurrentLastFMAPIKey    string
 	CurrentLastFMAPISecret string
 	DefaultListenBrainzURL string
 	SelectedUser           *db.User
-	//
+
 	Podcasts []*db.Podcast
 }
 
