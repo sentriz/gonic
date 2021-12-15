@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -231,8 +232,10 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *collected, i int, a
 		return nil
 	}
 
-	if err := populateAlbum(tx, album, albumArtist, trags, stat.ModTime()); err != nil {
-		return fmt.Errorf("propulate album: %w", err)
+	stat_t := stat.Sys().(*syscall.Stat_t)
+
+	if err := populateAlbum(tx, album, albumArtist, trags, timespecToTime(stat_t.Ctim)); err != nil {
+		return fmt.Errorf("populate album: %w", err)
 	}
 
 	if err := populateAlbumGenres(tx, album, genreIDs); err != nil {
@@ -256,6 +259,10 @@ func populateAlbum(tx *db.DB, album *db.Album, albumArtist *db.Artist, trags tag
 	}
 
 	return nil
+}
+
+func timespecToTime(ts syscall.Timespec) time.Time {
+	return time.Unix(int64(ts.Sec), int64(ts.Nsec))
 }
 
 func populateAlbumBasics(tx *db.DB, rootAbsPath string, parent, album *db.Album, dir, basename string, cover string) error {
