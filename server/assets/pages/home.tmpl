@@ -119,7 +119,7 @@
         {{ range $folder := .RecentFolders }}
             <tr>
                 <td class="text-right text-trunc">{{ $folder.RightPath }}</td>
-                <td><span class="text-light" title="{{ $folder.ModifiedAt }}">{{ $folder.ModifiedAt | dateHuman }}</span></td>
+                <td><span class="text-light" title="{{ $folder.CreatedAt }}">{{ $folder.CreatedAt | dateHuman }}</span></td>
             </tr>
         {{ end }}
         </table>

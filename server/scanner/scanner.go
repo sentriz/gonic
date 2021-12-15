@@ -13,6 +13,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/djherbis/times"
 	"github.com/jinzhu/gorm"
 	"github.com/rainycape/unidecode"
 
@@ -231,8 +232,13 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *collected, i int, a
 		return nil
 	}
 
-	if err := populateAlbum(tx, album, albumArtist, trags, stat.ModTime()); err != nil {
-		return fmt.Errorf("propulate album: %w", err)
+	t, err := times.Stat(absPath)
+	if err != nil {
+		return fmt.Errorf("populate album times %w", err)
+	}
+
+	if err := populateAlbum(tx, album, albumArtist, trags, stat.ModTime(), t.BirthTime()); err != nil {
+		return fmt.Errorf("populate album: %w", err)
 	}
 
 	if err := populateAlbumGenres(tx, album, genreIDs); err != nil {
@@ -242,7 +248,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *collected, i int, a
 	return nil
 }
 
-func populateAlbum(tx *db.DB, album *db.Album, albumArtist *db.Artist, trags tags.Parser, modTime time.Time) error {
+func populateAlbum(tx *db.DB, album *db.Album, albumArtist *db.Artist, trags tags.Parser, modTime time.Time, createTime time.Time) error {
 	albumName := trags.SomeAlbum()
 	album.TagTitle = albumName
 	album.TagTitleUDec = decoded(albumName)
@@ -250,6 +256,7 @@ func populateAlbum(tx *db.DB, album *db.Album, albumArtist *db.Artist, trags tag
 	album.TagYear = trags.Year()
 	album.TagArtistID = albumArtist.ID
 	album.ModifiedAt = modTime
+	album.CreatedAt = createTime
 
 	if err := tx.Save(&album).Error; err != nil {
 		return fmt.Errorf("saving album: %w", err)

@@ -9,6 +9,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.8.0 // indirect
 	github.com/cespare/xxhash v1.1.0
 	github.com/disintegration/imaging v1.6.2
+	github.com/djherbis/times v1.5.0 // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/faiface/beep v1.1.0
 	github.com/google/uuid v1.3.0 // indirect
