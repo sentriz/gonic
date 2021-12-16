@@ -246,7 +246,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *ctx, i int, album *
 
 	stat_t := stat.Sys().(*syscall.Stat_t)
 
-	if err := populateAlbum(tx, album, albumArtist, trags, timespecToTime(stat_t.Ctim)); err != nil {
+	if err := populateAlbum(tx, album, albumArtist, trags, stat.ModTime(), timespecToTime(stat_t.Ctim)); err != nil {
 		return fmt.Errorf("populate album: %w", err)
 	}
 
@@ -257,7 +257,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *ctx, i int, album *
 	return nil
 }
 
-func populateAlbum(tx *db.DB, album *db.Album, albumArtist *db.Artist, trags tags.Parser, modTime time.Time) error {
+func populateAlbum(tx *db.DB, album *db.Album, albumArtist *db.Artist, trags tags.Parser, modTime time.Time, createTime time.Time) error {
 	albumName := trags.SomeAlbum()
 	album.TagTitle = albumName
 	album.TagTitleUDec = decoded(albumName)
@@ -265,6 +265,7 @@ func populateAlbum(tx *db.DB, album *db.Album, albumArtist *db.Artist, trags tag
 	album.TagYear = trags.Year()
 	album.TagArtistID = albumArtist.ID
 	album.ModifiedAt = modTime
+	album.CreatedAt = createTime
 
 	if err := tx.Save(&album).Error; err != nil {
 		return fmt.Errorf("saving album: %w", err)
