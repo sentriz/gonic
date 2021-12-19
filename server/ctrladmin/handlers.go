@@ -65,11 +65,19 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	// users box
 	c.DB.Find(&data.AllUsers)
 	// recent folders box
-	c.DB.
-		Where("tag_artist_id IS NOT NULL").
-		Order("created_at DESC").
-		Limit(8).
-		Find(&data.RecentFolders)
+	if c.createSort {
+		c.DB.
+			Where("tag_artist_id IS NOT NULL").
+			Order("created_at DESC").
+			Limit(8).
+			Find(&data.RecentFolders)
+	} else {
+		c.DB.
+			Where("tag_artist_id IS NOT NULL").
+			Order("modified_at DESC").
+			Limit(8).
+			Find(&data.RecentFolders)
+	}
 	data.IsScanning = c.Scanner.IsScanning()
 	if tStr, err := c.DB.GetSetting("last_scan_time"); err != nil {
 		i, _ := strconv.ParseInt(tStr, 10, 64)

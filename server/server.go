@@ -35,6 +35,7 @@ type Options struct {
 	GenreSplit     string
 	HTTPLog        bool
 	JukeboxEnabled bool
+	CreateSort     bool
 }
 
 type Server struct {
@@ -84,7 +85,7 @@ func New(opts Options) (*Server, error) {
 
 	podcast := podcasts.New(opts.DB, opts.PodcastPath, tagger)
 
-	ctrlAdmin, err := ctrladmin.New(base, sessDB, podcast)
+	ctrlAdmin, err := ctrladmin.New(base, sessDB, podcast, opts.CreateSort)
 	if err != nil {
 		return nil, fmt.Errorf("create admin controller: %w", err)
 	}

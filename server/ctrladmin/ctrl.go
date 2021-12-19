@@ -52,13 +52,14 @@ func funcMap() template.FuncMap {
 
 type Controller struct {
 	*ctrlbase.Controller
-	buffPool  *bpool.BufferPool
-	templates map[string]*template.Template
-	sessDB    *gormstore.Store
-	Podcasts  *podcasts.Podcasts
+	buffPool   *bpool.BufferPool
+	templates  map[string]*template.Template
+	sessDB     *gormstore.Store
+	Podcasts   *podcasts.Podcasts
+	createSort bool
 }
 
-func New(b *ctrlbase.Controller, sessDB *gormstore.Store, podcasts *podcasts.Podcasts) (*Controller, error) {
+func New(b *ctrlbase.Controller, sessDB *gormstore.Store, podcasts *podcasts.Podcasts, createSort bool) (*Controller, error) {
 	tmpl := template.
 		New("layout").
 		Funcs(sprig.FuncMap()).
@@ -96,6 +97,7 @@ func New(b *ctrlbase.Controller, sessDB *gormstore.Store, podcasts *podcasts.Pod
 		templates:  pages,
 		sessDB:     sessDB,
 		Podcasts:   podcasts,
+		createSort: createSort,
 	}, nil
 }
 
