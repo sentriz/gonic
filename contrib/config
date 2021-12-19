@@ -5,3 +5,4 @@ db-path           /var/lib/gonic/gonic.db
 jukebox-enabled   false
 listen-addr       127.0.0.1:4747
 scan-interval     0
+create-sort       false

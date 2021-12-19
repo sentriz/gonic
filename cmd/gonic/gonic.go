@@ -37,6 +37,7 @@ func main() {
 	confJukeboxEnabled := set.Bool("jukebox-enabled", false, "whether the subsonic jukebox api should be enabled (optional)")
 	confProxyPrefix := set.String("proxy-prefix", "", "url path prefix to use if behind proxy. eg '/gonic' (optional)")
 	confGenreSplit := set.String("genre-split", "\n", "character or string to split genre tag data on (optional)")
+	confDateCreateSort := set.Bool("create-sort", false, "sort by date created (optional)")
 	confHTTPLog := set.Bool("http-log", true, "http request logging (optional)")
 	confShowVersion := set.Bool("version", false, "show gonic version")
 
@@ -119,6 +120,7 @@ func main() {
 		PodcastPath:    *confPodcastPath,
 		HTTPLog:        *confHTTPLog,
 		JukeboxEnabled: *confJukeboxEnabled,
+		CreateSort:     *confDateCreateSort,
 	})
 	if err != nil {
 		log.Panicf("error creating server: %v\n", err)
