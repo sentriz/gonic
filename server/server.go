@@ -230,6 +230,7 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/getArtists{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtists))
 	r.Handle("/search3{_:(?:\\.view)?}", ctrl.H(ctrl.ServeSearchThree))
 	r.Handle("/getArtistInfo2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtistInfoTwo))
+	r.Handle("/getStarred2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetStarredTwo))
 
 	// browse by folder
 	r.Handle("/getIndexes{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetIndexes))
@@ -238,6 +239,7 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/search2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeSearchTwo))
 	r.Handle("/getGenres{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetGenres))
 	r.Handle("/getArtistInfo{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtistInfo))
+	r.Handle("/getStarred{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetStarred))
 
 	// podcasts
 	r.Handle("/getPodcasts{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetPodcasts))

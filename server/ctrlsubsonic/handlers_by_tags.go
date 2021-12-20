@@ -361,3 +361,13 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 	}
 	return sub
 }
+
+func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
+	sub := spec.NewResponse()
+	sub.StarredTwo = &spec.StarredTwo{
+		Artists: []*spec.Artist{},
+		Albums:  []*spec.Album{},
+		Tracks:  []*spec.TrackChild{},
+	}
+	return sub
+}

@@ -245,3 +245,13 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 func (c *Controller) ServeGetArtistInfo(r *http.Request) *spec.Response {
 	return spec.NewResponse()
 }
+
+func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {
+	sub := spec.NewResponse()
+	sub.Starred = &spec.Starred{
+		Artists: []*spec.Directory{},
+		Albums:  []*spec.TrackChild{},
+		Tracks:  []*spec.TrackChild{},
+	}
+	return sub
+}
