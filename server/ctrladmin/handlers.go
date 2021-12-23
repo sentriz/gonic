@@ -92,7 +92,7 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	}
 	// podcasts box
 	c.DB.Find(&data.Podcasts)
-	//
+
 	return &Response{
 		template: "home.tmpl",
 		data:     data,

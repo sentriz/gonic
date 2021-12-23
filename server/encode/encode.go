@@ -208,7 +208,7 @@ func encode(out io.Writer, trackPath, cachePath string, profile Profile) error {
 	// still unsure if buffer version (cmdOutputWrite) is any better than io.Copy-based one (cmdOutputCopy)
 	// initial goal here is to start streaming response asap, with smallest ttfb. more testing needed
 	// -- @spijet
-	//
+
 	// start up writers for cache file and http response
 	go cmdOutputWrite(out, cacheFile, pipeReader)
 	// run ffmpeg
