@@ -89,12 +89,12 @@ func NewArtistByTags(a *db.Artist, dbc *db.DB) *Artist {
 			AlbumCount: a.AlbumCount,
 			CoverID:    a.SID(),
 		}
-	} else {
-		return &Artist{
-			ID:         a.SID(),
-			Name:       a.Name,
-			AlbumCount: a.AlbumCount,
-		}
+	}
+
+	return &Artist{
+		ID:         a.SID(),
+		Name:       a.Name,
+		AlbumCount: a.AlbumCount,
 	}
 
 }
