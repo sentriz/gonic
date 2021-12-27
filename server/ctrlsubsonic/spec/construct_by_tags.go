@@ -71,12 +71,32 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 	return ret
 }
 
-func NewArtistByTags(a *db.Artist) *Artist {
-	return &Artist{
-		ID:         a.SID(),
-		Name:       a.Name,
-		AlbumCount: a.AlbumCount,
+func NewArtistByTags(a *db.Artist, dbc *db.DB) *Artist {
+	// attempt to fetch a cover if possible
+	guessedArtistFolder := &db.Album{}
+	_ = dbc.
+		Select("parent.*").
+		Joins("JOIN albums parent ON parent.id=albums.parent_id").
+		// Where("albums.tag_artist_id=?", id.Value).
+		Where("albums.tag_artist_id=?", a.ID).
+		Find(&guessedArtistFolder).
+		Error
+
+	if guessedArtistFolder.Cover != "" {
+		return &Artist{
+			ID:         a.SID(),
+			Name:       a.Name,
+			AlbumCount: a.AlbumCount,
+			CoverID:    a.SID(),
+		}
+	} else {
+		return &Artist{
+			ID:         a.SID(),
+			Name:       a.Name,
+			AlbumCount: a.AlbumCount,
+		}
 	}
+
 }
 
 func NewGenre(g *db.Genre) *Genre {

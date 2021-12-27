@@ -44,7 +44,7 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 			resp = append(resp, indexMap[key])
 		}
 		indexMap[key].Artists = append(indexMap[key].Artists,
-			spec.NewArtistByTags(artist))
+			spec.NewArtistByTags(artist, c.DB))
 	}
 	sub := spec.NewResponse()
 	sub.Artists = &spec.Artists{
@@ -69,7 +69,7 @@ func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 		}).
 		First(artist, id.Value)
 	sub := spec.NewResponse()
-	sub.Artist = spec.NewArtistByTags(artist)
+	sub.Artist = spec.NewArtistByTags(artist, c.DB)
 	sub.Artist.Albums = make([]*spec.Album, len(artist.Albums))
 	for i, album := range artist.Albums {
 		sub.Artist.Albums[i] = spec.NewAlbumByTags(album, artist)
@@ -200,7 +200,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find artists: %v", err)
 	}
 	for _, a := range artists {
-		results.Artists = append(results.Artists, spec.NewArtistByTags(a))
+		results.Artists = append(results.Artists, spec.NewArtistByTags(a, c.DB))
 	}
 
 	// search "albums"
