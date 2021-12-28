@@ -24,6 +24,14 @@ func doScan(scanner *scanner.Scanner, opts scanner.ScanOptions) {
 	}()
 }
 
+func doCoverScan(scanner *scanner.Scanner) {
+	go func() {
+		if err := scanner.ScanAndUpdateCovers(); err != nil {
+			log.Printf("error while scanning: %v\n", err)
+		}
+	}()
+}
+
 func (c *Controller) ServeNotFound(r *http.Request) *Response {
 	return &Response{template: "not_found.tmpl", code: 404}
 }
@@ -357,6 +365,15 @@ func (c *Controller) ServeStartScanFullDo(r *http.Request) *Response {
 	return &Response{
 		redirect: "/admin/home",
 		flashN:   []string{"full scan started. refresh for results"},
+	}
+}
+
+// Switch to new function version (not implemented)
+func (c *Controller) ServeStartScanCoverDo(r *http.Request) *Response {
+	defer doCoverScan(c.Scanner)
+	return &Response{
+		redirect: "/admin/home",
+		flashN:   []string{"cover scan started. refresh for results"},
 	}
 }
 

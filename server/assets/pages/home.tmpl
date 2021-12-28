@@ -133,6 +133,9 @@
             <form action="{{ path "/admin/start_scan_full_do" }}" method="post">
                 <input type="submit" title="start a full scan (takes longer, and shouldn&#39;t usually be necessary)" value="scan full (!)">
             </form>
+            <form action="{{ path "/admin/start_scan_cover_do" }}" method="post">
+                <input type="submit" title="start a full cover scan (takes longer, and shouldn&#39;t usually be necessary)" value="cover scan">
+            </form>
         {{ end }}
     </div>
 </div>

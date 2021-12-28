@@ -133,6 +133,7 @@ func main() {
 	if *confScanInterval > 0 {
 		tickerDur := time.Duration(*confScanInterval) * time.Minute
 		g.Add(server.StartScanTicker(tickerDur))
+		g.Add(server.StartCoverScanTicker(tickerDur / 2))
 	}
 	if *confJukeboxEnabled {
 		g.Add(server.StartJukebox())

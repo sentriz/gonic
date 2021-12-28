@@ -54,6 +54,96 @@ type ScanOptions struct {
 	IsFull bool
 }
 
+/**
+Fetch and loop through all artists to update cover art work
+*/
+func (s *Scanner) ScanAndUpdateCovers() error {
+	if s.IsScanning() {
+		return ErrAlreadyScanning
+	}
+	atomic.StoreInt32(s.scanning, 1)
+	defer atomic.StoreInt32(s.scanning, 0)
+
+	start := time.Now()
+	c := &ctx{
+		errs:       &multierr.Err{},
+		seenAlbums: map[int]struct{}{},
+	}
+
+	log.Println("starting cover scan")
+	defer func() {
+		log.Printf("finished scan in %s, %d albums (%d err)\n", durSince(start), len(c.seenAlbums), c.errs.Len())
+	}()
+
+	q := s.db.DB
+	var folders []*db.Album
+
+	q.
+		Select("albums.*, count(tracks.id) child_count, sum(tracks.length) duration").
+		Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
+		Group("albums.id").
+		Where("albums.tag_artist_id IS NOT NULL").
+		Preload("Parent").
+		Order("modified_at DESC").
+		Find(&folders)
+
+	for _, folder := range folders {
+		// update cover art for each
+		err := s.updateFolderCover(c, folder)
+		if err != nil {
+			c.errs.Add(err)
+		}
+	}
+
+	if c.errs.Len() > 0 {
+		return c.errs
+	}
+
+	return nil
+}
+
+func (s *Scanner) updateFolderCover(c *ctx, album *db.Album) error {
+	log.Printf("processing album `%s`", album.TagTitle)
+
+	absPath := filepath.Join(album.RootDir, album.LeftPath, album.RightPath)
+
+	items, err := os.ReadDir(absPath)
+	if err != nil {
+		return err
+	}
+
+	var cover string
+
+	for _, item := range items {
+		if isCover(item.Name()) {
+			cover = item.Name()
+		}
+	}
+
+	tx := s.db.Begin()
+	if err := populateAlbumCover(tx, album, cover); err != nil {
+		c.errs.Add(fmt.Errorf("%q: %w", absPath, err))
+		tx.Rollback()
+		return nil
+	}
+	if err := tx.Commit().Error; err != nil {
+		return fmt.Errorf("commit tx: %w", err)
+	}
+
+	return nil
+}
+
+// Populates the Album with updated cover art
+func populateAlbumCover(tx *db.DB, album *db.Album, cover string) error {
+	album.Cover = cover
+
+	if err := tx.Save(&album).Error; err != nil {
+		return fmt.Errorf("Saving album: %w", err)
+	}
+
+	return nil
+}
+
 func (s *Scanner) ScanAndClean(opts ScanOptions) error {
 	if s.IsScanning() {
 		return ErrAlreadyScanning

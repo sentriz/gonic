@@ -183,6 +183,7 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	routAdmin.Handle("/update_lastfm_api_key_do", ctrl.H(ctrl.ServeUpdateLastFMAPIKeyDo))
 	routAdmin.Handle("/start_scan_inc_do", ctrl.H(ctrl.ServeStartScanIncDo))
 	routAdmin.Handle("/start_scan_full_do", ctrl.H(ctrl.ServeStartScanFullDo))
+	routAdmin.Handle("/start_scan_cover_do", ctrl.H(ctrl.ServeStartScanCoverDo))
 
 	// middlewares should be run for not found handler
 	// https://github.com/gorilla/mux/issues/416
@@ -290,6 +291,34 @@ func (s *Server) StartScanTicker(dur time.Duration) (FuncExecute, FuncInterrupt)
 			case <-ticker.C:
 				go func() {
 					if err := s.scanner.ScanAndClean(scanner.ScanOptions{}); err != nil {
+						log.Printf("error scanning: %v", err)
+					}
+				}()
+			}
+		}
+	}
+	return func() error {
+			log.Printf("starting job 'scan timer'\n")
+			return waitFor()
+		}, func(_ error) {
+			// stop job
+			ticker.Stop()
+			done <- struct{}{}
+		}
+}
+
+// Switch to new function (not implemented)
+func (s *Server) StartCoverScanTicker(dur time.Duration) (FuncExecute, FuncInterrupt) {
+	ticker := time.NewTicker(dur)
+	done := make(chan struct{})
+	waitFor := func() error {
+		for {
+			select {
+			case <-done:
+				return nil
+			case <-ticker.C:
+				go func() {
+					if err := s.scanner.ScanAndClean(scanner.ScanOptions{IsFull: true}); err != nil {
 						log.Printf("error scanning: %v", err)
 					}
 				}()
