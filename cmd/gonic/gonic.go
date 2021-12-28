@@ -34,6 +34,7 @@ func main() {
 	confCachePath := set.String("cache-path", "", "path to cache")
 	confDBPath := set.String("db-path", "gonic.db", "path to database (optional)")
 	confScanInterval := set.Int("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
+	confCoverScanInterval := set.Int("cover-scan-interval", 0, "interval (in minutes) to automatically scan album covers (optional)")
 	confJukeboxEnabled := set.Bool("jukebox-enabled", false, "whether the subsonic jukebox api should be enabled (optional)")
 	confProxyPrefix := set.String("proxy-prefix", "", "url path prefix to use if behind proxy. eg '/gonic' (optional)")
 	confGenreSplit := set.String("genre-split", "\n", "character or string to split genre tag data on (optional)")
@@ -131,9 +132,10 @@ func main() {
 	g.Add(server.StartSessionClean(cleanTimeDuration))
 	g.Add(server.StartPodcastRefresher(time.Hour))
 	if *confScanInterval > 0 {
-		tickerDur := time.Duration(*confScanInterval) * time.Minute
-		g.Add(server.StartScanTicker(tickerDur))
-		g.Add(server.StartCoverScanTicker(tickerDur / 2))
+		scanTickerDur := time.Duration(*confScanInterval) * time.Minute
+		coverScanTickerDur := time.Duration(*confCoverScanInterval) * time.Minute
+		g.Add(server.StartScanTicker(scanTickerDur))
+		g.Add(server.StartCoverScanTicker(coverScanTickerDur))
 	}
 	if *confJukeboxEnabled {
 		g.Add(server.StartJukebox())

@@ -1,8 +1,9 @@
-music-path        <path to your music dir>
-podcast-path      <path to your podcasts dir>
-cache-path        <path to cache dir>
-db-path           /var/lib/gonic/gonic.db
-jukebox-enabled   false
-listen-addr       127.0.0.1:4747
-scan-interval     0
-create-sort       false
+music-path           <path to your music dir>
+podcast-path         <path to your podcasts dir>
+cache-path           <path to cache dir>
+db-path              /var/lib/gonic/gonic.db
+jukebox-enabled      false
+listen-addr          127.0.0.1:4747
+scan-interval        0
+create-sort          false
+cover-scan-interval  0

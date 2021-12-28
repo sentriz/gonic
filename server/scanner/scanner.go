@@ -24,30 +24,37 @@ import (
 )
 
 var (
-	ErrAlreadyScanning = errors.New("already scanning")
-	ErrReadingTags     = errors.New("could not read tags")
+	ErrAlreadyScanning      = errors.New("already scanning")
+	ErrAlreadyCoverScanning = errors.New("already cover scanning")
+	ErrReadingTags          = errors.New("could not read tags")
 )
 
 type Scanner struct {
-	db         *db.DB
-	musicDirs  []string
-	genreSplit string
-	tagger     tags.Reader
-	scanning   *int32
+	db            *db.DB
+	musicDirs     []string
+	genreSplit    string
+	tagger        tags.Reader
+	scanning      *int32
+	coverScanning *int32
 }
 
 func New(musicDirs []string, db *db.DB, genreSplit string, tagger tags.Reader) *Scanner {
 	return &Scanner{
-		db:         db,
-		musicDirs:  musicDirs,
-		genreSplit: genreSplit,
-		tagger:     tagger,
-		scanning:   new(int32),
+		db:            db,
+		musicDirs:     musicDirs,
+		genreSplit:    genreSplit,
+		tagger:        tagger,
+		scanning:      new(int32),
+		coverScanning: new(int32),
 	}
 }
 
 func (s *Scanner) IsScanning() bool {
 	return atomic.LoadInt32(s.scanning) == 1
+}
+
+func (s *Scanner) IsCoverScanning() bool {
+	return atomic.LoadInt32(s.coverScanning) == 1
 }
 
 type ScanOptions struct {
@@ -58,11 +65,11 @@ type ScanOptions struct {
 Fetch and loop through all artists to update cover art work
 */
 func (s *Scanner) ScanAndUpdateCovers() error {
-	if s.IsScanning() {
-		return ErrAlreadyScanning
+	if s.IsCoverScanning() {
+		return ErrAlreadyCoverScanning
 	}
-	atomic.StoreInt32(s.scanning, 1)
-	defer atomic.StoreInt32(s.scanning, 0)
+	atomic.StoreInt32(s.coverScanning, 1)
+	defer atomic.StoreInt32(s.coverScanning, 0)
 
 	start := time.Now()
 	c := &ctx{

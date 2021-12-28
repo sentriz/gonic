@@ -155,6 +155,7 @@ view the admin UI at http://localhost:4747
 |`GONIC_LISTEN_ADDR`|`-listen-addr`|**optional** host and port to listen on (eg. `0.0.0.0:4747`, `127.0.0.1:4747`) (*default* `0.0.0.0:4747`)|
 |`GONIC_PROXY_PREFIX`|`-proxy-prefix`|**optional** url path prefix to use if behind reverse proxy. eg `/gonic` (see example configs below)|
 |`GONIC_SCAN_INTERVAL`|`-scan-interval`|**optional** interval (in minutes) to check for new music (automatic scanning disabled if omitted)|
+|`GONIC_COVER_SCAN_INTERVAL`|`-cover-scan-interval`|**optional** interval (in minutes) to update album cover art (automatic cover scanning disabled if omitted)|
 |`GONIC_JUKEBOX_ENABLED`|`-jukebox-enabled`|**optional** whether the subsonic [jukebox api](https://airsonic.github.io/docs/jukebox/) should be enabled|
 |`GONIC_GENRE_SPLIT`|`-genre-split`|**optional** a string or character to split genre tags on for multi-genre support (eg. `;`)|
 |`CREATE_SORT`|`-create-sort`|**optional** a boolean for if the date sort should be for time created (default time modified)|

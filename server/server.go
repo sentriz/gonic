@@ -318,8 +318,8 @@ func (s *Server) StartCoverScanTicker(dur time.Duration) (FuncExecute, FuncInter
 				return nil
 			case <-ticker.C:
 				go func() {
-					if err := s.scanner.ScanAndClean(scanner.ScanOptions{IsFull: true}); err != nil {
-						log.Printf("error scanning: %v", err)
+					if err := s.scanner.ScanAndUpdateCovers(); err != nil {
+						log.Printf("error cover scanning: %v", err)
 					}
 				}()
 			}
