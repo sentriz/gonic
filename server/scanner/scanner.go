@@ -216,7 +216,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *ctx, i int, album *
 	}
 
 	artistName := trags.SomeAlbumArtist()
-	albumArtist, err := s.populateAlbumArtist(tx, artistName)
+	albumArtist, err := s.populateAlbumArtist(tx, album, artistName)
 	if err != nil {
 		return fmt.Errorf("populate artist: %w", err)
 	}
@@ -310,11 +310,14 @@ func populateTrack(tx *db.DB, album *db.Album, albumArtist *db.Artist, track *db
 	return nil
 }
 
-func (s *Scanner) populateAlbumArtist(tx *db.DB, artistName string) (*db.Artist, error) {
+func (s *Scanner) populateAlbumArtist(tx *db.DB, guessedArtistFolder *db.Album, artistName string) (*db.Artist, error) {
 	var artist db.Artist
 	update := db.Artist{
 		Name:     artistName,
 		NameUDec: decoded(artistName),
+	}
+	if guessedArtistFolder != nil {
+		update.GuessedFolderID = guessedArtistFolder.ParentID
 	}
 	if err := tx.Where("name=?", artistName).Assign(update).FirstOrCreate(&artist).Error; err != nil {
 		return nil, fmt.Errorf("find or create artist: %w", err)
