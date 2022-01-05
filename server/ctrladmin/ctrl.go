@@ -18,7 +18,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/gorilla/sessions"
 	"github.com/oxtoacart/bpool"
-	"github.com/wader/gormstore"
+	"github.com/sentriz/gormstore"
 
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/server/assets"
