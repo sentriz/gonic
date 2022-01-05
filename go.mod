@@ -18,8 +18,9 @@ require (
 	github.com/hajimehoshi/go-mp3 v0.3.2 // indirect
 	github.com/hajimehoshi/oto v1.0.1 // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect
+	github.com/icza/bitio v1.1.0 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
-	github.com/jinzhu/gorm v1.9.16
+	github.com/jinzhu/gorm v1.9.17-0.20211120011537-5c235b72a414
 	github.com/josephburnett/jd v0.0.0-20191228205456-aa1a7c66b42f
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/matryer/is v1.4.0
@@ -32,11 +33,12 @@ require (
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c
 	github.com/peterbourgon/ff v1.7.1
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
-	github.com/wader/gormstore v0.0.0-20211009162750-8bf4f5606ef4
-	golang.org/x/exp v0.0.0-20211103171733-83d51122435b // indirect
+	github.com/wader/gormstore v0.0.0-20211130165236-e9463bf21331
+	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
+	golang.org/x/exp v0.0.0-20220104160115-025e73f80486 // indirect
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410 // indirect
-	golang.org/x/mobile v0.0.0-20211103151657-e68c98865fb2 // indirect
-	golang.org/x/net v0.0.0-20211104170005-ce137452f963 // indirect
-	golang.org/x/sys v0.0.0-20211103235746-7861aae1554b // indirect
+	golang.org/x/mobile v0.0.0-20220104184238-4a8be17bd2e3 // indirect
+	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f // indirect
+	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
 	gopkg.in/gormigrate.v1 v1.6.0
 )
