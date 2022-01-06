@@ -37,6 +37,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202102191448", migratePodcastAutoDownload),
 		construct(ctx, "202110041330", migrateAlbumCreatedAt),
 		construct(ctx, "202111021951", migrateAlbumRootDir),
+		construct(ctx, "202201042236", migrateArtistGuessedFolder),
 	}
 
 	return gormigrate.
@@ -305,4 +306,8 @@ func migrateAlbumRootDir(tx *gorm.DB, ctx MigrationContext) error {
 		return fmt.Errorf("step drop idx: %w", err)
 	}
 	return nil
+}
+
+func migrateArtistGuessedFolder(tx *gorm.DB, ctx MigrationContext) error {
+	return tx.AutoMigrate(Artist{}).Error
 }

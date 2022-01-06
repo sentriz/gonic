@@ -16,7 +16,7 @@ import (
 func playlistRender(c *Controller, playlist *db.Playlist) *spec.Playlist {
 	user := &db.User{}
 	c.DB.Where("id=?", playlist.UserID).Find(user)
-	//
+
 	resp := &spec.Playlist{
 		ID:        playlist.ID,
 		Name:      playlist.Name,
@@ -24,7 +24,7 @@ func playlistRender(c *Controller, playlist *db.Playlist) *spec.Playlist {
 		Created:   playlist.CreatedAt,
 		SongCount: playlist.TrackCount,
 	}
-	//
+
 	trackIDs := playlist.GetItems()
 	resp.List = make([]*spec.TrackChild, len(trackIDs))
 	for i, id := range trackIDs {
@@ -88,12 +88,14 @@ func (c *Controller) ServeCreatePlaylist(r *http.Request) *spec.Response {
 	c.DB.
 		Where("id=?", playlistID).
 		FirstOrCreate(&playlist)
-	// ** begin update meta info
+
+		// update meta info
 	playlist.UserID = user.ID
 	if val, err := params.Get("name"); err == nil {
 		playlist.Name = val
 	}
-	// ** begin replace song IDs
+
+	// replace song IDs
 	var trackIDs []int
 	if p, err := params.GetIDList("songId"); err == nil {
 		for _, i := range p {
@@ -103,7 +105,7 @@ func (c *Controller) ServeCreatePlaylist(r *http.Request) *spec.Response {
 	// Set the items of the playlist
 	playlist.SetItems(trackIDs)
 	c.DB.Save(playlist)
-	//
+
 	sub := spec.NewResponse()
 	sub.Playlist = playlistRender(c, &playlist)
 	return sub
@@ -119,7 +121,8 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 	c.DB.
 		Where("id=?", playlistID).
 		FirstOrCreate(&playlist)
-	// ** begin update meta info
+
+		// update meta info
 	playlist.UserID = user.ID
 	if val, err := params.Get("name"); err == nil {
 		playlist.Name = val
@@ -128,20 +131,22 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 		playlist.Comment = val
 	}
 	trackIDs := playlist.GetItems()
-	// ** begin delete items
+
+	// delete items
 	if p, err := params.GetIntList("songIndexToRemove"); err == nil {
 		sort.Sort(sort.Reverse(sort.IntSlice(p)))
 		for _, i := range p {
 			trackIDs = append(trackIDs[:i], trackIDs[i+1:]...)
 		}
 	}
-	// ** begin add items
+
+	// add items
 	if p, err := params.GetIDList("songIdToAdd"); err == nil {
 		for _, i := range p {
 			trackIDs = append(trackIDs, i.Value)
 		}
 	}
-	//
+
 	playlist.SetItems(trackIDs)
 	c.DB.Save(playlist)
 	return spec.NewResponse()

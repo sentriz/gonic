@@ -45,6 +45,8 @@ type Response struct {
 	JukeboxPlaylist   *JukeboxPlaylist   `xml:"jukeboxPlaylist"   json:"jukeboxPlaylist,omitempty"`
 	Podcasts          *Podcasts          `xml:"podcasts"          json:"podcasts,omitempty"`
 	Bookmarks         *Bookmarks         `xml:"bookmarks"         json:"bookmarks,omitempty"`
+	Starred           *Starred           `xml:"starred"           json:"starred,omitempty"`
+	StarredTwo        *StarredTwo        `xml:"starred2"          json:"starred2,omitempty"`
 }
 
 func NewResponse() *Response {
@@ -337,4 +339,16 @@ type Bookmark struct {
 type BookmarkEntry struct {
 	ID   *specid.ID `xml:"id,attr"   json:"id"`
 	Type string     `xml:"type,attr" json:"type"`
+}
+
+type Starred struct {
+	Artists []*Directory  `xml:"artist,omitempty" json:"artist,omitempty"`
+	Albums  []*TrackChild `xml:"album,omitempty"  json:"album,omitempty"`
+	Tracks  []*TrackChild `xml:"song,omitempty"   json:"song,omitempty"`
+}
+
+type StarredTwo struct {
+	Artists []*Artist     `xml:"artist,omitempty" json:"artist,omitempty"`
+	Albums  []*Album      `xml:"album,omitempty"  json:"album,omitempty"`
+	Tracks  []*TrackChild `xml:"song,omitempty"   json:"song,omitempty"`
 }

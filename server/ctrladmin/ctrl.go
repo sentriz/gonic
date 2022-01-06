@@ -18,7 +18,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/gorilla/sessions"
 	"github.com/oxtoacart/bpool"
-	"github.com/wader/gormstore"
+	"github.com/sentriz/gormstore"
 
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/server/assets"
@@ -118,12 +118,12 @@ type templateData struct {
 	Playlists            []*db.Playlist
 	TranscodePreferences []*db.TranscodePreference
 	TranscodeProfiles    []string
-	//
+
 	CurrentLastFMAPIKey    string
 	CurrentLastFMAPISecret string
 	DefaultListenBrainzURL string
 	SelectedUser           *db.User
-	//
+
 	Podcasts []*db.Podcast
 }
 
