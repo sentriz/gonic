@@ -132,7 +132,7 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 			user.ID)
 		q = q.Order("plays.count DESC")
 	case "newest":
-		q = q.Order("modified_at DESC")
+		q = q.Order("created_at DESC")
 	case "random":
 		q = q.Order(gorm.Expr("random()"))
 	case "recent":

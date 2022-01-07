@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -243,8 +244,8 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *ctx, i int, album *
 		return nil
 	}
 
-	if err := populateAlbum(tx, album, albumArtist, trags, stat.ModTime()); err != nil {
-		return fmt.Errorf("propulate album: %w", err)
+	if err := populateAlbum(tx, album, albumArtist, trags, stat.ModTime(), statCreateTime(stat)); err != nil {
+		return fmt.Errorf("populate album: %w", err)
 	}
 
 	if err := populateAlbumGenres(tx, album, genreIDs); err != nil {
@@ -254,14 +255,18 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *ctx, i int, album *
 	return nil
 }
 
-func populateAlbum(tx *db.DB, album *db.Album, albumArtist *db.Artist, trags tags.Parser, modTime time.Time) error {
+func populateAlbum(tx *db.DB, album *db.Album, albumArtist *db.Artist, trags tags.Parser, modTime, createTime time.Time) error {
 	albumName := trags.SomeAlbum()
 	album.TagTitle = albumName
 	album.TagTitleUDec = decoded(albumName)
 	album.TagBrainzID = trags.AlbumBrainzID()
 	album.TagYear = trags.Year()
 	album.TagArtistID = albumArtist.ID
+
 	album.ModifiedAt = modTime
+	if !createTime.IsZero() {
+		album.CreatedAt = createTime
+	}
 
 	if err := tx.Save(&album).Error; err != nil {
 		return fmt.Errorf("saving album: %w", err)
@@ -502,4 +507,15 @@ type ctx struct {
 	seenTracks    map[int]struct{}
 	seenAlbums    map[int]struct{}
 	seenTracksNew int
+}
+
+func statCreateTime(info fs.FileInfo) time.Time {
+	stat, ok := info.Sys().(*syscall.Stat_t)
+	if !ok {
+		return time.Time{}
+	}
+	if stat.Ctim.Sec == 0 {
+		return time.Time{}
+	}
+	return time.Unix(stat.Ctim.Sec, stat.Ctim.Nsec)
 }
