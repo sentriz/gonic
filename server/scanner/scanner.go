@@ -517,5 +517,6 @@ func statCreateTime(info fs.FileInfo) time.Time {
 	if stat.Ctim.Sec == 0 {
 		return time.Time{}
 	}
-	return time.Unix(stat.Ctim.Sec, stat.Ctim.Nsec)
+	//nolint:unconvert // Ctim.Sec/Nsec is int32 on arm/386, etc
+	return time.Unix(int64(stat.Ctim.Sec), int64(stat.Ctim.Nsec))
 }
