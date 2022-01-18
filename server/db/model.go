@@ -49,7 +49,7 @@ type Artist struct {
 	Albums          []*Album `gorm:"foreignkey:TagArtistID"`
 	AlbumCount      int      `sql:"-"`
 	GuessedFolder   *Album
-	GuessedFolderID int `sql:"default: null; type:int REFERENCES albums(id)"`
+	GuessedFolderID int `sql:"default: null; type:int REFERENCES albums(id) ON DELETE SET NULL"`
 }
 
 func (a *Artist) SID() *specid.ID {
