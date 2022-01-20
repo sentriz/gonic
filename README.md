@@ -201,7 +201,9 @@ queries like show me "recently played compilations" or "recently added albums" a
 
 ## directory structure
 
-when browsing by folder, any arbitrary and nested folder layout is supported. with one exception: _albums must be contained in a single folder_  
+when browsing by folder, any arbitrary and nested folder layout is supported, with the following caveats: 
+- Files from the same album must all be in the same folder
+- All files in a folder must be from the same album
 
 please see [here](https://github.com/sentriz/gonic/issues/89) for more context  
 
