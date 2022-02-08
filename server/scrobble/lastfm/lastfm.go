@@ -25,12 +25,13 @@ var (
 )
 
 type LastFM struct {
-	XMLName   xml.Name  `xml:"lfm"`
-	Status    string    `xml:"status,attr"`
-	Session   Session   `xml:"session"`
-	Error     Error     `xml:"error"`
-	Artist    Artist    `xml:"artist"`
-	TopTracks TopTracks `xml:"toptracks"`
+	XMLName       xml.Name      `xml:"lfm"`
+	Status        string        `xml:"status,attr"`
+	Session       Session       `xml:"session"`
+	Error         Error         `xml:"error"`
+	Artist        Artist        `xml:"artist"`
+	TopTracks     TopTracks     `xml:"toptracks"`
+	SimilarTracks SimilarTracks `xml:"similartracks"`
 }
 
 type Session struct {
@@ -81,6 +82,13 @@ type ArtistBio struct {
 type TopTracks struct {
 	XMLName xml.Name `xml:toptracks`
 	Artist  string   `xml:"artist,attr"`
+	Tracks  []Track  `xml:"track"`
+}
+
+type SimilarTracks struct {
+	XMLName xml.Name `xml:"similartracks"`
+	Artist  string   `xml:"artist,attr"`
+	Track   string   `xml:"track,attr"`
 	Tracks  []Track  `xml:"track"`
 }
 
@@ -156,6 +164,21 @@ func ArtistGetTopTracks(apiKey, artistName string) (TopTracks, error) {
 		return TopTracks{}, fmt.Errorf("making track GET: %w", err)
 	}
 	return resp.TopTracks, nil
+}
+
+func TrackGetSimilarTracks(apiKey string, track *db.Track) (SimilarTracks, error) {
+	params := url.Values{}
+	params.Add("method", "track.getSimilar")
+	params.Add("api_key", apiKey)
+	params.Add("track", track.TagTitle)
+	params.Add("artist", track.Artist.Name)
+
+	resp, err := makeRequest("GET", params)
+	if err != nil {
+		return SimilarTracks{}, fmt.Errorf("making track GET: %s %s %w", track.TagTitle, track.Artist.Name, err)
+	}
+
+	return resp.SimilarTracks, nil
 }
 
 func GetSession(apiKey, secret, token string) (string, error) {
