@@ -47,7 +47,8 @@ type Response struct {
 	Bookmarks         *Bookmarks         `xml:"bookmarks"         json:"bookmarks,omitempty"`
 	Starred           *Starred           `xml:"starred"           json:"starred,omitempty"`
 	StarredTwo        *StarredTwo        `xml:"starred2"          json:"starred2,omitempty"`
-	TopSongs          *TopSongs          `xml:"topSongs" json:"topSongs", omitempty`
+	TopSongs          *TopSongs          `xml:"topSongs" json:"topSongs,omitempty"`
+	SimilarSongs      *SimilarSongs      `xml:"similarSongs" json:"similarSongs,omitempty"`
 }
 
 func NewResponse() *Response {
@@ -355,5 +356,8 @@ type StarredTwo struct {
 }
 
 type TopSongs struct {
+	Tracks []*TrackChild `xml:"song,omitempty"         json:"song,omitempty"`
+}
+type SimilarSongs struct {
 	Tracks []*TrackChild `xml:"song,omitempty"         json:"song,omitempty"`
 }
