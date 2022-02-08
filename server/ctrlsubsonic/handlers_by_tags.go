@@ -3,10 +3,12 @@ package ctrlsubsonic
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jinzhu/gorm"
 
@@ -458,5 +460,80 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 		sub.TopSongs.Tracks[i] = spec.NewTrackByTags(track, track.Album)
 	}
 
+	return sub
+}
+
+func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	sub := spec.NewResponse()
+	sub.SimilarSongs = &spec.SimilarSongs{
+		Tracks: []*spec.TrackChild{},
+	}
+
+	count := params.GetOrInt("count", 10)
+	id, err := params.GetID("id")
+	if err != nil {
+		return spec.NewError(10, "please provide an `id` parameter")
+	}
+
+	apiKey, _ := c.DB.GetSetting("lastfm_api_key")
+	if apiKey == "" {
+		return sub
+	}
+
+	track := &db.Track{}
+	err = c.DB.Debug().
+		Preload("Artist").
+		Preload("Album").
+		Where("id=?", id.Value).
+		First(track).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return spec.NewError(10, "couldn't find a track with that id")
+	}
+
+	similarTracks, err := lastfm.TrackGetSimilarTracks(apiKey, track)
+	if err != nil {
+		return spec.NewError(0, "fetching track similar tracks: %v", err)
+	}
+
+	sub.SimilarSongs = &spec.SimilarSongs{
+		Tracks: make([]*spec.TrackChild, count),
+	}
+
+	if len(similarTracks.Tracks) == 0 {
+		return spec.NewError(70, "no similar songs found for track: %v", track.TagTitle)
+	}
+	similarTrackNames := make([]string, len(similarTracks.Tracks))
+	for i, t := range similarTracks.Tracks {
+		similarTrackNames[i] = t.Name
+	}
+
+	var tracks []*db.Track
+	q := c.DB.
+		Preload("Artist").
+		Preload("Album").
+		Select("tracks.*").
+		Where("tracks.tag_title IN ( ? )", similarTrackNames)
+
+	if err := q.Limit(1000).Find(&tracks).Error; err != nil {
+		return spec.NewError(0, "error finding tracks: %v", err)
+	}
+
+	lastfmTracks := make([]*spec.TrackChild, len(tracks))
+	if len(sub.SimilarSongs.Tracks) == 0 {
+		return spec.NewError(70, "no similar song could be match with collection in database: %v", track.TagTitle)
+	}
+
+	for i, track := range tracks {
+		lastfmTracks[i] = spec.NewTrackByTags(track, track.Album)
+	}
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(lastfmTracks), func(i, j int) { lastfmTracks[i], lastfmTracks[j] = lastfmTracks[j], lastfmTracks[i] })
+
+	for i := 0; i < count; i++ {
+		sub.SimilarSongs.Tracks[i] = lastfmTracks[i]
+	}
+
+	sub.SimilarSongs.Tracks = lastfmTracks
 	return sub
 }
