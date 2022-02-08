@@ -403,3 +403,60 @@ func (c *Controller) genAlbumCoverURL(r *http.Request, folder *db.Album, size in
 
 	return coverURL.String()
 }
+
+func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
+
+	params := r.Context().Value(CtxParams).(params.Params)
+	sub := spec.NewResponse()
+	count := params.GetOrInt("count", 10)
+	artist, err := params.Get("artist")
+	if err != nil {
+		return spec.NewError(10, "please provide an `artist` parameter")
+	}
+
+	apiKey, _ := c.DB.GetSetting("lastfm_api_key")
+	if apiKey == "" {
+		return sub
+	}
+
+	topTracks, err := lastfm.ArtistGetTopTracks(apiKey, artist)
+	if err != nil {
+		return spec.NewError(0, "fetching artist top tracks: %v", err)
+	}
+
+	sub.TopSongs = &spec.TopSongs{
+		Tracks: []*spec.TrackChild{},
+	}
+
+	if len(topTracks.Tracks) == 0 {
+		return spec.NewError(70, "no top tracks found for artist: %v", artist)
+	}
+
+	topTrackNames := make([]string, len(topTracks.Tracks))
+	for i, t := range topTracks.Tracks {
+		topTrackNames[i] = t.Name
+	}
+
+	var tracks []*db.Track
+	q := c.DB.
+		Preload("Artist").
+		Preload("Album").
+		Select("tracks.*").
+		Where("tracks.tag_title IN ( ? )", topTrackNames)
+
+	if err := q.Limit(count).Find(&tracks).Error; err != nil {
+		return spec.NewError(0, "error finding tracks: %v", err)
+	}
+
+	sub.TopSongs.Tracks = make([]*spec.TrackChild, len(tracks))
+
+	if len(sub.TopSongs.Tracks) == 0 {
+		return spec.NewError(70, "no tracks found matchind last fm top songs for artist: %v", artist)
+	}
+
+	for i, track := range tracks {
+		sub.TopSongs.Tracks[i] = spec.NewTrackByTags(track, track.Album)
+	}
+
+	return sub
+}
