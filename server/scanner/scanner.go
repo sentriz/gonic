@@ -187,7 +187,7 @@ func (s *Scanner) scanDir(tx *db.DB, c *ctx, musicDir string, absPath string) er
 	sort.Strings(tracks)
 	for i, basename := range tracks {
 		absPath := filepath.Join(musicDir, relPath, basename)
-		if err := s.populateTrackAndAlbumArtists(tx, c, i, album, basename, absPath); err != nil {
+		if err := s.populateTrackAndAlbumArtists(tx, c, i, parent, album, basename, absPath); err != nil {
 			return fmt.Errorf("populate track %q: %w", basename, err)
 		}
 	}
@@ -195,7 +195,7 @@ func (s *Scanner) scanDir(tx *db.DB, c *ctx, musicDir string, absPath string) er
 	return nil
 }
 
-func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *ctx, i int, album *db.Album, basename string, absPath string) error {
+func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *ctx, i int, parent, album *db.Album, basename string, absPath string) error {
 	track := &db.Track{AlbumID: album.ID, Filename: filepath.Base(basename)}
 	if err := tx.Where(track).First(track).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return fmt.Errorf("query track: %w", err)
@@ -217,7 +217,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *ctx, i int, album *
 	}
 
 	artistName := trags.SomeAlbumArtist()
-	albumArtist, err := s.populateAlbumArtist(tx, artistName)
+	albumArtist, err := s.populateAlbumArtist(tx, parent, artistName)
 	if err != nil {
 		return fmt.Errorf("populate artist: %w", err)
 	}
@@ -315,11 +315,14 @@ func populateTrack(tx *db.DB, album *db.Album, albumArtist *db.Artist, track *db
 	return nil
 }
 
-func (s *Scanner) populateAlbumArtist(tx *db.DB, artistName string) (*db.Artist, error) {
+func (s *Scanner) populateAlbumArtist(tx *db.DB, parent *db.Album, artistName string) (*db.Artist, error) {
 	var artist db.Artist
 	update := db.Artist{
 		Name:     artistName,
 		NameUDec: decoded(artistName),
+	}
+	if parent.Cover != "" {
+		update.Cover = parent.Cover
 	}
 	if err := tx.Where("name=?", artistName).Assign(update).FirstOrCreate(&artist).Error; err != nil {
 		return nil, fmt.Errorf("find or create artist: %w", err)
@@ -476,7 +479,8 @@ func isCover(name string) bool {
 		"folder.png", "folder.jpg", "folder.jpeg",
 		"album.png", "album.jpg", "album.jpeg",
 		"albumart.png", "albumart.jpg", "albumart.jpeg",
-		"front.png", "front.jpg", "front.jpeg":
+		"front.png", "front.jpg", "front.jpeg",
+		"artist.png", "artist.jpg", "artist.jpeg":
 		return true
 	default:
 		return false

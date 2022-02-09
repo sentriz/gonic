@@ -76,11 +76,15 @@ func NewArtistByFolder(f *db.Album) *Artist {
 	// an album is also a folder. so we're constructing an artist
 	// from an "album" where
 	// maybe TODO: rename the Album model to Folder
-	return &Artist{
+	a := &Artist{
 		ID:         f.SID(),
 		Name:       f.RightPath,
 		AlbumCount: f.ChildCount,
 	}
+	if f.Cover != "" {
+		a.CoverID = f.SID()
+	}
+	return a
 }
 
 func NewDirectoryByFolder(f *db.Album, children []*TrackChild) *Directory {

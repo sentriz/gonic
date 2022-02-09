@@ -37,6 +37,8 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202102191448", migratePodcastAutoDownload),
 		construct(ctx, "202110041330", migrateAlbumCreatedAt),
 		construct(ctx, "202111021951", migrateAlbumRootDir),
+		construct(ctx, "202201042236", migrateArtistGuessedFolder),
+		construct(ctx, "202202092013", migrateArtistCover),
 	}
 
 	return gormigrate.
@@ -303,6 +305,31 @@ func migrateAlbumRootDir(tx *gorm.DB, ctx MigrationContext) error {
 	`, ctx.OriginalMusicPath)
 	if err := step.Error; err != nil {
 		return fmt.Errorf("step drop idx: %w", err)
+	}
+	return nil
+}
+
+func migrateArtistGuessedFolder(tx *gorm.DB, ctx MigrationContext) error {
+	return tx.AutoMigrate(Artist{}).Error
+}
+
+func migrateArtistCover(tx *gorm.DB, ctx MigrationContext) error {
+	step := tx.AutoMigrate(
+		Artist{},
+	)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step auto migrate: %w", err)
+	}
+
+	if !tx.Dialect().HasColumn("artists", "guessed_folder_id") {
+		return nil
+	}
+
+	step = tx.Exec(`
+		ALTER TABLE artists DROP COLUMN guessed_folder_id
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step drop column: %w", err)
 	}
 	return nil
 }
