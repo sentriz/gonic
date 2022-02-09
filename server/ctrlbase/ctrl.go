@@ -55,21 +55,6 @@ func (c *Controller) Path(rel string) string {
 	return path.Join(c.ProxyPrefix, rel)
 }
 
-func (c *Controller) BaseURL(r *http.Request) string {
-	scheme := firstExisting(
-		"http", // fallback
-		r.Header.Get("X-Forwarded-Proto"),
-		r.Header.Get("X-Forwarded-Scheme"),
-		r.URL.Scheme,
-	)
-	host := firstExisting(
-		"localhost:4747", // fallback
-		r.Header.Get("X-Forwarded-Host"),
-		r.Host,
-	)
-	return fmt.Sprintf("%s://%s", scheme, host)
-}
-
 func (c *Controller) WithLogging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// this is (should be) the first middleware. pass right though it
@@ -101,13 +86,4 @@ func (c *Controller) WithCORS(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
-}
-
-func firstExisting(or string, strings ...string) string {
-	for _, s := range strings {
-		if s != "" {
-			return s
-		}
-	}
-	return or
 }

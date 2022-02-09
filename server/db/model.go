@@ -43,13 +43,11 @@ func joinInt(in []int, sep string) string {
 }
 
 type Artist struct {
-	ID              int      `gorm:"primary_key"`
-	Name            string   `gorm:"not null; unique_index"`
-	NameUDec        string   `sql:"default: null"`
-	Albums          []*Album `gorm:"foreignkey:TagArtistID"`
-	AlbumCount      int      `sql:"-"`
-	GuessedFolder   *Album
-	GuessedFolderID int `sql:"default: null; type:int REFERENCES albums(id) ON DELETE SET NULL"`
+	ID         int      `gorm:"primary_key"`
+	Name       string   `gorm:"not null; unique_index"`
+	NameUDec   string   `sql:"default: null"`
+	Albums     []*Album `gorm:"foreignkey:TagArtistID"`
+	AlbumCount int      `sql:"-"`
 }
 
 func (a *Artist) SID() *specid.ID {
