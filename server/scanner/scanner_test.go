@@ -441,3 +441,22 @@ func TestSymlinkedSubdiscs(t *testing.T) {
 	is.True(!info.IsDir())            // track resolves
 	is.True(!info.ModTime().IsZero()) // track resolves
 }
+
+func TestArtistHasCover(t *testing.T) {
+	t.Parallel()
+	is := is.New(t)
+	m := mockfs.New(t)
+	defer m.CleanUp()
+
+	m.AddItemsWithCovers()
+	m.AddCover("artist-2/artist.png")
+	m.ScanAndClean()
+
+	var artistWith db.Artist
+	is.NoErr(m.DB().Where("name=?", "artist-2").First(&artistWith).Error)
+	is.Equal(artistWith.Cover, "artist.png")
+
+	var artistWithout db.Artist
+	is.NoErr(m.DB().Where("name=?", "artist-0").First(&artistWithout).Error)
+	is.Equal(artistWithout.Cover, "")
+}

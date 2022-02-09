@@ -48,6 +48,7 @@ type Artist struct {
 	NameUDec   string   `sql:"default: null"`
 	Albums     []*Album `gorm:"foreignkey:TagArtistID"`
 	AlbumCount int      `sql:"-"`
+	Cover      string   `sql:"default: null"`
 }
 
 func (a *Artist) SID() *specid.ID {

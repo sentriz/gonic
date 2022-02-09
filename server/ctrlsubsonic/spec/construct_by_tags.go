@@ -72,11 +72,15 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 }
 
 func NewArtistByTags(a *db.Artist) *Artist {
-	return &Artist{
+	r := &Artist{
 		ID:         a.SID(),
 		Name:       a.Name,
 		AlbumCount: a.AlbumCount,
 	}
+	if a.Cover != "" {
+		r.CoverID = a.SID()
+	}
+	return r
 }
 
 func NewGenre(g *db.Genre) *Genre {

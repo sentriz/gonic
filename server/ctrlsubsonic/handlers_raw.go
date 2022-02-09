@@ -78,6 +78,8 @@ func coverGetPath(dbc *db.DB, podcastPath string, id specid.ID) (string, error) 
 	switch id.Type {
 	case specid.Album:
 		return coverGetPathAlbum(dbc, id.Value)
+	case specid.Artist:
+		return coverGetPathArtist(dbc, id.Value)
 	case specid.Podcast:
 		return coverGetPathPodcast(dbc, podcastPath, id.Value)
 	case specid.PodcastEpisode:
@@ -90,12 +92,33 @@ func coverGetPath(dbc *db.DB, podcastPath string, id specid.ID) (string, error) 
 func coverGetPathAlbum(dbc *db.DB, id int) (string, error) {
 	folder := &db.Album{}
 	err := dbc.DB.
-		Preload("Parent").
 		Select("id, root_dir, left_path, right_path, cover").
 		First(folder, id).
 		Error
 	if err != nil {
 		return "", fmt.Errorf("select album: %w", err)
+	}
+	if folder.Cover == "" {
+		return "", errCoverEmpty
+	}
+	return path.Join(
+		folder.RootDir,
+		folder.LeftPath,
+		folder.RightPath,
+		folder.Cover,
+	), nil
+}
+
+func coverGetPathArtist(dbc *db.DB, id int) (string, error) {
+	folder := &db.Album{}
+	err := dbc.DB.Debug().
+		Select("parent.id, parent.root_dir, parent.left_path, parent.right_path, parent.cover").
+		Joins("JOIN albums parent ON parent.id=albums.parent_id").
+		Where("albums.tag_artist_id=?", id).
+		Find(folder).
+		Error
+	if err != nil {
+		return "", fmt.Errorf("select guessed artist folder: %w", err)
 	}
 	if folder.Cover == "" {
 		return "", errCoverEmpty
