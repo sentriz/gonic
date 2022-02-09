@@ -134,6 +134,7 @@
                 <input type="submit" title="start a full scan (takes longer, and shouldn&#39;t usually be necessary)" value="scan full (!)">
             </form>
         {{ end }}
+        {{- if .IsScanning }}<p>scan in progress...</p>{{ end }}
     </div>
 </div>
 <div class="padded box">
