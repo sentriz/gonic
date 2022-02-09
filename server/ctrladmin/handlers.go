@@ -16,6 +16,15 @@ import (
 	"go.senan.xyz/gonic/server/scrobble/listenbrainz"
 )
 
+func firstExisting(or string, strings ...string) string {
+	for _, s := range strings {
+		if s != "" {
+			return s
+		}
+	}
+	return or
+}
+
 func doScan(scanner *scanner.Scanner, opts scanner.ScanOptions) {
 	go func() {
 		if err := scanner.ScanAndClean(opts); err != nil {
@@ -39,7 +48,18 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	c.DB.Model(&db.Album{}).Count(&data.AlbumCount)
 	c.DB.Table("tracks").Count(&data.TrackCount)
 	// lastfm box
-	data.RequestRoot = c.BaseURL(r)
+	scheme := firstExisting(
+		"http", // fallback
+		r.Header.Get("X-Forwarded-Proto"),
+		r.Header.Get("X-Forwarded-Scheme"),
+		r.URL.Scheme,
+	)
+	host := firstExisting(
+		"localhost:4747", // fallback
+		r.Header.Get("X-Forwarded-Host"),
+		r.Host,
+	)
+	data.RequestRoot = fmt.Sprintf("%s://%s", scheme, host)
 	data.CurrentLastFMAPIKey, _ = c.DB.GetSetting("lastfm_api_key")
 	data.DefaultListenBrainzURL = listenbrainz.BaseURL
 	// users box

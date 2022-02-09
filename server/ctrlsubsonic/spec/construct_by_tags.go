@@ -72,15 +72,11 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 }
 
 func NewArtistByTags(a *db.Artist) *Artist {
-	ret := &Artist{
+	return &Artist{
 		ID:         a.SID(),
 		Name:       a.Name,
 		AlbumCount: a.AlbumCount,
 	}
-	if a.GuessedFolder != nil && a.GuessedFolder.Cover != "" {
-		ret.CoverID = a.GuessedFolder.SID()
-	}
-	return ret
 }
 
 func NewGenre(g *db.Genre) *Genre {

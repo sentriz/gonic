@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
-	"strconv"
 	"strings"
 
 	"github.com/jinzhu/gorm"
@@ -21,7 +19,6 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	var artists []*db.Artist
 	q := c.DB.
-		Preload("GuessedFolder").
 		Select("*, count(sub.id) album_count").
 		Joins("LEFT JOIN albums sub ON artists.id=sub.tag_artist_id").
 		Group("artists.id").
@@ -62,7 +59,6 @@ func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 	}
 	artist := &db.Artist{}
 	c.DB.
-		Preload("GuessedFolder").
 		Preload("Albums", func(db *gorm.DB) *gorm.DB {
 			return db.
 				Select("*, count(sub.id) child_count, sum(sub.length) duration").
@@ -189,7 +185,6 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	// search "artists"
 	var artists []*db.Artist
 	q := c.DB.
-		Preload("GuessedFolder").
 		Select("*, count(albums.id) album_count").
 		Group("artists.id").
 		Where("name LIKE ? OR name_u_dec LIKE ?", query, query).
@@ -253,53 +248,40 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-
-	sub := spec.NewResponse()
-	sub.ArtistInfoTwo = &spec.ArtistInfo{}
-
 	apiKey, _ := c.DB.GetSetting("lastfm_api_key")
 	if apiKey == "" {
+		sub := spec.NewResponse()
+		sub.ArtistInfoTwo = &spec.ArtistInfo{}
 		return sub
 	}
-
 	artist := &db.Artist{}
 	err = c.DB.
-		Preload("GuessedFolder").
 		Where("id=?", id.Value).
 		Find(artist).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewError(70, "artist with id `%s` not found", id)
 	}
-
-	if artist.GuessedFolder != nil && artist.GuessedFolder.Cover != "" {
-		sub.ArtistInfoTwo.SmallImageURL = c.genAlbumCoverURL(r, artist.GuessedFolder, 64)
-		sub.ArtistInfoTwo.MediumImageURL = c.genAlbumCoverURL(r, artist.GuessedFolder, 126)
-		sub.ArtistInfoTwo.LargeImageURL = c.genAlbumCoverURL(r, artist.GuessedFolder, 256)
-	}
-
 	info, err := lastfm.ArtistGetInfo(apiKey, artist)
 	if err != nil {
 		return spec.NewError(0, "fetching artist info: %v", err)
 	}
-
-	sub.ArtistInfoTwo.Biography = info.Bio.Summary
-	sub.ArtistInfoTwo.MusicBrainzID = info.MBID
-	sub.ArtistInfoTwo.LastFMURL = info.URL
-
-	if !(artist.GuessedFolder != nil && artist.GuessedFolder.Cover != "") {
-		for _, image := range info.Image {
-			switch image.Size {
-			case "small":
-				sub.ArtistInfoTwo.SmallImageURL = image.Text
-			case "medium":
-				sub.ArtistInfoTwo.MediumImageURL = image.Text
-			case "large":
-				sub.ArtistInfoTwo.LargeImageURL = image.Text
-			}
+	sub := spec.NewResponse()
+	sub.ArtistInfoTwo = &spec.ArtistInfo{
+		Biography:     info.Bio.Summary,
+		MusicBrainzID: info.MBID,
+		LastFMURL:     info.URL,
+	}
+	for _, image := range info.Image {
+		switch image.Size {
+		case "small":
+			sub.ArtistInfoTwo.SmallImageURL = image.Text
+		case "medium":
+			sub.ArtistInfoTwo.MediumImageURL = image.Text
+		case "large":
+			sub.ArtistInfoTwo.LargeImageURL = image.Text
 		}
 	}
-
 	count := params.GetOrInt("count", 20)
 	inclNotPresent := params.GetOrBool("includeNotPresent", false)
 	for i, similarInfo := range info.Similar.Artists {
@@ -328,7 +310,6 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		sub.ArtistInfoTwo.SimilarArtist = append(
 			sub.ArtistInfoTwo.SimilarArtist, similar)
 	}
-
 	return sub
 }
 
@@ -389,17 +370,4 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 		Tracks:  []*spec.TrackChild{},
 	}
 	return sub
-}
-
-func (c *Controller) genAlbumCoverURL(r *http.Request, folder *db.Album, size int) string {
-	coverURL, _ := url.Parse(c.BaseURL(r))
-	coverURL.Path = c.Path("/rest/getCoverArt")
-
-	id := specid.ID{Type: specid.Album, Value: folder.ID}
-	query := r.URL.Query()
-	query.Set("id", id.String())
-	query.Set("size", strconv.Itoa(size))
-	coverURL.RawQuery = query.Encode()
-
-	return coverURL.String()
 }
