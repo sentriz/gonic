@@ -407,15 +407,14 @@ func (c *Controller) genAlbumCoverURL(r *http.Request, folder *db.Album, size in
 }
 
 func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
-
 	params := r.Context().Value(CtxParams).(params.Params)
-	sub := spec.NewResponse()
 	count := params.GetOrInt("count", 10)
 	artist, err := params.Get("artist")
 	if err != nil {
 		return spec.NewError(10, "please provide an `artist` parameter")
 	}
 
+	sub := spec.NewResponse()
 	apiKey, _ := c.DB.GetSetting("lastfm_api_key")
 	if apiKey == "" {
 		return sub
@@ -425,11 +424,6 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(0, "fetching artist top tracks: %v", err)
 	}
-
-	sub.TopSongs = &spec.TopSongs{
-		Tracks: []*spec.TrackChild{},
-	}
-
 	if len(topTracks.Tracks) == 0 {
 		return spec.NewError(70, "no top tracks found for artist: %v", artist)
 	}
@@ -450,10 +444,12 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 		return spec.NewError(0, "error finding tracks: %v", err)
 	}
 
-	sub.TopSongs.Tracks = make([]*spec.TrackChild, len(tracks))
-
-	if len(sub.TopSongs.Tracks) == 0 {
+	if len(tracks) == 0 {
 		return spec.NewError(70, "no tracks found matchind last fm top songs for artist: %v", artist)
+	}
+
+	sub.TopSongs = &spec.TopSongs{
+		Tracks: make([]*spec.TrackChild, len(tracks)),
 	}
 
 	for i, track := range tracks {
@@ -465,17 +461,13 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	sub := spec.NewResponse()
-	sub.SimilarSongs = &spec.SimilarSongs{
-		Tracks: []*spec.TrackChild{},
-	}
-
 	count := params.GetOrInt("count", 10)
 	id, err := params.GetID("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 
+	sub := spec.NewResponse()
 	apiKey, _ := c.DB.GetSetting("lastfm_api_key")
 	if apiKey == "" {
 		return sub
