@@ -25,11 +25,12 @@ var (
 )
 
 type LastFM struct {
-	XMLName xml.Name `xml:"lfm"`
-	Status  string   `xml:"status,attr"`
-	Session Session  `xml:"session"`
-	Error   Error    `xml:"error"`
-	Artist  Artist   `xml:"artist"`
+	XMLName        xml.Name       `xml:"lfm"`
+	Status         string         `xml:"status,attr"`
+	Session        Session        `xml:"session"`
+	Error          Error          `xml:"error"`
+	Artist         Artist         `xml:"artist"`
+	TopTracks      TopTracks      `xml:"toptracks"`
 }
 
 type Session struct {
@@ -77,6 +78,26 @@ type ArtistBio struct {
 	Content   string `xml:"content"`
 }
 
+type TopTracks struct {
+	XMLName xml.Name `xml:"toptracks"`
+	Artist  string   `xml:"artist,attr"`
+	Tracks  []Track  `xml:"track"`
+}
+
+type Track struct {
+	Rank      int     `xml:"rank,attr"`
+	Tracks    []Track `xml:"track"`
+	Name      string  `xml:"name"`
+	MBID      string  `xml:"mbid"`
+	PlayCount int     `xml:"playcount"`
+	Listeners int     `xml:"listeners"`
+	URL       string  `xml:"url"`
+	Image     []struct {
+		Text string `xml:",chardata"`
+		Size string `xml:"size,attr"`
+	} `xml:"image"`
+}
+
 func getParamSignature(params url.Values, secret string) string {
 	// the parameters must be in order before hashing
 	paramKeys := make([]string, 0, len(params))
@@ -113,16 +134,28 @@ func makeRequest(method string, params url.Values) (LastFM, error) {
 	return lastfm, nil
 }
 
-func ArtistGetInfo(apiKey string, artist *db.Artist) (Artist, error) {
+func ArtistGetInfo(apiKey string, artistName string) (Artist, error) {
 	params := url.Values{}
 	params.Add("method", "artist.getInfo")
 	params.Add("api_key", apiKey)
-	params.Add("artist", artist.Name)
+	params.Add("artist", artistName)
 	resp, err := makeRequest("GET", params)
 	if err != nil {
 		return Artist{}, fmt.Errorf("making artist GET: %w", err)
 	}
 	return resp.Artist, nil
+}
+
+func ArtistGetTopTracks(apiKey, artistName string) (TopTracks, error) {
+	params := url.Values{}
+	params.Add("method", "artist.getTopTracks")
+	params.Add("api_key", apiKey)
+	params.Add("artist", artistName)
+	resp, err := makeRequest("GET", params)
+	if err != nil {
+		return TopTracks{}, fmt.Errorf("making track GET: %w", err)
+	}
+	return resp.TopTracks, nil
 }
 
 func GetSession(apiKey, secret, token string) (string, error) {

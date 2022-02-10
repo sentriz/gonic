@@ -217,6 +217,7 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/getBookmarks{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetBookmarks))
 	r.Handle("/createBookmark{_:(?:\\.view)?}", ctrl.H(ctrl.ServeCreateBookmark))
 	r.Handle("/deleteBookmark{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDeleteBookmark))
+	r.Handle("/getTopSongs{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetTopSongs))
 
 	// raw
 	r.Handle("/download{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeDownload))

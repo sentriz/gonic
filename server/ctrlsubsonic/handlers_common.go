@@ -44,7 +44,7 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 
 	id, err := params.GetID("id")
 	if err != nil || id.Type != specid.Track {
-		return spec.NewError(10, "please provide an valid `id` track parameter")
+		return spec.NewError(10, "please provide a track `id` track parameter")
 	}
 
 	track := &db.Track{}

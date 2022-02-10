@@ -251,10 +251,10 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 
-	artist := &db.Artist{}
+	var artist db.Artist
 	err = c.DB.
 		Where("id=?", id.Value).
-		Find(artist).
+		Find(&artist).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewError(70, "artist with id `%s` not found", id)
@@ -263,16 +263,16 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	sub := spec.NewResponse()
 	sub.ArtistInfoTwo = &spec.ArtistInfo{}
 	if artist.Cover != "" {
-		sub.ArtistInfoTwo.SmallImageURL = c.genArtistCoverURL(r, artist, 64)
-		sub.ArtistInfoTwo.MediumImageURL = c.genArtistCoverURL(r, artist, 126)
-		sub.ArtistInfoTwo.LargeImageURL = c.genArtistCoverURL(r, artist, 256)
+		sub.ArtistInfoTwo.SmallImageURL = c.genArtistCoverURL(r, &artist, 64)
+		sub.ArtistInfoTwo.MediumImageURL = c.genArtistCoverURL(r, &artist, 126)
+		sub.ArtistInfoTwo.LargeImageURL = c.genArtistCoverURL(r, &artist, 256)
 	}
 
 	apiKey, _ := c.DB.GetSetting("lastfm_api_key")
 	if apiKey == "" {
 		return sub
 	}
-	info, err := lastfm.ArtistGetInfo(apiKey, artist)
+	info, err := lastfm.ArtistGetInfo(apiKey, artist.Name)
 	if err != nil {
 		return spec.NewError(0, "fetching artist info: %v", err)
 	}
@@ -300,13 +300,13 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		if i == count {
 			break
 		}
-		artist = &db.Artist{}
+		var artist db.Artist
 		err = c.DB.
 			Select("artists.*, count(albums.id) album_count").
 			Where("name=?", similarInfo.Name).
 			Joins("LEFT JOIN albums ON artists.id=albums.tag_artist_id").
 			Group("artists.id").
-			Find(artist).
+			Find(&artist).
 			Error
 		if errors.Is(err, gorm.ErrRecordNotFound) && !inclNotPresent {
 			continue
@@ -395,4 +395,57 @@ func (c *Controller) genArtistCoverURL(r *http.Request, artist *db.Artist, size 
 	coverURL.RawQuery = query.Encode()
 
 	return coverURL.String()
+}
+
+func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	count := params.GetOrInt("count", 10)
+	artistName, err := params.Get("artist")
+	if err != nil {
+		return spec.NewError(10, "please provide an `artist` parameter")
+	}
+	var artist db.Artist
+	if err := c.DB.Where("name=?", artistName).Find(&artist).Error; err != nil {
+		return spec.NewError(0, "finding artist by name: %v", err)
+	}
+
+	apiKey, _ := c.DB.GetSetting("lastfm_api_key")
+	if apiKey == "" {
+		return spec.NewResponse()
+	}
+	topTracks, err := lastfm.ArtistGetTopTracks(apiKey, artist.Name)
+	if err != nil {
+		return spec.NewError(0, "fetching artist top tracks: %v", err)
+	}
+	if len(topTracks.Tracks) == 0 {
+		return spec.NewError(70, "no top tracks found for artist: %v", artist)
+	}
+
+	topTrackNames := make([]string, len(topTracks.Tracks))
+	for i, t := range topTracks.Tracks {
+		topTrackNames[i] = t.Name
+	}
+
+	var tracks []*db.Track
+	err = c.DB.
+		Preload("Album").
+		Where("artist_id=? AND tracks.tag_title IN (?)", artist.ID, topTrackNames).
+		Limit(count).
+		Find(&tracks).
+		Error
+	if err != nil {
+		return spec.NewError(0, "error finding tracks: %v", err)
+	}
+	if len(tracks) == 0 {
+		return spec.NewError(70, "no tracks found matchind last fm top songs for artist: %v", artist)
+	}
+
+	sub := spec.NewResponse()
+	sub.TopSongs = &spec.TopSongs{
+		Tracks: make([]*spec.TrackChild, len(tracks)),
+	}
+	for i, track := range tracks {
+		sub.TopSongs.Tracks[i] = spec.NewTrackByTags(track, track.Album)
+	}
+	return sub
 }
