@@ -200,11 +200,11 @@ func TrackGetSimilarTracks(apiKey string, track *db.Track) (SimilarTracks, error
 	return resp.SimilarTracks, nil
 }
 
-func ArtistGetSimilar(apiKey string, artist *db.Artist) (SimilarArtists, error) {
+func ArtistGetSimilar(apiKey, artistName string) (SimilarArtists, error) {
 	params := url.Values{}
 	params.Add("method", "artist.getSimilar")
 	params.Add("api_key", apiKey)
-	params.Add("artist", artist.Name)
+	params.Add("artist", artistName)
 
 	resp, err := makeRequest("GET", params)
 	if err != nil {
