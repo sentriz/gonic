@@ -474,7 +474,7 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 	}
 
 	track := &db.Track{}
-	err = c.DB.Debug().
+	err = c.DB.
 		Preload("Artist").
 		Preload("Album").
 		Where("id=?", id.Value).
@@ -483,13 +483,9 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 		return spec.NewError(10, "couldn't find a track with that id")
 	}
 
-	similarTracks, err := lastfm.TrackGetSimilarTracks(apiKey, track)
+	similarTracks, err := lastfm.TrackGetSimilarTracks(apiKey, track.Artist.Name, track.TagTitle)
 	if err != nil {
 		return spec.NewError(0, "fetching track similar tracks: %v", err)
-	}
-
-	sub.SimilarSongs = &spec.SimilarSongs{
-		Tracks: make([]*spec.TrackChild, count),
 	}
 
 	if len(similarTracks.Tracks) == 0 {
@@ -505,9 +501,10 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 		Preload("Artist").
 		Preload("Album").
 		Select("tracks.*").
-		Where("tracks.tag_title IN ( ? )", similarTrackNames)
+		Where("tracks.tag_title IN ( ? )", similarTrackNames).
+		Order("RANDOM()").Limit(count)
 
-	if err := q.Limit(1000).Find(&tracks).Error; err != nil {
+	if err := q.Find(&tracks).Error; err != nil {
 		return spec.NewError(0, "error finding tracks: %v", err)
 	}
 
@@ -516,14 +513,12 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 		return spec.NewError(70, "no similar song could be match with collection in database: %v", track.TagTitle)
 	}
 
-	for i, track := range tracks {
-		lastfmTracks[i] = spec.NewTrackByTags(track, track.Album)
+	sub.SimilarSongs = &spec.SimilarSongs{
+		Tracks: make([]*spec.TrackChild, count),
 	}
-	rand.Seed(time.Now().UnixNano())
-	rand.Shuffle(len(lastfmTracks), func(i, j int) { lastfmTracks[i], lastfmTracks[j] = lastfmTracks[j], lastfmTracks[i] })
 
-	for i := 0; i < count; i++ {
-		sub.SimilarSongs.Tracks[i] = lastfmTracks[i]
+	for i, track := range tracks {
+		sub.SimilarSongs.Tracks[i] = spec.NewTrackByTags(track, track.Album)
 	}
 
 	sub.SimilarSongs.Tracks = lastfmTracks
