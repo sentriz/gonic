@@ -512,3 +512,64 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 	}
 	return sub
 }
+
+func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	count := params.GetOrInt("count", 10)
+	id, err := params.GetID("id")
+	if err != nil || id.Type != specid.Artist {
+		return spec.NewError(10, "please provide an artist `id` parameter")
+	}
+
+	apiKey, _ := c.DB.GetSetting("lastfm_api_key")
+	if apiKey == "" {
+		return spec.NewResponse()
+	}
+
+	var artist db.Artist
+	err = c.DB.
+		Where("id=?", id.Value).
+		First(&artist).
+		Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return spec.NewError(0, "artist with id `%s` not found", id)
+	}
+
+	similarArtists, err := lastfm.ArtistGetSimilar(apiKey, artist.Name)
+	if err != nil {
+		return spec.NewError(0, "fetching artist similar artists: %v", err)
+	}
+	if len(similarArtists.Artists) == 0 {
+		return spec.NewError(0, "no similar artist found for: %v", artist.Name)
+	}
+
+	artistNames := make([]string, len(similarArtists.Artists))
+	for i, similarArtist := range similarArtists.Artists {
+		artistNames[i] = similarArtist.Name
+	}
+
+	var tracks []*db.Track
+	err = c.DB.
+		Preload("Album").
+		Joins("JOIN artists on tracks.artist_id=artists.id").
+		Where("artists.name IN (?)", artistNames).
+		Order(gorm.Expr("random()")).
+		Limit(count).
+		Find(&tracks).
+		Error
+	if err != nil {
+		return spec.NewError(0, "error finding tracks: %v", err)
+	}
+	if len(tracks) == 0 {
+		return spec.NewError(70, "no similar song could be match with collection in database: %v", artist.Name)
+	}
+
+	sub := spec.NewResponse()
+	sub.SimilarSongsTwo = &spec.SimilarSongsTwo{
+		Tracks: make([]*spec.TrackChild, len(tracks)),
+	}
+	for i, track := range tracks {
+		sub.SimilarSongsTwo.Tracks[i] = spec.NewTrackByTags(track, track.Album)
+	}
+	return sub
+}
