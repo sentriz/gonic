@@ -449,3 +449,66 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 	}
 	return sub
 }
+
+func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	count := params.GetOrInt("count", 10)
+	id, err := params.GetID("id")
+	if err != nil || id.Type != specid.Track {
+		return spec.NewError(10, "please provide an track `id` parameter")
+	}
+	apiKey, _ := c.DB.GetSetting("lastfm_api_key")
+	if apiKey == "" {
+		return spec.NewResponse()
+	}
+
+	var track db.Track
+	err = c.DB.
+		Preload("Artist").
+		Preload("Album").
+		Where("id=?", id.Value).
+		First(&track).
+		Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return spec.NewError(10, "couldn't find a track with that id")
+	}
+
+	similarTracks, err := lastfm.TrackGetSimilarTracks(apiKey, track.Artist.Name, track.TagTitle)
+	if err != nil {
+		return spec.NewError(0, "fetching track similar tracks: %v", err)
+	}
+	if len(similarTracks.Tracks) == 0 {
+		return spec.NewError(70, "no similar songs found for track: %v", track.TagTitle)
+	}
+
+	similarTrackNames := make([]string, len(similarTracks.Tracks))
+	for i, t := range similarTracks.Tracks {
+		similarTrackNames[i] = t.Name
+	}
+
+	var tracks []*db.Track
+	err = c.DB.
+		Preload("Artist").
+		Preload("Album").
+		Select("tracks.*").
+		Where("tracks.tag_title IN (?)", similarTrackNames).
+		Order(gorm.Expr("random()")).
+		Limit(count).
+		Find(&tracks).
+		Error
+	if err != nil {
+		return spec.NewError(0, "error finding tracks: %v", err)
+	}
+	if len(tracks) == 0 {
+		return spec.NewError(70, "no similar song could be match with collection in database: %v", track.TagTitle)
+	}
+
+	sub := spec.NewResponse()
+	sub.SimilarSongs = &spec.SimilarSongs{
+		Tracks: make([]*spec.TrackChild, len(tracks)),
+	}
+	for i, track := range tracks {
+		sub.SimilarSongs.Tracks[i] = spec.NewTrackByTags(track, track.Album)
+	}
+	return sub
+}
