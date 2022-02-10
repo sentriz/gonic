@@ -185,16 +185,16 @@ func ArtistGetTopTracks(apiKey, artistName string) (TopTracks, error) {
 	return resp.TopTracks, nil
 }
 
-func TrackGetSimilarTracks(apiKey string, track *db.Track) (SimilarTracks, error) {
+func TrackGetSimilarTracks(apiKey, artistName, trackTitle string) (SimilarTracks, error) {
 	params := url.Values{}
 	params.Add("method", "track.getSimilar")
 	params.Add("api_key", apiKey)
-	params.Add("track", track.TagTitle)
-	params.Add("artist", track.Artist.Name)
+	params.Add("track", trackTitle)
+	params.Add("artist", artistName)
 
 	resp, err := makeRequest("GET", params)
 	if err != nil {
-		return SimilarTracks{}, fmt.Errorf("making track GET: %s %s %w", track.TagTitle, track.Artist.Name, err)
+		return SimilarTracks{}, fmt.Errorf("making track GET: %s %s %w", trackTitle, artistName, err)
 	}
 
 	return resp.SimilarTracks, nil
