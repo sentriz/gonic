@@ -111,7 +111,7 @@ func coverGetPathAlbum(dbc *db.DB, id int) (string, error) {
 
 func coverGetPathArtist(dbc *db.DB, id int) (string, error) {
 	folder := &db.Album{}
-	err := dbc.DB.Debug().
+	err := dbc.DB.
 		Select("parent.id, parent.root_dir, parent.left_path, parent.right_path, parent.cover").
 		Joins("JOIN albums parent ON parent.id=albums.parent_id").
 		Where("albums.tag_artist_id=?", id).
