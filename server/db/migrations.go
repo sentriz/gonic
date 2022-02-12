@@ -39,6 +39,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202111021951", migrateAlbumRootDir),
 		construct(ctx, "202201042236", migrateArtistGuessedFolder),
 		construct(ctx, "202202092013", migrateArtistCover),
+		construct(ctx, "202202121809", migrateAlbumRootDirAgain),
 	}
 
 	return gormigrate.
@@ -320,4 +321,9 @@ func migrateArtistCover(tx *gorm.DB, ctx MigrationContext) error {
 		return fmt.Errorf("step drop column: %w", err)
 	}
 	return nil
+}
+
+// there was an issue with that migration, try it again since it's updated
+func migrateAlbumRootDirAgain(tx *gorm.DB, ctx MigrationContext) error {
+	return migrateAlbumRootDir(tx, ctx)
 }
