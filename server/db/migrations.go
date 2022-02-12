@@ -275,18 +275,6 @@ func migrateAlbumCreatedAt(tx *gorm.DB, _ MigrationContext) error {
 }
 
 func migrateAlbumRootDir(tx *gorm.DB, ctx MigrationContext) error {
-	var hasIDX int
-	tx.
-		Select("1").
-		Table("sqlite_master").
-		Where("type = ?", "index").
-		Where("name = ?", "idx_album_abs_path").
-		Count(&hasIDX)
-	if hasIDX == 1 {
-		// index already exists
-		return nil
-	}
-
 	step := tx.AutoMigrate(
 		Album{},
 	)
@@ -301,7 +289,7 @@ func migrateAlbumRootDir(tx *gorm.DB, ctx MigrationContext) error {
 	}
 
 	step = tx.Exec(`
-		UPDATE albums SET root_dir=?
+		UPDATE albums SET root_dir=? WHERE root_dir IS NULL
 	`, ctx.OriginalMusicPath)
 	if err := step.Error; err != nil {
 		return fmt.Errorf("step drop idx: %w", err)
