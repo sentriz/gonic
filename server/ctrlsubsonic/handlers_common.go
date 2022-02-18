@@ -82,7 +82,7 @@ func (c *Controller) ServeGetMusicFolders(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeStartScan(r *http.Request) *spec.Response {
 	go func() {
-		if err := c.Scanner.ScanAndClean(scanner.ScanOptions{}); err != nil {
+		if _, err := c.Scanner.ScanAndClean(scanner.ScanOptions{}); err != nil {
 			log.Printf("error while scanning: %v\n", err)
 		}
 	}()

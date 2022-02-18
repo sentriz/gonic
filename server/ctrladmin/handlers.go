@@ -18,7 +18,7 @@ import (
 
 func doScan(scanner *scanner.Scanner, opts scanner.ScanOptions) {
 	go func() {
-		if err := scanner.ScanAndClean(opts); err != nil {
+		if _, err := scanner.ScanAndClean(opts); err != nil {
 			log.Printf("error while scanning: %v\n", err)
 		}
 	}()
