@@ -7,6 +7,9 @@
   <a href="https://github.com/sentriz/gonic/actions"><img src="https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fsentriz%2Fgonic%2Fbadge&label=build&logo=none"></a>
 </p>
 
+<p align="center">
+  <b>libera.chat</b> <a href="ircs://irc.libera.chat/#gonic" title="#gonic on Libera Chat">#gonic</a>
+</p>
 
 ## features
 
