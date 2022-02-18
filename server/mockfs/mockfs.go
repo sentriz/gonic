@@ -67,10 +67,12 @@ func new(t testing.TB, dirs []string) *MockFS {
 func (m *MockFS) DB() *db.DB     { return m.db }
 func (m *MockFS) TmpDir() string { return m.dir }
 
-func (m *MockFS) ScanAndClean() {
-	if err := m.scanner.ScanAndClean(scanner.ScanOptions{}); err != nil {
+func (m *MockFS) ScanAndClean() *scanner.Context {
+	ctx, err := m.scanner.ScanAndClean(scanner.ScanOptions{})
+	if err != nil {
 		m.t.Fatalf("error scan and cleaning: %v", err)
 	}
+	return ctx
 }
 
 func (m *MockFS) ResetDates() {
