@@ -111,11 +111,12 @@ func TestUpdatedTags(t *testing.T) {
 	defer m.CleanUp()
 
 	m.AddTrack("artist-10/album-10/track-10.flac")
-	m.SetTags("artist-10/album-10/track-10.flac", func(tags *mockfs.Tags) {
+	m.SetTags("artist-10/album-10/track-10.flac", func(tags *mockfs.Tags) error {
 		tags.RawArtist = "artist"
 		tags.RawAlbumArtist = "album-artist"
 		tags.RawAlbum = "album"
 		tags.RawTitle = "title"
+		return nil
 	})
 
 	m.ScanAndClean()
@@ -127,11 +128,12 @@ func TestUpdatedTags(t *testing.T) {
 	is.Equal(track.Album.TagTitle, "album")                                                                     // track has tags
 	is.Equal(track.TagTitle, "title")                                                                           // track has tags
 
-	m.SetTags("artist-10/album-10/track-10.flac", func(tags *mockfs.Tags) {
+	m.SetTags("artist-10/album-10/track-10.flac", func(tags *mockfs.Tags) error {
 		tags.RawArtist = "artist-upd"
 		tags.RawAlbumArtist = "album-artist-upd"
 		tags.RawAlbum = "album-upd"
 		tags.RawTitle = "title-upd"
+		return nil
 	})
 
 	m.ScanAndClean()
@@ -234,10 +236,10 @@ func TestGenres(t *testing.T) {
 	}
 
 	m.AddItems()
-	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.Tags) { tags.RawGenre = "genre-a;genre-b" })
-	m.SetTags("artist-0/album-0/track-1.flac", func(tags *mockfs.Tags) { tags.RawGenre = "genre-c;genre-d" })
-	m.SetTags("artist-1/album-2/track-0.flac", func(tags *mockfs.Tags) { tags.RawGenre = "genre-e;genre-f" })
-	m.SetTags("artist-1/album-2/track-1.flac", func(tags *mockfs.Tags) { tags.RawGenre = "genre-g;genre-h" })
+	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.Tags) error { tags.RawGenre = "genre-a;genre-b"; return nil })
+	m.SetTags("artist-0/album-0/track-1.flac", func(tags *mockfs.Tags) error { tags.RawGenre = "genre-c;genre-d"; return nil })
+	m.SetTags("artist-1/album-2/track-0.flac", func(tags *mockfs.Tags) error { tags.RawGenre = "genre-e;genre-f"; return nil })
+	m.SetTags("artist-1/album-2/track-1.flac", func(tags *mockfs.Tags) error { tags.RawGenre = "genre-g;genre-h"; return nil })
 	m.ScanAndClean()
 
 	isGenre("genre-a") // genre exists
@@ -257,7 +259,7 @@ func TestGenres(t *testing.T) {
 	isAlbumGenre("artist-0/", "album-0", "genre-a") // album genre exists
 	isAlbumGenre("artist-0/", "album-0", "genre-b") // album genre exists
 
-	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.Tags) { tags.RawGenre = "genre-aa;genre-bb" })
+	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.Tags) error { tags.RawGenre = "genre-aa;genre-bb"; return nil })
 	m.ScanAndClean()
 
 	isTrackGenre("artist-0/", "album-0", "track-0.flac", "genre-aa")       // updated track genre exists
@@ -325,11 +327,12 @@ func TestNewAlbumForExistingArtist(t *testing.T) {
 
 	for tr := 0; tr < 3; tr++ {
 		m.AddTrack(fmt.Sprintf("artist-2/new-album/track-%d.mp3", tr))
-		m.SetTags(fmt.Sprintf("artist-2/new-album/track-%d.mp3", tr), func(tags *mockfs.Tags) {
+		m.SetTags(fmt.Sprintf("artist-2/new-album/track-%d.mp3", tr), func(tags *mockfs.Tags) error {
 			tags.RawArtist = "artist-2"
 			tags.RawAlbumArtist = "artist-2"
 			tags.RawAlbum = "new-album"
 			tags.RawTitle = fmt.Sprintf("title-%d", tr)
+			return nil
 		})
 	}
 
@@ -351,20 +354,22 @@ func TestMultiFolderWithSharedArtist(t *testing.T) {
 	const artistName = "artist-a"
 
 	m.AddTrack(fmt.Sprintf("m-0/%s/album-a/track-1.flac", artistName))
-	m.SetTags(fmt.Sprintf("m-0/%s/album-a/track-1.flac", artistName), func(tags *mockfs.Tags) {
+	m.SetTags(fmt.Sprintf("m-0/%s/album-a/track-1.flac", artistName), func(tags *mockfs.Tags) error {
 		tags.RawArtist = artistName
 		tags.RawAlbumArtist = artistName
 		tags.RawAlbum = "album-a"
 		tags.RawTitle = "track-1"
+		return nil
 	})
 	m.ScanAndClean()
 
 	m.AddTrack(fmt.Sprintf("m-1/%s/album-a/track-1.flac", artistName))
-	m.SetTags(fmt.Sprintf("m-1/%s/album-a/track-1.flac", artistName), func(tags *mockfs.Tags) {
+	m.SetTags(fmt.Sprintf("m-1/%s/album-a/track-1.flac", artistName), func(tags *mockfs.Tags) error {
 		tags.RawArtist = artistName
 		tags.RawAlbumArtist = artistName
 		tags.RawAlbum = "album-a"
 		tags.RawTitle = "track-1"
+		return nil
 	})
 	m.ScanAndClean()
 
@@ -425,11 +430,12 @@ func TestSymlinkedSubdiscs(t *testing.T) {
 	addItem := func(prefix, artist, album, disc, track string) {
 		p := fmt.Sprintf("%s/%s/%s/%s/%s", prefix, artist, album, disc, track)
 		m.AddTrack(p)
-		m.SetTags(p, func(tags *mockfs.Tags) {
+		m.SetTags(p, func(tags *mockfs.Tags) error {
 			tags.RawArtist = artist
 			tags.RawAlbumArtist = artist
 			tags.RawAlbum = album
 			tags.RawTitle = track
+			return nil
 		})
 	}
 

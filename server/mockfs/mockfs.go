@@ -20,11 +20,11 @@ import (
 var ErrPathNotFound = errors.New("path not found")
 
 type MockFS struct {
-	t       testing.TB
-	scanner *scanner.Scanner
-	dir     string
-	reader  *mreader
-	db      *db.DB
+	t         testing.TB
+	scanner   *scanner.Scanner
+	dir       string
+	tagReader *tagReader
+	db        *db.DB
 }
 
 func New(t testing.TB) *MockFS                        { return new(t, []string{""}) }
@@ -52,15 +52,15 @@ func new(t testing.TB, dirs []string) *MockFS {
 		}
 	}
 
-	parser := &mreader{map[string]*Tags{}}
-	scanner := scanner.New(absDirs, dbc, ";", parser)
+	tagReader := &tagReader{paths: map[string]*tagReaderResult{}}
+	scanner := scanner.New(absDirs, dbc, ";", tagReader)
 
 	return &MockFS{
-		t:       t,
-		scanner: scanner,
-		dir:     tmpDir,
-		reader:  parser,
-		db:      dbc,
+		t:         t,
+		scanner:   scanner,
+		dir:       tmpDir,
+		tagReader: tagReader,
+		db:        dbc,
 	}
 }
 
@@ -104,11 +104,12 @@ func (m *MockFS) addItems(prefix string, covers bool) {
 		for al := 0; al < 3; al++ {
 			for tr := 0; tr < 3; tr++ {
 				m.AddTrack(p("artist-%d/album-%d/track-%d.flac", ar, al, tr))
-				m.SetTags(p("artist-%d/album-%d/track-%d.flac", ar, al, tr), func(tags *Tags) {
+				m.SetTags(p("artist-%d/album-%d/track-%d.flac", ar, al, tr), func(tags *Tags) error {
 					tags.RawArtist = fmt.Sprintf("artist-%d", ar)
 					tags.RawAlbumArtist = fmt.Sprintf("artist-%d", ar)
 					tags.RawAlbum = fmt.Sprintf("album-%d", al)
 					tags.RawTitle = fmt.Sprintf("title-%d", tr)
+					return nil
 				})
 			}
 			if covers {
@@ -134,8 +135,8 @@ func (m *MockFS) Symlink(src, dest string) {
 	}
 	src = filepath.Clean(src)
 	dest = filepath.Clean(dest)
-	for k, v := range m.reader.tags {
-		m.reader.tags[strings.Replace(k, src, dest, 1)] = v
+	for k, v := range m.tagReader.paths {
+		m.tagReader.paths[strings.Replace(k, src, dest, 1)] = v
 	}
 }
 
@@ -240,15 +241,18 @@ func (m *MockFS) AddCover(path string) {
 	defer f.Close()
 }
 
-func (m *MockFS) SetTags(path string, cb func(*Tags)) {
+func (m *MockFS) SetTags(path string, cb func(*Tags) error) {
 	abspath := filepath.Join(m.dir, path)
 	if err := os.Chtimes(abspath, time.Time{}, time.Now()); err != nil {
 		m.t.Fatalf("touch track: %v", err)
 	}
-	if _, ok := m.reader.tags[abspath]; !ok {
-		m.reader.tags[abspath] = &Tags{}
+	r := m.tagReader
+	if _, ok := r.paths[abspath]; !ok {
+		r.paths[abspath] = &tagReaderResult{tags: &Tags{}}
 	}
-	cb(m.reader.tags[abspath])
+	if err := cb(r.paths[abspath].tags); err != nil {
+		r.paths[abspath].err = err
+	}
 }
 
 func (m *MockFS) DumpDB(suffix ...string) {
@@ -300,19 +304,24 @@ func (m *MockFS) DumpDB(suffix ...string) {
 	}
 }
 
-type mreader struct {
-	tags map[string]*Tags
+type tagReaderResult struct {
+	tags *Tags
+	err  error
 }
 
-func (m *mreader) Read(abspath string) (tags.Parser, error) {
-	parser, ok := m.tags[abspath]
+type tagReader struct {
+	paths map[string]*tagReaderResult
+}
+
+func (m *tagReader) Read(abspath string) (tags.Parser, error) {
+	p, ok := m.paths[abspath]
 	if !ok {
 		return nil, ErrPathNotFound
 	}
-	return parser, nil
+	return p.tags, p.err
 }
 
-var _ tags.Reader = (*mreader)(nil)
+var _ tags.Reader = (*tagReader)(nil)
 
 type Tags struct {
 	RawTitle       string
