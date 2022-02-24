@@ -553,3 +553,22 @@ func TestCompilationAlbumWithoutAlbumArtist(t *testing.T) {
 	is.Equal(artists[0].Albums[0].RightPath, pathAlbum)
 	is.Equal(artists[0].Albums[0].LeftPath, pathArtist+"/")
 }
+
+func TestIncrementalScanNoChangeNoUpdatedAt(t *testing.T) {
+	t.Parallel()
+	is := is.New(t)
+	m := mockfs.New(t)
+	defer m.CleanUp()
+
+	m.AddItems()
+
+	m.ScanAndClean()
+	var albumA db.Album
+	is.NoErr(m.DB().Where("tag_artist_id NOT NULL").Order("updated_at DESC").Find(&albumA).Error)
+
+	m.ScanAndClean()
+	var albumB db.Album
+	is.NoErr(m.DB().Where("tag_artist_id NOT NULL").Order("updated_at DESC").Find(&albumB).Error)
+
+	is.Equal(albumA.UpdatedAt, albumB.UpdatedAt)
+}

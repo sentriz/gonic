@@ -164,20 +164,16 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string
 
 	relPath, _ := filepath.Rel(musicDir, absPath)
 	pdir, pbasename := filepath.Split(filepath.Dir(relPath))
-	parent := &db.Album{}
-	if err := tx.Where(db.Album{RootDir: musicDir, LeftPath: pdir, RightPath: pbasename}).FirstOrCreate(parent).Error; err != nil {
+	var parent db.Album
+	if err := tx.Where(db.Album{RootDir: musicDir, LeftPath: pdir, RightPath: pbasename}).FirstOrCreate(&parent).Error; err != nil {
 		return fmt.Errorf("first or create parent: %w", err)
 	}
 
 	c.seenAlbums[parent.ID] = struct{}{}
 
 	dir, basename := filepath.Split(relPath)
-	album := &db.Album{}
-	if err := tx.Where(db.Album{RootDir: musicDir, LeftPath: dir, RightPath: basename}).First(album).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return fmt.Errorf("find album: %w", err)
-	}
-
-	if err := populateAlbumBasics(tx, musicDir, parent, album, dir, basename, cover); err != nil {
+	var album db.Album
+	if err := populateAlbumBasics(tx, musicDir, &parent, &album, dir, basename, cover); err != nil {
 		return fmt.Errorf("populate album basics: %w", err)
 	}
 
@@ -186,7 +182,7 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string
 	sort.Strings(tracks)
 	for i, basename := range tracks {
 		absPath := filepath.Join(musicDir, relPath, basename)
-		if err := s.populateTrackAndAlbumArtists(tx, c, i, parent, album, basename, absPath); err != nil {
+		if err := s.populateTrackAndAlbumArtists(tx, c, i, &parent, &album, basename, absPath); err != nil {
 			return fmt.Errorf("populate track %q: %w", basename, err)
 		}
 	}
@@ -269,8 +265,17 @@ func populateAlbum(tx *db.DB, album *db.Album, albumArtist *db.Artist, trags tag
 	return nil
 }
 
-func populateAlbumBasics(tx *db.DB, rootAbsPath string, parent, album *db.Album, dir, basename string, cover string) error {
-	album.RootDir = rootAbsPath
+func populateAlbumBasics(tx *db.DB, musicDir string, parent, album *db.Album, dir, basename string, cover string) error {
+	if err := tx.Where(db.Album{RootDir: musicDir, LeftPath: dir, RightPath: basename}).First(album).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return fmt.Errorf("find album: %w", err)
+	}
+
+	// see if we can save ourselves from an extra write if it's found and nothing has changed
+	if album.ID != 0 && album.Cover == cover && album.ParentID == parent.ID {
+		return nil
+	}
+
+	album.RootDir = musicDir
 	album.LeftPath = dir
 	album.RightPath = basename
 	album.Cover = cover
