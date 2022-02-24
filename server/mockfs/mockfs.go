@@ -75,6 +75,10 @@ func (m *MockFS) ScanAndClean() *scanner.Context {
 	return ctx
 }
 
+func (m *MockFS) ScanAndCleanErr() (*scanner.Context, error) {
+	return m.scanner.ScanAndClean(scanner.ScanOptions{})
+}
+
 func (m *MockFS) ResetDates() {
 	t := time.Date(2020, 0, 0, 0, 0, 0, 0, time.UTC)
 	if err := m.db.Model(db.Album{}).Updates(db.Album{CreatedAt: t, UpdatedAt: t, ModifiedAt: t}).Error; err != nil {
@@ -117,6 +121,10 @@ func (m *MockFS) addItems(prefix string, covers bool) {
 			}
 		}
 	}
+}
+
+func (m *MockFS) NumTracks() int {
+	return len(m.tagReader.paths)
 }
 
 func (m *MockFS) RemoveAll(path string) {
