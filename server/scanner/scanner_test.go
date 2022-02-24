@@ -145,7 +145,7 @@ func TestUpdatedTags(t *testing.T) {
 	is.Equal(updated.TagTitle, "title-upd")                                                                       // updated has tags
 }
 
-func TestDelete(t *testing.T) {
+func TestDeleteAlbum(t *testing.T) {
 	t.Parallel()
 	is := is.NewRelaxed(t)
 	m := mockfs.New(t)
@@ -154,13 +154,30 @@ func TestDelete(t *testing.T) {
 	m.AddItems()
 	m.ScanAndClean()
 
-	var album db.Album
-	is.NoErr(m.DB().Where("left_path=? AND right_path=?", "artist-2/", "album-2").Find(&album).Error) // album exists
+	is.NoErr(m.DB().Where("left_path=? AND right_path=?", "artist-2/", "album-2").Find(&db.Album{}).Error) // album exists
 
 	m.RemoveAll("artist-2/album-2")
 	m.ScanAndClean()
 
-	is.Equal(m.DB().Where("left_path=? AND right_path=?", "artist-2/", "album-2").Find(&album).Error, gorm.ErrRecordNotFound) // album doesn't exist
+	is.Equal(m.DB().Where("left_path=? AND right_path=?", "artist-2/", "album-2").Find(&db.Album{}).Error, gorm.ErrRecordNotFound) // album doesn't exist
+}
+
+func TestDeleteArtist(t *testing.T) {
+	t.Parallel()
+	is := is.NewRelaxed(t)
+	m := mockfs.New(t)
+	defer m.CleanUp()
+
+	m.AddItems()
+	m.ScanAndClean()
+
+	is.NoErr(m.DB().Where("left_path=? AND right_path=?", "artist-2/", "album-2").Find(&db.Album{}).Error) // album exists
+
+	m.RemoveAll("artist-2")
+	m.ScanAndClean()
+
+	is.Equal(m.DB().Where("left_path=? AND right_path=?", "artist-2/", "album-2").Find(&db.Album{}).Error, gorm.ErrRecordNotFound) // album doesn't exist
+	is.Equal(m.DB().Where("name=?", "artist-2").Find(&db.Artist{}).Error, gorm.ErrRecordNotFound)                                  // artist doesn't exist
 }
 
 func TestGenres(t *testing.T) {
