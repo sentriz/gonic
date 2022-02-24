@@ -23,6 +23,8 @@ func playlistRender(c *Controller, playlist *db.Playlist) *spec.Playlist {
 		Comment:   playlist.Comment,
 		Created:   playlist.CreatedAt,
 		SongCount: playlist.TrackCount,
+		Public:    playlist.IsPublic,
+		Owner:     user.Name,
 	}
 
 	trackIDs := playlist.GetItems()
@@ -48,7 +50,7 @@ func playlistRender(c *Controller, playlist *db.Playlist) *spec.Playlist {
 func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	var playlists []*db.Playlist
-	c.DB.Where("user_id=?", user.ID).Find(&playlists)
+	c.DB.Where("user_id=?", user.ID).Or("is_public=?", true).Find(&playlists)
 	sub := spec.NewResponse()
 	sub.Playlists = &spec.Playlists{
 		List: make([]*spec.Playlist, len(playlists)),
@@ -90,6 +92,9 @@ func (c *Controller) ServeCreatePlaylist(r *http.Request) *spec.Response {
 		FirstOrCreate(&playlist)
 
 		// update meta info
+	if playlist.UserID != 0 && playlist.UserID != user.ID {
+		return spec.NewResponse()
+	}
 	playlist.UserID = user.ID
 	if val, err := params.Get("name"); err == nil {
 		playlist.Name = val
@@ -123,12 +128,18 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 		FirstOrCreate(&playlist)
 
 		// update meta info
+	if playlist.UserID != 0 && playlist.UserID != user.ID {
+		return spec.NewResponse()
+	}
 	playlist.UserID = user.ID
 	if val, err := params.Get("name"); err == nil {
 		playlist.Name = val
 	}
 	if val, err := params.Get("comment"); err == nil {
 		playlist.Comment = val
+	}
+	if val, err := params.GetBool("public"); err == nil {
+		playlist.IsPublic = val
 	}
 	trackIDs := playlist.GetItems()
 
