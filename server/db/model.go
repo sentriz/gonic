@@ -247,6 +247,7 @@ type Playlist struct {
 	Comment    string
 	TrackCount int
 	Items      string
+	IsPublic   bool `sql:"default: null"`
 }
 
 func (p *Playlist) GetItems() []int {

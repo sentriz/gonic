@@ -40,6 +40,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202201042236", migrateArtistGuessedFolder),
 		construct(ctx, "202202092013", migrateArtistCover),
 		construct(ctx, "202202121809", migrateAlbumRootDirAgain),
+		construct(ctx, "202202241218", migratePublicPlaylist),
 	}
 
 	return gormigrate.
@@ -326,4 +327,8 @@ func migrateArtistCover(tx *gorm.DB, ctx MigrationContext) error {
 // there was an issue with that migration, try it again since it's updated
 func migrateAlbumRootDirAgain(tx *gorm.DB, ctx MigrationContext) error {
 	return migrateAlbumRootDir(tx, ctx)
+}
+
+func migratePublicPlaylist(tx *gorm.DB, ctx MigrationContext) error {
+	return tx.AutoMigrate(Playlist{}).Error
 }
