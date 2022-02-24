@@ -101,7 +101,7 @@ func (s *Scanner) ScanAndClean(opts ScanOptions) (*Context, error) {
 	}
 
 	if c.errs.Len() > 0 {
-		return nil, c.errs
+		return c, c.errs
 	}
 
 	return c, nil

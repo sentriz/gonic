@@ -1,6 +1,7 @@
 package scanner_test
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -12,8 +13,10 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/matryer/is"
 
+	"go.senan.xyz/gonic/multierr"
 	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/mockfs"
+	"go.senan.xyz/gonic/server/scanner"
 )
 
 func TestMain(m *testing.M) {
@@ -32,7 +35,7 @@ func TestTableCounts(t *testing.T) {
 
 	var tracks int
 	is.NoErr(m.DB().Model(&db.Track{}).Count(&tracks).Error) // not all tracks
-	is.Equal(tracks, 3*3*3)                                  // not all tracks
+	is.Equal(tracks, m.NumTracks())
 
 	var albums int
 	is.NoErr(m.DB().Model(&db.Album{}).Count(&albums).Error) // not all albums
@@ -482,4 +485,32 @@ func TestArtistHasCover(t *testing.T) {
 	var artistWithout db.Artist
 	is.NoErr(m.DB().Where("name=?", "artist-0").First(&artistWithout).Error)
 	is.Equal(artistWithout.Cover, "")
+}
+
+func TestTagErrors(t *testing.T) {
+	t.Parallel()
+	is := is.New(t)
+	m := mockfs.New(t)
+	defer m.CleanUp()
+
+	m.AddItemsWithCovers()
+	m.SetTags("artist-1/album-0/track-0.flac", func(tags *mockfs.Tags) error {
+		return scanner.ErrReadingTags
+	})
+	m.SetTags("artist-1/album-1/track-0.flac", func(tags *mockfs.Tags) error {
+		return scanner.ErrReadingTags
+	})
+
+	var errs *multierr.Err
+	ctx, err := m.ScanAndCleanErr()
+	is.True(errors.As(err, &errs))
+	is.Equal(errs.Len(), 2)                            // we have 2 dir errors
+	is.Equal(ctx.SeenTracks(), m.NumTracks()-(3*2))    // we saw all tracks bar 2 album contents
+	is.Equal(ctx.SeenTracksNew(), m.NumTracks()-(3*2)) // we have all tracks bar 2 album contents
+
+	ctx, err = m.ScanAndCleanErr()
+	is.True(errors.As(err, &errs))
+	is.Equal(errs.Len(), 2)                         // we have 2 dir errors
+	is.Equal(ctx.SeenTracks(), m.NumTracks()-(3*2)) // we saw all tracks bar 2 album contents
+	is.Equal(ctx.SeenTracksNew(), 0)                // we have no new tracks
 }
