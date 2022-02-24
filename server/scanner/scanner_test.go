@@ -514,3 +514,42 @@ func TestTagErrors(t *testing.T) {
 	is.Equal(ctx.SeenTracks(), m.NumTracks()-(3*2)) // we saw all tracks bar 2 album contents
 	is.Equal(ctx.SeenTracksNew(), 0)                // we have no new tracks
 }
+
+// https://github.com/sentriz/gonic/issues/185#issuecomment-1050092128
+func TestCompilationAlbumWithoutAlbumArtist(t *testing.T) {
+	t.Parallel()
+	is := is.New(t)
+	m := mockfs.New(t)
+	defer m.CleanUp()
+
+	const pathArtist = "various-artists"
+	const pathAlbum = "my-compilation"
+	const toAdd = 5
+
+	// add tracks to one folder with random artists and no album artist tag
+	for i := 0; i < toAdd; i++ {
+		p := fmt.Sprintf("%s/%s/track-%d.flac", pathArtist, pathAlbum, i)
+		m.AddTrack(p)
+		m.SetTags(p, func(tags *mockfs.Tags) error {
+			// don't set an album artist
+			tags.RawTitle = fmt.Sprintf("track %d", i)
+			tags.RawArtist = fmt.Sprintf("artist %d", i)
+			tags.RawAlbum = pathArtist
+			return nil
+		})
+	}
+
+	m.ScanAndClean()
+
+	var trackCount int
+	is.NoErr(m.DB().Model(&db.Track{}).Count(&trackCount).Error)
+	is.Equal(trackCount, 5)
+
+	var artists []*db.Artist
+	is.NoErr(m.DB().Preload("Albums").Find(&artists).Error)
+	is.Equal(len(artists), 1)             // we only have one album artist
+	is.Equal(artists[0].Name, "artist 0") // it came from the first track's fallback to artist tag
+	is.Equal(len(artists[0].Albums), 1)   // the artist has one album
+	is.Equal(artists[0].Albums[0].RightPath, pathAlbum)
+	is.Equal(artists[0].Albums[0].LeftPath, pathArtist+"/")
+}

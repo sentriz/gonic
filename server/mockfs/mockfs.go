@@ -352,9 +352,18 @@ func (m *Tags) Length() int           { return 100 }
 func (m *Tags) Bitrate() int          { return 100 }
 func (m *Tags) Year() int             { return 2021 }
 
-func (m *Tags) SomeAlbum() string       { return m.Album() }
-func (m *Tags) SomeArtist() string      { return m.Artist() }
-func (m *Tags) SomeAlbumArtist() string { return m.AlbumArtist() }
-func (m *Tags) SomeGenre() string       { return m.Genre() }
+func (m *Tags) SomeAlbum() string       { return first("Unknown Album", m.Album()) }
+func (m *Tags) SomeArtist() string      { return first("Unknown Artist", m.Artist()) }
+func (m *Tags) SomeAlbumArtist() string { return first("Unknown Artist", m.AlbumArtist(), m.Artist()) }
+func (m *Tags) SomeGenre() string       { return first("Unknown Genre", m.Genre()) }
 
 var _ tags.Parser = (*Tags)(nil)
+
+func first(or string, strs ...string) string {
+	for _, str := range strs {
+		if str != "" {
+			return str
+		}
+	}
+	return or
+}
