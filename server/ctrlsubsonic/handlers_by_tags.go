@@ -296,7 +296,12 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 
 	count := params.GetOrInt("count", 20)
 	inclNotPresent := params.GetOrBool("includeNotPresent", false)
-	for i, similarInfo := range info.Similar.Artists {
+	similarArtists, err := lastfm.ArtistGetSimilar(apiKey, artist.Name)
+	if err != nil {
+		return spec.NewError(0, "fetching artist similar: %v", err)
+	}
+
+	for i, similarInfo := range similarArtists.Artists {
 		if i == count {
 			break
 		}
@@ -311,16 +316,15 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		if errors.Is(err, gorm.ErrRecordNotFound) && !inclNotPresent {
 			continue
 		}
-		similar := &spec.SimilarArtist{
-			ID: &specid.ID{},
-		}
+		artistID := &specid.ID{}
 		if artist.ID != 0 {
-			similar.ID = artist.SID()
+			artistID = artist.SID()
 		}
-		similar.Name = similarInfo.Name
-		similar.AlbumCount = artist.AlbumCount
-		sub.ArtistInfoTwo.SimilarArtist = append(
-			sub.ArtistInfoTwo.SimilarArtist, similar)
+		sub.ArtistInfoTwo.SimilarArtist = append(sub.ArtistInfoTwo.SimilarArtist, &spec.SimilarArtist{
+			ID:         artistID,
+			Name:       similarInfo.Name,
+			AlbumCount: artist.AlbumCount,
+		})
 	}
 
 	return sub
