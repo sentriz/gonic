@@ -296,31 +296,41 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 
 	count := params.GetOrInt("count", 20)
 	inclNotPresent := params.GetOrBool("includeNotPresent", false)
-	for i, similarInfo := range info.Similar.Artists {
-		if i == count {
-			break
-		}
-		var artist db.Artist
-		err = c.DB.
-			Select("artists.*, count(albums.id) album_count").
-			Where("name=?", similarInfo.Name).
-			Joins("LEFT JOIN albums ON artists.id=albums.tag_artist_id").
-			Group("artists.id").
-			Find(&artist).
-			Error
-		if errors.Is(err, gorm.ErrRecordNotFound) && !inclNotPresent {
-			continue
-		}
+	similarArtists, err := lastfm.ArtistGetSimilar(apiKey, artist.Name)
+	if err != nil {
+		return spec.NewError(0, "fetching artist info: %v", err)
+	}
+
+	similarArtistNames := make([]string, len(similarArtists.Artists))
+	for i, a := range similarArtists.Artists {
+		similarArtistNames[i] = a.Name
+	}
+	var artists []*db.Artist
+
+	err = c.DB.
+		Select("artists.* ").
+		Where("artists.name IN (?) ", similarArtistNames).
+		Find(&artists).
+		Limit(count).
+		Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) && !inclNotPresent {
+		return spec.NewError(10, "couldn't find any similar artists")
+	}
+
+	sub.ArtistInfoTwo.SimilarArtist = make([]*spec.SimilarArtist, len(artists))
+	for i, artist := range artists {
 		similar := &spec.SimilarArtist{
 			ID: &specid.ID{},
 		}
+
 		if artist.ID != 0 {
 			similar.ID = artist.SID()
 		}
-		similar.Name = similarInfo.Name
+
+		similar.Name = artist.Name
 		similar.AlbumCount = artist.AlbumCount
-		sub.ArtistInfoTwo.SimilarArtist = append(
-			sub.ArtistInfoTwo.SimilarArtist, similar)
+		sub.ArtistInfoTwo.SimilarArtist[i] = similar
 	}
 
 	return sub
