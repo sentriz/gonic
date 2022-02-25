@@ -65,6 +65,7 @@ func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 			return db.
 				Select("*, count(sub.id) child_count, sum(sub.length) duration").
 				Joins("LEFT JOIN tracks sub ON albums.id=sub.album_id").
+				Order("albums.right_path").
 				Group("albums.id")
 		}).
 		First(artist, id.Value)
