@@ -459,11 +459,10 @@ func (s *Scanner) cleanGenres(c *Context) error {
 }
 
 func ext(name string) string {
-	ext := filepath.Ext(name)
-	if len(ext) == 0 {
-		return ""
+	if ext := filepath.Ext(name); len(ext) > 0 {
+		return ext[1:]
 	}
-	return ext[1:]
+	return ""
 }
 
 func isCover(name string) bool {
