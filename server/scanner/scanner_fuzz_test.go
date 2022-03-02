@@ -4,7 +4,6 @@
 package scanner_test
 
 import (
-	"encoding/binary"
 	"fmt"
 	"math/rand"
 	"reflect"
@@ -28,7 +27,7 @@ func FuzzScanner(f *testing.F) {
 		is.Equal(ctx.GenresMissing(), 0)
 	}
 
-	f.Fuzz(func(t *testing.T, data []byte) {
+	f.Fuzz(func(t *testing.T, data []byte, seed int64) {
 		is := is.NewRelaxed(t)
 		m := mockfs.New(t)
 		defer m.CleanUp()
@@ -38,7 +37,7 @@ func FuzzScanner(f *testing.F) {
 			path := fmt.Sprintf("artist-%d/album-%d/track-%d.flac", i/6, i/3, i)
 			m.AddTrack(path)
 			m.SetTags(path, func(tags *mockfs.Tags) error {
-				fuzzStruct(i, data, tags)
+				fuzzStruct(i, data, seed, tags)
 				return nil
 			})
 		}
@@ -48,12 +47,12 @@ func FuzzScanner(f *testing.F) {
 	})
 }
 
-func fuzzStruct(taken int, data []byte, dest interface{}) {
+func fuzzStruct(taken int, data []byte, seed int64, dest interface{}) {
 	if len(data) == 0 {
 		return
 	}
 
-	r := seedRand(data)
+	r := rand.New(rand.NewSource(seed))
 	v := reflect.ValueOf(dest)
 	for i := 0; i < v.Elem().NumField(); i++ {
 		if r.Float64() < 0.1 {
@@ -79,15 +78,7 @@ func fuzzStruct(taken int, data []byte, dest interface{}) {
 		case reflect.Float32, reflect.Float64:
 			f.SetFloat(float64(b[0]))
 		case reflect.Struct:
-			fuzzStruct(taken, data, f.Addr().Interface())
+			fuzzStruct(taken, data, seed, f.Addr().Interface())
 		}
 	}
-}
-
-func seedRand(seed []byte) *rand.Rand {
-	b := make([]byte, 8)
-	for i := range b {
-		b[i] = seed[i%len(seed)]
-	}
-	return rand.New(rand.NewSource(int64(binary.BigEndian.Uint64(b))))
 }
