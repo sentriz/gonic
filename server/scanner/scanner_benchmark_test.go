@@ -9,7 +9,6 @@ import (
 
 func BenchmarkScanIncremental(b *testing.B) {
 	m := mockfs.New(b)
-	defer m.CleanUp()
 	for i := 0; i < 5; i++ {
 		m.AddItemsPrefix(fmt.Sprintf("t-%d", i))
 	}
@@ -30,6 +29,5 @@ func BenchmarkScanFull(b *testing.B) {
 		b.StartTimer()
 		m.ScanAndClean()
 		b.StopTimer()
-		m.CleanUp()
 	}
 }

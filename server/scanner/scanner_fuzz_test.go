@@ -30,7 +30,6 @@ func FuzzScanner(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte, seed int64) {
 		is := is.NewRelaxed(t)
 		m := mockfs.New(t)
-		defer m.CleanUp()
 
 		const toAdd = 1000
 		for i := 0; i < toAdd; i++ {

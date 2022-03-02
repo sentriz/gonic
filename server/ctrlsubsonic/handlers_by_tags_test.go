@@ -7,8 +7,7 @@ import (
 
 func TestGetArtists(t *testing.T) {
 	t.Parallel()
-	contr, m := makeControllerRoots(t, []string{"m-0", "m-1"})
-	defer m.CleanUp()
+	contr := makeControllerRoots(t, []string{"m-0", "m-1"})
 
 	runQueryCases(t, contr, contr.ServeGetArtists, []*queryCase{
 		{url.Values{}, "no_args", false},
@@ -19,8 +18,7 @@ func TestGetArtists(t *testing.T) {
 
 func TestGetArtist(t *testing.T) {
 	t.Parallel()
-	contr, m := makeController(t)
-	defer m.CleanUp()
+	contr := makeController(t)
 
 	runQueryCases(t, contr, contr.ServeGetArtist, []*queryCase{
 		{url.Values{"id": {"ar-1"}}, "id_one", false},
@@ -31,8 +29,7 @@ func TestGetArtist(t *testing.T) {
 
 func TestGetAlbum(t *testing.T) {
 	t.Parallel()
-	contr, m := makeController(t)
-	defer m.CleanUp()
+	contr := makeController(t)
 
 	runQueryCases(t, contr, contr.ServeGetAlbum, []*queryCase{
 		{url.Values{"id": {"al-2"}}, "without_cover", false},
@@ -42,8 +39,7 @@ func TestGetAlbum(t *testing.T) {
 
 func TestGetAlbumListTwo(t *testing.T) {
 	t.Parallel()
-	contr, m := makeController(t)
-	defer m.CleanUp()
+	contr := makeController(t)
 
 	runQueryCases(t, contr, contr.ServeGetAlbumListTwo, []*queryCase{
 		{url.Values{"type": {"alphabeticalByArtist"}}, "alpha_artist", false},
@@ -55,8 +51,7 @@ func TestGetAlbumListTwo(t *testing.T) {
 
 func TestSearchThree(t *testing.T) {
 	t.Parallel()
-	contr, m := makeController(t)
-	defer m.CleanUp()
+	contr := makeController(t)
 
 	runQueryCases(t, contr, contr.ServeSearchThree, []*queryCase{
 		{url.Values{"query": {"art"}}, "q_art", false},

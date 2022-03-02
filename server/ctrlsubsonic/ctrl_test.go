@@ -96,10 +96,10 @@ func runQueryCases(t *testing.T, contr *Controller, h handlerSubsonic, cases []*
 	}
 }
 
-func makeController(t *testing.T) (*Controller, *mockfs.MockFS)                  { return makec(t, []string{""}) }
-func makeControllerRoots(t *testing.T, r []string) (*Controller, *mockfs.MockFS) { return makec(t, r) }
+func makeController(t *testing.T) *Controller                  { return makec(t, []string{""}) }
+func makeControllerRoots(t *testing.T, r []string) *Controller { return makec(t, r) }
 
-func makec(t *testing.T, roots []string) (*Controller, *mockfs.MockFS) {
+func makec(t *testing.T, roots []string) *Controller {
 	t.Helper()
 
 	m := mockfs.NewWithDirs(t, roots)
@@ -117,7 +117,7 @@ func makec(t *testing.T, roots []string) (*Controller, *mockfs.MockFS) {
 	}
 
 	base := &ctrlbase.Controller{DB: m.DB()}
-	return &Controller{Controller: base, MusicPaths: absRoots}, m
+	return &Controller{Controller: base, MusicPaths: absRoots}
 }
 
 func TestMain(m *testing.M) {

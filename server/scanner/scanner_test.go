@@ -28,7 +28,6 @@ func TestTableCounts(t *testing.T) {
 	t.Parallel()
 	is := is.NewRelaxed(t)
 	m := mockfs.New(t)
-	defer m.CleanUp()
 
 	m.AddItems()
 	m.ScanAndClean()
@@ -50,7 +49,6 @@ func TestParentID(t *testing.T) {
 	t.Parallel()
 	is := is.New(t)
 	m := mockfs.New(t)
-	defer m.CleanUp()
 
 	m.AddItems()
 	m.ScanAndClean()
@@ -74,7 +72,6 @@ func TestUpdatedCover(t *testing.T) {
 	t.Parallel()
 	is := is.NewRelaxed(t)
 	m := mockfs.New(t)
-	defer m.CleanUp()
 
 	m.AddItems()
 	m.ScanAndClean()
@@ -90,7 +87,6 @@ func TestCoverBeforeTracks(t *testing.T) {
 	t.Parallel()
 	is := is.New(t)
 	m := mockfs.New(t)
-	defer m.CleanUp()
 
 	m.AddCover("artist-2/album-2/cover.jpg")
 	m.ScanAndClean()
@@ -111,7 +107,6 @@ func TestUpdatedTags(t *testing.T) {
 	t.Parallel()
 	is := is.New(t)
 	m := mockfs.New(t)
-	defer m.CleanUp()
 
 	m.AddTrack("artist-10/album-10/track-10.flac")
 	m.SetTags("artist-10/album-10/track-10.flac", func(tags *mockfs.Tags) error {
@@ -154,7 +149,6 @@ func TestDeleteAlbum(t *testing.T) {
 	t.Parallel()
 	is := is.NewRelaxed(t)
 	m := mockfs.New(t)
-	defer m.CleanUp()
 
 	m.AddItems()
 	m.ScanAndClean()
@@ -171,7 +165,6 @@ func TestDeleteArtist(t *testing.T) {
 	t.Parallel()
 	is := is.NewRelaxed(t)
 	m := mockfs.New(t)
-	defer m.CleanUp()
 
 	m.AddItems()
 	m.ScanAndClean()
@@ -189,7 +182,6 @@ func TestGenres(t *testing.T) {
 	t.Parallel()
 	is := is.New(t)
 	m := mockfs.New(t)
-	defer m.CleanUp()
 
 	albumGenre := func(artist, album, genre string) error {
 		return m.DB().
@@ -281,7 +273,6 @@ func TestMultiFolders(t *testing.T) {
 	t.Parallel()
 	is := is.New(t)
 	m := mockfs.NewWithDirs(t, []string{"m-1", "m-2", "m-3"})
-	defer m.CleanUp()
 
 	m.AddItemsPrefix("m-1")
 	m.AddItemsPrefix("m-2")
@@ -316,7 +307,6 @@ func TestNewAlbumForExistingArtist(t *testing.T) {
 	t.Parallel()
 	is := is.New(t)
 	m := mockfs.New(t)
-	defer m.CleanUp()
 
 	m.AddItems()
 	m.ScanAndClean()
@@ -352,7 +342,6 @@ func TestMultiFolderWithSharedArtist(t *testing.T) {
 	t.Parallel()
 	is := is.New(t)
 	m := mockfs.NewWithDirs(t, []string{"m-0", "m-1"})
-	defer m.CleanUp()
 
 	const artistName = "artist-a"
 
@@ -400,7 +389,6 @@ func TestSymlinkedAlbum(t *testing.T) {
 	t.Parallel()
 	is := is.New(t)
 	m := mockfs.NewWithDirs(t, []string{"scan"})
-	defer m.CleanUp()
 
 	m.AddItemsPrefixWithCovers("temp")
 
@@ -428,7 +416,6 @@ func TestSymlinkedSubdiscs(t *testing.T) {
 	t.Parallel()
 	is := is.New(t)
 	m := mockfs.NewWithDirs(t, []string{"scan"})
-	defer m.CleanUp()
 
 	addItem := func(prefix, artist, album, disc, track string) {
 		p := fmt.Sprintf("%s/%s/%s/%s/%s", prefix, artist, album, disc, track)
@@ -472,7 +459,6 @@ func TestArtistHasCover(t *testing.T) {
 	t.Parallel()
 	is := is.New(t)
 	m := mockfs.New(t)
-	defer m.CleanUp()
 
 	m.AddItemsWithCovers()
 	m.AddCover("artist-2/artist.png")
@@ -491,7 +477,6 @@ func TestTagErrors(t *testing.T) {
 	t.Parallel()
 	is := is.New(t)
 	m := mockfs.New(t)
-	defer m.CleanUp()
 
 	m.AddItemsWithCovers()
 	m.SetTags("artist-1/album-0/track-0.flac", func(tags *mockfs.Tags) error {
@@ -520,7 +505,6 @@ func TestCompilationAlbumWithoutAlbumArtist(t *testing.T) {
 	t.Parallel()
 	is := is.New(t)
 	m := mockfs.New(t)
-	defer m.CleanUp()
 
 	const pathArtist = "various-artists"
 	const pathAlbum = "my-compilation"
@@ -558,7 +542,6 @@ func TestIncrementalScanNoChangeNoUpdatedAt(t *testing.T) {
 	t.Parallel()
 	is := is.New(t)
 	m := mockfs.New(t)
-	defer m.CleanUp()
 
 	m.AddItems()
 

@@ -8,8 +8,7 @@ import (
 )
 
 func TestGetIndexes(t *testing.T) {
-	contr, m := makeControllerRoots(t, []string{"m-0", "m-1"})
-	defer m.CleanUp()
+	contr := makeControllerRoots(t, []string{"m-0", "m-1"})
 
 	runQueryCases(t, contr, contr.ServeGetIndexes, []*queryCase{
 		{url.Values{}, "no_args", false},
@@ -19,8 +18,7 @@ func TestGetIndexes(t *testing.T) {
 }
 
 func TestGetMusicDirectory(t *testing.T) {
-	contr, m := makeController(t)
-	defer m.CleanUp()
+	contr := makeController(t)
 
 	runQueryCases(t, contr, contr.ServeGetMusicDirectory, []*queryCase{
 		{url.Values{"id": {"al-2"}}, "without_tracks", false},
@@ -30,8 +28,7 @@ func TestGetMusicDirectory(t *testing.T) {
 
 func TestGetAlbumList(t *testing.T) {
 	t.Parallel()
-	contr, m := makeController(t)
-	defer m.CleanUp()
+	contr := makeController(t)
 
 	runQueryCases(t, contr, contr.ServeGetAlbumList, []*queryCase{
 		{url.Values{"type": {"alphabeticalByArtist"}}, "alpha_artist", false},
@@ -43,8 +40,7 @@ func TestGetAlbumList(t *testing.T) {
 
 func TestSearchTwo(t *testing.T) {
 	t.Parallel()
-	contr, m := makeController(t)
-	defer m.CleanUp()
+	contr := makeController(t)
 
 	runQueryCases(t, contr, contr.ServeSearchTwo, []*queryCase{
 		{url.Values{"query": {"art"}}, "q_art", false},

@@ -35,6 +35,12 @@ func new(t testing.TB, dirs []string) *MockFS {
 	if err != nil {
 		t.Fatalf("create db: %v", err)
 	}
+	t.Cleanup(func() {
+		if err := dbc.Close(); err != nil {
+			t.Fatalf("close db: %v", err)
+		}
+	})
+
 	if err := dbc.Migrate(db.MigrationContext{}); err != nil {
 		t.Fatalf("migrate db db: %v", err)
 	}
@@ -86,12 +92,6 @@ func (m *MockFS) ResetDates() {
 	}
 	if err := m.db.Model(db.Track{}).Updates(db.Track{CreatedAt: t, UpdatedAt: t}).Error; err != nil {
 		m.t.Fatalf("reset track times: %v", err)
-	}
-}
-
-func (m *MockFS) CleanUp() {
-	if err := m.db.Close(); err != nil {
-		m.t.Fatalf("close db: %v", err)
 	}
 }
 
