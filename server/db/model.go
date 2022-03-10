@@ -72,10 +72,11 @@ type Genre struct {
 // AudioFile is used to avoid some duplication in handlers_raw.go
 // between Track and Podcast
 type AudioFile interface {
-	AudioFilename() string
 	Ext() string
 	MIME() string
+	AudioFilename() string
 	AudioBitrate() int
+	AudioLength() int
 }
 
 type Track struct {
@@ -100,6 +101,9 @@ type Track struct {
 	TagBrainzID    string   `sql:"default: null"`
 }
 
+func (t *Track) AudioLength() int  { return t.Length }
+func (t *Track) AudioBitrate() int { return t.Bitrate }
+
 func (t *Track) SID() *specid.ID {
 	return &specid.ID{Type: specid.Track, Value: t.ID}
 }
@@ -122,10 +126,6 @@ func (t *Track) Ext() string {
 
 func (t *Track) AudioFilename() string {
 	return t.Filename
-}
-
-func (t *Track) AudioBitrate() int {
-	return t.Bitrate
 }
 
 func (t *Track) MIME() string {
@@ -364,6 +364,9 @@ type PodcastEpisode struct {
 	Error       string
 }
 
+func (pe *PodcastEpisode) AudioLength() int  { return pe.Length }
+func (pe *PodcastEpisode) AudioBitrate() int { return pe.Bitrate }
+
 func (pe *PodcastEpisode) SID() *specid.ID {
 	return &specid.ID{Type: specid.PodcastEpisode, Value: pe.ID}
 }
@@ -383,10 +386,6 @@ func (pe *PodcastEpisode) Ext() string {
 func (pe *PodcastEpisode) MIME() string {
 	v, _ := mime.FromExtension(pe.Ext())
 	return v
-}
-
-func (pe *PodcastEpisode) AudioBitrate() int {
-	return pe.Bitrate
 }
 
 type Bookmark struct {

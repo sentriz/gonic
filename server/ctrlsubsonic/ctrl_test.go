@@ -18,12 +18,22 @@ import (
 
 	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
+	"go.senan.xyz/gonic/server/db"
 	"go.senan.xyz/gonic/server/mockfs"
+	"go.senan.xyz/gonic/server/transcode"
 )
 
-var (
-	testDataDir   = "testdata"
-	testCamelExpr = regexp.MustCompile("([a-z0-9])([A-Z])")
+var testCamelExpr = regexp.MustCompile("([a-z0-9])([A-Z])")
+
+const (
+	mockUsername   = "admin"
+	mockPassword   = "admin"
+	mockClientName = "test"
+)
+
+const (
+	audioPath5s  = "testdata/audio/5s.flac"  //nolint:deadcode,varcheck
+	audioPath10s = "testdata/audio/10s.flac" //nolint:deadcode,varcheck
 )
 
 type queryCase struct {
@@ -37,20 +47,41 @@ func makeGoldenPath(test string) string {
 	snake := testCamelExpr.ReplaceAllString(test, "${1}_${2}")
 	lower := strings.ToLower(snake)
 	relPath := strings.ReplaceAll(lower, "/", "_")
-	return path.Join(testDataDir, relPath)
+	return path.Join("testdata", relPath)
 }
 
 func makeHTTPMock(query url.Values) (*httptest.ResponseRecorder, *http.Request) {
 	// ensure the handlers give us json
 	query.Add("f", "json")
+	query.Add("u", mockUsername)
+	query.Add("p", mockPassword)
+	query.Add("v", "1")
+	query.Add("c", mockClientName)
 	// request from the handler in question
 	req, _ := http.NewRequest("", "", nil)
 	req.URL.RawQuery = query.Encode()
-	subParams := params.New(req)
-	withParams := context.WithValue(req.Context(), CtxParams, subParams)
+	ctx := req.Context()
+	ctx = context.WithValue(ctx, CtxParams, params.New(req))
+	ctx = context.WithValue(ctx, CtxUser, &db.User{})
+	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
-	req = req.WithContext(withParams)
 	return rr, req
+}
+
+func serveRaw(t *testing.T, contr *Controller, h handlerSubsonicRaw, rr *httptest.ResponseRecorder, req *http.Request) {
+	type middleware func(http.Handler) http.Handler
+	middlewares := []middleware{
+		contr.WithParams,
+		contr.WithRequiredParams,
+		contr.WithUser,
+	}
+
+	handler := contr.HR(h)
+	for _, m := range middlewares {
+		handler = m(handler)
+	}
+
+	handler.ServeHTTP(rr, req)
 }
 
 func runQueryCases(t *testing.T, contr *Controller, h handlerSubsonic, cases []*queryCase) {
@@ -96,20 +127,26 @@ func runQueryCases(t *testing.T, contr *Controller, h handlerSubsonic, cases []*
 	}
 }
 
-func makeController(t *testing.T) *Controller                  { return makec(t, []string{""}) }
-func makeControllerRoots(t *testing.T, r []string) *Controller { return makec(t, r) }
+func makeController(t *testing.T) *Controller                  { return makec(t, []string{""}, false) }
+func makeControllerRoots(t *testing.T, r []string) *Controller { return makec(t, r, false) }
+func makeControllerAudio(t *testing.T) *Controller             { return makec(t, []string{""}, true) }
 
-func makec(t *testing.T, roots []string) *Controller {
+func makec(t *testing.T, roots []string, audio bool) *Controller {
 	t.Helper()
 
 	m := mockfs.NewWithDirs(t, roots)
 	for _, root := range roots {
 		m.AddItemsPrefixWithCovers(root)
+		if !audio {
+			continue
+		}
+		m.SetRealAudio(filepath.Join(root, "artist-0/album-0/track-0.flac"), 10, audioPath10s)
+		m.SetRealAudio(filepath.Join(root, "artist-0/album-0/track-1.flac"), 10, audioPath10s)
+		m.SetRealAudio(filepath.Join(root, "artist-0/album-0/track-2.flac"), 10, audioPath10s)
 	}
 
 	m.ScanAndClean()
 	m.ResetDates()
-	m.LogAlbums()
 
 	var absRoots []string
 	for _, root := range roots {
@@ -117,7 +154,13 @@ func makec(t *testing.T, roots []string) *Controller {
 	}
 
 	base := &ctrlbase.Controller{DB: m.DB()}
-	return &Controller{Controller: base, MusicPaths: absRoots}
+	contr := &Controller{
+		Controller: base,
+		MusicPaths: absRoots,
+		Transcoder: transcode.NewFFmpegTranscoder(),
+	}
+
+	return contr
 }
 
 func TestMain(m *testing.M) {

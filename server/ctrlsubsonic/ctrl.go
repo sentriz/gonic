@@ -15,6 +15,7 @@ import (
 	"go.senan.xyz/gonic/server/jukebox"
 	"go.senan.xyz/gonic/server/podcasts"
 	"go.senan.xyz/gonic/server/scrobble"
+	"go.senan.xyz/gonic/server/transcode"
 )
 
 type CtxKey int
@@ -34,6 +35,7 @@ type Controller struct {
 	Jukebox        *jukebox.Jukebox
 	Scrobblers     []scrobble.Scrobbler
 	Podcasts       *podcasts.Podcasts
+	Transcoder     transcode.Transcoder
 }
 
 type metaResponse struct {
