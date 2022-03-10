@@ -2,7 +2,7 @@ package ctrlsubsonic
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -121,6 +121,6 @@ func makec(t *testing.T, roots []string) *Controller {
 }
 
 func TestMain(m *testing.M) {
-	log.SetOutput(ioutil.Discard)
+	log.SetOutput(io.Discard)
 	os.Exit(m.Run())
 }
