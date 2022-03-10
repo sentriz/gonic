@@ -148,6 +148,22 @@ func (m *MockFS) Symlink(src, dest string) {
 	}
 }
 
+func (m *MockFS) SetRealAudio(path string, length int, audioPath string) {
+	abspath := filepath.Join(m.dir, path)
+	if err := os.Remove(abspath); err != nil {
+		m.t.Fatalf("remove all: %v", err)
+	}
+	wd, _ := os.Getwd()
+	if err := os.Symlink(filepath.Join(wd, audioPath), abspath); err != nil {
+		m.t.Fatalf("symlink: %v", err)
+	}
+	m.SetTags(path, func(tags *Tags) error {
+		tags.RawLength = length
+		tags.RawBitrate = 0
+		return nil
+	})
+}
+
 func (m *MockFS) LogItems() {
 	m.t.Logf("\nitems")
 	var items int
@@ -337,6 +353,9 @@ type Tags struct {
 	RawAlbum       string
 	RawAlbumArtist string
 	RawGenre       string
+
+	RawBitrate int
+	RawLength  int
 }
 
 func (m *Tags) Title() string         { return m.RawTitle }
@@ -348,9 +367,10 @@ func (m *Tags) AlbumBrainzID() string { return "" }
 func (m *Tags) Genre() string         { return m.RawGenre }
 func (m *Tags) TrackNumber() int      { return 1 }
 func (m *Tags) DiscNumber() int       { return 1 }
-func (m *Tags) Length() int           { return 100 }
-func (m *Tags) Bitrate() int          { return 100 }
 func (m *Tags) Year() int             { return 2021 }
+
+func (m *Tags) Length() int  { return firstInt(100, m.RawLength) }
+func (m *Tags) Bitrate() int { return firstInt(100, m.RawBitrate) }
 
 func (m *Tags) SomeAlbum() string       { return first("Unknown Album", m.Album()) }
 func (m *Tags) SomeArtist() string      { return first("Unknown Artist", m.Artist()) }
@@ -363,6 +383,15 @@ func first(or string, strs ...string) string {
 	for _, str := range strs {
 		if str != "" {
 			return str
+		}
+	}
+	return or
+}
+
+func firstInt(or int, ints ...int) int {
+	for _, int := range ints {
+		if int > 0 {
+			return int
 		}
 	}
 	return or

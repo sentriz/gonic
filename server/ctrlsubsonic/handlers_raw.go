@@ -3,7 +3,6 @@ package ctrlsubsonic
 import (
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -13,12 +12,13 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/jinzhu/gorm"
 
+	"go.senan.xyz/gonic/iout"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/httprange"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"go.senan.xyz/gonic/server/db"
-	"go.senan.xyz/gonic/server/encode"
-	"go.senan.xyz/gonic/server/mime"
+	"go.senan.xyz/gonic/server/transcode"
 )
 
 // "raw" handlers are ones that don't always return a spec response.
@@ -36,7 +36,7 @@ func streamGetTransPref(dbc *db.DB, userID int, client string) (*db.TranscodePre
 		First(&pref).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return &pref, nil
+		return nil, nil
 	}
 	if err != nil {
 		return nil, fmt.Errorf("find transcode preference: %w", err)
@@ -242,7 +242,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	var audioFile db.AudioFile
+	var file db.AudioFile
 	var audioPath string
 	switch id.Type {
 	case specid.Track:
@@ -250,103 +250,78 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		if err != nil {
 			return spec.NewError(70, "track with id `%s` was not found", id)
 		}
-		audioFile = track
+		file = track
 		audioPath = path.Join(track.AbsPath())
 	case specid.PodcastEpisode:
 		podcast, err := streamGetPodcast(c.DB, id.Value)
 		if err != nil {
 			return spec.NewError(70, "podcast with id `%s` was not found", id)
 		}
-		audioFile = podcast
+		file = podcast
 		audioPath = path.Join(c.PodcastsPath, podcast.Path)
 	default:
 		return spec.NewError(70, "media type of `%s` was not found", id.Type)
 	}
 
 	user := r.Context().Value(CtxUser).(*db.User)
-	if track, ok := audioFile.(*db.Track); ok && track.Album != nil {
+	if track, ok := file.(*db.Track); ok && track.Album != nil {
 		defer func() {
 			if err := streamUpdateStats(c.DB, user.ID, track.Album.ID, time.Now()); err != nil {
-				log.Printf("error updating listen stats: %v", err)
+				log.Printf("error updating status: %v", err)
 			}
 		}()
 	}
 
-	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
-	if err != nil {
-		return spec.NewError(0, "failed to get transcode stream preference: %v", err)
-	}
-
-	onInvalidProfile := func() error {
-		log.Printf("serving raw `%s`\n", audioFile.AudioFilename())
-		w.Header().Set("Content-Type", audioFile.MIME())
+	if format, _ := params.Get("format"); format == "raw" {
 		http.ServeFile(w, r, audioPath)
 		return nil
 	}
-	onCacheHit := func(profile encode.Profile, path string) error {
-		log.Printf("serving transcode `%s`: cache [%s/%dk] hit!\n",
-			audioFile.AudioFilename(), profile.Format, profile.Bitrate)
-		cacheMime, _ := mime.FromExtension(profile.Format)
-		w.Header().Set("Content-Type", cacheMime)
 
-		cacheFile, err := os.Stat(path)
-		if err != nil {
-			return fmt.Errorf("failed to stat cache file `%s`: %w", path, err)
-		}
-		contentLength := fmt.Sprintf("%d", cacheFile.Size())
-		w.Header().Set("Content-Length", contentLength)
-		http.ServeFile(w, r, path)
+	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return spec.NewError(0, "couldn't find transcode preference: %v", err)
+	}
+	if pref == nil {
+		http.ServeFile(w, r, audioPath)
 		return nil
 	}
-	onCacheMiss := func(profile encode.Profile) (io.Writer, error) {
-		log.Printf("serving transcode `%s`: cache [%s/%dk] miss!\n",
-			audioFile.AudioFilename(), profile.Format, profile.Bitrate)
-		encodeMime, _ := mime.FromExtension(profile.Format)
-		w.Header().Set("Content-Type", encodeMime)
-		return w, nil
-	}
-	encodeOptions := encode.Options{
-		TrackPath:        audioPath,
-		TrackBitrate:     audioFile.AudioBitrate(),
-		CachePath:        c.CachePath,
-		ProfileName:      pref.Profile,
-		PreferredBitrate: params.GetOrInt("maxBitRate", 0),
-		OnInvalidProfile: onInvalidProfile,
-		OnCacheHit:       onCacheHit,
-		OnCacheMiss:      onCacheMiss,
-	}
-	if err := encode.Encode(encodeOptions); err != nil {
-		log.Printf("serving transcode `%s`: error: %v\n", audioFile.AudioFilename(), err)
-	}
-	return nil
-}
 
-func (c *Controller) ServeDownload(w http.ResponseWriter, r *http.Request) *spec.Response {
-	params := r.Context().Value(CtxParams).(params.Params)
-	id, err := params.GetID("id")
+	profile, ok := transcode.UserProfiles[pref.Profile]
+	if !ok {
+		return spec.NewError(0, "unknown transcode user profile %q", pref.Profile)
+	}
+	if max, _ := params.GetInt("maxBitRate"); max > 0 && int(profile.BitRate()) > max {
+		profile = transcode.WithBitrate(profile, transcode.BitRate(max))
+	}
+
+	log.Printf("trancoding to %q with max bitrate %dk", profile.MIME(), profile.BitRate())
+
+	transcodeReader, err := c.Transcoder.Transcode(r.Context(), profile, audioPath)
 	if err != nil {
-		return spec.NewError(10, "please provide an `id` parameter")
+		return spec.NewError(0, "error transcoding: %v", err)
 	}
-	var filePath string
-	var audioFile db.AudioFile
-	switch id.Type {
-	case specid.Track:
-		track, _ := streamGetTrack(c.DB, id.Value)
-		audioFile = track
-		filePath = track.AbsPath()
-		if err != nil {
-			return spec.NewError(70, "track with id `%s` was not found", id)
-		}
-	case specid.PodcastEpisode:
-		podcast, err := streamGetPodcast(c.DB, id.Value)
-		audioFile = podcast
-		filePath = path.Join(c.PodcastsPath, podcast.Path)
-		if err != nil {
-			return spec.NewError(70, "podcast with id `%s` was not found", id)
-		}
+	defer transcodeReader.Close()
+
+	duration := time.Duration(file.AudioLength()) * time.Second
+	fullLength := transcode.GuessExpectedSize(profile, duration) // TODO: if there's no duration?
+
+	rreq, err := httprange.Parse(r.Header.Get("Range"), fullLength)
+	if err != nil {
+		return spec.NewError(0, "error parsing range: %v", err)
 	}
-	log.Printf("serving raw `%s`\n", audioFile.AudioFilename())
-	w.Header().Set("Content-Type", audioFile.MIME())
-	http.ServeFile(w, r, filePath)
+	if rreq.Partial {
+		w.WriteHeader(http.StatusPartialContent)
+	}
+
+	w.Header().Set("Content-Type", profile.MIME())
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", rreq.Length))
+	w.Header().Set("Content-Range", fmt.Sprintf("%s %d-%d/%d", httprange.UnitBytes, rreq.Start, rreq.End, fullLength))
+
+	if err := iout.CopyRange(w, transcodeReader, int64(rreq.Start), int64(rreq.Length)); err != nil {
+		log.Printf("error writing transcoded data: %v", err)
+	}
+	if f, ok := w.(http.Flusher); ok {
+		f.Flush()
+	}
 	return nil
 }
