@@ -1,7 +1,7 @@
 package db
 
 import (
-	"io/ioutil"
+	"io"
 	"log"
 	"math/rand"
 	"os"
@@ -47,6 +47,6 @@ func TestGetSetting(t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
-	log.SetOutput(ioutil.Discard)
+	log.SetOutput(io.Discard)
 	os.Exit(m.Run())
 }
