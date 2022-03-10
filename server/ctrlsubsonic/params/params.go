@@ -10,10 +10,11 @@
 //     "FirstOr" -> lookup from a list of possible keys, return `or` if not found
 
 // second component (type selection):
-//     ""     -> parse the value as a string
-//     "Int"  -> parse the value as an integer
-//     "ID"   -> parse the value as an artist, track, album etc id
-//     "Bool" -> parse the value as a boolean
+//     ""      -> parse the value as a string
+//     "Int"   -> parse the value as an integer
+//     "Float" -> parse the value as a float
+//     "ID"    -> parse the value as an artist, track, album etc id
+//     "Bool"  -> parse the value as a boolean
 
 // last component (list parsing with stacked keys, eg. `?a=1&a=2&a=3`):
 //     ""     -> return the first value, eg. `1`
@@ -40,10 +41,11 @@ var (
 
 // some thin wrappers
 // may be needed when cleaning up parse() below
-func parseStr(in string) (string, error)   { return in, nil }
-func parseInt(in string) (int, error)      { return strconv.Atoi(in) }
-func parseID(in string) (specid.ID, error) { return specid.New(in) }
-func parseBool(in string) (bool, error)    { return strconv.ParseBool(in) }
+func parseStr(in string) (string, error)    { return in, nil }
+func parseInt(in string) (int, error)       { return strconv.Atoi(in) }
+func parseFloat(in string) (float64, error) { return strconv.ParseFloat(in, 64) }
+func parseID(in string) (specid.ID, error)  { return specid.New(in) }
+func parseBool(in string) (bool, error)     { return strconv.ParseBool(in) }
 
 func parseTime(in string) (time.Time, error) {
 	ms, err := strconv.Atoi(in)
@@ -66,6 +68,8 @@ func parse(values []string, i interface{}) error {
 		*v, err = parseStr(values[0])
 	case *int:
 		*v, err = parseInt(values[0])
+	case *float64:
+		*v, err = parseFloat(values[0])
 	case *specid.ID:
 		*v, err = parseID(values[0])
 	case *bool:
@@ -85,6 +89,14 @@ func parse(values []string, i interface{}) error {
 	case *[]int:
 		for _, value := range values {
 			parsed, err := parseInt(value)
+			if err != nil {
+				return err
+			}
+			*v = append(*v, parsed)
+		}
+	case *[]float64:
+		for _, value := range values {
+			parsed, err := parseFloat(value)
 			if err != nil {
 				return err
 			}
@@ -251,6 +263,62 @@ func (p Params) GetOrIntList(key string, or []int) []int {
 
 func (p Params) GetFirstOrIntList(or []int, keys ...string) []int {
 	var ret []int
+	if err := parse(p.getFirst(keys), &ret); err == nil {
+		return ret
+	}
+	return or
+}
+
+// float {get, get first, get or, get first or}
+
+func (p Params) GetFloat(key string) (float64, error) {
+	var ret float64
+	return ret, parse(p.get(key), &ret)
+}
+
+func (p Params) GetFirstFloat(keys ...string) (float64, error) {
+	var ret float64
+	return ret, parse(p.getFirst(keys), &ret)
+}
+
+func (p Params) GetOrFloat(key string, or float64) float64 {
+	var ret float64
+	if err := parse(p.get(key), &ret); err == nil {
+		return ret
+	}
+	return or
+}
+
+func (p Params) GetFirstOrFloat(or float64, keys ...string) float64 {
+	var ret float64
+	if err := parse(p.getFirst(keys), &ret); err == nil {
+		return ret
+	}
+	return or
+}
+
+// []float {get, get first, get or, get first or}
+
+func (p Params) GetFloatList(key string) ([]float64, error) {
+	var ret []float64
+	return ret, parse(p.get(key), &ret)
+}
+
+func (p Params) GetFirstFloatList(keys ...string) ([]float64, error) {
+	var ret []float64
+	return ret, parse(p.getFirst(keys), &ret)
+}
+
+func (p Params) GetOrFloatList(key string, or []float64) []float64 {
+	var ret []float64
+	if err := parse(p.get(key), &ret); err == nil {
+		return ret
+	}
+	return or
+}
+
+func (p Params) GetFirstOrFloatList(or []float64, keys ...string) []float64 {
+	var ret []float64
 	if err := parse(p.getFirst(keys), &ret); err == nil {
 		return ret
 	}
