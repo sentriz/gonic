@@ -30,8 +30,8 @@ const (
 func main() {
 	set := flag.NewFlagSet(gonic.Name, flag.ExitOnError)
 	confListenAddr := set.String("listen-addr", "0.0.0.0:4747", "listen address (optional)")
-	confTlsCert := set.String("tls-cert", "", "path to TLS certificate (optional)")
-	confTlsKey := set.String("tls-key", "", "path to TLS private key (optional)")
+	confTLSCert := set.String("tls-cert", "", "path to TLS certificate (optional)")
+	confTLSKey := set.String("tls-key", "", "path to TLS private key (optional)")
 	confPodcastPath := set.String("podcast-path", "", "path to podcasts")
 	confCachePath := set.String("cache-path", "", "path to cache")
 	confDBPath := set.String("db-path", "gonic.db", "path to database (optional)")
@@ -127,7 +127,7 @@ func main() {
 	}
 
 	var g run.Group
-	g.Add(server.StartHTTP(*confListenAddr, *confTlsCert, *confTlsKey))
+	g.Add(server.StartHTTP(*confListenAddr, *confTLSCert, *confTLSKey))
 	g.Add(server.StartSessionClean(cleanTimeDuration))
 	g.Add(server.StartPodcastRefresher(time.Hour))
 	if *confScanInterval > 0 {

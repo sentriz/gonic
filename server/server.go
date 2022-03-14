@@ -276,9 +276,8 @@ func (s *Server) StartHTTP(listenAddr string, tlsCert string, tlsKey string) (Fu
 			log.Print("starting job 'http'\n")
 			if tlsCert != "" && tlsKey != "" {
 				return list.ListenAndServeTLS(tlsCert, tlsKey)
-			} else {
-				return list.ListenAndServe()
 			}
+			return list.ListenAndServe()
 		}, func(_ error) {
 			// stop job
 			_ = list.Close()
