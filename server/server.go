@@ -264,7 +264,7 @@ type (
 	FuncInterrupt func(error)
 )
 
-func (s *Server) StartHTTP(listenAddr string) (FuncExecute, FuncInterrupt) {
+func (s *Server) StartHTTP(listenAddr string, tlsCert string, tlsKey string) (FuncExecute, FuncInterrupt) {
 	list := &http.Server{
 		Addr:         listenAddr,
 		Handler:      s.router,
@@ -274,6 +274,9 @@ func (s *Server) StartHTTP(listenAddr string) (FuncExecute, FuncInterrupt) {
 	}
 	return func() error {
 			log.Print("starting job 'http'\n")
+			if tlsCert != "" && tlsKey != "" {
+				return list.ListenAndServeTLS(tlsCert, tlsKey)
+			}
 			return list.ListenAndServe()
 		}, func(_ error) {
 			// stop job

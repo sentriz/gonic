@@ -149,17 +149,19 @@ view the admin UI at http://localhost:4747
 
 ## configuration options
 
-|env var|command line arg|description|
-|---|---|---|
-|`GONIC_MUSIC_PATH`|`-music-path`|path to your music collection (see also multi-folder support below)|
-|`GONIC_PODCAST_PATH`|`-podcast-path`|path to a podcasts directory|
-|`GONIC_CACHE_PATH`|`-cache-path`|path to store audio transcodes, covers, etc|
-|`GONIC_DB_PATH`|`-db-path`|**optional** path to database file|
-|`GONIC_LISTEN_ADDR`|`-listen-addr`|**optional** host and port to listen on (eg. `0.0.0.0:4747`, `127.0.0.1:4747`) (*default* `0.0.0.0:4747`)|
-|`GONIC_PROXY_PREFIX`|`-proxy-prefix`|**optional** url path prefix to use if behind reverse proxy. eg `/gonic` (see example configs below)|
-|`GONIC_SCAN_INTERVAL`|`-scan-interval`|**optional** interval (in minutes) to check for new music (automatic scanning disabled if omitted)|
-|`GONIC_JUKEBOX_ENABLED`|`-jukebox-enabled`|**optional** whether the subsonic [jukebox api](https://airsonic.github.io/docs/jukebox/) should be enabled|
-|`GONIC_GENRE_SPLIT`|`-genre-split`|**optional** a string or character to split genre tags on for multi-genre support (eg. `;`)|
+| env var                 | command line arg   | description                                                                                                 |
+| ----------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------- |
+| `GONIC_MUSIC_PATH`      | `-music-path`      | path to your music collection (see also multi-folder support below)                                         |
+| `GONIC_PODCAST_PATH`    | `-podcast-path`    | path to a podcasts directory                                                                                |
+| `GONIC_CACHE_PATH`      | `-cache-path`      | path to store audio transcodes, covers, etc                                                                 |
+| `GONIC_DB_PATH`         | `-db-path`         | **optional** path to database file                                                                          |
+| `GONIC_LISTEN_ADDR`     | `-listen-addr`     | **optional** host and port to listen on (eg. `0.0.0.0:4747`, `127.0.0.1:4747`) (_default_ `0.0.0.0:4747`)   |
+| `GONIC_TLS_CERT`        | `-tls-cert`        | **optional** path to a TLS cert (enables HTTPS listening)                                                   |
+| `GONIC_TLS_KEY`         | `-tls-key`         | **optional** path to a TLS key (enables HTTPS listening)                                                    |
+| `GONIC_PROXY_PREFIX`    | `-proxy-prefix`    | **optional** url path prefix to use if behind reverse proxy. eg `/gonic` (see example configs below)        |
+| `GONIC_SCAN_INTERVAL`   | `-scan-interval`   | **optional** interval (in minutes) to check for new music (automatic scanning disabled if omitted)          |
+| `GONIC_JUKEBOX_ENABLED` | `-jukebox-enabled` | **optional** whether the subsonic [jukebox api](https://airsonic.github.io/docs/jukebox/) should be enabled |
+| `GONIC_GENRE_SPLIT`     | `-genre-split`     | **optional** a string or character to split genre tags on for multi-genre support (eg. `;`)                 |
 
 ## screenshots
 
