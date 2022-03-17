@@ -51,7 +51,7 @@ func streamGetPodcast(dbc *db.DB, podcastID int) (*db.PodcastEpisode, error) {
 	return &podcast, err
 }
 
-func streamUpdateStats(dbc *db.DB, userID, albumID int) {
+func streamUpdateStats(dbc *db.DB, userID, albumID int, playTime time.Time) {
 	play := db.Play{
 		AlbumID: albumID,
 		UserID:  userID,
@@ -59,7 +59,9 @@ func streamUpdateStats(dbc *db.DB, userID, albumID int) {
 	dbc.
 		Where(play).
 		First(&play)
-	play.Time = time.Now() // for getAlbumList?type=recent
+	if (playTime.After(play.Time)) {
+		play.Time = playTime // for getAlbumList?type=recent
+	}
 	play.Count++           // for getAlbumList?type=frequent
 	dbc.Save(&play)
 }
@@ -242,7 +244,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 
 	user := r.Context().Value(CtxUser).(*db.User)
 	if track, ok := audioFile.(*db.Track); ok && track.Album != nil {
-		defer streamUpdateStats(c.DB, user.ID, track.Album.ID)
+		defer streamUpdateStats(c.DB, user.ID, track.Album.ID, time.Now())
 	}
 
 	pref := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))

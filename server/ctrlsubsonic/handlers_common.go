@@ -54,6 +54,8 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 
 	optStamp := params.GetOrTime("time", time.Now())
 	optSubmission := params.GetOrBool("submission", true)
+	
+	streamUpdateStats(c.DB, user.ID, track.Album.ID, optStamp);
 
 	var scrobbleErrs multierr.Err
 	for _, scrobbler := range c.Scrobblers {
