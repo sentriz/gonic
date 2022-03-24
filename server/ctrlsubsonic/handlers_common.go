@@ -65,10 +65,8 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 			scrobbleErrs.Add(err)
 		}
 	}
-
 	if scrobbleErrs.Len() > 0 {
-		log.Printf("error when submitting: %v", scrobbleErrs)
-		return spec.NewError(0, "error when submitting: %v", scrobbleErrs)
+		return spec.NewError(0, "error when submitting: %s", scrobbleErrs.Error())
 	}
 
 	return spec.NewResponse()
