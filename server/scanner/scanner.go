@@ -66,6 +66,7 @@ func (s *Scanner) ScanAndClean(opts ScanOptions) (*Context, error) {
 		errs:       &multierr.Err{},
 		seenTracks: map[int]struct{}{},
 		seenAlbums: map[int]struct{}{},
+		isFull:     opts.IsFull,
 	}
 
 	log.Println("starting scan")
@@ -201,7 +202,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 		return fmt.Errorf("query track: %w", err)
 	}
 
-	if !c.full && track.ID != 0 && stat.ModTime().Before(track.UpdatedAt) {
+	if !c.isFull && track.ID != 0 && stat.ModTime().Before(track.UpdatedAt) {
 		c.seenTracks[track.ID] = struct{}{}
 		return nil
 	}
@@ -495,8 +496,8 @@ func durSince(t time.Time) time.Duration {
 }
 
 type Context struct {
-	errs *multierr.Err
-	full bool
+	errs   *multierr.Err
+	isFull bool
 
 	seenTracks    map[int]struct{}
 	seenAlbums    map[int]struct{}

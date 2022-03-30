@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/disintegration/imaging"
+	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
@@ -26,44 +27,64 @@ import (
 //   b) return a non-nil spec.Response
 //  _but not both_
 
-func streamGetTransPref(dbc *db.DB, userID int, client string) db.TranscodePreference {
-	pref := db.TranscodePreference{}
-	dbc.
+func streamGetTransPref(dbc *db.DB, userID int, client string) (*db.TranscodePreference, error) {
+	var pref db.TranscodePreference
+	err := dbc.
 		Where("user_id=?", userID).
 		Where("client COLLATE NOCASE IN (?)", []string{"*", client}).
 		Order("client DESC"). // ensure "*" is last if it's there
-		First(&pref)
-	return pref
+		First(&pref).
+		Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return &pref, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("find transcode preference: %w", err)
+	}
+	return &pref, nil
 }
 
 func streamGetTrack(dbc *db.DB, trackID int) (*db.Track, error) {
-	track := db.Track{}
+	var track db.Track
 	err := dbc.
 		Preload("Album").
 		First(&track, trackID).
 		Error
-	return &track, err
+	if err != nil {
+		return nil, fmt.Errorf("find track: %w", err)
+	}
+	return &track, nil
 }
 
 func streamGetPodcast(dbc *db.DB, podcastID int) (*db.PodcastEpisode, error) {
-	podcast := db.PodcastEpisode{}
-	err := dbc.First(&podcast, podcastID).Error
-	return &podcast, err
+	var podcast db.PodcastEpisode
+	if err := dbc.First(&podcast, podcastID).Error; err != nil {
+		return nil, fmt.Errorf("find podcast: %w", err)
+	}
+	return &podcast, nil
 }
 
-func streamUpdateStats(dbc *db.DB, userID, albumID int, playTime time.Time) {
+func streamUpdateStats(dbc *db.DB, userID, albumID int, playTime time.Time) error {
 	play := db.Play{
 		AlbumID: albumID,
 		UserID:  userID,
 	}
-	dbc.
+	err := dbc.
 		Where(play).
-		First(&play)
-	if (playTime.After(play.Time)) {
+		First(&play).
+		Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return fmt.Errorf("find stat: %w", err)
+	}
+
+	play.Count++ // for getAlbumList?type=frequent
+	if playTime.After(play.Time) {
 		play.Time = playTime // for getAlbumList?type=recent
 	}
-	play.Count++           // for getAlbumList?type=frequent
-	dbc.Save(&play)
+	if err := dbc.Save(&play).Error; err != nil {
+		return fmt.Errorf("save stat: %w", err)
+	}
+	return nil
 }
 
 const (
@@ -244,10 +265,18 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 
 	user := r.Context().Value(CtxUser).(*db.User)
 	if track, ok := audioFile.(*db.Track); ok && track.Album != nil {
-		defer streamUpdateStats(c.DB, user.ID, track.Album.ID, time.Now())
+		defer func() {
+			if err := streamUpdateStats(c.DB, user.ID, track.Album.ID, time.Now()); err != nil {
+				log.Printf("error updating listen stats: %v", err)
+			}
+		}()
 	}
 
-	pref := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
+	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
+	if err != nil {
+		return spec.NewError(0, "failed to get transcode stream preference: %v", err)
+	}
+
 	onInvalidProfile := func() error {
 		log.Printf("serving raw `%s`\n", audioFile.AudioFilename())
 		w.Header().Set("Content-Type", audioFile.MIME())

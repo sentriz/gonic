@@ -54,6 +54,13 @@ func (ew *errWriter) write(buf []byte) {
 }
 
 func writeResp(w http.ResponseWriter, r *http.Request, resp *spec.Response) error {
+	if resp == nil {
+		return nil
+	}
+	if resp.Error != nil {
+		log.Printf("subsonic error code %d: %s", resp.Error.Code, resp.Error.Message)
+	}
+
 	res := metaResponse{Response: resp}
 	params := r.Context().Value(CtxParams).(params.Params)
 	ew := &errWriter{w: w}
@@ -95,25 +102,16 @@ type (
 
 func (c *Controller) H(h handlerSubsonic) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		response := h(r)
-		if response == nil {
-			log.Println("error: non raw subsonic handler returned a nil response")
-			return
-		}
-		if err := writeResp(w, r, response); err != nil {
-			log.Printf("error writing subsonic response (normal handler): %v\n", err)
+		if err := writeResp(w, r, h(r)); err != nil {
+			log.Printf("error writing subsonic response: %v\n", err)
 		}
 	})
 }
 
 func (c *Controller) HR(h handlerSubsonicRaw) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		response := h(w, r)
-		if response == nil {
-			return
-		}
-		if err := writeResp(w, r, response); err != nil {
-			log.Printf("error writing subsonic response (raw handler): %v\n", err)
+		if err := writeResp(w, r, h(w, r)); err != nil {
+			log.Printf("error writing raw subsonic response: %v\n", err)
 		}
 	})
 }
