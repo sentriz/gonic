@@ -57,16 +57,18 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 	
 	streamUpdateStats(c.DB, user.ID, track.Album.ID, optStamp);
 
+	if err := streamUpdateStats(c.DB, user.ID, track.Album.ID, optStamp); err != nil {
+		return spec.NewError(0, "error updating stats: %v", err)
+	}
+
 	var scrobbleErrs multierr.Err
 	for _, scrobbler := range c.Scrobblers {
 		if err := scrobbler.Scrobble(user, track, optStamp, optSubmission); err != nil {
 			scrobbleErrs.Add(err)
 		}
 	}
-
 	if scrobbleErrs.Len() > 0 {
-		log.Printf("error when submitting: %v", scrobbleErrs)
-		return spec.NewError(0, "error when submitting: %v", scrobbleErrs)
+		return spec.NewError(0, "error when submitting: %s", scrobbleErrs.Error())
 	}
 
 	return spec.NewResponse()
