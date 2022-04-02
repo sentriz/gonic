@@ -117,8 +117,8 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 	case "byYear":
 		q = q.Where(
 			"tag_year BETWEEN ? AND ?",
-			params.GetOrInt("toYear", 2200),
-			params.GetOrInt("fromYear", 1800))
+			params.GetOrInt("fromYear", 1800),
+			params.GetOrInt("toYear", 2200))
 		q = q.Order("tag_year")
 	case "byGenre":
 		genre, _ := params.Get("genre")
