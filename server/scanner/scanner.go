@@ -219,7 +219,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 	}
 
 	// metadata for the album table comes only from the the first track's tags
-	if i == 0 {
+	if i == 0 || album.TagArtist == nil {
 		albumArtist, err := populateAlbumArtist(tx, album, parent, trags.SomeAlbumArtist())
 		if err != nil {
 			return fmt.Errorf("populate album artist: %w", err)
