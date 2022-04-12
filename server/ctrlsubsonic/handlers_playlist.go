@@ -10,7 +10,7 @@ import (
 
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
-	"go.senan.xyz/gonic/server/db"
+	"go.senan.xyz/gonic/db"
 )
 
 func playlistRender(c *Controller, playlist *db.Playlist) *spec.Playlist {

@@ -18,9 +18,9 @@ import (
 
 	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
-	"go.senan.xyz/gonic/server/db"
-	"go.senan.xyz/gonic/server/mockfs"
-	"go.senan.xyz/gonic/server/transcode"
+	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/mockfs"
+	"go.senan.xyz/gonic/transcode"
 )
 
 var testCamelExpr = regexp.MustCompile("([a-z0-9])([A-Z])")

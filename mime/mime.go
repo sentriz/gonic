@@ -1,8 +1,5 @@
 package mime
 
-// this package is at such a high level in the hierarchy because
-// it's used by both `server/db` and `server/scanner`
-
 func FromExtension(ext string) (string, bool) {
 	types := map[string]string{
 		"mp3":  "audio/mpeg",

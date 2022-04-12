@@ -1,6 +1,6 @@
 package spec
 
-import "go.senan.xyz/gonic/server/db"
+import "go.senan.xyz/gonic/db"
 
 func NewPodcastChannel(p *db.Podcast) *PodcastChannel {
 	ret := &PodcastChannel{

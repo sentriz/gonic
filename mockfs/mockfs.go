@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/mattn/go-sqlite3"
-	"go.senan.xyz/gonic/server/db"
-	"go.senan.xyz/gonic/server/scanner"
-	"go.senan.xyz/gonic/server/scanner/tags"
+	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/scanner"
+	"go.senan.xyz/gonic/scanner/tags"
 )
 
 var ErrPathNotFound = errors.New("path not found")

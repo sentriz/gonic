@@ -18,9 +18,9 @@ import (
 	"github.com/rainycape/unidecode"
 
 	"go.senan.xyz/gonic/multierr"
-	"go.senan.xyz/gonic/server/db"
-	"go.senan.xyz/gonic/server/mime"
-	"go.senan.xyz/gonic/server/scanner/tags"
+	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/mime"
+	"go.senan.xyz/gonic/scanner/tags"
 )
 
 var (

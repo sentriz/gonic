@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/matryer/is"
-	"go.senan.xyz/gonic/server/db"
-	"go.senan.xyz/gonic/server/transcode"
+	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/transcode"
 )
 
 func TestServeStreamRaw(t *testing.T) {
