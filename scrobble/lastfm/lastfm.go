@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"time"
 
-	"go.senan.xyz/gonic/server/db"
-	"go.senan.xyz/gonic/server/scrobble"
+	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/scrobble"
 )
 
 const (

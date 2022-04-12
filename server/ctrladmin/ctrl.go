@@ -23,8 +23,8 @@ import (
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/server/assets"
 	"go.senan.xyz/gonic/server/ctrlbase"
-	"go.senan.xyz/gonic/server/db"
-	"go.senan.xyz/gonic/server/podcasts"
+	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/podcasts"
 )
 
 type CtxKey int

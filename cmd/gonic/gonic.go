@@ -18,7 +18,7 @@ import (
 
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/server"
-	"go.senan.xyz/gonic/server/db"
+	"go.senan.xyz/gonic/db"
 )
 
 const (

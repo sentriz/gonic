@@ -9,11 +9,11 @@ import (
 
 	"github.com/mmcdole/gofeed"
 
-	"go.senan.xyz/gonic/server/db"
-	"go.senan.xyz/gonic/server/scanner"
-	"go.senan.xyz/gonic/server/scrobble/lastfm"
-	"go.senan.xyz/gonic/server/scrobble/listenbrainz"
-	"go.senan.xyz/gonic/server/transcode"
+	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/scanner"
+	"go.senan.xyz/gonic/scrobble/lastfm"
+	"go.senan.xyz/gonic/scrobble/listenbrainz"
+	"go.senan.xyz/gonic/transcode"
 )
 
 func doScan(scanner *scanner.Scanner, opts scanner.ScanOptions) {

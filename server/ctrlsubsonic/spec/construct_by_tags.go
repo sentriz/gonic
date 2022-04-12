@@ -4,7 +4,7 @@ import (
 	"path"
 	"strings"
 
-	"go.senan.xyz/gonic/server/db"
+	"go.senan.xyz/gonic/db"
 )
 
 func NewAlbumByTags(a *db.Album, artist *db.Artist) *Album {

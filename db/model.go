@@ -15,7 +15,7 @@ import (
 	// TODO: remove this dep
 
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
-	"go.senan.xyz/gonic/server/mime"
+	"go.senan.xyz/gonic/mime"
 )
 
 func splitInt(in, sep string) []int {

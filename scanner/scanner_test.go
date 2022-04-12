@@ -14,9 +14,9 @@ import (
 	"github.com/matryer/is"
 
 	"go.senan.xyz/gonic/multierr"
-	"go.senan.xyz/gonic/server/db"
-	"go.senan.xyz/gonic/server/mockfs"
-	"go.senan.xyz/gonic/server/scanner"
+	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/mockfs"
+	"go.senan.xyz/gonic/scanner"
 )
 
 func TestMain(m *testing.M) {

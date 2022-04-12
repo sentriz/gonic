@@ -9,7 +9,7 @@ import (
 
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
-	"go.senan.xyz/gonic/server/db"
+	"go.senan.xyz/gonic/db"
 )
 
 // the subsonic spec mentions "artist" a lot when talking about the

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/matryer/is"
-	"go.senan.xyz/gonic/server/transcode"
+	"go.senan.xyz/gonic/transcode"
 )
 
 // FuzzGuessExpectedSize makes sure all of our profile's estimated transcode

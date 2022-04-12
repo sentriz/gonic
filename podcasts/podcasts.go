@@ -19,9 +19,9 @@ import (
 	"github.com/mmcdole/gofeed"
 
 	"go.senan.xyz/gonic/multierr"
-	"go.senan.xyz/gonic/server/db"
-	gmime "go.senan.xyz/gonic/server/mime"
-	"go.senan.xyz/gonic/server/scanner/tags"
+	"go.senan.xyz/gonic/db"
+	gmime "go.senan.xyz/gonic/mime"
+	"go.senan.xyz/gonic/scanner/tags"
 )
 
 const downloadAllWaitInterval = 3 * time.Second
