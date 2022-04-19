@@ -15,14 +15,15 @@ import (
 	"go.senan.xyz/gonic/server/ctrladmin"
 	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/ctrlsubsonic"
-	"go.senan.xyz/gonic/server/db"
-	"go.senan.xyz/gonic/server/jukebox"
-	"go.senan.xyz/gonic/server/podcasts"
-	"go.senan.xyz/gonic/server/scanner"
-	"go.senan.xyz/gonic/server/scanner/tags"
-	"go.senan.xyz/gonic/server/scrobble"
-	"go.senan.xyz/gonic/server/scrobble/lastfm"
-	"go.senan.xyz/gonic/server/scrobble/listenbrainz"
+	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/jukebox"
+	"go.senan.xyz/gonic/podcasts"
+	"go.senan.xyz/gonic/scanner"
+	"go.senan.xyz/gonic/scanner/tags"
+	"go.senan.xyz/gonic/scrobble"
+	"go.senan.xyz/gonic/scrobble/lastfm"
+	"go.senan.xyz/gonic/scrobble/listenbrainz"
+	"go.senan.xyz/gonic/transcode"
 )
 
 type Options struct {
@@ -84,6 +85,11 @@ func New(opts Options) (*Server, error) {
 
 	podcast := podcasts.New(opts.DB, opts.PodcastPath, tagger)
 
+	cacheTranscoder := transcode.NewCachingTranscoder(
+		transcode.NewFFmpegTranscoder(),
+		opts.CachePath,
+	)
+
 	ctrlAdmin, err := ctrladmin.New(base, sessDB, podcast)
 	if err != nil {
 		return nil, fmt.Errorf("create admin controller: %w", err)
@@ -97,6 +103,7 @@ func New(opts Options) (*Server, error) {
 		Jukebox:        &jukebox.Jukebox{},
 		Scrobblers:     []scrobble.Scrobbler{&lastfm.Scrobbler{DB: opts.DB}, &listenbrainz.Scrobbler{}},
 		Podcasts:       podcast,
+		Transcoder:     cacheTranscoder,
 	}
 
 	setupMisc(r, base)
@@ -222,9 +229,9 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/getSimilarSongs2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetSimilarSongsTwo))
 
 	// raw
-	r.Handle("/download{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeDownload))
 	r.Handle("/getCoverArt{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeGetCoverArt))
 	r.Handle("/stream{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeStream))
+	r.Handle("/download{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeStream))
 
 	// browse by tag
 	r.Handle("/getAlbum{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetAlbum))

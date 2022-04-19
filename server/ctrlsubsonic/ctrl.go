@@ -12,9 +12,10 @@ import (
 	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
-	"go.senan.xyz/gonic/server/jukebox"
-	"go.senan.xyz/gonic/server/podcasts"
-	"go.senan.xyz/gonic/server/scrobble"
+	"go.senan.xyz/gonic/jukebox"
+	"go.senan.xyz/gonic/podcasts"
+	"go.senan.xyz/gonic/scrobble"
+	"go.senan.xyz/gonic/transcode"
 )
 
 type CtxKey int
@@ -34,6 +35,7 @@ type Controller struct {
 	Jukebox        *jukebox.Jukebox
 	Scrobblers     []scrobble.Scrobbler
 	Podcasts       *podcasts.Podcasts
+	Transcoder     transcode.Transcoder
 }
 
 type metaResponse struct {

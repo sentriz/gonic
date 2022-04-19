@@ -14,8 +14,8 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
-	"go.senan.xyz/gonic/server/db"
-	"go.senan.xyz/gonic/server/scanner"
+	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/scanner"
 )
 
 func lowerUDecOrHash(in string) string {
