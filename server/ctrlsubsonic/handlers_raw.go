@@ -12,12 +12,10 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/jinzhu/gorm"
 
-	"go.senan.xyz/gonic/iout"
-	"go.senan.xyz/gonic/server/ctrlsubsonic/httprange"
+	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
-	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/transcode"
 )
 
@@ -296,30 +294,11 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 
 	log.Printf("trancoding to %q with max bitrate %dk", profile.MIME(), profile.BitRate())
 
-	transcodeReader, err := c.Transcoder.Transcode(r.Context(), profile, audioPath)
-	if err != nil {
+	w.Header().Set("Content-Type", profile.MIME())
+	if err := c.Transcoder.Transcode(r.Context(), profile, audioPath, w); err != nil {
 		return spec.NewError(0, "error transcoding: %v", err)
 	}
-	defer transcodeReader.Close()
 
-	length := transcode.GuessExpectedSize(profile, time.Duration(file.AudioLength())*time.Second) // TODO: if there's no duration?
-	rreq, err := httprange.Parse(r.Header.Get("Range"), length)
-	if err != nil {
-		return spec.NewError(0, "error parsing range: %v", err)
-	}
-
-	w.Header().Set("Content-Type", profile.MIME())
-	w.Header().Set("Content-Length", fmt.Sprintf("%d", rreq.Length))
-	w.Header().Set("Accept-Ranges", string(httprange.UnitBytes))
-
-	if rreq.Partial {
-		w.WriteHeader(http.StatusPartialContent)
-		w.Header().Set("Content-Range", fmt.Sprintf("%s %d-%d/%d", httprange.UnitBytes, rreq.Start, rreq.End, length))
-	}
-
-	if err := iout.CopyRange(w, transcodeReader, int64(rreq.Start), int64(rreq.Length)); err != nil {
-		log.Printf("error writing transcoded data: %v", err)
-	}
 	if f, ok := w.(http.Flusher); ok {
 		f.Flush()
 	}
