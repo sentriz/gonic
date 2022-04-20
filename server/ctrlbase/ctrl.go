@@ -56,8 +56,14 @@ func (c *Controller) Path(rel string) string {
 }
 
 func (c *Controller) BaseURL(r *http.Request) string {
+	var protocol string
+	if r.TLS == nil {
+		protocol = "http"
+	} else {
+		protocol = "https"
+	}
 	scheme := firstExisting(
-		"http", // fallback
+		protocol, // fallback
 		r.Header.Get("X-Forwarded-Proto"),
 		r.Header.Get("X-Forwarded-Scheme"),
 		r.URL.Scheme,
