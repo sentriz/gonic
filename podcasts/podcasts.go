@@ -75,6 +75,19 @@ func (p *Podcasts) GetPodcastEpisodes(podcastID int) ([]*db.PodcastEpisode, erro
 	return episodes, nil
 }
 
+func (p *Podcasts) GetNewestPodcastEpisodes(count int) ([]*db.PodcastEpisode, error) {
+	episodes := []*db.PodcastEpisode{}
+	err := p.db.
+		Order("publish_date DESC").
+		Limit(count).
+		Find(&episodes).
+		Error
+	if err != nil {
+		return nil, fmt.Errorf("find newest podcast episodes: %w", err)
+	}
+	return episodes, nil
+}
+
 func (p *Podcasts) AddNewPodcast(rssURL string, feed *gofeed.Feed,
 	userID int) (*db.Podcast, error) {
 	podcast := db.Podcast{

@@ -371,6 +371,10 @@ func (pe *PodcastEpisode) SID() *specid.ID {
 	return &specid.ID{Type: specid.PodcastEpisode, Value: pe.ID}
 }
 
+func (pe *PodcastEpisode) PID() *specid.ID {
+	return &specid.ID{Type: specid.PodcastEpisode, Value: pe.PodcastID}
+}
+
 func (pe *PodcastEpisode) AudioFilename() string {
 	return pe.Filename
 }

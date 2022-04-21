@@ -44,6 +44,7 @@ type Response struct {
 	JukeboxStatus     *JukeboxStatus     `xml:"jukeboxStatus"     json:"jukeboxStatus,omitempty"`
 	JukeboxPlaylist   *JukeboxPlaylist   `xml:"jukeboxPlaylist"   json:"jukeboxPlaylist,omitempty"`
 	Podcasts          *Podcasts          `xml:"podcasts"          json:"podcasts,omitempty"`
+	NewestPodcasts    *NewestPodcasts    `xml:"newestPodcasts"    json:"newestPodcasts,omitempty"`
 	Bookmarks         *Bookmarks         `xml:"bookmarks"         json:"bookmarks,omitempty"`
 	Starred           *Starred           `xml:"starred"           json:"starred,omitempty"`
 	StarredTwo        *StarredTwo        `xml:"starred2"          json:"starred2,omitempty"`
@@ -292,6 +293,10 @@ type JukeboxPlaylist struct {
 
 type Podcasts struct {
 	List []*PodcastChannel `xml:"channel" json:"channel"`
+}
+
+type NewestPodcasts struct {
+	List []*PodcastEpisode `xml:"episode" json:"episode"`
 }
 
 type PodcastChannel struct {
