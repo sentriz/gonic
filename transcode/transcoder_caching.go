@@ -7,8 +7,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-
-	"go.senan.xyz/gonic/iout"
 )
 
 const perm = 0644
@@ -24,14 +22,14 @@ func NewCachingTranscoder(t Transcoder, cachePath string) *CachingTranscoder {
 	return &CachingTranscoder{transcoder: t, cachePath: cachePath}
 }
 
-func (t *CachingTranscoder) Transcode(ctx context.Context, profile Profile, in string) (io.ReadCloser, error) {
+func (t *CachingTranscoder) Transcode(ctx context.Context, profile Profile, in string, out io.Writer) error {
 	if err := os.MkdirAll(t.cachePath, perm^0111); err != nil {
-		return nil, fmt.Errorf("make cache path: %w", err)
+		return fmt.Errorf("make cache path: %w", err)
 	}
 
 	name, args, err := parseProfile(profile, in)
 	if err != nil {
-		return nil, fmt.Errorf("split command: %w", err)
+		return fmt.Errorf("split command: %w", err)
 	}
 
 	key := cacheKey(name, args)
@@ -39,18 +37,21 @@ func (t *CachingTranscoder) Transcode(ctx context.Context, profile Profile, in s
 
 	cf, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
-		return nil, fmt.Errorf("open cache file: %w", err)
+		return fmt.Errorf("open cache file: %w", err)
 	}
+	defer cf.Close()
+
 	if i, err := cf.Stat(); err == nil && i.Size() > 0 {
-		return cf, nil
+		_, _ = io.Copy(out, cf)
+		return nil
 	}
 
-	out, err := t.transcoder.Transcode(ctx, profile, in)
-	if err != nil {
-		return nil, fmt.Errorf("internal transcode: %w", err)
+	if err := t.transcoder.Transcode(ctx, profile, in, io.MultiWriter(out, cf)); err != nil {
+		os.Remove(path)
+		return fmt.Errorf("internal transcode: %w", err)
 	}
 
-	return iout.NewTeeCloser(out, cf), nil
+	return nil
 }
 
 func cacheKey(cmd string, args []string) string {

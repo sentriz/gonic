@@ -1,3 +1,4 @@
+//nolint:deadcode
 package ctrlsubsonic
 
 import (
@@ -16,10 +17,10 @@ import (
 
 	jd "github.com/josephburnett/jd/lib"
 
-	"go.senan.xyz/gonic/server/ctrlbase"
-	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/mockfs"
+	"go.senan.xyz/gonic/server/ctrlbase"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/transcode"
 )
 

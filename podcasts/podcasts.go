@@ -18,9 +18,9 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/mmcdole/gofeed"
 
-	"go.senan.xyz/gonic/multierr"
 	"go.senan.xyz/gonic/db"
 	gmime "go.senan.xyz/gonic/mime"
+	"go.senan.xyz/gonic/multierr"
 	"go.senan.xyz/gonic/scanner/tags"
 )
 
@@ -354,8 +354,8 @@ func (p *Podcasts) DownloadEpisode(episodeID int) error {
 	if err != nil {
 		return fmt.Errorf("get podcast by id: %w", err)
 	}
-	if podcastEpisode.Status == db.PodcastEpisodeStatusDownloading {
-		log.Printf("Already downloading podcast episode with id %d", episodeID)
+	if podcastEpisode.Status == db.PodcastEpisodeStatusDownloading || podcastEpisode.Status == db.PodcastEpisodeStatusCompleted {
+		log.Printf("already downloading podcast episode with id %d", episodeID)
 		return nil
 	}
 	if podcastEpisode.Status == db.PodcastEpisodeStatusCompleted {

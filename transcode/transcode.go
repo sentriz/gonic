@@ -15,7 +15,7 @@ import (
 )
 
 type Transcoder interface {
-	Transcode(ctx context.Context, profile Profile, in string) (io.ReadCloser, error)
+	Transcode(ctx context.Context, profile Profile, in string, out io.Writer) error
 }
 
 var UserProfiles = map[string]Profile{
@@ -105,25 +105,4 @@ func parseProfile(profile Profile, in string) (string, []string, error) {
 	}
 
 	return name, args, nil
-}
-
-// GuessExpectedSize guesses how big the transcoded file will be in bytes.
-// Handy if we want to send a Content-Length header to the client before
-// the transcode has finished. This way, clients like DSub can render their
-// scrub bar and duration as the track is streaming.
-//
-// The estimate should overshoot a bit (2s in this case) otherwise some HTTP
-// clients will shit their trousers given some unexpected bytes.
-func GuessExpectedSize(profile Profile, length time.Duration) int {
-	if length == 0 {
-		return 0
-	}
-
-	bytesPerSec := int(profile.BitRate() * 1000 / 8)
-
-	var guess int
-	guess += bytesPerSec * int(length.Seconds()-profile.seek.Seconds())
-	guess += bytesPerSec * 2 // 2s pading
-	guess += 10000           // 10kb byte padding
-	return guess
 }

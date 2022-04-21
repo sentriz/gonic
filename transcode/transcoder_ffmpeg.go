@@ -2,6 +2,7 @@ package transcode
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os/exec"
@@ -17,23 +18,25 @@ func NewFFmpegTranscoder() *FFmpegTranscoder {
 
 var ErrFFmpegExit = fmt.Errorf("ffmpeg exited with non 0 status code")
 
-func (*FFmpegTranscoder) Transcode(ctx context.Context, profile Profile, in string) (io.ReadCloser, error) {
+func (*FFmpegTranscoder) Transcode(ctx context.Context, profile Profile, in string, out io.Writer) error {
 	name, args, err := parseProfile(profile, in)
 	if err != nil {
-		return nil, fmt.Errorf("split command: %w", err)
+		return fmt.Errorf("split command: %w", err)
 	}
-
-	preader, pwriter := io.Pipe()
 
 	cmd := exec.CommandContext(ctx, name, args...)
-	cmd.Stdout = pwriter
+	cmd.Stdout = out
+
 	if err := cmd.Start(); err != nil {
-		return nil, fmt.Errorf("starting cmd: %w", err)
+		return fmt.Errorf("starting cmd: %w", err)
 	}
 
-	go func() {
-		_ = pwriter.CloseWithError(cmd.Wait())
-	}()
-
-	return preader, nil
+	var exitErr *exec.ExitError
+	if err := cmd.Wait(); err != nil && !errors.As(err, &exitErr) {
+		return fmt.Errorf("waiting cmd: %w", err)
+	}
+	if code := cmd.ProcessState.ExitCode(); code > 1 {
+		return fmt.Errorf("%w: %d", ErrFFmpegExit, code)
+	}
+	return nil
 }
