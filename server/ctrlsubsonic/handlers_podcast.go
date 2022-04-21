@@ -29,6 +29,21 @@ func (c *Controller) ServeGetPodcasts(r *http.Request) *spec.Response {
 	return sub
 }
 
+func (c *Controller) ServeGetNewestPodcasts(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	count := params.GetOrInt("count", 10)
+	episodes, err := c.Podcasts.GetNewestPodcastEpisodes(count)
+	if err != nil {
+		return spec.NewError(10, "failed get podcast(s): %s", err)
+	}
+	sub := spec.NewResponse()
+	sub.NewestPodcasts = &spec.NewestPodcasts{}
+	for _, episode := range episodes {
+		sub.NewestPodcasts.List = append(sub.NewestPodcasts.List, spec.NewPodcastEpisode(episode))
+	}
+	return sub
+}
+
 func (c *Controller) ServeDownloadPodcastEpisode(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	id, err := params.GetID("id")

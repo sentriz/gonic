@@ -13,13 +13,13 @@ func NewPodcastChannel(p *db.Podcast) *PodcastChannel {
 		Status:           "skipped",
 	}
 	for _, episode := range p.Episodes {
-		specEpisode := NewPodcastEpisode(p, episode)
+		specEpisode := NewPodcastEpisode(episode)
 		ret.Episode = append(ret.Episode, specEpisode)
 	}
 	return ret
 }
 
-func NewPodcastEpisode(p *db.Podcast, e *db.PodcastEpisode) *PodcastEpisode {
+func NewPodcastEpisode(e *db.PodcastEpisode) *PodcastEpisode {
 	if e == nil {
 		return nil
 	}
@@ -27,11 +27,11 @@ func NewPodcastEpisode(p *db.Podcast, e *db.PodcastEpisode) *PodcastEpisode {
 		ID:          e.SID(),
 		StreamID:    e.SID(),
 		ContentType: e.MIME(),
-		ChannelID:   p.SID(),
+		ChannelID:   e.PodcastSID(),
 		Title:       e.Title,
 		Description: e.Description,
 		Status:      string(e.Status),
-		CoverArt:    p.SID(),
+		CoverArt:    e.PodcastSID(),
 		PublishDate: *e.PublishDate,
 		Genre:       "Podcast",
 		Duration:    e.Length,

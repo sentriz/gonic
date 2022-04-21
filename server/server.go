@@ -253,6 +253,7 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 
 	// podcasts
 	r.Handle("/getPodcasts{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetPodcasts))
+	r.Handle("/getNewestPodcasts{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetNewestPodcasts))
 	r.Handle("/downloadPodcastEpisode{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDownloadPodcastEpisode))
 	r.Handle("/createPodcastChannel{_:(?:\\.view)?}", ctrl.H(ctrl.ServeCreatePodcastChannel))
 	r.Handle("/refreshPodcasts{_:(?:\\.view)?}", ctrl.H(ctrl.ServeRefreshPodcasts))
