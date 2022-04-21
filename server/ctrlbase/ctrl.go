@@ -56,10 +56,8 @@ func (c *Controller) Path(rel string) string {
 }
 
 func (c *Controller) BaseURL(r *http.Request) string {
-	var protocol string
-	if r.TLS == nil {
-		protocol = "http"
-	} else {
+	protocol := "http"
+	if r.TLS != nil {
 		protocol = "https"
 	}
 	scheme := firstExisting(
