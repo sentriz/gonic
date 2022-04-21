@@ -42,24 +42,32 @@ func streamGetTransPref(dbc *db.DB, userID int, client string) (*db.TranscodePre
 	return &pref, nil
 }
 
-func streamGetTrack(dbc *db.DB, trackID int) (*db.Track, error) {
-	var track db.Track
-	err := dbc.
-		Preload("Album").
-		First(&track, trackID).
-		Error
-	if err != nil {
-		return nil, fmt.Errorf("find track: %w", err)
-	}
-	return &track, nil
-}
+var errUnknownMediaType = fmt.Errorf("media type is unknown")
 
-func streamGetPodcast(dbc *db.DB, podcastID int) (*db.PodcastEpisode, error) {
-	var podcast db.PodcastEpisode
-	if err := dbc.First(&podcast, podcastID).Error; err != nil {
-		return nil, fmt.Errorf("find podcast: %w", err)
+// TODO: there is a mismatch between abs paths for podcasts and music. if they were the same, db.AudioFile
+// could have an AbsPath() method. and we wouldn't need to pass podcastsPath or return 3 values
+func streamGetAudio(dbc *db.DB, podcastsPath string, user *db.User, id specid.ID) (db.AudioFile, string, error) {
+	switch t := id.Type; t {
+	case specid.Track:
+		var track db.Track
+		if err := dbc.Preload("Album").Preload("Artist").First(&track, id.Value).Error; err != nil {
+			return nil, "", fmt.Errorf("find track: %w", err)
+		}
+		if track.Artist != nil && track.Album != nil {
+			log.Printf("%s requests %s - %s from %s", user.Name, track.Artist.Name, track.TagTitle, track.Album.TagTitle)
+		}
+		return &track, path.Join(track.AbsPath()), nil
+
+	case specid.PodcastEpisode:
+		var podcast db.PodcastEpisode
+		if err := dbc.First(&podcast, id.Value).Error; err != nil {
+			return nil, "", fmt.Errorf("find podcast: %w", err)
+		}
+		return &podcast, path.Join(podcastsPath, podcast.Path), nil
+
+	default:
+		return nil, "", fmt.Errorf("%w: %q", errUnknownMediaType, t)
 	}
-	return &podcast, nil
 }
 
 func streamUpdateStats(dbc *db.DB, userID, albumID int, playTime time.Time) error {
@@ -236,32 +244,17 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 
 func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
 	id, err := params.GetID("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	var file db.AudioFile
-	var audioPath string
-	switch id.Type {
-	case specid.Track:
-		track, err := streamGetTrack(c.DB, id.Value)
-		if err != nil {
-			return spec.NewError(70, "track with id `%s` was not found", id)
-		}
-		file = track
-		audioPath = path.Join(track.AbsPath())
-	case specid.PodcastEpisode:
-		podcast, err := streamGetPodcast(c.DB, id.Value)
-		if err != nil {
-			return spec.NewError(70, "podcast with id `%s` was not found", id)
-		}
-		file = podcast
-		audioPath = path.Join(c.PodcastsPath, podcast.Path)
-	default:
-		return spec.NewError(70, "media type of `%s` was not found", id.Type)
+
+	file, audioPath, err := streamGetAudio(c.DB, c.PodcastsPath, user, id)
+	if err != nil {
+		return spec.NewError(70, "error finding media: %v", err)
 	}
 
-	user := r.Context().Value(CtxUser).(*db.User)
 	if track, ok := file.(*db.Track); ok && track.Album != nil {
 		defer func() {
 			if err := streamUpdateStats(c.DB, user.ID, track.Album.ID, time.Now()); err != nil {
