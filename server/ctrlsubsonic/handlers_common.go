@@ -54,7 +54,7 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 
 	optStamp := params.GetOrTime("time", time.Now())
 	optSubmission := params.GetOrBool("submission", true)
-	
+
 	if err := streamUpdateStats(c.DB, user.ID, track.Album.ID, optStamp); err != nil {
 		return spec.NewError(0, "error updating stats: %v", err)
 	}

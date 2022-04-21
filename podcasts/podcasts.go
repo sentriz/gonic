@@ -358,10 +358,6 @@ func (p *Podcasts) DownloadEpisode(episodeID int) error {
 		log.Printf("already downloading podcast episode with id %d", episodeID)
 		return nil
 	}
-	if podcastEpisode.Status == db.PodcastEpisodeStatusCompleted {
-		log.Printf("Already downloaded podcast episode with id %d", episodeID)
-		return nil
-	}
 	podcastEpisode.Status = db.PodcastEpisodeStatusDownloading
 	p.db.Save(&podcastEpisode)
 	// nolint: bodyclose
