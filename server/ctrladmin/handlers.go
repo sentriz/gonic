@@ -391,7 +391,6 @@ func (c *Controller) ServeDeleteTranscodePrefDo(r *http.Request) *Response {
 }
 
 func (c *Controller) ServePodcastAddDo(r *http.Request) *Response {
-	user := r.Context().Value(CtxUser).(*db.User)
 	rssURL := r.FormValue("feed")
 	fp := gofeed.NewParser()
 	feed, err := fp.ParseURL(rssURL)
@@ -401,7 +400,7 @@ func (c *Controller) ServePodcastAddDo(r *http.Request) *Response {
 			flashW:   []string{fmt.Sprintf("could not create feed: %v", err)},
 		}
 	}
-	if _, err = c.Podcasts.AddNewPodcast(rssURL, feed, user.ID); err != nil {
+	if _, err = c.Podcasts.AddNewPodcast(rssURL, feed); err != nil {
 		return &Response{
 			redirect: "/admin/home",
 			flashW:   []string{fmt.Sprintf("could not create feed: %v", err)},
@@ -454,12 +453,11 @@ func (c *Controller) ServePodcastUpdateDo(r *http.Request) *Response {
 }
 
 func (c *Controller) ServePodcastDeleteDo(r *http.Request) *Response {
-	user := r.Context().Value(CtxUser).(*db.User)
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil {
 		return &Response{code: 400, err: "please provide a valid podcast id"}
 	}
-	if err := c.Podcasts.DeletePodcast(user.ID, id); err != nil {
+	if err := c.Podcasts.DeletePodcast(id); err != nil {
 		return &Response{code: 400, err: "please provide a valid podcast id"}
 	}
 	return &Response{

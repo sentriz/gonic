@@ -315,7 +315,6 @@ type Podcast struct {
 	ID           int `gorm:"primary_key"`
 	UpdatedAt    time.Time
 	ModifiedAt   time.Time
-	UserID       int `sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
 	URL          string
 	Title        string
 	Description  string

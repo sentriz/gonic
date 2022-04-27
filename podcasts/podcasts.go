@@ -40,13 +40,15 @@ func New(db *db.DB, base string, tagger tags.Reader) *Podcasts {
 	}
 }
 
-func (p *Podcasts) GetPodcastOrAll(userID int, id int, includeEpisodes bool) ([]*db.Podcast, error) {
+func (p *Podcasts) GetPodcastOrAll(id int, includeEpisodes bool) ([]*db.Podcast, error) {
+	var err error
 	podcasts := []*db.Podcast{}
-	q := p.db.Where("user_id=?", userID)
 	if id != 0 {
-		q = q.Where("id=?", id)
+		err = p.db.Where("id=?", id).Find(&podcasts).Error
+	} else {
+		err = p.db.Find(&podcasts).Error
 	}
-	if err := q.Find(&podcasts).Error; err != nil {
+	if err != nil {
 		return nil, fmt.Errorf("finding podcasts: %w", err)
 	}
 	if !includeEpisodes {
@@ -88,12 +90,10 @@ func (p *Podcasts) GetNewestPodcastEpisodes(count int) ([]*db.PodcastEpisode, er
 	return episodes, nil
 }
 
-func (p *Podcasts) AddNewPodcast(rssURL string, feed *gofeed.Feed,
-	userID int) (*db.Podcast, error) {
+func (p *Podcasts) AddNewPodcast(rssURL string, feed *gofeed.Feed) (*db.Podcast, error) {
 	podcast := db.Podcast{
 		Description: feed.Description,
 		ImageURL:    feed.Image.URL,
-		UserID:      userID,
 		Title:       feed.Title,
 		URL:         rssURL,
 	}
@@ -291,22 +291,6 @@ func (p *Podcasts) RefreshPodcasts() error {
 	return nil
 }
 
-func (p *Podcasts) RefreshPodcastsForUser(userID int) error {
-	podcasts := []*db.Podcast{}
-	err := p.db.
-		Where("user_id=?", userID).
-		Find(&podcasts).
-		Error
-	if err != nil {
-		return fmt.Errorf("find podcasts: %w", err)
-	}
-	var errs *multierr.Err
-	if errors.As(p.refreshPodcasts(podcasts), &errs) && errs.Len() > 0 {
-		return fmt.Errorf("refresh podcasts: %w", errs)
-	}
-	return nil
-}
-
 func (p *Podcasts) refreshPodcasts(podcasts []*db.Podcast) error {
 	errs := &multierr.Err{}
 	for _, podcast := range podcasts {
@@ -492,10 +476,10 @@ func (p *Podcasts) doPodcastDownload(podcastEpisode *db.PodcastEpisode, file *os
 	return p.db.Save(podcastEpisode).Error
 }
 
-func (p *Podcasts) DeletePodcast(userID, podcastID int) error {
+func (p *Podcasts) DeletePodcast(podcastID int) error {
 	podcast := db.Podcast{}
 	err := p.db.
-		Where("id=? AND user_id=?", podcastID, userID).
+		Where("id=?", podcastID).
 		First(&podcast).
 		Error
 	if err != nil {
@@ -513,7 +497,7 @@ func (p *Podcasts) DeletePodcast(userID, podcastID int) error {
 		}
 	}
 	err = p.db.
-		Where("id=? AND user_id=?", podcastID, userID).
+		Where("id=?", podcastID).
 		Delete(db.Podcast{}).
 		Error
 	if err != nil {
