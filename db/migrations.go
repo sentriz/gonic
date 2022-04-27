@@ -341,6 +341,12 @@ func migratePodcastDropUserID(tx *gorm.DB, _ MigrationContext) error {
 	if err := step.Error; err != nil {
 		return fmt.Errorf("step auto migrate: %w", err)
 	}
+
+	if !tx.Dialect().HasColumn("podcasts", "user_id") {
+		return nil
+	}
+
+
 	step = tx.Exec(`
 		ALTER TABLE podcasts DROP COLUMN user_id;
 	`)
