@@ -76,19 +76,22 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 	} else {
 		scrobble.ListenType = listenTypePlayingNow
 	}
-	payloadBuf := bytes.Buffer{}
+
+	var payloadBuf bytes.Buffer
 	if err := json.NewEncoder(&payloadBuf).Encode(scrobble); err != nil {
 		return err
 	}
 	submitURL := fmt.Sprintf("%s%s", user.ListenBrainzURL, submitPath)
 	authHeader := fmt.Sprintf("Token %s", user.ListenBrainzToken)
 	req, _ := http.NewRequest(http.MethodPost, submitURL, &payloadBuf)
+	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", authHeader)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("http post: %w", err)
 	}
 	defer resp.Body.Close()
+
 	respBytes, _ := httputil.DumpResponse(resp, true)
 	switch {
 	case resp.StatusCode == http.StatusUnauthorized:
