@@ -41,6 +41,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202202092013", migrateArtistCover),
 		construct(ctx, "202202121809", migrateAlbumRootDirAgain),
 		construct(ctx, "202202241218", migratePublicPlaylist),
+		construct(ctx, "202204270903", migratePodcastDropUserID),
 	}
 
 	return gormigrate.
@@ -332,3 +333,26 @@ func migrateAlbumRootDirAgain(tx *gorm.DB, ctx MigrationContext) error {
 func migratePublicPlaylist(tx *gorm.DB, ctx MigrationContext) error {
 	return tx.AutoMigrate(Playlist{}).Error
 }
+
+func migratePodcastDropUserID(tx *gorm.DB, _ MigrationContext) error {
+	step := tx.AutoMigrate(
+		Podcast{},
+	)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step auto migrate: %w", err)
+	}
+
+	if !tx.Dialect().HasColumn("podcasts", "user_id") {
+		return nil
+	}
+
+
+	step = tx.Exec(`
+		ALTER TABLE podcasts DROP COLUMN user_id;
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step migrate podcasts drop user_id: %w", err)
+	}
+	return nil
+}
+

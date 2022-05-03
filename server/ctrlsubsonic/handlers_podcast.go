@@ -14,9 +14,8 @@ import (
 func (c *Controller) ServeGetPodcasts(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	isIncludeEpisodes := params.GetOrBool("includeEpisodes", true)
-	user := r.Context().Value(CtxUser).(*db.User)
 	id, _ := params.GetID("id")
-	podcasts, err := c.Podcasts.GetPodcastOrAll(user.ID, id.Value, isIncludeEpisodes)
+	podcasts, err := c.Podcasts.GetPodcastOrAll(id.Value, isIncludeEpisodes)
 	if err != nil {
 		return spec.NewError(10, "failed get podcast(s): %s", err)
 	}
@@ -45,6 +44,10 @@ func (c *Controller) ServeGetNewestPodcasts(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeDownloadPodcastEpisode(r *http.Request) *spec.Response {
+	user := r.Context().Value(CtxUser).(*db.User)
+	if (!user.IsAdmin) {
+		return spec.NewError(10, "user not admin")
+	}
 	params := r.Context().Value(CtxParams).(params.Params)
 	id, err := params.GetID("id")
 	if err != nil || id.Type != specid.PodcastEpisode {
@@ -58,6 +61,9 @@ func (c *Controller) ServeDownloadPodcastEpisode(r *http.Request) *spec.Response
 
 func (c *Controller) ServeCreatePodcastChannel(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
+	if (!user.IsAdmin) {
+		return spec.NewError(10, "user not admin")
+	}
 	params := r.Context().Value(CtxParams).(params.Params)
 	rssURL, _ := params.Get("url")
 	fp := gofeed.NewParser()
@@ -65,7 +71,7 @@ func (c *Controller) ServeCreatePodcastChannel(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "failed to parse feed: %s", err)
 	}
-	if _, err = c.Podcasts.AddNewPodcast(rssURL, feed, user.ID); err != nil {
+	if _, err = c.Podcasts.AddNewPodcast(rssURL, feed); err != nil {
 		return spec.NewError(10, "failed to add feed: %s", err)
 	}
 	return spec.NewResponse()
@@ -73,7 +79,10 @@ func (c *Controller) ServeCreatePodcastChannel(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeRefreshPodcasts(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
-	if err := c.Podcasts.RefreshPodcastsForUser(user.ID); err != nil {
+	if (!user.IsAdmin) {
+		return spec.NewError(10, "user not admin")
+	}
+	if err := c.Podcasts.RefreshPodcasts(); err != nil {
 		return spec.NewError(10, "failed to refresh feeds: %s", err)
 	}
 	return spec.NewResponse()
@@ -81,18 +90,25 @@ func (c *Controller) ServeRefreshPodcasts(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeDeletePodcastChannel(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
+	if (!user.IsAdmin) {
+		return spec.NewError(10, "user not admin")
+	}
 	params := r.Context().Value(CtxParams).(params.Params)
 	id, err := params.GetID("id")
 	if err != nil || id.Type != specid.Podcast {
 		return spec.NewError(10, "please provide a valid podcast id")
 	}
-	if err := c.Podcasts.DeletePodcast(user.ID, id.Value); err != nil {
+	if err := c.Podcasts.DeletePodcast(id.Value); err != nil {
 		return spec.NewError(10, "failed to delete podcast: %s", err)
 	}
 	return spec.NewResponse()
 }
 
 func (c *Controller) ServeDeletePodcastEpisode(r *http.Request) *spec.Response {
+	user := r.Context().Value(CtxUser).(*db.User)
+	if (!user.IsAdmin) {
+		return spec.NewError(10, "user not admin")
+	}
 	params := r.Context().Value(CtxParams).(params.Params)
 	id, err := params.GetID("id")
 	if err != nil || id.Type != specid.PodcastEpisode {
