@@ -169,10 +169,6 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	routUser.Handle("/delete_playlist_do", ctrl.H(ctrl.ServeDeletePlaylistDo))
 	routUser.Handle("/create_transcode_pref_do", ctrl.H(ctrl.ServeCreateTranscodePrefDo))
 	routUser.Handle("/delete_transcode_pref_do", ctrl.H(ctrl.ServeDeleteTranscodePrefDo))
-	routUser.Handle("/add_podcast_do", ctrl.H(ctrl.ServePodcastAddDo))
-	routUser.Handle("/delete_podcast_do", ctrl.H(ctrl.ServePodcastDeleteDo))
-	routUser.Handle("/download_podcast_do", ctrl.H(ctrl.ServePodcastDownloadDo))
-	routUser.Handle("/update_podcast_do", ctrl.H(ctrl.ServePodcastUpdateDo))
 
 	// admin routes (if session is valid, and is admin)
 	routAdmin := routUser.NewRoute().Subrouter()
@@ -189,6 +185,10 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	routAdmin.Handle("/update_lastfm_api_key_do", ctrl.H(ctrl.ServeUpdateLastFMAPIKeyDo))
 	routAdmin.Handle("/start_scan_inc_do", ctrl.H(ctrl.ServeStartScanIncDo))
 	routAdmin.Handle("/start_scan_full_do", ctrl.H(ctrl.ServeStartScanFullDo))
+	routAdmin.Handle("/add_podcast_do", ctrl.H(ctrl.ServePodcastAddDo))
+	routAdmin.Handle("/delete_podcast_do", ctrl.H(ctrl.ServePodcastDeleteDo))
+	routAdmin.Handle("/download_podcast_do", ctrl.H(ctrl.ServePodcastDownloadDo))
+	routAdmin.Handle("/update_podcast_do", ctrl.H(ctrl.ServePodcastUpdateDo))
 
 	// middlewares should be run for not found handler
 	// https://github.com/gorilla/mux/issues/416
