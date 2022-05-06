@@ -97,7 +97,7 @@ func (p *Podcasts) AddNewPodcast(rssURL string, feed *gofeed.Feed) (*db.Podcast,
 		Title:       feed.Title,
 		URL:         rssURL,
 	}
-	podPath := podcast.Fullpath(p.baseDir)
+	podPath := absPath(p.baseDir, &podcast)
 	err := os.Mkdir(podPath, 0755)
 	if err != nil && !os.IsExist(err) {
 		return nil, err
@@ -252,8 +252,7 @@ func itemToEpisode(podcastID, size, duration int, audio string,
 	}
 }
 
-func (p *Podcasts) findEnclosureAudio(podcastID, duration int,
-	item *gofeed.Item) (*db.PodcastEpisode, bool) {
+func (p *Podcasts) findEnclosureAudio(podcastID, duration int, item *gofeed.Item) (*db.PodcastEpisode, bool) {
 	for _, enc := range item.Enclosures {
 		if !isAudio(enc.Type, enc.URL) {
 			continue
@@ -264,8 +263,7 @@ func (p *Podcasts) findEnclosureAudio(podcastID, duration int,
 	return nil, false
 }
 
-func (p *Podcasts) findMediaAudio(podcastID, duration int,
-	item *gofeed.Item) (*db.PodcastEpisode, bool) {
+func (p *Podcasts) findMediaAudio(podcastID, duration int, item *gofeed.Item) (*db.PodcastEpisode, bool) {
 	extensions, ok := item.Extensions["media"]["content"]
 	if !ok {
 		return nil, false
@@ -371,13 +369,12 @@ func (p *Podcasts) DownloadEpisode(episodeID int) error {
 		filename = path.Base(audioURL.Path)
 	}
 	filename = p.findUniqueEpisodeName(&podcast, &podcastEpisode, filename)
-	audioFile, err := os.Create(path.Join(podcast.Fullpath(p.baseDir), filename))
+	audioFile, err := os.Create(path.Join(absPath(p.baseDir, &podcast), filename))
 	if err != nil {
 		return fmt.Errorf("create audio file: %w", err)
 	}
 	podcastEpisode.Filename = filename
-	sanTitle := strings.ReplaceAll(podcast.Title, "/", "_")
-	podcastEpisode.Path = path.Join(sanTitle, filename)
+	podcastEpisode.Path = path.Join(pathSafe(podcast.Title), filename)
 	p.db.Save(&podcastEpisode)
 	go func() {
 		if err := p.doPodcastDownload(&podcastEpisode, audioFile, resp.Body); err != nil {
@@ -387,22 +384,18 @@ func (p *Podcasts) DownloadEpisode(episodeID int) error {
 	return nil
 }
 
-func (p *Podcasts) findUniqueEpisodeName(
-	podcast *db.Podcast,
-	podcastEpisode *db.PodcastEpisode,
-	filename string) string {
-	podcastPath := path.Join(podcast.Fullpath(p.baseDir), filename)
+func (p *Podcasts) findUniqueEpisodeName(podcast *db.Podcast, podcastEpisode *db.PodcastEpisode, filename string) string {
+	podcastPath := path.Join(absPath(p.baseDir, podcast), filename)
 	if _, err := os.Stat(podcastPath); os.IsNotExist(err) {
 		return filename
 	}
-	sanitizedTitle := strings.ReplaceAll(podcastEpisode.Title, "/", "_")
-	titlePath := fmt.Sprintf("%s%s", sanitizedTitle, filepath.Ext(filename))
-	podcastPath = path.Join(podcast.Fullpath(p.baseDir), titlePath)
+	titlePath := fmt.Sprintf("%s%s", pathSafe(podcastEpisode.Title), filepath.Ext(filename))
+	podcastPath = path.Join(absPath(p.baseDir, podcast), titlePath)
 	if _, err := os.Stat(podcastPath); os.IsNotExist(err) {
 		return titlePath
 	}
 	// try to find a filename like FILENAME (1).mp3 incrementing
-	return findEpisode(podcast.Fullpath(p.baseDir), filename, 1)
+	return findEpisode(absPath(p.baseDir, podcast), filename, 1)
 }
 
 func findEpisode(base, filename string, count int) string {
@@ -446,9 +439,7 @@ func (p *Podcasts) downloadPodcastCover(podPath string, podcast *db.Podcast) err
 	if _, err := io.Copy(coverFile, resp.Body); err != nil {
 		return fmt.Errorf("writing podcast cover: %w", err)
 	}
-	podcastPath := filepath.Clean(strings.ReplaceAll(podcast.Title, "/", "_"))
-	podcastFilename := fmt.Sprintf("cover%s", ext)
-	podcast.ImagePath = path.Join(podcastPath, podcastFilename)
+	podcast.ImagePath = path.Join(pathSafe(podcast.Title), fmt.Sprintf("cover%s", ext))
 	if err := p.db.Save(podcast).Error; err != nil {
 		return fmt.Errorf("save podcast: %w", err)
 	}
@@ -485,16 +476,8 @@ func (p *Podcasts) DeletePodcast(podcastID int) error {
 	if err != nil {
 		return err
 	}
-	var userCount int
-	p.db.
-		Model(&db.Podcast{}).
-		Where("title=?", podcast.Title).
-		Count(&userCount)
-	if userCount == 1 {
-		// only delete the folder if there are not multiple listeners
-		if err = os.RemoveAll(podcast.Fullpath(p.baseDir)); err != nil {
-			return fmt.Errorf("delete podcast directory: %w", err)
-		}
+	if err := os.RemoveAll(absPath(p.baseDir, &podcast)); err != nil {
+		return fmt.Errorf("delete podcast directory: %w", err)
 	}
 	err = p.db.
 		Where("id=?", podcastID).
@@ -518,4 +501,12 @@ func (p *Podcasts) DeletePodcastEpisode(podcastEpisodeID int) error {
 		return err
 	}
 	return err
+}
+
+func pathSafe(in string) string {
+	return filepath.Clean(strings.ReplaceAll(in, string(filepath.Separator), "_"))
+}
+
+func absPath(base string, p *db.Podcast) string {
+	return filepath.Join(base, pathSafe(p.Title))
 }
