@@ -177,15 +177,15 @@
         <div class="box-description text-light">
             <p>you can add podcasts rss feeds here</p>
         </div>
-        <div class="block-right">
+        <div>
             <table id="podcast-preferences">
             {{ range $pref := .Podcasts }}
                 <tr>
                     <form id="podcast-{{ $pref.ID }}-download" action="{{ printf "/admin/download_podcast_do?id=%d" $pref.ID | path }}" method="post"></form>
                     <form id="podcast-{{ $pref.ID }}-auto-download" action="{{ printf "/admin/update_podcast_do?id=%d" $pref.ID | path }}" method="post"></form>
                     <form id="podcast-{{ $pref.ID }}-delete" action="{{ printf "/admin/delete_podcast_do?id=%d" $pref.ID | path }}" method="post"></form>
-                    <td>{{ $pref.Title }}</td>
-                    <td><select form="podcast-{{ $pref.ID }}-auto-download" name="setting">
+                    <td class="text-full">{{ $pref.Title }}</td>
+                    <td><select class="no-small" form="podcast-{{ $pref.ID }}-auto-download" name="setting">
                         {{ if eq $pref.AutoDownload "latest" }}
                           <option value="latest" selected="selected">download latest</option>
                           <option value="none">no auto download</option>
@@ -194,7 +194,7 @@
                           <option value="latest">download latest</option>
                         {{ end }}
                     </select></td>
-                    <td><input form="podcast-{{ $pref.ID }}-download" type="submit" value="download all"></td>
+                    <td><input class="no-small" form="podcast-{{ $pref.ID }}-download" type="submit" value="download all"></td>
                     <td><input form="podcast-{{ $pref.ID }}-auto-download" type="submit" value="save"></td>
                     <td><input form="podcast-{{ $pref.ID }}-delete" type="submit" value="delete"></td>
                 </tr>

@@ -57,6 +57,10 @@ input[type="password"] {
   width: 100%;
 }
 
+input[type="submit"] {
+  width: fit-content;
+}
+
 form.block {
   max-width: var(--width-form);
   margin-left: auto;
@@ -153,6 +157,10 @@ a:hover {
 .text-emp {
   font-style: italic;
   color: #444;
+}
+
+.text-full {
+  width: 100%;
 }
 
 .block-right > * {
