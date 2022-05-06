@@ -7,15 +7,14 @@ package db
 
 import (
 	"path"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	// TODO: remove this dep
 
-	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"go.senan.xyz/gonic/mime"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
 func splitInt(in, sep string) []int {
@@ -323,11 +322,6 @@ type Podcast struct {
 	Error        string
 	Episodes     []*PodcastEpisode
 	AutoDownload PodcastAutoDownload
-}
-
-func (p *Podcast) Fullpath(podcastPath string) string {
-	sanitizedTitle := strings.ReplaceAll(p.Title, "/", "_")
-	return filepath.Join(podcastPath, filepath.Clean(sanitizedTitle))
 }
 
 func (p *Podcast) SID() *specid.ID {
