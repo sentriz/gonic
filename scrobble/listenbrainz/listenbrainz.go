@@ -92,13 +92,12 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 	}
 	defer resp.Body.Close()
 
-	respBytes, _ := httputil.DumpResponse(resp, true)
 	switch {
 	case resp.StatusCode == http.StatusUnauthorized:
 		return fmt.Errorf("unathorized: %w", ErrListenBrainz)
 	case resp.StatusCode >= 400:
-		log.Println("received listenbrainz response")
-		log.Println(string(respBytes))
+		respBytes, _ := httputil.DumpResponse(resp, true)
+		log.Printf("received bad listenbrainz response:\n%s", string(respBytes))
 		return fmt.Errorf(">= 400: %d: %w", resp.StatusCode, ErrListenBrainz)
 	}
 	return nil
