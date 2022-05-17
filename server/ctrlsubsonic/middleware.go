@@ -36,7 +36,7 @@ func (c *Controller) WithParams(next http.Handler) http.Handler {
 
 func (c *Controller) WithRequiredParams(next http.Handler) http.Handler {
 	requiredParameters := []string{
-		"u", "v", "c",
+		"u", "c",
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		params := r.Context().Value(CtxParams).(params.Params)
