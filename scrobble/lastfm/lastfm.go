@@ -246,10 +246,6 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 		return fmt.Errorf("get secret: %w", err)
 	}
 
-	// fetch user to get lastfm session
-	if user.LastFMSession == "" {
-		return fmt.Errorf("you don't have a last.fm session: %w", ErrLastFM)
-	}
 	params := url.Values{}
 	if submission {
 		params.Add("method", "track.Scrobble")
