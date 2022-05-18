@@ -145,6 +145,36 @@ func TestUpdatedTags(t *testing.T) {
 	is.Equal(updated.TagTitle, "title-upd")                                                                       // updated has tags
 }
 
+// https://github.com/sentriz/gonic/issues/225
+func TestUpdatedAlbumGenre(t *testing.T) {
+	t.Parallel()
+	is := is.New(t)
+	m := mockfs.New(t)
+
+	m.AddItems()
+	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.Tags) error {
+		tags.RawGenre = "gen-a;gen-b"
+		return nil
+	})
+
+	m.ScanAndClean()
+
+	var album db.Album
+	is.NoErr(m.DB().Preload("Genres").Where("left_path=? AND right_path=?", "artist-0/", "album-0").Find(&album).Error)
+	is.Equal(album.GenreStrings(), []string{"gen-a", "gen-b"})
+
+	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.Tags) error {
+		tags.RawGenre = "gen-a-upd;gen-b-upd"
+		return nil
+	})
+
+	m.ScanAndClean()
+
+	var updated db.Album
+	is.NoErr(m.DB().Preload("Genres").Where("left_path=? AND right_path=?", "artist-0/", "album-0").Find(&updated).Error)
+	is.Equal(updated.GenreStrings(), []string{"gen-a-upd", "gen-b-upd"})
+}
+
 func TestDeleteAlbum(t *testing.T) {
 	t.Parallel()
 	is := is.NewRelaxed(t)
