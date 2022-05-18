@@ -25,7 +25,8 @@
           "title": "title-0",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         },
         {
           "id": "tr-2",
@@ -44,7 +45,8 @@
           "title": "title-1",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         },
         {
           "id": "tr-3",
@@ -63,7 +65,8 @@
           "title": "title-2",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         }
       ]
     }

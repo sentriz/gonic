@@ -2,6 +2,7 @@ package spec
 
 import (
 	"path"
+	"strings"
 
 	"go.senan.xyz/gonic/db"
 )
@@ -54,6 +55,8 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 		),
 		ParentID:  parent.SID(),
 		Duration:  t.Length,
+		Genre:     strings.Join(t.GenreStrings(), ", "),
+		Year:      parent.TagYear,
 		Bitrate:   t.Bitrate,
 		IsDir:     false,
 		Type:      "music",

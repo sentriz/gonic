@@ -22,7 +22,8 @@
           "title": "title-0",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         },
         {
           "id": "tr-2",
@@ -41,7 +42,8 @@
           "title": "title-1",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         },
         {
           "id": "tr-3",
@@ -60,7 +62,8 @@
           "title": "title-2",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         },
         {
           "id": "tr-4",
@@ -79,7 +82,8 @@
           "title": "title-0",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         },
         {
           "id": "tr-5",
@@ -98,7 +102,8 @@
           "title": "title-1",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         },
         {
           "id": "tr-6",
@@ -117,7 +122,8 @@
           "title": "title-2",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         },
         {
           "id": "tr-7",
@@ -136,7 +142,8 @@
           "title": "title-0",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         },
         {
           "id": "tr-8",
@@ -155,7 +162,8 @@
           "title": "title-1",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         },
         {
           "id": "tr-9",
@@ -174,7 +182,8 @@
           "title": "title-2",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         },
         {
           "id": "tr-10",
@@ -193,7 +202,8 @@
           "title": "title-0",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         },
         {
           "id": "tr-11",
@@ -212,7 +222,8 @@
           "title": "title-1",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         },
         {
           "id": "tr-12",
@@ -231,7 +242,8 @@
           "title": "title-2",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         },
         {
           "id": "tr-13",
@@ -250,7 +262,8 @@
           "title": "title-0",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         },
         {
           "id": "tr-14",
@@ -269,7 +282,8 @@
           "title": "title-1",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         },
         {
           "id": "tr-15",
@@ -288,7 +302,8 @@
           "title": "title-2",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         },
         {
           "id": "tr-16",
@@ -307,7 +322,8 @@
           "title": "title-0",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         },
         {
           "id": "tr-17",
@@ -326,7 +342,8 @@
           "title": "title-1",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         },
         {
           "id": "tr-18",
@@ -345,7 +362,8 @@
           "title": "title-2",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         },
         {
           "id": "tr-19",
@@ -364,7 +382,8 @@
           "title": "title-0",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         },
         {
           "id": "tr-20",
@@ -383,7 +402,8 @@
           "title": "title-1",
           "track": 1,
           "discNumber": 1,
-          "type": "music"
+          "type": "music",
+          "year": 2021
         }
       ]
     }
