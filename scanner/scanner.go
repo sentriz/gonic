@@ -17,9 +17,9 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/rainycape/unidecode"
 
-	"go.senan.xyz/gonic/multierr"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/mime"
+	"go.senan.xyz/gonic/multierr"
 	"go.senan.xyz/gonic/scanner/tags"
 )
 
@@ -224,7 +224,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 		if err != nil {
 			return fmt.Errorf("populate album artist: %w", err)
 		}
-		if err := populateAlbum(tx, album, albumArtist, trags, genreIDs, stat.ModTime(), statCreateTime(stat)); err != nil {
+		if err := populateAlbum(tx, album, albumArtist, trags, stat.ModTime(), statCreateTime(stat)); err != nil {
 			return fmt.Errorf("populate album: %w", err)
 		}
 		if err := populateAlbumGenres(tx, album, genreIDs); err != nil {
@@ -235,7 +235,6 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 	if err := populateTrack(tx, album, track, trags, basename, int(stat.Size())); err != nil {
 		return fmt.Errorf("process %q: %w", basename, err)
 	}
-
 	if err := populateTrackGenres(tx, track, genreIDs); err != nil {
 		return fmt.Errorf("populate track genres: %w", err)
 	}
@@ -246,7 +245,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 	return nil
 }
 
-func populateAlbum(tx *db.DB, album *db.Album, albumArtist *db.Artist, trags tags.Parser, genreIDs []int, modTime, createTime time.Time) error {
+func populateAlbum(tx *db.DB, album *db.Album, albumArtist *db.Artist, trags tags.Parser, modTime, createTime time.Time) error {
 	albumName := trags.SomeAlbum()
 	album.TagTitle = albumName
 	album.TagTitleUDec = decoded(albumName)
