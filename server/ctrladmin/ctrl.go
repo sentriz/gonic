@@ -123,6 +123,7 @@ type templateData struct {
 	SelectedUser           *db.User
 
 	Podcasts []*db.Podcast
+	InternetRadioStations []*db.InternetRadioStation
 }
 
 type Response struct {

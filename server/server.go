@@ -189,6 +189,9 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	routAdmin.Handle("/delete_podcast_do", ctrl.H(ctrl.ServePodcastDeleteDo))
 	routAdmin.Handle("/download_podcast_do", ctrl.H(ctrl.ServePodcastDownloadDo))
 	routAdmin.Handle("/update_podcast_do", ctrl.H(ctrl.ServePodcastUpdateDo))
+	routAdmin.Handle("/add_internet_radio_station_do", ctrl.H(ctrl.ServeInternetRadioStationAddDo))
+	routAdmin.Handle("/delete_internet_radio_station_do", ctrl.H(ctrl.ServeInternetRadioStationDeleteDo))
+	routAdmin.Handle("/update_internet_radio_station_do", ctrl.H(ctrl.ServeInternetRadioStationUpdateDo))
 
 	// middlewares should be run for not found handler
 	// https://github.com/gorilla/mux/issues/416
@@ -259,6 +262,12 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/refreshPodcasts{_:(?:\\.view)?}", ctrl.H(ctrl.ServeRefreshPodcasts))
 	r.Handle("/deletePodcastChannel{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDeletePodcastChannel))
 	r.Handle("/deletePodcastEpisode{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDeletePodcastEpisode))
+
+	// internet radio
+	r.Handle("/getInternetRadioStations{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetInternetRadioStations))
+	r.Handle("/createInternetRadioStation{_:(?:\\.view)?}", ctrl.H(ctrl.ServeCreateInternetRadioStation))
+	r.Handle("/updateInternetRadioStation{_:(?:\\.view)?}", ctrl.H(ctrl.ServeUpdateInternetRadioStation))
+	r.Handle("/deleteInternetRadioStation{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDeleteInternetRadioStation))
 
 	// middlewares should be run for not found handler
 	// https://github.com/gorilla/mux/issues/416

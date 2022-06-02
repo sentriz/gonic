@@ -42,6 +42,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202202121809", migrateAlbumRootDirAgain),
 		construct(ctx, "202202241218", migratePublicPlaylist),
 		construct(ctx, "202204270903", migratePodcastDropUserID),
+		construct(ctx, "202206011628", migrateInternetRadioStations),
 	}
 
 	return gormigrate.
@@ -356,3 +357,9 @@ func migratePodcastDropUserID(tx *gorm.DB, _ MigrationContext) error {
 	return nil
 }
 
+func migrateInternetRadioStations(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(
+		InternetRadioStation{},
+	).
+		Error
+}

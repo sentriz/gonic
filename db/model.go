@@ -396,3 +396,14 @@ type Bookmark struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
+
+type InternetRadioStation struct {
+	ID           int `gorm:"primary_key"`
+	StreamURL    string
+  Name         string
+  HomepageURL  string
+}
+
+func (ir *InternetRadioStation) SID() *specid.ID {
+	return &specid.ID{Type: specid.InternetRadioStation, Value: ir.ID}
+}
