@@ -13,6 +13,10 @@ const (
 	xmlns      = "http://subsonic.org/restapi"
 )
 
+type SubsonicResponse struct {
+	Response          Response           `xml:"subsonic-response"       json:"subsonic-response"`
+}
+
 type Response struct {
 	Status            string             `xml:"status,attr"       json:"status"`
 	Version           string             `xml:"version,attr"      json:"version"`
