@@ -15,6 +15,7 @@ var (
 	ErrBadSeparator = errors.New("bad separator")
 	ErrNotAnInt     = errors.New("not an int")
 	ErrBadPrefix    = errors.New("bad prefix")
+	ErrBadJSON			= errors.New("bad JSON")
 )
 
 type IDT string
@@ -72,6 +73,17 @@ func (i ID) String() string {
 
 func (i ID) MarshalJSON() ([]byte, error) {
 	return json.Marshal(i.String())
+}
+
+func (i *ID) UnmarshalJSON(data []byte) (error) {
+	if (len(data) <= 2) {
+		return fmt.Errorf("too short: %w", ErrBadJSON)
+	}
+	id, err := New(string(data[1:len(data)-1])) // Strip quotes
+	if (err == nil) {
+		*i = id;
+	}
+	return err;
 }
 
 func (i ID) MarshalText() ([]byte, error) {

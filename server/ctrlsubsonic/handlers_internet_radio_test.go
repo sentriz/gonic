@@ -27,7 +27,18 @@ func RunTestCase(t *testing.T, contr *Controller, h handlerSubsonic, q url.Value
 	var response spec.SubsonicResponse
 	err := json.Unmarshal(rr.Body.Bytes(), &response)
 	if (err != nil) {
-		t.Fatal("json unmarshal failed")
+		switch ty := err.(type) {
+		case *json.SyntaxError:
+			jsn := body[0:ty.Offset]
+      jsn += "<--(Invalid Character)"
+      t.Fatalf("Invalid character at offset %v\n %s", ty.Offset, jsn)
+		case *json.UnmarshalTypeError:
+			jsn := body[0:ty.Offset]
+      jsn += "<--(Invalid Type)"
+      t.Fatalf("Invalid type at offset %v\n %s", ty.Offset, jsn)
+		default:
+			t.Fatalf("json unmarshal failed: %s", err.Error())
+		}
 	}
 
 	return &response
@@ -98,4 +109,9 @@ func TestInternetRadioStations(t *testing.T) {
 								 "name": {"NRK P2"},
 								 "homepageUrl": {"http://p3.no"}}, true)
 	CheckSuccess(t, response)
+	response = RunTestCase(t, contr, contr.ServeGetInternetRadioStations, url.Values{}, false) //no need to be admin
+	CheckSuccess(t, response)
+	if (response.Response.InternetRadioStations == nil) {
+		t.Fatal("didn't return stations")
+	}
 }
