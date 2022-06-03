@@ -15,7 +15,7 @@ const station1name = "NRK P1"
 const station1homepageURL = "http://www.nrk.no/p1"
 const station2streamURL = "http://lyd.nrk.no/nrk_radio_p2_mp3_m"
 const station2name = "NRK P2"
-const station2homepageURL = "http://p3.no"
+// const station2homepageURL = "http://p3.no"
 const notaURL = "not_a_url"
 
 func runTestCase(t *testing.T, contr *Controller, h handlerSubsonic, q url.Values, admin bool) (*spec.SubsonicResponse) {
@@ -83,7 +83,7 @@ func TestInternetRadioStations(t *testing.T) {
 	var response *spec.SubsonicResponse
 	
 	// check for empty get on new DB
-	response = runTestCase(t, contr, contr.ServeGetInternetRadioStations, url.Values{}, false) //no need to be admin
+	response = runTestCase(t, contr, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
 	checkSuccess(t, response)
 	if ((response.Response.InternetRadioStations == nil) ||
 			(len(response.Response.InternetRadioStations.List) != 0)) {
@@ -117,7 +117,7 @@ func TestInternetRadioStations(t *testing.T) {
 	checkBadParameter(t, response)
 
 	// check for empty get
-	response = runTestCase(t, contr, contr.ServeGetInternetRadioStations, url.Values{}, false) //no need to be admin
+	response = runTestCase(t, contr, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
 	checkSuccess(t, response)
 	if ((response.Response.InternetRadioStations == nil) ||
 			(len(response.Response.InternetRadioStations.List) != 0)) {
@@ -134,7 +134,7 @@ func TestInternetRadioStations(t *testing.T) {
 			url.Values{"streamUrl": {station2streamURL},
 								 "name": {station2name}}, true) // NOTE: No homepage URL
 	checkSuccess(t, response)
-	response = runTestCase(t, contr, contr.ServeGetInternetRadioStations, url.Values{}, false) //no need to be admin
+	response = runTestCase(t, contr, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
 	checkSuccess(t, response)
 	if (response.Response.InternetRadioStations == nil) {
 		t.Fatal("didn't return stations")
@@ -142,11 +142,11 @@ func TestInternetRadioStations(t *testing.T) {
 	if (len(response.Response.InternetRadioStations.List) != 2) {
 		t.Fatal("wrong number of stations")
 	}
-	if ((*response.Response.InternetRadioStations.List[0].ID != specid.ID{specid.InternetRadioStation, 1}) ||
+	if ((*response.Response.InternetRadioStations.List[0].ID != specid.ID{Type: specid.InternetRadioStation, Value: 1}) ||
 			(response.Response.InternetRadioStations.List[0].StreamURL != station1streamURL) ||
 			(response.Response.InternetRadioStations.List[0].Name != station1name) ||
 			(response.Response.InternetRadioStations.List[0].HomepageURL != station1homepageURL) ||
-			(*response.Response.InternetRadioStations.List[1].ID != specid.ID{specid.InternetRadioStation, 2}) ||
+			(*response.Response.InternetRadioStations.List[1].ID != specid.ID{Type: specid.InternetRadioStation, Value: 2}) ||
 			(response.Response.InternetRadioStations.List[1].StreamURL != station2streamURL) ||
 			(response.Response.InternetRadioStations.List[1].Name != station2name) ||
 			(response.Response.InternetRadioStations.List[1].HomepageURL != "")) {
