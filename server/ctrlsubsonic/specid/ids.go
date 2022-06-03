@@ -15,7 +15,7 @@ var (
 	ErrBadSeparator = errors.New("bad separator")
 	ErrNotAnInt     = errors.New("not an int")
 	ErrBadPrefix    = errors.New("bad prefix")
-	ErrBadJSON			= errors.New("bad JSON")
+	ErrBadJSON      = errors.New("bad JSON")
 )
 
 type IDT string

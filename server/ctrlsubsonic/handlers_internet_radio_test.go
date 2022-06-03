@@ -6,10 +6,19 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
   "encoding/json"
 )
 
-func RunTestCase(t *testing.T, contr *Controller, h handlerSubsonic, q url.Values, admin bool) (*spec.SubsonicResponse) {
+const station1streamURL = "http://lyd.nrk.no/nrk_radio_p1_ostlandssendingen_mp3_m"
+const station1name = "NRK P1"
+const station1homepageURL = "http://www.nrk.no/p1"
+const station2streamURL = "http://lyd.nrk.no/nrk_radio_p2_mp3_m"
+const station2name = "NRK P2"
+const station2homepageURL = "http://p3.no"
+const notaURL = "not_a_url"
+
+func runTestCase(t *testing.T, contr *Controller, h handlerSubsonic, q url.Values, admin bool) (*spec.SubsonicResponse) {
 	var rr *httptest.ResponseRecorder
 	var req *http.Request
 
@@ -44,13 +53,13 @@ func RunTestCase(t *testing.T, contr *Controller, h handlerSubsonic, q url.Value
 	return &response
 }
 
-func CheckSuccess(t *testing.T, response *spec.SubsonicResponse) {
+func checkSuccess(t *testing.T, response *spec.SubsonicResponse) {
 	if (response.Response.Status != "ok") {
 		t.Fatal("didn't return ok status")
 	}
 }
 
-func CheckMissingParameter(t *testing.T, response *spec.SubsonicResponse) {
+func checkMissingParameter(t *testing.T, response *spec.SubsonicResponse) {
 	if (response.Response.Status != "failed") {
 		t.Fatal("didn't return failed status")
 	}
@@ -59,7 +68,7 @@ func CheckMissingParameter(t *testing.T, response *spec.SubsonicResponse) {
 	}
 }
 
-func CheckBadParameter(t *testing.T, response *spec.SubsonicResponse) {
+func checkBadParameter(t *testing.T, response *spec.SubsonicResponse) {
 	if (response.Response.Status != "failed") {
 		t.Fatal("didn't return failed status")
 	}
@@ -71,47 +80,76 @@ func CheckBadParameter(t *testing.T, response *spec.SubsonicResponse) {
 func TestInternetRadioStations(t *testing.T) {
 	t.Parallel()
 	contr := makeController(t)
+	var response *spec.SubsonicResponse
 	
-	// Start with some bad creates
+	// check for empty get on new DB
+	response = runTestCase(t, contr, contr.ServeGetInternetRadioStations, url.Values{}, false) //no need to be admin
+	checkSuccess(t, response)
+	if ((response.Response.InternetRadioStations == nil) ||
+			(len(response.Response.InternetRadioStations.List) != 0)) {
+		t.Fatal("didn't return empty stations")
+	}
+
+	// Bad creates
 
 	// No parameters
-	response := RunTestCase(t, contr, contr.ServeCreateInternetRadioStation, url.Values{}, true)
-	CheckMissingParameter(t, response)
+	response = runTestCase(t, contr, contr.ServeCreateInternetRadioStation, url.Values{}, true)
+	checkMissingParameter(t, response)
 
 	// Just one required parameter
-	response = RunTestCase(t, contr, contr.ServeCreateInternetRadioStation,
-			url.Values{"streamUrl": {"http://lyd.nrk.no/nrk_radio_p1_ostlandssendingen_mp3_m"}}, true)
-	CheckMissingParameter(t, response)
-	response = RunTestCase(t, contr, contr.ServeCreateInternetRadioStation,
-			url.Values{"name": {"NRK P1"}}, true)
-	CheckMissingParameter(t, response)
+	response = runTestCase(t, contr, contr.ServeCreateInternetRadioStation,
+			url.Values{"streamUrl": {station1streamURL}}, true)
+	checkMissingParameter(t, response)
+	response = runTestCase(t, contr, contr.ServeCreateInternetRadioStation,
+			url.Values{"name": {station1name}}, true)
+	checkMissingParameter(t, response)
 
 	// Bad URLs
-	response = RunTestCase(t, contr, contr.ServeCreateInternetRadioStation,
-			url.Values{"streamUrl": {"http://lyd.nrk.no/nrk_radio_p1_ostlandssendingen_mp3_m"},
-								 "name": {"NRK P1"},
-								 "homepageUrl": {"not_a_url"}}, true)
-	CheckBadParameter(t, response)
-	response = RunTestCase(t, contr, contr.ServeCreateInternetRadioStation,
-			url.Values{"streamUrl": {"not_a_url"},
-								 "name": {"NRK P1"},
-								 "homepageUrl": {"http://www.nrk.no/p1"}}, true)
-	CheckBadParameter(t, response)
+	response = runTestCase(t, contr, contr.ServeCreateInternetRadioStation,
+			url.Values{"streamUrl": {station1streamURL},
+								 "name": {station1name},
+								 "homepageUrl": {notaURL}}, true)
+	checkBadParameter(t, response)
+	response = runTestCase(t, contr, contr.ServeCreateInternetRadioStation,
+			url.Values{"streamUrl": {notaURL},
+								 "name": {station1name},
+								 "homepageUrl": {station1homepageURL}}, true)
+	checkBadParameter(t, response)
+
+	// check for empty get
+	response = runTestCase(t, contr, contr.ServeGetInternetRadioStations, url.Values{}, false) //no need to be admin
+	checkSuccess(t, response)
+	if ((response.Response.InternetRadioStations == nil) ||
+			(len(response.Response.InternetRadioStations.List) != 0)) {
+		t.Fatal("didn't return empty stations")
+	}
 
 	// Successful adds and read back
-	response = RunTestCase(t, contr, contr.ServeCreateInternetRadioStation,
-			url.Values{"streamUrl": {"http://lyd.nrk.no/nrk_radio_p1_ostlandssendingen_mp3_m"},
-								 "name": {"NRK P1"},
-								 "homepageUrl": {"http://www.nrk.no/p1"}}, true)
-	CheckSuccess(t, response)
-	response = RunTestCase(t, contr, contr.ServeCreateInternetRadioStation,
-			url.Values{"streamUrl": {"http://lyd.nrk.no/nrk_radio_p2_mp3_m"},
-								 "name": {"NRK P2"},
-								 "homepageUrl": {"http://p3.no"}}, true)
-	CheckSuccess(t, response)
-	response = RunTestCase(t, contr, contr.ServeGetInternetRadioStations, url.Values{}, false) //no need to be admin
-	CheckSuccess(t, response)
+	response = runTestCase(t, contr, contr.ServeCreateInternetRadioStation,
+			url.Values{"streamUrl": {station1streamURL},
+								 "name": {station1name},
+								 "homepageUrl": {station1homepageURL}}, true)
+	checkSuccess(t, response)
+	response = runTestCase(t, contr, contr.ServeCreateInternetRadioStation,
+			url.Values{"streamUrl": {station2streamURL},
+								 "name": {station2name}}, true) // NOTE: No homepage URL
+	checkSuccess(t, response)
+	response = runTestCase(t, contr, contr.ServeGetInternetRadioStations, url.Values{}, false) //no need to be admin
+	checkSuccess(t, response)
 	if (response.Response.InternetRadioStations == nil) {
 		t.Fatal("didn't return stations")
+	}
+	if (len(response.Response.InternetRadioStations.List) != 2) {
+		t.Fatal("wrong number of stations")
+	}
+	if ((*response.Response.InternetRadioStations.List[0].ID != specid.ID{specid.InternetRadioStation, 1}) ||
+			(response.Response.InternetRadioStations.List[0].StreamURL != station1streamURL) ||
+			(response.Response.InternetRadioStations.List[0].Name != station1name) ||
+			(response.Response.InternetRadioStations.List[0].HomepageURL != station1homepageURL) ||
+			(*response.Response.InternetRadioStations.List[1].ID != specid.ID{specid.InternetRadioStation, 2}) ||
+			(response.Response.InternetRadioStations.List[1].StreamURL != station2streamURL) ||
+			(response.Response.InternetRadioStations.List[1].Name != station2name) ||
+			(response.Response.InternetRadioStations.List[1].HomepageURL != "")) {
+		t.Fatal("bad data")
 	}
 }

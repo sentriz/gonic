@@ -379,7 +379,7 @@ type SimilarSongsTwo struct {
 }
 
 type InternetRadioStations struct {
-	List []*InternetRadioStation `xml:"internetRadioStation" json:"internetRadioStation"`
+	List []*InternetRadioStation `xml:"internetRadioStation" json:"internetRadioStation,omitempty"`
 }
 
 type InternetRadioStation struct {
