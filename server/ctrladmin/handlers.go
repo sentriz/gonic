@@ -573,6 +573,16 @@ func (c *Controller) ServeInternetRadioStationDeleteDo(r *http.Request) *Respons
 		return &Response{code: 400, err: "please provide a valid internet radio station id"}
 	}
 
+	var station db.InternetRadioStation
+	err = c.DB.
+		Where("id=?", stationID).
+		First(&station).
+		Error
+
+	if err != nil {
+		return &Response{code: 400, err: "please provide a valid internet radio station id"}
+	}
+
 	err = c.DB.
 		Where("id=?", stationID).
 		Delete(&db.InternetRadioStation{}).
