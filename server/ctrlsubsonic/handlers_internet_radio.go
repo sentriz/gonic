@@ -25,7 +25,7 @@ func (c *Controller) ServeGetInternetRadioStations(r *http.Request) *spec.Respon
 func (c *Controller) ServeCreateInternetRadioStation(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	if (!user.IsAdmin) {
-		return spec.NewError(10, "user not admin")
+		return spec.NewError(50, "user not admin")
 	}
 
 	params := r.Context().Value(CtxParams).(params.Params)
@@ -66,7 +66,7 @@ func (c *Controller) ServeCreateInternetRadioStation(r *http.Request) *spec.Resp
 func (c *Controller) ServeUpdateInternetRadioStation(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	if (!user.IsAdmin) {
-		return spec.NewError(10, "user not admin")
+		return spec.NewError(50, "user not admin")
 	}
 	params := r.Context().Value(CtxParams).(params.Params)
 
@@ -118,7 +118,7 @@ func (c *Controller) ServeUpdateInternetRadioStation(r *http.Request) *spec.Resp
 func (c *Controller) ServeDeleteInternetRadioStation(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	if (!user.IsAdmin) {
-		return spec.NewError(10, "user not admin")
+		return spec.NewError(50, "user not admin")
 	}
 	params := r.Context().Value(CtxParams).(params.Params)
 	
@@ -127,9 +127,18 @@ func (c *Controller) ServeDeleteInternetRadioStation(r *http.Request) *spec.Resp
 		return spec.NewError(10, "no id provided: %s", err)
 	}
 
+	var station db.InternetRadioStation
 	err = c.DB.
 		Where("id=?", stationID.Value).
-		Delete(&db.InternetRadioStation{}).
+		First(&station).
+		Error
+
+	if err != nil {
+		return spec.NewError(70, "id not found: %s", err)
+	}
+
+	err = c.DB.
+		Delete(&station).
 		Error
 	if err != nil {
 		return spec.NewError(70, "id not found: %s", err)
