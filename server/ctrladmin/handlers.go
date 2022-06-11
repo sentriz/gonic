@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"image"
-	_ "image/gif"
+	_ "image/gif" // Needed to decode uploaded GIFs
 	"image/jpeg"
-	_ "image/png"
+	_ "image/png" // Needed to decode uploaded PNGs
 
 	"github.com/nfnt/resize"
 

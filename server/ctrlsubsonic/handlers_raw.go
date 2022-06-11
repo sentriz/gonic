@@ -306,10 +306,10 @@ func (c *Controller) ServeGetAvatar(w http.ResponseWriter, r *http.Request) *spe
 	if err != nil {
 		return spec.NewError(10, "please provide an `username` parameter")
 	}
-	req_user := c.DB.GetUserByName(username)
-	if (user != req_user) && !user.IsAdmin {
+	reqUser := c.DB.GetUserByName(username)
+	if (user != reqUser) && !user.IsAdmin {
 		return spec.NewError(50, "user not admin")
 	}
-	http.ServeContent(w, r, "", time.Now(), bytes.NewReader(req_user.Avatar))
+	http.ServeContent(w, r, "", time.Now(), bytes.NewReader(reqUser.Avatar))
 	return nil
 }
