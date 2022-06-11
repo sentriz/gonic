@@ -11,10 +11,6 @@ import (
 	"github.com/gorilla/securecookie"
 	"github.com/sentriz/gormstore"
 
-	"go.senan.xyz/gonic/server/assets"
-	"go.senan.xyz/gonic/server/ctrladmin"
-	"go.senan.xyz/gonic/server/ctrlbase"
-	"go.senan.xyz/gonic/server/ctrlsubsonic"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/jukebox"
 	"go.senan.xyz/gonic/podcasts"
@@ -23,6 +19,10 @@ import (
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/scrobble/lastfm"
 	"go.senan.xyz/gonic/scrobble/listenbrainz"
+	"go.senan.xyz/gonic/server/assets"
+	"go.senan.xyz/gonic/server/ctrladmin"
+	"go.senan.xyz/gonic/server/ctrlbase"
+	"go.senan.xyz/gonic/server/ctrlsubsonic"
 	"go.senan.xyz/gonic/transcode"
 )
 
@@ -161,6 +161,8 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	routUser.Handle("/change_own_username_do", ctrl.H(ctrl.ServeChangeOwnUsernameDo))
 	routUser.Handle("/change_own_password", ctrl.H(ctrl.ServeChangeOwnPassword))
 	routUser.Handle("/change_own_password_do", ctrl.H(ctrl.ServeChangeOwnPasswordDo))
+	routUser.Handle("/change_own_avatar", ctrl.H(ctrl.ServeChangeOwnAvatar))
+	routUser.Handle("/change_own_avatar_do", ctrl.H(ctrl.ServeChangeOwnAvatarDo))
 	routUser.Handle("/link_lastfm_do", ctrl.H(ctrl.ServeLinkLastFMDo))
 	routUser.Handle("/unlink_lastfm_do", ctrl.H(ctrl.ServeUnlinkLastFMDo))
 	routUser.Handle("/link_listenbrainz_do", ctrl.H(ctrl.ServeLinkListenBrainzDo))
@@ -177,6 +179,8 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	routAdmin.Handle("/change_username_do", ctrl.H(ctrl.ServeChangeUsernameDo))
 	routAdmin.Handle("/change_password", ctrl.H(ctrl.ServeChangePassword))
 	routAdmin.Handle("/change_password_do", ctrl.H(ctrl.ServeChangePasswordDo))
+	routAdmin.Handle("/change_avatar", ctrl.H(ctrl.ServeChangeAvatar))
+	routAdmin.Handle("/change_avatar_do", ctrl.H(ctrl.ServeChangeAvatarDo))
 	routAdmin.Handle("/delete_user", ctrl.H(ctrl.ServeDeleteUser))
 	routAdmin.Handle("/delete_user_do", ctrl.H(ctrl.ServeDeleteUserDo))
 	routAdmin.Handle("/create_user", ctrl.H(ctrl.ServeCreateUser))
@@ -235,6 +239,7 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/getCoverArt{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeGetCoverArt))
 	r.Handle("/stream{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeStream))
 	r.Handle("/download{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeStream))
+	r.Handle("/getAvatar{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeGetAvatar))
 
 	// browse by tag
 	r.Handle("/getAlbum{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetAlbum))

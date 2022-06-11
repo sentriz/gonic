@@ -43,6 +43,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202202241218", migratePublicPlaylist),
 		construct(ctx, "202204270903", migratePodcastDropUserID),
 		construct(ctx, "202206011628", migrateInternetRadioStations),
+		construct(ctx, "202206101425", migrateUser),
 	}
 
 	return gormigrate.
@@ -347,7 +348,6 @@ func migratePodcastDropUserID(tx *gorm.DB, _ MigrationContext) error {
 		return nil
 	}
 
-
 	step = tx.Exec(`
 		ALTER TABLE podcasts DROP COLUMN user_id;
 	`)
@@ -360,6 +360,13 @@ func migratePodcastDropUserID(tx *gorm.DB, _ MigrationContext) error {
 func migrateInternetRadioStations(tx *gorm.DB, _ MigrationContext) error {
 	return tx.AutoMigrate(
 		InternetRadioStation{},
+	).
+		Error
+}
+
+func migrateUser(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(
+		User{},
 	).
 		Error
 }

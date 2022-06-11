@@ -1,12 +1,20 @@
 package ctrladmin
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"image"
+	_ "image/gif"
+	"image/jpeg"
+	_ "image/png"
+
+	"github.com/nfnt/resize"
 
 	"github.com/mmcdole/gofeed"
 
@@ -116,6 +124,61 @@ func (c *Controller) ServeChangeOwnPasswordDo(r *http.Request) *Response {
 	}
 	user := r.Context().Value(CtxUser).(*db.User)
 	user.Password = passwordOne
+	c.DB.Save(user)
+	return &Response{redirect: "/admin/home"}
+}
+
+func (c *Controller) ServeChangeOwnAvatar(r *http.Request) *Response {
+	return &Response{template: "change_own_avatar.tmpl"}
+}
+
+func (c *Controller) ServeChangeOwnAvatarDo(r *http.Request) *Response {
+	user := r.Context().Value(CtxUser).(*db.User)
+	mpr, err := r.MultipartReader()
+	if err != nil {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{err.Error()},
+		}
+	}
+	form, err := mpr.ReadForm(0)
+	if err != nil {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{err.Error()},
+		}
+	}
+	fileh, found := form.File["avatar"]
+	if !found {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{"no avatar file"},
+		}
+	}
+	file, err := fileh[0].Open()
+	if err != nil {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{err.Error()},
+		}
+	}
+	i, _, err := image.Decode(file)
+	if err != nil {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{err.Error()},
+		}
+	}
+	newi := resize.Resize(64, 64, i, resize.Lanczos3)
+	buf := new(bytes.Buffer)
+	err = jpeg.Encode(buf, newi, nil)
+	if err != nil {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{err.Error()},
+		}
+	}
+	user.Avatar = buf.Bytes()
 	c.DB.Save(user)
 	return &Response{redirect: "/admin/home"}
 }
@@ -242,6 +305,75 @@ func (c *Controller) ServeChangePasswordDo(r *http.Request) *Response {
 	return &Response{redirect: "/admin/home"}
 }
 
+func (c *Controller) ServeChangeAvatar(r *http.Request) *Response {
+	username := r.URL.Query().Get("user")
+	if username == "" {
+		return &Response{code: 400, err: "please provide a username"}
+	}
+	user := c.DB.GetUserByName(username)
+	if user == nil {
+		return &Response{code: 400, err: "couldn't find a user with that name"}
+	}
+	data := &templateData{}
+	data.SelectedUser = user
+	return &Response{
+		template: "change_avatar.tmpl",
+		data:     data,
+	}
+}
+
+func (c *Controller) ServeChangeAvatarDo(r *http.Request) *Response {
+	username := r.URL.Query().Get("user")
+	user := c.DB.GetUserByName(username)
+	mpr, err := r.MultipartReader()
+	if err != nil {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{err.Error()},
+		}
+	}
+	form, err := mpr.ReadForm(0)
+	if err != nil {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{err.Error()},
+		}
+	}
+	fileh, found := form.File["avatar"]
+	if !found {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{"no avatar file"},
+		}
+	}
+	file, err := fileh[0].Open()
+	if err != nil {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{err.Error()},
+		}
+	}
+	i, _, err := image.Decode(file)
+	if err != nil {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{err.Error()},
+		}
+	}
+	newi := resize.Resize(64, 64, i, resize.Lanczos3)
+	buf := new(bytes.Buffer)
+	err = jpeg.Encode(buf, newi, nil)
+	if err != nil {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{err.Error()},
+		}
+	}
+	user.Avatar = buf.Bytes()
+	c.DB.Save(user)
+	return &Response{redirect: "/admin/home"}
+}
+
 func (c *Controller) ServeDeleteUser(r *http.Request) *Response {
 	username := r.URL.Query().Get("user")
 	if username == "" {
@@ -277,16 +409,30 @@ func (c *Controller) ServeCreateUser(r *http.Request) *Response {
 }
 
 func (c *Controller) ServeCreateUserDo(r *http.Request) *Response {
-	username := r.FormValue("username")
-	err := validateUsername(username)
+	mpr, err := r.MultipartReader()
 	if err != nil {
 		return &Response{
 			redirect: r.Referer(),
 			flashW:   []string{err.Error()},
 		}
 	}
-	passwordOne := r.FormValue("password_one")
-	passwordTwo := r.FormValue("password_two")
+	form, err := mpr.ReadForm(0)
+	if err != nil {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{err.Error()},
+		}
+	}
+	username := form.Value["username"][0]
+	err = validateUsername(username)
+	if err != nil {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{err.Error()},
+		}
+	}
+	passwordOne := form.Value["password_one"][0]
+	passwordTwo := form.Value["password_two"][0]
 	err = validatePasswords(passwordOne, passwordTwo)
 	if err != nil {
 		return &Response{
@@ -294,9 +440,38 @@ func (c *Controller) ServeCreateUserDo(r *http.Request) *Response {
 			flashW:   []string{err.Error()},
 		}
 	}
+	avatar := []byte{}
+	fileh, found := form.File["avatar"]
+	if !found {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{"no avatar file"},
+		}
+	}
+	file, err := fileh[0].Open()
+	if err == nil { // ok if empty
+		i, _, err := image.Decode(file)
+		if err != nil {
+			return &Response{
+				redirect: r.Referer(),
+				flashW:   []string{err.Error()},
+			}
+		}
+		newi := resize.Resize(64, 64, i, resize.Lanczos3)
+		buf := new(bytes.Buffer)
+		err = jpeg.Encode(buf, newi, nil)
+		if err != nil {
+			return &Response{
+				redirect: r.Referer(),
+				flashW:   []string{err.Error()},
+			}
+		}
+		avatar = buf.Bytes()
+	}
 	user := db.User{
 		Name:     username,
 		Password: passwordOne,
+		Avatar:   avatar,
 	}
 	if err := c.DB.Create(&user).Error; err != nil {
 		return &Response{
@@ -474,8 +649,8 @@ func (c *Controller) ServeInternetRadioStationAddDo(r *http.Request) *Response {
 	name := r.FormValue("name")
 	homepageURL := r.FormValue("homepageURL")
 
-	if (name == "") {
-			return &Response{
+	if name == "" {
+		return &Response{
 			redirect: "/admin/home",
 			flashW:   []string{"no name provided"},
 		}
@@ -489,9 +664,9 @@ func (c *Controller) ServeInternetRadioStationAddDo(r *http.Request) *Response {
 		}
 	}
 
-	if (homepageURL != "") {
-			_, err := url.ParseRequestURI(homepageURL)
-			if err != nil {
+	if homepageURL != "" {
+		_, err := url.ParseRequestURI(homepageURL)
+		if err != nil {
 			return &Response{
 				redirect: "/admin/home",
 				flashW:   []string{fmt.Sprintf("bad homepage URL provided: %v", err)},
@@ -521,8 +696,8 @@ func (c *Controller) ServeInternetRadioStationUpdateDo(r *http.Request) *Respons
 	name := r.FormValue("name")
 	homepageURL := r.FormValue("homepageURL")
 
-	if (name == "") {
-			return &Response{
+	if name == "" {
+		return &Response{
 			redirect: "/admin/home",
 			flashW:   []string{"no name provided"},
 		}
@@ -536,8 +711,8 @@ func (c *Controller) ServeInternetRadioStationUpdateDo(r *http.Request) *Respons
 		}
 	}
 
-	if (homepageURL != "") {
-			_, err := url.ParseRequestURI(homepageURL)
+	if homepageURL != "" {
+		_, err := url.ParseRequestURI(homepageURL)
 		if err != nil {
 			return &Response{
 				redirect: "/admin/home",

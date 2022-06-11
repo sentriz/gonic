@@ -1,0 +1,11 @@
+{{ define "user" }}
+<div class="padded box">
+    <div class="box-title">
+        <i class="mdi mdi-account-key"></i> changing {{ .SelectedUser.Name }}'s avatar
+    </div>
+    <form enctype="multipart/form-data" class="block" action="{{ printf "/admin/change_avatar_do?user=%s" .SelectedUser.Name | path }}" method="post">
+        <input type="file" id="avatar" name="avatar">
+        <input type="submit" value="change">
+    </form>
+</div>
+{{ end }}
