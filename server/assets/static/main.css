@@ -61,6 +61,10 @@ input[type="submit"] {
   width: fit-content;
 }
 
+img[src=""] {
+  display: none;
+}
+
 form.block {
   max-width: var(--width-form);
   margin-left: auto;

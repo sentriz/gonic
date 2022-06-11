@@ -4,8 +4,20 @@
         <i class="mdi mdi-account-key"></i> changing {{ .SelectedUser.Name }}'s avatar
     </div>
     <form enctype="multipart/form-data" class="block" action="{{ printf "/admin/change_avatar_do?user=%s" .SelectedUser.Name | path }}" method="post">
-        <input type="file" id="avatar" name="avatar">
-        <input type="submit" value="change">
+        <p><input type="file" accept="image/jpeg image/png image/gif" id="avatar" name="avatar" onchange="showAvatar(event)" hidden></p>
+        <p><label style="cursor:pointer; color:blue;" type="button" for="avatar">choose file</label>
+        <p><img id="new_avatar" width="64" height="64" src=""/></p>
+        <p><input type="submit" value="change"></p>
+
+        <script>
+            {{if ne (len .SelectedUser.Avatar) 0}}
+                document.getElementById("new_avatar").src = "data:image/jpg;base64," + {{ .SelectedUser.Avatar }}
+            {{end}}
+            var showAvatar = function(event) {
+        	    var image = document.getElementById('new_avatar');
+	            image.src = URL.createObjectURL(event.target.files[0]);
+            };
+        </script>
     </form>
 </div>
 {{ end }}

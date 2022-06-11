@@ -7,8 +7,17 @@
         <input type="text" id="username" name="username" placeholder="username">
         <input type="password" id="password_one" name="password_one" placeholder="password">
         <input type="password" id="password_two" name="password_two" placeholder="verify password">
-        <input type="file" id="avatar" name="avatar">
-        <input type="submit" value="create">
+        <p><input type="file" accept="image/jpeg image/png image/gif" id="avatar" name="avatar" onchange="showAvatar(event)" hidden></p>
+        <p><label style="cursor:pointer; color:blue;" type="button" for="avatar">choose avatar</label>
+        <p><img id="new_avatar" width="64" height="64" src=""/></p>
+        <p><input type="submit" value="create"></p>
+
+        <script>
+            var showAvatar = function(event) {
+        	    var image = document.getElementById('new_avatar');
+	            image.src = URL.createObjectURL(event.target.files[0]);
+            };
+        </script>
     </form>
 </div>
 {{ end }}

@@ -21,10 +21,10 @@ import (
 	"github.com/sentriz/gormstore"
 
 	"go.senan.xyz/gonic"
-	"go.senan.xyz/gonic/server/assets"
-	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/podcasts"
+	"go.senan.xyz/gonic/server/assets"
+	"go.senan.xyz/gonic/server/ctrlbase"
 )
 
 type CtxKey int
@@ -122,8 +122,11 @@ type templateData struct {
 	DefaultListenBrainzURL string
 	SelectedUser           *db.User
 
-	Podcasts []*db.Podcast
+	Podcasts              []*db.Podcast
 	InternetRadioStations []*db.InternetRadioStation
+
+	// avatar
+	Avatar []byte
 }
 
 type Response struct {

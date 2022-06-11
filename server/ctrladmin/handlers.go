@@ -129,56 +129,54 @@ func (c *Controller) ServeChangeOwnPasswordDo(r *http.Request) *Response {
 }
 
 func (c *Controller) ServeChangeOwnAvatar(r *http.Request) *Response {
-	return &Response{template: "change_own_avatar.tmpl"}
+	data := &templateData{}
+	user := r.Context().Value(CtxUser).(*db.User)
+	data.SelectedUser = user
+	return &Response{
+		template: "change_own_avatar.tmpl",
+		data:     data,
+	}
 }
 
-func (c *Controller) ServeChangeOwnAvatarDo(r *http.Request) *Response {
-	user := r.Context().Value(CtxUser).(*db.User)
-	mpr, err := r.MultipartReader()
+func getAvatarFile(r *http.Request, avatar *[]byte) error {
+	err := r.ParseMultipartForm(10 << 20) // Keep up to 10 MB in memory
 	if err != nil {
-		return &Response{
-			redirect: r.Referer(),
-			flashW:   []string{err.Error()},
-		}
+		return err
 	}
-	form, err := mpr.ReadForm(0)
+	file, _, err := r.FormFile("avatar")
 	if err != nil {
-		return &Response{
-			redirect: r.Referer(),
-			flashW:   []string{err.Error()},
-		}
-	}
-	fileh, found := form.File["avatar"]
-	if !found {
-		return &Response{
-			redirect: r.Referer(),
-			flashW:   []string{"no avatar file"},
-		}
-	}
-	file, err := fileh[0].Open()
-	if err != nil {
-		return &Response{
-			redirect: r.Referer(),
-			flashW:   []string{err.Error()},
-		}
+		return err
 	}
 	i, _, err := image.Decode(file)
 	if err != nil {
-		return &Response{
-			redirect: r.Referer(),
-			flashW:   []string{err.Error()},
-		}
+		return err
 	}
 	newi := resize.Resize(64, 64, i, resize.Lanczos3)
 	buf := new(bytes.Buffer)
 	err = jpeg.Encode(buf, newi, nil)
 	if err != nil {
+		return err
+	}
+	*avatar = buf.Bytes()
+	return nil
+}
+
+func (c *Controller) ServeChangeOwnAvatarDo(r *http.Request) *Response {
+	user := r.Context().Value(CtxUser).(*db.User)
+	err := getAvatarFile(r, &user.Avatar)
+	if err != nil {
 		return &Response{
 			redirect: r.Referer(),
 			flashW:   []string{err.Error()},
 		}
 	}
-	user.Avatar = buf.Bytes()
+	c.DB.Save(user)
+	return &Response{redirect: "/admin/home"}
+}
+
+func (c *Controller) ServeDeleteOwnAvatarDo(r *http.Request) *Response {
+	user := r.Context().Value(CtxUser).(*db.User)
+	user.Avatar = nil
 	c.DB.Save(user)
 	return &Response{redirect: "/admin/home"}
 }
@@ -325,51 +323,21 @@ func (c *Controller) ServeChangeAvatar(r *http.Request) *Response {
 func (c *Controller) ServeChangeAvatarDo(r *http.Request) *Response {
 	username := r.URL.Query().Get("user")
 	user := c.DB.GetUserByName(username)
-	mpr, err := r.MultipartReader()
+	err := getAvatarFile(r, &user.Avatar)
 	if err != nil {
 		return &Response{
 			redirect: r.Referer(),
 			flashW:   []string{err.Error()},
 		}
 	}
-	form, err := mpr.ReadForm(0)
-	if err != nil {
-		return &Response{
-			redirect: r.Referer(),
-			flashW:   []string{err.Error()},
-		}
-	}
-	fileh, found := form.File["avatar"]
-	if !found {
-		return &Response{
-			redirect: r.Referer(),
-			flashW:   []string{"no avatar file"},
-		}
-	}
-	file, err := fileh[0].Open()
-	if err != nil {
-		return &Response{
-			redirect: r.Referer(),
-			flashW:   []string{err.Error()},
-		}
-	}
-	i, _, err := image.Decode(file)
-	if err != nil {
-		return &Response{
-			redirect: r.Referer(),
-			flashW:   []string{err.Error()},
-		}
-	}
-	newi := resize.Resize(64, 64, i, resize.Lanczos3)
-	buf := new(bytes.Buffer)
-	err = jpeg.Encode(buf, newi, nil)
-	if err != nil {
-		return &Response{
-			redirect: r.Referer(),
-			flashW:   []string{err.Error()},
-		}
-	}
-	user.Avatar = buf.Bytes()
+	c.DB.Save(user)
+	return &Response{redirect: "/admin/home"}
+}
+
+func (c *Controller) ServeDeleteAvatarDo(r *http.Request) *Response {
+	username := r.URL.Query().Get("user")
+	user := c.DB.GetUserByName(username)
+	user.Avatar = nil
 	c.DB.Save(user)
 	return &Response{redirect: "/admin/home"}
 }
@@ -409,21 +377,14 @@ func (c *Controller) ServeCreateUser(r *http.Request) *Response {
 }
 
 func (c *Controller) ServeCreateUserDo(r *http.Request) *Response {
-	mpr, err := r.MultipartReader()
+	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
 		return &Response{
 			redirect: r.Referer(),
 			flashW:   []string{err.Error()},
 		}
 	}
-	form, err := mpr.ReadForm(0)
-	if err != nil {
-		return &Response{
-			redirect: r.Referer(),
-			flashW:   []string{err.Error()},
-		}
-	}
-	username := form.Value["username"][0]
+	username := r.FormValue("username")
 	err = validateUsername(username)
 	if err != nil {
 		return &Response{
@@ -431,8 +392,8 @@ func (c *Controller) ServeCreateUserDo(r *http.Request) *Response {
 			flashW:   []string{err.Error()},
 		}
 	}
-	passwordOne := form.Value["password_one"][0]
-	passwordTwo := form.Value["password_two"][0]
+	passwordOne := r.FormValue("password_one")
+	passwordTwo := r.FormValue("password_two")
 	err = validatePasswords(passwordOne, passwordTwo)
 	if err != nil {
 		return &Response{
@@ -441,33 +402,7 @@ func (c *Controller) ServeCreateUserDo(r *http.Request) *Response {
 		}
 	}
 	avatar := []byte{}
-	fileh, found := form.File["avatar"]
-	if !found {
-		return &Response{
-			redirect: r.Referer(),
-			flashW:   []string{"no avatar file"},
-		}
-	}
-	file, err := fileh[0].Open()
-	if err == nil { // ok if empty
-		i, _, err := image.Decode(file)
-		if err != nil {
-			return &Response{
-				redirect: r.Referer(),
-				flashW:   []string{err.Error()},
-			}
-		}
-		newi := resize.Resize(64, 64, i, resize.Lanczos3)
-		buf := new(bytes.Buffer)
-		err = jpeg.Encode(buf, newi, nil)
-		if err != nil {
-			return &Response{
-				redirect: r.Referer(),
-				flashW:   []string{err.Error()},
-			}
-		}
-		avatar = buf.Bytes()
-	}
+	_ = getAvatarFile(r, &avatar)
 	user := db.User{
 		Name:     username,
 		Password: passwordOne,
