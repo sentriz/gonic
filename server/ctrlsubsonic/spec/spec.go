@@ -13,6 +13,10 @@ const (
 	xmlns      = "http://subsonic.org/restapi"
 )
 
+type SubsonicResponse struct {
+	Response          Response           `xml:"subsonic-response"       json:"subsonic-response"`
+}
+
 type Response struct {
 	Status            string             `xml:"status,attr"       json:"status"`
 	Version           string             `xml:"version,attr"      json:"version"`
@@ -51,6 +55,7 @@ type Response struct {
 	TopSongs          *TopSongs          `xml:"topSongs"          json:"topSongs,omitempty"`
 	SimilarSongs      *SimilarSongs      `xml:"similarSongs"      json:"similarSongs,omitempty"`
 	SimilarSongsTwo   *SimilarSongsTwo   `xml:"similarSongs2"     json:"similarSongs2,omitempty"`
+	InternetRadioStations   *InternetRadioStations   `xml:"internetRadioStations"     json:"internetRadioStations,omitempty"`
 }
 
 func NewResponse() *Response {
@@ -372,3 +377,15 @@ type SimilarSongs struct {
 type SimilarSongsTwo struct {
 	Tracks []*TrackChild `xml:"song,omitempty" json:"song,omitempty"`
 }
+
+type InternetRadioStations struct {
+	List []*InternetRadioStation `xml:"internetRadioStation" json:"internetRadioStation,omitempty"`
+}
+
+type InternetRadioStation struct {
+	ID               *specid.ID    `xml:"id,attr"          json:"id"`
+	Name             string        `xml:"name,attr"        json:"name"`
+	StreamURL        string        `xml:"streamUrl,attr"   json:"streamUrl"`
+	HomepageURL      string        `xml:"homepageUrl,attr" json:"homepageUrl"`
+}
+

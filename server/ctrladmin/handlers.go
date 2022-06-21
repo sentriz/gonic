@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -72,6 +73,9 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	}
 	// podcasts box
 	c.DB.Find(&data.Podcasts)
+
+	// internet radio box
+	c.DB.Find(&data.InternetRadioStations)
 
 	return &Response{
 		template: "home.tmpl",
@@ -400,7 +404,7 @@ func (c *Controller) ServePodcastAddDo(r *http.Request) *Response {
 			flashW:   []string{fmt.Sprintf("could not create feed: %v", err)},
 		}
 	}
-	if _, err = c.Podcasts.AddNewPodcast(rssURL, feed); err != nil {
+	if _, err := c.Podcasts.AddNewPodcast(rssURL, feed); err != nil {
 		return &Response{
 			redirect: "/admin/home",
 			flashW:   []string{fmt.Sprintf("could not create feed: %v", err)},
@@ -460,6 +464,108 @@ func (c *Controller) ServePodcastDeleteDo(r *http.Request) *Response {
 	if err := c.Podcasts.DeletePodcast(id); err != nil {
 		return &Response{code: 400, err: "please provide a valid podcast id"}
 	}
+	return &Response{
+		redirect: "/admin/home",
+	}
+}
+
+func (c *Controller) ServeInternetRadioStationAddDo(r *http.Request) *Response {
+	streamURL := r.FormValue("streamURL")
+	name := r.FormValue("name")
+	homepageURL := r.FormValue("homepageURL")
+
+	if name == "" {
+		return &Response{redirect: "/admin/home", flashW: []string{"no name provided"}}
+	}
+
+	if _, err := url.ParseRequestURI(streamURL); err != nil {
+		return &Response{redirect: "/admin/home", flashW: []string{fmt.Sprintf("bad stream URL provided: %v", err)}}
+	}
+
+	if homepageURL != "" {
+		if _, err := url.ParseRequestURI(homepageURL); err != nil {
+			return &Response{redirect: "/admin/home", flashW: []string{fmt.Sprintf("bad homepage URL provided: %v", err)}}
+		}
+	}
+
+	var station db.InternetRadioStation
+	station.StreamURL = streamURL
+	station.Name = name
+	station.HomepageURL = homepageURL
+	if err := c.DB.Save(&station).Error; err != nil {
+		return &Response{code: 500, err: fmt.Sprintf("error saving station: %v", err)}
+	}
+
+	return &Response{
+		redirect: "/admin/home",
+	}
+}
+
+func (c *Controller) ServeInternetRadioStationUpdateDo(r *http.Request) *Response {
+	stationID, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil {
+		return &Response{code: 400, err: "please provide a valid internet radio station id"}
+	}
+
+	streamURL := r.FormValue("streamURL")
+	name := r.FormValue("name")
+	homepageURL := r.FormValue("homepageURL")
+
+	if name == "" {
+		return &Response{
+			redirect: "/admin/home",
+			flashW:   []string{"no name provided"},
+		}
+	}
+
+	if _, err := url.ParseRequestURI(streamURL); err != nil {
+		return &Response{
+			redirect: "/admin/home",
+			flashW:   []string{fmt.Sprintf("bad stream URL provided: %v", err)},
+		}
+	}
+
+	if homepageURL != "" {
+		if _, err := url.ParseRequestURI(homepageURL); err != nil {
+			return &Response{
+				redirect: "/admin/home",
+				flashW:   []string{fmt.Sprintf("bad homepage URL provided: %v", err)},
+			}
+		}
+	}
+
+	var station db.InternetRadioStation
+	if err := c.DB.Where("id=?", stationID).First(&station).Error; err != nil {
+		return &Response{code: 404, err: fmt.Sprintf("find station by id: %v", err)}
+	}
+
+	station.StreamURL = streamURL
+	station.Name = name
+	station.HomepageURL = homepageURL
+	if err := c.DB.Save(&station).Error; err != nil {
+		return &Response{code: 500, err: "please provide a valid internet radio station id"}
+	}
+
+	return &Response{
+		redirect: "/admin/home",
+	}
+}
+
+func (c *Controller) ServeInternetRadioStationDeleteDo(r *http.Request) *Response {
+	stationID, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil {
+		return &Response{code: 400, err: "please provide a valid internet radio station id"}
+	}
+
+	var station db.InternetRadioStation
+	if err := c.DB.Where("id=?", stationID).First(&station).Error; err != nil {
+		return &Response{code: 404, err: fmt.Sprintf("find station by id: %v", err)}
+	}
+
+	if err := c.DB.Where("id=?", stationID).Delete(&db.InternetRadioStation{}).Error; err != nil {
+		return &Response{code: 500, err: fmt.Sprintf("deleting radio station: %v", err)}
+	}
+
 	return &Response{
 		redirect: "/admin/home",
 	}

@@ -69,6 +69,15 @@ func makeHTTPMock(query url.Values) (*httptest.ResponseRecorder, *http.Request) 
 	return rr, req
 }
 
+func makeHTTPMockWithAdmin(query url.Values) (*httptest.ResponseRecorder, *http.Request) {
+	rr, req := makeHTTPMock(query)
+	ctx := req.Context()
+	ctx = context.WithValue(ctx, CtxUser, &db.User{IsAdmin: true})
+	req = req.WithContext(ctx)
+
+	return rr, req
+}
+
 func serveRaw(t *testing.T, contr *Controller, h handlerSubsonicRaw, rr *httptest.ResponseRecorder, req *http.Request) {
 	type middleware func(http.Handler) http.Handler
 	middlewares := []middleware{

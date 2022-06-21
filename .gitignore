@@ -16,3 +16,4 @@ gonicembed
 .vscode
 *.swp
 .tags*
+*.test

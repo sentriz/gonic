@@ -208,6 +208,38 @@
         </div>
     </div>
 {{ end }}
+{{ if .User.IsAdmin }}
+    <div class="padded box">
+        <div class="box-title">
+            <i class="mdi mdi-radio"></i> internet_radio_stations
+        </div>
+        <div class="box-description text-light">
+            <p>you can add and update internet radio stations here</p>
+        </div>
+        <div>
+            <table id="irs-preferences">
+            {{ range $pref := .InternetRadioStations }}
+                <tr>
+                    <form id="irs-{{ $pref.ID }}-update" action="{{ printf "/admin/update_internet_radio_station_do?id=%d" $pref.ID | path }}" method="post"></form>
+                    <form id="irs-{{ $pref.ID }}-delete" action="{{ printf "/admin/delete_internet_radio_station_do?id=%d" $pref.ID | path }}" method="post"></form>
+                    <td><input form="irs-{{ $pref.ID }}-update" type="text" name="streamURL" value={{ $pref.StreamURL }}></td>
+                    <td><input form="irs-{{ $pref.ID }}-update" type="text" name="name" value={{ $pref.Name }}></td>
+                    <td><input form="irs-{{ $pref.ID }}-update" type="text" name="homepageURL" value={{ $pref.HomepageURL }}></td>
+                    <td><input form="irs-{{ $pref.ID }}-update" type="submit" value="update"></td>
+                    <td><input form="irs-{{ $pref.ID }}-delete" type="submit" value="delete"></td>
+                </tr>
+            {{ end }}
+            <tr>
+                <form id="irs-add" action="{{ path "/admin/add_internet_radio_station_do" }}" method="post"></form>
+                <td><input form="irs-add" type="text" name="streamURL" placeholder="stream URL"></td>
+                <td><input form="irs-add" type="text" name="name" placeholder="name"></td>
+                <td><input form="irs-add" type="text" name="homepageURL" placeholder="[homepage URL]"></td>
+                <td><input form="irs-add" type="submit" value="add"></td>
+            </tr>
+            </table>
+        </div>
+    </div>
+{{ end }}
 <div class="padded box">
     <div class="box-title">
         <i class="mdi mdi-playlist-music"></i> playlists
