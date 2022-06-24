@@ -404,7 +404,7 @@ func (c *Controller) ServePodcastAddDo(r *http.Request) *Response {
 			flashW:   []string{fmt.Sprintf("could not create feed: %v", err)},
 		}
 	}
-	if _, err = c.Podcasts.AddNewPodcast(rssURL, feed); err != nil {
+	if _, err := c.Podcasts.AddNewPodcast(rssURL, feed); err != nil {
 		return &Response{
 			redirect: "/admin/home",
 			flashW:   []string{fmt.Sprintf("could not create feed: %v", err)},
@@ -474,28 +474,17 @@ func (c *Controller) ServeInternetRadioStationAddDo(r *http.Request) *Response {
 	name := r.FormValue("name")
 	homepageURL := r.FormValue("homepageURL")
 
-	if (name == "") {
-			return &Response{
-			redirect: "/admin/home",
-			flashW:   []string{"no name provided"},
-		}
+	if name == "" {
+		return &Response{redirect: "/admin/home", flashW: []string{"no name provided"}}
 	}
 
-	_, err := url.ParseRequestURI(streamURL)
-	if err != nil {
-		return &Response{
-			redirect: "/admin/home",
-			flashW:   []string{fmt.Sprintf("bad stream URL provided: %v", err)},
-		}
+	if _, err := url.ParseRequestURI(streamURL); err != nil {
+		return &Response{redirect: "/admin/home", flashW: []string{fmt.Sprintf("bad stream URL provided: %v", err)}}
 	}
 
-	if (homepageURL != "") {
-			_, err := url.ParseRequestURI(homepageURL)
-			if err != nil {
-			return &Response{
-				redirect: "/admin/home",
-				flashW:   []string{fmt.Sprintf("bad homepage URL provided: %v", err)},
-			}
+	if homepageURL != "" {
+		if _, err := url.ParseRequestURI(homepageURL); err != nil {
+			return &Response{redirect: "/admin/home", flashW: []string{fmt.Sprintf("bad homepage URL provided: %v", err)}}
 		}
 	}
 
@@ -503,8 +492,9 @@ func (c *Controller) ServeInternetRadioStationAddDo(r *http.Request) *Response {
 	station.StreamURL = streamURL
 	station.Name = name
 	station.HomepageURL = homepageURL
-
-	c.DB.Save(&station)
+	if err := c.DB.Save(&station).Error; err != nil {
+		return &Response{code: 500, err: fmt.Sprintf("error saving station: %v", err)}
+	}
 
 	return &Response{
 		redirect: "/admin/home",
@@ -521,24 +511,38 @@ func (c *Controller) ServeInternetRadioStationUpdateDo(r *http.Request) *Respons
 	name := r.FormValue("name")
 	homepageURL := r.FormValue("homepageURL")
 
+<<<<<<< HEAD
 	if (name == "") {
 			return &Response{
+=======
+	if name == "" {
+		return &Response{
+>>>>>>> 7ab378accbadf2f25478ae37e231aacca881f7b7
 			redirect: "/admin/home",
 			flashW:   []string{"no name provided"},
 		}
 	}
 
+<<<<<<< HEAD
 	_, err = url.ParseRequestURI(streamURL)
 	if err != nil {
+=======
+	if _, err := url.ParseRequestURI(streamURL); err != nil {
+>>>>>>> 7ab378accbadf2f25478ae37e231aacca881f7b7
 		return &Response{
 			redirect: "/admin/home",
 			flashW:   []string{fmt.Sprintf("bad stream URL provided: %v", err)},
 		}
 	}
 
+<<<<<<< HEAD
 	if (homepageURL != "") {
 			_, err := url.ParseRequestURI(homepageURL)
 		if err != nil {
+=======
+	if homepageURL != "" {
+		if _, err := url.ParseRequestURI(homepageURL); err != nil {
+>>>>>>> 7ab378accbadf2f25478ae37e231aacca881f7b7
 			return &Response{
 				redirect: "/admin/home",
 				flashW:   []string{fmt.Sprintf("bad homepage URL provided: %v", err)},
@@ -547,6 +551,7 @@ func (c *Controller) ServeInternetRadioStationUpdateDo(r *http.Request) *Respons
 	}
 
 	var station db.InternetRadioStation
+<<<<<<< HEAD
 	err = c.DB.
 		Where("id=?", stationID).
 		First(&station).
@@ -554,13 +559,23 @@ func (c *Controller) ServeInternetRadioStationUpdateDo(r *http.Request) *Respons
 
 	if err != nil {
 		return &Response{code: 400, err: "please provide a valid internet radio station id"}
+=======
+	if err := c.DB.Where("id=?", stationID).First(&station).Error; err != nil {
+		return &Response{code: 404, err: fmt.Sprintf("find station by id: %v", err)}
+>>>>>>> 7ab378accbadf2f25478ae37e231aacca881f7b7
 	}
 
 	station.StreamURL = streamURL
 	station.Name = name
 	station.HomepageURL = homepageURL
+<<<<<<< HEAD
 
 	c.DB.Save(&station)
+=======
+	if err := c.DB.Save(&station).Error; err != nil {
+		return &Response{code: 500, err: "please provide a valid internet radio station id"}
+	}
+>>>>>>> 7ab378accbadf2f25478ae37e231aacca881f7b7
 
 	return &Response{
 		redirect: "/admin/home",
@@ -574,6 +589,7 @@ func (c *Controller) ServeInternetRadioStationDeleteDo(r *http.Request) *Respons
 	}
 
 	var station db.InternetRadioStation
+<<<<<<< HEAD
 	err = c.DB.
 		Where("id=?", stationID).
 		First(&station).
@@ -589,6 +605,14 @@ func (c *Controller) ServeInternetRadioStationDeleteDo(r *http.Request) *Respons
 		Error
 	if err != nil {
 		return &Response{code: 400, err: "please provide a valid internet radio station id"}
+=======
+	if err := c.DB.Where("id=?", stationID).First(&station).Error; err != nil {
+		return &Response{code: 404, err: fmt.Sprintf("find station by id: %v", err)}
+	}
+
+	if err := c.DB.Where("id=?", stationID).Delete(&db.InternetRadioStation{}).Error; err != nil {
+		return &Response{code: 500, err: fmt.Sprintf("deleting radio station: %v", err)}
+>>>>>>> 7ab378accbadf2f25478ae37e231aacca881f7b7
 	}
 
 	return &Response{
