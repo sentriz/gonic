@@ -1,6 +1,7 @@
 package ctrlsubsonic
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"log"
@@ -295,5 +296,20 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	if f, ok := w.(http.Flusher); ok {
 		f.Flush()
 	}
+	return nil
+}
+
+func (c *Controller) ServeGetAvatar(w http.ResponseWriter, r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
+	username, err := params.Get("username")
+	if err != nil {
+		return spec.NewError(10, "please provide an `username` parameter")
+	}
+	reqUser := c.DB.GetUserByName(username)
+	if (user != reqUser) && !user.IsAdmin {
+		return spec.NewError(50, "user not admin")
+	}
+	http.ServeContent(w, r, "", time.Now(), bytes.NewReader(reqUser.Avatar))
 	return nil
 }

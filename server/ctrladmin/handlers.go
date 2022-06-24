@@ -1,12 +1,20 @@
 package ctrladmin
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"image"
+	_ "image/gif" // Needed to decode uploaded GIFs
+	"image/jpeg"
+	_ "image/png" // Needed to decode uploaded PNGs
+
+	"github.com/nfnt/resize"
 
 	"github.com/mmcdole/gofeed"
 
@@ -116,6 +124,59 @@ func (c *Controller) ServeChangeOwnPasswordDo(r *http.Request) *Response {
 	}
 	user := r.Context().Value(CtxUser).(*db.User)
 	user.Password = passwordOne
+	c.DB.Save(user)
+	return &Response{redirect: "/admin/home"}
+}
+
+func (c *Controller) ServeChangeOwnAvatar(r *http.Request) *Response {
+	data := &templateData{}
+	user := r.Context().Value(CtxUser).(*db.User)
+	data.SelectedUser = user
+	return &Response{
+		template: "change_own_avatar.tmpl",
+		data:     data,
+	}
+}
+
+func getAvatarFile(r *http.Request, avatar *[]byte) error {
+	err := r.ParseMultipartForm(10 << 20) // Keep up to 10 MB in memory
+	if err != nil {
+		return err
+	}
+	file, _, err := r.FormFile("avatar")
+	if err != nil {
+		return err
+	}
+	i, _, err := image.Decode(file)
+	if err != nil {
+		return err
+	}
+	newi := resize.Resize(64, 64, i, resize.Lanczos3)
+	buf := new(bytes.Buffer)
+	err = jpeg.Encode(buf, newi, nil)
+	if err != nil {
+		return err
+	}
+	*avatar = buf.Bytes()
+	return nil
+}
+
+func (c *Controller) ServeChangeOwnAvatarDo(r *http.Request) *Response {
+	user := r.Context().Value(CtxUser).(*db.User)
+	err := getAvatarFile(r, &user.Avatar)
+	if err != nil {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{err.Error()},
+		}
+	}
+	c.DB.Save(user)
+	return &Response{redirect: "/admin/home"}
+}
+
+func (c *Controller) ServeDeleteOwnAvatarDo(r *http.Request) *Response {
+	user := r.Context().Value(CtxUser).(*db.User)
+	user.Avatar = nil
 	c.DB.Save(user)
 	return &Response{redirect: "/admin/home"}
 }
@@ -242,6 +303,45 @@ func (c *Controller) ServeChangePasswordDo(r *http.Request) *Response {
 	return &Response{redirect: "/admin/home"}
 }
 
+func (c *Controller) ServeChangeAvatar(r *http.Request) *Response {
+	username := r.URL.Query().Get("user")
+	if username == "" {
+		return &Response{code: 400, err: "please provide a username"}
+	}
+	user := c.DB.GetUserByName(username)
+	if user == nil {
+		return &Response{code: 400, err: "couldn't find a user with that name"}
+	}
+	data := &templateData{}
+	data.SelectedUser = user
+	return &Response{
+		template: "change_avatar.tmpl",
+		data:     data,
+	}
+}
+
+func (c *Controller) ServeChangeAvatarDo(r *http.Request) *Response {
+	username := r.URL.Query().Get("user")
+	user := c.DB.GetUserByName(username)
+	err := getAvatarFile(r, &user.Avatar)
+	if err != nil {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{err.Error()},
+		}
+	}
+	c.DB.Save(user)
+	return &Response{redirect: "/admin/home"}
+}
+
+func (c *Controller) ServeDeleteAvatarDo(r *http.Request) *Response {
+	username := r.URL.Query().Get("user")
+	user := c.DB.GetUserByName(username)
+	user.Avatar = nil
+	c.DB.Save(user)
+	return &Response{redirect: "/admin/home"}
+}
+
 func (c *Controller) ServeDeleteUser(r *http.Request) *Response {
 	username := r.URL.Query().Get("user")
 	if username == "" {
@@ -277,8 +377,15 @@ func (c *Controller) ServeCreateUser(r *http.Request) *Response {
 }
 
 func (c *Controller) ServeCreateUserDo(r *http.Request) *Response {
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{err.Error()},
+		}
+	}
 	username := r.FormValue("username")
-	err := validateUsername(username)
+	err = validateUsername(username)
 	if err != nil {
 		return &Response{
 			redirect: r.Referer(),
@@ -294,9 +401,12 @@ func (c *Controller) ServeCreateUserDo(r *http.Request) *Response {
 			flashW:   []string{err.Error()},
 		}
 	}
+	avatar := []byte{}
+	_ = getAvatarFile(r, &avatar)
 	user := db.User{
 		Name:     username,
 		Password: passwordOne,
+		Avatar:   avatar,
 	}
 	if err := c.DB.Create(&user).Error; err != nil {
 		return &Response{
