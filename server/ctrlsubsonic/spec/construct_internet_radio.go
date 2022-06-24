@@ -2,12 +2,11 @@ package spec
 
 import "go.senan.xyz/gonic/db"
 
-func NewInternetRadioStation(p *db.InternetRadioStation) *InternetRadioStation {
-	ret := &InternetRadioStation{
-		ID:				p.SID(),
-		Name:				p.Name,
-		StreamURL:			p.StreamURL,
-		HomepageURL:			p.HomepageURL,
+func NewInternetRadioStation(irs *db.InternetRadioStation) *InternetRadioStation {
+	return &InternetRadioStation{
+		ID:          irs.SID(),
+		Name:        irs.Name,
+		StreamURL:   irs.StreamURL,
+		HomepageURL: irs.HomepageURL,
 	}
-	return ret
 }

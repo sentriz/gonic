@@ -4,14 +4,16 @@ import (
 	"net/http"
 	"net/url"
 
+	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
-	"go.senan.xyz/gonic/db"
 )
 
 func (c *Controller) ServeGetInternetRadioStations(r *http.Request) *spec.Response {
 	var stations []*db.InternetRadioStation
-	c.DB.Find(&stations)
+	if err := c.DB.Find(&stations).Error; err != nil {
+		return spec.NewError(0, "find stations: %v", err)
+	}
 	sub := spec.NewResponse()
 	sub.InternetRadioStations = &spec.InternetRadioStations{
 		List: make([]*spec.InternetRadioStation, len(stations)),
@@ -24,7 +26,7 @@ func (c *Controller) ServeGetInternetRadioStations(r *http.Request) *spec.Respon
 
 func (c *Controller) ServeCreateInternetRadioStation(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
-	if (!user.IsAdmin) {
+	if !user.IsAdmin {
 		return spec.NewError(50, "user not admin")
 	}
 
@@ -32,23 +34,19 @@ func (c *Controller) ServeCreateInternetRadioStation(r *http.Request) *spec.Resp
 
 	streamURL, err := params.Get("streamUrl")
 	if err != nil {
-		return spec.NewError(10, "no stream URL provided: %s", err)
+		return spec.NewError(10, "no stream URL provided: %v", err)
 	}
-	_, err = url.ParseRequestURI(streamURL)
-	if err != nil {
-		return spec.NewError(70, "bad stream URL provided: %s", err)
+	if _, err := url.ParseRequestURI(streamURL); err != nil {
+		return spec.NewError(70, "bad stream URL provided: %v", err)
 	}
-
 	name, err := params.Get("name")
 	if err != nil {
-		return spec.NewError(10, "no name provided: %s", err)
+		return spec.NewError(10, "no name provided: %v", err)
 	}
-
 	homepageURL, err := params.Get("homepageUrl")
-	if (err == nil) {
-			_, err := url.ParseRequestURI(homepageURL)
-		if err != nil {
-			return spec.NewError(70, "bad homepage URL provided: %s", err)
+	if err == nil {
+		if _, err := url.ParseRequestURI(homepageURL); err != nil {
+			return spec.NewError(70, "bad homepage URL provided: %v", err)
 		}
 	}
 
@@ -57,91 +55,76 @@ func (c *Controller) ServeCreateInternetRadioStation(r *http.Request) *spec.Resp
 	station.Name = name
 	station.HomepageURL = homepageURL
 
-	c.DB.Save(&station)
+	if err := c.DB.Save(&station).Error; err != nil {
+		return spec.NewError(0, "save station: %v", err)
+	}
 
-	sub := spec.NewResponse()
-	return sub
+	return spec.NewResponse()
 }
 
 func (c *Controller) ServeUpdateInternetRadioStation(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
-	if (!user.IsAdmin) {
+	if !user.IsAdmin {
 		return spec.NewError(50, "user not admin")
 	}
 	params := r.Context().Value(CtxParams).(params.Params)
 
 	stationID, err := params.GetID("id")
 	if err != nil {
-		return spec.NewError(10, "no id provided: %s", err)
+		return spec.NewError(10, "no id provided: %v", err)
 	}
-
 	streamURL, err := params.Get("streamUrl")
 	if err != nil {
-		return spec.NewError(10, "no stream URL provided: %s", err)
+		return spec.NewError(10, "no stream URL provided: %v", err)
 	}
-	_, err = url.ParseRequestURI(streamURL)
-	if err != nil {
-		return spec.NewError(70, "bad stream URL provided: %s", err)
+	if _, err = url.ParseRequestURI(streamURL); err != nil {
+		return spec.NewError(70, "bad stream URL provided: %v", err)
 	}
-
 	name, err := params.Get("name")
 	if err != nil {
-		return spec.NewError(10, "no name provided: %s", err)
+		return spec.NewError(10, "no name provided: %v", err)
 	}
-
 	homepageURL, err := params.Get("homepageUrl")
-	if (err == nil) {
-			_, err := url.ParseRequestURI(homepageURL)
-		if err != nil {
-			return spec.NewError(70, "bad homepage URL provided: %s", err)
+	if err == nil {
+		if _, err := url.ParseRequestURI(homepageURL); err != nil {
+			return spec.NewError(70, "bad homepage URL provided: %v", err)
 		}
 	}
 
 	var station db.InternetRadioStation
-	err = c.DB.
-		Where("id=?", stationID.Value).
-		First(&station).
-		Error
-
-	if err != nil {
-		return spec.NewError(70, "id not found: %s", err)
+	if err := c.DB.Where("id=?", stationID.Value).First(&station).Error; err != nil {
+		return spec.NewError(70, "id not found: %v", err)
 	}
 
 	station.StreamURL = streamURL
 	station.Name = name
 	station.HomepageURL = homepageURL
 
-	c.DB.Save(&station)
+	if err := c.DB.Save(&station).Error; err != nil {
+		return spec.NewError(0, "save station: %v", err)
+	}
 	return spec.NewResponse()
 }
 
 func (c *Controller) ServeDeleteInternetRadioStation(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
-	if (!user.IsAdmin) {
+	if !user.IsAdmin {
 		return spec.NewError(50, "user not admin")
 	}
 	params := r.Context().Value(CtxParams).(params.Params)
-	
+
 	stationID, err := params.GetID("id")
 	if err != nil {
-		return spec.NewError(10, "no id provided: %s", err)
+		return spec.NewError(10, "no id provided: %v", err)
 	}
 
 	var station db.InternetRadioStation
-	err = c.DB.
-		Where("id=?", stationID.Value).
-		First(&station).
-		Error
-
-	if err != nil {
-		return spec.NewError(70, "id not found: %s", err)
+	if err := c.DB.Where("id=?", stationID.Value).First(&station).Error; err != nil {
+		return spec.NewError(70, "id not found: %v", err)
 	}
 
-	err = c.DB.
-		Delete(&station).
-		Error
-	if err != nil {
-		return spec.NewError(70, "id not found: %s", err)
+	if err := c.DB.Delete(&station).Error; err != nil {
+		return spec.NewError(70, "id not found: %v", err)
 	}
 
 	return spec.NewResponse()
