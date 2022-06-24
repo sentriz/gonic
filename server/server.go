@@ -11,6 +11,10 @@ import (
 	"github.com/gorilla/securecookie"
 	"github.com/sentriz/gormstore"
 
+	"go.senan.xyz/gonic/server/assets"
+	"go.senan.xyz/gonic/server/ctrladmin"
+	"go.senan.xyz/gonic/server/ctrlbase"
+	"go.senan.xyz/gonic/server/ctrlsubsonic"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/jukebox"
 	"go.senan.xyz/gonic/podcasts"
@@ -19,10 +23,6 @@ import (
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/scrobble/lastfm"
 	"go.senan.xyz/gonic/scrobble/listenbrainz"
-	"go.senan.xyz/gonic/server/assets"
-	"go.senan.xyz/gonic/server/ctrladmin"
-	"go.senan.xyz/gonic/server/ctrlbase"
-	"go.senan.xyz/gonic/server/ctrlsubsonic"
 	"go.senan.xyz/gonic/transcode"
 )
 

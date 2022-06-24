@@ -348,6 +348,7 @@ func migratePodcastDropUserID(tx *gorm.DB, _ MigrationContext) error {
 		return nil
 	}
 
+
 	step = tx.Exec(`
 		ALTER TABLE podcasts DROP COLUMN user_id;
 	`)
