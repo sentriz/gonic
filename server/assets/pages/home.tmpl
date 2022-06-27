@@ -84,8 +84,6 @@
             <span class="text-light">&#124;</span>
             <a href="{{ printf "/admin/change_avatar?user=%s" $user.Name | path }}">change avatar&#8230;</a>
             <span class="text-light">&#124;</span>
-            <a href="{{ printf "/admin/delete_avatar_do?user=%s" $user.Name | path }}">delete avatar&#8230;</a>
-            <span class="text-light">&#124;</span>
             {{ if $user.IsAdmin }}
                 <span class="text-light">delete&#8230;</span>
             {{ else }}
@@ -106,8 +104,6 @@
             <a href="{{ path "/admin/change_own_password" }}" class="button">change password&#8230;</a>
             <span class="text-light">&#124;</span>
             <a href="{{ path "/admin/change_own_avatar" }}" class="button">change avatar&#8230;</a>
-            <span class="text-light">&#124;</span>
-            <a href="{{ path "/admin/delete_own_avatar_do" }}" class="button">delete avatar&#8230;</a>
         </div>
     {{ end }}
 </div>

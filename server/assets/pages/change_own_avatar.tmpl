@@ -3,9 +3,12 @@
     <div class="box-title">
         <i class="mdi mdi-account-key"></i> changing account avatar
     </div>
+    <form class="block" action="{{ path "/admin/delete_own_avatar_do" }}" method="post">
+        <input type="submit" value="delete avatar" style="color: red;">
+    </form>
     <form enctype="multipart/form-data" class="block" action="{{ path "/admin/change_own_avatar_do" }}" method="post">
         <p><input type="file" accept="image/jpeg image/png image/gif" id="avatar" name="avatar" onchange="showAvatar(event)" hidden></p>
-        <p><label style="cursor:pointer; color:blue;" type="button" for="avatar">choose file</label>
+        <p><label style="outline: 1px solid #ccc;" type="button" for="avatar">choose file</label>
         <p><img id="new_avatar" width="64" height="64" src=""/></p>
         <p><input type="submit" value="change"></p>
 
