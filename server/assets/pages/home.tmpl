@@ -82,6 +82,8 @@
             <span class="text-light">&#124;</span>
             <a href="{{ printf "/admin/change_password?user=%s" $user.Name | path }}">password&#8230;</a>
             <span class="text-light">&#124;</span>
+            <a href="{{ printf "/admin/change_avatar?user=%s" $user.Name | path }}">change avatar&#8230;</a>
+            <span class="text-light">&#124;</span>
             {{ if $user.IsAdmin }}
                 <span class="text-light">delete&#8230;</span>
             {{ else }}
@@ -100,6 +102,8 @@
             <a href="{{ path "/admin/change_own_username" }}" class="button">change username&#8230;</a>
             <span class="text-light">&#124;</span>
             <a href="{{ path "/admin/change_own_password" }}" class="button">change password&#8230;</a>
+            <span class="text-light">&#124;</span>
+            <a href="{{ path "/admin/change_own_avatar" }}" class="button">change avatar&#8230;</a>
         </div>
     {{ end }}
 </div>
@@ -260,17 +264,16 @@
         {{ end }}
         </table>
         <form
-            id="playlist-upload-form"
+            class="file-upload"
             enctype="multipart/form-data"
             action="{{ path "/admin/upload_playlist_do" }}"
             method="post"
         >
             <div style="position: relative;">
-                <input id="playlist-upload-input" style="position: absolute; opacity: 0;" name="playlist-files" type="file" multiple />
+                <input style="position: absolute; opacity: 0;" name="playlist-files" type="file" multiple />
                 <input type="button" value="upload m3u8">
             </div>
         </form>
-        <script src="{{ path "/admin/static/playlist-upload.js" }}"></script>
     </div>
 </div>
 {{ end }}

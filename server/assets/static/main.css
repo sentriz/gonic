@@ -178,3 +178,9 @@ a:hover {
 .angry {
   background-color: #f4433669;
 }
+
+.avatar-preview {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+}

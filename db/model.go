@@ -172,6 +172,7 @@ type User struct {
 	ListenBrainzURL   string `sql:"default: null"`
 	ListenBrainzToken string `sql:"default: null"`
 	IsAdmin           bool   `sql:"default: null"`
+	Avatar            []byte `sql:"default: null"`
 }
 
 type Setting struct {
@@ -398,10 +399,10 @@ type Bookmark struct {
 }
 
 type InternetRadioStation struct {
-	ID           int `gorm:"primary_key"`
-	StreamURL    string
-  Name         string
-  HomepageURL  string
+	ID          int `gorm:"primary_key"`
+	StreamURL   string
+	Name        string
+	HomepageURL string
 }
 
 func (ir *InternetRadioStation) SID() *specid.ID {

@@ -1,7 +1,12 @@
 package ctrladmin
 
 import (
+	"bytes"
 	"fmt"
+	"image"
+	_ "image/gif" // to decode uploaded GIF avatars
+	"image/jpeg"
+	_ "image/png" // to decode uploaded PNG avatars
 	"log"
 	"net/http"
 	"net/url"
@@ -9,6 +14,7 @@ import (
 	"time"
 
 	"github.com/mmcdole/gofeed"
+	"github.com/nfnt/resize"
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/scanner"
@@ -116,6 +122,37 @@ func (c *Controller) ServeChangeOwnPasswordDo(r *http.Request) *Response {
 	}
 	user := r.Context().Value(CtxUser).(*db.User)
 	user.Password = passwordOne
+	c.DB.Save(user)
+	return &Response{redirect: "/admin/home"}
+}
+
+func (c *Controller) ServeChangeOwnAvatar(r *http.Request) *Response {
+	data := &templateData{}
+	user := r.Context().Value(CtxUser).(*db.User)
+	data.SelectedUser = user
+	return &Response{
+		template: "change_own_avatar.tmpl",
+		data:     data,
+	}
+}
+
+func (c *Controller) ServeChangeOwnAvatarDo(r *http.Request) *Response {
+	user := r.Context().Value(CtxUser).(*db.User)
+	avatar, err := getAvatarFile(r)
+	if err != nil {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{err.Error()},
+		}
+	}
+	user.Avatar = avatar
+	c.DB.Save(user)
+	return &Response{redirect: "/admin/home"}
+}
+
+func (c *Controller) ServeDeleteOwnAvatarDo(r *http.Request) *Response {
+	user := r.Context().Value(CtxUser).(*db.User)
+	user.Avatar = nil
 	c.DB.Save(user)
 	return &Response{redirect: "/admin/home"}
 }
@@ -242,6 +279,46 @@ func (c *Controller) ServeChangePasswordDo(r *http.Request) *Response {
 	return &Response{redirect: "/admin/home"}
 }
 
+func (c *Controller) ServeChangeAvatar(r *http.Request) *Response {
+	username := r.URL.Query().Get("user")
+	if username == "" {
+		return &Response{code: 400, err: "please provide a username"}
+	}
+	user := c.DB.GetUserByName(username)
+	if user == nil {
+		return &Response{code: 400, err: "couldn't find a user with that name"}
+	}
+	data := &templateData{}
+	data.SelectedUser = user
+	return &Response{
+		template: "change_avatar.tmpl",
+		data:     data,
+	}
+}
+
+func (c *Controller) ServeChangeAvatarDo(r *http.Request) *Response {
+	username := r.URL.Query().Get("user")
+	user := c.DB.GetUserByName(username)
+	avatar, err := getAvatarFile(r)
+	if err != nil {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{err.Error()},
+		}
+	}
+	user.Avatar = avatar
+	c.DB.Save(user)
+	return &Response{redirect: "/admin/home"}
+}
+
+func (c *Controller) ServeDeleteAvatarDo(r *http.Request) *Response {
+	username := r.URL.Query().Get("user")
+	user := c.DB.GetUserByName(username)
+	user.Avatar = nil
+	c.DB.Save(user)
+	return &Response{redirect: "/admin/home"}
+}
+
 func (c *Controller) ServeDeleteUser(r *http.Request) *Response {
 	username := r.URL.Query().Get("user")
 	if username == "" {
@@ -278,8 +355,7 @@ func (c *Controller) ServeCreateUser(r *http.Request) *Response {
 
 func (c *Controller) ServeCreateUserDo(r *http.Request) *Response {
 	username := r.FormValue("username")
-	err := validateUsername(username)
-	if err != nil {
+	if err := validateUsername(username); err != nil {
 		return &Response{
 			redirect: r.Referer(),
 			flashW:   []string{err.Error()},
@@ -287,8 +363,7 @@ func (c *Controller) ServeCreateUserDo(r *http.Request) *Response {
 	}
 	passwordOne := r.FormValue("password_one")
 	passwordTwo := r.FormValue("password_two")
-	err = validatePasswords(passwordOne, passwordTwo)
-	if err != nil {
+	if err := validatePasswords(passwordOne, passwordTwo); err != nil {
 		return &Response{
 			redirect: r.Referer(),
 			flashW:   []string{err.Error()},
@@ -569,4 +644,25 @@ func (c *Controller) ServeInternetRadioStationDeleteDo(r *http.Request) *Respons
 	return &Response{
 		redirect: "/admin/home",
 	}
+}
+
+func getAvatarFile(r *http.Request) ([]byte, error) {
+	err := r.ParseMultipartForm(10 << 20) // keep up to 10MB in memory
+	if err != nil {
+		return nil, err
+	}
+	file, _, err := r.FormFile("avatar")
+	if err != nil {
+		return nil, fmt.Errorf("read form file: %w", err)
+	}
+	i, _, err := image.Decode(file)
+	if err != nil {
+		return nil, fmt.Errorf("decode image: %w", err)
+	}
+	resized := resize.Resize(64, 64, i, resize.Lanczos3)
+	var buff bytes.Buffer
+	if err := jpeg.Encode(&buff, resized, nil); err != nil {
+		return nil, err
+	}
+	return buff.Bytes(), nil
 }
