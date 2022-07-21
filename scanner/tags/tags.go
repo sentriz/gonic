@@ -21,11 +21,20 @@ type Tagger struct {
 
 func (t *Tagger) first(keys ...string) string {
 	for _, key := range keys {
-		if val, ok := t.raw[key]; ok {
-			return val
+		if v := strings.TrimSpace(t.raw[key]); v != "" {
+			return v
 		}
 	}
 	return ""
+}
+
+func (t *Tagger) firstInt(sep string, keys ...string) int {
+	for _, key := range keys {
+		if v := intSep(t.raw[key], sep); v > 0 {
+			return v
+		}
+	}
+	return 0
 }
 
 func (t *Tagger) Title() string         { return t.first("title") }
@@ -35,11 +44,11 @@ func (t *Tagger) Album() string         { return t.first("album") }
 func (t *Tagger) AlbumArtist() string   { return t.first("albumartist", "album artist") }
 func (t *Tagger) AlbumBrainzID() string { return t.first("musicbrainz_albumid") }
 func (t *Tagger) Genre() string         { return t.first("genre") }
-func (t *Tagger) TrackNumber() int      { return intSep(t.first("tracknumber"), "/") } // eg. 5/12
-func (t *Tagger) DiscNumber() int       { return intSep(t.first("discnumber"), "/") }  // eg. 1/2
+func (t *Tagger) TrackNumber() int      { return t.firstInt("/" /* eg. 5/12 */, "tracknumber") }
+func (t *Tagger) DiscNumber() int       { return t.firstInt("/" /* eg. 1/2  */, "discnumber") }
 func (t *Tagger) Length() int           { return t.props.Length }
 func (t *Tagger) Bitrate() int          { return t.props.Bitrate }
-func (t *Tagger) Year() int             { return intSep(t.first("originaldate", "date", "year"), "-") }
+func (t *Tagger) Year() int             { return t.firstInt("-", "originaldate", "date", "year") }
 
 func (t *Tagger) SomeAlbum() string  { return first("Unknown Album", t.Album()) }
 func (t *Tagger) SomeArtist() string { return first("Unknown Artist", t.Artist()) }
@@ -47,27 +56,6 @@ func (t *Tagger) SomeAlbumArtist() string {
 	return first("Unknown Artist", t.AlbumArtist(), t.Artist())
 }
 func (t *Tagger) SomeGenre() string { return first("Unknown Genre", t.Genre()) }
-
-func first(or string, strs ...string) string {
-	for _, str := range strs {
-		if str != "" {
-			return str
-		}
-	}
-	return or
-}
-
-func intSep(in, sep string) int {
-	if in == "" {
-		return 0
-	}
-	start := strings.SplitN(in, sep, 2)[0]
-	out, err := strconv.Atoi(start)
-	if err != nil {
-		return 0
-	}
-	return out
-}
 
 type Reader interface {
 	Read(abspath string) (Parser, error)
@@ -91,4 +79,25 @@ type Parser interface {
 	SomeArtist() string
 	SomeAlbumArtist() string
 	SomeGenre() string
+}
+
+func intSep(in, sep string) int {
+	if in == "" {
+		return 0
+	}
+	start := strings.SplitN(in, sep, 2)[0]
+	out, err := strconv.Atoi(start)
+	if err != nil {
+		return 0
+	}
+	return out
+}
+
+func first(or string, strs ...string) string {
+	for _, str := range strs {
+		if str != "" {
+			return str
+		}
+	}
+	return or
 }
