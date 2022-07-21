@@ -182,6 +182,9 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide a `query` parameter")
 	}
+	if query == `""` {
+		query = ""
+	}
 	query = fmt.Sprintf("%%%s%%", strings.TrimSuffix(query, "*"))
 	results := &spec.SearchResultThree{}
 
