@@ -7,9 +7,9 @@ import (
 
 	"github.com/jinzhu/gorm"
 
+	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
-	"go.senan.xyz/gonic/db"
 )
 
 // the subsonic spec mentions "artist" a lot when talking about the
@@ -177,10 +177,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide a `query` parameter")
 	}
-	if query == `""` {
-		query = ""
-	}
-	query = fmt.Sprintf("%%%s%%", strings.TrimSuffix(query, "*"))
+	query = fmt.Sprintf("%%%s%%", strings.Trim(query, `*"'`))
 
 	results := &spec.SearchResultTwo{}
 
