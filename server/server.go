@@ -293,6 +293,7 @@ func (s *Server) StartHTTP(listenAddr string, tlsCert string, tlsKey string) (Fu
 		Addr:         listenAddr,
 		Handler:      s.router,
 		ReadTimeout:  5 * time.Second,
+		ReadHeaderTimeout:  5 * time.Second,
 		WriteTimeout: 80 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}

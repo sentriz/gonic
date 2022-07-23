@@ -151,7 +151,7 @@ func (s *Scanner) ExecuteWatch() error {
 					isFull:     false,
 				}
 				fileInfo, err := os.Stat(event.Name)
-				if fileInfo.IsDir() {
+				if err != nil && fileInfo.IsDir() {
 					dirName = event.Name
 				} else {
 					dirName = filepath.Dir(event.Name)
