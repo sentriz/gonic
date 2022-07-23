@@ -170,7 +170,7 @@ func (s *Scanner) ExecuteWatch() error {
 					return s.scanCallback(c, musicDirName, absPath, d, err)
 				})
 				if err != nil {
-					log.Printf("walk: %w", err)
+					log.Printf("walk: %v", err)
 				}
 				atomic.StoreInt32(s.scanning, 0)
 			}
