@@ -335,6 +335,16 @@ func (s *Server) StartScanTicker(dur time.Duration) (FuncExecute, FuncInterrupt)
 		}
 }
 
+func (s *Server) StartScanWatcher() (FuncExecute, FuncInterrupt) {
+	return func() error {
+			log.Printf("starting job 'scan watcher'\n")
+			return s.scanner.ExecuteWatch()
+		}, func(_ error) {
+			// stop job
+			s.scanner.CancelWatch()
+		}
+}
+
 func (s *Server) StartJukebox() (FuncExecute, FuncInterrupt) {
 	return func() error {
 			log.Printf("starting job 'jukebox'\n")

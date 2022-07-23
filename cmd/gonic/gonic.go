@@ -36,6 +36,7 @@ func main() {
 	confCachePath := set.String("cache-path", "", "path to cache")
 	confDBPath := set.String("db-path", "gonic.db", "path to database (optional)")
 	confScanInterval := set.Int("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
+	confScanWatcher := set.Bool("scan-watcher", false, "whether to watch file system for new music and rescan (optional)")
 	confJukeboxEnabled := set.Bool("jukebox-enabled", false, "whether the subsonic jukebox api should be enabled (optional)")
 	confProxyPrefix := set.String("proxy-prefix", "", "url path prefix to use if behind proxy. eg '/gonic' (optional)")
 	confGenreSplit := set.String("genre-split", "\n", "character or string to split genre tag data on (optional)")
@@ -133,6 +134,9 @@ func main() {
 	if *confScanInterval > 0 {
 		tickerDur := time.Duration(*confScanInterval) * time.Minute
 		g.Add(server.StartScanTicker(tickerDur))
+	}
+	if *confScanWatcher {
+		g.Add(server.StartScanWatcher())
 	}
 	if *confJukeboxEnabled {
 		g.Add(server.StartJukebox())

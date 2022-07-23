@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/jinzhu/gorm"
 	"github.com/rainycape/unidecode"
 
@@ -34,6 +35,9 @@ type Scanner struct {
 	genreSplit string
 	tagger     tags.Reader
 	scanning   *int32
+	watcher    *fsnotify.Watcher
+	watchMap   map[string]string // Maps watched dirs back to root music dir
+	watchDone  chan bool
 }
 
 func New(musicDirs []string, db *db.DB, genreSplit string, tagger tags.Reader) *Scanner {
@@ -43,6 +47,8 @@ func New(musicDirs []string, db *db.DB, genreSplit string, tagger tags.Reader) *
 		genreSplit: genreSplit,
 		tagger:     tagger,
 		scanning:   new(int32),
+		watchMap:   make(map[string]string),
+		watchDone:  make(chan bool),
 	}
 }
 
@@ -50,15 +56,18 @@ func (s *Scanner) IsScanning() bool {
 	return atomic.LoadInt32(s.scanning) == 1
 }
 
+func (s *Scanner) StartScanning() bool {
+	return atomic.CompareAndSwapInt32(s.scanning, 0, 1)
+}
+
 type ScanOptions struct {
 	IsFull bool
 }
 
 func (s *Scanner) ScanAndClean(opts ScanOptions) (*Context, error) {
-	if s.IsScanning() {
+	if !s.StartScanning() {
 		return nil, ErrAlreadyScanning
 	}
-	atomic.StoreInt32(s.scanning, 1)
 	defer atomic.StoreInt32(s.scanning, 0)
 
 	start := time.Now()
@@ -106,6 +115,100 @@ func (s *Scanner) ScanAndClean(opts ScanOptions) (*Context, error) {
 	}
 
 	return c, nil
+}
+
+func (s *Scanner) ExecuteWatch() error {
+	var err error
+	s.watcher, err = fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatalf("error creating watcher: %v\n", err)
+	}
+	defer s.watcher.Close()
+
+	for _, dir := range s.musicDirs {
+		err := filepath.WalkDir(dir, func(absPath string, d fs.DirEntry, err error) error {
+			return s.watchCallback(dir, absPath, d, err)
+		})
+		if err != nil {
+			log.Printf("error watching directory tree: %v\n", err)
+		}
+	}
+
+	if _, err = s.ScanAndClean(ScanOptions{}); err != nil {
+		log.Printf("error scanning: %v", err)
+	}
+
+	for {
+		select {
+		case event := <-s.watcher.Events:
+			doScan := event.Op&(fsnotify.Create|fsnotify.Write) != 0
+			if doScan && s.StartScanning() {
+				var dirName string
+				c := &Context{
+					errs:       &multierr.Err{},
+					seenTracks: map[int]struct{}{},
+					seenAlbums: map[int]struct{}{},
+					isFull:     false,
+				}
+				fileInfo, err := os.Stat(event.Name)
+				if fileInfo.IsDir() {
+					dirName = event.Name
+				} else {
+					dirName = filepath.Dir(event.Name)
+				}
+				musicDirName := s.watchMap[dirName]
+				if musicDirName == "" {
+					musicDirName = s.watchMap[filepath.Dir(dirName)]
+				}
+				err = filepath.WalkDir(dirName, func(absPath string, d fs.DirEntry, err error) error {
+					return s.watchCallback(musicDirName, absPath, d, err)
+				})
+				if err != nil {
+					log.Printf("error watching directory tree: %v\n", err)
+				}
+				err = filepath.WalkDir(dirName, func(absPath string, d fs.DirEntry, err error) error {
+					return s.scanCallback(c, musicDirName, absPath, d, err)
+				})
+				if err != nil {
+					log.Printf("walk: %w", err)
+				}
+				atomic.StoreInt32(s.scanning, 0)
+			}
+		case err = <-s.watcher.Errors:
+			log.Printf("error from watcher: %v\n", err)
+		case <-s.watchDone:
+			return nil
+		}
+	}
+}
+
+func (s *Scanner) CancelWatch() {
+	s.watchDone <- true
+}
+
+func (s *Scanner) watchCallback(dir string, absPath string, d fs.DirEntry, err error) error {
+	if err != nil {
+		return err
+	}
+
+	switch d.Type() {
+	case os.ModeDir:
+	case os.ModeSymlink:
+		eval, _ := filepath.EvalSymlinks(absPath)
+		return filepath.WalkDir(eval, func(subAbs string, d fs.DirEntry, err error) error {
+			subAbs = strings.Replace(subAbs, eval, absPath, 1)
+			return s.watchCallback(dir, subAbs, d, err)
+		})
+	default:
+		return nil
+	}
+
+	if s.watchMap[absPath] == "" {
+		log.Printf("watching folder `%s`", absPath)
+		s.watchMap[absPath] = dir
+		err = s.watcher.Add(absPath)
+	}
+	return err
 }
 
 func (s *Scanner) scanCallback(c *Context, dir string, absPath string, d fs.DirEntry, err error) error {
