@@ -10,11 +10,11 @@ import (
 
 	"github.com/jinzhu/gorm"
 
+	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/scrobble/lastfm"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
-	"go.senan.xyz/gonic/db"
-	"go.senan.xyz/gonic/scrobble/lastfm"
 )
 
 func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
@@ -182,10 +182,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide a `query` parameter")
 	}
-	if query == `""` {
-		query = ""
-	}
-	query = fmt.Sprintf("%%%s%%", strings.TrimSuffix(query, "*"))
+	query = fmt.Sprintf("%%%s%%", strings.Trim(query, `*"'`))
 	results := &spec.SearchResultThree{}
 
 	// search "artists"
@@ -211,6 +208,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	var albums []*db.Album
 	q = c.DB.
 		Preload("TagArtist").
+		Preload("Genres").
 		Where("tag_title LIKE ? OR tag_title_u_dec LIKE ?", query, query).
 		Offset(params.GetOrInt("albumOffset", 0)).
 		Limit(params.GetOrInt("albumCount", 20))
@@ -228,6 +226,8 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	var tracks []*db.Track
 	q = c.DB.
 		Preload("Album").
+		Preload("Album.TagArtist").
+		Preload("Genres").
 		Where("tag_title LIKE ? OR tag_title_u_dec LIKE ?", query, query).
 		Offset(params.GetOrInt("songOffset", 0)).
 		Limit(params.GetOrInt("songCount", 20))

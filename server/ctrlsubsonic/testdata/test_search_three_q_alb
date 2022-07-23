@@ -16,6 +16,7 @@
           "name": "album-0",
           "songCount": 0,
           "duration": 0,
+          "genre": "Unknown Genre",
           "year": 2021
         },
         {
@@ -29,6 +30,7 @@
           "name": "album-1",
           "songCount": 0,
           "duration": 0,
+          "genre": "Unknown Genre",
           "year": 2021
         },
         {
@@ -42,6 +44,7 @@
           "name": "album-2",
           "songCount": 0,
           "duration": 0,
+          "genre": "Unknown Genre",
           "year": 2021
         },
         {
@@ -55,6 +58,7 @@
           "name": "album-0",
           "songCount": 0,
           "duration": 0,
+          "genre": "Unknown Genre",
           "year": 2021
         },
         {
@@ -68,6 +72,7 @@
           "name": "album-1",
           "songCount": 0,
           "duration": 0,
+          "genre": "Unknown Genre",
           "year": 2021
         },
         {
@@ -81,6 +86,7 @@
           "name": "album-2",
           "songCount": 0,
           "duration": 0,
+          "genre": "Unknown Genre",
           "year": 2021
         },
         {
@@ -94,6 +100,7 @@
           "name": "album-0",
           "songCount": 0,
           "duration": 0,
+          "genre": "Unknown Genre",
           "year": 2021
         },
         {
@@ -107,6 +114,7 @@
           "name": "album-1",
           "songCount": 0,
           "duration": 0,
+          "genre": "Unknown Genre",
           "year": 2021
         },
         {
@@ -120,6 +128,7 @@
           "name": "album-2",
           "songCount": 0,
           "duration": 0,
+          "genre": "Unknown Genre",
           "year": 2021
         }
       ]
