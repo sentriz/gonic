@@ -304,6 +304,42 @@ type AlbumGenre struct {
 	GenreID int `gorm:"not null; unique_index:idx_album_id_genre_id" sql:"default: null; type:int REFERENCES genres(id) ON DELETE CASCADE"`
 }
 
+type AlbumStar struct {
+	UserID    int `gorm:"primary_key; not null; unique_index:idx_user_id_albumstar" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
+	AlbumID   int `gorm:"primary_key; not null; unique_index:idx_album_id_albumstar" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	StarDate time.Time
+}
+
+type AlbumRating struct {
+	UserID   int `gorm:"primary_key; not null; unique_index:idx_user_id_albumrating" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
+	AlbumID  int `gorm:"primary_key; not null; unique_index:idx_album_id_albumrating" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	Rating   int `gorm:"not null; check:(rating >= 1 AND rating <= 5)"`
+}
+
+type ArtistStar struct {
+	UserID   int `gorm:"primary_key; not null; unique_index:idx_user_id_artiststar" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
+	ArtistID int `gorm:"primary_key; not null; unique_index:idx_artist_id_artiststar" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
+	StarDate time.Time
+}
+
+type ArtistRating struct {
+	UserID   int `gorm:"primary_key; not null; unique_index:idx_user_id_artistrating" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
+	ArtistID int `gorm:"primary_key; not null; unique_index:idx_artist_id_artistrating" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
+	Rating   int `gorm:"not null; check:(rating >= 1 AND rating <= 5)"`
+}
+
+type TrackStar struct {
+	UserID   int `gorm:"primary_key; not null; unique_index:idx_user_id_trackstar" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
+	TrackID  int `gorm:"primary_key; not null; unique_index:idx_track_id_trackstar" sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
+	StarDate time.Time
+}
+
+type TrackRating struct {
+	UserID   int `gorm:"primary_key; not null; unique_index:idx_user_id_trackrating" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
+	TrackID int `gorm:"primary_key; not null; unique_index:idx_track_id_trackrating" sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
+	Rating   int `gorm:"not null; check:(rating >= 1 AND rating <= 5)"`
+}
+
 type PodcastAutoDownload string
 
 const (

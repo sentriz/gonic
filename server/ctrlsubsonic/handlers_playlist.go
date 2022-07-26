@@ -42,6 +42,7 @@ func playlistRender(c *Controller, playlist *db.Playlist) *spec.Playlist {
 			continue
 		}
 		resp.List[i] = spec.NewTCTrackByFolder(&track, track.Album)
+		c.addStarRatingToTCTrack(user.ID, resp.List[i])
 		resp.Duration += track.Length
 	}
 	return resp

@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jinzhu/gorm"
 
@@ -19,6 +20,7 @@ import (
 
 func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
 	var artists []*db.Artist
 	q := c.DB.
 		Select("*, count(sub.id) album_count").
@@ -43,8 +45,9 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 			}
 			resp = append(resp, indexMap[key])
 		}
-		indexMap[key].Artists = append(indexMap[key].Artists,
-			spec.NewArtistByTags(artist))
+		a := spec.NewArtistByTags(artist)
+		c.addStarRatingToArtist(user.ID, a)
+		indexMap[key].Artists = append(indexMap[key].Artists, a)
 	}
 	sub := spec.NewResponse()
 	sub.Artists = &spec.Artists{
@@ -55,6 +58,7 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
 	id, err := params.GetID("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
@@ -71,9 +75,11 @@ func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 		First(artist, id.Value)
 	sub := spec.NewResponse()
 	sub.Artist = spec.NewArtistByTags(artist)
+	c.addStarRatingToArtist(user.ID, sub.Artist)
 	sub.Artist.Albums = make([]*spec.Album, len(artist.Albums))
 	for i, album := range artist.Albums {
 		sub.Artist.Albums[i] = spec.NewAlbumByTags(album, artist)
+		c.addStarRatingToAlbum(user.ID, sub.Artist.Albums[i])
 	}
 	sub.Artist.AlbumCount = len(artist.Albums)
 	return sub
@@ -81,6 +87,7 @@ func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
 	id, err := params.GetID("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
@@ -101,9 +108,12 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 	}
 	sub := spec.NewResponse()
 	sub.Album = spec.NewAlbumByTags(album, album.TagArtist)
+	c.addStarRatingToAlbum(user.ID, sub.Album)
 	sub.Album.Tracks = make([]*spec.TrackChild, len(album.Tracks))
 	for i, track := range album.Tracks {
-		sub.Album.Tracks[i] = spec.NewTrackByTags(track, album)
+		t := spec.NewTrackByTags(track, album)
+		c.addStarRatingToTCTrack(user.ID, t)
+		sub.Album.Tracks[i] = t
 	}
 	return sub
 }
@@ -113,6 +123,7 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 // getAlbumList() function
 func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
 	listType, err := params.Get("type")
 	if err != nil {
 		return spec.NewError(10, "please provide a `type` parameter")
@@ -171,13 +182,16 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 		List: make([]*spec.Album, len(albums)),
 	}
 	for i, album := range albums {
-		sub.AlbumsTwo.List[i] = spec.NewAlbumByTags(album, album.TagArtist)
+		a := spec.NewAlbumByTags(album, album.TagArtist)
+		c.addStarRatingToAlbum(user.ID, a)
+		sub.AlbumsTwo.List[i] = a
 	}
 	return sub
 }
 
 func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
 	query, err := params.Get("query")
 	if err != nil {
 		return spec.NewError(10, "please provide a `query` parameter")
@@ -201,7 +215,9 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find artists: %v", err)
 	}
 	for _, a := range artists {
-		results.Artists = append(results.Artists, spec.NewArtistByTags(a))
+		ar := spec.NewArtistByTags(a)
+		c.addStarRatingToArtist(user.ID, ar)
+		results.Artists = append(results.Artists, ar)
 	}
 
 	// search "albums"
@@ -219,7 +235,9 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find albums: %v", err)
 	}
 	for _, a := range albums {
-		results.Albums = append(results.Albums, spec.NewAlbumByTags(a, a.TagArtist))
+		al := spec.NewAlbumByTags(a, a.TagArtist)
+		c.addStarRatingToAlbum(user.ID, al)
+		results.Albums = append(results.Albums, al)
 	}
 
 	// search tracks
@@ -240,7 +258,9 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
 	for _, t := range tracks {
-		results.Tracks = append(results.Tracks, spec.NewTrackByTags(t, t.Album))
+		tr := spec.NewTrackByTags(t, t.Album)
+		c.addStarRatingToTCTrack(user.ID, tr)
+		results.Tracks = append(results.Tracks, tr)
 	}
 
 	sub := spec.NewResponse()
@@ -354,6 +374,7 @@ func (c *Controller) ServeGetGenres(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
 	genre, err := params.Get("genre")
 	if err != nil {
 		return spec.NewError(10, "please provide an `genre` parameter")
@@ -378,18 +399,67 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 		List: make([]*spec.TrackChild, len(tracks)),
 	}
 	for i, track := range tracks {
-		sub.TracksByGenre.List[i] = spec.NewTrackByTags(track, track.Album)
+		tr := spec.NewTrackByTags(track, track.Album)
+		c.addStarRatingToTCTrack(user.ID, tr)
+		sub.TracksByGenre.List[i] = tr
 	}
 	return sub
 }
 
 func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
+	user := r.Context().Value(CtxUser).(*db.User)
+
 	sub := spec.NewResponse()
 	sub.StarredTwo = &spec.StarredTwo{
 		Artists: []*spec.Artist{},
 		Albums:  []*spec.Album{},
 		Tracks:  []*spec.TrackChild{},
 	}
+
+	// artists
+	var artists []*db.Artist
+	q := c.DB.Table("artists").Joins("right join artiststars on artists.id=artiststars.artistid").Where("artiststars.userid=?", user.ID)
+	if err := q.Find(&artists).Error; err != nil {
+		return spec.NewError(0, "find artists: %v", err)
+	}
+	for _, a := range artists {
+		artist := spec.NewArtistByTags(a)
+		c.addStarRatingToArtist(user.ID, artist)
+		sub.StarredTwo.Artists = append(sub.StarredTwo.Artists, artist)
+	}
+
+	// albums
+	var albums []*db.Album
+	q = c.DB.Table("albums").Joins("right join albumstars on albums.id=albumstars.albumid").Where("albumstars.userid=?", user.ID)
+	if err := q.Find(&albums).Error; err != nil {
+		return spec.NewError(0, "find albums: %v", err)
+	}
+	for _, a := range albums {
+		var ar db.Artist
+		if err := c.DB.Where("artistid=?",a.TagArtistID).Find(&ar); err != nil {
+			return spec.NewError(0, "find artist for album: %v", err)
+		}
+		album := spec.NewAlbumByTags(a, &ar)
+		c.addStarRatingToAlbum(user.ID, album)
+		sub.StarredTwo.Albums = append(sub.StarredTwo.Albums, album)
+	}
+
+	// tracks
+	var tracks []*db.Track
+	q = c.DB.Table("tracks").Joins("right join trackstars on tracks.id=trackstars.trackid").Where("trackstars.userid=?", user.ID)
+	if err := q.Find(&tracks).Error; err != nil {
+		return spec.NewError(0, "find tracks: %v", err)
+	}
+	for _, t := range tracks {
+		var a db.Album
+		if err := c.DB.Where("albumid=?",t.AlbumID).Find(&a); err != nil {
+			return spec.NewError(0, "find album for track: %v", err)
+		}
+		track := spec.NewTCTrackByFolder(t, &a)
+		c.addStarRatingToTCTrack(user.ID, track)
+		sub.StarredTwo.Tracks = append(sub.StarredTwo.Tracks, track)
+	}
+
 	return sub
 }
 
@@ -407,6 +477,7 @@ func (c *Controller) genArtistCoverURL(r *http.Request, artist *db.Artist, size 
 
 func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
 	count := params.GetOrInt("count", 10)
 	artistName, err := params.Get("artist")
 	if err != nil {
@@ -453,13 +524,16 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 		Tracks: make([]*spec.TrackChild, len(tracks)),
 	}
 	for i, track := range tracks {
-		sub.TopSongs.Tracks[i] = spec.NewTrackByTags(track, track.Album)
+		tr := spec.NewTrackByTags(track, track.Album)
+		c.addStarRatingToTCTrack(user.ID, tr)
+		sub.TopSongs.Tracks[i] = tr
 	}
 	return sub
 }
 
 func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
 	count := params.GetOrInt("count", 10)
 	id, err := params.GetID("id")
 	if err != nil || id.Type != specid.Track {
@@ -516,13 +590,16 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 		Tracks: make([]*spec.TrackChild, len(tracks)),
 	}
 	for i, track := range tracks {
-		sub.SimilarSongs.Tracks[i] = spec.NewTrackByTags(track, track.Album)
+		tr := spec.NewTrackByTags(track, track.Album)
+		c.addStarRatingToTCTrack(user.ID, tr)
+		sub.SimilarSongs.Tracks[i] = tr
 	}
 	return sub
 }
 
 func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
 	count := params.GetOrInt("count", 10)
 	id, err := params.GetID("id")
 	if err != nil || id.Type != specid.Artist {
@@ -577,7 +654,215 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 		Tracks: make([]*spec.TrackChild, len(tracks)),
 	}
 	for i, track := range tracks {
-		sub.SimilarSongsTwo.Tracks[i] = spec.NewTrackByTags(track, track.Album)
+		tr := spec.NewTrackByTags(track, track.Album)
+		c.addStarRatingToTCTrack(user.ID, tr)
+		sub.SimilarSongsTwo.Tracks[i] = tr
 	}
 	return sub
+}
+
+func (c* Controller) parseStarParams(p params.Params) (*spec.Response, []int, []int, []int) {
+	var albumIDs []int
+	var artistIDs []int
+	var trackIDs []int
+
+	if idl, err := p.GetIDList("id"); err == nil {
+		for _, i := range idl {
+			switch i.Type {
+			case specid.Album:
+				albumIDs = append(albumIDs, i.Value)
+			case specid.Artist:
+				artistIDs = append(artistIDs, i.Value)
+			case specid.Track:
+				trackIDs = append(trackIDs, i.Value)
+			default:
+				return spec.NewError(0, "non-album non-artist non-track id cannot be starred"), nil, nil, nil
+			}
+		}
+	}
+
+	if idl, err := p.GetIDList("albumId"); err == nil {
+		for _, i := range idl {
+			switch i.Type {
+			case specid.Album:
+				albumIDs = append(albumIDs, i.Value)
+			default:
+				return spec.NewError(0, "non-album id passed as albumId"), nil, nil, nil
+			}
+		}
+	}
+
+	if idl, err := p.GetIDList("artistId"); err == nil {
+		for _, i := range idl {
+			switch i.Type {
+			case specid.Artist:
+				artistIDs = append(artistIDs, i.Value)
+			default:
+				return spec.NewError(0, "non-artist id passed as artistId"), nil, nil, nil
+			}
+		}
+	}
+
+	return nil, albumIDs, artistIDs, trackIDs
+}
+
+func (c *Controller) ServeStar(r *http.Request) *spec.Response {
+	p := r.Context().Value(CtxParams).(params.Params)
+	response, albumIDs, artistIDs, trackIDs := c.parseStarParams(p)
+	if response != nil {
+		return response;
+	}
+	
+	stardate := time.Now()
+	user := r.Context().Value(CtxUser).(*db.User)
+	for _, i := range albumIDs {
+		var albumstar db.AlbumStar
+		_ = c.DB.Where("userid=? AND albumid=?", user.ID, i).First(&albumstar).Error
+		albumstar.UserID = user.ID
+		albumstar.AlbumID = i
+		albumstar.StarDate = stardate
+		if err := c.DB.Save(&albumstar).Error; err != nil {
+			return spec.NewError(0, "save album star: %v", err)
+		}
+	}
+
+	for _, i := range artistIDs {
+		var artiststar db.ArtistStar
+		_ = c.DB.Where("userid=? AND artistid=?", user.ID, i).First(&artiststar).Error
+		artiststar.UserID = user.ID
+		artiststar.ArtistID = i
+		artiststar.StarDate = stardate
+		if err := c.DB.Save(&artiststar).Error; err != nil {
+			return spec.NewError(0, "save artist star: %v", err)
+		}
+	}
+
+	for _, i := range trackIDs {
+		var trackstar db.TrackStar
+		_ = c.DB.Where("userid=? AND trackid=?", user.ID, i).First(&trackstar).Error
+		trackstar.UserID = user.ID
+		trackstar.TrackID = i
+		trackstar.StarDate = stardate
+		if err := c.DB.Save(&trackstar).Error; err != nil {
+			return spec.NewError(0, "save track star: %v", err)
+		}
+	}
+
+	return spec.NewResponse()
+}
+
+func (c *Controller) ServeUnstar(r *http.Request) *spec.Response {
+	p := r.Context().Value(CtxParams).(params.Params)
+	response, albumIDs, artistIDs, trackIDs := c.parseStarParams(p)
+	if response != nil {
+		return response;
+	}
+	
+	user := r.Context().Value(CtxUser).(*db.User)
+	for _, i := range albumIDs {
+		var albumstar db.AlbumStar
+		err := c.DB.Where("userid=? AND albumid=?", user.ID, i).First(&albumstar).Error
+		if (err != nil) {
+			if err := c.DB.Delete(&albumstar).Error; err != nil {
+				return spec.NewError(0, "delete album star: %v", err)
+			}
+		}
+	}
+
+	for _, i := range artistIDs {
+		var artiststar db.ArtistStar
+		err := c.DB.Where("userid=? AND artistid=?", user.ID, i).First(&artiststar).Error
+		if (err != nil) {
+			if err := c.DB.Delete(&artiststar).Error; err != nil {
+				return spec.NewError(0, "delete artist star: %v", err)
+			}
+		}
+	}
+
+	for _, i := range trackIDs {
+		var trackstar db.TrackStar
+		err := c.DB.Where("userid=? AND trackid=?", user.ID, i).First(&trackstar).Error
+		if (err != nil) {
+			if err := c.DB.Delete(&trackstar).Error; err != nil {
+				return spec.NewError(0, "delete track star: %v", err)
+			}
+		}
+	}
+
+	return spec.NewResponse()
+}
+
+func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	var err error
+	var id specid.ID
+	var rating int
+
+	if id, err = params.GetID("id"); err != nil {
+		return spec.NewError(10, "please provide a valid id")
+	}
+
+	if rating, err = params.GetInt("rating"); ((err != nil) || (rating < 0) || (rating > 5)) {
+		return spec.NewError(10, "please provide a valid rating")
+	}
+
+	user := r.Context().Value(CtxUser).(*db.User)
+
+	switch id.Type {
+	case specid.Album:
+		var albumrating db.AlbumRating
+		err := c.DB.Where("userid=? AND albumid=?", user.ID, id.Value).First(&albumrating).Error
+		if (rating != 0) {
+			albumrating.UserID = user.ID
+			albumrating.AlbumID = id.Value
+			albumrating.Rating = rating
+			if err := c.DB.Save(&albumrating).Error; err != nil {
+				return spec.NewError(0, "save album rating: %v", err)
+			}
+		} else {
+			if (err == nil) {
+				if err := c.DB.Delete(&albumrating).Error; err != nil {
+					return spec.NewError(0, "delete album rating: %v", err)
+				}
+			}
+		}
+	case specid.Artist:
+		var artistrating db.ArtistRating
+		err := c.DB.Where("userid=? AND artistid=?", user.ID, id.Value).First(&artistrating).Error
+		if (rating != 0) {
+			artistrating.UserID = user.ID
+			artistrating.ArtistID = id.Value
+			artistrating.Rating = rating
+			if err := c.DB.Save(&artistrating).Error; err != nil {
+				return spec.NewError(0, "save artist rating: %v", err)
+			}
+		} else {
+			if (err == nil) {
+				if err := c.DB.Delete(&artistrating).Error; err != nil {
+					return spec.NewError(0, "delete artist rating: %v", err)
+				}
+			}
+		}
+	case specid.Track:
+		var trackrating db.TrackRating
+		err := c.DB.Where("userid=? AND trackid=?", user.ID, id.Value).First(&trackrating).Error
+		if (rating != 0) {
+			trackrating.UserID = user.ID
+			trackrating.TrackID = id.Value
+			trackrating.Rating = rating
+			if err := c.DB.Save(&trackrating).Error; err != nil {
+				return spec.NewError(0, "save track rating: %v", err)
+			}
+		} else {
+			if (err == nil) {
+				if err := c.DB.Delete(&trackrating).Error; err != nil {
+					return spec.NewError(0, "delete track rating: %v", err)
+				}
+			}
+		}
+	default:
+		return spec.NewError(0, "non-album non-artist non-track id cannot be rated")
+	}
+
+	return spec.NewResponse()
 }

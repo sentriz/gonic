@@ -20,6 +20,7 @@ import (
 
 func (c *Controller) ServeGetIndexes(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
 	rootQ := c.DB.
 		Select("id").
 		Model(&db.Album{}).
@@ -48,8 +49,9 @@ func (c *Controller) ServeGetIndexes(r *http.Request) *spec.Response {
 			}
 			resp = append(resp, indexMap[key])
 		}
-		indexMap[key].Artists = append(indexMap[key].Artists,
-			spec.NewArtistByFolder(folder))
+		artist := spec.NewArtistByFolder(folder)
+		c.addStarRatingToArtist(user.ID, artist)
+		indexMap[key].Artists = append(indexMap[key].Artists, artist)
 	}
 	sub := spec.NewResponse()
 	sub.Indexes = &spec.Indexes{
@@ -65,6 +67,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
+	user := r.Context().Value(CtxUser).(*db.User)
 	childrenObj := []*spec.TrackChild{}
 	folder := &db.Album{}
 	c.DB.First(folder, id.Value)
@@ -74,8 +77,10 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 		Where("parent_id=?", id.Value).
 		Order("albums.right_path COLLATE NOCASE").
 		Find(&childFolders)
-	for _, c := range childFolders {
-		childrenObj = append(childrenObj, spec.NewTCAlbumByFolder(c))
+	for _, ch := range childFolders {
+		child := spec.NewTCAlbumByFolder(ch)
+		c.addStarRatingToTCAlbum(user.ID, child)
+		childrenObj = append(childrenObj, child)
 	}
 	// start looking for child childTracks in the current dir
 	var childTracks []*db.Track
@@ -85,18 +90,20 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 		Preload("Album.TagArtist").
 		Order("filename").
 		Find(&childTracks)
-	for _, c := range childTracks {
-		toAppend := spec.NewTCTrackByFolder(c, folder)
+	for _, ch := range childTracks {
+		toAppend := spec.NewTCTrackByFolder(ch, folder)
 		if v, _ := params.Get("c"); v == "Jamstash" {
 			// jamstash thinks it can't play flacs
 			toAppend.ContentType = "audio/mpeg"
 			toAppend.Suffix = "mp3"
 		}
+		c.addStarRatingToTCTrack(user.ID, toAppend)
 		childrenObj = append(childrenObj, toAppend)
 	}
 	// respond section
 	sub := spec.NewResponse()
 	sub.Directory = spec.NewDirectoryByFolder(folder, childrenObj)
+	c.addStarRatingToDirectoryAlbum(user.ID, sub.Directory)
 	return sub
 }
 
@@ -105,6 +112,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 // getAlbumListTwo() function
 func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
 	q := c.DB.DB
 	switch v, _ := params.Get("type"); v {
 	case "alphabeticalByArtist":
@@ -125,7 +133,6 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 		q = q.Joins("JOIN album_genres ON album_genres.album_id=albums.id")
 		q = q.Joins("JOIN genres ON genres.id=album_genres.genre_id AND genres.name=?", genre)
 	case "frequent":
-		user := r.Context().Value(CtxUser).(*db.User)
 		q = q.Joins(`
 			JOIN plays
 			ON albums.id=plays.album_id AND plays.user_id=?`,
@@ -167,12 +174,14 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 	}
 	for i, folder := range folders {
 		sub.Albums.List[i] = spec.NewAlbumByFolder(folder)
+		c.addStarRatingToAlbum(user.ID, sub.Albums.List[i])
 	}
 	return sub
 }
 
 func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
 	query, err := params.Get("query")
 	if err != nil {
 		return spec.NewError(10, "please provide a `query` parameter")
@@ -199,7 +208,9 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find artists: %v", err)
 	}
 	for _, a := range artists {
-		results.Artists = append(results.Artists, spec.NewDirectoryByFolder(a, nil))
+		artist := spec.NewDirectoryByFolder(a, nil)
+		c.addStarRatingToDirectoryArtist(user.ID, artist)
+		results.Artists = append(results.Artists, artist)
 	}
 
 	// search "albums"
@@ -215,7 +226,9 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find albums: %v", err)
 	}
 	for _, a := range albums {
-		results.Albums = append(results.Albums, spec.NewTCAlbumByFolder(a))
+		album := spec.NewTCAlbumByFolder(a)
+		c.addStarRatingToTCAlbum(user.ID, album)
+		results.Albums = append(results.Albums, album)
 	}
 
 	// search tracks
@@ -234,7 +247,9 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
 	for _, t := range tracks {
-		results.Tracks = append(results.Tracks, spec.NewTCTrackByFolder(t, t.Album))
+		track := spec.NewTCTrackByFolder(t, t.Album)
+		c.addStarRatingToTCTrack(user.ID, track)
+		results.Tracks = append(results.Tracks, track)
 	}
 
 	sub := spec.NewResponse()
@@ -247,11 +262,53 @@ func (c *Controller) ServeGetArtistInfo(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {
+	user := r.Context().Value(CtxUser).(*db.User)
 	sub := spec.NewResponse()
 	sub.Starred = &spec.Starred{
-		Artists: []*spec.Directory{},
+		Artists: []*spec.Artist{},
 		Albums:  []*spec.TrackChild{},
 		Tracks:  []*spec.TrackChild{},
 	}
+
+	// artists
+	var artists []*db.Artist
+	q := c.DB.Table("artists").Joins("right join artiststars on artists.id=artiststars.artistid").Where("artiststars.userid=?", user.ID)
+	if err := q.Find(&artists).Error; err != nil {
+		return spec.NewError(0, "find artists: %v", err)
+	}
+	for _, a := range artists {
+		artist := spec.NewArtistByTags(a)
+		c.addStarRatingToArtist(user.ID, artist)
+		sub.Starred.Artists = append(sub.Starred.Artists, artist)
+	}
+
+	// albums
+	var albums []*db.Album
+	q = c.DB.Table("albums").Joins("right join albumstars on albums.id=albumstars.albumid").Where("albumstars.userid=?", user.ID)
+	if err := q.Find(&albums).Error; err != nil {
+		return spec.NewError(0, "find albums: %v", err)
+	}
+	for _, a := range albums {
+		album := spec.NewTCAlbumByFolder(a)
+		c.addStarRatingToTCAlbum(user.ID, album)
+		sub.Starred.Albums = append(sub.Starred.Albums, album)
+	}
+
+	// tracks
+	var tracks []*db.Track
+	q = c.DB.Table("tracks").Joins("right join trackstars on tracks.id=trackstars.trackid").Where("trackstars.userid=?", user.ID)
+	if err := q.Find(&tracks).Error; err != nil {
+		return spec.NewError(0, "find tracks: %v", err)
+	}
+	for _, t := range tracks {
+		var a db.Album
+		if err := c.DB.Where("albumid=?",t.AlbumID).Find(&a); err != nil {
+			return spec.NewError(0, "find album for track: %v", err)
+		}
+		track := spec.NewTCTrackByFolder(t, &a)
+		c.addStarRatingToTCTrack(user.ID, track)
+		sub.Starred.Tracks = append(sub.Starred.Tracks, track)
+	}
+
 	return sub
 }
