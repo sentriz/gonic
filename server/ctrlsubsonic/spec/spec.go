@@ -121,7 +121,7 @@ type Album struct {
 	// star / rating
 	Starred       string     `xml:"starred,attr,omitempty"         json:"starred,omitempty"`
 	UserRating    int        `xml:"userRating,attr,omitempty"      json:"userRating,omitempty"`
-	AverageRating float64    `xml:"averageRating,attr,omitempty"   json:"averageRating,omitempty"`
+	AverageRating string     `xml:"averageRating,attr,omitempty"   json:"averageRating,omitempty"`
 }
 
 type RandomTracks struct {
@@ -158,7 +158,7 @@ type TrackChild struct {
 	// star / rating
 	Starred       string     `xml:"starred,attr,omitempty"         json:"starred,omitempty"`
 	UserRating    int        `xml:"userRating,attr,omitempty"      json:"userRating,omitempty"`
-	AverageRating float64    `xml:"averageRating,attr,omitempty"   json:"averageRating,omitempty"`
+	AverageRating string     `xml:"averageRating,attr,omitempty"   json:"averageRating,omitempty"`
 }
 
 type Artists struct {
@@ -175,7 +175,7 @@ type Artist struct {
 	// star / rating
 	Starred       string     `xml:"starred,attr,omitempty"         json:"starred,omitempty"`
 	UserRating    int        `xml:"userRating,attr,omitempty"      json:"userRating,omitempty"`
-	AverageRating float64    `xml:"averageRating,attr,omitempty"   json:"averageRating,omitempty"`
+	AverageRating string     `xml:"averageRating,attr,omitempty"   json:"averageRating,omitempty"`
 }
 
 type Indexes struct {
@@ -195,7 +195,7 @@ type Directory struct {
 	Name     string        `xml:"name,attr,omitempty"    json:"name"`
 	Starred  string        `xml:"starred,attr,omitempty"         json:"starred,omitempty"`
 	UserRating    int      `xml:"userRating,attr,omitempty"      json:"userRating,omitempty"`
-	AverageRating float64  `xml:"averageRating,attr,omitempty"   json:"averageRating,omitempty"`
+	AverageRating string   `xml:"averageRating,attr,omitempty"   json:"averageRating,omitempty"`
 	Children []*TrackChild `xml:"child,omitempty"        json:"child,omitempty"`
 }
 

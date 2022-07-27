@@ -375,10 +375,13 @@ func migrateUser(tx *gorm.DB, _ MigrationContext) error {
 
 func migrateStarRating(tx *gorm.DB, _ MigrationContext) error {
 	return tx.AutoMigrate(
+		Album{},
 		AlbumStar{},
 		AlbumRating{},
+		Artist{},
 		ArtistStar{},
 		ArtistRating{},
+		Track{},
 		TrackStar{},
 		TrackRating{},
 	).

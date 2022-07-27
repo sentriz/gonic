@@ -810,8 +810,14 @@ func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
 
 	switch id.Type {
 	case specid.Album:
+		var album db.Album
 		var albumrating db.AlbumRating
-		err := c.DB.Where("userid=? AND albumid=?", user.ID, id.Value).First(&albumrating).Error
+		var sum int
+		var count int
+		if err := c.DB.Where("albumid=?", id.Value).First(&album).Error; err != nil {
+			return spec.NewError(0, "fetch album: %v", err)
+		}
+		err = c.DB.Where("userid=? AND albumid=?", user.ID, id.Value).First(&albumrating).Error
 		if (rating != 0) {
 			albumrating.UserID = user.ID
 			albumrating.AlbumID = id.Value
@@ -826,9 +832,22 @@ func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
 				}
 			}
 		}
+		aar := c.DB.Table("albumrating").Where("albumid=?", id.Value)
+		aar.Select("sum(rating)").Row().Scan(&sum)
+		aar.Count(&count)
+		album.AverageRating = strconv.FormatFloat(float64(sum) / float64(count), 'g', 2, 64)
+		if err := c.DB.Save(&album).Error; err != nil {
+			return spec.NewError(0, "save album: %v", err)
+		}
 	case specid.Artist:
+		var artist db.Artist
 		var artistrating db.ArtistRating
-		err := c.DB.Where("userid=? AND artistid=?", user.ID, id.Value).First(&artistrating).Error
+		var sum int
+		var count int
+		if err := c.DB.Where("artistid=?", id.Value).First(&artist).Error; err != nil {
+			return spec.NewError(0, "fetch artist: %v", err)
+		}
+		err = c.DB.Where("userid=? AND artistid=?", user.ID, id.Value).First(&artistrating).Error
 		if (rating != 0) {
 			artistrating.UserID = user.ID
 			artistrating.ArtistID = id.Value
@@ -843,9 +862,22 @@ func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
 				}
 			}
 		}
+		aar := c.DB.Table("artistrating").Where("artistid=?", id.Value)
+		aar.Select("sum(rating)").Row().Scan(&sum)
+		aar.Count(&count)
+		artist.AverageRating = strconv.FormatFloat(float64(sum) / float64(count), 'g', 2, 64)
+		if err := c.DB.Save(&artist).Error; err != nil {
+			return spec.NewError(0, "save artist: %v", err)
+		}
 	case specid.Track:
+		var track db.Track
 		var trackrating db.TrackRating
-		err := c.DB.Where("userid=? AND trackid=?", user.ID, id.Value).First(&trackrating).Error
+		var sum int
+		var count int
+		if err := c.DB.Where("trackid=?", id.Value).First(&track).Error; err != nil {
+			return spec.NewError(0, "fetch track: %v", err)
+		}
+		err = c.DB.Where("userid=? AND trackid=?", user.ID, id.Value).First(&trackrating).Error
 		if (rating != 0) {
 			trackrating.UserID = user.ID
 			trackrating.TrackID = id.Value
@@ -859,6 +891,13 @@ func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
 					return spec.NewError(0, "delete track rating: %v", err)
 				}
 			}
+		}
+		atr := c.DB.Table("trackrating").Where("trackid=?", id.Value)
+		atr.Select("sum(rating)").Row().Scan(&sum)
+		atr.Count(&count)
+		track.AverageRating = strconv.FormatFloat(float64(sum) / float64(count), 'g', 2, 64)
+		if err := c.DB.Save(&track).Error; err != nil {
+			return spec.NewError(0, "save track: %v", err)
 		}
 	default:
 		return spec.NewError(0, "non-album non-artist non-track id cannot be rated")

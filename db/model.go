@@ -48,6 +48,7 @@ type Artist struct {
 	Albums     []*Album `gorm:"foreignkey:TagArtistID"`
 	AlbumCount int      `sql:"-"`
 	Cover      string   `sql:"default: null"`
+	AverageRating string `sql:"default: null"`
 }
 
 func (a *Artist) SID() *specid.ID {
@@ -98,6 +99,7 @@ type Track struct {
 	TagTrackNumber int      `sql:"default: null"`
 	TagDiscNumber  int      `sql:"default: null"`
 	TagBrainzID    string   `sql:"default: null"`
+	AverageRating string `sql:"default: null"`
 }
 
 func (t *Track) AudioLength() int  { return t.Length }
@@ -212,6 +214,7 @@ type Album struct {
 	Tracks        []*Track
 	ChildCount    int `sql:"-"`
 	Duration      int `sql:"-"`
+	AverageRating string `sql:"default: null"`
 }
 
 func (a *Album) SID() *specid.ID {

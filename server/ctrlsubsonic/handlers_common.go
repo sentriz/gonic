@@ -323,13 +323,7 @@ func (c *Controller) addStarRatingToAlbum(UID int, album *spec.Album) {
 		album.Starred = as.StarDate.Format(time.RFC3339)
 	}
 	if err := c.DB.Where("userid=? AND albumid=?", UID, album.ID.Value).First(&ar).Error; err == nil {
-		var sum int
-		var count int
 		album.UserRating = ar.Rating
-		aar := c.DB.Where("albumid=?", album.ID.Value)
-		aar.Select("sum(rating)").Row().Scan(&sum)
-		aar.Count(&count)
-		album.AverageRating = float64(sum) / float64(count)
 	}
 }
 
@@ -341,13 +335,7 @@ func (c *Controller) addStarRatingToArtist(UID int, artist *spec.Artist) {
 		artist.Starred = as.StarDate.Format(time.RFC3339)
 	}
 	if err := c.DB.Where("userid=? AND artistid=?", UID, artist.ID.Value).First(&ar).Error; err == nil {
-		var sum int
-		var count int
 		artist.UserRating = ar.Rating
-		aar := c.DB.Where("artistid=?", artist.ID.Value)
-		aar.Select("sum(rating)").Row().Scan(&sum)
-		aar.Count(&count)
-		artist.AverageRating = float64(sum) / float64(count)
 	}
 }
 
@@ -359,13 +347,7 @@ func (c *Controller) addStarRatingToTCAlbum(UID int, album *spec.TrackChild) {
 		album.Starred = as.StarDate.Format(time.RFC3339)
 	}
 	if err := c.DB.Where("userid=? AND albumid=?", UID, album.ID.Value).First(&ar).Error; err == nil {
-		var sum int
-		var count int
 		album.UserRating = ar.Rating
-		aar := c.DB.Where("albumid=?", album.ID.Value)
-		aar.Select("sum(rating)").Row().Scan(&sum)
-		aar.Count(&count)
-		album.AverageRating = float64(sum) / float64(count)
 	}
 }
 
@@ -377,13 +359,7 @@ func (c *Controller) addStarRatingToTCTrack(UID int, track *spec.TrackChild) {
 		track.Starred = ts.StarDate.Format(time.RFC3339)
 	}
 	if err := c.DB.Where("userid=? AND trackid=?", UID, track.ID.Value).First(&tr).Error; err == nil {
-		var sum int
-		var count int
 		track.UserRating = tr.Rating
-		atr := c.DB.Where("trackid=?", track.ID.Value)
-		atr.Select("sum(rating)").Row().Scan(&sum)
-		atr.Count(&count)
-		track.AverageRating = float64(sum) / float64(count)
 	}
 }
 
@@ -395,13 +371,7 @@ func (c *Controller) addStarRatingToDirectoryArtist(UID int, artist *spec.Direct
 		artist.Starred = as.StarDate.Format(time.RFC3339)
 	}
 	if err := c.DB.Where("userid=? AND artistid=?", UID, artist.ID.Value).First(&ar).Error; err == nil {
-		var sum int
-		var count int
 		artist.UserRating = ar.Rating
-		aar := c.DB.Where("artistid=?", artist.ID.Value)
-		aar.Select("sum(rating)").Row().Scan(&sum)
-		aar.Count(&count)
-		artist.AverageRating = float64(sum) / float64(count)
 	}
 }
 
@@ -413,13 +383,7 @@ func (c *Controller) addStarRatingToDirectoryAlbum(UID int, album *spec.Director
 		album.Starred = as.StarDate.Format(time.RFC3339)
 	}
 	if err := c.DB.Where("userid=? AND albumid=?", UID, album.ID.Value).First(&ar).Error; err == nil {
-		var sum int
-		var count int
 		album.UserRating = ar.Rating
-		aar := c.DB.Where("albumid=?", album.ID.Value)
-		aar.Select("sum(rating)").Row().Scan(&sum)
-		aar.Count(&count)
-		album.AverageRating = float64(sum) / float64(count)
 	}
 }
 

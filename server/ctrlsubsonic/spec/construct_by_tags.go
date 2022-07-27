@@ -16,6 +16,7 @@ func NewAlbumByTags(a *db.Album, artist *db.Artist) *Album {
 		TrackCount: a.ChildCount,
 		Genre:      strings.Join(a.GenreStrings(), ", "),
 		Duration:   a.Duration,
+		AverageRating: a.AverageRating,
 	}
 	if a.Cover != "" {
 		ret.CoverID = a.SID()
@@ -51,6 +52,7 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 		Bitrate:  t.Bitrate,
 		Type:     "music",
 		Year:     album.TagYear,
+		AverageRating: t.AverageRating,
 	}
 	if album.Cover != "" {
 		ret.CoverID = album.SID()
@@ -76,6 +78,7 @@ func NewArtistByTags(a *db.Artist) *Artist {
 		ID:         a.SID(),
 		Name:       a.Name,
 		AlbumCount: a.AlbumCount,
+		AverageRating: a.AverageRating,
 	}
 	if a.Cover != "" {
 		r.CoverID = a.SID()

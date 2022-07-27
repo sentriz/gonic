@@ -17,6 +17,7 @@ func NewAlbumByFolder(f *db.Album) *Album {
 		TrackCount: f.ChildCount,
 		Duration:   f.Duration,
 		Created:    f.CreatedAt,
+		AverageRating: f.AverageRating,
 	}
 	if f.Cover != "" {
 		a.CoverID = f.SID()
@@ -31,6 +32,7 @@ func NewTCAlbumByFolder(f *db.Album) *TrackChild {
 		Title:     f.RightPath,
 		ParentID:  f.ParentSID(),
 		CreatedAt: f.CreatedAt,
+		AverageRating: f.AverageRating,
 	}
 	if f.Cover != "" {
 		trCh.CoverID = f.SID()
@@ -61,6 +63,7 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 		IsDir:     false,
 		Type:      "music",
 		CreatedAt: t.CreatedAt,
+		AverageRating: t.AverageRating,
 	}
 	if trCh.Title == "" {
 		trCh.Title = t.Filename
@@ -83,6 +86,7 @@ func NewArtistByFolder(f *db.Album) *Artist {
 		ID:         f.SID(),
 		Name:       f.RightPath,
 		AlbumCount: f.ChildCount,
+		AverageRating: f.AverageRating,
 	}
 	if f.Cover != "" {
 		a.CoverID = f.SID()
@@ -96,5 +100,6 @@ func NewDirectoryByFolder(f *db.Album, children []*TrackChild) *Directory {
 		Name:     f.RightPath,
 		Children: children,
 		ParentID: f.ParentSID(),
+		AverageRating: f.AverageRating,
 	}
 }
