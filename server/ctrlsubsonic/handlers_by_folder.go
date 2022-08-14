@@ -263,6 +263,8 @@ func (c *Controller) ServeGetArtistInfo(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
+	params := r.Context().Value(CtxParams).(params.Params)
+	m := c.getMusicFolder(params)
 	sub := spec.NewResponse()
 	sub.Starred = &spec.Starred{
 		Artists: []*spec.Artist{},
@@ -272,7 +274,10 @@ func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {
 
 	// artists
 	var artists []*db.Artist
-	q := c.DB.Table("artists").Joins("right join artiststars on artists.id=artiststars.artistid").Where("artiststars.userid=?", user.ID)
+	q := c.DB.Table("artists").Joins("right join artist_stars on artists.id=artist_stars.artist_id").Where("artist_stars.user_id=?", user.ID)
+	if m != "" {
+		q = q.Joins("JOIN albums on artists.id=albums.tag_artist_id").Where("albums.rootdir=?", m)
+	}
 	if err := q.Find(&artists).Error; err != nil {
 		return spec.NewError(0, "find artists: %v", err)
 	}
@@ -284,7 +289,10 @@ func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {
 
 	// albums
 	var albums []*db.Album
-	q = c.DB.Table("albums").Joins("right join albumstars on albums.id=albumstars.albumid").Where("albumstars.userid=?", user.ID)
+	q = c.DB.Table("albums").Joins("right join album_stars on albums.id=album_stars.album_id").Where("album_stars.user_id=?", user.ID)
+	if m != "" {
+		q = q.Where("rootdir=?", m)
+	}
 	if err := q.Find(&albums).Error; err != nil {
 		return spec.NewError(0, "find albums: %v", err)
 	}
@@ -296,13 +304,16 @@ func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {
 
 	// tracks
 	var tracks []*db.Track
-	q = c.DB.Table("tracks").Joins("right join trackstars on tracks.id=trackstars.trackid").Where("trackstars.userid=?", user.ID)
+	q = c.DB.Table("tracks").Joins("right join track_stars on tracks.id=track_stars.track_id").Where("track_stars.user_id=?", user.ID)
+	if m != "" {
+		q = q.Joins("JOIN albums on tracks.album_id=albums.id").Where("albums.rootdir=?", m)
+	}
 	if err := q.Find(&tracks).Error; err != nil {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
 	for _, t := range tracks {
 		var a db.Album
-		if err := c.DB.Where("albumid=?",t.AlbumID).Find(&a); err != nil {
+		if err := c.DB.Where("album_id=?", t.AlbumID).Find(&a); err != nil {
 			return spec.NewError(0, "find album for track: %v", err)
 		}
 		track := spec.NewTCTrackByFolder(t, &a)

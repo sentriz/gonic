@@ -408,6 +408,8 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
+	params := r.Context().Value(CtxParams).(params.Params)
+	m := c.getMusicFolder(params)
 
 	sub := spec.NewResponse()
 	sub.StarredTwo = &spec.StarredTwo{
@@ -418,7 +420,10 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 
 	// artists
 	var artists []*db.Artist
-	q := c.DB.Table("artists").Joins("right join artiststars on artists.id=artiststars.artistid").Where("artiststars.userid=?", user.ID)
+	q := c.DB.Table("artists").Joins("JOIN artist_stars on artists.id=artist_stars.artist_id").Where("artist_stars.user_id=?", user.ID)
+	if m != "" {
+		q = q.Joins("JOIN albums on artists.id=albums.tag_artist_id").Where("albums.rootdir=?", m)
+	}
 	if err := q.Find(&artists).Error; err != nil {
 		return spec.NewError(0, "find artists: %v", err)
 	}
@@ -430,13 +435,16 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 
 	// albums
 	var albums []*db.Album
-	q = c.DB.Table("albums").Joins("right join albumstars on albums.id=albumstars.albumid").Where("albumstars.userid=?", user.ID)
+	q = c.DB.Table("albums").Joins("JOIN album_stars on albums.id=album_stars.album_id").Where("album_stars.user_id=?", user.ID)
+	if m != "" {
+		q = q.Where("rootdir=?", m)
+	}
 	if err := q.Find(&albums).Error; err != nil {
 		return spec.NewError(0, "find albums: %v", err)
 	}
 	for _, a := range albums {
 		var ar db.Artist
-		if err := c.DB.Where("artistid=?",a.TagArtistID).Find(&ar); err != nil {
+		if err := c.DB.Where("artist_id=?", a.TagArtistID).Find(&ar); err != nil {
 			return spec.NewError(0, "find artist for album: %v", err)
 		}
 		album := spec.NewAlbumByTags(a, &ar)
@@ -446,13 +454,16 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 
 	// tracks
 	var tracks []*db.Track
-	q = c.DB.Table("tracks").Joins("right join trackstars on tracks.id=trackstars.trackid").Where("trackstars.userid=?", user.ID)
+	q = c.DB.Table("tracks").Joins("right join track_stars on tracks.id=track_stars.track_id").Where("track_stars.user_id=?", user.ID)
+	if m != "" {
+		q = q.Joins("JOIN albums on tracks.album_id=albums.id").Where("albums.rootdir=?", m)
+	}
 	if err := q.Find(&tracks).Error; err != nil {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
 	for _, t := range tracks {
 		var a db.Album
-		if err := c.DB.Where("albumid=?",t.AlbumID).Find(&a); err != nil {
+		if err := c.DB.Where("album_id=?", t.AlbumID).Find(&a); err != nil {
 			return spec.NewError(0, "find album for track: %v", err)
 		}
 		track := spec.NewTCTrackByFolder(t, &a)
@@ -661,7 +672,7 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 	return sub
 }
 
-func (c* Controller) parseStarParams(p params.Params) (*spec.Response, []int, []int, []int) {
+func (c *Controller) parseStarParams(p params.Params) (*spec.Response, []int, []int, []int) {
 	var albumIDs []int
 	var artistIDs []int
 	var trackIDs []int
@@ -710,14 +721,14 @@ func (c *Controller) ServeStar(r *http.Request) *spec.Response {
 	p := r.Context().Value(CtxParams).(params.Params)
 	response, albumIDs, artistIDs, trackIDs := c.parseStarParams(p)
 	if response != nil {
-		return response;
+		return response
 	}
-	
+
 	stardate := time.Now()
 	user := r.Context().Value(CtxUser).(*db.User)
 	for _, i := range albumIDs {
 		var albumstar db.AlbumStar
-		_ = c.DB.Where("userid=? AND albumid=?", user.ID, i).First(&albumstar).Error
+		_ = c.DB.Where("user_id=? AND album_id=?", user.ID, i).First(&albumstar).Error
 		albumstar.UserID = user.ID
 		albumstar.AlbumID = i
 		albumstar.StarDate = stardate
@@ -728,7 +739,7 @@ func (c *Controller) ServeStar(r *http.Request) *spec.Response {
 
 	for _, i := range artistIDs {
 		var artiststar db.ArtistStar
-		_ = c.DB.Where("userid=? AND artistid=?", user.ID, i).First(&artiststar).Error
+		_ = c.DB.Where("user_id=? AND artist_id=?", user.ID, i).First(&artiststar).Error
 		artiststar.UserID = user.ID
 		artiststar.ArtistID = i
 		artiststar.StarDate = stardate
@@ -739,7 +750,7 @@ func (c *Controller) ServeStar(r *http.Request) *spec.Response {
 
 	for _, i := range trackIDs {
 		var trackstar db.TrackStar
-		_ = c.DB.Where("userid=? AND trackid=?", user.ID, i).First(&trackstar).Error
+		_ = c.DB.Where("user_id=? AND track_id=?", user.ID, i).First(&trackstar).Error
 		trackstar.UserID = user.ID
 		trackstar.TrackID = i
 		trackstar.StarDate = stardate
@@ -755,14 +766,14 @@ func (c *Controller) ServeUnstar(r *http.Request) *spec.Response {
 	p := r.Context().Value(CtxParams).(params.Params)
 	response, albumIDs, artistIDs, trackIDs := c.parseStarParams(p)
 	if response != nil {
-		return response;
+		return response
 	}
-	
+
 	user := r.Context().Value(CtxUser).(*db.User)
 	for _, i := range albumIDs {
 		var albumstar db.AlbumStar
-		err := c.DB.Where("userid=? AND albumid=?", user.ID, i).First(&albumstar).Error
-		if (err != nil) {
+		err := c.DB.Where("user_id=? AND album_id=?", user.ID, i).First(&albumstar).Error
+		if err != nil {
 			if err := c.DB.Delete(&albumstar).Error; err != nil {
 				return spec.NewError(0, "delete album star: %v", err)
 			}
@@ -771,8 +782,8 @@ func (c *Controller) ServeUnstar(r *http.Request) *spec.Response {
 
 	for _, i := range artistIDs {
 		var artiststar db.ArtistStar
-		err := c.DB.Where("userid=? AND artistid=?", user.ID, i).First(&artiststar).Error
-		if (err != nil) {
+		err := c.DB.Where("user_id=? AND artist_id=?", user.ID, i).First(&artiststar).Error
+		if err != nil {
 			if err := c.DB.Delete(&artiststar).Error; err != nil {
 				return spec.NewError(0, "delete artist star: %v", err)
 			}
@@ -781,8 +792,8 @@ func (c *Controller) ServeUnstar(r *http.Request) *spec.Response {
 
 	for _, i := range trackIDs {
 		var trackstar db.TrackStar
-		err := c.DB.Where("userid=? AND trackid=?", user.ID, i).First(&trackstar).Error
-		if (err != nil) {
+		err := c.DB.Where("user_id=? AND track_id=?", user.ID, i).First(&trackstar).Error
+		if err != nil {
 			if err := c.DB.Delete(&trackstar).Error; err != nil {
 				return spec.NewError(0, "delete track star: %v", err)
 			}
@@ -802,7 +813,7 @@ func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide a valid id")
 	}
 
-	if rating, err = params.GetInt("rating"); ((err != nil) || (rating < 0) || (rating > 5)) {
+	if rating, err = params.GetInt("rating"); (err != nil) || (rating < 0) || (rating > 5) {
 		return spec.NewError(10, "please provide a valid rating")
 	}
 
@@ -814,11 +825,11 @@ func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
 		var albumrating db.AlbumRating
 		var sum int
 		var count int
-		if err := c.DB.Where("albumid=?", id.Value).First(&album).Error; err != nil {
+		if err := c.DB.Where("id=?", id.Value).First(&album).Error; err != nil {
 			return spec.NewError(0, "fetch album: %v", err)
 		}
-		err = c.DB.Where("userid=? AND albumid=?", user.ID, id.Value).First(&albumrating).Error
-		if (rating != 0) {
+		err = c.DB.Where("user_id=? AND album_id=?", user.ID, id.Value).First(&albumrating).Error
+		if rating != 0 {
 			albumrating.UserID = user.ID
 			albumrating.AlbumID = id.Value
 			albumrating.Rating = rating
@@ -826,16 +837,16 @@ func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
 				return spec.NewError(0, "save album rating: %v", err)
 			}
 		} else {
-			if (err == nil) {
+			if err == nil {
 				if err := c.DB.Delete(&albumrating).Error; err != nil {
 					return spec.NewError(0, "delete album rating: %v", err)
 				}
 			}
 		}
-		aar := c.DB.Table("albumrating").Where("albumid=?", id.Value)
+		aar := c.DB.Table("album_ratings").Where("album_id=?", id.Value)
 		aar.Select("sum(rating)").Row().Scan(&sum)
 		aar.Count(&count)
-		album.AverageRating = strconv.FormatFloat(float64(sum) / float64(count), 'g', 2, 64)
+		album.AverageRating = strconv.FormatFloat(float64(sum)/float64(count), 'g', 2, 64)
 		if err := c.DB.Save(&album).Error; err != nil {
 			return spec.NewError(0, "save album: %v", err)
 		}
@@ -844,11 +855,11 @@ func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
 		var artistrating db.ArtistRating
 		var sum int
 		var count int
-		if err := c.DB.Where("artistid=?", id.Value).First(&artist).Error; err != nil {
+		if err := c.DB.Where("id=?", id.Value).First(&artist).Error; err != nil {
 			return spec.NewError(0, "fetch artist: %v", err)
 		}
-		err = c.DB.Where("userid=? AND artistid=?", user.ID, id.Value).First(&artistrating).Error
-		if (rating != 0) {
+		err = c.DB.Where("user_id=? AND artist_id=?", user.ID, id.Value).First(&artistrating).Error
+		if rating != 0 {
 			artistrating.UserID = user.ID
 			artistrating.ArtistID = id.Value
 			artistrating.Rating = rating
@@ -856,16 +867,16 @@ func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
 				return spec.NewError(0, "save artist rating: %v", err)
 			}
 		} else {
-			if (err == nil) {
+			if err == nil {
 				if err := c.DB.Delete(&artistrating).Error; err != nil {
 					return spec.NewError(0, "delete artist rating: %v", err)
 				}
 			}
 		}
-		aar := c.DB.Table("artistrating").Where("artistid=?", id.Value)
+		aar := c.DB.Table("artist_ratings").Where("artist_id=?", id.Value)
 		aar.Select("sum(rating)").Row().Scan(&sum)
 		aar.Count(&count)
-		artist.AverageRating = strconv.FormatFloat(float64(sum) / float64(count), 'g', 2, 64)
+		artist.AverageRating = strconv.FormatFloat(float64(sum)/float64(count), 'g', 2, 64)
 		if err := c.DB.Save(&artist).Error; err != nil {
 			return spec.NewError(0, "save artist: %v", err)
 		}
@@ -874,11 +885,11 @@ func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
 		var trackrating db.TrackRating
 		var sum int
 		var count int
-		if err := c.DB.Where("trackid=?", id.Value).First(&track).Error; err != nil {
+		if err := c.DB.Where("id=?", id.Value).First(&track).Error; err != nil {
 			return spec.NewError(0, "fetch track: %v", err)
 		}
-		err = c.DB.Where("userid=? AND trackid=?", user.ID, id.Value).First(&trackrating).Error
-		if (rating != 0) {
+		err = c.DB.Where("user_id=? AND track_id=?", user.ID, id.Value).First(&trackrating).Error
+		if rating != 0 {
 			trackrating.UserID = user.ID
 			trackrating.TrackID = id.Value
 			trackrating.Rating = rating
@@ -886,16 +897,16 @@ func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
 				return spec.NewError(0, "save track rating: %v", err)
 			}
 		} else {
-			if (err == nil) {
+			if err == nil {
 				if err := c.DB.Delete(&trackrating).Error; err != nil {
 					return spec.NewError(0, "delete track rating: %v", err)
 				}
 			}
 		}
-		atr := c.DB.Table("trackrating").Where("trackid=?", id.Value)
+		atr := c.DB.Table("track_ratings").Where("track_id=?", id.Value)
 		atr.Select("sum(rating)").Row().Scan(&sum)
 		atr.Count(&count)
-		track.AverageRating = strconv.FormatFloat(float64(sum) / float64(count), 'g', 2, 64)
+		track.AverageRating = strconv.FormatFloat(float64(sum)/float64(count), 'g', 2, 64)
 		if err := c.DB.Save(&track).Error; err != nil {
 			return spec.NewError(0, "save track: %v", err)
 		}

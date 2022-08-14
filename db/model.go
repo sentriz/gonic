@@ -42,13 +42,13 @@ func joinInt(in []int, sep string) string {
 }
 
 type Artist struct {
-	ID         int      `gorm:"primary_key"`
-	Name       string   `gorm:"not null; unique_index"`
-	NameUDec   string   `sql:"default: null"`
-	Albums     []*Album `gorm:"foreignkey:TagArtistID"`
-	AlbumCount int      `sql:"-"`
-	Cover      string   `sql:"default: null"`
-	AverageRating string `sql:"default: null"`
+	ID            int      `gorm:"primary_key"`
+	Name          string   `gorm:"not null; unique_index"`
+	NameUDec      string   `sql:"default: null"`
+	Albums        []*Album `gorm:"foreignkey:TagArtistID"`
+	AlbumCount    int      `sql:"-"`
+	Cover         string   `sql:"default: null"`
+	AverageRating string   `sql:"default: null"`
 }
 
 func (a *Artist) SID() *specid.ID {
@@ -99,7 +99,7 @@ type Track struct {
 	TagTrackNumber int      `sql:"default: null"`
 	TagDiscNumber  int      `sql:"default: null"`
 	TagBrainzID    string   `sql:"default: null"`
-	AverageRating string `sql:"default: null"`
+	AverageRating  string   `sql:"default: null"`
 }
 
 func (t *Track) AudioLength() int  { return t.Length }
@@ -212,8 +212,8 @@ type Album struct {
 	TagBrainzID   string `sql:"default: null"`
 	TagYear       int    `sql:"default: null"`
 	Tracks        []*Track
-	ChildCount    int `sql:"-"`
-	Duration      int `sql:"-"`
+	ChildCount    int    `sql:"-"`
+	Duration      int    `sql:"-"`
 	AverageRating string `sql:"default: null"`
 }
 
@@ -308,15 +308,15 @@ type AlbumGenre struct {
 }
 
 type AlbumStar struct {
-	UserID    int `gorm:"primary_key; not null; unique_index:idx_user_id_albumstar" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
-	AlbumID   int `gorm:"primary_key; not null; unique_index:idx_album_id_albumstar" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	UserID   int `gorm:"primary_key; not null; unique_index:idx_user_id_albumstar" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
+	AlbumID  int `gorm:"primary_key; not null; unique_index:idx_album_id_albumstar" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	StarDate time.Time
 }
 
 type AlbumRating struct {
-	UserID   int `gorm:"primary_key; not null; unique_index:idx_user_id_albumrating" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
-	AlbumID  int `gorm:"primary_key; not null; unique_index:idx_album_id_albumrating" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
-	Rating   int `gorm:"not null; check:(rating >= 1 AND rating <= 5)"`
+	UserID  int `gorm:"primary_key; not null; unique_index:idx_user_id_albumrating" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
+	AlbumID int `gorm:"primary_key; not null; unique_index:idx_album_id_albumrating" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	Rating  int `gorm:"not null; check:(rating >= 1 AND rating <= 5)"`
 }
 
 type ArtistStar struct {
@@ -338,9 +338,9 @@ type TrackStar struct {
 }
 
 type TrackRating struct {
-	UserID   int `gorm:"primary_key; not null; unique_index:idx_user_id_trackrating" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
+	UserID  int `gorm:"primary_key; not null; unique_index:idx_user_id_trackrating" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
 	TrackID int `gorm:"primary_key; not null; unique_index:idx_track_id_trackrating" sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
-	Rating   int `gorm:"not null; check:(rating >= 1 AND rating <= 5)"`
+	Rating  int `gorm:"not null; check:(rating >= 1 AND rating <= 5)"`
 }
 
 type PodcastAutoDownload string

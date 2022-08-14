@@ -319,10 +319,10 @@ func (c *Controller) addStarRatingToAlbum(UID int, album *spec.Album) {
 	var as db.AlbumStar
 	var ar db.AlbumRating
 
-	if err := c.DB.Where("userid=? AND albumid=?", UID, album.ID.Value).First(&as).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND album_id=?", UID, album.ID.Value).First(&as).Error; err == nil {
 		album.Starred = as.StarDate.Format(time.RFC3339)
 	}
-	if err := c.DB.Where("userid=? AND albumid=?", UID, album.ID.Value).First(&ar).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND album_id=?", UID, album.ID.Value).First(&ar).Error; err == nil {
 		album.UserRating = ar.Rating
 	}
 }
@@ -331,10 +331,10 @@ func (c *Controller) addStarRatingToArtist(UID int, artist *spec.Artist) {
 	var as db.ArtistStar
 	var ar db.ArtistRating
 
-	if err := c.DB.Where("userid=? AND artistid=?", UID, artist.ID.Value).First(&as).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND artist_id=?", UID, artist.ID.Value).First(&as).Error; err == nil {
 		artist.Starred = as.StarDate.Format(time.RFC3339)
 	}
-	if err := c.DB.Where("userid=? AND artistid=?", UID, artist.ID.Value).First(&ar).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND artist_id=?", UID, artist.ID.Value).First(&ar).Error; err == nil {
 		artist.UserRating = ar.Rating
 	}
 }
@@ -343,10 +343,10 @@ func (c *Controller) addStarRatingToTCAlbum(UID int, album *spec.TrackChild) {
 	var as db.AlbumStar
 	var ar db.AlbumRating
 
-	if err := c.DB.Where("userid=? AND albumid=?", UID, album.ID.Value).First(&as).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND album_id=?", UID, album.ID.Value).First(&as).Error; err == nil {
 		album.Starred = as.StarDate.Format(time.RFC3339)
 	}
-	if err := c.DB.Where("userid=? AND albumid=?", UID, album.ID.Value).First(&ar).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND album_id=?", UID, album.ID.Value).First(&ar).Error; err == nil {
 		album.UserRating = ar.Rating
 	}
 }
@@ -355,10 +355,10 @@ func (c *Controller) addStarRatingToTCTrack(UID int, track *spec.TrackChild) {
 	var ts db.TrackStar
 	var tr db.TrackRating
 
-	if err := c.DB.Where("userid=? AND trackid=?", UID, track.ID.Value).First(&ts).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND track_id=?", UID, track.ID.Value).First(&ts).Error; err == nil {
 		track.Starred = ts.StarDate.Format(time.RFC3339)
 	}
-	if err := c.DB.Where("userid=? AND trackid=?", UID, track.ID.Value).First(&tr).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND track_id=?", UID, track.ID.Value).First(&tr).Error; err == nil {
 		track.UserRating = tr.Rating
 	}
 }
@@ -367,10 +367,10 @@ func (c *Controller) addStarRatingToDirectoryArtist(UID int, artist *spec.Direct
 	var as db.ArtistStar
 	var ar db.ArtistRating
 
-	if err := c.DB.Where("userid=? AND artistid=?", UID, artist.ID.Value).First(&as).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND artist_id=?", UID, artist.ID.Value).First(&as).Error; err == nil {
 		artist.Starred = as.StarDate.Format(time.RFC3339)
 	}
-	if err := c.DB.Where("userid=? AND artistid=?", UID, artist.ID.Value).First(&ar).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND artist_id=?", UID, artist.ID.Value).First(&ar).Error; err == nil {
 		artist.UserRating = ar.Rating
 	}
 }
@@ -379,10 +379,10 @@ func (c *Controller) addStarRatingToDirectoryAlbum(UID int, album *spec.Director
 	var as db.AlbumStar
 	var ar db.AlbumRating
 
-	if err := c.DB.Where("userid=? AND albumid=?", UID, album.ID.Value).First(&as).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND album_id=?", UID, album.ID.Value).First(&as).Error; err == nil {
 		album.Starred = as.StarDate.Format(time.RFC3339)
 	}
-	if err := c.DB.Where("userid=? AND albumid=?", UID, album.ID.Value).First(&ar).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND album_id=?", UID, album.ID.Value).First(&ar).Error; err == nil {
 		album.UserRating = ar.Rating
 	}
 }
