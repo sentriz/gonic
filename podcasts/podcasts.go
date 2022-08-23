@@ -25,6 +25,7 @@ import (
 )
 
 const downloadAllWaitInterval = 3 * time.Second
+const fetchUserAgent = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11`
 
 type Podcasts struct {
 	db      *db.DB
@@ -355,8 +356,14 @@ func (p *Podcasts) DownloadEpisode(episodeID int) error {
 	}
 	podcastEpisode.Status = db.PodcastEpisodeStatusDownloading
 	p.db.Save(&podcastEpisode)
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", podcastEpisode.AudioURL, nil)
+	if err != nil {
+		return fmt.Errorf("create http request: %w", err)
+	}
+	req.Header.Add("User-Agent", fetchUserAgent)
 	// nolint: bodyclose
-	resp, err := http.Get(podcastEpisode.AudioURL)
+	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("fetch podcast audio: %w", err)
 	}
@@ -420,11 +427,17 @@ func (p *Podcasts) downloadPodcastCover(podPath string, podcast *db.Podcast) err
 		return fmt.Errorf("parse image url: %w", err)
 	}
 	ext := path.Ext(imageURL.Path)
-	resp, err := http.Get(podcast.ImageURL)
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", podcast.ImageURL, nil)
+	if err != nil {
+		return fmt.Errorf("create http request: %w", err)
+	}
+	req.Header.Add("User-Agent", fetchUserAgent)
+	// nolint: bodyclose
+	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("fetch image url: %w", err)
 	}
-	defer resp.Body.Close()
 	if ext == "" {
 		contentHeader := resp.Header.Get("content-disposition")
 		filename, _ := getContentDispositionFilename(contentHeader)
