@@ -142,38 +142,39 @@ func (s *Scanner) ExecuteWatch() error {
 		select {
 		case event := <-s.watcher.Events:
 			doScan := event.Op&(fsnotify.Create|fsnotify.Write) != 0
-			if doScan && s.StartScanning() {
-				var dirName string
-				c := &Context{
-					errs:       &multierr.Err{},
-					seenTracks: map[int]struct{}{},
-					seenAlbums: map[int]struct{}{},
-					isFull:     false,
-				}
-				fileInfo, err := os.Stat(event.Name)
-				if err != nil && fileInfo.IsDir() {
-					dirName = event.Name
-				} else {
-					dirName = filepath.Dir(event.Name)
-				}
-				musicDirName := s.watchMap[dirName]
-				if musicDirName == "" {
-					musicDirName = s.watchMap[filepath.Dir(dirName)]
-				}
-				err = filepath.WalkDir(dirName, func(absPath string, d fs.DirEntry, err error) error {
-					return s.watchCallback(musicDirName, absPath, d, err)
-				})
-				if err != nil {
-					log.Printf("error watching directory tree: %v\n", err)
-				}
-				err = filepath.WalkDir(dirName, func(absPath string, d fs.DirEntry, err error) error {
-					return s.scanCallback(c, musicDirName, absPath, d, err)
-				})
-				if err != nil {
-					log.Printf("walk: %v", err)
-				}
-				atomic.StoreInt32(s.scanning, 0)
+			if !doScan || !s.StartScanning() {
+				break;
 			}
+			var dirName string
+			c := &Context{
+				errs:       &multierr.Err{},
+				seenTracks: map[int]struct{}{},
+				seenAlbums: map[int]struct{}{},
+				isFull:     false,
+			}
+			fileInfo, err := os.Stat(event.Name)
+			if err != nil && fileInfo.IsDir() {
+				dirName = event.Name
+			} else {
+				dirName = filepath.Dir(event.Name)
+			}
+			musicDirName := s.watchMap[dirName]
+			if musicDirName == "" {
+				musicDirName = s.watchMap[filepath.Dir(dirName)]
+			}
+			err = filepath.WalkDir(dirName, func(absPath string, d fs.DirEntry, err error) error {
+				return s.watchCallback(musicDirName, absPath, d, err)
+			})
+			if err != nil {
+				log.Printf("error watching directory tree: %v\n", err)
+			}
+			err = filepath.WalkDir(dirName, func(absPath string, d fs.DirEntry, err error) error {
+				return s.scanCallback(c, musicDirName, absPath, d, err)
+			})
+			if err != nil {
+				log.Printf("walk: %v", err)
+			}
+			atomic.StoreInt32(s.scanning, 0)
 		case err = <-s.watcher.Errors:
 			log.Printf("error from watcher: %v\n", err)
 		case <-s.watchDone:
