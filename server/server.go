@@ -140,6 +140,9 @@ func setupMisc(r *mux.Router, ctrl *ctrlbase.Controller) {
 		restScan := ctrl.Path(fmt.Sprintf("/rest/startScan.view?%s", r.URL.Query().Encode()))
 		http.Redirect(w, r, restScan, http.StatusSeeOther)
 	})
+	r.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "OK")
+	})
 }
 
 func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
