@@ -155,6 +155,7 @@ view the admin UI at http://localhost:4747
 | `GONIC_PODCAST_PATH`    | `-podcast-path`    | path to a podcasts directory                                                                                |
 | `GONIC_CACHE_PATH`      | `-cache-path`      | path to store audio transcodes, covers, etc                                                                 |
 | `GONIC_DB_PATH`         | `-db-path`         | **optional** path to database file                                                                          |
+| `GONIC_HTTP_LOG`        | `-http-log`        | **optional** http request logging, enabled by default                                                        |
 | `GONIC_LISTEN_ADDR`     | `-listen-addr`     | **optional** host and port to listen on (eg. `0.0.0.0:4747`, `127.0.0.1:4747`) (_default_ `0.0.0.0:4747`)   |
 | `GONIC_TLS_CERT`        | `-tls-cert`        | **optional** path to a TLS cert (enables HTTPS listening)                                                   |
 | `GONIC_TLS_KEY`         | `-tls-key`         | **optional** path to a TLS key (enables HTTPS listening)                                                    |
