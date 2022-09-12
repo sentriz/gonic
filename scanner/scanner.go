@@ -121,7 +121,8 @@ func (s *Scanner) ExecuteWatch() error {
 	var err error
 	s.watcher, err = fsnotify.NewWatcher()
 	if err != nil {
-		log.Fatalf("error creating watcher: %v\n", err)
+		log.Printf("error creating watcher: %v\n", err)
+		return err;
 	}
 	defer s.watcher.Close()
 
