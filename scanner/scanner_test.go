@@ -585,3 +585,28 @@ func TestIncrementalScanNoChangeNoUpdatedAt(t *testing.T) {
 
 	is.Equal(albumA.UpdatedAt, albumB.UpdatedAt)
 }
+
+// https://github.com/sentriz/gonic/issues/230
+func TestAlbumAndArtistSameNameWeirdness(t *testing.T) {
+	t.Parallel()
+	is := is.NewRelaxed(t)
+	m := mockfs.New(t)
+
+	const name = "same"
+
+	add := func(path string, a ...interface{}) {
+		m.AddTrack(fmt.Sprintf(path, a...))
+		m.SetTags(fmt.Sprintf(path, a...), func(tags *mockfs.Tags) error { return nil })
+	}
+
+	add("an-artist/%s/track-1.flac", name)
+	add("an-artist/%s/track-2.flac", name)
+	add("%s/an-album/track-1.flac", name)
+	add("%s/an-album/track-2.flac", name)
+
+	m.ScanAndClean()
+
+	var albums []*db.Album
+	is.NoErr(m.DB().Find(&albums).Error)
+	is.Equal(len(albums), 5) // root, 2 artists, 2 albums
+}

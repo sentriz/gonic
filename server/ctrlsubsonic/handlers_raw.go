@@ -72,22 +72,22 @@ func streamGetAudio(dbc *db.DB, podcastsPath string, user *db.User, id specid.ID
 }
 
 func streamUpdateStats(dbc *db.DB, userID, albumID int, playTime time.Time) error {
-	play := db.Play{
-		AlbumID: albumID,
-		UserID:  userID,
-	}
+	var play db.Play
 	err := dbc.
-		Where(play).
+		Where("album_id=? AND user_id=?", albumID, userID).
 		First(&play).
 		Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return fmt.Errorf("find stat: %w", err)
 	}
 
+	play.AlbumID = albumID
+	play.UserID = userID
 	play.Count++ // for getAlbumList?type=frequent
 	if playTime.After(play.Time) {
 		play.Time = playTime // for getAlbumList?type=recent
 	}
+
 	if err := dbc.Save(&play).Error; err != nil {
 		return fmt.Errorf("save stat: %w", err)
 	}

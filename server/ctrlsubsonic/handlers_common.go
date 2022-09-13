@@ -10,12 +10,12 @@ import (
 
 	"github.com/jinzhu/gorm"
 
+	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/multierr"
+	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
-	"go.senan.xyz/gonic/db"
-	"go.senan.xyz/gonic/scanner"
 )
 
 func lowerUDecOrHash(in string) string {
@@ -128,7 +128,7 @@ func (c *Controller) ServeNotFound(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
-	queue := db.PlayQueue{}
+	var queue db.PlayQueue
 	err := c.DB.
 		Where("user_id=?", user.ID).
 		Find(&queue).
@@ -170,8 +170,9 @@ func (c *Controller) ServeSavePlayQueue(r *http.Request) *spec.Response {
 		}
 	}
 	user := r.Context().Value(CtxUser).(*db.User)
-	queue := &db.PlayQueue{UserID: user.ID}
-	c.DB.Where(queue).First(queue)
+	var queue db.PlayQueue
+	c.DB.Where("user_id=?, user.ID").First(&queue)
+	queue.UserID = user.ID
 	queue.Current = params.GetOrID("current", specid.ID{}).Value
 	queue.Position = params.GetOrInt("position", 0)
 	queue.ChangedBy = params.GetOr("c", "") // must exist, middleware checks
@@ -186,18 +187,18 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "provide an `id` parameter")
 	}
-	track := &db.Track{}
+	var track db.Track
 	err = c.DB.
 		Where("id=?", id.Value).
 		Preload("Album").
 		Preload("Album.TagArtist").
-		First(track).
+		First(&track).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewError(10, "couldn't find a track with that id")
 	}
 	sub := spec.NewResponse()
-	sub.Track = spec.NewTrackByTags(track, track.Album)
+	sub.Track = spec.NewTrackByTags(&track, track.Album)
 	return sub
 }
 

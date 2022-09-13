@@ -166,7 +166,7 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string
 	relPath, _ := filepath.Rel(musicDir, absPath)
 	pdir, pbasename := filepath.Split(filepath.Dir(relPath))
 	var parent db.Album
-	if err := tx.Where(db.Album{RootDir: musicDir, LeftPath: pdir, RightPath: pbasename}).FirstOrCreate(&parent).Error; err != nil {
+	if err := tx.Where("root_dir=? AND left_path=? AND right_path=?", musicDir, pdir, pbasename).Assign(db.Album{RootDir: musicDir, LeftPath: pdir, RightPath: pbasename}).FirstOrCreate(&parent).Error; err != nil {
 		return fmt.Errorf("first or create parent: %w", err)
 	}
 
@@ -197,8 +197,8 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 		return fmt.Errorf("stating %q: %w", basename, err)
 	}
 
-	track := &db.Track{AlbumID: album.ID, Filename: filepath.Base(basename)}
-	if err := tx.Where(track).First(track).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	var track db.Track
+	if err := tx.Where("album_id=? AND filename=?", album.ID, filepath.Base(basename)).First(&track).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return fmt.Errorf("query track: %w", err)
 	}
 
@@ -213,7 +213,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 	}
 
 	genreNames := strings.Split(trags.SomeGenre(), s.genreSplit)
-	genreIDs, err := populateGenres(tx, track, genreNames)
+	genreIDs, err := populateGenres(tx, &track, genreNames)
 	if err != nil {
 		return fmt.Errorf("populate genres: %w", err)
 	}
@@ -232,10 +232,10 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 		}
 	}
 
-	if err := populateTrack(tx, album, track, trags, basename, int(stat.Size())); err != nil {
+	if err := populateTrack(tx, album, &track, trags, basename, int(stat.Size())); err != nil {
 		return fmt.Errorf("process %q: %w", basename, err)
 	}
-	if err := populateTrackGenres(tx, track, genreIDs); err != nil {
+	if err := populateTrackGenres(tx, &track, genreIDs); err != nil {
 		return fmt.Errorf("populate track genres: %w", err)
 	}
 
@@ -266,7 +266,7 @@ func populateAlbum(tx *db.DB, album *db.Album, albumArtist *db.Artist, trags tag
 }
 
 func populateAlbumBasics(tx *db.DB, musicDir string, parent, album *db.Album, dir, basename string, cover string) error {
-	if err := tx.Where(db.Album{RootDir: musicDir, LeftPath: dir, RightPath: basename}).First(album).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	if err := tx.Where("root_dir=? AND left_path=? AND right_path=?", musicDir, dir, basename).First(album).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return fmt.Errorf("find album: %w", err)
 	}
 
