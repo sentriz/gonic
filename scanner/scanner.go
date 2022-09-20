@@ -302,7 +302,9 @@ func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trags tags.Parse
 	track.TagTrackArtist = trags.Artist()
 	track.TagTrackNumber = trags.TrackNumber()
 	track.TagDiscNumber = trags.DiscNumber()
-	track.TagBrainzID = trags.BrainzID()
+	track.TagBrainzRecordingID = trags.RecordingID()
+	track.TagBrainzTrackID = trags.TrackID()
+	track.TagBrainzReleaseID = trags.AlbumBrainzID()
 
 	track.Length = trags.Length()   // these two should be calculated
 	track.Bitrate = trags.Bitrate() // ...from the file instead of tags

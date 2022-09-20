@@ -79,25 +79,27 @@ type AudioFile interface {
 }
 
 type Track struct {
-	ID             int `gorm:"primary_key"`
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	Filename       string `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null"`
-	FilenameUDec   string `sql:"default: null"`
-	Album          *Album
-	AlbumID        int `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
-	Artist         *Artist
-	ArtistID       int      `gorm:"not null" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
-	Genres         []*Genre `gorm:"many2many:track_genres"`
-	Size           int      `sql:"default: null"`
-	Length         int      `sql:"default: null"`
-	Bitrate        int      `sql:"default: null"`
-	TagTitle       string   `sql:"default: null"`
-	TagTitleUDec   string   `sql:"default: null"`
-	TagTrackArtist string   `sql:"default: null"`
-	TagTrackNumber int      `sql:"default: null"`
-	TagDiscNumber  int      `sql:"default: null"`
-	TagBrainzID    string   `sql:"default: null"`
+	ID                   int `gorm:"primary_key"`
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
+	Filename             string `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null"`
+	FilenameUDec         string `sql:"default: null"`
+	Album                *Album
+	AlbumID              int `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	Artist               *Artist
+	ArtistID             int      `gorm:"not null" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
+	Genres               []*Genre `gorm:"many2many:track_genres"`
+	Size                 int      `sql:"default: null"`
+	Length               int      `sql:"default: null"`
+	Bitrate              int      `sql:"default: null"`
+	TagTitle             string   `sql:"default: null"`
+	TagTitleUDec         string   `sql:"default: null"`
+	TagTrackArtist       string   `sql:"default: null"`
+	TagTrackNumber       int      `sql:"default: null"`
+	TagDiscNumber        int      `sql:"default: null"`
+	TagBrainzRecordingID string   `sql:"default: null"`
+	TagBrainzReleaseID   string   `sql:"default: null"`
+	TagBrainzTrackID     string   `sql:"default: null"`
 }
 
 func (t *Track) AudioLength() int  { return t.Length }

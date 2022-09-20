@@ -260,7 +260,7 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 	params.Add("track", track.TagTitle)
 	params.Add("trackNumber", strconv.Itoa(track.TagTrackNumber))
 	params.Add("album", track.Album.TagTitle)
-	params.Add("mbid", track.TagBrainzID)
+	params.Add("mbid", track.TagBrainzTrackID)
 	params.Add("albumArtist", track.Artist.Name)
 	params.Add("duration", strconv.Itoa(track.Length))
 	params.Add("api_sig", getParamSignature(params, secret))
