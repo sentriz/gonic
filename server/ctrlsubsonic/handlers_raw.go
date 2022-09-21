@@ -264,7 +264,10 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		}()
 	}
 
-	if format, _ := params.Get("format"); format == "raw" {
+	maxBitRate, _ := params.GetInt("maxBitRate")
+	format, _ := params.Get("format")
+
+	if format == "raw" || maxBitRate >= file.AudioBitrate() {
 		http.ServeFile(w, r, audioPath)
 		return nil
 	}
@@ -282,8 +285,8 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	if !ok {
 		return spec.NewError(0, "unknown transcode user profile %q", pref.Profile)
 	}
-	if max, _ := params.GetInt("maxBitRate"); max > 0 && int(profile.BitRate()) > max {
-		profile = transcode.WithBitrate(profile, transcode.BitRate(max))
+	if maxBitRate > 0 && int(profile.BitRate()) > maxBitRate {
+		profile = transcode.WithBitrate(profile, transcode.BitRate(maxBitRate))
 	}
 
 	log.Printf("trancoding to %q with max bitrate %dk", profile.MIME(), profile.BitRate())
