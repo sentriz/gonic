@@ -171,7 +171,7 @@ func (c *Controller) ServeSavePlayQueue(r *http.Request) *spec.Response {
 	}
 	user := r.Context().Value(CtxUser).(*db.User)
 	var queue db.PlayQueue
-	c.DB.Where("user_id=?, user.ID").First(&queue)
+	c.DB.Where("user_id=?", user.ID).First(&queue)
 	queue.UserID = user.ID
 	queue.Current = params.GetOrID("current", specid.ID{}).Value
 	queue.Position = params.GetOrInt("position", 0)
