@@ -55,8 +55,8 @@ func NewMock() (*DB, error) {
 }
 
 func (db *DB) GetSetting(key string) (string, error) {
-	setting := &Setting{}
-	if err := db.Where("key=?", key).First(setting).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	var setting Setting
+	if err := db.Where("key=?", key).First(&setting).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return "", err
 	}
 	return setting.Value, nil
@@ -64,8 +64,8 @@ func (db *DB) GetSetting(key string) (string, error) {
 
 func (db *DB) SetSetting(key, value string) error {
 	return db.
-		Where(Setting{Key: key}).
-		Assign(Setting{Value: value}).
+		Where("key=?", key).
+		Assign(Setting{Key: key, Value: value}).
 		FirstOrCreate(&Setting{}).
 		Error
 }
@@ -89,27 +89,27 @@ func (db *DB) InsertBulkLeftMany(table string, head []string, left int, col []in
 }
 
 func (db *DB) GetUserByID(id int) *User {
-	user := &User{}
+	var user User
 	err := db.
 		Where("id=?", id).
-		First(user).
+		First(&user).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil
 	}
-	return user
+	return &user
 }
 
 func (db *DB) GetUserByName(name string) *User {
-	user := &User{}
+	var user User
 	err := db.
 		Where("name=?", name).
-		First(user).
+		First(&user).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil
 	}
-	return user
+	return &user
 }
 
 func (db *DB) Begin() *DB {

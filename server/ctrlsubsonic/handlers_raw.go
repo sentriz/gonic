@@ -72,22 +72,22 @@ func streamGetAudio(dbc *db.DB, podcastsPath string, user *db.User, id specid.ID
 }
 
 func streamUpdateStats(dbc *db.DB, userID, albumID int, playTime time.Time) error {
-	play := db.Play{
-		AlbumID: albumID,
-		UserID:  userID,
-	}
+	var play db.Play
 	err := dbc.
-		Where(play).
+		Where("album_id=? AND user_id=?", albumID, userID).
 		First(&play).
 		Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return fmt.Errorf("find stat: %w", err)
 	}
 
+	play.AlbumID = albumID
+	play.UserID = userID
 	play.Count++ // for getAlbumList?type=frequent
 	if playTime.After(play.Time) {
 		play.Time = playTime // for getAlbumList?type=recent
 	}
+
 	if err := dbc.Save(&play).Error; err != nil {
 		return fmt.Errorf("save stat: %w", err)
 	}
@@ -264,7 +264,10 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		}()
 	}
 
-	if format, _ := params.Get("format"); format == "raw" {
+	maxBitRate, _ := params.GetInt("maxBitRate")
+	format, _ := params.Get("format")
+
+	if format == "raw" || maxBitRate >= file.AudioBitrate() {
 		http.ServeFile(w, r, audioPath)
 		return nil
 	}
@@ -282,8 +285,8 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	if !ok {
 		return spec.NewError(0, "unknown transcode user profile %q", pref.Profile)
 	}
-	if max, _ := params.GetInt("maxBitRate"); max > 0 && int(profile.BitRate()) > max {
-		profile = transcode.WithBitrate(profile, transcode.BitRate(max))
+	if maxBitRate > 0 && int(profile.BitRate()) > maxBitRate {
+		profile = transcode.WithBitrate(profile, transcode.BitRate(maxBitRate))
 	}
 
 	log.Printf("trancoding to %q with max bitrate %dk", profile.MIME(), profile.BitRate())
