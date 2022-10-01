@@ -316,74 +316,74 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response {
 	return sub
 }
 
-func (c *Controller) addStarRatingToAlbum(UID int, album *spec.Album) {
+func (c *Controller) addStarRatingToAlbum(uid int, album *spec.Album) {
 	var as db.AlbumStar
 	var ar db.AlbumRating
 
-	if err := c.DB.Where("user_id=? AND album_id=?", UID, album.ID.Value).First(&as).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND album_id=?", uid, album.ID.Value).First(&as).Error; err == nil {
 		album.Starred = as.StarDate.Format(time.RFC3339Nano)
 	}
-	if err := c.DB.Where("user_id=? AND album_id=?", UID, album.ID.Value).First(&ar).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND album_id=?", uid, album.ID.Value).First(&ar).Error; err == nil {
 		album.UserRating = ar.Rating
 	}
 }
 
-func (c *Controller) addStarRatingToArtist(UID int, artist *spec.Artist) {
+func (c *Controller) addStarRatingToArtist(uid int, artist *spec.Artist) {
 	var as db.ArtistStar
 	var ar db.ArtistRating
 
-	if err := c.DB.Where("user_id=? AND artist_id=?", UID, artist.ID.Value).First(&as).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND artist_id=?", uid, artist.ID.Value).First(&as).Error; err == nil {
 		artist.Starred = as.StarDate.Format(time.RFC3339Nano)
 	}
-	if err := c.DB.Where("user_id=? AND artist_id=?", UID, artist.ID.Value).First(&ar).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND artist_id=?", uid, artist.ID.Value).First(&ar).Error; err == nil {
 		artist.UserRating = ar.Rating
 	}
 }
 
-func (c *Controller) addStarRatingToTCAlbum(UID int, album *spec.TrackChild) {
+func (c *Controller) addStarRatingToTCAlbum(uid int, album *spec.TrackChild) {
 	var as db.AlbumStar
 	var ar db.AlbumRating
 
-	if err := c.DB.Where("user_id=? AND album_id=?", UID, album.ID.Value).First(&as).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND album_id=?", uid, album.ID.Value).First(&as).Error; err == nil {
 		album.Starred = as.StarDate.Format(time.RFC3339)
 	}
-	if err := c.DB.Where("user_id=? AND album_id=?", UID, album.ID.Value).First(&ar).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND album_id=?", uid, album.ID.Value).First(&ar).Error; err == nil {
 		album.UserRating = ar.Rating
 	}
 }
 
-func (c *Controller) addStarRatingToTCTrack(UID int, track *spec.TrackChild) {
+func (c *Controller) addStarRatingToTCTrack(uid int, track *spec.TrackChild) {
 	var ts db.TrackStar
 	var tr db.TrackRating
 
-	if err := c.DB.Where("user_id=? AND track_id=?", UID, track.ID.Value).First(&ts).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND track_id=?", uid, track.ID.Value).First(&ts).Error; err == nil {
 		track.Starred = ts.StarDate.Format(time.RFC3339)
 	}
-	if err := c.DB.Where("user_id=? AND track_id=?", UID, track.ID.Value).First(&tr).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND track_id=?", uid, track.ID.Value).First(&tr).Error; err == nil {
 		track.UserRating = tr.Rating
 	}
 }
 
-func (c *Controller) addStarRatingToDirectoryArtist(UID int, artist *spec.Directory) {
+func (c *Controller) addStarRatingToDirectoryArtist(uid int, artist *spec.Directory) {
 	var as db.ArtistStar
 	var ar db.ArtistRating
 
-	if err := c.DB.Where("user_id=? AND artist_id=?", UID, artist.ID.Value).First(&as).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND artist_id=?", uid, artist.ID.Value).First(&as).Error; err == nil {
 		artist.Starred = as.StarDate.Format(time.RFC3339)
 	}
-	if err := c.DB.Where("user_id=? AND artist_id=?", UID, artist.ID.Value).First(&ar).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND artist_id=?", uid, artist.ID.Value).First(&ar).Error; err == nil {
 		artist.UserRating = ar.Rating
 	}
 }
 
-func (c *Controller) addStarRatingToDirectoryAlbum(UID int, album *spec.Directory) {
+func (c *Controller) addStarRatingToDirectoryAlbum(uid int, album *spec.Directory) {
 	var as db.AlbumStar
 	var ar db.AlbumRating
 
-	if err := c.DB.Where("user_id=? AND album_id=?", UID, album.ID.Value).First(&as).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND album_id=?", uid, album.ID.Value).First(&as).Error; err == nil {
 		album.Starred = as.StarDate.Format(time.RFC3339)
 	}
-	if err := c.DB.Where("user_id=? AND album_id=?", UID, album.ID.Value).First(&ar).Error; err == nil {
+	if err := c.DB.Where("user_id=? AND album_id=?", uid, album.ID.Value).First(&ar).Error; err == nil {
 		album.UserRating = ar.Rating
 	}
 }

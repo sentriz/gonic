@@ -141,7 +141,7 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 		if fromYear > toYear {
 			toYear, fromYear = fromYear, toYear
 		}
-		q = q.Where("tag_year BETWEEN ? AND ?",	fromYear, toYear)
+		q = q.Where("tag_year BETWEEN ? AND ?", fromYear, toYear)
 		q = q.Order("tag_year")
 	case "byGenre":
 		genre, _ := params.Get("genre")
@@ -838,11 +838,9 @@ func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
 			if err := c.DB.Save(&albumrating).Error; err != nil {
 				return spec.NewError(0, "save album rating: %v", err)
 			}
-		} else {
-			if err == nil {
-				if err := c.DB.Delete(&albumrating).Error; err != nil {
-					return spec.NewError(0, "delete album rating: %v", err)
-				}
+		} else if err == nil {
+			if err := c.DB.Delete(&albumrating).Error; err != nil {
+				return spec.NewError(0, "delete album rating: %v", err)
 			}
 		}
 		aar := c.DB.Table("album_ratings").Where("album_id=?", id.Value)
@@ -868,11 +866,9 @@ func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
 			if err := c.DB.Save(&artistrating).Error; err != nil {
 				return spec.NewError(0, "save artist rating: %v", err)
 			}
-		} else {
-			if err == nil {
-				if err := c.DB.Delete(&artistrating).Error; err != nil {
-					return spec.NewError(0, "delete artist rating: %v", err)
-				}
+		} else if err == nil {
+			if err := c.DB.Delete(&artistrating).Error; err != nil {
+				return spec.NewError(0, "delete artist rating: %v", err)
 			}
 		}
 		aar := c.DB.Table("artist_ratings").Where("artist_id=?", id.Value)
@@ -898,11 +894,9 @@ func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
 			if err := c.DB.Save(&trackrating).Error; err != nil {
 				return spec.NewError(0, "save track rating: %v", err)
 			}
-		} else {
-			if err == nil {
-				if err := c.DB.Delete(&trackrating).Error; err != nil {
-					return spec.NewError(0, "delete track rating: %v", err)
-				}
+		} else if err == nil {
+			if err := c.DB.Delete(&trackrating).Error; err != nil {
+				return spec.NewError(0, "delete track rating: %v", err)
 			}
 		}
 		atr := c.DB.Table("track_ratings").Where("track_id=?", id.Value)
