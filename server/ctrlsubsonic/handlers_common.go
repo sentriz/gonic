@@ -321,7 +321,7 @@ func (c *Controller) addStarRatingToAlbum(UID int, album *spec.Album) {
 	var ar db.AlbumRating
 
 	if err := c.DB.Where("user_id=? AND album_id=?", UID, album.ID.Value).First(&as).Error; err == nil {
-		album.Starred = as.StarDate.Format(time.RFC3339)
+		album.Starred = as.StarDate.Format(time.RFC3339Nano)
 	}
 	if err := c.DB.Where("user_id=? AND album_id=?", UID, album.ID.Value).First(&ar).Error; err == nil {
 		album.UserRating = ar.Rating
@@ -333,7 +333,7 @@ func (c *Controller) addStarRatingToArtist(UID int, artist *spec.Artist) {
 	var ar db.ArtistRating
 
 	if err := c.DB.Where("user_id=? AND artist_id=?", UID, artist.ID.Value).First(&as).Error; err == nil {
-		artist.Starred = as.StarDate.Format(time.RFC3339)
+		artist.Starred = as.StarDate.Format(time.RFC3339Nano)
 	}
 	if err := c.DB.Where("user_id=? AND artist_id=?", UID, artist.ID.Value).First(&ar).Error; err == nil {
 		artist.UserRating = ar.Rating
