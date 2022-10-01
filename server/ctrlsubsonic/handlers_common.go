@@ -178,7 +178,7 @@ func (c *Controller) ServeSavePlayQueue(r *http.Request) *spec.Response {
 	queue.Position = params.GetOrInt("position", 0)
 	queue.ChangedBy = params.GetOr("c", "") // must exist, middleware checks
 	queue.SetItems(trackIDs)
-	c.DB.Save(queue)
+	c.DB.Save(&queue)
 	return spec.NewResponse()
 }
 
