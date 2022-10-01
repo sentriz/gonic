@@ -844,7 +844,7 @@ func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
 			}
 		}
 		aar := c.DB.Table("album_ratings").Where("album_id=?", id.Value)
-		aar.Select("sum(rating)").Row().Scan(&sum)
+		_ = aar.Select("sum(rating)").Row().Scan(&sum)
 		aar.Count(&count)
 		album.AverageRating = strconv.FormatFloat(float64(sum)/float64(count), 'g', 2, 64)
 		if err := c.DB.Save(&album).Error; err != nil {
@@ -872,7 +872,7 @@ func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
 			}
 		}
 		aar := c.DB.Table("artist_ratings").Where("artist_id=?", id.Value)
-		aar.Select("sum(rating)").Row().Scan(&sum)
+		_ = aar.Select("sum(rating)").Row().Scan(&sum)
 		aar.Count(&count)
 		artist.AverageRating = strconv.FormatFloat(float64(sum)/float64(count), 'g', 2, 64)
 		if err := c.DB.Save(&artist).Error; err != nil {
@@ -900,7 +900,7 @@ func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
 			}
 		}
 		atr := c.DB.Table("track_ratings").Where("track_id=?", id.Value)
-		atr.Select("sum(rating)").Row().Scan(&sum)
+		_ = atr.Select("sum(rating)").Row().Scan(&sum)
 		atr.Count(&count)
 		track.AverageRating = strconv.FormatFloat(float64(sum)/float64(count), 'g', 2, 64)
 		if err := c.DB.Save(&track).Error; err != nil {
