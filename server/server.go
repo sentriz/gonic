@@ -296,6 +296,7 @@ func (s *Server) StartHTTP(listenAddr string, tlsCert string, tlsKey string) (Fu
 		Addr:         listenAddr,
 		Handler:      s.router,
 		ReadTimeout:  5 * time.Second,
+		ReadHeaderTimeout:  5 * time.Second,
 		WriteTimeout: 80 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
@@ -335,6 +336,16 @@ func (s *Server) StartScanTicker(dur time.Duration) (FuncExecute, FuncInterrupt)
 			// stop job
 			ticker.Stop()
 			done <- struct{}{}
+		}
+}
+
+func (s *Server) StartScanWatcher() (FuncExecute, FuncInterrupt) {
+	return func() error {
+			log.Printf("starting job 'scan watcher'\n")
+			return s.scanner.ExecuteWatch()
+		}, func(_ error) {
+			// stop job
+			s.scanner.CancelWatch()
 		}
 }
 
