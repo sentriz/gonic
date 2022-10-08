@@ -169,6 +169,9 @@ func (c *Controller) ServeSavePlayQueue(r *http.Request) *spec.Response {
 			trackIDs = append(trackIDs, id.Value)
 		}
 	}
+	if len(trackIDs) == 0 {
+		return spec.NewError(10, "no track ids provided")
+	}
 	user := r.Context().Value(CtxUser).(*db.User)
 	var queue db.PlayQueue
 	c.DB.Where("user_id=?", user.ID).First(&queue)
