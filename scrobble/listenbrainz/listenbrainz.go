@@ -26,10 +26,17 @@ var (
 	ErrListenBrainz = errors.New("listenbrainz error")
 )
 
+// https://listenbrainz.readthedocs.io/en/latest/users/json.html#submission-json
+type Payload struct {
+	ListenedAt    int            `json:"listened_at,omitempty"`
+	TrackMetadata *TrackMetadata `json:"track_metadata"`
+}
+
 type AdditionalInfo struct {
-	TrackNumber int    `json:"tracknumber,omitempty"`
-	TrackMBID   string `json:"track_mbid,omitempty"`
-	TrackLength int    `json:"track_length,omitempty"`
+	TrackNumber   int    `json:"tracknumber,omitempty"`
+	TrackMBID     string `json:"track_mbid,omitempty"`
+	RecordingMBID string `json:"recording_mbid,omitempty"`
+	TrackLength   int    `json:"track_length,omitempty"`
 }
 
 type TrackMetadata struct {
@@ -37,11 +44,6 @@ type TrackMetadata struct {
 	ArtistName     string          `json:"artist_name,omitempty"`
 	TrackName      string          `json:"track_name,omitempty"`
 	ReleaseName    string          `json:"release_name,omitempty"`
-}
-
-type Payload struct {
-	ListenedAt    int            `json:"listened_at,omitempty"`
-	TrackMetadata *TrackMetadata `json:"track_metadata"`
 }
 
 type Scrobble struct {
@@ -58,9 +60,9 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 	payload := &Payload{
 		TrackMetadata: &TrackMetadata{
 			AdditionalInfo: &AdditionalInfo{
-				TrackNumber: track.TagTrackNumber,
-				TrackMBID:   track.TagBrainzID,
-				TrackLength: track.Length,
+				TrackNumber:   track.TagTrackNumber,
+				RecordingMBID: track.TagBrainzID,
+				TrackLength:   track.Length,
 			},
 			ArtistName:  track.TagTrackArtist,
 			TrackName:   track.TagTitle,

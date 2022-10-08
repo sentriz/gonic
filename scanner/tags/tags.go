@@ -37,12 +37,14 @@ func (t *Tagger) firstInt(sep string, keys ...string) int {
 	return 0
 }
 
+// https://picard-docs.musicbrainz.org/downloads/MusicBrainz_Picard_Tag_Map.html
+
 func (t *Tagger) Title() string         { return t.first("title") }
-func (t *Tagger) BrainzID() string      { return t.first("musicbrainz_trackid") }
+func (t *Tagger) BrainzID() string      { return t.first("musicbrainz_trackid") } // musicbrainz recording ID
 func (t *Tagger) Artist() string        { return t.first("artist") }
 func (t *Tagger) Album() string         { return t.first("album") }
 func (t *Tagger) AlbumArtist() string   { return t.first("albumartist", "album artist") }
-func (t *Tagger) AlbumBrainzID() string { return t.first("musicbrainz_albumid") }
+func (t *Tagger) AlbumBrainzID() string { return t.first("musicbrainz_albumid") } // musicbrainz release ID
 func (t *Tagger) Genre() string         { return t.first("genre") }
 func (t *Tagger) TrackNumber() int      { return t.firstInt("/" /* eg. 5/12 */, "tracknumber") }
 func (t *Tagger) DiscNumber() int       { return t.firstInt("/" /* eg. 1/2  */, "discnumber") }
