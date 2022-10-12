@@ -175,7 +175,7 @@ func (s *Scanner) ExecuteWatch() error {
 				}
 
 			}
-			scanList = nil
+			scanList = map[string]struct{}{}
 			s.StopScanning()
 		case event := <-s.watcher.Events:
 			var dirName string
