@@ -150,9 +150,10 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 		c.DB.
 			Where("id=?", id).
 			Preload("Album").
+			Preload("TrackStar", "user_id=?", user.ID).
+			Preload("TrackRating", "user_id=?", user.ID).
 			Find(&track)
 		sub.PlayQueue.List[i] = spec.NewTCTrackByFolder(&track, track.Album)
-		c.addStarRatingToTCTrack(user.ID, sub.PlayQueue.List[i])
 	}
 	return sub
 }
@@ -194,6 +195,8 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 		Where("id=?", id.Value).
 		Preload("Album").
 		Preload("Album.TagArtist").
+		Preload("TrackStar", "user_id=?", user.ID).
+		Preload("TrackRating", "user_id=?", user.ID).
 		First(&track).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -201,7 +204,6 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 	}
 	sub := spec.NewResponse()
 	sub.Track = spec.NewTrackByTags(&track, track.Album)
-	c.addStarRatingToTCTrack(user.ID, sub.Track)
 	return sub
 }
 
@@ -213,6 +215,8 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 		Limit(params.GetOrInt("size", 10)).
 		Preload("Album").
 		Preload("Album.TagArtist").
+		Preload("TrackStar", "user_id=?", user.ID).
+		Preload("TrackRating", "user_id=?", user.ID).
 		Joins("JOIN albums ON tracks.album_id=albums.id").
 		Order(gorm.Expr("random()"))
 	if year, err := params.GetInt("fromYear"); err == nil {
@@ -236,7 +240,6 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	sub.RandomTracks.List = make([]*spec.TrackChild, len(tracks))
 	for i, track := range tracks {
 		sub.RandomTracks.List[i] = spec.NewTrackByTags(track, track.Album)
-		c.addStarRatingToTCTrack(user.ID, sub.RandomTracks.List[i])
 	}
 	return sub
 }
@@ -252,7 +255,10 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response {
 		}
 		for _, id := range ids {
 			track := &db.Track{}
-			c.DB.Preload("Album").First(track, id.Value)
+			c.DB.Preload("Album").
+				Preload("TrackStar", "user_id=?", user.ID).
+				Preload("TrackRating", "user_id=?", user.ID).
+				First(track, id.Value)
 			if track.ID != 0 {
 				tracks = append(tracks, track)
 			}
@@ -273,7 +279,6 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response {
 		ret := make([]*spec.TrackChild, len(tracks))
 		for i, track := range tracks {
 			ret[i] = spec.NewTrackByTags(track, track.Album)
-			c.addStarRatingToTCTrack(user.ID, ret[i])
 		}
 		return ret
 	}
@@ -314,76 +319,4 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response {
 	status := getStatus()
 	sub.JukeboxStatus = &status
 	return sub
-}
-
-func (c *Controller) addStarRatingToAlbum(uid int, album *spec.Album) {
-	var as db.AlbumStar
-	var ar db.AlbumRating
-
-	if err := c.DB.Where("user_id=? AND album_id=?", uid, album.ID.Value).First(&as).Error; err == nil {
-		album.Starred = as.StarDate.Format(time.RFC3339Nano)
-	}
-	if err := c.DB.Where("user_id=? AND album_id=?", uid, album.ID.Value).First(&ar).Error; err == nil {
-		album.UserRating = ar.Rating
-	}
-}
-
-func (c *Controller) addStarRatingToArtist(uid int, artist *spec.Artist) {
-	var as db.ArtistStar
-	var ar db.ArtistRating
-
-	if err := c.DB.Where("user_id=? AND artist_id=?", uid, artist.ID.Value).First(&as).Error; err == nil {
-		artist.Starred = as.StarDate.Format(time.RFC3339Nano)
-	}
-	if err := c.DB.Where("user_id=? AND artist_id=?", uid, artist.ID.Value).First(&ar).Error; err == nil {
-		artist.UserRating = ar.Rating
-	}
-}
-
-func (c *Controller) addStarRatingToTCAlbum(uid int, album *spec.TrackChild) {
-	var as db.AlbumStar
-	var ar db.AlbumRating
-
-	if err := c.DB.Where("user_id=? AND album_id=?", uid, album.ID.Value).First(&as).Error; err == nil {
-		album.Starred = as.StarDate.Format(time.RFC3339)
-	}
-	if err := c.DB.Where("user_id=? AND album_id=?", uid, album.ID.Value).First(&ar).Error; err == nil {
-		album.UserRating = ar.Rating
-	}
-}
-
-func (c *Controller) addStarRatingToTCTrack(uid int, track *spec.TrackChild) {
-	var ts db.TrackStar
-	var tr db.TrackRating
-
-	if err := c.DB.Where("user_id=? AND track_id=?", uid, track.ID.Value).First(&ts).Error; err == nil {
-		track.Starred = ts.StarDate.Format(time.RFC3339)
-	}
-	if err := c.DB.Where("user_id=? AND track_id=?", uid, track.ID.Value).First(&tr).Error; err == nil {
-		track.UserRating = tr.Rating
-	}
-}
-
-func (c *Controller) addStarRatingToDirectoryArtist(uid int, artist *spec.Directory) {
-	var as db.ArtistStar
-	var ar db.ArtistRating
-
-	if err := c.DB.Where("user_id=? AND artist_id=?", uid, artist.ID.Value).First(&as).Error; err == nil {
-		artist.Starred = as.StarDate.Format(time.RFC3339)
-	}
-	if err := c.DB.Where("user_id=? AND artist_id=?", uid, artist.ID.Value).First(&ar).Error; err == nil {
-		artist.UserRating = ar.Rating
-	}
-}
-
-func (c *Controller) addStarRatingToDirectoryAlbum(uid int, album *spec.Directory) {
-	var as db.AlbumStar
-	var ar db.AlbumRating
-
-	if err := c.DB.Where("user_id=? AND album_id=?", uid, album.ID.Value).First(&as).Error; err == nil {
-		album.Starred = as.StarDate.Format(time.RFC3339)
-	}
-	if err := c.DB.Where("user_id=? AND album_id=?", uid, album.ID.Value).First(&ar).Error; err == nil {
-		album.UserRating = ar.Rating
-	}
 }

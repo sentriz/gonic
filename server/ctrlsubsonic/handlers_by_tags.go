@@ -25,6 +25,8 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 	q := c.DB.
 		Select("*, count(sub.id) album_count").
 		Joins("LEFT JOIN albums sub ON artists.id=sub.tag_artist_id").
+		Preload("ArtistStar", "user_id=?", user.ID).
+		Preload("ArtistRating", "user_id=?", user.ID).
 		Group("artists.id").
 		Order("artists.name COLLATE NOCASE")
 	if m := c.getMusicFolder(params); m != "" {
@@ -46,7 +48,6 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 			resp = append(resp, indexMap[key])
 		}
 		a := spec.NewArtistByTags(artist)
-		c.addStarRatingToArtist(user.ID, a)
 		indexMap[key].Artists = append(indexMap[key].Artists, a)
 	}
 	sub := spec.NewResponse()
@@ -69,17 +70,19 @@ func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 			return db.
 				Select("*, count(sub.id) child_count, sum(sub.length) duration").
 				Joins("LEFT JOIN tracks sub ON albums.id=sub.album_id").
+				Preload("AlbumStar", "user_id=?", user.ID).
+				Preload("AlbumRating", "user_id=?", user.ID).
 				Order("albums.right_path").
 				Group("albums.id")
 		}).
+		Preload("ArtistStar", "user_id=?", user.ID).
+		Preload("ArtistRating", "user_id=?", user.ID).
 		First(artist, id.Value)
 	sub := spec.NewResponse()
 	sub.Artist = spec.NewArtistByTags(artist)
-	c.addStarRatingToArtist(user.ID, sub.Artist)
 	sub.Artist.Albums = make([]*spec.Album, len(artist.Albums))
 	for i, album := range artist.Albums {
 		sub.Artist.Albums[i] = spec.NewAlbumByTags(album, artist)
-		c.addStarRatingToAlbum(user.ID, sub.Artist.Albums[i])
 	}
 	sub.Artist.AlbumCount = len(artist.Albums)
 	return sub
@@ -99,8 +102,12 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 		Preload("TagArtist").
 		Preload("Genres").
 		Preload("Tracks", func(db *gorm.DB) *gorm.DB {
-			return db.Order("tracks.tag_disc_number, tracks.tag_track_number")
+			return db.Order("tracks.tag_disc_number, tracks.tag_track_number").
+				Preload("TrackStar", "user_id=?", user.ID).
+				Preload("TrackRating", "user_id=?", user.ID)
 		}).
+		Preload("AlbumStar", "user_id=?", user.ID).
+		Preload("AlbumRating", "user_id=?", user.ID).
 		First(album, id.Value).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -108,11 +115,9 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 	}
 	sub := spec.NewResponse()
 	sub.Album = spec.NewAlbumByTags(album, album.TagArtist)
-	c.addStarRatingToAlbum(user.ID, sub.Album)
 	sub.Album.Tracks = make([]*spec.TrackChild, len(album.Tracks))
 	for i, track := range album.Tracks {
 		t := spec.NewTrackByTags(track, album)
-		c.addStarRatingToTCTrack(user.ID, t)
 		sub.Album.Tracks[i] = t
 	}
 	return sub
@@ -178,6 +183,8 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 		Offset(params.GetOrInt("offset", 0)).
 		Limit(params.GetOrInt("size", 10)).
 		Preload("TagArtist").
+		Preload("AlbumStar", "user_id=?", user.ID).
+		Preload("AlbumRating", "user_id=?", user.ID).
 		Find(&albums)
 	sub := spec.NewResponse()
 	sub.AlbumsTwo = &spec.Albums{
@@ -185,7 +192,6 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	}
 	for i, album := range albums {
 		a := spec.NewAlbumByTags(album, album.TagArtist)
-		c.addStarRatingToAlbum(user.ID, a)
 		sub.AlbumsTwo.List[i] = a
 	}
 	return sub
@@ -208,6 +214,8 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		Group("artists.id").
 		Where("name LIKE ? OR name_u_dec LIKE ?", query, query).
 		Joins("JOIN albums ON albums.tag_artist_id=artists.id").
+		Preload("ArtistStar", "user_id=?", user.ID).
+		Preload("ArtistRating", "user_id=?", user.ID).
 		Offset(params.GetOrInt("artistOffset", 0)).
 		Limit(params.GetOrInt("artistCount", 20))
 	if m := c.getMusicFolder(params); m != "" {
@@ -218,7 +226,6 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	}
 	for _, a := range artists {
 		ar := spec.NewArtistByTags(a)
-		c.addStarRatingToArtist(user.ID, ar)
 		results.Artists = append(results.Artists, ar)
 	}
 
@@ -227,6 +234,8 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	q = c.DB.
 		Preload("TagArtist").
 		Preload("Genres").
+		Preload("AlbumStar", "user_id=?", user.ID).
+		Preload("AlbumRating", "user_id=?", user.ID).
 		Where("tag_title LIKE ? OR tag_title_u_dec LIKE ?", query, query).
 		Offset(params.GetOrInt("albumOffset", 0)).
 		Limit(params.GetOrInt("albumCount", 20))
@@ -238,7 +247,6 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	}
 	for _, a := range albums {
 		al := spec.NewAlbumByTags(a, a.TagArtist)
-		c.addStarRatingToAlbum(user.ID, al)
 		results.Albums = append(results.Albums, al)
 	}
 
@@ -248,6 +256,8 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		Preload("Album").
 		Preload("Album.TagArtist").
 		Preload("Genres").
+		Preload("TrackStar", "user_id=?", user.ID).
+		Preload("TrackRating", "user_id=?", user.ID).
 		Where("tag_title LIKE ? OR tag_title_u_dec LIKE ?", query, query).
 		Offset(params.GetOrInt("songOffset", 0)).
 		Limit(params.GetOrInt("songCount", 20))
@@ -261,7 +271,6 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	}
 	for _, t := range tracks {
 		tr := spec.NewTrackByTags(t, t.Album)
-		c.addStarRatingToTCTrack(user.ID, tr)
 		results.Tracks = append(results.Tracks, tr)
 	}
 
@@ -388,6 +397,8 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 		Joins("JOIN genres ON track_genres.genre_id=genres.id AND genres.name=?", genre).
 		Preload("Album").
 		Preload("Album.TagArtist").
+		Preload("TrackStar", "user_id=?", user.ID).
+		Preload("TrackRating", "user_id=?", user.ID).
 		Offset(params.GetOrInt("offset", 0)).
 		Limit(params.GetOrInt("count", 10))
 	if m := c.getMusicFolder(params); m != "" {
@@ -402,7 +413,6 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 	}
 	for i, track := range tracks {
 		tr := spec.NewTrackByTags(track, track.Album)
-		c.addStarRatingToTCTrack(user.ID, tr)
 		sub.TracksByGenre.List[i] = tr
 	}
 	return sub
@@ -422,7 +432,11 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 
 	// artists
 	var artists []*db.Artist
-	q := c.DB.Table("artists").Joins("JOIN artist_stars on artists.id=artist_stars.artist_id").Where("artist_stars.user_id=?", user.ID)
+	q := c.DB.Table("artists").Joins("JOIN artist_stars on artists.id=artist_stars.artist_id").
+		Where("artist_stars.user_id=?", user.ID).
+		Preload("ArtistStar", "user_id=?", user.ID).
+		Preload("ArtistRating", "user_id=?", user.ID)
+
 	if m != "" {
 		q = q.Joins("JOIN albums on artists.id=albums.tag_artist_id").Where("albums.rootdir=?", m)
 	}
@@ -431,13 +445,15 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 	}
 	for _, a := range artists {
 		artist := spec.NewArtistByTags(a)
-		c.addStarRatingToArtist(user.ID, artist)
 		sub.StarredTwo.Artists = append(sub.StarredTwo.Artists, artist)
 	}
 
 	// albums
 	var albums []*db.Album
-	q = c.DB.Table("albums").Joins("JOIN album_stars on albums.id=album_stars.album_id").Where("album_stars.user_id=?", user.ID)
+	q = c.DB.Table("albums").Joins("JOIN album_stars on albums.id=album_stars.album_id").
+		Where("album_stars.user_id=?", user.ID).
+		Preload("AlbumStar", "user_id=?", user.ID).
+		Preload("AlbumRating", "user_id=?", user.ID)
 	if m != "" {
 		q = q.Where("rootdir=?", m)
 	}
@@ -450,13 +466,15 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 			return spec.NewError(0, "find artist for album: %v", err)
 		}
 		album := spec.NewAlbumByTags(a, &ar)
-		c.addStarRatingToAlbum(user.ID, album)
 		sub.StarredTwo.Albums = append(sub.StarredTwo.Albums, album)
 	}
 
 	// tracks
 	var tracks []*db.Track
-	q = c.DB.Table("tracks").Joins("right join track_stars on tracks.id=track_stars.track_id").Where("track_stars.user_id=?", user.ID)
+	q = c.DB.Table("tracks").Joins("right join track_stars on tracks.id=track_stars.track_id").
+		Where("track_stars.user_id=?", user.ID).
+		Preload("TrackStar", "user_id=?", user.ID).
+		Preload("TrackRating", "user_id=?", user.ID)
 	if m != "" {
 		q = q.Joins("JOIN albums on tracks.album_id=albums.id").Where("albums.rootdir=?", m)
 	}
@@ -469,7 +487,6 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 			return spec.NewError(0, "find album for track: %v", err)
 		}
 		track := spec.NewTCTrackByFolder(t, &a)
-		c.addStarRatingToTCTrack(user.ID, track)
 		sub.StarredTwo.Tracks = append(sub.StarredTwo.Tracks, track)
 	}
 
@@ -523,6 +540,8 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 		Preload("Album").
 		Where("artist_id=? AND tracks.tag_title IN (?)", artist.ID, topTrackNames).
 		Limit(count).
+		Preload("TrackStar", "user_id=?", user.ID).
+		Preload("TrackRating", "user_id=?", user.ID).
 		Find(&tracks).
 		Error
 	if err != nil {
@@ -538,7 +557,6 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 	}
 	for i, track := range tracks {
 		tr := spec.NewTrackByTags(track, track.Album)
-		c.addStarRatingToTCTrack(user.ID, tr)
 		sub.TopSongs.Tracks[i] = tr
 	}
 	return sub
@@ -585,6 +603,8 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 	err = c.DB.
 		Preload("Artist").
 		Preload("Album").
+		Preload("TrackStar", "user_id=?", user.ID).
+		Preload("TrackRating", "user_id=?", user.ID).
 		Select("tracks.*").
 		Where("tracks.tag_title IN (?)", similarTrackNames).
 		Order(gorm.Expr("random()")).
@@ -604,7 +624,6 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 	}
 	for i, track := range tracks {
 		tr := spec.NewTrackByTags(track, track.Album)
-		c.addStarRatingToTCTrack(user.ID, tr)
 		sub.SimilarSongs.Tracks[i] = tr
 	}
 	return sub
@@ -649,6 +668,8 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 	var tracks []*db.Track
 	err = c.DB.
 		Preload("Album").
+		Preload("TrackStar", "user_id=?", user.ID).
+		Preload("TrackRating", "user_id=?", user.ID).
 		Joins("JOIN artists on tracks.artist_id=artists.id").
 		Where("artists.name IN (?)", artistNames).
 		Order(gorm.Expr("random()")).
@@ -668,7 +689,6 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 	}
 	for i, track := range tracks {
 		tr := spec.NewTrackByTags(track, track.Album)
-		c.addStarRatingToTCTrack(user.ID, tr)
 		sub.SimilarSongsTwo.Tracks[i] = tr
 	}
 	return sub

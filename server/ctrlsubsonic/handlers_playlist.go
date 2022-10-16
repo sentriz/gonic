@@ -8,9 +8,9 @@ import (
 
 	"github.com/jinzhu/gorm"
 
+	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
-	"go.senan.xyz/gonic/db"
 )
 
 func playlistRender(c *Controller, playlist *db.Playlist) *spec.Playlist {
@@ -35,6 +35,8 @@ func playlistRender(c *Controller, playlist *db.Playlist) *spec.Playlist {
 			Where("id=?", id).
 			Preload("Album").
 			Preload("Album.TagArtist").
+			Preload("TrackStar", "user_id=?", user.ID).
+			Preload("TrackRating", "user_id=?", user.ID).
 			Find(&track).
 			Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -42,7 +44,6 @@ func playlistRender(c *Controller, playlist *db.Playlist) *spec.Playlist {
 			continue
 		}
 		resp.List[i] = spec.NewTCTrackByFolder(&track, track.Album)
-		c.addStarRatingToTCTrack(user.ID, resp.List[i])
 		resp.Duration += track.Length
 	}
 	return resp
