@@ -438,7 +438,7 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 		Preload("ArtistRating", "user_id=?", user.ID)
 
 	if m != "" {
-		q = q.Joins("JOIN albums on artists.id=albums.tag_artist_id").Where("albums.rootdir=?", m)
+		q = q.Joins("JOIN albums on artists.id=albums.tag_artist_id").Where("albums.root_dir=?", m)
 	}
 	if err := q.Find(&artists).Error; err != nil {
 		return spec.NewError(0, "find artists: %v", err)
@@ -456,7 +456,7 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 		Preload("AlbumStar", "user_id=?", user.ID).
 		Preload("AlbumRating", "user_id=?", user.ID)
 	if m != "" {
-		q = q.Where("rootdir=?", m)
+		q = q.Where("root_dir=?", m)
 	}
 	if err := q.Find(&albums).Error; err != nil {
 		return spec.NewError(0, "find albums: %v", err)
@@ -474,7 +474,7 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID)
 	if m != "" {
-		q = q.Joins("JOIN albums on tracks.album_id=albums.id").Where("albums.rootdir=?", m)
+		q = q.Joins("JOIN albums on tracks.album_id=albums.id").Where("albums.root_dir=?", m)
 	}
 	if err := q.Find(&tracks).Error; err != nil {
 		return spec.NewError(0, "find tracks: %v", err)
