@@ -452,6 +452,7 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 	var albums []*db.Album
 	q = c.DB.Table("albums").Joins("JOIN album_stars on albums.id=album_stars.album_id").
 		Where("album_stars.user_id=?", user.ID).
+		Preload("TagArtist").
 		Preload("AlbumStar", "user_id=?", user.ID).
 		Preload("AlbumRating", "user_id=?", user.ID)
 	if m != "" {
@@ -461,18 +462,15 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find albums: %v", err)
 	}
 	for _, a := range albums {
-		var ar db.Artist
-		if err := c.DB.Where("artist_id=?", a.TagArtistID).Find(&ar); err != nil {
-			return spec.NewError(0, "find artist for album: %v", err)
-		}
-		album := spec.NewAlbumByTags(a, &ar)
+		album := spec.NewAlbumByTags(a, a.TagArtist)
 		sub.StarredTwo.Albums = append(sub.StarredTwo.Albums, album)
 	}
 
 	// tracks
 	var tracks []*db.Track
-	q = c.DB.Table("tracks").Joins("right join track_stars on tracks.id=track_stars.track_id").
+	q = c.DB.Table("tracks").Joins("join track_stars on tracks.id=track_stars.track_id").
 		Where("track_stars.user_id=?", user.ID).
+		Preload("Album").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID)
 	if m != "" {
@@ -482,11 +480,7 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
 	for _, t := range tracks {
-		var a db.Album
-		if err := c.DB.Where("album_id=?", t.AlbumID).Find(&a); err != nil {
-			return spec.NewError(0, "find album for track: %v", err)
-		}
-		track := spec.NewTCTrackByFolder(t, &a)
+		track := spec.NewTCTrackByFolder(t, t.Album)
 		sub.StarredTwo.Tracks = append(sub.StarredTwo.Tracks, track)
 	}
 
