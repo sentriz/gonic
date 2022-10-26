@@ -150,6 +150,8 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 		c.DB.
 			Where("id=?", id).
 			Preload("Album").
+			Preload("TrackStar", "user_id=?", user.ID).
+			Preload("TrackRating", "user_id=?", user.ID).
 			Find(&track)
 		sub.PlayQueue.List[i] = spec.NewTCTrackByFolder(&track, track.Album)
 	}
@@ -180,12 +182,13 @@ func (c *Controller) ServeSavePlayQueue(r *http.Request) *spec.Response {
 	queue.Position = params.GetOrInt("position", 0)
 	queue.ChangedBy = params.GetOr("c", "") // must exist, middleware checks
 	queue.SetItems(trackIDs)
-	c.DB.Save(queue)
+	c.DB.Save(&queue)
 	return spec.NewResponse()
 }
 
 func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
 	id, err := params.GetID("id")
 	if err != nil {
 		return spec.NewError(10, "provide an `id` parameter")
@@ -195,6 +198,8 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 		Where("id=?", id.Value).
 		Preload("Album").
 		Preload("Album.TagArtist").
+		Preload("TrackStar", "user_id=?", user.ID).
+		Preload("TrackRating", "user_id=?", user.ID).
 		First(&track).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -207,11 +212,14 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
 	var tracks []*db.Track
 	q := c.DB.DB.
 		Limit(params.GetOrInt("size", 10)).
 		Preload("Album").
 		Preload("Album.TagArtist").
+		Preload("TrackStar", "user_id=?", user.ID).
+		Preload("TrackRating", "user_id=?", user.ID).
 		Joins("JOIN albums ON tracks.album_id=albums.id").
 		Order(gorm.Expr("random()"))
 	if year, err := params.GetInt("fromYear"); err == nil {
@@ -241,6 +249,7 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeJukebox(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
 	getTracks := func() []*db.Track {
 		var tracks []*db.Track
 		ids, err := params.GetIDList("id")
@@ -249,7 +258,11 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response {
 		}
 		for _, id := range ids {
 			track := &db.Track{}
-			c.DB.Preload("Album").First(track, id.Value)
+			c.DB.
+				Preload("Album").
+				Preload("TrackStar", "user_id=?", user.ID).
+				Preload("TrackRating", "user_id=?", user.ID).
+				First(track, id.Value)
 			if track.ID != 0 {
 				tracks = append(tracks, track)
 			}

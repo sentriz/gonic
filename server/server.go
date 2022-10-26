@@ -264,6 +264,11 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/getArtistInfo{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetArtistInfo))
 	r.Handle("/getStarred{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetStarred))
 
+	// star / rating
+	r.Handle("/star{_:(?:\\.view)?}", ctrl.H(ctrl.ServeStar))
+	r.Handle("/unstar{_:(?:\\.view)?}", ctrl.H(ctrl.ServeUnstar))
+	r.Handle("/setRating{_:(?:\\.view)?}", ctrl.H(ctrl.ServeSetRating))
+
 	// podcasts
 	r.Handle("/getPodcasts{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetPodcasts))
 	r.Handle("/getNewestPodcasts{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetNewestPodcasts))

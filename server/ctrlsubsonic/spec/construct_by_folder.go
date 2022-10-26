@@ -9,14 +9,21 @@ import (
 
 func NewAlbumByFolder(f *db.Album) *Album {
 	a := &Album{
-		Artist:     f.Parent.RightPath,
-		ID:         f.SID(),
-		IsDir:      true,
-		ParentID:   f.ParentSID(),
-		Title:      f.RightPath,
-		TrackCount: f.ChildCount,
-		Duration:   f.Duration,
-		Created:    f.CreatedAt,
+		Artist:        f.Parent.RightPath,
+		ID:            f.SID(),
+		IsDir:         true,
+		ParentID:      f.ParentSID(),
+		Title:         f.RightPath,
+		TrackCount:    f.ChildCount,
+		Duration:      f.Duration,
+		Created:       f.CreatedAt,
+		AverageRating: formatRating(f.AverageRating),
+	}
+	if f.AlbumStar != nil {
+		a.Starred = &f.AlbumStar.StarDate
+	}
+	if f.AlbumRating != nil {
+		a.UserRating = f.AlbumRating.Rating
 	}
 	if f.Cover != "" {
 		a.CoverID = f.SID()
@@ -26,11 +33,18 @@ func NewAlbumByFolder(f *db.Album) *Album {
 
 func NewTCAlbumByFolder(f *db.Album) *TrackChild {
 	trCh := &TrackChild{
-		ID:        f.SID(),
-		IsDir:     true,
-		Title:     f.RightPath,
-		ParentID:  f.ParentSID(),
-		CreatedAt: f.CreatedAt,
+		ID:            f.SID(),
+		IsDir:         true,
+		Title:         f.RightPath,
+		ParentID:      f.ParentSID(),
+		CreatedAt:     f.CreatedAt,
+		AverageRating: formatRating(f.AverageRating),
+	}
+	if f.AlbumStar != nil {
+		trCh.Starred = &f.AlbumStar.StarDate
+	}
+	if f.AlbumRating != nil {
+		trCh.UserRating = f.AlbumRating.Rating
 	}
 	if f.Cover != "" {
 		trCh.CoverID = f.SID()
@@ -53,14 +67,15 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 			parent.RightPath,
 			t.Filename,
 		),
-		ParentID:  parent.SID(),
-		Duration:  t.Length,
-		Genre:     strings.Join(t.GenreStrings(), ", "),
-		Year:      parent.TagYear,
-		Bitrate:   t.Bitrate,
-		IsDir:     false,
-		Type:      "music",
-		CreatedAt: t.CreatedAt,
+		ParentID:      parent.SID(),
+		Duration:      t.Length,
+		Genre:         strings.Join(t.GenreStrings(), ", "),
+		Year:          parent.TagYear,
+		Bitrate:       t.Bitrate,
+		IsDir:         false,
+		Type:          "music",
+		CreatedAt:     t.CreatedAt,
+		AverageRating: formatRating(t.AverageRating),
 	}
 	if trCh.Title == "" {
 		trCh.Title = t.Filename
@@ -71,6 +86,12 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 	if t.Album != nil {
 		trCh.Album = t.Album.RightPath
 	}
+	if t.TrackStar != nil {
+		trCh.Starred = &t.TrackStar.StarDate
+	}
+	if t.TrackRating != nil {
+		trCh.UserRating = t.TrackRating.Rating
+	}
 	return trCh
 }
 
@@ -80,9 +101,16 @@ func NewArtistByFolder(f *db.Album) *Artist {
 	// from an "album" where
 	// maybe TODO: rename the Album model to Folder
 	a := &Artist{
-		ID:         f.SID(),
-		Name:       f.RightPath,
-		AlbumCount: f.ChildCount,
+		ID:            f.SID(),
+		Name:          f.RightPath,
+		AlbumCount:    f.ChildCount,
+		AverageRating: formatRating(f.AverageRating),
+	}
+	if f.AlbumStar != nil {
+		a.Starred = &f.AlbumStar.StarDate
+	}
+	if f.AlbumRating != nil {
+		a.UserRating = f.AlbumRating.Rating
 	}
 	if f.Cover != "" {
 		a.CoverID = f.SID()
@@ -91,10 +119,18 @@ func NewArtistByFolder(f *db.Album) *Artist {
 }
 
 func NewDirectoryByFolder(f *db.Album, children []*TrackChild) *Directory {
-	return &Directory{
-		ID:       f.SID(),
-		Name:     f.RightPath,
-		Children: children,
-		ParentID: f.ParentSID(),
+	d := &Directory{
+		ID:            f.SID(),
+		Name:          f.RightPath,
+		Children:      children,
+		ParentID:      f.ParentSID(),
+		AverageRating: formatRating(f.AverageRating),
 	}
+	if f.AlbumStar != nil {
+		d.Starred = &f.AlbumStar.StarDate
+	}
+	if f.AlbumRating != nil {
+		d.UserRating = f.AlbumRating.Rating
+	}
+	return d
 }
