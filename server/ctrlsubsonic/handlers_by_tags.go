@@ -421,7 +421,6 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 	// artists
 	var artists []*db.Artist
 	q := c.DB.
-		Select("*, count(albums.id) album_count").
 		Group("artists.id").
 		Joins("JOIN artist_stars ON artist_stars.artist_id=artists.id").
 		Where("artist_stars.user_id=?", user.ID).
