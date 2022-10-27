@@ -144,14 +144,17 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 		fromYear := params.GetOrInt("fromYear", 1800)
 		toYear := params.GetOrInt("toYear", 2200)
 		if fromYear > toYear {
-			toYear, fromYear = fromYear, toYear
+			q = q.Where("tag_year BETWEEN ? AND ?", toYear, fromYear)
+			q = q.Order("tag_year DESC")
+		} else {
+			q = q.Where("tag_year BETWEEN ? AND ?", fromYear, toYear)
+			q = q.Order("tag_year")
 		}
-		q = q.Where("tag_year BETWEEN ? AND ?", fromYear, toYear)
-		q = q.Order("tag_year")
 	case "byGenre":
 		genre, _ := params.Get("genre")
 		q = q.Joins("JOIN album_genres ON album_genres.album_id=albums.id")
 		q = q.Joins("JOIN genres ON genres.id=album_genres.genre_id AND genres.name=?", genre)
+		q = q.Order("tag_title")
 	case "frequent":
 		user := r.Context().Value(CtxUser).(*db.User)
 		q = q.Joins("JOIN plays ON albums.id=plays.album_id AND plays.user_id=?", user.ID)
@@ -161,9 +164,11 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	case "random":
 		q = q.Order(gorm.Expr("random()"))
 	case "recent":
-		user := r.Context().Value(CtxUser).(*db.User)
 		q = q.Joins("JOIN plays ON albums.id=plays.album_id AND plays.user_id=?", user.ID)
 		q = q.Order("plays.time DESC")
+	case "starred":
+		q = q.Joins("JOIN album_stars ON albums.id=album_stars.album_id AND album_stars.user_id=?", user.ID)
+		q = q.Order("tag_title")
 	default:
 		return spec.NewError(10, "unknown value `%s` for parameter 'type'", listType)
 	}
