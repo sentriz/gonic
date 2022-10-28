@@ -9,6 +9,7 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/transcode"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 )
@@ -29,6 +30,20 @@ func playlistRender(c *Controller, playlist *db.Playlist) *spec.Playlist {
 
 	trackIDs := playlist.GetItems()
 	resp.List = make([]*spec.TrackChild, len(trackIDs))
+	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	var transcodeMIME = ""
+	var transcodeSuffix = ""
+	var transcodeOk = false
+	pref, err := streamGetTransPref(c.DB, user.ID, "")
+	if err == nil && pref != nil {
+		profile, ok := transcode.UserProfiles[pref.Profile]
+		if ok {
+			transcodeOk = true
+			transcodeMIME = profile.MIME()
+			transcodeSuffix = profile.Suffix()
+		}
+	}
+
 	for i, id := range trackIDs {
 		track := db.Track{}
 		err := c.DB.
@@ -44,6 +59,10 @@ func playlistRender(c *Controller, playlist *db.Playlist) *spec.Playlist {
 			continue
 		}
 		resp.List[i] = spec.NewTCTrackByFolder(&track, track.Album)
+		if transcodeOk {
+			resp.List[i].TranscodedContentType = transcodeMIME
+			resp.List[i].TranscodedSuffix = transcodeSuffix
+		}
 		resp.Duration += track.Length
 	}
 	return resp

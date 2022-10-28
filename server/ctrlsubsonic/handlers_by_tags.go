@@ -13,6 +13,7 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/transcode"
 	"go.senan.xyz/gonic/scrobble/lastfm"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
@@ -117,8 +118,29 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 	sub := spec.NewResponse()
 	sub.Album = spec.NewAlbumByTags(album, album.TagArtist)
 	sub.Album.Tracks = make([]*spec.TrackChild, len(album.Tracks))
+
+	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	var transcodeMIME = ""
+	var transcodeSuffix = ""
+	var transcodeOk = false
+	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	        return spec.NewError(0, "couldn't find transcode preference: %v", err)
+	} else {
+	        profile, ok := transcode.UserProfiles[pref.Profile]
+	        if ok {
+	                transcodeOk = true
+	                transcodeMIME = profile.MIME()
+	                transcodeSuffix = profile.Suffix()
+	        }
+	}
+
 	for i, track := range album.Tracks {
 		sub.Album.Tracks[i] = spec.NewTrackByTags(track, album)
+		if transcodeOk {
+			sub.Album.Tracks[i].TranscodedContentType = transcodeMIME
+			sub.Album.Tracks[i].TranscodedSuffix = transcodeSuffix
+		}
 	}
 	return sub
 }
@@ -270,8 +292,31 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	if err := q.Find(&tracks).Error; err != nil {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
+
+	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	var transcodeMIME = ""
+	var transcodeSuffix = ""
+	var transcodeOk = false
+	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	        return spec.NewError(0, "couldn't find transcode preference: %v", err)
+	} else {
+	        profile, ok := transcode.UserProfiles[pref.Profile]
+	        if ok {
+	                transcodeOk = true
+	                transcodeMIME = profile.MIME()
+	                transcodeSuffix = profile.Suffix()
+	        }
+	}
+
 	for _, t := range tracks {
-		results.Tracks = append(results.Tracks, spec.NewTrackByTags(t, t.Album))
+		var track = spec.NewTCTrackByFolder(t, t.Album)
+		if transcodeOk {
+			track.TranscodedContentType = transcodeMIME
+			track.TranscodedSuffix = transcodeSuffix
+		}
+
+		results.Tracks = append(results.Tracks, track)
 	}
 
 	sub := spec.NewResponse()
@@ -411,9 +456,31 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 	sub.TracksByGenre = &spec.TracksByGenre{
 		List: make([]*spec.TrackChild, len(tracks)),
 	}
-	for i, track := range tracks {
-		sub.TracksByGenre.List[i] = spec.NewTrackByTags(track, track.Album)
+
+	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	var transcodeMIME = ""
+	var transcodeSuffix = ""
+	var transcodeOk = false
+	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	        return spec.NewError(0, "couldn't find transcode preference: %v", err)
+	} else {
+	        profile, ok := transcode.UserProfiles[pref.Profile]
+	        if ok {
+	                transcodeOk = true
+	                transcodeMIME = profile.MIME()
+	                transcodeSuffix = profile.Suffix()
+	        }
 	}
+
+	for i, t := range tracks {
+		sub.TracksByGenre.List[i] = spec.NewTrackByTags(t, t.Album)
+		if transcodeOk {
+			sub.TracksByGenre.List[i].TranscodedContentType = transcodeMIME
+			sub.TracksByGenre.List[i].TranscodedSuffix = transcodeSuffix
+		}
+        }
+
 	return sub
 }
 
@@ -475,7 +542,31 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 	if err := q.Find(&tracks).Error; err != nil {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
+
+	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	var transcodeMIME = ""
+	var transcodeSuffix = ""
+	var transcodeOk = false
+	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	        return spec.NewError(0, "couldn't find transcode preference: %v", err)
+	} else {
+	        profile, ok := transcode.UserProfiles[pref.Profile]
+	        if ok {
+	                transcodeOk = true
+	                transcodeMIME = profile.MIME()
+	                transcodeSuffix = profile.Suffix()
+	        }
+	}
+
 	for _, t := range tracks {
+		var track = spec.NewTCTrackByFolder(t, t.Album)
+		if transcodeOk {
+			track.TranscodedContentType = transcodeMIME
+			track.TranscodedSuffix = transcodeSuffix
+		}
+		results.Tracks = append(results.Tracks, track)
+
 		results.Tracks = append(results.Tracks, spec.NewTrackByTags(t, t.Album))
 	}
 
@@ -546,8 +637,29 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 	sub.TopSongs = &spec.TopSongs{
 		Tracks: make([]*spec.TrackChild, len(tracks)),
 	}
+
+	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	var transcodeMIME = ""
+	var transcodeSuffix = ""
+	var transcodeOk = false
+	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	        return spec.NewError(0, "couldn't find transcode preference: %v", err)
+	} else {
+	        profile, ok := transcode.UserProfiles[pref.Profile]
+	        if ok {
+	                transcodeOk = true
+	                transcodeMIME = profile.MIME()
+	                transcodeSuffix = profile.Suffix()
+	        }
+	}
+
 	for i, track := range tracks {
 		sub.TopSongs.Tracks[i] = spec.NewTrackByTags(track, track.Album)
+		if transcodeOk {
+			sub.TopSongs.Tracks[i].TranscodedContentType = transcodeMIME
+			sub.TopSongs.Tracks[i].TranscodedSuffix = transcodeSuffix
+		}
 	}
 	return sub
 }
@@ -612,8 +724,29 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 	sub.SimilarSongs = &spec.SimilarSongs{
 		Tracks: make([]*spec.TrackChild, len(tracks)),
 	}
+
+	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	var transcodeMIME = ""
+	var transcodeSuffix = ""
+	var transcodeOk = false
+	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	        return spec.NewError(0, "couldn't find transcode preference: %v", err)
+	} else {
+	        profile, ok := transcode.UserProfiles[pref.Profile]
+	        if ok {
+	                transcodeOk = true
+	                transcodeMIME = profile.MIME()
+	                transcodeSuffix = profile.Suffix()
+	        }
+	}
+
 	for i, track := range tracks {
 		sub.SimilarSongs.Tracks[i] = spec.NewTrackByTags(track, track.Album)
+		if transcodeOk {
+			sub.SimilarSongs.Tracks[i].TranscodedContentType = transcodeMIME
+			sub.SimilarSongs.Tracks[i].TranscodedSuffix = transcodeSuffix
+		}
 	}
 	return sub
 }
@@ -676,8 +809,29 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 	sub.SimilarSongsTwo = &spec.SimilarSongsTwo{
 		Tracks: make([]*spec.TrackChild, len(tracks)),
 	}
+
+	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	var transcodeMIME = ""
+	var transcodeSuffix = ""
+	var transcodeOk = false
+	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	        return spec.NewError(0, "couldn't find transcode preference: %v", err)
+	} else {
+	        profile, ok := transcode.UserProfiles[pref.Profile]
+	        if ok {
+	                transcodeOk = true
+	                transcodeMIME = profile.MIME()
+	                transcodeSuffix = profile.Suffix()
+	        }
+	}
+
 	for i, track := range tracks {
 		sub.SimilarSongsTwo.Tracks[i] = spec.NewTrackByTags(track, track.Album)
+		if transcodeOk {
+			sub.SimilarSongsTwo.Tracks[i].TranscodedContentType = transcodeMIME
+			sub.SimilarSongsTwo.Tracks[i].TranscodedSuffix = transcodeSuffix
+		}
 	}
 	return sub
 }

@@ -2,6 +2,7 @@ package ctrlsubsonic
 
 import (
 	"fmt"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
+	"go.senan.xyz/gonic/transcode"
 )
 
 // the subsonic spec mentions "artist" a lot when talking about the
@@ -95,12 +97,33 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 		Preload("TrackRating", "user_id=?", user.ID).
 		Order("filename").
 		Find(&childTracks)
+
+	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	var transcodeMIME = ""
+	var transcodeSuffix = ""
+	var transcodeOk = false
+	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	        return spec.NewError(0, "couldn't find transcode preference: %v", err)
+	} else {
+	        profile, ok := transcode.UserProfiles[pref.Profile]
+	        if ok {
+	                transcodeOk = true
+	                transcodeMIME = profile.MIME()
+	                transcodeSuffix = profile.Suffix()
+	        }
+	}
+
 	for _, ch := range childTracks {
 		toAppend := spec.NewTCTrackByFolder(ch, folder)
 		if v, _ := params.Get("c"); v == "Jamstash" {
 			// jamstash thinks it can't play flacs
 			toAppend.ContentType = "audio/mpeg"
 			toAppend.Suffix = "mp3"
+		}
+		if transcodeOk {
+			toAppend.TranscodedContentType = transcodeMIME
+			toAppend.TranscodedSuffix = transcodeSuffix
 		}
 		childrenObj = append(childrenObj, toAppend)
 	}
@@ -259,8 +282,30 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	if err := q.Find(&tracks).Error; err != nil {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
+
+	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	var transcodeMIME = ""
+	var transcodeSuffix = ""
+	var transcodeOk = false
+	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	        return spec.NewError(0, "couldn't find transcode preference: %v", err)
+	} else {
+	        profile, ok := transcode.UserProfiles[pref.Profile]
+	        if ok {
+	                transcodeOk = true
+	                transcodeMIME = profile.MIME()
+	                transcodeSuffix = profile.Suffix()
+	        }
+	}
+
 	for _, t := range tracks {
-		results.Tracks = append(results.Tracks, spec.NewTCTrackByFolder(t, t.Album))
+		var track = spec.NewTCTrackByFolder(t, t.Album)
+		if transcodeOk {
+			track.TranscodedContentType = transcodeMIME
+			track.TranscodedSuffix = transcodeSuffix
+		}
+		results.Tracks = append(results.Tracks, track)
 	}
 
 	sub := spec.NewResponse()
@@ -335,8 +380,30 @@ func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {
 	if err := q.Find(&tracks).Error; err != nil {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
+
+	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	var transcodeMIME = ""
+	var transcodeSuffix = ""
+	var transcodeOk = false
+	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	        return spec.NewError(0, "couldn't find transcode preference: %v", err)
+	} else {
+	        profile, ok := transcode.UserProfiles[pref.Profile]
+	        if ok {
+	                transcodeOk = true
+	                transcodeMIME = profile.MIME()
+	                transcodeSuffix = profile.Suffix()
+	        }
+	}
+
 	for _, t := range tracks {
-		results.Tracks = append(results.Tracks, spec.NewTCTrackByFolder(t, t.Album))
+		var track = spec.NewTCTrackByFolder(t, t.Album)
+		if transcodeOk {
+			track.TranscodedContentType = transcodeMIME
+			track.TranscodedSuffix = transcodeSuffix
+		}
+		results.Tracks = append(results.Tracks, track)
 	}
 
 	sub := spec.NewResponse()

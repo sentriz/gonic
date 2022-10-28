@@ -13,6 +13,7 @@ import (
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/multierr"
 	"go.senan.xyz/gonic/scanner"
+	"go.senan.xyz/gonic/transcode"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
@@ -145,6 +146,23 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 	sub.PlayQueue.ChangedBy = queue.ChangedBy
 	trackIDs := queue.GetItems()
 	sub.PlayQueue.List = make([]*spec.TrackChild, len(trackIDs))
+
+	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	var transcodeMIME = ""
+	var transcodeSuffix = ""
+	var transcodeOk = false
+	pref, err := streamGetTransPref(c.DB, user.ID, "")
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return spec.NewError(0, "couldn't find transcode preference: %v", err)
+	} else {
+		profile, ok := transcode.UserProfiles[pref.Profile]
+		if ok {
+			transcodeOk = true
+			transcodeMIME = profile.MIME()
+			transcodeSuffix = profile.Suffix()
+		}
+	}
+
 	for i, id := range trackIDs {
 		track := db.Track{}
 		c.DB.
@@ -154,6 +172,10 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 			Preload("TrackRating", "user_id=?", user.ID).
 			Find(&track)
 		sub.PlayQueue.List[i] = spec.NewTCTrackByFolder(&track, track.Album)
+		if transcodeOk {
+			sub.PlayQueue.List[i].TranscodedContentType = transcodeMIME
+			sub.PlayQueue.List[i].TranscodedSuffix = transcodeSuffix
+		}
 	}
 	return sub
 }
@@ -241,8 +263,28 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	sub := spec.NewResponse()
 	sub.RandomTracks = &spec.RandomTracks{}
 	sub.RandomTracks.List = make([]*spec.TrackChild, len(tracks))
+
+	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	var transcodeMIME = ""
+	var transcodeSuffix = ""
+	var transcodeOk = false
+	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return spec.NewError(0, "couldn't find transcode preference: %v", err)
+	} else {
+		profile, ok := transcode.UserProfiles[pref.Profile]
+		if ok {
+			transcodeMIME = profile.MIME()
+			transcodeSuffix = profile.Suffix()
+		}
+	}
+
 	for i, track := range tracks {
 		sub.RandomTracks.List[i] = spec.NewTrackByTags(track, track.Album)
+		if transcodeOk {
+			sub.RandomTracks.List[i].TranscodedContentType = transcodeMIME
+			sub.RandomTracks.List[i].TranscodedSuffix = transcodeSuffix
+		}
 	}
 	return sub
 }
