@@ -126,7 +126,7 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 	        return spec.NewError(0, "couldn't find transcode preference: %v", err)
-	} else {
+	} else if (pref != nil) {
 	        profile, ok := transcode.UserProfiles[pref.Profile]
 	        if ok {
 	                transcodeOk = true
@@ -300,7 +300,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 	        return spec.NewError(0, "couldn't find transcode preference: %v", err)
-	} else {
+	} else if (pref != nil) {
 	        profile, ok := transcode.UserProfiles[pref.Profile]
 	        if ok {
 	                transcodeOk = true
@@ -464,7 +464,7 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 	        return spec.NewError(0, "couldn't find transcode preference: %v", err)
-	} else {
+	} else if (pref != nil) {
 	        profile, ok := transcode.UserProfiles[pref.Profile]
 	        if ok {
 	                transcodeOk = true
@@ -550,7 +550,7 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 	        return spec.NewError(0, "couldn't find transcode preference: %v", err)
-	} else {
+	} else if (pref != nil) {
 	        profile, ok := transcode.UserProfiles[pref.Profile]
 	        if ok {
 	                transcodeOk = true
@@ -645,7 +645,7 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 	        return spec.NewError(0, "couldn't find transcode preference: %v", err)
-	} else {
+	} else if (pref != nil) {
 	        profile, ok := transcode.UserProfiles[pref.Profile]
 	        if ok {
 	                transcodeOk = true
@@ -732,7 +732,7 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 	        return spec.NewError(0, "couldn't find transcode preference: %v", err)
-	} else {
+	} else if (pref != nil) {
 	        profile, ok := transcode.UserProfiles[pref.Profile]
 	        if ok {
 	                transcodeOk = true
@@ -817,7 +817,7 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 	        return spec.NewError(0, "couldn't find transcode preference: %v", err)
-	} else {
+	} else if (pref != nil) {
 	        profile, ok := transcode.UserProfiles[pref.Profile]
 	        if ok {
 	                transcodeOk = true
