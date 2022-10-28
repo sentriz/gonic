@@ -98,7 +98,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 		Order("filename").
 		Find(&childTracks)
 
-	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	// Get the transcoder profile to serve the transcoded MIME type and Suffix
 	var transcodeMIME = ""
 	var transcodeSuffix = ""
 	var transcodeOk = false
@@ -283,7 +283,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
 
-	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	// Get the transcoder profile to serve the transcoded MIME type and Suffix
 	var transcodeMIME = ""
 	var transcodeSuffix = ""
 	var transcodeOk = false
@@ -381,7 +381,7 @@ func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
 
-	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	// Get the transcoder profile to serve the transcoded MIME type and Suffix
 	var transcodeMIME = ""
 	var transcodeSuffix = ""
 	var transcodeOk = false

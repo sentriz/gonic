@@ -119,7 +119,7 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 	sub.Album = spec.NewAlbumByTags(album, album.TagArtist)
 	sub.Album.Tracks = make([]*spec.TrackChild, len(album.Tracks))
 
-	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	// Get the transcoder profile to serve the transcoded MIME type and Suffix
 	var transcodeMIME = ""
 	var transcodeSuffix = ""
 	var transcodeOk = false
@@ -293,7 +293,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
 
-	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	// Get the transcoder profile to serve the transcoded MIME type and Suffix
 	var transcodeMIME = ""
 	var transcodeSuffix = ""
 	var transcodeOk = false
@@ -457,7 +457,7 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 		List: make([]*spec.TrackChild, len(tracks)),
 	}
 
-	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	// Get the transcoder profile to serve the transcoded MIME type and Suffix
 	var transcodeMIME = ""
 	var transcodeSuffix = ""
 	var transcodeOk = false
@@ -543,7 +543,7 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
 
-	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	// Get the transcoder profile to serve the transcoded MIME type and Suffix
 	var transcodeMIME = ""
 	var transcodeSuffix = ""
 	var transcodeOk = false
@@ -638,7 +638,7 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 		Tracks: make([]*spec.TrackChild, len(tracks)),
 	}
 
-	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	// Get the transcoder profile to serve the transcoded MIME type and Suffix
 	var transcodeMIME = ""
 	var transcodeSuffix = ""
 	var transcodeOk = false
@@ -725,7 +725,7 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 		Tracks: make([]*spec.TrackChild, len(tracks)),
 	}
 
-	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	// Get the transcoder profile to serve the transcoded MIME type and Suffix
 	var transcodeMIME = ""
 	var transcodeSuffix = ""
 	var transcodeOk = false
@@ -810,7 +810,7 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 		Tracks: make([]*spec.TrackChild, len(tracks)),
 	}
 
-	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	// Get the transcoder profile to serve the transcoded MIME type and Suffix
 	var transcodeMIME = ""
 	var transcodeSuffix = ""
 	var transcodeOk = false

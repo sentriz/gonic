@@ -147,7 +147,7 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 	trackIDs := queue.GetItems()
 	sub.PlayQueue.List = make([]*spec.TrackChild, len(trackIDs))
 
-	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	// Get the transcoder profile to serve the transcoded MIME type and Suffix
 	var transcodeMIME = ""
 	var transcodeSuffix = ""
 	var transcodeOk = false
@@ -264,7 +264,7 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	sub.RandomTracks = &spec.RandomTracks{}
 	sub.RandomTracks.List = make([]*spec.TrackChild, len(tracks))
 
-	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	// Get the transcoder profile to serve the transcoded MIME type and Suffix
 	var transcodeMIME = ""
 	var transcodeSuffix = ""
 	var transcodeOk = false

@@ -30,7 +30,7 @@ func playlistRender(c *Controller, playlist *db.Playlist) *spec.Playlist {
 
 	trackIDs := playlist.GetItems()
 	resp.List = make([]*spec.TrackChild, len(trackIDs))
-	//Get the transcoder profile to serve the transcoded MIME type and Suffix
+	// Get the transcoder profile to serve the transcoded MIME type and Suffix
 	var transcodeMIME = ""
 	var transcodeSuffix = ""
 	var transcodeOk = false
