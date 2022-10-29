@@ -310,7 +310,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	}
 
 	for _, t := range tracks {
-		var track = spec.NewTCTrackByFolder(t, t.Album)
+		var track = spec.NewTrackByTags(t, t.Album)
 		if transcodeOk {
 			track.TranscodedContentType = transcodeMIME
 			track.TranscodedSuffix = transcodeSuffix
