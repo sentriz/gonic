@@ -43,6 +43,18 @@ func streamGetTransPref(dbc *db.DB, userID int, client string) (*db.TranscodePre
 	return &pref, nil
 }
 
+func streamGetTransPrefProfile(dbc *db.DB, userID int, client string) (mime string, suffix string) {
+	pref, _ := streamGetTransPref(dbc, userID, client)
+	if pref == nil {
+		return "", ""
+	}
+	profile, ok := transcode.UserProfiles[pref.Profile]
+	if !ok {
+		return "", ""
+	}
+	return profile.MIME(), profile.Suffix()
+}
+
 var errUnknownMediaType = fmt.Errorf("media type is unknown")
 
 // TODO: there is a mismatch between abs paths for podcasts and music. if they were the same, db.AudioFile

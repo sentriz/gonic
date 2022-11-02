@@ -117,8 +117,13 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 	sub := spec.NewResponse()
 	sub.Album = spec.NewAlbumByTags(album, album.TagArtist)
 	sub.Album.Tracks = make([]*spec.TrackChild, len(album.Tracks))
+
+	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+
 	for i, track := range album.Tracks {
 		sub.Album.Tracks[i] = spec.NewTrackByTags(track, album)
+		sub.Album.Tracks[i].TranscodedContentType = transcodeMIME
+		sub.Album.Tracks[i].TranscodedSuffix = transcodeSuffix
 	}
 	return sub
 }
@@ -270,8 +275,14 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	if err := q.Find(&tracks).Error; err != nil {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
+
+	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+
 	for _, t := range tracks {
-		results.Tracks = append(results.Tracks, spec.NewTrackByTags(t, t.Album))
+		track := spec.NewTrackByTags(t, t.Album)
+		track.TranscodedContentType = transcodeMIME
+		track.TranscodedSuffix = transcodeSuffix
+		results.Tracks = append(results.Tracks, track)
 	}
 
 	sub := spec.NewResponse()
@@ -411,9 +422,15 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 	sub.TracksByGenre = &spec.TracksByGenre{
 		List: make([]*spec.TrackChild, len(tracks)),
 	}
-	for i, track := range tracks {
-		sub.TracksByGenre.List[i] = spec.NewTrackByTags(track, track.Album)
+
+	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+
+	for i, t := range tracks {
+		sub.TracksByGenre.List[i] = spec.NewTrackByTags(t, t.Album)
+		sub.TracksByGenre.List[i].TranscodedContentType = transcodeMIME
+		sub.TracksByGenre.List[i].TranscodedSuffix = transcodeSuffix
 	}
+
 	return sub
 }
 
@@ -475,8 +492,14 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 	if err := q.Find(&tracks).Error; err != nil {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
+
+	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+
 	for _, t := range tracks {
-		results.Tracks = append(results.Tracks, spec.NewTrackByTags(t, t.Album))
+		track := spec.NewTrackByTags(t, t.Album)
+		track.TranscodedContentType = transcodeMIME
+		track.TranscodedSuffix = transcodeSuffix
+		results.Tracks = append(results.Tracks, track)
 	}
 
 	sub := spec.NewResponse()
@@ -546,8 +569,13 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 	sub.TopSongs = &spec.TopSongs{
 		Tracks: make([]*spec.TrackChild, len(tracks)),
 	}
+
+	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+
 	for i, track := range tracks {
 		sub.TopSongs.Tracks[i] = spec.NewTrackByTags(track, track.Album)
+		sub.TopSongs.Tracks[i].TranscodedContentType = transcodeMIME
+		sub.TopSongs.Tracks[i].TranscodedSuffix = transcodeSuffix
 	}
 	return sub
 }
@@ -612,8 +640,13 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 	sub.SimilarSongs = &spec.SimilarSongs{
 		Tracks: make([]*spec.TrackChild, len(tracks)),
 	}
+
+	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+
 	for i, track := range tracks {
 		sub.SimilarSongs.Tracks[i] = spec.NewTrackByTags(track, track.Album)
+		sub.SimilarSongs.Tracks[i].TranscodedContentType = transcodeMIME
+		sub.SimilarSongs.Tracks[i].TranscodedSuffix = transcodeSuffix
 	}
 	return sub
 }
@@ -676,8 +709,13 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 	sub.SimilarSongsTwo = &spec.SimilarSongsTwo{
 		Tracks: make([]*spec.TrackChild, len(tracks)),
 	}
+
+	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+
 	for i, track := range tracks {
 		sub.SimilarSongsTwo.Tracks[i] = spec.NewTrackByTags(track, track.Album)
+		sub.SimilarSongsTwo.Tracks[i].TranscodedContentType = transcodeMIME
+		sub.SimilarSongsTwo.Tracks[i].TranscodedSuffix = transcodeSuffix
 	}
 	return sub
 }

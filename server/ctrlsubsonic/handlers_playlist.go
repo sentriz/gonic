@@ -13,7 +13,7 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 )
 
-func playlistRender(c *Controller, playlist *db.Playlist) *spec.Playlist {
+func playlistRender(c *Controller, playlist *db.Playlist, params params.Params) *spec.Playlist {
 	user := &db.User{}
 	c.DB.Where("id=?", playlist.UserID).Find(user)
 
@@ -29,6 +29,9 @@ func playlistRender(c *Controller, playlist *db.Playlist) *spec.Playlist {
 
 	trackIDs := playlist.GetItems()
 	resp.List = make([]*spec.TrackChild, len(trackIDs))
+
+	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+
 	for i, id := range trackIDs {
 		track := db.Track{}
 		err := c.DB.
@@ -44,12 +47,15 @@ func playlistRender(c *Controller, playlist *db.Playlist) *spec.Playlist {
 			continue
 		}
 		resp.List[i] = spec.NewTCTrackByFolder(&track, track.Album)
+		resp.List[i].TranscodedContentType = transcodeMIME
+		resp.List[i].TranscodedSuffix = transcodeSuffix
 		resp.Duration += track.Length
 	}
 	return resp
 }
 
 func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
 	var playlists []*db.Playlist
 	c.DB.Where("user_id=?", user.ID).Or("is_public=?", true).Find(&playlists)
@@ -58,7 +64,7 @@ func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
 		List: make([]*spec.Playlist, len(playlists)),
 	}
 	for i, playlist := range playlists {
-		sub.Playlists.List[i] = playlistRender(c, playlist)
+		sub.Playlists.List[i] = playlistRender(c, playlist, params)
 	}
 	return sub
 }
@@ -78,7 +84,7 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 		return spec.NewError(70, "playlist with id `%d` not found", playlistID)
 	}
 	sub := spec.NewResponse()
-	sub.Playlist = playlistRender(c, &playlist)
+	sub.Playlist = playlistRender(c, &playlist, params)
 	return sub
 }
 
@@ -114,7 +120,7 @@ func (c *Controller) ServeCreatePlaylist(r *http.Request) *spec.Response {
 	c.DB.Save(playlist)
 
 	sub := spec.NewResponse()
-	sub.Playlist = playlistRender(c, &playlist)
+	sub.Playlist = playlistRender(c, &playlist, params)
 	return sub
 }
 

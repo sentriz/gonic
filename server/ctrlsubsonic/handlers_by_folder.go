@@ -95,6 +95,9 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 		Preload("TrackRating", "user_id=?", user.ID).
 		Order("filename").
 		Find(&childTracks)
+
+	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+
 	for _, ch := range childTracks {
 		toAppend := spec.NewTCTrackByFolder(ch, folder)
 		if v, _ := params.Get("c"); v == "Jamstash" {
@@ -102,6 +105,8 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 			toAppend.ContentType = "audio/mpeg"
 			toAppend.Suffix = "mp3"
 		}
+		toAppend.TranscodedContentType = transcodeMIME
+		toAppend.TranscodedSuffix = transcodeSuffix
 		childrenObj = append(childrenObj, toAppend)
 	}
 	// respond section
@@ -259,8 +264,14 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	if err := q.Find(&tracks).Error; err != nil {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
+
+	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+
 	for _, t := range tracks {
-		results.Tracks = append(results.Tracks, spec.NewTCTrackByFolder(t, t.Album))
+		track := spec.NewTCTrackByFolder(t, t.Album)
+		track.TranscodedContentType = transcodeMIME
+		track.TranscodedSuffix = transcodeSuffix
+		results.Tracks = append(results.Tracks, track)
 	}
 
 	sub := spec.NewResponse()
@@ -335,8 +346,14 @@ func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {
 	if err := q.Find(&tracks).Error; err != nil {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
+
+	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+
 	for _, t := range tracks {
-		results.Tracks = append(results.Tracks, spec.NewTCTrackByFolder(t, t.Album))
+		track := spec.NewTCTrackByFolder(t, t.Album)
+		track.TranscodedContentType = transcodeMIME
+		track.TranscodedSuffix = transcodeSuffix
+		results.Tracks = append(results.Tracks, track)
 	}
 
 	sub := spec.NewResponse()
