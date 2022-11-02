@@ -26,6 +26,17 @@ func lowerUDecOrHash(in string) string {
 	return string(lower)
 }
 
+func getMusicFolder(musicPaths []string, p params.Params) string {
+	idx, err := p.GetInt("musicFolderId")
+	if err != nil {
+		return ""
+	}
+	if idx < 0 || idx > len(musicPaths) {
+		return ""
+	}
+	return musicPaths[idx]
+}
+
 func (c *Controller) ServeGetLicence(r *http.Request) *spec.Response {
 	sub := spec.NewResponse()
 	sub.Licence = &spec.Licence{
@@ -239,7 +250,7 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 		q = q.Joins("JOIN track_genres ON track_genres.track_id=tracks.id")
 		q = q.Joins("JOIN genres ON genres.id=track_genres.genre_id AND genres.name=?", genre)
 	}
-	if m := c.getMusicFolder(params); m != "" {
+	if m := getMusicFolder(c.MusicPaths, params); m != "" {
 		q = q.Where("albums.root_dir=?", m)
 	}
 	if err := q.Find(&tracks).Error; err != nil {

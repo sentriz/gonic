@@ -117,14 +117,3 @@ func (c *Controller) HR(h handlerSubsonicRaw) http.Handler {
 		}
 	})
 }
-
-func (c *Controller) getMusicFolder(p params.Params) string {
-	idx, err := p.GetInt("musicFolderId")
-	if err != nil {
-		return ""
-	}
-	if idx < 0 || idx > len(c.MusicPaths) {
-		return ""
-	}
-	return c.MusicPaths[idx]
-}
