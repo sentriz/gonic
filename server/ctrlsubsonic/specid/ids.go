@@ -75,15 +75,15 @@ func (i ID) MarshalJSON() ([]byte, error) {
 	return json.Marshal(i.String())
 }
 
-func (i *ID) UnmarshalJSON(data []byte) (error) {
-	if (len(data) <= 2) {
+func (i *ID) UnmarshalJSON(data []byte) error {
+	if len(data) <= 2 {
 		return fmt.Errorf("too short: %w", ErrBadJSON)
 	}
-	id, err := New(string(data[1:len(data)-1])) // Strip quotes
-	if (err == nil) {
-		*i = id;
+	id, err := New(string(data[1 : len(data)-1])) // Strip quotes
+	if err == nil {
+		*i = id
 	}
-	return err;
+	return err
 }
 
 func (i ID) MarshalText() ([]byte, error) {

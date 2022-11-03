@@ -5,10 +5,10 @@ import (
 
 	"github.com/mmcdole/gofeed"
 
+	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
-	"go.senan.xyz/gonic/db"
 )
 
 func (c *Controller) ServeGetPodcasts(r *http.Request) *spec.Response {
@@ -45,7 +45,7 @@ func (c *Controller) ServeGetNewestPodcasts(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeDownloadPodcastEpisode(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
-	if (!user.IsAdmin) {
+	if !user.IsAdmin {
 		return spec.NewError(50, "user not admin")
 	}
 	params := r.Context().Value(CtxParams).(params.Params)
@@ -61,7 +61,7 @@ func (c *Controller) ServeDownloadPodcastEpisode(r *http.Request) *spec.Response
 
 func (c *Controller) ServeCreatePodcastChannel(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
-	if (!user.IsAdmin) {
+	if !user.IsAdmin {
 		return spec.NewError(50, "user not admin")
 	}
 	params := r.Context().Value(CtxParams).(params.Params)
@@ -79,7 +79,7 @@ func (c *Controller) ServeCreatePodcastChannel(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeRefreshPodcasts(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
-	if (!user.IsAdmin) {
+	if !user.IsAdmin {
 		return spec.NewError(50, "user not admin")
 	}
 	if err := c.Podcasts.RefreshPodcasts(); err != nil {
@@ -90,7 +90,7 @@ func (c *Controller) ServeRefreshPodcasts(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeDeletePodcastChannel(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
-	if (!user.IsAdmin) {
+	if !user.IsAdmin {
 		return spec.NewError(50, "user not admin")
 	}
 	params := r.Context().Value(CtxParams).(params.Params)
@@ -106,7 +106,7 @@ func (c *Controller) ServeDeletePodcastChannel(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeDeletePodcastEpisode(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
-	if (!user.IsAdmin) {
+	if !user.IsAdmin {
 		return spec.NewError(50, "user not admin")
 	}
 	params := r.Context().Value(CtxParams).(params.Params)

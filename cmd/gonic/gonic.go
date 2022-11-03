@@ -17,8 +17,8 @@ import (
 	"github.com/peterbourgon/ff"
 
 	"go.senan.xyz/gonic"
-	"go.senan.xyz/gonic/server"
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/server"
 )
 
 const (

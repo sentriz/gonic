@@ -11,10 +11,6 @@ import (
 	"github.com/gorilla/securecookie"
 	"github.com/sentriz/gormstore"
 
-	"go.senan.xyz/gonic/server/assets"
-	"go.senan.xyz/gonic/server/ctrladmin"
-	"go.senan.xyz/gonic/server/ctrlbase"
-	"go.senan.xyz/gonic/server/ctrlsubsonic"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/jukebox"
 	"go.senan.xyz/gonic/podcasts"
@@ -23,6 +19,10 @@ import (
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/scrobble/lastfm"
 	"go.senan.xyz/gonic/scrobble/listenbrainz"
+	"go.senan.xyz/gonic/server/assets"
+	"go.senan.xyz/gonic/server/ctrladmin"
+	"go.senan.xyz/gonic/server/ctrlbase"
+	"go.senan.xyz/gonic/server/ctrlsubsonic"
 	"go.senan.xyz/gonic/transcode"
 )
 
@@ -298,12 +298,12 @@ type (
 
 func (s *Server) StartHTTP(listenAddr string, tlsCert string, tlsKey string) (FuncExecute, FuncInterrupt) {
 	list := &http.Server{
-		Addr:         listenAddr,
-		Handler:      s.router,
-		ReadTimeout:  5 * time.Second,
-		ReadHeaderTimeout:  5 * time.Second,
-		WriteTimeout: 80 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		Addr:              listenAddr,
+		Handler:           s.router,
+		ReadTimeout:       5 * time.Second,
+		ReadHeaderTimeout: 5 * time.Second,
+		WriteTimeout:      80 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
 	return func() error {
 			log.Print("starting job 'http'\n")
