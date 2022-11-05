@@ -1,4 +1,5 @@
 // Package main is the gonic server entrypoint
+//
 //nolint:lll // flags help strings
 package main
 
@@ -36,6 +37,7 @@ func main() {
 	confCachePath := set.String("cache-path", "", "path to cache")
 	confDBPath := set.String("db-path", "gonic.db", "path to database (optional)")
 	confScanInterval := set.Int("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
+	confScanAtStart := set.Bool("scan-at-start-enabled", false, "whether to perform an initial scan at startup")
 	confScanWatcher := set.Bool("scan-watcher-enabled", false, "whether to watch file system for new music and rescan (optional)")
 	confJukeboxEnabled := set.Bool("jukebox-enabled", false, "whether the subsonic jukebox api should be enabled (optional)")
 	confProxyPrefix := set.String("proxy-prefix", "", "url path prefix to use if behind proxy. eg '/gonic' (optional)")
@@ -140,6 +142,9 @@ func main() {
 	}
 	if *confJukeboxEnabled {
 		g.Add(server.StartJukebox())
+	}
+	if *confScanAtStart {
+		server.ScanAtStart()
 	}
 
 	if err := g.Run(); err != nil {
