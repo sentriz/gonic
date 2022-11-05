@@ -516,6 +516,23 @@ func (p *Podcasts) DeletePodcastEpisode(podcastEpisodeID int) error {
 	return err
 }
 
+func (p *Podcasts) PurgeOldPodcasts(dur time.Duration) error {
+	var episodes []db.PodcastEpisode
+	expDate := time.Now().Add(-dur)
+	p.db.Where("created_at < ?", expDate).
+		Where("updated_at < ?", expDate).
+		Where("modified_at < ?", expDate).
+		Find(&episodes)
+	for i := range episodes {
+		episodes[i].Status = db.PodcastEpisodeStatusDeleted
+		p.db.Save(&episodes[i])
+		if err := os.Remove(filepath.Join(p.baseDir, episodes[i].Path)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func pathSafe(in string) string {
 	return filepath.Clean(strings.ReplaceAll(in, string(filepath.Separator), "_"))
 }

@@ -163,6 +163,7 @@ view the admin UI at http://localhost:4747
 | `GONIC_SCAN_INTERVAL`   | `-scan-interval`   | **optional** interval (in minutes) to check for new music (automatic scanning disabled if omitted)          |
 | `GONIC_SCAN_WATCHER `   | `-scan-watcher-enabled` | **optional** whether to watch file system for new music and rescan         |
 | `GONIC_JUKEBOX_ENABLED` | `-jukebox-enabled` | **optional** whether the subsonic [jukebox api](https://airsonic.github.io/docs/jukebox/) should be enabled |
+| `GONIC_PODCAST_PURGE_AGE ` | `-podcast-purge-age` | **optional** age (in days) to purge podcast episodes if not accessed (0 to disable) |
 | `GONIC_GENRE_SPLIT`     | `-genre-split`     | **optional** a string or character to split genre tags on for multi-genre support (eg. `;`)                 |
 
 ## screenshots

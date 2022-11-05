@@ -1,4 +1,5 @@
 // Package main is the gonic server entrypoint
+//
 //nolint:lll // flags help strings
 package main
 
@@ -38,6 +39,7 @@ func main() {
 	confScanInterval := set.Int("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
 	confScanWatcher := set.Bool("scan-watcher-enabled", false, "whether to watch file system for new music and rescan (optional)")
 	confJukeboxEnabled := set.Bool("jukebox-enabled", false, "whether the subsonic jukebox api should be enabled (optional)")
+	confPodcastPurgeAge := set.Int("podcast-purge-age", 0, "age (in days) to purge podcast episodes if not accessed (0 to disable) (optional)")
 	confProxyPrefix := set.String("proxy-prefix", "", "url path prefix to use if behind proxy. eg '/gonic' (optional)")
 	confGenreSplit := set.String("genre-split", "\n", "character or string to split genre tag data on (optional)")
 	confHTTPLog := set.Bool("http-log", true, "http request logging (optional)")
@@ -140,6 +142,9 @@ func main() {
 	}
 	if *confJukeboxEnabled {
 		g.Add(server.StartJukebox())
+	}
+	if *confPodcastPurgeAge > 0 {
+		g.Add(server.StartPodcastPurger(time.Duration(*confPodcastPurgeAge*24) * time.Hour))
 	}
 
 	if err := g.Run(); err != nil {
