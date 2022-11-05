@@ -37,6 +37,7 @@ func main() {
 	confCachePath := set.String("cache-path", "", "path to cache")
 	confDBPath := set.String("db-path", "gonic.db", "path to database (optional)")
 	confScanIntervalMins := set.Int("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
+	confScanAtStart := set.Bool("scan-at-start-enabled", false, "whether to perform an initial scan at startup (optional)")
 	confScanWatcher := set.Bool("scan-watcher-enabled", false, "whether to watch file system for new music and rescan (optional)")
 	confJukeboxEnabled := set.Bool("jukebox-enabled", false, "whether the subsonic jukebox api should be enabled (optional)")
 	confPodcastPurgeAgeDays := set.Int("podcast-purge-age", 0, "age (in days) to purge podcast episodes if not accessed (optional)")
@@ -145,6 +146,9 @@ func main() {
 	}
 	if *confPodcastPurgeAgeDays > 0 {
 		g.Add(server.StartPodcastPurger(time.Duration(*confPodcastPurgeAgeDays) * 24 * time.Hour))
+	}
+	if *confScanAtStart {
+		server.ScanAtStart()
 	}
 
 	if err := g.Run(); err != nil {

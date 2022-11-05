@@ -344,6 +344,12 @@ func (s *Server) StartScanTicker(dur time.Duration) (FuncExecute, FuncInterrupt)
 		}
 }
 
+func (s *Server) ScanAtStart() {
+	if _, err := s.scanner.ScanAndClean(scanner.ScanOptions{}); err != nil {
+		log.Printf("error scanning: %v", err)
+	}
+}
+
 func (s *Server) StartScanWatcher() (FuncExecute, FuncInterrupt) {
 	return func() error {
 			log.Printf("starting job 'scan watcher'\n")
