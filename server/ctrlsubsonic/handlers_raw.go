@@ -106,6 +106,24 @@ func streamUpdateStats(dbc *db.DB, userID, albumID int, playTime time.Time) erro
 	return nil
 }
 
+func streamUpdatePodcastEpisodeStats(dbc *db.DB, peID int) error {
+	var pe db.PodcastEpisode
+	err := dbc.
+		Where("id=?", peID).
+		First(&pe).
+		Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return fmt.Errorf("find podcast episode: %w", err)
+	}
+
+	pe.ModifiedAt = time.Now()
+
+	if err := dbc.Save(&pe).Error; err != nil {
+		return fmt.Errorf("save podcast episode: %w", err)
+	}
+	return nil
+}
+
 const (
 	coverDefaultSize = 600
 	coverCacheFormat = "png"
@@ -271,7 +289,15 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	if track, ok := file.(*db.Track); ok && track.Album != nil {
 		defer func() {
 			if err := streamUpdateStats(c.DB, user.ID, track.Album.ID, time.Now()); err != nil {
-				log.Printf("error updating status: %v", err)
+				log.Printf("error updating track status: %v", err)
+			}
+		}()
+	}
+
+	if pe, ok := file.(*db.PodcastEpisode); ok {
+		defer func() {
+			if err := streamUpdatePodcastEpisodeStats(c.DB, pe.ID); err != nil {
+				log.Printf("error updating podcast episode status: %v", err)
 			}
 		}()
 	}

@@ -389,6 +389,31 @@ func (s *Server) StartPodcastRefresher(dur time.Duration) (FuncExecute, FuncInte
 		}
 }
 
+func (s *Server) StartPodcastPurger(maxAge time.Duration) (FuncExecute, FuncInterrupt) {
+	ticker := time.NewTicker(24 * time.Hour)
+	done := make(chan struct{})
+	waitFor := func() error {
+		for {
+			select {
+			case <-done:
+				return nil
+			case <-ticker.C:
+				if err := s.podcast.PurgeOldPodcasts(maxAge); err != nil {
+					log.Printf("error purging old podcasts: %v", err)
+				}
+			}
+		}
+	}
+	return func() error {
+			log.Printf("starting job 'podcast purger'\n")
+			return waitFor()
+		}, func(_ error) {
+			// stop job
+			ticker.Stop()
+			done <- struct{}{}
+		}
+}
+
 func (s *Server) StartSessionClean(dur time.Duration) (FuncExecute, FuncInterrupt) {
 	ticker := time.NewTicker(dur)
 	done := make(chan struct{})

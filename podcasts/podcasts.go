@@ -516,6 +516,31 @@ func (p *Podcasts) DeletePodcastEpisode(podcastEpisodeID int) error {
 	return err
 }
 
+func (p *Podcasts) PurgeOldPodcasts(maxAge time.Duration) error {
+	expDate := time.Now().Add(-maxAge)
+	var episodes []*db.PodcastEpisode
+	err := p.db.
+		Debug().
+		Where("created_at < ?", expDate).
+		Where("updated_at < ?", expDate).
+		Where("modified_at < ?", expDate).
+		Find(&episodes).
+		Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return fmt.Errorf("find podcasts: %w", err)
+	}
+	for _, episode := range episodes {
+		episode.Status = db.PodcastEpisodeStatusDeleted
+		if err := p.db.Save(episode).Error; err != nil {
+			return fmt.Errorf("save new podcast status: %w", err)
+		}
+		if err := os.Remove(filepath.Join(p.baseDir, episode.Path)); err != nil {
+			return fmt.Errorf("remove podcast path: %w", err)
+		}
+	}
+	return nil
+}
+
 func pathSafe(in string) string {
 	return filepath.Clean(strings.ReplaceAll(in, string(filepath.Separator), "_"))
 }
