@@ -37,111 +37,15 @@ password can then be changed from the web interface
 
 ### ...from source
 
-```bash
-$ apt install build-essential git sqlite libtag1-dev ffmpeg libasound-dev # for debian like
-$ pacman -S base-devel git sqlite taglib ffmpeg alsa-lib                  # for arch like
-$ go install go.senan.xyz/gonic/cmd/gonic@latest
-$ export PATH=$PATH:$HOME/go/bin
-$ gonic -h # or see "configuration options below"
-```
-
-**note:** unfortunately if you do this above, you'll be compiling gonic locally on your machine
-(if someone knows how I can statically link sqlite3 and taglib, please let me know so I can distribute static binaries)
+https://github.com/sentriz/gonic/wiki/installation#from-source
 
 ### ...with docker
 
-the image is available on dockerhub as [sentriz/gonic](https://hub.docker.com/r/sentriz/gonic)
-
-available architectures are
-
-- `linux/amd64`
-- `linux/arm/v6`
-- `linux/arm/v7`
-- `linux/arm64`
-
-```yaml
-# example docker-compose.yml
-
-version: "2.4"
-services:
-  gonic:
-    image: sentriz/gonic:latest
-    environment:
-      - TZ
-    # optionally, see more env vars below
-    expose:
-      - 80
-    volumes:
-      - ./data:/data # gonic db etc
-      - /path/to/music:/music:ro # your music
-      - /path/to/podcasts:/podcasts # your podcasts
-      - /path/to/cache:/cache # transcode / covers / etc cache dir
-
-    # set the following two sections if you've enabled jukebox
-    group_add:
-      - audio
-    devices:
-      - /dev/snd:/dev/snd
-```
-
-then start with `docker-compose up -d`
+https://github.com/sentriz/gonic/wiki/installation#with-docker
 
 ### ...with systemd
 
-tested on Ubuntu 21.04
-
-1. install **go 1.16 or newer**, check version, and install dependencies
-
-```shell
-$ sudo apt update
-$ sudo apt install golang
-
-$ go version
-go version go1.16.2 linux/amd64
-
-$ sudo apt install build-essential git sqlite libtag1-dev ffmpeg libasound-dev
-```
-
-2. install / compile gonic globally, and check version
-
-```shell
-$ sudo GOBIN=/usr/local/bin go install go.senan.xyz/gonic/cmd/gonic@latest
-
-$ gonic -version
-v0.14.0
-```
-
-3. add a gonic user, create a data directory, and install a config file
-
-```shell
-$ sudo adduser --system --no-create-home --group gonic
-$ sudo mkdir -p /var/lib/gonic/ /etc/gonic/
-$ sudo chown -R gonic:gonic /var/lib/gonic/
-$ sudo wget https://raw.githubusercontent.com/sentriz/gonic/master/contrib/config -O /etc/gonic/config
-```
-
-4. update the config with your `music-path`, `podcast-path`, etc
-
-```shell
-$ sudo nano /etc/gonic/config
-music-path        <path to your music dir>
-podcast-path      <path to your podcasts dir>
-cache-path        <path to cache dir>
-```
-
-5. install the systemd service, check status or logs
-
-```shell
-$ sudo wget https://raw.githubusercontent.com/sentriz/gonic/master/contrib/gonic.service -O /etc/systemd/system/gonic.service
-$ sudo systemctl daemon-reload
-$ sudo systemctl enable --now gonic
-
-$ systemctl status gonic            # check status, should be active (running)
-$ journalctl --follow --unit gonic  # check logs
-```
-
-should be installed and running on boot now 👍  
-view the admin UI at <http://localhost:4747>
+https://github.com/sentriz/gonic/wiki/installation#with-systemd
 
 ### ...elsewhere
 
@@ -198,18 +102,6 @@ music-path /path/to/compilations
 
 after that, most subsonic clients should allow you to select which music folder to use.
 queries like show me "recently played compilations" or "recently added albums" are possible for example.
-
-## example nginx config with `GONIC_PROXY_PREFIX`
-
-```nginx
-  location /gonic/ {
-      proxy_pass http://localhost:4747/;
-      # set "Secure" cookie if using HTTPS
-      proxy_cookie_path / "/; Secure";
-      # set "X-Forwarded-Host" header for last.fm connection callback
-      proxy_set_header X-Forwarded-Host $host;
-  }
-```
 
 ## directory structure
 
