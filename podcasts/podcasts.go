@@ -521,6 +521,7 @@ func (p *Podcasts) PurgeOldPodcasts(maxAge time.Duration) error {
 	var episodes []*db.PodcastEpisode
 	err := p.db.
 		Debug().
+		Where("status = ?", "completed").
 		Where("created_at < ?", expDate).
 		Where("updated_at < ?", expDate).
 		Where("modified_at < ?", expDate).
