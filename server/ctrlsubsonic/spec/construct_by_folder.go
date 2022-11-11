@@ -95,6 +95,24 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 	return trCh
 }
 
+func NewTCPodcastEpisode(pe *db.PodcastEpisode, parent *db.Podcast) *TrackChild {
+	trCh := &TrackChild{
+		ID:          pe.SID(),
+		ContentType: pe.MIME(),
+		Suffix:      pe.Ext(),
+		Size:        pe.Size,
+		Title:       pe.Title,
+		Path:        pe.Path,
+		ParentID:    parent.SID(),
+		Duration:    pe.Length,
+		Bitrate:     pe.Bitrate,
+		IsDir:       false,
+		Type:        "podcastepisode",
+		CreatedAt:   pe.CreatedAt,
+	}
+	return trCh
+}
+
 func NewArtistByFolder(f *db.Album) *Artist {
 	// the db is structued around "browse by tags", and where
 	// an album is also a folder. so we're constructing an artist

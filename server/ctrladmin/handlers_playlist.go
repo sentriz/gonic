@@ -12,15 +12,16 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
 var (
 	errPlaylistNoMatch = errors.New("couldn't match track")
 )
 
-func playlistParseLine(c *Controller, absPath string) (int, error) {
+func playlistParseLine(c *Controller, absPath string) (*specid.ID, error) {
 	if strings.HasPrefix(absPath, "#") || strings.TrimSpace(absPath) == "" {
-		return 0, nil
+		return nil, nil
 	}
 	var track db.Track
 	query := c.DB.Raw(`
@@ -29,14 +30,23 @@ func playlistParseLine(c *Controller, absPath string) (int, error) {
 		WHERE (albums.root_dir || '/' || albums.left_path || albums.right_path || '/' || tracks.filename)=?`,
 		absPath)
 	err := query.First(&track).Error
-	switch {
-	case errors.Is(err, gorm.ErrRecordNotFound):
-		return 0, fmt.Errorf("%v: %w", err, errPlaylistNoMatch)
-	case err != nil:
-		return 0, fmt.Errorf("while matching: %w", err)
-	default:
-		return track.ID, nil
+	if err == nil {
+		return &specid.ID{Type: specid.Track, Value: track.ID}, nil
 	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, fmt.Errorf("while matching: %w", err)
+	}
+
+	var pe db.PodcastEpisode
+	err = c.DB.Where("path=?", absPath).First(&pe).Error
+	if err == nil {
+		return &specid.ID{Type: specid.PodcastEpisode, Value: pe.ID}, nil
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, fmt.Errorf("while matching: %w", err)
+	}
+
+	return nil, fmt.Errorf("%v: %w", err, errPlaylistNoMatch)
 }
 
 func playlistCheckContentType(contentType string) bool {
@@ -63,7 +73,7 @@ func playlistParseUpload(c *Controller, userID int, header *multipart.FileHeader
 	if !playlistCheckContentType(contentType) {
 		return []string{fmt.Sprintf("invalid content-type %q", contentType)}, false
 	}
-	var trackIDs []int
+	var trackIDs []specid.ID
 	var errors []string
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
@@ -72,8 +82,8 @@ func playlistParseUpload(c *Controller, userID int, header *multipart.FileHeader
 			// trim length of error to not overflow cookie flash
 			errors = append(errors, fmt.Sprintf("%.100s", err.Error()))
 		}
-		if trackID != 0 {
-			trackIDs = append(trackIDs, trackID)
+		if trackID.Value != 0 {
+			trackIDs = append(trackIDs, *trackID)
 		}
 	}
 	if err := scanner.Err(); err != nil {

@@ -45,6 +45,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202206011628", migrateInternetRadioStations),
 		construct(ctx, "202206101425", migrateUser),
 		construct(ctx, "202207251148", migrateStarRating),
+		construct(ctx, "202211111057", migratePlaylistsQueuesToFullID),
 	}
 
 	return gormigrate.
@@ -385,4 +386,58 @@ func migrateStarRating(tx *gorm.DB, _ MigrationContext) error {
 		TrackRating{},
 	).
 		Error
+}
+
+func migratePlaylistsQueuesToFullID(tx *gorm.DB, _ MigrationContext) error {
+	step := tx.Exec(`
+		UPDATE playlists SET items=('tr-' || items) WHERE items IS NOT NULL;
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step migrate playlists to full id: %w", err)
+	}
+	step = tx.Exec(`
+		UPDATE playlists SET items=REPLACE(items,',',',tr-') WHERE items IS NOT NULL;
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step migrate playlists to full id: %w", err)
+	}
+
+	step = tx.Exec(`
+		UPDATE play_queues SET items=('tr-' || items) WHERE items IS NOT NULL;
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step migrate play_queues to full id: %w", err)
+	}
+	step = tx.Exec(`
+		UPDATE play_queues SET items=REPLACE(items,',',',tr-') WHERE items IS NOT NULL;
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step migrate play_queues to full id: %w", err)
+	}
+	step = tx.Exec(`
+		ALTER TABLE play_queues ADD COLUMN newcurrent varchar[255];
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step migrate play_queues to full id: %w", err)
+	}
+	step = tx.Exec(`
+		UPDATE play_queues SET newcurrent=('tr-' || CAST(current AS varchar(10)));
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step migrate play_queues to full id: %w", err)
+	}
+	step = tx.Exec(`
+		ALTER TABLE play_queues DROP COLUMN current;
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step migrate play_queues to full id: %w", err)
+	}
+	step = tx.Exec(`
+		ALTER TABLE play_queues RENAME COLUMN newcurrent TO "current";
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step migrate play_queues to full id: %w", err)
+	}
+
+	return nil
 }

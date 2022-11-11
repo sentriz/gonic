@@ -8,7 +8,6 @@ package db
 
 import (
 	"path"
-	"strconv"
 	"strings"
 	"time"
 
@@ -18,26 +17,26 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
-func splitInt(in, sep string) []int {
+func splitIds(in, sep string) []specid.ID {
 	if in == "" {
-		return []int{}
+		return []specid.ID{}
 	}
 	parts := strings.Split(in, sep)
-	ret := make([]int, 0, len(parts))
+	ret := make([]specid.ID, 0, len(parts))
 	for _, p := range parts {
-		i, _ := strconv.Atoi(p)
-		ret = append(ret, i)
+		id, _ := specid.New(p)
+		ret = append(ret, id)
 	}
 	return ret
 }
 
-func joinInt(in []int, sep string) string {
+func joinIds(in []specid.ID, sep string) string {
 	if in == nil {
 		return ""
 	}
 	strs := make([]string, 0, len(in))
-	for _, i := range in {
-		strs = append(strs, strconv.Itoa(i))
+	for _, id := range in {
+		strs = append(strs, id.String())
 	}
 	return strings.Join(strs, sep)
 }
@@ -260,12 +259,12 @@ type Playlist struct {
 	IsPublic   bool `sql:"default: null"`
 }
 
-func (p *Playlist) GetItems() []int {
-	return splitInt(p.Items, ",")
+func (p *Playlist) GetItems() []specid.ID {
+	return splitIds(p.Items, ",")
 }
 
-func (p *Playlist) SetItems(items []int) {
-	p.Items = joinInt(items, ",")
+func (p *Playlist) SetItems(items []specid.ID) {
+	p.Items = joinIds(items, ",")
 	p.TrackCount = len(items)
 }
 
@@ -275,22 +274,23 @@ type PlayQueue struct {
 	UpdatedAt time.Time
 	User      *User
 	UserID    int `sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
-	Current   int
+	Current   string
 	Position  int
 	ChangedBy string
 	Items     string
 }
 
 func (p *PlayQueue) CurrentSID() *specid.ID {
-	return &specid.ID{Type: specid.Track, Value: p.Current}
+	id, _ := specid.New(p.Current)
+	return &id
 }
 
-func (p *PlayQueue) GetItems() []int {
-	return splitInt(p.Items, ",")
+func (p *PlayQueue) GetItems() []specid.ID {
+	return splitIds(p.Items, ",")
 }
 
-func (p *PlayQueue) SetItems(items []int) {
-	p.Items = joinInt(items, ",")
+func (p *PlayQueue) SetItems(items []specid.ID) {
+	p.Items = joinIds(items, ",")
 }
 
 type TranscodePreference struct {
