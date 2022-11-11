@@ -167,16 +167,31 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
 
 	for i, id := range trackIDs {
-		track := db.Track{}
-		c.DB.
-			Where("id=?", id).
-			Preload("Album").
-			Preload("TrackStar", "user_id=?", user.ID).
-			Preload("TrackRating", "user_id=?", user.ID).
-			Find(&track)
-		sub.PlayQueue.List[i] = spec.NewTCTrackByFolder(&track, track.Album)
-		sub.PlayQueue.List[i].TranscodedContentType = transcodeMIME
-		sub.PlayQueue.List[i].TranscodedSuffix = transcodeSuffix
+		switch id.Type {
+		case specid.Track:
+			track := db.Track{}
+			c.DB.
+				Where("id=?", id.Value).
+				Preload("Album").
+				Preload("TrackStar", "user_id=?", user.ID).
+				Preload("TrackRating", "user_id=?", user.ID).
+				Find(&track)
+			sub.PlayQueue.List[i] = spec.NewTCTrackByFolder(&track, track.Album)
+			sub.PlayQueue.List[i].TranscodedContentType = transcodeMIME
+			sub.PlayQueue.List[i].TranscodedSuffix = transcodeSuffix
+		case specid.PodcastEpisode:
+			pe := db.PodcastEpisode{}
+			c.DB.
+				Where("id=?", id.Value).
+				Find(&pe)
+			p := db.Podcast{}
+			c.DB.
+				Where("id=?", pe.PodcastID).
+				Find(&p)
+			sub.PlayQueue.List[i] = spec.NewTCPodcastEpisode(&pe, &p)
+			sub.PlayQueue.List[i].TranscodedContentType = transcodeMIME
+			sub.PlayQueue.List[i].TranscodedSuffix = transcodeSuffix
+		}
 	}
 	return sub
 }
@@ -187,11 +202,10 @@ func (c *Controller) ServeSavePlayQueue(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide some `id` parameters")
 	}
-	// TODO: support other play queue entries other than tracks
-	trackIDs := make([]int, 0, len(tracks))
+	trackIDs := make([]specid.ID, 0, len(tracks))
 	for _, id := range tracks {
-		if id.Type == specid.Track {
-			trackIDs = append(trackIDs, id.Value)
+		if (id.Type == specid.Track) || (id.Type == specid.PodcastEpisode) {
+			trackIDs = append(trackIDs, id)
 		}
 	}
 	if len(trackIDs) == 0 {
@@ -201,7 +215,7 @@ func (c *Controller) ServeSavePlayQueue(r *http.Request) *spec.Response {
 	var queue db.PlayQueue
 	c.DB.Where("user_id=?", user.ID).First(&queue)
 	queue.UserID = user.ID
-	queue.Current = params.GetOrID("current", specid.ID{}).Value
+	queue.Current = params.GetOrID("current", specid.ID{}).String()
 	queue.Position = params.GetOrInt("position", 0)
 	queue.ChangedBy = params.GetOr("c", "") // must exist, middleware checks
 	queue.SetItems(trackIDs)

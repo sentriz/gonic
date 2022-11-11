@@ -11,6 +11,7 @@ import (
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
 func playlistRender(c *Controller, playlist *db.Playlist, params params.Params) *spec.Playlist {
@@ -33,23 +34,47 @@ func playlistRender(c *Controller, playlist *db.Playlist, params params.Params) 
 	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
 
 	for i, id := range trackIDs {
-		track := db.Track{}
-		err := c.DB.
-			Where("id=?", id).
-			Preload("Album").
-			Preload("Album.TagArtist").
-			Preload("TrackStar", "user_id=?", user.ID).
-			Preload("TrackRating", "user_id=?", user.ID).
-			Find(&track).
-			Error
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Printf("wasn't able to find track with id %d", id)
-			continue
+		switch id.Type {
+		case specid.Track:
+			track := db.Track{}
+			err := c.DB.
+				Where("id=?", id.Value).
+				Preload("Album").
+				Preload("Album.TagArtist").
+				Preload("TrackStar", "user_id=?", user.ID).
+				Preload("TrackRating", "user_id=?", user.ID).
+				Find(&track).
+				Error
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				log.Printf("wasn't able to find track with id %d", id.Value)
+				continue
+			}
+			resp.List[i] = spec.NewTCTrackByFolder(&track, track.Album)
+			resp.Duration += track.Length
+		case specid.PodcastEpisode:
+			pe := db.PodcastEpisode{}
+			err := c.DB.
+				Where("id=?", id.Value).
+				Find(&pe).
+				Error
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				log.Printf("wasn't able to find podcast episode with id %d", id.Value)
+				continue
+			}
+			p := db.Podcast{}
+			err = c.DB.
+				Where("id=?", pe.PodcastID).
+				Find(&p).
+				Error
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				log.Printf("wasn't able to find podcast with id %d", pe.PodcastID)
+				continue
+			}
+			resp.List[i] = spec.NewTCPodcastEpisode(&pe, &p)
+			resp.Duration += pe.Length
 		}
-		resp.List[i] = spec.NewTCTrackByFolder(&track, track.Album)
 		resp.List[i].TranscodedContentType = transcodeMIME
 		resp.List[i].TranscodedSuffix = transcodeSuffix
-		resp.Duration += track.Length
 	}
 	return resp
 }
@@ -109,12 +134,7 @@ func (c *Controller) ServeCreatePlaylist(r *http.Request) *spec.Response {
 	}
 
 	// replace song IDs
-	var trackIDs []int
-	if p, err := params.GetIDList("songId"); err == nil {
-		for _, i := range p {
-			trackIDs = append(trackIDs, i.Value)
-		}
-	}
+	trackIDs, _ := params.GetIDList("songId")
 	// Set the items of the playlist
 	playlist.SetItems(trackIDs)
 	c.DB.Save(playlist)
@@ -161,9 +181,7 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 
 	// add items
 	if p, err := params.GetIDList("songIdToAdd"); err == nil {
-		for _, i := range p {
-			trackIDs = append(trackIDs, i.Value)
-		}
+		trackIDs = append(trackIDs, p...)
 	}
 
 	playlist.SetItems(trackIDs)
