@@ -541,7 +541,7 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 		return spec.NewError(0, "fetching artist top tracks: %v", err)
 	}
 	if len(topTracks.Tracks) == 0 {
-		return spec.NewError(70, "no top tracks found for artist: %v", artist)
+		return spec.NewError(70, "no top tracks found for artist: %s", artist.Name)
 	}
 
 	topTrackNames := make([]string, len(topTracks.Tracks))
@@ -562,7 +562,7 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 		return spec.NewError(0, "error finding tracks: %v", err)
 	}
 	if len(tracks) == 0 {
-		return spec.NewError(70, "no tracks found matchind last fm top songs for artist: %v", artist)
+		return spec.NewError(70, "no tracks found matching last fm top songs for artist: %s", artist.Name)
 	}
 
 	sub := spec.NewResponse()
