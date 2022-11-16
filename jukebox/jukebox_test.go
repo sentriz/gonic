@@ -1,6 +1,7 @@
 package jukebox_test
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"sort"
@@ -18,6 +19,9 @@ func newJukebox(t *testing.T) *jukebox.Jukebox {
 		sockPath,
 		[]string{jukebox.MPVArg("--ao", "null")},
 	)
+	if errors.Is(err, jukebox.ErrMPVTooOld) {
+		t.Skip("old mpv found, skipping")
+	}
 	if err != nil {
 		t.Fatalf("start jukebox: %v", err)
 	}
