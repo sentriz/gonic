@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -26,8 +27,8 @@ func playlistParseLine(c *Controller, absPath string) (int, error) {
 	query := c.DB.Raw(`
 		SELECT tracks.id FROM TRACKS
 		JOIN albums ON tracks.album_id=albums.id
-		WHERE (albums.root_dir || '/' || albums.left_path || albums.right_path || '/' || tracks.filename)=?`,
-		absPath)
+		WHERE (albums.root_dir || ? || albums.left_path || albums.right_path || ? || tracks.filename)=?`,
+		string(os.PathSeparator), string(os.PathSeparator), absPath)
 	err := query.First(&track).Error
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):
