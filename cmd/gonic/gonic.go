@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/shlex"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/oklog/run"
 	"github.com/peterbourgon/ff"
@@ -40,6 +41,7 @@ func main() {
 	confScanAtStart := set.Bool("scan-at-start-enabled", false, "whether to perform an initial scan at startup (optional)")
 	confScanWatcher := set.Bool("scan-watcher-enabled", false, "whether to watch file system for new music and rescan (optional)")
 	confJukeboxEnabled := set.Bool("jukebox-enabled", false, "whether the subsonic jukebox api should be enabled (optional)")
+	confJukeboxMPVExtraArgs := set.String("jukebox-mpv-extra-args", "", "extra command line arguments to pass to the jukebox mpv daemon (optional)")
 	confPodcastPurgeAgeDays := set.Int("podcast-purge-age", 0, "age (in days) to purge podcast episodes if not accessed (optional)")
 	confProxyPrefix := set.String("proxy-prefix", "", "url path prefix to use if behind proxy. eg '/gonic' (optional)")
 	confGenreSplit := set.String("genre-split", "\n", "character or string to split genre tag data on (optional)")
@@ -68,7 +70,7 @@ func main() {
 	log.Printf("provided config\n")
 	set.VisitAll(func(f *flag.Flag) {
 		value := strings.ReplaceAll(f.Value.String(), "\n", "")
-		log.Printf("    %-15s %s\n", f.Name, value)
+		log.Printf("    %-25s %s\n", f.Name, value)
 	})
 
 	if len(confMusicPaths) == 0 {
@@ -142,7 +144,8 @@ func main() {
 		g.Add(server.StartScanWatcher())
 	}
 	if *confJukeboxEnabled {
-		g.Add(server.StartJukebox(nil))
+		extraArgs, _ := shlex.Split(*confJukeboxMPVExtraArgs)
+		g.Add(server.StartJukebox(extraArgs))
 	}
 	if *confPodcastPurgeAgeDays > 0 {
 		g.Add(server.StartPodcastPurger(time.Duration(*confPodcastPurgeAgeDays) * 24 * time.Hour))
