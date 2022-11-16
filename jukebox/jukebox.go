@@ -9,6 +9,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"sync"
 	"time"
 
@@ -20,6 +22,7 @@ import (
 var (
 	ErrMPVTimeout      = fmt.Errorf("mpv not responding")
 	ErrMPVNeverStarted = fmt.Errorf("mpv never started")
+	ErrMPVTooOld       = fmt.Errorf("mpv too old")
 )
 
 func MPVArg(k string, v any) string {
@@ -72,6 +75,15 @@ func (j *Jukebox) Start(sockPath string, mpvExtraArgs []string) error {
 	if err := j.conn.Open(); err != nil {
 		return fmt.Errorf("open connection: %w", err)
 	}
+
+	var mpvVersionStr string
+	if err := j.getDecode(&mpvVersionStr, "mpv-version"); err != nil {
+		return fmt.Errorf("get mpv version: %w", err)
+	}
+	if major, minor, patch := parseMPVVersion(mpvVersionStr); major == 0 && minor < 34 {
+		return fmt.Errorf("%w: v0.34.0+ required, found v%d.%d.%d", ErrMPVTooOld, major, minor, patch)
+	}
+
 	if _, err := j.conn.Call("observe_property", 0, "seekable"); err != nil {
 		return fmt.Errorf("observe property: %w", err)
 	}
@@ -403,4 +415,17 @@ func filter[T comparable](items []T, f func(T) bool) ([]T, bool) {
 func lock(mu *sync.Mutex) func() {
 	mu.Lock()
 	return mu.Unlock
+}
+
+var mpvVersionExpr = regexp.MustCompile(`mpv\s(\d+)\.(\d+)\.(\d+)`)
+
+func parseMPVVersion(version string) (major, minor, patch int) {
+	m := mpvVersionExpr.FindStringSubmatch(version)
+	if len(m) != 4 {
+		return
+	}
+	major, _ = strconv.Atoi(m[1])
+	minor, _ = strconv.Atoi(m[2])
+	patch, _ = strconv.Atoi(m[3])
+	return
 }
