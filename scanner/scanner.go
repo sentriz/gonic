@@ -277,7 +277,7 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string
 			cover = item.Name()
 			continue
 		}
-		if _, ok := mime.FromExtension(ext(item.Name())); ok {
+		if mime := mime.FromExtension(ext(item.Name())); mime != "" {
 			tracks = append(tracks, item.Name())
 			continue
 		}
