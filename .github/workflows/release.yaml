@@ -17,7 +17,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update -qq
-          sudo apt install -y -qq build-essential git sqlite libtag1-dev ffmpeg libasound-dev zlib1g-dev
+          sudo apt install -y -qq build-essential git sqlite libtag1-dev ffmpeg mpv zlib1g-dev
       - name: Lint
         uses: golangci/golangci-lint-action@v2
         with:

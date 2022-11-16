@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -100,7 +101,6 @@ func New(opts Options) (*Server, error) {
 		CoverCachePath: opts.CoverCachePath,
 		PodcastsPath:   opts.PodcastPath,
 		MusicPaths:     opts.MusicPaths,
-		Jukebox:        &jukebox.Jukebox{},
 		Scrobblers:     []scrobble.Scrobbler{&lastfm.Scrobbler{DB: opts.DB}, &listenbrainz.Scrobbler{}},
 		Podcasts:       podcast,
 		Transcoder:     cacheTranscoder,
@@ -360,13 +360,29 @@ func (s *Server) StartScanWatcher() (FuncExecute, FuncInterrupt) {
 		}
 }
 
-func (s *Server) StartJukebox() (FuncExecute, FuncInterrupt) {
+func (s *Server) StartJukebox(mpvExtraArgs []string) (FuncExecute, FuncInterrupt) {
+	var sockFile *os.File
 	return func() error {
 			log.Printf("starting job 'jukebox'\n")
-			return s.jukebox.Listen()
+			var err error
+			sockFile, err = os.CreateTemp("", "gonic-jukebox-*.sock")
+			if err != nil {
+				return fmt.Errorf("create tmp sock file: %w", err)
+			}
+			if err := s.jukebox.Start(sockFile.Name(), mpvExtraArgs); err != nil {
+				return fmt.Errorf("start jukebox: %w", err)
+			}
+			if err := s.jukebox.Wait(); err != nil {
+				return fmt.Errorf("start jukebox: %w", err)
+			}
+			return nil
 		}, func(_ error) {
 			// stop job
-			s.jukebox.Quit()
+			if err := s.jukebox.Quit(); err != nil {
+				log.Printf("error quitting jukebox: %v", err)
+			}
+			_ = sockFile.Close()
+			_ = os.Remove(sockFile.Name())
 		}
 }
 

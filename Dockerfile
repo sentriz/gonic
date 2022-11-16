@@ -5,7 +5,6 @@ RUN apk add -U --no-cache \
     git \
     sqlite \
     taglib-dev \
-    alsa-lib-dev \
     zlib-dev \
     go
 WORKDIR /src
@@ -15,10 +14,11 @@ RUN go mod download
 COPY . .
 RUN GOOS=linux go build -o gonic cmd/gonic/gonic.go
 
-FROM alpine:3.15
+FROM alpine:3.16
 LABEL org.opencontainers.image.source https://github.com/sentriz/gonic
 RUN apk add -U --no-cache \
     ffmpeg \
+    mpv \
     ca-certificates \
     tzdata \
     tini
