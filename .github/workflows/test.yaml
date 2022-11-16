@@ -14,7 +14,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16.x
+          go-version: 1.19.x
       - name: Install dependencies
         run: |
           sudo apt update -qq
@@ -22,7 +22,7 @@ jobs:
       - name: Lint
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.42.1
+          version: v1.50.1
           skip-go-installation: true
           args: --timeout=5m
       - name: Test
