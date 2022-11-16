@@ -313,7 +313,7 @@ type JukeboxStatus struct {
 
 type JukeboxPlaylist struct {
 	List []*TrackChild `xml:"entry,omitempty" json:"entry,omitempty"`
-	JukeboxStatus
+	*JukeboxStatus
 }
 
 type Podcasts struct {

@@ -142,7 +142,7 @@ func main() {
 		g.Add(server.StartScanWatcher())
 	}
 	if *confJukeboxEnabled {
-		g.Add(server.StartJukebox())
+		g.Add(server.StartJukebox(nil))
 	}
 	if *confPodcastPurgeAgeDays > 0 {
 		g.Add(server.StartPodcastPurger(time.Duration(*confPodcastPurgeAgeDays) * 24 * time.Hour))
