@@ -15,6 +15,7 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/multierr"
+	"go.senan.xyz/gonic/paths"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
@@ -29,7 +30,7 @@ func lowerUDecOrHash(in string) string {
 	return string(lower)
 }
 
-func getMusicFolder(musicPaths []string, p params.Params) string {
+func getMusicFolder(musicPaths paths.MusicPaths, p params.Params) string {
 	idx, err := p.GetInt("musicFolderId")
 	if err != nil {
 		return ""
@@ -37,7 +38,7 @@ func getMusicFolder(musicPaths []string, p params.Params) string {
 	if idx < 0 || idx > len(musicPaths) {
 		return ""
 	}
-	return musicPaths[idx]
+	return musicPaths[idx].Path
 }
 
 func (c *Controller) ServeGetLicence(r *http.Request) *spec.Response {
@@ -91,7 +92,7 @@ func (c *Controller) ServeGetMusicFolders(r *http.Request) *spec.Response {
 	sub.MusicFolders = &spec.MusicFolders{}
 	sub.MusicFolders.List = make([]*spec.MusicFolder, len(c.MusicPaths))
 	for i, path := range c.MusicPaths {
-		sub.MusicFolders.List[i] = &spec.MusicFolder{ID: i, Name: filepath.Base(path)}
+		sub.MusicFolders.List[i] = &spec.MusicFolder{ID: i, Name: path.DisplayAlias()}
 	}
 	return sub
 }
