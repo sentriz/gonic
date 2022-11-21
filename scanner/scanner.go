@@ -570,7 +570,32 @@ func (s *Scanner) cleanTracks(st *State) error {
 		}
 	}
 	return s.db.TransactionChunked(st.tracksMissing, func(tx *db.DB, chunk []int64) error {
-		return tx.Where(chunk).Delete(&db.Track{}).Error
+		err := tx.Where(chunk).Delete(&db.Track{}).Error
+		if err != nil {
+			return err
+		}
+
+		err = tx.Where("track_id IN (?)", chunk).Delete(&db.TrackArtist{}).Error
+		if err != nil {
+			return err
+		}
+
+		err = tx.Where("track_id IN (?)", chunk).Delete(&db.TrackGenre{}).Error
+		if err != nil {
+			return err
+		}
+
+		err = tx.Where("track_id IN (?)", chunk).Delete(&db.TrackStar{}).Error
+		if err != nil {
+			return err
+		}
+
+		err = tx.Where("track_id IN (?)", chunk).Delete(&db.TrackRating{}).Error
+		if err != nil {
+			return err
+		}
+
+		return nil
 	})
 }
 
@@ -592,7 +617,37 @@ func (s *Scanner) cleanAlbums(st *State) error {
 		}
 	}
 	return s.db.TransactionChunked(st.albumsMissing, func(tx *db.DB, chunk []int64) error {
-		return tx.Where(chunk).Delete(&db.Album{}).Error
+		err := tx.Where(chunk).Delete(&db.Album{}).Error
+		if err != nil {
+			return err
+		}
+
+		err = tx.Where("album_id IN (?)", chunk).Delete(&db.AlbumArtist{}).Error
+		if err != nil {
+			return err
+		}
+
+		err = tx.Where("album_id IN (?)", chunk).Delete(&db.ArtistAppearances{}).Error
+		if err != nil {
+			return err
+		}
+
+		err = tx.Where("album_id IN (?)", chunk).Delete(&db.AlbumGenre{}).Error
+		if err != nil {
+			return err
+		}
+
+		err = tx.Where("album_id IN (?)", chunk).Delete(&db.AlbumStar{}).Error
+		if err != nil {
+			return err
+		}
+
+		err = tx.Where("album_id IN (?)", chunk).Delete(&db.AlbumRating{}).Error
+		if err != nil {
+			return err
+		}
+
+		return nil
 	})
 }
 
@@ -639,6 +694,11 @@ func (s *Scanner) cleanGenres(st *State) error { //nolint:unparam
 		Delete(db.Genre{})
 	st.genresMissing += int(q.RowsAffected)
 
+	// cascade the delete
+	s.db.
+		Where("album_genres.genre_id IN ? AND album_genres.genre_id ?", subTrack, subAlbum).
+		Delete(db.AlbumGenre{})
+
 	subAlbumGenresNoTracks := s.db.
 		Select("album_genres.genre_id").
 		Model(db.AlbumGenre{}).
@@ -651,6 +711,9 @@ func (s *Scanner) cleanGenres(st *State) error { //nolint:unparam
 		Where("genres.id IN ?", subAlbumGenresNoTracks).
 		Delete(db.Genre{})
 	st.genresMissing += int(q.RowsAffected)
+
+	// cascade the delete
+	s.db.Where("album_genres.genre_id IN ?", subAlbumGenresNoTracks).Delete(db.AlbumGenre{})
 
 	return nil
 }

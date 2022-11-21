@@ -2,7 +2,6 @@
 package db
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -20,7 +19,6 @@ import (
 
 type MigrationContext struct {
 	Production        bool
-	DBPath            string
 	OriginalMusicPath string
 	PlaylistsPath     string
 	PodcastsPath      string
@@ -59,7 +57,6 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202206101425", migrateUser),
 		construct(ctx, "202207251148", migrateStarRating),
 		construct(ctx, "202211111057", migratePlaylistsQueuesToFullID),
-		constructNoTx(ctx, "202212272312", backupDBPre016),
 		construct(ctx, "202304221528", migratePlaylistsToM3U),
 		construct(ctx, "202305301718", migratePlayCountToLength),
 		construct(ctx, "202307281628", migrateAlbumArtistsMany2Many),
@@ -106,14 +103,14 @@ func constructNoTx(ctx MigrationContext, id string, f func(*gorm.DB, MigrationCo
 func migrateInitSchema(tx *gorm.DB, _ MigrationContext) error {
 	return tx.AutoMigrate(
 		Genre{},
+		Artist{},
+		Album{},
+		Track{},
 		TrackGenre{},
 		AlbumGenre{},
-		Track{},
-		Artist{},
 		User{},
 		Setting{},
 		Play{},
-		Album{},
 		PlayQueue{},
 	).
 		Error
@@ -179,12 +176,18 @@ func migrateAddGenre(tx *gorm.DB, _ MigrationContext) error {
 
 func migrateUpdateTranscodePrefIDX(tx *gorm.DB, _ MigrationContext) error {
 	var hasIDX int
-	tx.
-		Select("1").
-		Table("sqlite_master").
-		Where("type = ?", "index").
-		Where("name = ?", "idx_user_id_client").
-		Count(&hasIDX)
+	if tx.Dialect().GetName() == "sqlite3" {
+		tx.Select("1").
+			Table("sqlite_master").
+			Where("type = ?", "index").
+			Where("name = ?", "idx_user_id_client").
+			Count(&hasIDX)
+	} else if tx.Dialect().GetName() == "postgres" {
+		tx.Select("1").
+			Table("pg_indexes").
+			Where("indexname = ?", "idx_user_id_client").
+			Count(&hasIDX)
+	}
 	if hasIDX == 1 {
 		// index already exists
 		return nil
@@ -461,9 +464,15 @@ func migratePlaylistsQueuesToFullID(tx *gorm.DB, _ MigrationContext) error {
 	if err := step.Error; err != nil {
 		return fmt.Errorf("step migrate play_queues to full id: %w", err)
 	}
-	step = tx.Exec(`
+	if tx.Dialect().GetName() == "postgres" {
+		step = tx.Exec(`
+		UPDATE play_queues SET newcurrent=('tr-' || current)::varchar[200];
+	`)
+	} else {
+		step = tx.Exec(`
 		UPDATE play_queues SET newcurrent=('tr-' || CAST(current AS varchar(10)));
 	`)
+	}
 	if err := step.Error; err != nil {
 		return fmt.Errorf("step migrate play_queues to full id: %w", err)
 	}
@@ -590,7 +599,7 @@ func migrateAlbumArtistsMany2Many(tx *gorm.DB, _ MigrationContext) error {
 			return fmt.Errorf("step insert from albums: %w", err)
 		}
 
-		step = tx.Exec(`DROP INDEX idx_albums_tag_artist_id`)
+		step = tx.Exec(`DROP INDEX IF EXISTS idx_albums_tag_artist_id`)
 		if err := step.Error; err != nil {
 			return fmt.Errorf("step drop index: %w", err)
 		}
@@ -729,13 +738,6 @@ func migratePlaylistsPaths(tx *gorm.DB, ctx MigrationContext) error {
 	return nil
 }
 
-func backupDBPre016(tx *gorm.DB, ctx MigrationContext) error {
-	if !ctx.Production {
-		return nil
-	}
-	return Dump(context.Background(), tx, fmt.Sprintf("%s.%d.bak", ctx.DBPath, time.Now().Unix()))
-}
-
 func migrateAlbumTagArtistString(tx *gorm.DB, _ MigrationContext) error {
 	return tx.AutoMigrate(Album{}).Error
 }
@@ -770,12 +772,22 @@ func migrateArtistAppearances(tx *gorm.DB, _ MigrationContext) error {
 		return fmt.Errorf("step transfer album artists: %w", err)
 	}
 
-	step = tx.Exec(`
+	if tx.Dialect().GetName() == "sqlite3" {
+		step = tx.Exec(`
 		INSERT OR IGNORE INTO artist_appearances (artist_id, album_id)
 		SELECT track_artists.artist_id, tracks.album_id
 		FROM track_artists
 		JOIN tracks ON tracks.id=track_artists.track_id
 	`)
+	} else {
+		step = tx.Exec(`
+		INSERT INTO artist_appearances (artist_id, album_id)
+		SELECT track_artists.artist_id, tracks.album_id
+		FROM track_artists
+		JOIN tracks ON tracks.id=track_artists.track_id
+		ON CONFLICT DO NOTHING
+	`)
+	}
 	if err := step.Error; err != nil {
 		return fmt.Errorf("step transfer album artists: %w", err)
 	}
@@ -795,7 +807,7 @@ func migrateTemporaryDisplayAlbumArtist(tx *gorm.DB, _ MigrationContext) error {
 	return tx.Exec(`
 		UPDATE albums
 		SET tag_album_artist=(
-			SELECT group_concat(artists.name, ', ')
+			SELECT string_agg(artists.name, ', ')
 			FROM artists
 			JOIN album_artists ON album_artists.artist_id=artists.id AND album_artists.album_id=albums.id
 			GROUP BY album_artists.album_id

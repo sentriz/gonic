@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"expvar"
 	"flag"
@@ -26,6 +27,7 @@ import (
 
 	"github.com/google/shlex"
 	"github.com/gorilla/securecookie"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/sentriz/gormstore"
 	"golang.org/x/sync/errgroup"
@@ -65,8 +67,7 @@ func main() {
 	flag.Var(&confMusicPaths, "music-path", "path to music")
 
 	confPlaylistsPath := flag.String("playlists-path", "", "path to your list of new or existing m3u playlists that gonic can manage")
-
-	confDBPath := flag.String("db-path", "gonic.db", "path to database (optional)")
+	confDBURI := flag.String("db-uri", "", "db URI")
 
 	confScanIntervalMins := flag.Uint("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
 	confScanAtStart := flag.Bool("scan-at-start-enabled", false, "whether to perform an initial scan at startup (optional)")
@@ -92,6 +93,7 @@ func main() {
 	confExpvar := flag.Bool("expvar", false, "enable the /debug/vars endpoint (optional)")
 
 	deprecatedConfGenreSplit := flag.String("genre-split", "", "(deprecated, see multi-value settings)")
+	deprecatedConfDBPath := flag.String("db-path", "gonic.db", "(deprecated, see db-uri)")
 
 	flag.Parse()
 	flagconf.ParseEnv()
@@ -136,7 +138,11 @@ func main() {
 		log.Fatalf("couldn't create covers cache path: %v\n", err)
 	}
 
-	dbc, err := db.New(*confDBPath, db.DefaultOptions())
+	if *confDBURI == "" {
+		*confDBURI = "sqlite3://" + *deprecatedConfDBPath
+	}
+
+	dbc, err := db.New(*confDBURI)
 	if err != nil {
 		log.Fatalf("error opening database: %v\n", err)
 	}
@@ -144,7 +150,6 @@ func main() {
 
 	err = dbc.Migrate(db.MigrationContext{
 		Production:        true,
-		DBPath:            *confDBPath,
 		OriginalMusicPath: confMusicPaths[0].path,
 		PlaylistsPath:     *confPlaylistsPath,
 		PodcastsPath:      *confPodcastPath,
@@ -225,17 +230,18 @@ func main() {
 		jukebx = jukebox.New()
 	}
 
-	sessKey, err := dbc.GetSetting("session_key")
+	encSessKey, err := dbc.GetSetting("session_key")
 	if err != nil {
 		log.Panicf("error getting session key: %v\n", err)
 	}
-	if sessKey == "" {
-		sessKey = string(securecookie.GenerateRandomKey(32))
-		if err := dbc.SetSetting("session_key", sessKey); err != nil {
+	sessKey, err := base64.StdEncoding.DecodeString(encSessKey)
+	if err != nil || len(sessKey) == 0 {
+		sessKey = securecookie.GenerateRandomKey(32)
+		if err := dbc.SetSetting("session_key", base64.StdEncoding.EncodeToString(sessKey)); err != nil {
 			log.Panicf("error setting session key: %v\n", err)
 		}
 	}
-	sessDB := gormstore.New(dbc.DB, []byte(sessKey))
+	sessDB := gormstore.New(dbc.DB, []byte(encSessKey))
 	sessDB.SessionOpts.HttpOnly = true
 	sessDB.SessionOpts.SameSite = http.SameSiteLaxMode
 
