@@ -20,6 +20,7 @@ import (
 
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/paths"
 	"go.senan.xyz/gonic/server"
 )
 
@@ -48,7 +49,7 @@ func main() {
 	confHTTPLog := set.Bool("http-log", true, "http request logging (optional)")
 	confShowVersion := set.Bool("version", false, "show gonic version")
 
-	var confMusicPaths musicPaths
+	var confMusicPaths paths.MusicPaths
 	set.Var(&confMusicPaths, "music-path", "path to music")
 
 	_ = set.String("config-path", "", "path to config (optional)")
@@ -77,8 +78,8 @@ func main() {
 		log.Fatalf("please provide a music directory")
 	}
 	for _, confMusicPath := range confMusicPaths {
-		if _, err := os.Stat(confMusicPath); os.IsNotExist(err) {
-			log.Fatalf("music directory %q not found", confMusicPath)
+		if _, err := os.Stat(confMusicPath.Path); os.IsNotExist(err) {
+			log.Fatalf("music directory %q not found", confMusicPath.Path)
 		}
 	}
 	if _, err := os.Stat(*confPodcastPath); os.IsNotExist(err) {
@@ -109,7 +110,7 @@ func main() {
 	defer dbc.Close()
 
 	err = dbc.Migrate(db.MigrationContext{
-		OriginalMusicPath: confMusicPaths[0],
+		OriginalMusicPath: confMusicPaths[0].Path,
 	})
 	if err != nil {
 		log.Panicf("error migrating database: %v\n", err)
@@ -157,15 +158,4 @@ func main() {
 	if err := g.Run(); err != nil {
 		log.Panicf("error in job: %v", err)
 	}
-}
-
-type musicPaths []string
-
-func (m musicPaths) String() string {
-	return strings.Join(m, ", ")
-}
-
-func (m *musicPaths) Set(value string) error {
-	*m = append(*m, value)
-	return nil
 }

@@ -14,6 +14,7 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/jukebox"
+	"go.senan.xyz/gonic/paths"
 	"go.senan.xyz/gonic/podcasts"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/scanner/tags"
@@ -29,7 +30,7 @@ import (
 
 type Options struct {
 	DB             *db.DB
-	MusicPaths     []string
+	MusicPaths     paths.MusicPaths
 	PodcastPath    string
 	CachePath      string
 	CoverCachePath string
@@ -49,14 +50,14 @@ type Server struct {
 
 func New(opts Options) (*Server, error) {
 	for i, musicPath := range opts.MusicPaths {
-		opts.MusicPaths[i] = filepath.Clean(musicPath)
+		opts.MusicPaths[i].Path = filepath.Clean(musicPath.Path)
 	}
 	opts.CachePath = filepath.Clean(opts.CachePath)
 	opts.PodcastPath = filepath.Clean(opts.PodcastPath)
 
 	tagger := &tags.TagReader{}
 
-	scanner := scanner.New(opts.MusicPaths, opts.DB, opts.GenreSplit, tagger)
+	scanner := scanner.New(opts.MusicPaths.Paths(), opts.DB, opts.GenreSplit, tagger)
 	base := &ctrlbase.Controller{
 		DB:          opts.DB,
 		ProxyPrefix: opts.ProxyPrefix,

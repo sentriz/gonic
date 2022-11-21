@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	"go.senan.xyz/gonic/jukebox"
+	"go.senan.xyz/gonic/paths"
 	"go.senan.xyz/gonic/podcasts"
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/server/ctrlbase"
@@ -31,7 +32,7 @@ type Controller struct {
 	CachePath      string
 	CoverCachePath string
 	PodcastsPath   string
-	MusicPaths     []string
+	MusicPaths     paths.MusicPaths
 	Jukebox        *jukebox.Jukebox
 	Scrobblers     []scrobble.Scrobbler
 	Podcasts       *podcasts.Podcasts
