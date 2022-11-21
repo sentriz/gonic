@@ -292,7 +292,7 @@ func (m *MockFS) DumpDB(suffix ...string) {
 	p = append(p, suffix...)
 
 	destPath := filepath.Join(os.TempDir(), strings.Join(p, "-"))
-	dest, err := db.New(destPath, url.Values{})
+	dest, err := db.NewSqlite3(destPath, url.Values{})
 	if err != nil {
 		m.t.Fatalf("create dest db: %v", err)
 	}

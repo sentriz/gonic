@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/base64"
 	"fmt"
 	"log"
 	"net/http"
@@ -76,17 +77,19 @@ func New(opts Options) (*Server, error) {
 	r.Use(base.WithCORS)
 	r.Use(handlers.RecoveryHandler(handlers.PrintRecoveryStack(true)))
 
-	sessKey, err := opts.DB.GetSetting("session_key")
+	encSessKey, err := opts.DB.GetSetting("session_key")
 	if err != nil {
 		return nil, fmt.Errorf("get session key: %w", err)
 	}
-	if sessKey == "" {
-		if err := opts.DB.SetSetting("session_key", string(securecookie.GenerateRandomKey(32))); err != nil {
+	sessKey, err := base64.StdEncoding.DecodeString(encSessKey)
+	if err != nil || len(sessKey) == 0 {
+		sessKey = securecookie.GenerateRandomKey(32)
+		if err := opts.DB.SetSetting("session_key", base64.StdEncoding.EncodeToString(sessKey)); err != nil {
 			return nil, fmt.Errorf("set session key: %w", err)
 		}
 	}
 
-	sessDB := gormstore.New(opts.DB.DB, []byte(sessKey))
+	sessDB := gormstore.New(opts.DB.DB, sessKey)
 	sessDB.SessionOpts.HttpOnly = true
 	sessDB.SessionOpts.SameSite = http.SameSiteLaxMode
 
