@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -355,15 +356,16 @@ func (s *Server) StartScanWatcher() (FuncExecute, FuncInterrupt) {
 }
 
 func (s *Server) StartJukebox(mpvExtraArgs []string) (FuncExecute, FuncInterrupt) {
-	var sockFile *os.File
+	var tempDir string
 	return func() error {
 			log.Printf("starting job 'jukebox'\n")
 			var err error
-			sockFile, err = os.CreateTemp("", "gonic-jukebox-*.sock")
+			tempDir, err = os.MkdirTemp("", "gonic-jukebox-*")
 			if err != nil {
 				return fmt.Errorf("create tmp sock file: %w", err)
 			}
-			if err := s.jukebox.Start(sockFile.Name(), mpvExtraArgs); err != nil {
+			sockPath := filepath.Join(tempDir, "sock")
+			if err := s.jukebox.Start(sockPath, mpvExtraArgs); err != nil {
 				return fmt.Errorf("start jukebox: %w", err)
 			}
 			if err := s.jukebox.Wait(); err != nil {
@@ -375,8 +377,7 @@ func (s *Server) StartJukebox(mpvExtraArgs []string) (FuncExecute, FuncInterrupt
 			if err := s.jukebox.Quit(); err != nil {
 				log.Printf("error quitting jukebox: %v", err)
 			}
-			_ = sockFile.Close()
-			_ = os.Remove(sockFile.Name())
+			_ = os.RemoveAll(tempDir)
 		}
 }
 
