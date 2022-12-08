@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.16.0](https://www.github.com/sentriz/gonic/compare/v0.15.0...v0.16.0) (2022-12-08)
+
+
+### Features
+
+* allow for custom music folder path alias ([7e097c9](https://www.github.com/sentriz/gonic/commit/7e097c9bdffa6f6cff57e5af6d9dea6965553c19)), closes [#259](https://www.github.com/sentriz/gonic/issues/259)
+
+
+### Bug Fixes
+
+* **jukebox:** use a tmp dir instead of file for mpv sock ([e8fac56](https://www.github.com/sentriz/gonic/commit/e8fac564920cde42e023fcf79c9ac694fec20dd8)), closes [#266](https://www.github.com/sentriz/gonic/issues/266) [#265](https://www.github.com/sentriz/gonic/issues/265)
+
 ## [0.15.0](https://www.github.com/sentriz/gonic/compare/v0.14.0...v0.15.0) (2022-11-17)
 
 
