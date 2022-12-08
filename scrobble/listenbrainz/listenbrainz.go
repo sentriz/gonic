@@ -10,6 +10,7 @@ import (
 	"net/http/httputil"
 	"time"
 
+	"github.com/google/uuid"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/scrobble"
 )
@@ -57,11 +58,18 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 	if user.ListenBrainzURL == "" || user.ListenBrainzToken == "" {
 		return nil
 	}
+
+	// make sure we provide a valid uuid, since some users may have an incorrect mbid in their tags
+	var trackMBID string
+	if _, err := uuid.Parse(track.TagBrainzID); err == nil {
+		trackMBID = track.TagBrainzID
+	}
+
 	payload := &Payload{
 		TrackMetadata: &TrackMetadata{
 			AdditionalInfo: &AdditionalInfo{
 				TrackNumber:   track.TagTrackNumber,
-				RecordingMBID: track.TagBrainzID,
+				RecordingMBID: trackMBID,
 				TrackLength:   track.Length,
 			},
 			ArtistName:  track.TagTrackArtist,
