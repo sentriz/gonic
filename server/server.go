@@ -363,6 +363,9 @@ func (s *Server) StartJukebox(mpvExtraArgs []string) (FuncExecute, FuncInterrupt
 			if err != nil {
 				return fmt.Errorf("create tmp sock file: %w", err)
 			}
+			if err := os.Remove(sockFile.Name()); err != nil {
+				return fmt.Errorf("delete tmp sock file: %w", err)
+			}
 			if err := s.jukebox.Start(sockFile.Name(), mpvExtraArgs); err != nil {
 				return fmt.Errorf("start jukebox: %w", err)
 			}
