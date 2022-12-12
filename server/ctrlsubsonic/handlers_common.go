@@ -35,7 +35,7 @@ func getMusicFolder(musicPaths paths.MusicPaths, p params.Params) string {
 	if err != nil {
 		return ""
 	}
-	if idx < 0 || idx > len(musicPaths) {
+	if idx < 0 || idx >= len(musicPaths) {
 		return ""
 	}
 	return musicPaths[idx].Path
