@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
 	"github.com/sentriz/gormstore"
@@ -64,6 +65,7 @@ func New(opts Options) (*Server, error) {
 		r.Use(base.WithLogging)
 	}
 	r.Use(base.WithCORS)
+	r.Use(handlers.RecoveryHandler(handlers.PrintRecoveryStack(true)))
 
 	sessKey, err := opts.DB.GetSetting("session_key")
 	if err != nil {
