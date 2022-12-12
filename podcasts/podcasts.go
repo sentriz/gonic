@@ -24,6 +24,8 @@ import (
 	"go.senan.xyz/gonic/scanner/tags"
 )
 
+var ErrNoAudioInFeedItem = errors.New("no audio in feed item")
+
 const downloadAllWaitInterval = 3 * time.Second
 const fetchUserAgent = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11`
 
@@ -166,6 +168,10 @@ func (p *Podcasts) AddNewEpisodes(podcast *db.Podcast, items []*gofeed.Item) err
 	}
 	for _, item := range getEntriesAfterDate(items, *podcastEpisode.PublishDate) {
 		episode, err := p.AddEpisode(podcast.ID, item)
+		if errors.Is(err, ErrNoAudioInFeedItem) {
+			log.Println("failed to find audio in feed item, skipping")
+			continue
+		}
 		if err != nil {
 			return err
 		}
@@ -226,9 +232,7 @@ func (p *Podcasts) AddEpisode(podcastID int, item *gofeed.Item) (*db.PodcastEpis
 		}
 		return episode, nil
 	}
-	// hopefully shouldnt reach here
-	log.Println("failed to find audio in feed item, skipping")
-	return nil, nil
+	return nil, ErrNoAudioInFeedItem
 }
 
 func isAudio(mediaType, url string) bool {
