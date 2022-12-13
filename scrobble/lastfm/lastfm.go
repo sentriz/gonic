@@ -263,12 +263,13 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 	params.Add("album", track.Album.TagTitle)
 	params.Add("albumArtist", track.Artist.Name)
 	params.Add("duration", strconv.Itoa(track.Length))
-	params.Add("api_sig", getParamSignature(params, secret))
 
 	// make sure we provide a valid uuid, since some users may have an incorrect mbid in their tags
 	if _, err := uuid.Parse(track.TagBrainzID); err == nil {
 		params.Add("mbid", track.TagBrainzID)
 	}
+
+	params.Add("api_sig", getParamSignature(params, secret))
 
 	_, err = makeRequest("POST", params)
 	return err
