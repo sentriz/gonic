@@ -2,8 +2,11 @@ package ctrlsubsonic
 
 import (
 	"fmt"
+	"math"
+	"math/rand"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/jinzhu/gorm"
 
@@ -154,7 +157,13 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 	case "newest":
 		q = q.Order("created_at DESC")
 	case "random":
-		q = q.Order(gorm.Expr("random()"))
+		seed, err := c.paginatedShuffleSeed(user, params.GetOrInt("offset", 0))
+		if err != nil {
+			return spec.NewError(0, "error generating shuffle seed: %v", err)
+		}
+		// sqlite doesn't have a random seed function, so instead multiply the pk by the
+		// seed and take the last few numbers after the dot
+		q = q.Order(gorm.Expr("substr(albums.id * ?, -5, 5)", seed))
 	case "recent":
 		q = q.Joins(`
 			JOIN plays
@@ -359,4 +368,23 @@ func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {
 	sub := spec.NewResponse()
 	sub.Starred = results
 	return sub
+}
+
+// as we're scrolling down / paginating through the random album list, we don't want to see the same album twice.
+// generate a seed per use that they can keep between pages
+func (c *Controller) paginatedShuffleSeed(user *db.User, page int) (float64, error) {
+	if page > 0 && user.PaginatedShuffleSeed > 0 {
+		// we're scrolling down the page, keep the same random seed
+		return user.PaginatedShuffleSeed, nil
+	}
+
+	rand.Seed(time.Now().UnixNano())
+	seed := math.Trunc(rand.Float64()*10e5) / 10e5
+
+	user.PaginatedShuffleSeed = seed
+	if err := c.DB.Save(user).Error; err != nil {
+		return 0, fmt.Errorf("save user seed: %w", err)
+	}
+
+	return seed, nil
 }

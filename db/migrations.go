@@ -45,6 +45,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202206011628", migrateInternetRadioStations),
 		construct(ctx, "202206101425", migrateUser),
 		construct(ctx, "202207251148", migrateStarRating),
+		construct(ctx, "202212141507", migrateShuffleSeed),
 	}
 
 	return gormigrate.
@@ -383,6 +384,13 @@ func migrateStarRating(tx *gorm.DB, _ MigrationContext) error {
 		Track{},
 		TrackStar{},
 		TrackRating{},
+	).
+		Error
+}
+
+func migrateShuffleSeed(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(
+		User{},
 	).
 		Error
 }

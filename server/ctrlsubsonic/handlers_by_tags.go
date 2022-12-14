@@ -167,7 +167,13 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	case "newest":
 		q = q.Order("created_at DESC")
 	case "random":
-		q = q.Order(gorm.Expr("random()"))
+		seed, err := c.paginatedShuffleSeed(user, params.GetOrInt("offset", 0))
+		if err != nil {
+			return spec.NewError(0, "error generating shuffle seed: %v", err)
+		}
+		// sqlite doesn't have a random seed function, so instead multiply the pk by the
+		// seed and take the last few numbers after the dot
+		q = q.Order(gorm.Expr("substr(albums.id * ?, -5, 5)", seed))
 	case "recent":
 		q = q.Joins("JOIN plays ON albums.id=plays.album_id AND plays.user_id=?", user.ID)
 		q = q.Order("plays.time DESC")

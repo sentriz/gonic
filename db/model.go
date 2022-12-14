@@ -170,15 +170,16 @@ func (t *Track) GenreStrings() []string {
 }
 
 type User struct {
-	ID                int `gorm:"primary_key"`
-	CreatedAt         time.Time
-	Name              string `gorm:"not null; unique_index" sql:"default: null"`
-	Password          string `gorm:"not null" sql:"default: null"`
-	LastFMSession     string `sql:"default: null"`
-	ListenBrainzURL   string `sql:"default: null"`
-	ListenBrainzToken string `sql:"default: null"`
-	IsAdmin           bool   `sql:"default: null"`
-	Avatar            []byte `sql:"default: null"`
+	ID                   int `gorm:"primary_key"`
+	CreatedAt            time.Time
+	Name                 string  `gorm:"not null; unique_index" sql:"default: null"`
+	Password             string  `gorm:"not null" sql:"default: null"`
+	LastFMSession        string  `sql:"default: null"`
+	ListenBrainzURL      string  `sql:"default: null"`
+	ListenBrainzToken    string  `sql:"default: null"`
+	PaginatedShuffleSeed float64 `gorm:"paginated_shuffle_seed"`
+	IsAdmin              bool    `sql:"default: null"`
+	Avatar               []byte  `sql:"default: null"`
 }
 
 type Setting struct {
