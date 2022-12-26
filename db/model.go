@@ -8,13 +8,14 @@ package db
 
 import (
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
-	// TODO: remove this dep
-
 	"go.senan.xyz/gonic/mime"
+
+	// TODO: remove this dep
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
@@ -123,11 +124,7 @@ func (t *Track) ArtistSID() *specid.ID {
 }
 
 func (t *Track) Ext() string {
-	longExt := path.Ext(t.Filename)
-	if len(longExt) < 1 {
-		return ""
-	}
-	return longExt[1:]
+	return filepath.Ext(t.Filename)
 }
 
 func (t *Track) AudioFilename() string {
@@ -135,7 +132,7 @@ func (t *Track) AudioFilename() string {
 }
 
 func (t *Track) MIME() string {
-	return mime.FromExtension(t.Ext())
+	return mime.TypeByExtension(filepath.Ext(t.Filename))
 }
 
 func (t *Track) AbsPath() string {
@@ -419,15 +416,11 @@ func (pe *PodcastEpisode) AudioFilename() string {
 }
 
 func (pe *PodcastEpisode) Ext() string {
-	longExt := path.Ext(pe.Filename)
-	if len(longExt) < 1 {
-		return ""
-	}
-	return longExt[1:]
+	return filepath.Ext(pe.Filename)
 }
 
 func (pe *PodcastEpisode) MIME() string {
-	return mime.FromExtension(pe.Ext())
+	return mime.TypeByExtension(filepath.Ext(pe.Filename))
 }
 
 type Bookmark struct {

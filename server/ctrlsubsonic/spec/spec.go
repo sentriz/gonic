@@ -2,6 +2,7 @@ package spec
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"go.senan.xyz/gonic"
@@ -421,4 +422,8 @@ func formatRating(rating float64) string {
 		return ""
 	}
 	return fmt.Sprintf("%.2f", rating)
+}
+
+func formatExt(ext string) string {
+	return strings.TrimPrefix(ext, ".")
 }

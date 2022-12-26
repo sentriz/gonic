@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"mime"
 	"net/http"
 	"net/url"
 	"os"
@@ -19,7 +18,7 @@ import (
 	"github.com/mmcdole/gofeed"
 
 	"go.senan.xyz/gonic/db"
-	gmime "go.senan.xyz/gonic/mime"
+	"go.senan.xyz/gonic/mime"
 	"go.senan.xyz/gonic/multierr"
 	"go.senan.xyz/gonic/scanner/tags"
 )
@@ -236,10 +235,7 @@ func (p *Podcasts) AddEpisode(podcastID int, item *gofeed.Item) (*db.PodcastEpis
 }
 
 func isAudio(mediaType, url string) bool {
-	if mediaType != "" && strings.HasPrefix(mediaType, "audio") {
-		return true
-	}
-	return gmime.FromExtension(filepath.Ext(url)[1:]) != ""
+	return mime.TypeByAudioExtension(path.Ext(url)) != ""
 }
 
 func itemToEpisode(podcastID, size, duration int, audio string,

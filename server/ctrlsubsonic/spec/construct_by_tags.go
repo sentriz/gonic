@@ -38,7 +38,7 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 	ret := &TrackChild{
 		ID:          t.SID(),
 		ContentType: t.MIME(),
-		Suffix:      t.Ext(),
+		Suffix:      formatExt(t.Ext()),
 		ParentID:    t.AlbumSID(),
 		CreatedAt:   t.CreatedAt,
 		Size:        t.Size,

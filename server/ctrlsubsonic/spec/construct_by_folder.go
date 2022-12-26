@@ -56,7 +56,7 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 	trCh := &TrackChild{
 		ID:          t.SID(),
 		ContentType: t.MIME(),
-		Suffix:      t.Ext(),
+		Suffix:      formatExt(t.Ext()),
 		Size:        t.Size,
 		Artist:      t.TagTrackArtist,
 		Title:       t.TagTitle,
