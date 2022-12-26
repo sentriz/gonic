@@ -1,5 +1,23 @@
 # Changelog
 
+### [0.15.1](https://www.github.com/sentriz/gonic/compare/v0.15.0...v0.15.1) (2022-12-26)
+
+
+### Features
+
+* allow for custom music folder path alias ([7e097c9](https://www.github.com/sentriz/gonic/commit/7e097c9bdffa6f6cff57e5af6d9dea6965553c19)), closes [#259](https://www.github.com/sentriz/gonic/issues/259)
+* **scrobble:** only send musicbrainz id if it's a valid uuid ([2bc3f31](https://www.github.com/sentriz/gonic/commit/2bc3f31554c9b6be9a9beef72b76e437d13131be))
+* **server:** recover from panics ([df93286](https://www.github.com/sentriz/gonic/commit/df932864d812b6a83d1049c7a4820172c859ab22))
+* **subsonic:** add stub lyrics.view ([0407a15](https://www.github.com/sentriz/gonic/commit/0407a1581f5d80dc66e849906518cb73a4dc3311)), closes [#274](https://www.github.com/sentriz/gonic/issues/274)
+
+
+### Bug Fixes
+
+* **jukebox:** gracefully handle case of no audio in feed item ([b47c880](https://www.github.com/sentriz/gonic/commit/b47c880ea5ffd357878b7617c3493d7b1f48f4cf)), closes [#269](https://www.github.com/sentriz/gonic/issues/269)
+* **jukebox:** use a tmp dir instead of file for mpv sock ([4280700](https://www.github.com/sentriz/gonic/commit/42807006213871432b7ddfbb623ed6f82f4122c6)), closes [#266](https://www.github.com/sentriz/gonic/issues/266) [#265](https://www.github.com/sentriz/gonic/issues/265)
+* **subsonic:** update music folder id in bounds check ([c6ddee8](https://www.github.com/sentriz/gonic/commit/c6ddee8f7e7f246c4384b05384057c24231937a1)), closes [#271](https://www.github.com/sentriz/gonic/issues/271)
+* **transcode:** don't leave half transcode cache files lying around ([ce31310](https://www.github.com/sentriz/gonic/commit/ce31310571a1b1c3007202d507bec5ef1a9fad99)), closes [#270](https://www.github.com/sentriz/gonic/issues/270)
+
 ## [0.15.0](https://www.github.com/sentriz/gonic/compare/v0.14.0...v0.15.0) (2022-11-17)
 
 
