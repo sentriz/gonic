@@ -236,6 +236,7 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/getTopSongs{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetTopSongs))
 	r.Handle("/getSimilarSongs{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetSimilarSongs))
 	r.Handle("/getSimilarSongs2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetSimilarSongsTwo))
+	r.Handle("/getLyrics{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetLyrics))
 
 	// raw
 	r.Handle("/getCoverArt{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeGetCoverArt))

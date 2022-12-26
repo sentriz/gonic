@@ -58,6 +58,7 @@ type Response struct {
 	SimilarSongs          *SimilarSongs          `xml:"similarSongs"          json:"similarSongs,omitempty"`
 	SimilarSongsTwo       *SimilarSongsTwo       `xml:"similarSongs2"         json:"similarSongs2,omitempty"`
 	InternetRadioStations *InternetRadioStations `xml:"internetRadioStations" json:"internetRadioStations,omitempty"`
+	Lyrics                *Lyrics                `xml:"lyrics"                json:"lyrics,omitempty"`
 }
 
 func NewResponse() *Response {
@@ -407,6 +408,12 @@ type InternetRadioStation struct {
 	Name        string     `xml:"name,attr"        json:"name"`
 	StreamURL   string     `xml:"streamUrl,attr"   json:"streamUrl"`
 	HomepageURL string     `xml:"homepageUrl,attr" json:"homepageUrl"`
+}
+
+type Lyrics struct {
+	Value  string `xml:",chardata"             json:"value,omitempty"`
+	Artist string `xml:"artist,attr,omitempty" json:"artist,omitempty"`
+	Title  string `xml:"title,attr,omitempty"  json:"title,omitempty"`
 }
 
 func formatRating(rating float64) string {

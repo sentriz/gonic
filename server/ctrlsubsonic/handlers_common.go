@@ -407,3 +407,9 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 	sub.JukeboxStatus = status
 	return sub
 }
+
+func (c *Controller) ServeGetLyrics(r *http.Request) *spec.Response {
+	sub := spec.NewResponse()
+	sub.Lyrics = &spec.Lyrics{}
+	return sub
+}
