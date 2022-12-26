@@ -239,7 +239,7 @@ func isAudio(mediaType, url string) bool {
 	if mediaType != "" && strings.HasPrefix(mediaType, "audio") {
 		return true
 	}
-	return gmime.FromExtension(filepath.Ext(url)[1:]) != ""
+	return gmime.FromAudioExtension(filepath.Ext(url)[1:]) != ""
 }
 
 func itemToEpisode(podcastID, size, duration int, audio string,

@@ -135,7 +135,7 @@ func (t *Track) AudioFilename() string {
 }
 
 func (t *Track) MIME() string {
-	return mime.FromExtension(t.Ext())
+	return mime.FromAudioExtension(t.Ext())
 }
 
 func (t *Track) AbsPath() string {
@@ -427,7 +427,7 @@ func (pe *PodcastEpisode) Ext() string {
 }
 
 func (pe *PodcastEpisode) MIME() string {
-	return mime.FromExtension(pe.Ext())
+	return mime.FromAudioExtension(pe.Ext())
 }
 
 type Bookmark struct {
