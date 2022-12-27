@@ -1,5 +1,12 @@
 # Changelog
 
+### [0.15.2](https://www.github.com/sentriz/gonic/compare/v0.15.1...v0.15.2) (2022-12-27)
+
+
+### Bug Fixes
+
+* **subsonic:** send valid content-type with http.ServeStream ([8dc58c7](https://www.github.com/sentriz/gonic/commit/8dc58c71a45b4bd8ec4224392a4d2ed3c36c24fa))
+
 ### [0.15.1](https://www.github.com/sentriz/gonic/compare/v0.15.0...v0.15.1) (2022-12-26)
 
 
