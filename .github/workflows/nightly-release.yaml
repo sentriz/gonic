@@ -4,8 +4,22 @@ on:
     - cron: "0 0 * * *"
   workflow_dispatch: {}
 jobs:
+  check-date:
+    runs-on: ubuntu-latest
+    name: Check latest commit
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: check
+        run: |
+          test -n "$(git rev-list --after="24 hours" ${{ github.sha }})" \
+            && echo "::set-output name=should_run::true" \
+            || echo "::set-output name=should_run::false"
   test:
     name: Lint and test
+    needs: check-date
+    if: ${{ needs.check-date.outputs.should_run == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -28,8 +42,9 @@ jobs:
         run: go test ./...
   build-release:
     name: Build and release Docker image
+    needs: [check-date, test]
+    if: ${{ needs.check-date.outputs.should_run == 'true' }}
     runs-on: ubuntu-latest
-    needs: [test]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
