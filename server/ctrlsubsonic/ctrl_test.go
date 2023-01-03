@@ -19,6 +19,7 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/mockfs"
+	"go.senan.xyz/gonic/paths"
 	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/transcode"
@@ -158,9 +159,9 @@ func makec(t *testing.T, roots []string, audio bool) *Controller {
 	m.ScanAndClean()
 	m.ResetDates()
 
-	var absRoots []string
+	var absRoots paths.MusicPaths
 	for _, root := range roots {
-		absRoots = append(absRoots, filepath.Join(m.TmpDir(), root))
+		absRoots = append(absRoots, paths.MusicPath{Alias: "", Path: filepath.Join(m.TmpDir(), root)})
 	}
 
 	base := &ctrlbase.Controller{DB: m.DB()}

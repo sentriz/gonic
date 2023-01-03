@@ -16,6 +16,7 @@ func NewFFmpegTranscoder() *FFmpegTranscoder {
 	return &FFmpegTranscoder{}
 }
 
+var ErrFFmpegKilled = fmt.Errorf("ffmpeg was killed early")
 var ErrFFmpegExit = fmt.Errorf("ffmpeg exited with non 0 status code")
 
 func (*FFmpegTranscoder) Transcode(ctx context.Context, profile Profile, in string, out io.Writer) error {
@@ -32,7 +33,11 @@ func (*FFmpegTranscoder) Transcode(ctx context.Context, profile Profile, in stri
 	}
 
 	var exitErr *exec.ExitError
-	if err := cmd.Wait(); err != nil && !errors.As(err, &exitErr) {
+
+	switch err := cmd.Wait(); {
+	case errors.As(err, &exitErr):
+		return fmt.Errorf("waiting cmd: %v: %w", err, ErrFFmpegKilled)
+	case err != nil:
 		return fmt.Errorf("waiting cmd: %w", err)
 	}
 	if code := cmd.ProcessState.ExitCode(); code > 1 {

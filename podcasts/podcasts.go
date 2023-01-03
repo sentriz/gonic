@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"mime"
 	"net/http"
 	"net/url"
 	"os"
@@ -19,10 +18,12 @@ import (
 	"github.com/mmcdole/gofeed"
 
 	"go.senan.xyz/gonic/db"
-	gmime "go.senan.xyz/gonic/mime"
+	"go.senan.xyz/gonic/mime"
 	"go.senan.xyz/gonic/multierr"
 	"go.senan.xyz/gonic/scanner/tags"
 )
+
+var ErrNoAudioInFeedItem = errors.New("no audio in feed item")
 
 const downloadAllWaitInterval = 3 * time.Second
 const fetchUserAgent = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11`
@@ -166,6 +167,10 @@ func (p *Podcasts) AddNewEpisodes(podcast *db.Podcast, items []*gofeed.Item) err
 	}
 	for _, item := range getEntriesAfterDate(items, *podcastEpisode.PublishDate) {
 		episode, err := p.AddEpisode(podcast.ID, item)
+		if errors.Is(err, ErrNoAudioInFeedItem) {
+			log.Println("failed to find audio in feed item, skipping")
+			continue
+		}
 		if err != nil {
 			return err
 		}
@@ -226,17 +231,11 @@ func (p *Podcasts) AddEpisode(podcastID int, item *gofeed.Item) (*db.PodcastEpis
 		}
 		return episode, nil
 	}
-	// hopefully shouldnt reach here
-	log.Println("failed to find audio in feed item, skipping")
-	return nil, nil
+	return nil, ErrNoAudioInFeedItem
 }
 
 func isAudio(mediaType, url string) bool {
-	if mediaType != "" && strings.HasPrefix(mediaType, "audio") {
-		return true
-	}
-	_, ok := gmime.FromExtension(filepath.Ext(url)[1:])
-	return ok
+	return mime.TypeByAudioExtension(path.Ext(url)) != ""
 }
 
 func itemToEpisode(podcastID, size, duration int, audio string,
@@ -520,7 +519,7 @@ func (p *Podcasts) PurgeOldPodcasts(maxAge time.Duration) error {
 	expDate := time.Now().Add(-maxAge)
 	var episodes []*db.PodcastEpisode
 	err := p.db.
-		Debug().
+		Where("status = ?", db.PodcastEpisodeStatusCompleted).
 		Where("created_at < ?", expDate).
 		Where("updated_at < ?", expDate).
 		Where("modified_at < ?", expDate).

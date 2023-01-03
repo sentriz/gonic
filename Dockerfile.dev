@@ -1,13 +1,12 @@
 # syntax=docker/dockerfile:experimental
 
-FROM golang:1.17-alpine AS builder
+FROM golang:1.19-alpine AS builder
 RUN apk add -U --no-cache \
     build-base \
     ca-certificates \
     git \
     sqlite \
     taglib-dev \
-    alsa-lib-dev \
     zlib-dev
 WORKDIR /src
 COPY . .
@@ -15,9 +14,10 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     GOOS=linux go build -o gonic cmd/gonic/gonic.go
 
-FROM alpine:3.15
+FROM alpine:3.16
 RUN apk add -U --no-cache \
     ffmpeg \
+    mpv \
     ca-certificates
 COPY --from=builder \
     /usr/lib/libgcc_s.so.1 \

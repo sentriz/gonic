@@ -4,8 +4,22 @@ on:
     - cron: "0 0 * * *"
   workflow_dispatch: {}
 jobs:
+  check-date:
+    runs-on: ubuntu-latest
+    name: Check latest commit
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: check
+        run: |
+          test -n "$(git rev-list --after="24 hours" ${{ github.sha }})" \
+            && echo "should_run=true" >>$GITHUB_OUTPUT \
+            || echo "should_run=false" >>$GITHUB_OUTPUT
   test:
     name: Lint and test
+    needs: check-date
+    if: ${{ needs.check-date.outputs.should_run == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -13,23 +27,24 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16.x
+          go-version: 1.19.x
       - name: Install dependencies
         run: |
           sudo apt update -qq
-          sudo apt install -y -qq build-essential git sqlite libtag1-dev ffmpeg libasound-dev zlib1g-dev
+          sudo apt install -y -qq build-essential git sqlite libtag1-dev ffmpeg mpv zlib1g-dev
       - name: Lint
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.42.1
+          version: v1.50.1
           skip-go-installation: true
           args: --timeout=5m
       - name: Test
         run: go test ./...
   build-release:
     name: Build and release Docker image
+    needs: [check-date, test]
+    if: ${{ needs.check-date.outputs.should_run == 'true' }}
     runs-on: ubuntu-latest
-    needs: [test]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2

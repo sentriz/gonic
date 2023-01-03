@@ -2,8 +2,11 @@ package ctrlsubsonic
 
 import (
 	"errors"
+	"fmt"
 	"log"
+	"math"
 	"net/http"
+	"os"
 	"path/filepath"
 	"time"
 	"unicode"
@@ -12,6 +15,7 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/multierr"
+	"go.senan.xyz/gonic/paths"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
@@ -26,15 +30,15 @@ func lowerUDecOrHash(in string) string {
 	return string(lower)
 }
 
-func getMusicFolder(musicPaths []string, p params.Params) string {
+func getMusicFolder(musicPaths paths.MusicPaths, p params.Params) string {
 	idx, err := p.GetInt("musicFolderId")
 	if err != nil {
 		return ""
 	}
-	if idx < 0 || idx > len(musicPaths) {
+	if idx < 0 || idx >= len(musicPaths) {
 		return ""
 	}
-	return musicPaths[idx]
+	return musicPaths[idx].Path
 }
 
 func (c *Controller) ServeGetLicence(r *http.Request) *spec.Response {
@@ -88,7 +92,7 @@ func (c *Controller) ServeGetMusicFolders(r *http.Request) *spec.Response {
 	sub.MusicFolders = &spec.MusicFolders{}
 	sub.MusicFolders.List = make([]*spec.MusicFolder, len(c.MusicPaths))
 	for i, path := range c.MusicPaths {
-		sub.MusicFolders.List[i] = &spec.MusicFolder{ID: i, Name: filepath.Base(path)}
+		sub.MusicFolders.List[i] = &spec.MusicFolder{ID: i, Name: path.DisplayAlias()}
 	}
 	return sub
 }
@@ -127,6 +131,7 @@ func (c *Controller) ServeGetUser(r *http.Request) *spec.Response {
 		AdminRole:         user.IsAdmin,
 		JukeboxRole:       c.Jukebox != nil,
 		PodcastRole:       c.Podcasts != nil,
+		DownloadRole:      true,
 		ScrobblingEnabled: hasLastFM || hasListenBrainz,
 		Folder:            []int{1},
 	}
@@ -284,80 +289,141 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	return sub
 }
 
-func (c *Controller) ServeJukebox(r *http.Request) *spec.Response {
+func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:gocyclo
 	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
-	getTracks := func() []*db.Track {
-		var tracks []*db.Track
-		ids, err := params.GetIDList("id")
-		if err != nil {
-			return tracks
-		}
+	trackPaths := func(ids []specid.ID) ([]string, error) {
+		var paths []string
 		for _, id := range ids {
-			track := &db.Track{}
-			c.DB.
-				Preload("Album").
-				Preload("TrackStar", "user_id=?", user.ID).
-				Preload("TrackRating", "user_id=?", user.ID).
-				First(track, id.Value)
-			if track.ID != 0 {
-				tracks = append(tracks, track)
+			var track db.Track
+			if err := c.DB.Preload("Album").Preload("TrackStar", "user_id=?", user.ID).Preload("TrackRating", "user_id=?", user.ID).First(&track, id.Value).Error; err != nil {
+				return nil, fmt.Errorf("find track by id: %w", err)
 			}
+			paths = append(paths, track.AbsPath())
 		}
-		return tracks
+		return paths, nil
 	}
-	getStatus := func() spec.JukeboxStatus {
-		status := c.Jukebox.GetStatus()
-		return spec.JukeboxStatus{
+	getSpecStatus := func() (*spec.JukeboxStatus, error) {
+		status, err := c.Jukebox.GetStatus()
+		if err != nil {
+			return nil, fmt.Errorf("get status: %w", err)
+		}
+		return &spec.JukeboxStatus{
 			CurrentIndex: status.CurrentIndex,
 			Playing:      status.Playing,
-			Gain:         status.Gain,
+			Gain:         float64(status.GainPct) / 100.0,
 			Position:     status.Position,
-		}
+		}, nil
 	}
-	getStatusTracks := func() []*spec.TrackChild {
-		tracks := c.Jukebox.GetTracks()
-		ret := make([]*spec.TrackChild, len(tracks))
-		for i, track := range tracks {
-			ret[i] = spec.NewTrackByTags(track, track.Album)
+	getSpecPlaylist := func() ([]*spec.TrackChild, error) {
+		var ret []*spec.TrackChild
+		playlist, err := c.Jukebox.GetPlaylist()
+		if err != nil {
+			return nil, fmt.Errorf("get playlist: %w", err)
 		}
-		return ret
+		for _, path := range playlist {
+			cwd, _ := os.Getwd()
+			path, _ = filepath.Rel(cwd, path)
+			var track db.Track
+			err := c.DB.
+				Preload("Album").
+				Where(`(albums.root_dir || ? || albums.left_path || albums.right_path || ? || tracks.filename)=?`,
+					string(filepath.Separator), string(filepath.Separator), path).
+				Joins(`JOIN albums ON tracks.album_id=albums.id`).
+				First(&track).
+				Error
+			if err != nil {
+				return nil, fmt.Errorf("fetch track: %w", err)
+			}
+			ret = append(ret, spec.NewTrackByTags(&track, track.Album))
+		}
+		return ret, nil
 	}
+
 	switch act, _ := params.Get("action"); act {
 	case "set":
-		c.Jukebox.SetTracks(getTracks())
+		ids := params.GetOrIDList("id", nil)
+		paths, err := trackPaths(ids)
+		if err != nil {
+			return spec.NewError(0, "error creating playlist items: %v", err)
+		}
+		if err := c.Jukebox.SetPlaylist(paths); err != nil {
+			return spec.NewError(0, "error setting playlist: %v", err)
+		}
 	case "add":
-		c.Jukebox.AddTracks(getTracks())
+		ids := params.GetOrIDList("id", nil)
+		paths, err := trackPaths(ids)
+		if err != nil {
+			return spec.NewError(10, "error creating playlist items: %v", err)
+		}
+		if err := c.Jukebox.AppendToPlaylist(paths); err != nil {
+			return spec.NewError(0, "error appending to playlist: %v", err)
+		}
 	case "clear":
-		c.Jukebox.ClearTracks()
+		if err := c.Jukebox.ClearPlaylist(); err != nil {
+			return spec.NewError(0, "error clearing playlist: %v", err)
+		}
 	case "remove":
 		index, err := params.GetInt("index")
 		if err != nil {
 			return spec.NewError(10, "please provide an id for remove actions")
 		}
-		c.Jukebox.RemoveTrack(index)
+		if err := c.Jukebox.RemovePlaylistIndex(index); err != nil {
+			return spec.NewError(0, "error removing: %v", err)
+		}
 	case "stop":
-		c.Jukebox.Stop()
+		if err := c.Jukebox.Pause(); err != nil {
+			return spec.NewError(0, "error stopping: %v", err)
+		}
 	case "start":
-		c.Jukebox.Start()
+		if err := c.Jukebox.Play(); err != nil {
+			return spec.NewError(0, "error starting: %v", err)
+		}
 	case "skip":
 		index, err := params.GetInt("index")
 		if err != nil {
 			return spec.NewError(10, "please provide an index for skip actions")
 		}
 		offset, _ := params.GetInt("offset")
-		c.Jukebox.Skip(index, offset)
+		if err := c.Jukebox.SkipToPlaylistIndex(index, offset); err != nil {
+			return spec.NewError(0, "error skipping: %v", err)
+		}
 	case "get":
+		specPlaylist, err := getSpecPlaylist()
+		if err != nil {
+			return spec.NewError(10, "error getting status tracks: %v", err)
+		}
+		status, err := getSpecStatus()
+		if err != nil {
+			return spec.NewError(10, "error getting status: %v", err)
+		}
 		sub := spec.NewResponse()
 		sub.JukeboxPlaylist = &spec.JukeboxPlaylist{
-			JukeboxStatus: getStatus(),
-			List:          getStatusTracks(),
+			JukeboxStatus: status,
+			List:          specPlaylist,
 		}
 		return sub
+	case "setGain":
+		gain, err := params.GetFloat("gain")
+		if err != nil {
+			return spec.NewError(10, "please provide a valid gain param")
+		}
+		if err := c.Jukebox.SetVolumePct(int(math.Min(gain, 1) * 100)); err != nil {
+			return spec.NewError(0, "error setting gain: %v", err)
+		}
 	}
 	// all actions except get are expected to return a status
+	status, err := getSpecStatus()
+	if err != nil {
+		return spec.NewError(10, "error getting status: %v", err)
+	}
 	sub := spec.NewResponse()
-	status := getStatus()
-	sub.JukeboxStatus = &status
+	sub.JukeboxStatus = status
+	return sub
+}
+
+func (c *Controller) ServeGetLyrics(r *http.Request) *spec.Response {
+	sub := spec.NewResponse()
+	sub.Lyrics = &spec.Lyrics{}
 	return sub
 }

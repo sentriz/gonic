@@ -2,6 +2,7 @@ package spec
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"go.senan.xyz/gonic"
@@ -58,6 +59,7 @@ type Response struct {
 	SimilarSongs          *SimilarSongs          `xml:"similarSongs"          json:"similarSongs,omitempty"`
 	SimilarSongsTwo       *SimilarSongsTwo       `xml:"similarSongs2"         json:"similarSongs2,omitempty"`
 	InternetRadioStations *InternetRadioStations `xml:"internetRadioStations" json:"internetRadioStations,omitempty"`
+	Lyrics                *Lyrics                `xml:"lyrics"                json:"lyrics,omitempty"`
 }
 
 func NewResponse() *Response {
@@ -313,7 +315,7 @@ type JukeboxStatus struct {
 
 type JukeboxPlaylist struct {
 	List []*TrackChild `xml:"entry,omitempty" json:"entry,omitempty"`
-	JukeboxStatus
+	*JukeboxStatus
 }
 
 type Podcasts struct {
@@ -409,9 +411,19 @@ type InternetRadioStation struct {
 	HomepageURL string     `xml:"homepageUrl,attr" json:"homepageUrl"`
 }
 
+type Lyrics struct {
+	Value  string `xml:",chardata"             json:"value,omitempty"`
+	Artist string `xml:"artist,attr,omitempty" json:"artist,omitempty"`
+	Title  string `xml:"title,attr,omitempty"  json:"title,omitempty"`
+}
+
 func formatRating(rating float64) string {
 	if rating == 0 {
 		return ""
 	}
 	return fmt.Sprintf("%.2f", rating)
+}
+
+func formatExt(ext string) string {
+	return strings.TrimPrefix(ext, ".")
 }

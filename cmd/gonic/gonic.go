@@ -9,16 +9,19 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/google/shlex"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/oklog/run"
 	"github.com/peterbourgon/ff"
 
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/paths"
 	"go.senan.xyz/gonic/server"
 )
 
@@ -40,13 +43,14 @@ func main() {
 	confScanAtStart := set.Bool("scan-at-start-enabled", false, "whether to perform an initial scan at startup (optional)")
 	confScanWatcher := set.Bool("scan-watcher-enabled", false, "whether to watch file system for new music and rescan (optional)")
 	confJukeboxEnabled := set.Bool("jukebox-enabled", false, "whether the subsonic jukebox api should be enabled (optional)")
+	confJukeboxMPVExtraArgs := set.String("jukebox-mpv-extra-args", "", "extra command line arguments to pass to the jukebox mpv daemon (optional)")
 	confPodcastPurgeAgeDays := set.Int("podcast-purge-age", 0, "age (in days) to purge podcast episodes if not accessed (optional)")
 	confProxyPrefix := set.String("proxy-prefix", "", "url path prefix to use if behind proxy. eg '/gonic' (optional)")
 	confGenreSplit := set.String("genre-split", "\n", "character or string to split genre tag data on (optional)")
 	confHTTPLog := set.Bool("http-log", true, "http request logging (optional)")
 	confShowVersion := set.Bool("version", false, "show gonic version")
 
-	var confMusicPaths musicPaths
+	var confMusicPaths paths.MusicPaths
 	set.Var(&confMusicPaths, "music-path", "path to music")
 
 	_ = set.String("config-path", "", "path to config (optional)")
@@ -68,15 +72,15 @@ func main() {
 	log.Printf("provided config\n")
 	set.VisitAll(func(f *flag.Flag) {
 		value := strings.ReplaceAll(f.Value.String(), "\n", "")
-		log.Printf("    %-15s %s\n", f.Name, value)
+		log.Printf("    %-25s %s\n", f.Name, value)
 	})
 
 	if len(confMusicPaths) == 0 {
 		log.Fatalf("please provide a music directory")
 	}
 	for _, confMusicPath := range confMusicPaths {
-		if _, err := os.Stat(confMusicPath); os.IsNotExist(err) {
-			log.Fatalf("music directory %q not found", confMusicPath)
+		if _, err := os.Stat(confMusicPath.Path); os.IsNotExist(err) {
+			log.Fatalf("music directory %q not found", confMusicPath.Path)
 		}
 	}
 	if _, err := os.Stat(*confPodcastPath); os.IsNotExist(err) {
@@ -107,7 +111,7 @@ func main() {
 	defer dbc.Close()
 
 	err = dbc.Migrate(db.MigrationContext{
-		OriginalMusicPath: confMusicPaths[0],
+		OriginalMusicPath: confMusicPaths[0].Path,
 	})
 	if err != nil {
 		log.Panicf("error migrating database: %v\n", err)
@@ -118,11 +122,11 @@ func main() {
 	server, err := server.New(server.Options{
 		DB:             dbc,
 		MusicPaths:     confMusicPaths,
-		CachePath:      cacheDirAudio,
+		CachePath:      filepath.Clean(cacheDirAudio),
 		CoverCachePath: cacheDirCovers,
 		ProxyPrefix:    *confProxyPrefix,
 		GenreSplit:     *confGenreSplit,
-		PodcastPath:    *confPodcastPath,
+		PodcastPath:    filepath.Clean(*confPodcastPath),
 		HTTPLog:        *confHTTPLog,
 		JukeboxEnabled: *confJukeboxEnabled,
 	})
@@ -142,7 +146,8 @@ func main() {
 		g.Add(server.StartScanWatcher())
 	}
 	if *confJukeboxEnabled {
-		g.Add(server.StartJukebox())
+		extraArgs, _ := shlex.Split(*confJukeboxMPVExtraArgs)
+		g.Add(server.StartJukebox(extraArgs))
 	}
 	if *confPodcastPurgeAgeDays > 0 {
 		g.Add(server.StartPodcastPurger(time.Duration(*confPodcastPurgeAgeDays) * 24 * time.Hour))
@@ -154,15 +159,4 @@ func main() {
 	if err := g.Run(); err != nil {
 		log.Panicf("error in job: %v", err)
 	}
-}
-
-type musicPaths []string
-
-func (m musicPaths) String() string {
-	return strings.Join(m, ", ")
-}
-
-func (m *musicPaths) Set(value string) error {
-	*m = append(*m, value)
-	return nil
 }

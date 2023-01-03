@@ -330,7 +330,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	log.Printf("trancoding to %q with max bitrate %dk", profile.MIME(), profile.BitRate())
 
 	w.Header().Set("Content-Type", profile.MIME())
-	if err := c.Transcoder.Transcode(r.Context(), profile, audioPath, w); err != nil {
+	if err := c.Transcoder.Transcode(r.Context(), profile, audioPath, w); err != nil && !errors.Is(err, transcode.ErrFFmpegKilled) {
 		return spec.NewError(0, "error transcoding: %v", err)
 	}
 

@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/scrobble"
 )
@@ -260,10 +261,16 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 	params.Add("track", track.TagTitle)
 	params.Add("trackNumber", strconv.Itoa(track.TagTrackNumber))
 	params.Add("album", track.Album.TagTitle)
-	params.Add("mbid", track.TagBrainzID)
 	params.Add("albumArtist", track.Artist.Name)
 	params.Add("duration", strconv.Itoa(track.Length))
+
+	// make sure we provide a valid uuid, since some users may have an incorrect mbid in their tags
+	if _, err := uuid.Parse(track.TagBrainzID); err == nil {
+		params.Add("mbid", track.TagBrainzID)
+	}
+
 	params.Add("api_sig", getParamSignature(params, secret))
+
 	_, err = makeRequest("POST", params)
 	return err
 }

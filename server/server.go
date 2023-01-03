@@ -4,15 +4,18 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
 	"github.com/sentriz/gormstore"
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/jukebox"
+	"go.senan.xyz/gonic/paths"
 	"go.senan.xyz/gonic/podcasts"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/scanner/tags"
@@ -28,7 +31,7 @@ import (
 
 type Options struct {
 	DB             *db.DB
-	MusicPaths     []string
+	MusicPaths     paths.MusicPaths
 	PodcastPath    string
 	CachePath      string
 	CoverCachePath string
@@ -47,15 +50,9 @@ type Server struct {
 }
 
 func New(opts Options) (*Server, error) {
-	for i, musicPath := range opts.MusicPaths {
-		opts.MusicPaths[i] = filepath.Clean(musicPath)
-	}
-	opts.CachePath = filepath.Clean(opts.CachePath)
-	opts.PodcastPath = filepath.Clean(opts.PodcastPath)
-
 	tagger := &tags.TagReader{}
 
-	scanner := scanner.New(opts.MusicPaths, opts.DB, opts.GenreSplit, tagger)
+	scanner := scanner.New(opts.MusicPaths.Paths(), opts.DB, opts.GenreSplit, tagger)
 	base := &ctrlbase.Controller{
 		DB:          opts.DB,
 		ProxyPrefix: opts.ProxyPrefix,
@@ -68,6 +65,7 @@ func New(opts Options) (*Server, error) {
 		r.Use(base.WithLogging)
 	}
 	r.Use(base.WithCORS)
+	r.Use(handlers.RecoveryHandler(handlers.PrintRecoveryStack(true)))
 
 	sessKey, err := opts.DB.GetSetting("session_key")
 	if err != nil {
@@ -100,7 +98,6 @@ func New(opts Options) (*Server, error) {
 		CoverCachePath: opts.CoverCachePath,
 		PodcastsPath:   opts.PodcastPath,
 		MusicPaths:     opts.MusicPaths,
-		Jukebox:        &jukebox.Jukebox{},
 		Scrobblers:     []scrobble.Scrobbler{&lastfm.Scrobbler{DB: opts.DB}, &listenbrainz.Scrobbler{}},
 		Podcasts:       podcast,
 		Transcoder:     cacheTranscoder,
@@ -239,6 +236,7 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/getTopSongs{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetTopSongs))
 	r.Handle("/getSimilarSongs{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetSimilarSongs))
 	r.Handle("/getSimilarSongs2{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetSimilarSongsTwo))
+	r.Handle("/getLyrics{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetLyrics))
 
 	// raw
 	r.Handle("/getCoverArt{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeGetCoverArt))
@@ -360,13 +358,29 @@ func (s *Server) StartScanWatcher() (FuncExecute, FuncInterrupt) {
 		}
 }
 
-func (s *Server) StartJukebox() (FuncExecute, FuncInterrupt) {
+func (s *Server) StartJukebox(mpvExtraArgs []string) (FuncExecute, FuncInterrupt) {
+	var tempDir string
 	return func() error {
 			log.Printf("starting job 'jukebox'\n")
-			return s.jukebox.Listen()
+			var err error
+			tempDir, err = os.MkdirTemp("", "gonic-jukebox-*")
+			if err != nil {
+				return fmt.Errorf("create tmp sock file: %w", err)
+			}
+			sockPath := filepath.Join(tempDir, "sock")
+			if err := s.jukebox.Start(sockPath, mpvExtraArgs); err != nil {
+				return fmt.Errorf("start jukebox: %w", err)
+			}
+			if err := s.jukebox.Wait(); err != nil {
+				return fmt.Errorf("start jukebox: %w", err)
+			}
+			return nil
 		}, func(_ error) {
 			// stop job
-			s.jukebox.Quit()
+			if err := s.jukebox.Quit(); err != nil {
+				log.Printf("error quitting jukebox: %v", err)
+			}
+			_ = os.RemoveAll(tempDir)
 		}
 }
 

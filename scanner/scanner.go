@@ -277,7 +277,7 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string
 			cover = item.Name()
 			continue
 		}
-		if _, ok := mime.FromExtension(ext(item.Name())); ok {
+		if mime := mime.TypeByAudioExtension(filepath.Ext(item.Name())); mime != "" {
 			tracks = append(tracks, item.Name())
 			continue
 		}
@@ -576,13 +576,6 @@ func (s *Scanner) cleanGenres(c *Context) error {
 		Delete(&db.Genre{})
 	c.genresMissing = int(q.RowsAffected)
 	return nil
-}
-
-func ext(name string) string {
-	if ext := filepath.Ext(name); len(ext) > 0 {
-		return ext[1:]
-	}
-	return ""
 }
 
 func isCover(name string) bool {
