@@ -70,7 +70,7 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 			AdditionalInfo: &AdditionalInfo{
 				TrackNumber:   track.TagTrackNumber,
 				RecordingMBID: trackMBID,
-				TrackLength:   track.Length,
+				TrackLength:   track.AudioLength(),
 			},
 			ArtistName:  track.TagTrackArtist,
 			TrackName:   track.TagTitle,

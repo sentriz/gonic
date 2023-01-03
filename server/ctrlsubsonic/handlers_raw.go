@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/disintegration/imaging"
@@ -57,29 +58,28 @@ func streamGetTransPrefProfile(dbc *db.DB, userID int, client string) (mime stri
 
 var errUnknownMediaType = fmt.Errorf("media type is unknown")
 
-// TODO: there is a mismatch between abs paths for podcasts and music. if they were the same, db.AudioFile
-// could have an AbsPath() method. and we wouldn't need to pass podcastsPath or return 3 values
-func streamGetAudio(dbc *db.DB, podcastsPath string, user *db.User, id specid.ID) (db.AudioFile, string, error) {
+func streamGetAudio(dbc *db.DB, podcastsPath string, user *db.User, id specid.ID) (db.AudioFile, error) {
 	switch t := id.Type; t {
 	case specid.Track:
 		var track db.Track
 		if err := dbc.Preload("Album").Preload("Artist").First(&track, id.Value).Error; err != nil {
-			return nil, "", fmt.Errorf("find track: %w", err)
+			return nil, fmt.Errorf("find track: %w", err)
 		}
 		if track.Artist != nil && track.Album != nil {
 			log.Printf("%s requests %s - %s from %s", user.Name, track.Artist.Name, track.TagTitle, track.Album.TagTitle)
 		}
-		return &track, path.Join(track.AbsPath()), nil
+		return &track, nil
 
 	case specid.PodcastEpisode:
 		var podcast db.PodcastEpisode
 		if err := dbc.First(&podcast, id.Value).Error; err != nil {
-			return nil, "", fmt.Errorf("find podcast: %w", err)
+			return nil, fmt.Errorf("find podcast: %w", err)
 		}
-		return &podcast, path.Join(podcastsPath, podcast.Path), nil
+		podcast.FullPath = filepath.Join(podcastsPath, podcast.Path)
+		return &podcast, nil
 
 	default:
-		return nil, "", fmt.Errorf("%w: %q", errUnknownMediaType, t)
+		return nil, fmt.Errorf("%w: %q", errUnknownMediaType, t)
 	}
 }
 
@@ -152,7 +152,7 @@ func coverGetPath(dbc *db.DB, podcastPath string, id specid.ID) (string, error) 
 func coverGetPathAlbum(dbc *db.DB, id int) (string, error) {
 	folder := &db.Album{}
 	err := dbc.DB.
-		Select("id, root_dir, left_path, right_path, cover").
+		Select("id, root_dir, left_path, right_path, cover, multi_track_media").
 		First(folder, id).
 		Error
 	if err != nil {
@@ -160,6 +160,13 @@ func coverGetPathAlbum(dbc *db.DB, id int) (string, error) {
 	}
 	if folder.Cover == "" {
 		return "", errCoverEmpty
+	}
+	if folder.MultiTrackMedia {
+		return path.Join(
+			folder.RootDir,
+			folder.LeftPath,
+			folder.Cover,
+		), nil
 	}
 	return path.Join(
 		folder.RootDir,
@@ -281,7 +288,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 
-	file, audioPath, err := streamGetAudio(c.DB, c.PodcastsPath, user, id)
+	file, err := streamGetAudio(c.DB, c.PodcastsPath, user, id)
 	if err != nil {
 		return spec.NewError(70, "error finding media: %v", err)
 	}
@@ -306,7 +313,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	format, _ := params.Get("format")
 
 	if format == "raw" || maxBitRate >= file.AudioBitrate() {
-		http.ServeFile(w, r, audioPath)
+		http.ServeFile(w, r, file.AbsPath())
 		return nil
 	}
 
@@ -314,12 +321,21 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewError(0, "couldn't find transcode preference: %v", err)
 	}
+
+	profileName := ""
+	subtrack := false
 	if pref == nil {
-		http.ServeFile(w, r, audioPath)
-		return nil
+		if file.Seek() == time.Duration(0) {
+			http.ServeFile(w, r, file.AbsPath())
+			return nil
+		}
+		subtrack = true
+		profileName = "opus_128_rg"
+	} else {
+		profileName = pref.Profile
 	}
 
-	profile, ok := transcode.UserProfiles[pref.Profile]
+	profile, ok := transcode.UserProfiles[profileName]
 	if !ok {
 		return spec.NewError(0, "unknown transcode user profile %q", pref.Profile)
 	}
@@ -327,10 +343,14 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		profile = transcode.WithBitrate(profile, transcode.BitRate(maxBitRate))
 	}
 
+	if subtrack {
+		profile = transcode.WithInterval(profile, file.Seek(), file.Duration())
+	}
+
 	log.Printf("trancoding to %q with max bitrate %dk", profile.MIME(), profile.BitRate())
 
 	w.Header().Set("Content-Type", profile.MIME())
-	if err := c.Transcoder.Transcode(r.Context(), profile, audioPath, w); err != nil && !errors.Is(err, transcode.ErrFFmpegKilled) {
+	if err := c.Transcoder.Transcode(r.Context(), profile, file.AbsPath(), w); err != nil && !errors.Is(err, transcode.ErrFFmpegKilled) {
 		return spec.NewError(0, "error transcoding: %v", err)
 	}
 
@@ -341,9 +361,9 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 }
 
 func (c *Controller) ServeGetAvatar(w http.ResponseWriter, r *http.Request) *spec.Response {
-	params := r.Context().Value(CtxParams).(params.Params)
+	inParams := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
-	username, err := params.Get("username")
+	username, err := inParams.Get("username")
 	if err != nil {
 		return spec.NewError(10, "please provide an `username` parameter")
 	}

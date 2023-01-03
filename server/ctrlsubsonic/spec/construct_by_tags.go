@@ -54,7 +54,7 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 		Album:         album.TagTitle,
 		AlbumID:       album.SID(),
 		Genre:         strings.Join(t.GenreStrings(), ", "),
-		Duration:      t.Length,
+		Duration:      t.AudioLength(),
 		Bitrate:       t.Bitrate,
 		Type:          "music",
 		Year:          album.TagYear,

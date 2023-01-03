@@ -68,7 +68,7 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 			t.Filename,
 		),
 		ParentID:      parent.SID(),
-		Duration:      t.Length,
+		Duration:      t.AudioLength(),
 		Genre:         strings.Join(t.GenreStrings(), ", "),
 		Year:          parent.TagYear,
 		Bitrate:       t.Bitrate,

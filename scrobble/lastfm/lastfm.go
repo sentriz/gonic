@@ -262,7 +262,7 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 	params.Add("trackNumber", strconv.Itoa(track.TagTrackNumber))
 	params.Add("album", track.Album.TagTitle)
 	params.Add("albumArtist", track.Artist.Name)
-	params.Add("duration", strconv.Itoa(track.Length))
+	params.Add("duration", strconv.Itoa(track.AudioLength()))
 
 	// make sure we provide a valid uuid, since some users may have an incorrect mbid in their tags
 	if _, err := uuid.Parse(track.TagBrainzID); err == nil {

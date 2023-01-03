@@ -31,32 +31,32 @@ var UserProfiles = map[string]Profile{
 
 // Store as simple strings, since we may let the user provide their own profiles soon
 var (
-	MP3   = NewProfile("audio/mpeg", "mp3", 128, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -b:a <bitrate> -c:a libmp3lame -f mp3 -`)
-	MP3RG = NewProfile("audio/mpeg", "mp3", 128, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -b:a <bitrate> -c:a libmp3lame -af "volume=replaygain=track:replaygain_preamp=6dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f mp3 -`)
+	MP3   = NewProfile("audio/mpeg", "mp3", 128, `ffmpeg -v 0 -i <file> -map 0:a:0 -vn -b:a <bitrate> -c:a libmp3lame -f mp3 -`)
+	MP3RG = NewProfile("audio/mpeg", "mp3", 128, `ffmpeg -v 0 -i <file> -map 0:a:0 -vn -b:a <bitrate> -c:a libmp3lame -af "volume=replaygain=track:replaygain_preamp=6dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f mp3 -`)
 
-	Opus       = NewProfile("audio/ogg", "opus", 96, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -b:a <bitrate> -c:a libopus -vbr on -f opus -`)
-	OpusRG     = NewProfile("audio/ogg", "opus", 96, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -b:a <bitrate> -c:a libopus -vbr on -af "volume=replaygain=track:replaygain_preamp=6dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f opus -`)
-	OpusRGLoud = NewProfile("audio/ogg", "opus", 96, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -b:a <bitrate> -c:a libopus -vbr on -af "aresample=96000:resampler=soxr, volume=replaygain=track:replaygain_preamp=15dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f opus -`)
+	Opus       = NewProfile("audio/ogg", "opus", 96, `ffmpeg -v 0 -i <file> -map 0:a:0 -vn -b:a <bitrate> -c:a libopus -vbr on -f opus -`)
+	OpusRG     = NewProfile("audio/ogg", "opus", 96, `ffmpeg -v 0 -i <file> -map 0:a:0 -vn -b:a <bitrate> -c:a libopus -vbr on -af "volume=replaygain=track:replaygain_preamp=6dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f opus -`)
+	OpusRGLoud = NewProfile("audio/ogg", "opus", 96, `ffmpeg -v 0 -i <file> -map 0:a:0 -vn -b:a <bitrate> -c:a libopus -vbr on -af "aresample=96000:resampler=soxr, volume=replaygain=track:replaygain_preamp=15dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f opus -`)
 
-	Opus128       = NewProfile("audio/ogg", "opus", 128, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -b:a <bitrate> -c:a libopus -vbr on -f opus -`)
-	Opus128RG     = NewProfile("audio/ogg", "opus", 128, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -b:a <bitrate> -c:a libopus -vbr on -af "volume=replaygain=track:replaygain_preamp=6dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f opus -`)
-	Opus128RGLoud = NewProfile("audio/ogg", "opus", 128, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -b:a <bitrate> -c:a libopus -vbr on -af "aresample=96000:resampler=soxr, volume=replaygain=track:replaygain_preamp=15dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f opus -`)
+	Opus128       = NewProfile("audio/ogg", "opus", 128, `ffmpeg -v 0 -i <file> -map 0:a:0 -vn -b:a <bitrate> -c:a libopus -vbr on -f opus -`)
+	Opus128RG     = NewProfile("audio/ogg", "opus", 128, `ffmpeg -v 0 -i <file> -map 0:a:0 -vn -b:a <bitrate> -c:a libopus -vbr on -af "volume=replaygain=track:replaygain_preamp=6dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f opus -`)
+	Opus128RGLoud = NewProfile("audio/ogg", "opus", 128, `ffmpeg -v 0 -i <file> -map 0:a:0 -vn -b:a <bitrate> -c:a libopus -vbr on -af "aresample=96000:resampler=soxr, volume=replaygain=track:replaygain_preamp=15dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f opus -`)
 )
 
 type BitRate uint // kilobits/s
 
 type Profile struct {
-	bitrate BitRate // the default bitrate, but the user can request a different one
-	seek    time.Duration
-	mime    string
-	suffix  string
-	exec    string
+	bitrate  BitRate // the default bitrate, but the user can request a different one
+	seek     time.Duration
+	duration time.Duration
+	mime     string
+	suffix   string
+	exec     string
 }
 
-func (p *Profile) BitRate() BitRate    { return p.bitrate }
-func (p *Profile) Seek() time.Duration { return p.seek }
-func (p *Profile) Suffix() string      { return p.suffix }
-func (p *Profile) MIME() string        { return p.mime }
+func (p *Profile) BitRate() BitRate { return p.bitrate }
+func (p *Profile) Suffix() string   { return p.suffix }
+func (p *Profile) MIME() string     { return p.mime }
 
 func NewProfile(mime string, suffix string, bitrate BitRate, exec string) Profile {
 	return Profile{mime: mime, suffix: suffix, bitrate: bitrate, exec: exec}
@@ -72,7 +72,18 @@ func WithSeek(p Profile, seek time.Duration) Profile {
 	return p
 }
 
+func WithInterval(p Profile, start, duration time.Duration) Profile {
+	p.seek = start
+	p.duration = duration
+	return p
+}
+
 var ErrNoProfileParts = fmt.Errorf("not enough profile parts")
+
+func formatDuration(dur time.Duration) string {
+	z := time.Unix(0, 0).UTC()
+	return z.Add(dur).Format("15:04:05.000")
+}
 
 func parseProfile(profile Profile, in string) (string, []string, error) {
 	parts, err := shlex.Split(profile.exec)
@@ -92,8 +103,12 @@ func parseProfile(profile Profile, in string) (string, []string, error) {
 		switch p {
 		case "<file>":
 			args = append(args, in)
-		case "<seek>":
-			args = append(args, fmt.Sprintf("%dus", profile.Seek().Microseconds()))
+			if profile.seek > time.Duration(0) {
+				args = append(args, "-ss", formatDuration(profile.seek))
+			}
+			if profile.duration > time.Duration(0) {
+				args = append(args, "-t", formatDuration(profile.duration))
+			}
 		case "<bitrate>":
 			args = append(args, fmt.Sprintf("%dk", profile.BitRate()))
 		default:

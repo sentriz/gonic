@@ -4,12 +4,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/nicksellen/audiotags"
+	"github.com/eHoward1996/audiotags"
 )
 
 type TagReader struct{}
 
-func (*TagReader) Read(abspath string) (Parser, error) {
+const UnknownArtist = "Unknown Artist"
+const UnknownAlbum = "Unknown Album"
+const UnknownGenre = "Unknown Genre"
+
+func (*TagReader) Read(abspath string) (MetaDataProvider, error) {
 	raw, props, err := audiotags.Read(abspath)
 	return &Tagger{raw, props}, err
 }
@@ -48,22 +52,23 @@ func (t *Tagger) AlbumBrainzID() string { return t.first("musicbrainz_albumid") 
 func (t *Tagger) Genre() string         { return t.first("genre") }
 func (t *Tagger) TrackNumber() int      { return t.firstInt("/" /* eg. 5/12 */, "tracknumber") }
 func (t *Tagger) DiscNumber() int       { return t.firstInt("/" /* eg. 1/2  */, "discnumber") }
-func (t *Tagger) Length() int           { return t.props.Length }
+func (t *Tagger) Length() int           { return t.props.LengthMs }
 func (t *Tagger) Bitrate() int          { return t.props.Bitrate }
 func (t *Tagger) Year() int             { return t.firstInt("-", "originaldate", "date", "year") }
+func (t *Tagger) CueSheet() string      { return t.first("cuesheet") }
 
-func (t *Tagger) SomeAlbum() string  { return first("Unknown Album", t.Album()) }
-func (t *Tagger) SomeArtist() string { return first("Unknown Artist", t.Artist()) }
+func (t *Tagger) SomeAlbum() string  { return First(UnknownAlbum, t.Album()) }
+func (t *Tagger) SomeArtist() string { return First(UnknownArtist, t.Artist()) }
 func (t *Tagger) SomeAlbumArtist() string {
-	return first("Unknown Artist", t.AlbumArtist(), t.Artist())
+	return First(UnknownArtist, t.AlbumArtist(), t.Artist())
 }
-func (t *Tagger) SomeGenre() string { return first("Unknown Genre", t.Genre()) }
+func (t *Tagger) SomeGenre() string { return First(UnknownGenre, t.Genre()) }
 
 type Reader interface {
-	Read(abspath string) (Parser, error)
+	Read(absPath string) (MetaDataProvider, error)
 }
 
-type Parser interface {
+type MetaDataProvider interface {
 	Title() string
 	BrainzID() string
 	Artist() string
@@ -95,7 +100,7 @@ func intSep(in, sep string) int {
 	return out
 }
 
-func first(or string, strs ...string) string {
+func First(or string, strs ...string) string {
 	for _, str := range strs {
 		if str != "" {
 			return str

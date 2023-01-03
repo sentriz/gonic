@@ -21,6 +21,7 @@ import (
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/mime"
 	"go.senan.xyz/gonic/multierr"
+	"go.senan.xyz/gonic/scanner/cuesheet"
 	"go.senan.xyz/gonic/scanner/tags"
 )
 
@@ -28,6 +29,13 @@ var (
 	ErrAlreadyScanning = errors.New("already scanning")
 	ErrReadingTags     = errors.New("could not read tags")
 )
+
+type cueTracksIterator interface {
+	ForEachTrack(callback cuesheet.TrackCallback) error
+}
+type cueFilesExtractor interface {
+	GetMediaFiles() []string
+}
 
 type Scanner struct {
 	db         *db.DB
@@ -126,7 +134,10 @@ func (s *Scanner) ExecuteWatch() error {
 		log.Printf("error creating watcher: %v\n", err)
 		return err
 	}
-	defer s.watcher.Close()
+	defer func() {
+		err := s.watcher.Close()
+		log.Printf("error watcher close: %v\n", err)
+	}()
 
 	t := time.NewTimer(10 * time.Second)
 	if !t.Stop() {
@@ -271,13 +282,18 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string
 	}
 
 	var tracks []string
+	var cueFiles []string
 	var cover string
 	for _, item := range items {
 		if isCover(item.Name()) {
 			cover = item.Name()
 			continue
 		}
-		if mime := mime.TypeByAudioExtension(filepath.Ext(item.Name())); mime != "" {
+		if isCueSheet(item.Name()) {
+			cueFiles = append(cueFiles, item.Name())
+			continue
+		}
+		if isSupportedMedia(item.Name()) {
 			tracks = append(tracks, item.Name())
 			continue
 		}
@@ -300,8 +316,22 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string
 
 	c.seenAlbums[album.ID] = struct{}{}
 
+	tracksForSkip := map[string]bool{}
+	for _, basename := range cueFiles {
+		mediaFiles, err := s.populateAlbumFromExternalCueSheet(tx, c, musicDir, filepath.Join(absPath, basename))
+		if err != nil {
+			return fmt.Errorf("populate CUE %q: %w", basename, err)
+		}
+		for _, file := range mediaFiles {
+			tracksForSkip[file] = true
+		}
+	}
+
 	sort.Strings(tracks)
 	for i, basename := range tracks {
+		if tracksForSkip[basename] {
+			continue
+		}
 		absPath := filepath.Join(musicDir, relPath, basename)
 		if err := s.populateTrackAndAlbumArtists(tx, c, i, &parent, &album, basename, absPath); err != nil {
 			return fmt.Errorf("populate track %q: %w", basename, err)
@@ -309,6 +339,112 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string
 	}
 
 	return nil
+}
+
+func (s *Scanner) populateAlbumFromExternalCueSheet(tx *db.DB, c *Context, musicDir string, absPath string) ([]string, error) {
+	stat, err := os.Stat(absPath)
+	if err != nil {
+		log.Printf("can't stat file '%s', %v", filepath.Base(absPath), err)
+		return nil, nil
+	}
+
+	file, err := os.Open(absPath)
+	if err != nil {
+		log.Printf("can't read file '%s', %v", filepath.Base(absPath), err)
+		return nil, nil
+	}
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Printf("error close file '%s', %v", filepath.Base(absPath), err)
+		}
+	}()
+
+	cue, err := cuesheet.ReadCue(file)
+	if err != nil {
+		log.Printf("can't parse CUE '%s', %v", filepath.Base(absPath), err)
+		return nil, nil
+	}
+
+	cueMapper, err := cuesheet.MakeDataMapper(cue, s.tagger, filepath.Dir(absPath), nil, nil)
+	if err != nil {
+		log.Printf("can't read CUE metadata '%s', %v", filepath.Base(absPath), err)
+		return nil, nil
+	}
+
+	iter, ok := cueMapper.(cueTracksIterator)
+	if !ok {
+		return nil, nil
+	}
+
+	var parent db.Album
+	var album db.Album
+
+	genreNames := strings.Split(cueMapper.SomeGenre(), s.genreSplit)
+	genreIDs, err := populateGenres(tx, genreNames)
+	if err != nil {
+		return nil, fmt.Errorf("populate genres: %w", err)
+	}
+
+	err = iter.ForEachTrack(func(absMediaPath string, trackIndex int, trackOffset int, reader tags.MetaDataProvider) error {
+		trackFilename := fmt.Sprintf("%s#%.3d", filepath.Base(absMediaPath), trackIndex)
+		if trackIndex == 0 {
+			relPath, _ := filepath.Rel(musicDir, absPath)
+			parentDir, parentBasename := filepath.Split(filepath.Dir(relPath))
+			if err := tx.Where("root_dir=? AND left_path=? AND right_path=?", musicDir, parentDir, parentBasename).Assign(db.Album{RootDir: musicDir, LeftPath: parentDir, RightPath: parentBasename}).FirstOrCreate(&parent).Error; err != nil {
+				return err
+			}
+			c.seenAlbums[parent.ID] = struct{}{}
+
+			dir, basename := filepath.Split(relPath)
+			if err := populateAlbumBasics(tx, musicDir, &parent, &album, dir, basename, parent.Cover); err != nil {
+				return err
+			}
+			c.seenAlbums[album.ID] = struct{}{}
+
+			albumArtist, err := populateAlbumArtist(tx, &parent, reader.SomeAlbumArtist())
+			if err != nil {
+				return fmt.Errorf("populate album artist: %w", err)
+			}
+			album.MultiTrackMedia = true
+			if err := populateAlbum(tx, &album, albumArtist, reader, stat.ModTime(), statCreateTime(stat)); err != nil {
+				return fmt.Errorf("populate album: %w", err)
+			}
+
+			if err := populateAlbumGenres(tx, &album, genreIDs); err != nil {
+				return fmt.Errorf("populate album genres: %w", err)
+			}
+		}
+
+		var track db.Track
+		if err := tx.Where("album_id=? AND filename=?", album.ID, trackFilename).First(&track).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("query track: %w", err)
+		}
+
+		if !c.isFull && track.ID != 0 && stat.ModTime().Before(track.UpdatedAt) {
+			c.seenTracks[track.ID] = struct{}{}
+			return nil
+		}
+
+		track.Offset = trackOffset
+		// TODO: size?
+		if err := populateTrack(tx, &album, &track, reader, trackFilename, 0); err != nil {
+			return fmt.Errorf("process %q: %w", trackFilename, err)
+		}
+		if err := populateTrackGenres(tx, &track, genreIDs); err != nil {
+			return fmt.Errorf("populate track genres: %w", err)
+		}
+
+		c.seenTracks[track.ID] = struct{}{}
+		c.seenTracksNew++
+
+		return nil
+	})
+
+	if extractor, ok := cueMapper.(cueFilesExtractor); ok && err == nil {
+		return extractor.GetMediaFiles(), nil
+	}
+
+	return []string{}, err
 }
 
 func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, parent, album *db.Album, basename string, absPath string) error {
@@ -327,24 +463,24 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 		return nil
 	}
 
-	trags, err := s.tagger.Read(absPath)
+	mediaTags, err := s.tagger.Read(absPath)
 	if err != nil {
 		return fmt.Errorf("%v: %w", err, ErrReadingTags)
 	}
 
-	genreNames := strings.Split(trags.SomeGenre(), s.genreSplit)
-	genreIDs, err := populateGenres(tx, &track, genreNames)
+	genreNames := strings.Split(mediaTags.SomeGenre(), s.genreSplit)
+	genreIDs, err := populateGenres(tx, genreNames)
 	if err != nil {
 		return fmt.Errorf("populate genres: %w", err)
 	}
 
-	// metadata for the album table comes only from the the first track's tags
+	// metadata for the album table comes only from the first track's tags
 	if i == 0 || album.TagArtist == nil {
-		albumArtist, err := populateAlbumArtist(tx, album, parent, trags.SomeAlbumArtist())
+		albumArtist, err := populateAlbumArtist(tx, parent, mediaTags.SomeAlbumArtist())
 		if err != nil {
 			return fmt.Errorf("populate album artist: %w", err)
 		}
-		if err := populateAlbum(tx, album, albumArtist, trags, stat.ModTime(), statCreateTime(stat)); err != nil {
+		if err := populateAlbum(tx, album, albumArtist, mediaTags, stat.ModTime(), statCreateTime(stat)); err != nil {
 			return fmt.Errorf("populate album: %w", err)
 		}
 		if err := populateAlbumGenres(tx, album, genreIDs); err != nil {
@@ -352,7 +488,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 		}
 	}
 
-	if err := populateTrack(tx, album, &track, trags, basename, int(stat.Size())); err != nil {
+	if err := populateTrack(tx, album, &track, mediaTags, basename, int(stat.Size())); err != nil {
 		return fmt.Errorf("process %q: %w", basename, err)
 	}
 	if err := populateTrackGenres(tx, &track, genreIDs); err != nil {
@@ -365,13 +501,14 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 	return nil
 }
 
-func populateAlbum(tx *db.DB, album *db.Album, albumArtist *db.Artist, trags tags.Parser, modTime, createTime time.Time) error {
-	albumName := trags.SomeAlbum()
+func populateAlbum(tx *db.DB, album *db.Album, albumArtist *db.Artist, tagsReader tags.MetaDataProvider, modTime, createTime time.Time) error {
+	albumName := tagsReader.SomeAlbum()
 	album.TagTitle = albumName
 	album.TagTitleUDec = decoded(albumName)
-	album.TagBrainzID = trags.AlbumBrainzID()
-	album.TagYear = trags.Year()
+	album.TagBrainzID = tagsReader.AlbumBrainzID()
+	album.TagYear = tagsReader.Year()
 	album.TagArtist = albumArtist
+	album.TagArtistID = albumArtist.ID
 
 	album.ModifiedAt = modTime
 	if !createTime.IsZero() {
@@ -409,7 +546,7 @@ func populateAlbumBasics(tx *db.DB, musicDir string, parent, album *db.Album, di
 	return nil
 }
 
-func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trags tags.Parser, absPath string, size int) error {
+func populateTrack(tx *db.DB, album *db.Album, track *db.Track, tagsReader tags.MetaDataProvider, absPath string, size int) error {
 	basename := filepath.Base(absPath)
 	track.Filename = basename
 	track.FilenameUDec = decoded(basename)
@@ -417,15 +554,15 @@ func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trags tags.Parse
 	track.AlbumID = album.ID
 	track.ArtistID = album.TagArtist.ID
 
-	track.TagTitle = trags.Title()
-	track.TagTitleUDec = decoded(trags.Title())
-	track.TagTrackArtist = trags.Artist()
-	track.TagTrackNumber = trags.TrackNumber()
-	track.TagDiscNumber = trags.DiscNumber()
-	track.TagBrainzID = trags.BrainzID()
+	track.TagTitle = tagsReader.Title()
+	track.TagTitleUDec = decoded(tagsReader.Title())
+	track.TagTrackArtist = tagsReader.Artist()
+	track.TagTrackNumber = tagsReader.TrackNumber()
+	track.TagDiscNumber = tagsReader.DiscNumber()
+	track.TagBrainzID = tagsReader.BrainzID()
 
-	track.Length = trags.Length()   // these two should be calculated
-	track.Bitrate = trags.Bitrate() // ...from the file instead of tags
+	track.Length = tagsReader.Length()   // these two should be calculated
+	track.Bitrate = tagsReader.Bitrate() // ...from the file instead of tags
 
 	if err := tx.Save(&track).Error; err != nil {
 		return fmt.Errorf("saving track: %w", err)
@@ -434,7 +571,7 @@ func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trags tags.Parse
 	return nil
 }
 
-func populateAlbumArtist(tx *db.DB, album, parent *db.Album, artistName string) (*db.Artist, error) {
+func populateAlbumArtist(tx *db.DB, parent *db.Album, artistName string) (*db.Artist, error) {
 	var update db.Artist
 	update.Name = artistName
 	update.NameUDec = decoded(artistName)
@@ -448,7 +585,7 @@ func populateAlbumArtist(tx *db.DB, album, parent *db.Album, artistName string) 
 	return &artist, nil
 }
 
-func populateGenres(tx *db.DB, track *db.Track, names []string) ([]int, error) {
+func populateGenres(tx *db.DB, names []string) ([]int, error) {
 	var filteredNames []string
 	for _, name := range names {
 		if clean := strings.TrimSpace(name); clean != "" {
@@ -591,6 +728,14 @@ func isCover(name string) bool {
 	default:
 		return false
 	}
+}
+
+func isCueSheet(name string) bool {
+	return strings.HasSuffix(strings.ToLower(name), ".cue")
+}
+
+func isSupportedMedia(name string) bool {
+	return mime.TypeByAudioExtension(filepath.Ext(name)) != ""
 }
 
 // decoded converts a string to it's latin equivalent.

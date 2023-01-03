@@ -49,7 +49,7 @@ func playlistRender(c *Controller, playlist *db.Playlist, params params.Params) 
 		resp.List[i] = spec.NewTCTrackByFolder(&track, track.Album)
 		resp.List[i].TranscodedContentType = transcodeMIME
 		resp.List[i].TranscodedSuffix = transcodeSuffix
-		resp.Duration += track.Length
+		resp.Duration += track.AudioLength()
 	}
 	return resp
 }
@@ -99,7 +99,7 @@ func (c *Controller) ServeCreatePlaylist(r *http.Request) *spec.Response {
 		Where("id=?", playlistID).
 		FirstOrCreate(&playlist)
 
-		// update meta info
+	// update meta info
 	if playlist.UserID != 0 && playlist.UserID != user.ID {
 		return spec.NewResponse()
 	}
@@ -135,7 +135,7 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 		Where("id=?", playlistID).
 		FirstOrCreate(&playlist)
 
-		// update meta info
+	// update meta info
 	if playlist.UserID != 0 && playlist.UserID != user.ID {
 		return spec.NewResponse()
 	}

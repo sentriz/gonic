@@ -337,7 +337,7 @@ type tagReader struct {
 	paths map[string]*tagReaderResult
 }
 
-func (m *tagReader) Read(abspath string) (tags.Parser, error) {
+func (m *tagReader) Read(abspath string) (tags.MetaDataProvider, error) {
 	p, ok := m.paths[abspath]
 	if !ok {
 		return nil, ErrPathNotFound
@@ -377,7 +377,7 @@ func (m *Tags) SomeArtist() string      { return first("Unknown Artist", m.Artis
 func (m *Tags) SomeAlbumArtist() string { return first("Unknown Artist", m.AlbumArtist(), m.Artist()) }
 func (m *Tags) SomeGenre() string       { return first("Unknown Genre", m.Genre()) }
 
-var _ tags.Parser = (*Tags)(nil)
+var _ tags.MetaDataProvider = (*Tags)(nil)
 
 func first(or string, strs ...string) string {
 	for _, str := range strs {

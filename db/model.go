@@ -19,6 +19,9 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
+var _ AudioFile = (*Track)(nil)
+var _ AudioFile = (*PodcastEpisode)(nil)
+
 func splitInt(in, sep string) []int {
 	if in == "" {
 		return []int{}
@@ -81,6 +84,9 @@ type AudioFile interface {
 	AudioFilename() string
 	AudioBitrate() int
 	AudioLength() int
+	Seek() time.Duration
+	Duration() time.Duration
+	AbsPath() string
 }
 
 type Track struct {
@@ -96,6 +102,7 @@ type Track struct {
 	Genres         []*Genre `gorm:"many2many:track_genres"`
 	Size           int      `sql:"default: null"`
 	Length         int      `sql:"default: null"`
+	Offset         int      `sql:"default: null"`
 	Bitrate        int      `sql:"default: null"`
 	TagTitle       string   `sql:"default: null"`
 	TagTitleUDec   string   `sql:"default: null"`
@@ -108,8 +115,22 @@ type Track struct {
 	AverageRating  float64 `sql:"default: null"`
 }
 
-func (t *Track) AudioLength() int  { return t.Length }
-func (t *Track) AudioBitrate() int { return t.Bitrate }
+// Is seconds
+func (t *Track) AudioLength() int {
+	return int(t.Duration().Seconds())
+}
+
+func (t *Track) AudioBitrate() int {
+	return t.Bitrate
+}
+
+func (t *Track) Seek() time.Duration {
+	return time.Millisecond * time.Duration(t.Offset)
+}
+
+func (t *Track) Duration() time.Duration {
+	return time.Millisecond * time.Duration(t.Length)
+}
 
 func (t *Track) SID() *specid.ID {
 	return &specid.ID{Type: specid.Track, Value: t.ID}
@@ -138,6 +159,16 @@ func (t *Track) MIME() string {
 func (t *Track) AbsPath() string {
 	if t.Album == nil {
 		return ""
+	}
+	if t.Album.MultiTrackMedia {
+		idx := strings.LastIndex(t.Filename, "#")
+		if idx == -1 {
+			return ""
+		}
+		return path.Join(
+			t.Album.RootDir,
+			t.Album.LeftPath,
+			t.Filename[:idx])
 	}
 	return path.Join(
 		t.Album.RootDir,
@@ -194,30 +225,31 @@ type Play struct {
 }
 
 type Album struct {
-	ID            int `gorm:"primary_key"`
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
-	ModifiedAt    time.Time
-	LeftPath      string `gorm:"unique_index:idx_album_abs_path"`
-	RightPath     string `gorm:"not null; unique_index:idx_album_abs_path" sql:"default: null"`
-	RightPathUDec string `sql:"default: null"`
-	Parent        *Album
-	ParentID      int      `sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
-	RootDir       string   `gorm:"unique_index:idx_album_abs_path" sql:"default: null"`
-	Genres        []*Genre `gorm:"many2many:album_genres"`
-	Cover         string   `sql:"default: null"`
-	TagArtist     *Artist
-	TagArtistID   int    `gorm:"index" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
-	TagTitle      string `sql:"default: null"`
-	TagTitleUDec  string `sql:"default: null"`
-	TagBrainzID   string `sql:"default: null"`
-	TagYear       int    `sql:"default: null"`
-	Tracks        []*Track
-	ChildCount    int `sql:"-"`
-	Duration      int `sql:"-"`
-	AlbumStar     *AlbumStar
-	AlbumRating   *AlbumRating
-	AverageRating float64 `sql:"default: null"`
+	ID              int `gorm:"primary_key"`
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	ModifiedAt      time.Time
+	LeftPath        string `gorm:"unique_index:idx_album_abs_path"`
+	RightPath       string `gorm:"not null; unique_index:idx_album_abs_path" sql:"default: null"`
+	RightPathUDec   string `sql:"default: null"`
+	Parent          *Album
+	ParentID        int      `sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	RootDir         string   `gorm:"unique_index:idx_album_abs_path" sql:"default: null"`
+	Genres          []*Genre `gorm:"many2many:album_genres"`
+	Cover           string   `sql:"default: null"`
+	TagArtist       *Artist
+	TagArtistID     int    `gorm:"index" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
+	TagTitle        string `sql:"default: null"`
+	TagTitleUDec    string `sql:"default: null"`
+	TagBrainzID     string `sql:"default: null"`
+	TagYear         int    `sql:"default: null"`
+	Tracks          []*Track
+	ChildCount      int `sql:"-"`
+	Duration        int `sql:"-"`
+	AlbumStar       *AlbumStar
+	AlbumRating     *AlbumRating
+	AverageRating   float64 `sql:"default: null"`
+	MultiTrackMedia bool
 }
 
 func (a *Album) SID() *specid.ID {
@@ -395,13 +427,31 @@ type PodcastEpisode struct {
 	Length      int
 	Size        int
 	Path        string
+	FullPath    string `sql:"-"`
 	Filename    string
 	Status      PodcastEpisodeStatus
 	Error       string
 }
 
-func (pe *PodcastEpisode) AudioLength() int  { return pe.Length }
-func (pe *PodcastEpisode) AudioBitrate() int { return pe.Bitrate }
+func (pe *PodcastEpisode) AbsPath() string {
+	return pe.FullPath
+}
+
+func (pe *PodcastEpisode) AudioLength() int {
+	return int(pe.Duration().Seconds())
+}
+
+func (pe *PodcastEpisode) AudioBitrate() int {
+	return pe.Bitrate
+}
+
+func (pe *PodcastEpisode) Seek() time.Duration {
+	return time.Duration(0)
+}
+
+func (pe *PodcastEpisode) Duration() time.Duration {
+	return time.Millisecond * time.Duration(pe.Length)
+}
 
 func (pe *PodcastEpisode) SID() *specid.ID {
 	return &specid.ID{Type: specid.PodcastEpisode, Value: pe.ID}

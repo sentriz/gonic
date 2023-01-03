@@ -34,7 +34,7 @@ func NewPodcastEpisode(e *db.PodcastEpisode) *PodcastEpisode {
 		CoverArt:    e.PodcastSID(),
 		PublishDate: *e.PublishDate,
 		Genre:       "Podcast",
-		Duration:    e.Length,
+		Duration:    e.AudioLength(),
 		Year:        e.PublishDate.Year(),
 		Suffix:      formatExt(e.Ext()),
 		BitRate:     e.Bitrate,
