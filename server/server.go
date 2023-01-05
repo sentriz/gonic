@@ -30,15 +30,16 @@ import (
 )
 
 type Options struct {
-	DB             *db.DB
-	MusicPaths     paths.MusicPaths
-	PodcastPath    string
-	CachePath      string
-	CoverCachePath string
-	ProxyPrefix    string
-	GenreSplit     string
-	HTTPLog        bool
-	JukeboxEnabled bool
+	DB                *db.DB
+	MusicPaths        paths.MusicPaths
+	PodcastPath       string
+	CachePath         string
+	CoverCachePath    string
+	ProxyPrefix       string
+	GenreSplit        string
+	PreferEmbeddedCue bool
+	HTTPLog           bool
+	JukeboxEnabled    bool
 }
 
 type Server struct {
@@ -52,7 +53,7 @@ type Server struct {
 func New(opts Options) (*Server, error) {
 	tagger := &tags.TagReader{}
 
-	scanner := scanner.New(opts.MusicPaths.Paths(), opts.DB, opts.GenreSplit, tagger)
+	scanner := scanner.New(opts.MusicPaths.Paths(), opts.DB, opts.GenreSplit, opts.PreferEmbeddedCue, tagger)
 	base := &ctrlbase.Controller{
 		DB:          opts.DB,
 		ProxyPrefix: opts.ProxyPrefix,
@@ -138,7 +139,7 @@ func setupMisc(r *mux.Router, ctrl *ctrlbase.Controller) {
 		http.Redirect(w, r, restScan, http.StatusSeeOther)
 	})
 	r.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "OK")
+		_, _ = fmt.Fprint(w, "OK")
 	})
 }
 

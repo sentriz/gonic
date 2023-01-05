@@ -7,6 +7,8 @@ import (
 	"github.com/eHoward1996/audiotags"
 )
 
+var _ MetaDataProvider = (*Tagger)(nil)
+
 type TagReader struct{}
 
 const UnknownArtist = "Unknown Artist"
@@ -66,6 +68,10 @@ func (t *Tagger) SomeGenre() string { return First(UnknownGenre, t.Genre()) }
 
 type Reader interface {
 	Read(absPath string) (MetaDataProvider, error)
+}
+
+type EmbeddedCueProvider interface {
+	CueSheet() string
 }
 
 type MetaDataProvider interface {

@@ -59,7 +59,7 @@ func new(t testing.TB, dirs []string) *MockFS {
 	}
 
 	tagReader := &tagReader{paths: map[string]*tagReaderResult{}}
-	scanner := scanner.New(absDirs, dbc, ";", tagReader)
+	scanner := scanner.New(absDirs, dbc, ";", false, tagReader)
 
 	return &MockFS{
 		t:         t,
@@ -389,9 +389,9 @@ func first(or string, strs ...string) string {
 }
 
 func firstInt(or int, ints ...int) int {
-	for _, int := range ints {
-		if int > 0 {
-			return int
+	for _, i := range ints {
+		if i > 0 {
+			return i
 		}
 	}
 	return or

@@ -17,6 +17,7 @@ var (
 	ErrorInputParams      = errors.New("invalid input params")
 	ErrorInvalidCallback  = errors.New("invalid callback")
 	ErrorUnsupportedMedia = errors.New("unsupported media")
+	ErrorSkipCUE          = errors.New("skip CUE")
 )
 
 type tagsMapper struct {
@@ -27,7 +28,7 @@ type tagsMapper struct {
 	mediaParsers []tags.MetaDataProvider
 }
 
-func MakeDataMapper(aCue *Cuesheet, tagsReader tags.Reader, aAbsDir string, mediaPaths []string, parsers []tags.MetaDataProvider) (tags.MetaDataProvider, error) {
+func MakeDataMapper(aCue *Cuesheet, tagsReader tags.Reader, aAbsDir string, skipWhenHasEmbedded bool, mediaPaths []string, parsers []tags.MetaDataProvider) (tags.MetaDataProvider, error) {
 	if aCue == nil {
 		return nil, ErrorInvalidCUE
 	}
@@ -43,6 +44,11 @@ func MakeDataMapper(aCue *Cuesheet, tagsReader tags.Reader, aAbsDir string, medi
 			parser, err := tagsReader.Read(mediaPath)
 			if err != nil {
 				return nil, fmt.Errorf("can't read media: %w", err)
+			}
+			if skipWhenHasEmbedded {
+				if provider, ok := parser.(tags.EmbeddedCueProvider); ok && provider.CueSheet() != "" {
+					return nil, ErrorSkipCUE
+				}
 			}
 			mediaPaths = append(mediaPaths, mediaPath)
 			parsers = append(parsers, parser)
@@ -85,6 +91,10 @@ func (mapper *tagsMapper) Title() string {
 	return mapper.track().Title
 }
 
+func (mapper *tagsMapper) CueSheet() string {
+	return ""
+}
+
 func (mapper *tagsMapper) BrainzID() string {
 	return mapper.track().Rem.MusicBrainzID()
 }
@@ -106,7 +116,7 @@ func (mapper *tagsMapper) AlbumArtist() string {
 				continue
 			}
 
-			if result != "" && strings.EqualFold(result, artist) {
+			if result != "" && !strings.EqualFold(result, artist) {
 				return "VA"
 			}
 			result = artist

@@ -450,11 +450,11 @@ func readTrack(b *bufio.Reader, track *Track) error {
 	for {
 		before := *b
 		line, err := (*b).ReadString('\n')
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
+		if err != nil && err != io.EOF {
 			return err
+		}
+		if line == "" {
+			break
 		}
 		if !strings.HasPrefix(line, "    ") {
 			*b = before

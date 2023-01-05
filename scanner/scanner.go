@@ -28,6 +28,7 @@ import (
 var (
 	ErrAlreadyScanning = errors.New("already scanning")
 	ErrReadingTags     = errors.New("could not read tags")
+	ErrReadingTracks   = errors.New("could not read tracks")
 )
 
 type cueTracksIterator interface {
@@ -38,25 +39,27 @@ type cueFilesExtractor interface {
 }
 
 type Scanner struct {
-	db         *db.DB
-	musicDirs  []string
-	genreSplit string
-	tagger     tags.Reader
-	scanning   *int32
-	watcher    *fsnotify.Watcher
-	watchMap   map[string]string // maps watched dirs back to root music dir
-	watchDone  chan bool
+	db                *db.DB
+	musicDirs         []string
+	genreSplit        string
+	preferEmbeddedCue bool
+	tagger            tags.Reader
+	scanning          *int32
+	watcher           *fsnotify.Watcher
+	watchMap          map[string]string // maps watched dirs back to root music dir
+	watchDone         chan bool
 }
 
-func New(musicDirs []string, db *db.DB, genreSplit string, tagger tags.Reader) *Scanner {
+func New(musicDirs []string, db *db.DB, genreSplit string, preferEmbeddedCue bool, tagger tags.Reader) *Scanner {
 	return &Scanner{
-		db:         db,
-		musicDirs:  musicDirs,
-		genreSplit: genreSplit,
-		tagger:     tagger,
-		scanning:   new(int32),
-		watchMap:   make(map[string]string),
-		watchDone:  make(chan bool),
+		db:                db,
+		musicDirs:         musicDirs,
+		genreSplit:        genreSplit,
+		preferEmbeddedCue: preferEmbeddedCue,
+		tagger:            tagger,
+		scanning:          new(int32),
+		watchMap:          make(map[string]string),
+		watchDone:         make(chan bool),
 	}
 }
 
@@ -341,54 +344,20 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string
 	return nil
 }
 
-func (s *Scanner) populateAlbumFromExternalCueSheet(tx *db.DB, c *Context, musicDir string, absPath string) ([]string, error) {
-	stat, err := os.Stat(absPath)
-	if err != nil {
-		log.Printf("can't stat file '%s', %v", filepath.Base(absPath), err)
-		return nil, nil
-	}
-
-	file, err := os.Open(absPath)
-	if err != nil {
-		log.Printf("can't read file '%s', %v", filepath.Base(absPath), err)
-		return nil, nil
-	}
-	defer func() {
-		if err := file.Close(); err != nil {
-			log.Printf("error close file '%s', %v", filepath.Base(absPath), err)
-		}
-	}()
-
-	cue, err := cuesheet.ReadCue(file)
-	if err != nil {
-		log.Printf("can't parse CUE '%s', %v", filepath.Base(absPath), err)
-		return nil, nil
-	}
-
-	cueMapper, err := cuesheet.MakeDataMapper(cue, s.tagger, filepath.Dir(absPath), nil, nil)
-	if err != nil {
-		log.Printf("can't read CUE metadata '%s', %v", filepath.Base(absPath), err)
-		return nil, nil
-	}
-
-	iter, ok := cueMapper.(cueTracksIterator)
-	if !ok {
-		return nil, nil
-	}
-
-	var parent db.Album
-	var album db.Album
-
-	genreNames := strings.Split(cueMapper.SomeGenre(), s.genreSplit)
+func (s *Scanner) getCueTrackCallback(tx *db.DB, c *Context, parent *db.Album, tagsMapper tags.MetaDataProvider, stat os.FileInfo) (cuesheet.TrackCallback, error) {
+	genreNames := strings.Split(tagsMapper.SomeGenre(), s.genreSplit)
 	genreIDs, err := populateGenres(tx, genreNames)
 	if err != nil {
-		return nil, fmt.Errorf("populate genres: %w", err)
+		return nil, err
 	}
 
-	err = iter.ForEachTrack(func(absMediaPath string, trackIndex int, trackOffset int, reader tags.MetaDataProvider) error {
+	musicDir := parent.RootDir
+	var album db.Album
+
+	return func(absMediaPath string, trackIndex int, trackOffset int, reader tags.MetaDataProvider) error {
 		trackFilename := fmt.Sprintf("%s#%.3d", filepath.Base(absMediaPath), trackIndex)
 		if trackIndex == 0 {
-			relPath, _ := filepath.Rel(musicDir, absPath)
+			relPath, _ := filepath.Rel(musicDir, absMediaPath)
 			parentDir, parentBasename := filepath.Split(filepath.Dir(relPath))
 			if err := tx.Where("root_dir=? AND left_path=? AND right_path=?", musicDir, parentDir, parentBasename).Assign(db.Album{RootDir: musicDir, LeftPath: parentDir, RightPath: parentBasename}).FirstOrCreate(&parent).Error; err != nil {
 				return err
@@ -396,12 +365,12 @@ func (s *Scanner) populateAlbumFromExternalCueSheet(tx *db.DB, c *Context, music
 			c.seenAlbums[parent.ID] = struct{}{}
 
 			dir, basename := filepath.Split(relPath)
-			if err := populateAlbumBasics(tx, musicDir, &parent, &album, dir, basename, parent.Cover); err != nil {
+			if err := populateAlbumBasics(tx, musicDir, parent, &album, dir, basename, parent.Cover); err != nil {
 				return err
 			}
 			c.seenAlbums[album.ID] = struct{}{}
 
-			albumArtist, err := populateAlbumArtist(tx, &parent, reader.SomeAlbumArtist())
+			albumArtist, err := populateAlbumArtist(tx, parent, reader.SomeAlbumArtist())
 			if err != nil {
 				return fmt.Errorf("populate album artist: %w", err)
 			}
@@ -438,7 +407,70 @@ func (s *Scanner) populateAlbumFromExternalCueSheet(tx *db.DB, c *Context, music
 		c.seenTracksNew++
 
 		return nil
-	})
+	}, nil
+}
+
+func (s *Scanner) populateAlbumFromEmbeddedCueSheet(tx *db.DB, c *Context, parent *db.Album, cue *cuesheet.Cuesheet, trackTagReader tags.MetaDataProvider, stat os.FileInfo, absPath string) error {
+	cueMapper, err := cuesheet.MakeDataMapper(cue, s.tagger, filepath.Dir(absPath), false, []string{absPath}, []tags.MetaDataProvider{trackTagReader})
+	if err != nil {
+		return err
+	}
+	iter, ok := cueMapper.(cueTracksIterator)
+	if !ok {
+		return ErrReadingTracks
+	}
+
+	cb, err := s.getCueTrackCallback(tx, c, parent, cueMapper, stat)
+	if err != nil {
+		return err
+	}
+	return iter.ForEachTrack(cb)
+}
+
+func (s *Scanner) populateAlbumFromExternalCueSheet(tx *db.DB, c *Context, musicDir string, absPath string) ([]string, error) {
+	stat, err := os.Stat(absPath)
+	if err != nil {
+		log.Printf("can't stat file '%s', %v", filepath.Base(absPath), err)
+		return nil, nil
+	}
+
+	file, err := os.Open(absPath)
+	if err != nil {
+		log.Printf("can't read file '%s', %v", filepath.Base(absPath), err)
+		return nil, nil
+	}
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Printf("error close file '%s', %v", filepath.Base(absPath), err)
+		}
+	}()
+
+	cue, err := cuesheet.ReadCue(file)
+	if err != nil {
+		log.Printf("can't parse CUE '%s', %v", filepath.Base(absPath), err)
+		return nil, nil
+	}
+
+	cueMapper, err := cuesheet.MakeDataMapper(cue, s.tagger, filepath.Dir(absPath), s.preferEmbeddedCue, nil, nil)
+	if err != nil {
+		log.Printf("can't read CUE metadata '%s', %v", filepath.Base(absPath), err)
+		return nil, nil
+	}
+
+	iter, ok := cueMapper.(cueTracksIterator)
+	if !ok {
+		return nil, nil
+	}
+
+	var parent db.Album
+	parent.RootDir = musicDir
+
+	cb, err := s.getCueTrackCallback(tx, c, &parent, cueMapper, stat)
+	if err != nil {
+		return nil, nil
+	}
+
+	err = iter.ForEachTrack(cb)
 
 	if extractor, ok := cueMapper.(cueFilesExtractor); ok && err == nil {
 		return extractor.GetMediaFiles(), nil
@@ -466,6 +498,14 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 	mediaTags, err := s.tagger.Read(absPath)
 	if err != nil {
 		return fmt.Errorf("%v: %w", err, ErrReadingTags)
+	}
+
+	if provider, ok := mediaTags.(tags.EmbeddedCueProvider); ok && provider.CueSheet() != "" {
+		cue, err := cuesheet.ReadCue(strings.NewReader(provider.CueSheet()))
+		if err != nil {
+			return err
+		}
+		return s.populateAlbumFromEmbeddedCueSheet(tx, c, album, cue, mediaTags, stat, absPath)
 	}
 
 	genreNames := strings.Split(mediaTags.SomeGenre(), s.genreSplit)

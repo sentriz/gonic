@@ -49,6 +49,7 @@ func main() {
 	confGenreSplit := set.String("genre-split", "\n", "character or string to split genre tag data on (optional)")
 	confHTTPLog := set.Bool("http-log", true, "http request logging (optional)")
 	confShowVersion := set.Bool("version", false, "show gonic version")
+	preferEmbeddedCue := set.Bool("cue-prefer-embedded", false, "prefer embedded CUE if exists")
 
 	var confMusicPaths paths.MusicPaths
 	set.Var(&confMusicPaths, "music-path", "path to music")
@@ -120,15 +121,16 @@ func main() {
 	proxyPrefixExpr := regexp.MustCompile(`^\/*(.*?)\/*$`)
 	*confProxyPrefix = proxyPrefixExpr.ReplaceAllString(*confProxyPrefix, `/$1`)
 	server, err := server.New(server.Options{
-		DB:             dbc,
-		MusicPaths:     confMusicPaths,
-		CachePath:      filepath.Clean(cacheDirAudio),
-		CoverCachePath: cacheDirCovers,
-		ProxyPrefix:    *confProxyPrefix,
-		GenreSplit:     *confGenreSplit,
-		PodcastPath:    filepath.Clean(*confPodcastPath),
-		HTTPLog:        *confHTTPLog,
-		JukeboxEnabled: *confJukeboxEnabled,
+		DB:                dbc,
+		MusicPaths:        confMusicPaths,
+		CachePath:         filepath.Clean(cacheDirAudio),
+		CoverCachePath:    cacheDirCovers,
+		ProxyPrefix:       *confProxyPrefix,
+		GenreSplit:        *confGenreSplit,
+		PreferEmbeddedCue: *preferEmbeddedCue,
+		PodcastPath:       filepath.Clean(*confPodcastPath),
+		HTTPLog:           *confHTTPLog,
+		JukeboxEnabled:    *confJukeboxEnabled,
 	})
 	if err != nil {
 		log.Panicf("error creating server: %v\n", err)
