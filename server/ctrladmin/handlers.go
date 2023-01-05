@@ -43,7 +43,10 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	data := &templateData{}
 	// stats box
 	c.DB.Model(&db.Artist{}).Count(&data.ArtistCount)
-	c.DB.Model(&db.Album{}).Count(&data.AlbumCount)
+	c.DB.
+		Select("id").
+		Model(&db.Album{}).
+		Where("tag_title IS NOT NULL").Count(&data.AlbumCount)
 	c.DB.Table("tracks").Count(&data.TrackCount)
 	// lastfm box
 	data.RequestRoot = c.BaseURL(r)
