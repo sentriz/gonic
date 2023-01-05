@@ -87,6 +87,7 @@ type AudioFile interface {
 	Seek() time.Duration
 	Duration() time.Duration
 	AbsPath() string
+	IsSubTrack() bool
 }
 
 type Track struct {
@@ -154,6 +155,13 @@ func (t *Track) AudioFilename() string {
 
 func (t *Track) MIME() string {
 	return mime.TypeByExtension(filepath.Ext(t.Filename))
+}
+
+func (t *Track) IsSubTrack() bool {
+	if t.Album == nil {
+		return false
+	}
+	return t.Album.MultiTrackMedia
 }
 
 func (t *Track) AbsPath() string {
@@ -431,6 +439,10 @@ type PodcastEpisode struct {
 	Filename    string
 	Status      PodcastEpisodeStatus
 	Error       string
+}
+
+func (pe *PodcastEpisode) IsSubTrack() bool {
+	return false
 }
 
 func (pe *PodcastEpisode) AbsPath() string {

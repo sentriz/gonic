@@ -37,11 +37,15 @@ type RemData map[string]string
 
 const (
 	// None - no flags
-	None    Flags = iota
-	Dcp           = 1 << iota
-	Four_ch       = 1 << iota
-	Pre           = 1 << iota
-	Scms          = 1 << iota
+	None   Flags = iota
+	Dcp          = 1 << iota
+	FourCh       = 1 << iota
+	Pre          = 1 << iota
+	Scms         = 1 << iota
+)
+
+var (
+	ErrorFrameFormat = fmt.Errorf("invalid frame format")
 )
 
 // TrackIndex data
@@ -50,24 +54,24 @@ type TrackIndex struct {
 	Frame  Frame
 }
 
-func FrameFromString(str string) (Frame, error) {
+func frameFromString(str string) (Frame, error) {
 	v := strings.Split(str, ":")
 	if len(str) < 8 {
-		return 0, fmt.Errorf("invalid frame format")
+		return 0, ErrorFrameFormat
 	}
 	if len(v) == 3 {
 		mm, _ := strconv.ParseUint(v[0], 10, 32)
 		ss, _ := strconv.ParseUint(v[1], 10, 32)
 		if ss > 59 {
-			return 0, fmt.Errorf("invalid frame format")
+			return 0, ErrorFrameFormat
 		}
 		ff, _ := strconv.ParseUint(v[2], 10, 32)
 		if ff >= framesPerSecond {
-			return 0, fmt.Errorf("invalid frame format")
+			return 0, ErrorFrameFormat
 		}
 		return Frame((mm*60+ss)*framesPerSecond + ff), nil
 	}
-	return 0, fmt.Errorf("invalid frame format")
+	return 0, ErrorFrameFormat
 }
 
 func (frame Frame) Duration() time.Duration {
@@ -79,7 +83,7 @@ func (frame Frame) Duration() time.Duration {
 func (frame Frame) String() string {
 	seconds := frame / framesPerSecond
 	minutes := seconds / 60
-	seconds = seconds % 60
+	seconds %= 60
 	ff := frame % framesPerSecond
 	return fmt.Sprintf("%.2d:%.2d:%.2d", minutes, seconds, ff)
 }
@@ -160,34 +164,26 @@ func ReadCue(r io.Reader) (*Cuesheet, error) {
 				cuesheet.Rem = RemData{}
 			}
 			cuesheet.Rem[readString(&line)] = line
-			break
 		case "CATALOG":
 			cuesheet.Catalog = line
-			break
 		case "CDTEXTFILE":
 			cuesheet.CdTextFile = readString(&line)
-			break
 		case "TITLE":
 			cuesheet.Title = readString(&line)
-			break
 		case "PERFORMER":
 			cuesheet.Performer = readString(&line)
-			break
 		case "SONGWRITER":
 			cuesheet.SongWriter = readString(&line)
-			break
 		case "PREGAP":
-			cuesheet.Pregap, err = FrameFromString(readString(&line))
+			cuesheet.Pregap, err = frameFromString(readString(&line))
 			if err != nil {
 				return nil, err
 			}
-			break
 		case "POSTGAP":
-			cuesheet.Postgap, err = FrameFromString(readString(&line))
+			cuesheet.Postgap, err = frameFromString(readString(&line))
 			if err != nil {
 				return nil, err
 			}
-			break
 		case "FILE":
 			fname := readString(&line)
 			ftype := readString(&line)
@@ -196,9 +192,7 @@ func ReadCue(r io.Reader) (*Cuesheet, error) {
 				return nil, err
 			}
 			cuesheet.File = append(cuesheet.File, File{fname, ftype, *tracks})
-			break
 		default:
-			break
 		}
 	}
 
@@ -206,6 +200,8 @@ func ReadCue(r io.Reader) (*Cuesheet, error) {
 }
 
 // WriteCue writes CUESHEET to writer
+//
+//gocyclo:ignore
 func WriteCue(w io.Writer, cuesheet *Cuesheet) error {
 	ws := bufio.NewWriter(w)
 	for k := range cuesheet.Rem {
@@ -292,7 +288,7 @@ func WriteCue(w io.Writer, cuesheet *Cuesheet) error {
 						return err
 					}
 				}
-				if (track.Flags & Four_ch) != 0 {
+				if (track.Flags & FourCh) != 0 {
 					_, err := ws.WriteString(" 4CH")
 					if err != nil {
 						return err
@@ -451,7 +447,6 @@ func unquote(s string) string {
 }
 
 func readTrack(b *bufio.Reader, track *Track) error {
-L:
 	for {
 		before := *b
 		line, err := (*b).ReadString('\n')
@@ -474,64 +469,48 @@ L:
 			for len(line) > 0 {
 				switch readString(&line) {
 				case "DCP":
-					(*track).Flags |= Dcp
-					break
+					track.Flags |= Dcp
 				case "4CH":
-					(*track).Flags |= Four_ch
-					break
+					track.Flags |= FourCh
 				case "PRE":
-					(*track).Flags |= Pre
-					break
+					track.Flags |= Pre
 				case "SCMS":
-					(*track).Flags |= Scms
-					break
+					track.Flags |= Scms
 				default:
-					break
 				}
 			}
-			break
 		case "ISRC":
 			track.ISRC = line
-			break
 		case "TITLE":
 			track.Title = unquote(line)
-			break
 		case "PERFORMER":
 			track.Performer = unquote(line)
-			break
 		case "SONGWRITER":
 			track.SongWriter = unquote(line)
-			break
 		case "PREGAP":
-			track.PreGap, err = FrameFromString(readString(&line))
+			track.PreGap, err = frameFromString(readString(&line))
 			if err != nil {
 				return err
 			}
-
-			break
 		case "POSTGAP":
-			track.PostGap, err = FrameFromString(readString(&line))
+			track.PostGap, err = frameFromString(readString(&line))
 			if err != nil {
 				return err
 			}
-			break
 		case "INDEX":
 			index := TrackIndex{}
 			index.Number = readUint(&line)
-			index.Frame, err = FrameFromString(readString(&line))
+			index.Frame, err = frameFromString(readString(&line))
 			if err != nil {
 				return err
 			}
-			track.Index = append((*track).Index, index)
-			break
+			track.Index = append(track.Index, index)
 		case "REM":
 			if track.Rem == nil {
 				track.Rem = RemData{}
 			}
-			(*track).Rem[readString(&line)] = line
-			break
+			track.Rem[readString(&line)] = line
 		default:
-			break L
 		}
 	}
 
@@ -541,7 +520,6 @@ L:
 func readTracks(b *bufio.Reader) (*[]Track, error) {
 	tracks := &[]Track{}
 
-L:
 	for {
 		before := *b
 		line, err := (*b).ReadString('\n')
@@ -567,9 +545,7 @@ L:
 				return nil, err
 			}
 			*tracks = append(*tracks, track)
-			break
 		default:
-			break L
 		}
 	}
 
@@ -577,8 +553,7 @@ L:
 }
 
 func leftPad(s, padStr string, overallLen int) string {
-	var padCountInt int
-	padCountInt = 1 + ((overallLen - len(padStr)) / len(padStr))
+	padCountInt := 1 + ((overallLen - len(padStr)) / len(padStr))
 	var retStr = strings.Repeat(padStr, padCountInt) + s
 	return retStr[(len(retStr) - overallLen):]
 }

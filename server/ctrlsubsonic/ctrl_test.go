@@ -151,9 +151,9 @@ func makec(t *testing.T, roots []string, audio bool) *Controller {
 		if !audio {
 			continue
 		}
-		m.SetRealAudio(filepath.Join(root, "artist-0/album-0/track-0.flac"), 10, audioPath10s)
-		m.SetRealAudio(filepath.Join(root, "artist-0/album-0/track-1.flac"), 10, audioPath10s)
-		m.SetRealAudio(filepath.Join(root, "artist-0/album-0/track-2.flac"), 10, audioPath10s)
+		m.SetRealAudio(filepath.Join(root, "artist-0/album-0/track-0.flac"), 10000, audioPath10s)
+		m.SetRealAudio(filepath.Join(root, "artist-0/album-0/track-1.flac"), 10000, audioPath10s)
+		m.SetRealAudio(filepath.Join(root, "artist-0/album-0/track-2.flac"), 10000, audioPath10s)
 	}
 
 	m.ScanAndClean()

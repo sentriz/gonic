@@ -313,6 +313,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	format, _ := params.Get("format")
 
 	if format == "raw" || maxBitRate >= file.AudioBitrate() {
+		// TODO: raw with CUE need more work, copy stream for subTrack
 		http.ServeFile(w, r, file.AbsPath())
 		return nil
 	}
@@ -323,13 +324,13 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	}
 
 	profileName := ""
-	subtrack := false
+	subTrack := false
 	if pref == nil {
-		if file.Seek() == time.Duration(0) {
+		if !file.IsSubTrack() {
 			http.ServeFile(w, r, file.AbsPath())
 			return nil
 		}
-		subtrack = true
+		subTrack = true
 		profileName = "opus_128_rg"
 	} else {
 		profileName = pref.Profile
@@ -343,7 +344,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		profile = transcode.WithBitrate(profile, transcode.BitRate(maxBitRate))
 	}
 
-	if subtrack {
+	if subTrack {
 		profile = transcode.WithInterval(profile, file.Seek(), file.Duration())
 	}
 

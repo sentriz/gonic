@@ -68,7 +68,7 @@ func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 	c.DB.
 		Preload("Albums", func(db *gorm.DB) *gorm.DB {
 			return db.
-				Select("*, count(sub.id) child_count, sum(sub.length) duration").
+				Select("*, count(sub.id) child_count, sum(sub.length)/1000 duration").
 				Joins("LEFT JOIN tracks sub ON albums.id=sub.album_id").
 				Preload("AlbumStar", "user_id=?", user.ID).
 				Preload("AlbumRating", "user_id=?", user.ID).
@@ -97,7 +97,7 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 	}
 	album := &db.Album{}
 	err = c.DB.
-		Select("albums.*, count(tracks.id) child_count, sum(tracks.length) duration").
+		Select("albums.*, count(tracks.id) child_count, sum(tracks.length)/1000 duration").
 		Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
 		Preload("TagArtist").
 		Preload("Genres").
@@ -184,7 +184,7 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	// TODO: think about removing this extra join to count number
 	// of children. it might make sense to store that in the db
 	q.
-		Select("albums.*, count(tracks.id) child_count, sum(tracks.length) duration").
+		Select("albums.*, count(tracks.id) child_count, sum(tracks.length)/1000 duration").
 		Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
 		Group("albums.id").
 		Where("albums.tag_artist_id IS NOT NULL").

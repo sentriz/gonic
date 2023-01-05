@@ -369,7 +369,7 @@ func (m *Tags) TrackNumber() int      { return 1 }
 func (m *Tags) DiscNumber() int       { return 1 }
 func (m *Tags) Year() int             { return 2021 }
 
-func (m *Tags) Length() int  { return firstInt(100, m.RawLength) }
+func (m *Tags) Length() int  { return firstInt(100000, m.RawLength) }
 func (m *Tags) Bitrate() int { return firstInt(100, m.RawBitrate) }
 
 func (m *Tags) SomeAlbum() string       { return first("Unknown Album", m.Album()) }

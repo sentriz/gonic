@@ -1,6 +1,7 @@
 package cuesheet
 
 import (
+	"errors"
 	"fmt"
 	"go.senan.xyz/gonic/mime"
 	"go.senan.xyz/gonic/scanner/tags"
@@ -8,6 +9,14 @@ import (
 	"strconv"
 	"strings"
 	"time"
+)
+
+var (
+	ErrorInvalidCUE       = errors.New("invalid CUE")
+	ErrorInvalidMediaPath = errors.New("invalid media paths")
+	ErrorInputParams      = errors.New("invalid input params")
+	ErrorInvalidCallback  = errors.New("invalid callback")
+	ErrorUnsupportedMedia = errors.New("unsupported media")
 )
 
 type tagsMapper struct {
@@ -20,15 +29,15 @@ type tagsMapper struct {
 
 func MakeDataMapper(aCue *Cuesheet, tagsReader tags.Reader, aAbsDir string, mediaPaths []string, parsers []tags.MetaDataProvider) (tags.MetaDataProvider, error) {
 	if aCue == nil {
-		return nil, fmt.Errorf("invalid CUE")
+		return nil, ErrorInvalidCUE
 	}
 	if parsers == nil {
 		if len(mediaPaths) > 0 {
-			return nil, fmt.Errorf("invalid media paths")
+			return nil, ErrorInvalidMediaPath
 		}
 		for _, file := range aCue.File {
 			if mime.TypeByAudioExtension(filepath.Ext(file.FileName)) == "" {
-				return nil, fmt.Errorf("unsupported media")
+				return nil, ErrorUnsupportedMedia
 			}
 			mediaPath := filepath.Join(aAbsDir, file.FileName)
 			parser, err := tagsReader.Read(mediaPath)
@@ -41,7 +50,7 @@ func MakeDataMapper(aCue *Cuesheet, tagsReader tags.Reader, aAbsDir string, medi
 	}
 
 	if len(mediaPaths) != len(parsers) || len(aCue.File) != len(parsers) {
-		return nil, fmt.Errorf("invalid input params")
+		return nil, ErrorInputParams
 	}
 
 	return &tagsMapper{
@@ -59,7 +68,7 @@ type TrackCallback func(absMediaPath string, trackIndex int, trackOffset int, re
 
 func (mapper *tagsMapper) ForEachTrack(callback TrackCallback) error {
 	if callback == nil {
-		return fmt.Errorf("invalid callback")
+		return ErrorInvalidCallback
 	}
 	var file File
 	for mapper.fileIndex, file = range mapper.cue.File {
@@ -96,7 +105,8 @@ func (mapper *tagsMapper) AlbumArtist() string {
 			if artist == "" {
 				continue
 			}
-			if result != "" && strings.ToLower(result) != strings.ToLower(artist) {
+
+			if result != "" && strings.EqualFold(result, artist) {
 				return "VA"
 			}
 			result = artist

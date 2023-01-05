@@ -2,7 +2,6 @@ package cuesheet
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/stretchr/testify/require"
 	"os"
 	"path/filepath"
@@ -60,7 +59,7 @@ func TestFrameFromStringToString(t *testing.T) {
 		},
 		{
 			input: "0:0:0",
-			err:   fmt.Errorf("invalid frame format"),
+			err:   ErrorFrameFormat,
 		},
 		{
 			input:  "00:00:00",
@@ -80,7 +79,7 @@ func TestFrameFromStringToString(t *testing.T) {
 		},
 		{
 			input:  "02:59:01",
-			output: Frame(0xaa4e8),
+			output: Frame(0x3472),
 		},
 		{
 			input:  "01:01:01",
@@ -89,23 +88,23 @@ func TestFrameFromStringToString(t *testing.T) {
 		{
 			input:  "00:01:75",
 			output: Frame(0),
-			err:    fmt.Errorf("invalid frame format"),
+			err:    ErrorFrameFormat,
 		},
 		{
 			input:  "invalid",
 			output: Frame(0),
-			err:    fmt.Errorf("invalid frame format"),
+			err:    ErrorFrameFormat,
 		},
 		{
 			input:  "001:60:73",
 			output: Frame(0),
-			err:    fmt.Errorf("invalid frame format"),
+			err:    ErrorFrameFormat,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
-			result, err := FrameFromString(test.input)
+			result, err := frameFromString(test.input)
 			if test.err != nil {
 				require.EqualError(t, err, test.err.Error())
 			} else {
