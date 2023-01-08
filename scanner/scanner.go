@@ -453,7 +453,9 @@ func (s *Scanner) populateAlbumFromExternalCueSheet(tx *db.DB, c *Context, music
 
 	cueMapper, err := cuesheet.MakeDataMapper(cue, s.tagger, filepath.Dir(absPath), s.preferEmbeddedCue, nil, nil)
 	if err != nil {
-		log.Printf("can't read CUE metadata '%s', %v", filepath.Base(absPath), err)
+		if !errors.Is(err, cuesheet.ErrorSkipCUE) {
+			log.Printf("can't read CUE metadata '%s', %v", filepath.Base(absPath), err)
+		}
 		return nil, nil
 	}
 

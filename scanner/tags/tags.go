@@ -1,23 +1,33 @@
 package tags
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 
-	"github.com/eHoward1996/audiotags"
+	"github.com/psyton/audiotags"
 )
 
 var _ MetaDataProvider = (*Tagger)(nil)
 
 type TagReader struct{}
 
+var ErrorUnsupportedMedia = errors.New("unsupported media")
+
 const UnknownArtist = "Unknown Artist"
 const UnknownAlbum = "Unknown Album"
 const UnknownGenre = "Unknown Genre"
 
 func (*TagReader) Read(abspath string) (MetaDataProvider, error) {
-	raw, props, err := audiotags.Read(abspath)
-	return &Tagger{raw, props}, err
+	f, err := audiotags.Open(abspath)
+	if err != nil {
+		return nil, err
+	}
+	if !f.HasMedia() {
+		return nil, ErrorUnsupportedMedia
+	}
+
+	return &Tagger{f.ReadTags(), f.ReadAudioProperties()}, nil
 }
 
 type Tagger struct {

@@ -7,6 +7,7 @@ package transcode
 import (
 	"context"
 	"fmt"
+	"go.senan.xyz/gonic/mime"
 	"io"
 	"os/exec"
 	"time"
@@ -27,6 +28,7 @@ var UserProfiles = map[string]Profile{
 	"opus_128_car": Opus128RGLoud,
 	"opus_128":     Opus128,
 	"opus_128_rg":  Opus128RG,
+	"raw":          Raw,
 }
 
 // Store as simple strings, since we may let the user provide their own profiles soon
@@ -41,6 +43,8 @@ var (
 	Opus128       = NewProfile("audio/ogg", "opus", 128, `ffmpeg -v 0 -i <file> -map 0:a:0 -vn -b:a <bitrate> -c:a libopus -vbr on -f opus -`)
 	Opus128RG     = NewProfile("audio/ogg", "opus", 128, `ffmpeg -v 0 -i <file> -map 0:a:0 -vn -b:a <bitrate> -c:a libopus -vbr on -af "volume=replaygain=track:replaygain_preamp=6dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f opus -`)
 	Opus128RGLoud = NewProfile("audio/ogg", "opus", 128, `ffmpeg -v 0 -i <file> -map 0:a:0 -vn -b:a <bitrate> -c:a libopus -vbr on -af "aresample=96000:resampler=soxr, volume=replaygain=track:replaygain_preamp=15dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f opus -`)
+
+	Raw = NewProfile("", "", 0, `ffmpeg -v 0 -i <file> -map 0:a:0 -vn -c:a copy -`)
 )
 
 type BitRate uint // kilobits/s
@@ -69,6 +73,12 @@ func WithBitrate(p Profile, bitRate BitRate) Profile {
 
 func WithSeek(p Profile, seek time.Duration) Profile {
 	p.seek = seek
+	return p
+}
+
+func WithSource(p Profile, suffix string) Profile {
+	p.suffix = suffix
+	p.mime = mime.TypeByAudioExtension(suffix)
 	return p
 }
 

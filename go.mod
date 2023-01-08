@@ -7,7 +7,6 @@ require (
 	github.com/dexterlb/mpvipc v0.0.0-20210824102722-5d27ef06b6c3
 	github.com/disintegration/imaging v1.6.2
 	github.com/dustin/go-humanize v1.0.0
-	github.com/eHoward1996/audiotags v0.0.0-20200516204304-58d5ffddcc9c
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/google/uuid v1.3.0
@@ -25,9 +24,10 @@ require (
 	github.com/oklog/run v1.1.0
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c
 	github.com/peterbourgon/ff v1.7.1
+	github.com/psyton/audiotags v0.0.0-20230108094817-78243360e50a
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
 	github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.8.1
 	golang.org/x/exp v0.0.0-20221114191408-850992195362
 	gopkg.in/gormigrate.v1 v1.6.0
 )
@@ -63,5 +63,5 @@ require (
 	golang.org/x/text v0.4.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

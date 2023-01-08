@@ -27,6 +27,8 @@ import (
 //   b) return a non-nil spec.Response
 //  _but not both_
 
+const rawProfile = "raw"
+
 func streamGetTransPref(dbc *db.DB, userID int, client string) (*db.TranscodePreference, error) {
 	var pref db.TranscodePreference
 	err := dbc.
@@ -264,10 +266,12 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 	_, err = os.Stat(cachePath)
 	switch {
 	case os.IsNotExist(err):
+		// TODO: get image, not path
 		coverPath, err := coverGetPath(c.DB, c.PodcastsPath, id)
 		if err != nil {
 			return spec.NewError(10, "couldn't find cover `%s`: %v", id, err)
 		}
+		// TODO: save image, not path
 		if err := coverScaleAndSave(coverPath, cachePath, size); err != nil {
 			log.Printf("error scaling cover: %v", err)
 			return nil
@@ -312,40 +316,48 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	maxBitRate, _ := params.GetInt("maxBitRate")
 	format, _ := params.Get("format")
 
-	if format == "raw" || maxBitRate >= file.AudioBitrate() {
-		// TODO: raw with CUE need more work, copy stream for subTrack
-		http.ServeFile(w, r, file.AbsPath())
-		return nil
-	}
-
-	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return spec.NewError(0, "couldn't find transcode preference: %v", err)
-	}
-
 	profileName := ""
 	subTrack := false
-	if pref == nil {
+
+	if format == rawProfile || (maxBitRate >= file.AudioBitrate() && file.AudioBitrate() > 0) {
 		if !file.IsSubTrack() {
 			http.ServeFile(w, r, file.AbsPath())
 			return nil
 		}
 		subTrack = true
-		profileName = "opus_128_rg"
+		profileName = rawProfile
 	} else {
-		profileName = pref.Profile
+		pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return spec.NewError(0, "couldn't find transcode preference: %v", err)
+		}
+		if pref == nil {
+			if !file.IsSubTrack() {
+				http.ServeFile(w, r, file.AbsPath())
+				return nil
+			}
+			subTrack = true
+			profileName = "opus_128"
+		} else {
+			profileName = pref.Profile
+		}
 	}
 
 	profile, ok := transcode.UserProfiles[profileName]
 	if !ok {
-		return spec.NewError(0, "unknown transcode user profile %q", pref.Profile)
+		return spec.NewError(0, "unknown transcode user profile %q", profileName)
 	}
-	if maxBitRate > 0 && int(profile.BitRate()) > maxBitRate {
+
+	if profileName != rawProfile && maxBitRate > 0 && int(profile.BitRate()) > maxBitRate {
 		profile = transcode.WithBitrate(profile, transcode.BitRate(maxBitRate))
 	}
 
 	if subTrack {
 		profile = transcode.WithInterval(profile, file.Seek(), file.Duration())
+	}
+
+	if profileName == rawProfile {
+		profile = transcode.WithSource(profile, file.Ext())
 	}
 
 	log.Printf("trancoding to %q with max bitrate %dk", profile.MIME(), profile.BitRate())

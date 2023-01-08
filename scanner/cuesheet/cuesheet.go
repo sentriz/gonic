@@ -379,7 +379,7 @@ func WriteCue(w io.Writer, cuesheet *Cuesheet) error {
 func readString(s *string) string {
 	*s = strings.TrimLeft(*s, delims)
 
-	if isQuoted(*s) {
+	if len(*s) > 0 && isQuoted(*s) {
 		v := unquote(*s)
 		*s = (*s)[len(v)+2:]
 		return v
@@ -413,6 +413,9 @@ func formatTrackNumber(n uint) string {
 }
 
 func isQuoted(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
 	return s[0] == '"' || s[0] == '\''
 }
 
