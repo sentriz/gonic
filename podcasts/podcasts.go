@@ -168,7 +168,7 @@ func (p *Podcasts) AddNewEpisodes(podcast *db.Podcast, items []*gofeed.Item) err
 	for _, item := range getEntriesAfterDate(items, *podcastEpisode.PublishDate) {
 		episode, err := p.AddEpisode(podcast.ID, item)
 		if errors.Is(err, ErrNoAudioInFeedItem) {
-			log.Println("failed to find audio in feed item, skipping")
+			log.Printf("failed to find audio in feed (%s, %s) item, skipping", podcast.Title, item.Title)
 			continue
 		}
 		if err != nil {
@@ -234,8 +234,13 @@ func (p *Podcasts) AddEpisode(podcastID int, item *gofeed.Item) (*db.PodcastEpis
 	return nil, ErrNoAudioInFeedItem
 }
 
-func isAudio(mediaType, url string) bool {
-	return mime.TypeByAudioExtension(path.Ext(url)) != ""
+func isAudio(mediaType, rawItemURL string) (bool, error) {
+	itemURL, err := url.Parse(rawItemURL)
+	if err != nil {
+		return false, err
+	}
+
+	return mime.TypeByAudioExtension(path.Ext(itemURL.Path)) != "", nil
 }
 
 func itemToEpisode(podcastID, size, duration int, audio string,
@@ -254,7 +259,7 @@ func itemToEpisode(podcastID, size, duration int, audio string,
 
 func (p *Podcasts) findEnclosureAudio(podcastID, duration int, item *gofeed.Item) (*db.PodcastEpisode, bool) {
 	for _, enc := range item.Enclosures {
-		if !isAudio(enc.Type, enc.URL) {
+		if t, err := isAudio(enc.Type, enc.URL); !t || err != nil {
 			continue
 		}
 		size, _ := strconv.Atoi(enc.Length)
@@ -269,7 +274,7 @@ func (p *Podcasts) findMediaAudio(podcastID, duration int, item *gofeed.Item) (*
 		return nil, false
 	}
 	for _, ext := range extensions {
-		if !isAudio(ext.Attrs["type"], ext.Attrs["url"]) {
+		if t, err := isAudio(ext.Attrs["type"], ext.Attrs["url"]); !t || err != nil {
 			continue
 		}
 		return itemToEpisode(podcastID, 0, duration, ext.Attrs["url"], item), true
