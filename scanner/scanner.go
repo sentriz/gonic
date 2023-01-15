@@ -601,6 +601,7 @@ func populateTrack(tx *db.DB, album *db.Album, track *db.Track, tagsReader tags.
 	track.TagTrackArtist = tagsReader.Artist()
 	track.TagTrackNumber = tagsReader.TrackNumber()
 	track.TagDiscNumber = tagsReader.DiscNumber()
+	track.TagTotalDiscs = tagsReader.TotalDiscs()
 	track.TagBrainzID = tagsReader.BrainzID()
 
 	track.Length = tagsReader.Length()   // these two should be calculated

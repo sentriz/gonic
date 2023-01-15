@@ -46,8 +46,17 @@ func (t *Tagger) first(keys ...string) string {
 
 func (t *Tagger) firstInt(sep string, keys ...string) int {
 	for _, key := range keys {
-		if v := intSep(t.raw[key], sep); v > 0 {
-			return v
+		if v := intSep(t.raw[key], sep); v[0] > 0 {
+			return v[0]
+		}
+	}
+	return 0
+}
+
+func (t *Tagger) secondInt(sep string, keys ...string) int {
+	for _, key := range keys {
+		if v := intSep(t.raw[key], sep); v[1] > 0 {
+			return v[1]
 		}
 	}
 	return 0
@@ -68,6 +77,13 @@ func (t *Tagger) Length() int           { return t.props.LengthMs }
 func (t *Tagger) Bitrate() int          { return t.props.Bitrate }
 func (t *Tagger) Year() int             { return t.firstInt("-", "originaldate", "date", "year") }
 func (t *Tagger) CueSheet() string      { return t.first("cuesheet") }
+func (t *Tagger) TotalDiscs() int {
+	result := t.secondInt("/" /* eg. 1/2  */, "discnumber")
+	if result == 0 {
+		result = t.firstInt("/", "totaldiscs")
+	}
+	return result
+}
 
 func (t *Tagger) SomeAlbum() string  { return First(UnknownAlbum, t.Album()) }
 func (t *Tagger) SomeArtist() string { return First(UnknownArtist, t.Artist()) }
@@ -94,6 +110,7 @@ type MetaDataProvider interface {
 	Genre() string
 	TrackNumber() int
 	DiscNumber() int
+	TotalDiscs() int
 	Length() int
 	Bitrate() int
 	Year() int
@@ -104,16 +121,20 @@ type MetaDataProvider interface {
 	SomeGenre() string
 }
 
-func intSep(in, sep string) int {
+func intSep(in, sep string) []int {
+	result := []int{0, 0}
 	if in == "" {
-		return 0
+		return result
 	}
-	start := strings.SplitN(in, sep, 2)[0]
-	out, err := strconv.Atoi(start)
-	if err != nil {
-		return 0
+	for i, val := range strings.SplitN(in, sep, 2) {
+		intValue, err := strconv.Atoi(val)
+		if err != nil {
+			return result
+		}
+		result[i] = intValue
 	}
-	return out
+
+	return result
 }
 
 func First(or string, strs ...string) string {

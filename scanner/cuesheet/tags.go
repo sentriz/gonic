@@ -20,6 +20,8 @@ var (
 	ErrorSkipCUE          = errors.New("skip CUE")
 )
 
+var _ tags.MetaDataProvider = (*tagsMapper)(nil)
+
 type tagsMapper struct {
 	cue          *Cuesheet
 	fileIndex    int
@@ -138,8 +140,11 @@ func (mapper *tagsMapper) TrackNumber() int {
 }
 
 func (mapper *tagsMapper) DiscNumber() int {
-	return mapper.cue.Rem.DiskNumber()
+	return mapper.cue.Rem.DiscNumber()
+}
 
+func (mapper *tagsMapper) TotalDiscs() int {
+	return mapper.cue.Rem.TotalDiscs()
 }
 
 func (mapper *tagsMapper) Length() int {

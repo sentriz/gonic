@@ -349,16 +349,16 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	}
 
 	if profileName != rawProfile && maxBitRate > 0 && int(profile.BitRate()) > maxBitRate {
-		profile = transcode.WithBitrate(profile, transcode.BitRate(maxBitRate))
+		profile.SetBitrate(transcode.BitRate(maxBitRate))
 	}
 
 	if subTrack {
-		profile = transcode.WithInterval(profile, file.Seek(), file.Duration())
+		profile.SetInterval(file.Seek(), file.Duration())
+		if profileName == rawProfile {
+			profile.SetSource(file.Ext())
+		}
 	}
-
-	if profileName == rawProfile {
-		profile = transcode.WithSource(profile, file.Ext())
-	}
+	profile.SetMetadata(file.Metadata())
 
 	log.Printf("trancoding to %q with max bitrate %dk", profile.MIME(), profile.BitRate())
 

@@ -367,6 +367,7 @@ func (m *Tags) AlbumBrainzID() string { return "" }
 func (m *Tags) Genre() string         { return m.RawGenre }
 func (m *Tags) TrackNumber() int      { return 1 }
 func (m *Tags) DiscNumber() int       { return 1 }
+func (m *Tags) TotalDiscs() int       { return 0 }
 func (m *Tags) Year() int             { return 2021 }
 
 func (m *Tags) Length() int  { return firstInt(100000, m.RawLength) }

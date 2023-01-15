@@ -7,6 +7,7 @@ package db
 // https://www.db-fiddle.com/f/wJ7z8L7mu6ZKaYmWk1xr1p/5
 
 import (
+	"fmt"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -88,6 +89,7 @@ type AudioFile interface {
 	Duration() time.Duration
 	AbsPath() string
 	IsSubTrack() bool
+	Metadata() map[string]string
 }
 
 type Track struct {
@@ -110,6 +112,7 @@ type Track struct {
 	TagTrackArtist string   `sql:"default: null"`
 	TagTrackNumber int      `sql:"default: null"`
 	TagDiscNumber  int      `sql:"default: null"`
+	TagTotalDiscs  int      `sql:"default: null"`
 	TagBrainzID    string   `sql:"default: null"`
 	TrackStar      *TrackStar
 	TrackRating    *TrackRating
@@ -197,12 +200,38 @@ func (t *Track) RelPath() string {
 	)
 }
 
-func (t *Track) GenreStrings() []string {
-	strs := make([]string, 0, len(t.Genres))
-	for _, genre := range t.Genres {
-		strs = append(strs, genre.Name)
+func (t *Track) Metadata() map[string]string {
+	if !t.IsSubTrack() {
+		return nil
 	}
-	return strs
+	result := map[string]string{
+		"cuesheet": "",
+		"CUESHEET": "",
+		"Cuesheet": "",
+		"title":    t.TagTitle,
+		"artist":   t.TagTrackArtist,
+		"album":    t.Album.TagTitle,
+		"date":     fmt.Sprintf("%d", t.Album.TagYear),
+		"genre":    strings.Join(t.GenreStrings(), ", "),
+	}
+	if t.TagTrackNumber > 0 {
+		result["track"] = fmt.Sprintf("%d/%d", t.TagTrackNumber, len(t.Album.Tracks))
+	}
+	if t.TagDiscNumber > 0 && t.TagTotalDiscs > 0 {
+		result["disc"] = fmt.Sprintf("%d/%d", t.TagDiscNumber, t.TagTotalDiscs)
+	}
+	if t.Album.TagArtistID != t.ArtistID {
+		result["album_artist"] = t.Album.TagArtist.Name
+	}
+	return result
+}
+
+func (t *Track) GenreStrings() []string {
+	strGenres := make([]string, 0, len(t.Genres))
+	for _, genre := range t.Genres {
+		strGenres = append(strGenres, genre.Name)
+	}
+	return strGenres
 }
 
 type User struct {
@@ -483,6 +512,10 @@ func (pe *PodcastEpisode) Ext() string {
 
 func (pe *PodcastEpisode) MIME() string {
 	return mime.TypeByExtension(filepath.Ext(pe.Filename))
+}
+
+func (pe *PodcastEpisode) Metadata() map[string]string {
+	return nil
 }
 
 type Bookmark struct {

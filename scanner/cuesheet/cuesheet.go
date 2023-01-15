@@ -22,8 +22,8 @@ const (
 	remRGTrackGain   = "REPLAYGAIN_TRACK_GAIN"
 	remRGTrackPeak   = "REPLAYGAIN_TRACK_PEAK"
 	remMusicBrainzID = "MUSICBRAINZID"
-	remDiskNumber    = "DISKNUMBER"
-	remTotalDisks    = "TOTALDISKS"
+	remDiscNumber    = "DISCNUMBER"
+	remTotalDiscs    = "TOTALDISCS"
 )
 
 // Frame represent track frame
@@ -569,8 +569,8 @@ func (rem *RemData) MusicBrainzID() string {
 	return ""
 }
 
-func (rem *RemData) DiskNumber() int {
-	s, ok := (*rem)[remDiskNumber]
+func (rem *RemData) DiscNumber() int {
+	s, ok := (*rem)[remDiscNumber]
 	if ok {
 		result, err := strconv.Atoi(s)
 		if err != nil {
@@ -581,8 +581,8 @@ func (rem *RemData) DiskNumber() int {
 	return 1
 }
 
-func (rem *RemData) TotalDisks() int {
-	s, ok := (*rem)[remTotalDisks]
+func (rem *RemData) TotalDiscs() int {
+	s, ok := (*rem)[remTotalDiscs]
 	if ok {
 		result, err := strconv.Atoi(s)
 		if err != nil {
