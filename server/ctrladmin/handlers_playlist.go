@@ -41,14 +41,15 @@ func playlistParseLine(c *Controller, absPath string) (int, error) {
 }
 
 func playlistCheckContentType(contentType string) bool {
-	contentType = strings.ToLower(contentType)
-	known := map[string]struct{}{
-		"audio/x-mpegurl":          {},
-		"audio/mpegurl":            {},
-		"application/octet-stream": {},
+	switch ct := strings.ToLower(contentType); ct {
+	case
+		"audio/x-mpegurl",
+		"audio/mpegurl",
+		"application/x-mpegurl",
+		"application/octet-stream":
+		return true
 	}
-	_, ok := known[contentType]
-	return ok
+	return false
 }
 
 func playlistParseUpload(c *Controller, userID int, header *multipart.FileHeader) ([]string, bool) {
