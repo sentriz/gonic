@@ -1,7 +1,52 @@
-music-path        <path to your music dir>
-podcast-path      <path to your podcasts dir>
-cache-path        <path to cache dir>
-db-path           /var/lib/gonic/gonic.db
-jukebox-enabled   false
-listen-addr       127.0.0.1:4747
-scan-interval     0
+# This is the gonic server system-wide configuration file. For other
+# administrative and per user settings go th the web UI.
+#
+# The strategy used for options in the default config shipped with gonic is to
+# specify options with their default value where possible, and leave optional
+# ones commented. Uncommented options override the default value. Options that
+# are mandatory and need setting before first run have a placeholder for their
+# values in <angle brackets>.
+
+# Interface and port to listen on. Defaults to 0.0.0.0:4747
+listen-addr                 127.0.0.1:4747
+
+# HTTP(S) request logging
+#http-log                    true
+# URL path prefix to use if behind reverse proxy
+#proxy-prefix                <prefix>
+
+# Secure connection settings. Recommended to set up unless gonic sits behing an
+# SSL enabled reverse proxy server. Disabled by default.
+#tls-cert                    <path to TLS certificatie>
+#tls-key                     <path to TLS private key>
+
+# gonic's internal state database location
+db-path                     /var/lib/gonic/gonic.db
+
+# Path to music files. Must be specified at least once, but can be specified
+# multiple times if the collection is split into different
+# directories. E.g.:
+# music-path                  /srv/audio/music
+music-path                  <path to your music dir>
+
+# Path to downloaded podcast files. Must be specified. E.g.:
+# podcast-path                /var/cache/podcast
+podcast-path                <path to your podcasts dir>
+
+# Age (in days) to purge podcast episodes if not accessed. Disabled by default.
+#podcast-purge-age           0
+
+# Directory where transcoded audio files and covers are stored. It's safe to
+# delete contents periodically (see tmpfilesd configuration), as it will be
+# regenerated.
+cache-path                  <path to cache dir>
+
+# Interval (in minutes) to check for new music. Default: don't scan
+#scan-interval               0
+#scan-at-start-enabled       false
+#scan-watcher-enabled        false
+#jukebox-enabled             false
+#jukebox-mpv-extra-args      <extra command line arguments to pass to the jukebox mpv daemon>
+
+# A string or character to split genre tags on for multi-genre support (e.g. ;)
+#genre-split                 ;
