@@ -39,7 +39,7 @@ podcast-path                <path to your podcasts dir>
 # Directory where transcoded audio files and covers are stored. It's safe to
 # delete contents periodically (see tmpfilesd configuration), as it will be
 # regenerated.
-cache-path                  <path to cache dir>
+cache-path                  /var/cache/gonic
 
 # Interval (in minutes) to check for new music. Default: don't scan
 #scan-interval               0

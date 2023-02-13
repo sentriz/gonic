@@ -1,12 +1,14 @@
 [Unit]
 Description=gonic service
-ConditionPathExists=/var/lib/gonic/
 After=network.target
 
 [Service]
 Type=simple
 User=gonic
 Group=gonic
+
+StateDirectory=gonic
+CacheDirectory=gonic
 
 Restart=on-failure
 RestartSec=10
