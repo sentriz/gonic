@@ -186,7 +186,10 @@ func (s *Scanner) ExecuteWatch() error {
 				t.Reset(10 * time.Second)
 			}
 			fileInfo, err := os.Stat(event.Name)
-			if err != nil && fileInfo.IsDir() {
+			if err != nil {
+				break
+			}
+			if fileInfo.IsDir() {
 				dirName = event.Name
 			} else {
 				dirName = filepath.Dir(event.Name)
