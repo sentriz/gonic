@@ -1,6 +1,7 @@
 package ctrlsubsonic
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"math"
@@ -204,6 +205,42 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	return sub
 }
 
+func toLikeStrm(vs []string, col string) (string, []sql.NamedArg) {
+	qparts := []string{}
+	qparams := []sql.NamedArg{}
+	for idx, v := range vs {
+		qparts = append(qparts, fmt.Sprintf("%s LIKE @%s_%d OR %s_u_dec LIKE @%s_%d", col, col, idx, col, col, idx))
+		qparams = append(qparams, sql.Named(fmt.Sprintf("%s_%d", col, idx), fmt.Sprintf("%%%s%%", strings.Trim(v, `*"' `))))
+	}
+	return strings.Join(qparts, " OR "), qparams
+}
+
+func toOrIds(vs []int, col string) (string, []sql.NamedArg) {
+	qparts := []string{}
+	qparams := []sql.NamedArg{}
+	for idx, v := range vs {
+		qparts = append(qparts, fmt.Sprintf("%s = @%s_%d", col, col, idx))
+		qparams = append(qparams, sql.Named(fmt.Sprintf("%s_%d", col, idx), v))
+	}
+	return strings.Join(qparts, " OR "), qparams
+}
+
+func toArtistIds(res *spec.SearchResultThree) []int {
+	ids := []int{}
+	for _, artist := range res.Artists {
+		ids = append(ids, artist.ID.Value)
+	}
+	return ids
+}
+
+func toAlbumIds(res *spec.SearchResultThree) []int {
+	ids := []int{}
+	for _, album := range res.Albums {
+		ids = append(ids, album.ID.Value)
+	}
+	return ids
+}
+
 func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
@@ -211,24 +248,26 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide a `query` parameter")
 	}
-	query = fmt.Sprintf("%%%s%%", strings.Trim(query, `*"'`))
-
+	query_parts := append(strings.Split(strings.Trim(query, " "), " "), []string{}...)
 	results := &spec.SearchResultThree{}
 
 	// search artists
+	qsql, qparams := toLikeStrm(query_parts, "name")
 	var artists []*db.Artist
 	q := c.DB.
 		Select("*, count(albums.id) album_count").
 		Group("artists.id").
-		Where("name LIKE ? OR name_u_dec LIKE ?", query, query).
+		Where(qsql, qparams).
 		Joins("JOIN albums ON albums.tag_artist_id=artists.id").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
 		Offset(params.GetOrInt("artistOffset", 0)).
 		Limit(params.GetOrInt("artistCount", 20))
+
 	if m := getMusicFolder(c.MusicPaths, params); m != "" {
 		q = q.Where("albums.root_dir=?", m)
 	}
+
 	if err := q.Find(&artists).Error; err != nil {
 		return spec.NewError(0, "find artists: %v", err)
 	}
@@ -237,45 +276,58 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	}
 
 	// search albums
+	qal_sql, qalparams := toLikeStrm(query_parts, "tag_title")
 	var albums []*db.Album
 	q = c.DB.
 		Preload("TagArtist").
 		Preload("Genres").
 		Preload("AlbumStar", "user_id=?", user.ID).
 		Preload("AlbumRating", "user_id=?", user.ID).
-		Where("tag_title LIKE ? OR tag_title_u_dec LIKE ?", query, query).
-		Offset(params.GetOrInt("albumOffset", 0)).
-		Limit(params.GetOrInt("albumCount", 20))
+		Where(qal_sql, qalparams)
+	if artist_ids := toArtistIds(results); len(artist_ids) > 0 {
+		qsql, qparams := toOrIds(artist_ids, "tag_artist_id")
+		q = q.Where(qsql, qparams)
+	}
 	if m := getMusicFolder(c.MusicPaths, params); m != "" {
 		q = q.Where("root_dir=?", m)
 	}
+	q = q.Offset(params.GetOrInt("albumOffset", 0)).
+		Limit(params.GetOrInt("albumCount", 20))
 	if err := q.Find(&albums).Error; err != nil {
 		return spec.NewError(0, "find albums: %v", err)
 	}
+
 	for _, a := range albums {
 		results.Albums = append(results.Albums, spec.NewAlbumByTags(a, a.TagArtist))
 	}
 
 	// search tracks
 	var tracks []*db.Track
+	qtr_sql, qtrparams := toLikeStrm(query_parts, "tag_title")
 	q = c.DB.
 		Preload("Album").
 		Preload("Album.TagArtist").
 		Preload("Genres").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
-		Where("tag_title LIKE ? OR tag_title_u_dec LIKE ?", query, query).
-		Offset(params.GetOrInt("songOffset", 0)).
-		Limit(params.GetOrInt("songCount", 20))
+		Where(qtr_sql, qtrparams)
+	if album_ids := toAlbumIds(results); album_ids != nil {
+		qsql_al, qparams_al := toOrIds(album_ids, "album_id")
+		q = q.Where(qsql_al, qparams_al)
+	}
+	if artist_ids := toArtistIds(results); artist_ids != nil {
+		qsql_ar, qparams_ar := toOrIds(artist_ids, "artist_id")
+		q = q.Where(qsql_ar, qparams_ar)
+	}
 	if m := getMusicFolder(c.MusicPaths, params); m != "" {
 		q = q.
 			Joins("JOIN albums ON albums.id=tracks.album_id").
 			Where("albums.root_dir=?", m)
 	}
+	q = q.Offset(params.GetOrInt("songOffset", 0)).Limit(params.GetOrInt("songCount", 20))
 	if err := q.Find(&tracks).Error; err != nil {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
-
 	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
 
 	for _, t := range tracks {
