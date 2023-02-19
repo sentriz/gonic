@@ -17,3 +17,5 @@ gonicembed
 *.swp
 .tags*
 *.test
+.envrc
+vendor/

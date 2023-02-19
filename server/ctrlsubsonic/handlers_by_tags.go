@@ -252,12 +252,12 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	results := &spec.SearchResultThree{}
 
 	// search artists
-	qsql, qparams := toLikeStrm(queryParts, "name")
+	qSql, qParams := toLikeStrm(queryParts, "name")
 	var artists []*db.Artist
 	q := c.DB.
 		Select("*, count(albums.id) album_count").
 		Group("artists.id").
-		Where(qsql, qparams).
+		Where(qSql, qParams).
 		Joins("JOIN albums ON albums.tag_artist_id=artists.id").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
@@ -276,7 +276,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	}
 
 	// search albums
-	qalSql, qalParams := toLikeStrm(query_parts, "tag_title")
+	qalSql, qalParams := toLikeStrm(queryParts, "tag_title")
 	var albums []*db.Album
 	q = c.DB.
 		Preload("TagArtist").
@@ -303,14 +303,14 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 
 	// search tracks
 	var tracks []*db.Track
-	qtr_sql, qtrparams := toLikeStrm(query_parts, "tag_title")
+	qtrSql, qtrParams := toLikeStrm(queryParts, "tag_title")
 	q = c.DB.
 		Preload("Album").
 		Preload("Album.TagArtist").
 		Preload("Genres").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
-		Where(qtr_sql, qtrparams)
+		Where(qtrSql, qtrParams)
 	if albumIds := toAlbumIds(results); albumIds != nil {
 		qSqlAl, qParamsAl := toOrIds(albumIds, "album_id")
 		q = q.Where(qSqlAl, qParamsAl)
