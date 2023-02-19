@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"sync/atomic"
-	"syscall"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
@@ -347,7 +346,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 		if err != nil {
 			return fmt.Errorf("populate album artist: %w", err)
 		}
-		if err := populateAlbum(tx, album, albumArtist, trags, stat.ModTime(), statCreateTime(stat)); err != nil {
+		if err := populateAlbum(tx, album, albumArtist, trags, stat.ModTime()); err != nil {
 			return fmt.Errorf("populate album: %w", err)
 		}
 		if err := populateAlbumGenres(tx, album, genreIDs); err != nil {
@@ -368,7 +367,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 	return nil
 }
 
-func populateAlbum(tx *db.DB, album *db.Album, albumArtist *db.Artist, trags tags.Parser, modTime, createTime time.Time) error {
+func populateAlbum(tx *db.DB, album *db.Album, albumArtist *db.Artist, trags tags.Parser, modTime time.Time) error {
 	albumName := trags.SomeAlbum()
 	album.TagTitle = albumName
 	album.TagTitleUDec = decoded(albumName)
@@ -377,9 +376,7 @@ func populateAlbum(tx *db.DB, album *db.Album, albumArtist *db.Artist, trags tag
 	album.TagArtist = albumArtist
 
 	album.ModifiedAt = modTime
-	if !createTime.IsZero() {
-		album.CreatedAt = createTime
-	}
+	album.CreatedAt = modTime
 
 	if err := tx.Save(&album).Error; err != nil {
 		return fmt.Errorf("saving album: %w", err)
@@ -632,15 +629,3 @@ func (c *Context) TracksMissing() int  { return len(c.tracksMissing) }
 func (c *Context) AlbumsMissing() int  { return len(c.albumsMissing) }
 func (c *Context) ArtistsMissing() int { return c.artistsMissing }
 func (c *Context) GenresMissing() int  { return c.genresMissing }
-
-func statCreateTime(info fs.FileInfo) time.Time {
-	stat, ok := info.Sys().(*syscall.Stat_t)
-	if !ok {
-		return time.Time{}
-	}
-	if stat.Ctim.Sec == 0 {
-		return time.Time{}
-	}
-	//nolint:unconvert // Ctim.Sec/Nsec is int32 on arm/386, etc
-	return time.Unix(int64(stat.Ctim.Sec), int64(stat.Ctim.Nsec))
-}
