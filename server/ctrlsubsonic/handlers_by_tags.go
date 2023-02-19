@@ -248,11 +248,11 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide a `query` parameter")
 	}
-	query_parts := append(strings.Split(strings.Trim(query, " "), " "), []string{}...)
+	queryParts := append(strings.Split(strings.Trim(query, " "), " "), []string{}...)
 	results := &spec.SearchResultThree{}
 
 	// search artists
-	qsql, qparams := toLikeStrm(query_parts, "name")
+	qsql, qparams := toLikeStrm(queryParts, "name")
 	var artists []*db.Artist
 	q := c.DB.
 		Select("*, count(albums.id) album_count").
@@ -276,17 +276,17 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	}
 
 	// search albums
-	qal_sql, qalparams := toLikeStrm(query_parts, "tag_title")
+	qalSql, qalParams := toLikeStrm(query_parts, "tag_title")
 	var albums []*db.Album
 	q = c.DB.
 		Preload("TagArtist").
 		Preload("Genres").
 		Preload("AlbumStar", "user_id=?", user.ID).
 		Preload("AlbumRating", "user_id=?", user.ID).
-		Where(qal_sql, qalparams)
-	if artist_ids := toArtistIds(results); len(artist_ids) > 0 {
-		qsql, qparams := toOrIds(artist_ids, "tag_artist_id")
-		q = q.Where(qsql, qparams)
+		Where(qalSql, qalParams)
+	if artistIds := toArtistIds(results); len(artistIds) > 0 {
+		qSql, qParams := toOrIds(artistIds, "tag_artist_id")
+		q = q.Where(qSql, qParams)
 	}
 	if m := getMusicFolder(c.MusicPaths, params); m != "" {
 		q = q.Where("root_dir=?", m)
@@ -311,13 +311,13 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Where(qtr_sql, qtrparams)
-	if album_ids := toAlbumIds(results); album_ids != nil {
-		qsql_al, qparams_al := toOrIds(album_ids, "album_id")
-		q = q.Where(qsql_al, qparams_al)
+	if albumIds := toAlbumIds(results); albumIds != nil {
+		qSqlAl, qParamsAl := toOrIds(albumIds, "album_id")
+		q = q.Where(qSqlAl, qParamsAl)
 	}
-	if artist_ids := toArtistIds(results); artist_ids != nil {
-		qsql_ar, qparams_ar := toOrIds(artist_ids, "artist_id")
-		q = q.Where(qsql_ar, qparams_ar)
+	if artistIds := toArtistIds(results); artistIds != nil {
+		qSqlAr, qParamsAr := toOrIds(artistIds, "artist_id")
+		q = q.Where(qSqlAr, qParamsAr)
 	}
 	if m := getMusicFolder(c.MusicPaths, params); m != "" {
 		q = q.
