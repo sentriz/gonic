@@ -209,8 +209,11 @@ func toLikeStrm(vs []string, col string) (string, []sql.NamedArg) {
 	qparts := []string{}
 	qparams := []sql.NamedArg{}
 	for idx, v := range vs {
-		qparts = append(qparts, fmt.Sprintf("%s LIKE @%s_%d OR %s_u_dec LIKE @%s_%d", col, col, idx, col, col, idx))
-		qparams = append(qparams, sql.Named(fmt.Sprintf("%s_%d", col, idx), fmt.Sprintf("%%%s%%", strings.Trim(v, `*"' `))))
+		param := strings.Trim(v, `*"' `)
+		if len(param) > 0 {
+			qparts = append(qparts, fmt.Sprintf("%s LIKE @%s_%d OR %s_u_dec LIKE @%s_%d", col, col, idx, col, col, idx))
+			qparams = append(qparams, sql.Named(fmt.Sprintf("%s_%d", col, idx), fmt.Sprintf("%%%s%%", param)))
+		}
 	}
 	return strings.Join(qparts, " OR "), qparams
 }
