@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"time"
 
@@ -77,6 +78,7 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	for profile := range transcode.UserProfiles {
 		data.TranscodeProfiles = append(data.TranscodeProfiles, profile)
 	}
+	sort.Strings(data.TranscodeProfiles)
 	// podcasts box
 	c.DB.Find(&data.Podcasts)
 
