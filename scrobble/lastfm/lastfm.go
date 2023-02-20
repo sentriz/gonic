@@ -6,14 +6,17 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/dyatlov/go-opengraph/opengraph"
 	"github.com/google/uuid"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/scrobble"
@@ -177,7 +180,42 @@ func ArtistGetInfo(apiKey string, artistName string) (Artist, error) {
 	if err != nil {
 		return Artist{}, fmt.Errorf("making artist GET: %w", err)
 	}
+	artistUrl := resp.Artist.URL
+
+	response, err := http.Get(artistUrl)
+	if err != nil {
+		return resp.Artist, nil
+	}
+
+	defer response.Body.Close()
+
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	html := string(body)
+	og := opengraph.NewOpenGraph()
+	err = og.ProcessHTML(strings.NewReader(html))
+
+	if err != nil {
+		fmt.Println(err)
+		return resp.Artist, nil
+	}
+
+	if og.Images == nil {
+		return resp.Artist, nil
+	}
+
+	image := og.Images[0]
+
+	for i, _ := range resp.Artist.Image {
+		resp.Artist.Image[i].Text = image.URL
+	}
+
+	fmt.Printf("%v\n", resp.Artist.Image)
+
 	return resp.Artist, nil
+
 }
 
 func ArtistGetTopTracks(apiKey, artistName string) (TopTracks, error) {
