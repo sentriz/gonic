@@ -284,6 +284,7 @@ type ArtistInfo struct {
 	SmallImageURL  string           `xml:"smallImageUrl"           json:"smallImageUrl"`
 	MediumImageURL string           `xml:"mediumImageUrl"          json:"mediumImageUrl"`
 	LargeImageURL  string           `xml:"largeImageUrl"           json:"largeImageUrl"`
+	ArtistImageURL string           `xml:"artistImageUrl"          json:"artistImageUrl"` // not sure where this comes from but other clients seem to expect it
 	SimilarArtist  []*SimilarArtist `xml:"similarArtist,omitempty" json:"similarArtist,omitempty"`
 }
 

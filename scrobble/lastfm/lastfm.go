@@ -14,9 +14,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/andybalholm/cascadia"
 	"github.com/google/uuid"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/scrobble"
+	"golang.org/x/net/html"
 )
 
 const (
@@ -61,16 +63,18 @@ type SimilarArtist struct {
 	Streamable string `xml:"streamable"`
 }
 
+type ArtistImage struct {
+	Text string `xml:",chardata"`
+	Size string `xml:"size,attr"`
+}
+
 type Artist struct {
-	XMLName xml.Name `xml:"artist"`
-	Name    string   `xml:"name"`
-	MBID    string   `xml:"mbid"`
-	URL     string   `xml:"url"`
-	Image   []struct {
-		Text string `xml:",chardata"`
-		Size string `xml:"size,attr"`
-	} `xml:"image"`
-	Streamable string `xml:"streamable"`
+	XMLName    xml.Name      `xml:"artist"`
+	Name       string        `xml:"name"`
+	MBID       string        `xml:"mbid"`
+	URL        string        `xml:"url"`
+	Image      []ArtistImage `xml:"image"`
+	Streamable string        `xml:"streamable"`
 	Stats      struct {
 		Listeners string `xml:"listeners"`
 		Plays     string `xml:"plays"`
@@ -276,3 +280,34 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 }
 
 var _ scrobble.Scrobbler = (*Scrobbler)(nil)
+
+//nolint:gochecknoglobals
+var artistOpenGraphQuery = cascadia.MustCompile(`html > head > meta[property="og:image"]`)
+
+func StealArtistImage(artistURL string) (string, error) {
+	resp, err := http.Get(artistURL) //nolint:gosec
+	if err != nil {
+		return "", fmt.Errorf("get artist url: %w", err)
+	}
+	defer resp.Body.Close()
+
+	node, err := html.Parse(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("parse html: %w", err)
+	}
+
+	n := cascadia.Query(node, artistOpenGraphQuery)
+	if n == nil {
+		return "", nil
+	}
+
+	var imageURL string
+	for _, attr := range n.Attr {
+		if attr.Key == "content" {
+			imageURL = attr.Val
+			break
+		}
+	}
+
+	return imageURL, nil
+}

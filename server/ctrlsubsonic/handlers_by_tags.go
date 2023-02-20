@@ -338,6 +338,12 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 				sub.ArtistInfoTwo.LargeImageURL = image.Text
 			}
 		}
+		if url, _ := lastfm.StealArtistImage(info.URL); url != "" {
+			sub.ArtistInfoTwo.SmallImageURL = url
+			sub.ArtistInfoTwo.MediumImageURL = url
+			sub.ArtistInfoTwo.LargeImageURL = url
+			sub.ArtistInfoTwo.ArtistImageURL = url
+		}
 	}
 
 	count := params.GetOrInt("count", 20)
