@@ -1,13 +1,17 @@
-{{ define "user" }}
-<div class="padded box">
-    <div class="box-title">
-        <i class="mdi mdi-account-plus"></i> creating new user
-    </div>
-    <form class="block" action="{{ path "/admin/create_user_do" }}" method="post">
+{{ component "layout" . }}
+{{ component "layout_user" . }}
+
+{{ component "block" (props .
+    "Icon" "user"
+    "Name" "creating new user"
+) }}
+    <form class="flex flex-col gap-2 items-end" action="{{ path "/admin/create_user_do" }}" method="post">
         <input type="text" id="username" name="username" placeholder="username">
         <input type="password" id="password_one" name="password_one" placeholder="password">
         <input type="password" id="password_two" name="password_two" placeholder="verify password">
         <input type="submit" value="create">
     </form>
-</div>
+{{ end }}
+
+{{ end }}
 {{ end }}

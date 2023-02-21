@@ -1,0 +1,52 @@
+@tailwind base;
+
+form,
+input,
+select {
+  all: unset;
+  appearance: none;
+  display: block;
+}
+
+a {
+  text-decoration: none;
+}
+
+@font-face {
+  font-family: "Inconsolata";
+  font-style: normal;
+  font-weight: 500;
+  src: local(""),
+    url("/admin/static/inconsolata-v31-latin-500.woff2") format("woff2"),
+    url("/admin/static/inconsolata-v31-latin-500.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Inconsolata";
+  font-style: normal;
+  font-weight: 600;
+  src: local(""),
+    url("/admin/static/inconsolata-v31-latin-600.woff2") format("woff2"),
+    url("/admin/static/inconsolata-v31-latin-600.woff") format("woff");
+}
+
+@tailwind components;
+@tailwind utilities;
+
+a {
+  @apply text-blue-500;
+}
+
+input[type],
+select {
+  @apply h-6 px-2 leading-[1.5] w-full min-w-[3rem] md:min-w-[8rem] box-border bg-white text-gray-600 shadow-none border-0 outline outline-1 outline-gray-400/50 cursor-pointer overflow-hidden whitespace-nowrap text-ellipsis;
+}
+
+input[type="button"],
+input[type="submit"] {
+  @apply text-center w-[6rem] md:w-[8rem] font-bold;
+}
+
+.ellipsis {
+  @apply max-w-full overflow-hidden text-ellipsis whitespace-nowrap;
+}

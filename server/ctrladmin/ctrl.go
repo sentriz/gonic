@@ -4,27 +4,27 @@ package ctrladmin
 import (
 	"encoding/base64"
 	"encoding/gob"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"html/template"
-	"io/fs"
 	"log"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/Masterminds/sprig"
 	"github.com/dustin/go-humanize"
+	"github.com/fatih/structs"
 	"github.com/gorilla/sessions"
 	"github.com/oxtoacart/bpool"
+	"github.com/philippta/go-template/html/template"
 	"github.com/sentriz/gormstore"
 
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/podcasts"
-	"go.senan.xyz/gonic/server/assets"
+	"go.senan.xyz/gonic/server/ctrladmin/adminui"
 	"go.senan.xyz/gonic/server/ctrlbase"
 )
 
@@ -37,6 +37,10 @@ const (
 
 func funcMap() template.FuncMap {
 	return template.FuncMap{
+		"str": func(in any) string {
+			v, _ := json.Marshal(in)
+			return string(v)
+		},
 		"noCache": func(in string) string {
 			parsed, _ := url.Parse(in)
 			params := parsed.Query()
@@ -49,53 +53,49 @@ func funcMap() template.FuncMap {
 		},
 		"dateHuman": humanize.Time,
 		"base64":    base64.StdEncoding.EncodeToString,
+		"props": func(parent any, values ...any) map[string]any {
+			if len(values)%2 != 0 {
+				panic("uneven number of key/value pairs")
+			}
+			props := map[string]any{}
+			for i := 0; i < len(values); i += 2 {
+				k, v := fmt.Sprint(values[i]), values[i+1]
+				props[k] = v
+			}
+			merged := map[string]any{}
+			if structs.IsStruct(parent) {
+				merged = structs.Map(parent)
+			}
+			merged["Props"] = props
+			return merged
+		},
 	}
 }
 
 type Controller struct {
 	*ctrlbase.Controller
-	buffPool  *bpool.BufferPool
-	templates map[string]*template.Template
-	sessDB    *gormstore.Store
-	Podcasts  *podcasts.Podcasts
+	buffPool *bpool.BufferPool
+	template *template.Template
+	sessDB   *gormstore.Store
+	Podcasts *podcasts.Podcasts
 }
 
 func New(b *ctrlbase.Controller, sessDB *gormstore.Store, podcasts *podcasts.Podcasts) (*Controller, error) {
-	tmpl := template.
+	tmpl, err := template.
 		New("layout").
-		Funcs(sprig.FuncMap()).
+		Funcs(template.FuncMap(sprig.FuncMap())).
 		Funcs(funcMap()).       // static
 		Funcs(template.FuncMap{ // from base
 			"path": b.Path,
-		})
-
-	var err error
-	tmpl, err = tmpl.ParseFS(assets.Partials, "**/*.tmpl")
+		}).
+		ParseFS(adminui.TemplatesFS, "*.tmpl", "**/*.tmpl")
 	if err != nil {
-		return nil, fmt.Errorf("extend partials: %w", err)
+		return nil, fmt.Errorf("build template: %w", err)
 	}
-	tmpl, err = tmpl.ParseFS(assets.Layouts, "**/*.tmpl")
-	if err != nil {
-		return nil, fmt.Errorf("extend layouts: %w", err)
-	}
-
-	pagePaths, err := fs.Glob(assets.Pages, "**/*.tmpl")
-	if err != nil {
-		return nil, fmt.Errorf("parse pages: %w", err)
-	}
-	pages := map[string]*template.Template{}
-	for _, pagePath := range pagePaths {
-		pageBytes, _ := assets.Pages.ReadFile(pagePath)
-		page, _ := tmpl.Clone()
-		page, _ = page.Parse(string(pageBytes))
-		pageName := filepath.Base(pagePath)
-		pages[pageName] = page
-	}
-
 	return &Controller{
 		Controller: b,
 		buffPool:   bpool.NewBufferPool(64),
-		templates:  pages,
+		template:   tmpl,
 		sessDB:     sessDB,
 		Podcasts:   podcasts,
 	}, nil
@@ -196,12 +196,7 @@ func (c *Controller) H(h handlerAdmin) http.Handler {
 
 		buff := c.buffPool.Get()
 		defer c.buffPool.Put(buff)
-		tmpl, ok := c.templates[resp.template]
-		if !ok {
-			http.Error(w, fmt.Sprintf("finding template %q", resp.template), 500)
-			return
-		}
-		if err := tmpl.Execute(buff, resp.data); err != nil {
+		if err := c.template.ExecuteTemplate(buff, resp.template, resp.data); err != nil {
 			http.Error(w, fmt.Sprintf("executing template: %v", err), 500)
 			return
 		}
@@ -236,8 +231,9 @@ type Flash struct {
 	Type    FlashType
 }
 
-//nolint:gochecknoinits // for now I think it's nice that our types and their
 // gob registrations are next to each other, in case there's more added later)
+//
+//nolint:gochecknoinits // for now I think it's nice that our types and their
 func init() {
 	gob.Register(&Flash{})
 }

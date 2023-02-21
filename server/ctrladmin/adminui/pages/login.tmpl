@@ -1,0 +1,13 @@
+{{ component "layout" . }}
+{{ component "block" (props .
+    "Icon" "user"
+    "Name" "login"
+    "Desc" "if you are logging in as an admin, the default credentials can be found in the readme"
+) }}
+    <form class="flex flex-col md:flex-row gap-2 items-end" action="{{ path "/admin/login_do" }}" method="post">
+        <input class="text-center" type="text" id="username" name="username" placeholder="username">
+        <input class="text-center" type="password" id="password" name="password" placeholder="password">
+        <input type="submit" value="login">
+    </form>
+{{ end }}
+{{ end }}

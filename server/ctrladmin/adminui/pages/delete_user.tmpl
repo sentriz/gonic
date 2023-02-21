@@ -1,0 +1,15 @@
+{{ component "layout" . }}
+{{ component "layout_user" . }}
+
+{{ component "block" (props .
+    "Icon" "user"
+    "Name" (printf "deleting user %s" .SelectedUser.Name)
+    "Desc" "are you sure? this will also delete their plays, playlists, starred, rated, etc."
+) }}
+    <form class="inline-block" action="{{ printf "/admin/delete_user_do?user=%s" .SelectedUser.Name | path }}" method="post">
+        <input type="submit" value="yes">
+    </form>
+{{ end }}
+
+{{ end }}
+{{ end }}
