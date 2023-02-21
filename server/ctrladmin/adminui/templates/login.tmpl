@@ -1,0 +1,12 @@
+{{ component "layout" . }}
+{{ component "block" (props .
+    "Icon" "user"
+    "Name" "login"
+    "Desc" "if you are logging in as an admin, the default credentials can be found in the readme"
+) }}
+    <form class="hidden" id="form-login" action="{{ path "/admin/login_do" }}" method="post"></form>
+    <input form="form-login" type="text" id="username" name="username" placeholder="username">
+    <input form="form-login" type="password" id="password" name="password" placeholder="password">
+    <input form="form-login" type="submit" value="login">
+{{ end }}
+{{ end }}

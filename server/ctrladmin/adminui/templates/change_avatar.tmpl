@@ -1,0 +1,21 @@
+{{ component "layout" . }}
+{{ component "layout_user" . }}
+
+{{ component "block" (props .
+    "Icon" "user"
+    "Name" (printf "changing %s's avatar" .SelectedUser.Name)
+) }}
+    {{ if ne (len .SelectedUser.Avatar) 0 }}
+        <img class="h-[8rem] w-[8rem] object-cover" src="data:image/jpg;base64,{{ .SelectedUser.Avatar | base64 }}" />
+        <form class="hidden" id="form-delete" action="{{ printf "/admin/delete_avatar_do?user=%s" .SelectedUser.Name | path }}" method="post"></form>
+        <input form="form-delete" type="submit" value="delete avatar">
+    {{ end }}
+    <form class="hidden" id="form-upload" enctype="multipart/form-data" action="{{ printf "/admin/change_avatar_do?user=%s" .SelectedUser.Name | path }}" method="post"></form>
+    <div class="relative pointer-events-auto">
+        <input form="form-upload" class="auto-submit absolute opacity-0" name="avatar" type="file" accept="image/jpeg image/png image/gif"  />
+        <input form="form-upload" type="button" value="choose file">
+    </div>
+{{ end }}
+
+{{ end }}
+{{ end }}

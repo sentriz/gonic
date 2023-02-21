@@ -1,0 +1,18 @@
+{{ component "layout" . }}
+{{ component "layout_user" . }}
+
+{{ component "block" (props .
+    "Icon" "user"
+    "Name" "update last.fm api keys"
+    "Desc" "you can get an api key from last.fm here <a class='text-blue-500' href='https://www.last.fm/api/account/create' target='_blank' rel='noopener noreferrer'>here</a>. note, only the <span class='italic text-gray-800'>application name</span> field is required"
+) }}
+    <p class="text-gray-500">current key <span class="font-bold text-gray-800 italic">{{ default "not set" .CurrentLastFMAPIKey }}</span></p>
+    <p class="text-gray-500">current secret <span class="font-bold text-gray-800 italic">{{ default "not set" .CurrentLastFMAPISecret }}</span></p>
+    <form class="hidden" id="form-set-keys" action="{{ path "/admin/update_lastfm_api_key_do" }}" method="post"></form>
+    <input form="form-set-keys" type="text" id="api_key" name="api_key" placeholder="new key">
+    <input form="form-set-keys" type="text" id="secret" name="secret" placeholder="new secret">
+    <input form="form-set-keys" type="submit" value="update">
+{{ end }}
+
+{{ end }}
+{{ end }}

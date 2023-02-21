@@ -1,0 +1,16 @@
+{{ component "layout" . }}
+{{ component "layout_user" . }}
+
+{{ component "block" (props .
+    "Icon" "user"
+    "Name" "creating new user"
+) }}
+    <form id="form-create" class="hidden" action="{{ path "/admin/create_user_do" }}" method="post"></form>
+    <input form="form-create" type="text" id="username" name="username" placeholder="username">
+    <input form="form-create" type="password" id="password_one" name="password_one" placeholder="password">
+    <input form="form-create" type="password" id="password_two" name="password_two" placeholder="verify password">
+    <input form="form-create" type="submit" value="create">
+{{ end }}
+
+{{ end }}
+{{ end }}

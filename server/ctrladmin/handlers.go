@@ -1,3 +1,4 @@
+//nolint:goerr113
 package ctrladmin
 
 import (
@@ -41,6 +42,8 @@ func (c *Controller) ServeLogin(r *http.Request) *Response {
 }
 
 func (c *Controller) ServeHome(r *http.Request) *Response {
+	user := r.Context().Value(CtxUser).(*db.User)
+
 	data := &templateData{}
 	// stats box
 	c.DB.Model(&db.Artist{}).Count(&data.ArtistCount)
@@ -50,8 +53,14 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	data.RequestRoot = c.BaseURL(r)
 	data.CurrentLastFMAPIKey, _ = c.DB.GetSetting("lastfm_api_key")
 	data.DefaultListenBrainzURL = listenbrainz.BaseURL
+
 	// users box
-	c.DB.Find(&data.AllUsers)
+	allUsersQ := c.DB.DB
+	if !user.IsAdmin {
+		allUsersQ = allUsersQ.Where("name=?", user.Name)
+	}
+	allUsersQ.Find(&data.AllUsers)
+
 	// recent folders box
 	c.DB.
 		Where("tag_artist_id IS NOT NULL").
@@ -63,8 +72,6 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 		i, _ := strconv.ParseInt(tStr, 10, 64)
 		data.LastScanTime = time.Unix(i, 0)
 	}
-
-	user := r.Context().Value(CtxUser).(*db.User)
 
 	// playlists box
 	c.DB.
@@ -91,74 +98,6 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	}
 }
 
-func (c *Controller) ServeChangeOwnUsername(r *http.Request) *Response {
-	return &Response{template: "change_own_username.tmpl"}
-}
-
-func (c *Controller) ServeChangeOwnUsernameDo(r *http.Request) *Response {
-	username := r.FormValue("username")
-	if err := validateUsername(username); err != nil {
-		return &Response{
-			redirect: r.Referer(),
-			flashW:   []string{err.Error()},
-		}
-	}
-	user := r.Context().Value(CtxUser).(*db.User)
-	user.Name = username
-	c.DB.Save(user)
-	return &Response{redirect: "/admin/home"}
-}
-
-func (c *Controller) ServeChangeOwnPassword(r *http.Request) *Response {
-	return &Response{template: "change_own_password.tmpl"}
-}
-
-func (c *Controller) ServeChangeOwnPasswordDo(r *http.Request) *Response {
-	passwordOne := r.FormValue("password_one")
-	passwordTwo := r.FormValue("password_two")
-	if err := validatePasswords(passwordOne, passwordTwo); err != nil {
-		return &Response{
-			redirect: r.Referer(),
-			flashW:   []string{err.Error()},
-		}
-	}
-	user := r.Context().Value(CtxUser).(*db.User)
-	user.Password = passwordOne
-	c.DB.Save(user)
-	return &Response{redirect: "/admin/home"}
-}
-
-func (c *Controller) ServeChangeOwnAvatar(r *http.Request) *Response {
-	data := &templateData{}
-	user := r.Context().Value(CtxUser).(*db.User)
-	data.SelectedUser = user
-	return &Response{
-		template: "change_own_avatar.tmpl",
-		data:     data,
-	}
-}
-
-func (c *Controller) ServeChangeOwnAvatarDo(r *http.Request) *Response {
-	user := r.Context().Value(CtxUser).(*db.User)
-	avatar, err := getAvatarFile(r)
-	if err != nil {
-		return &Response{
-			redirect: r.Referer(),
-			flashW:   []string{err.Error()},
-		}
-	}
-	user.Avatar = avatar
-	c.DB.Save(user)
-	return &Response{redirect: "/admin/home"}
-}
-
-func (c *Controller) ServeDeleteOwnAvatarDo(r *http.Request) *Response {
-	user := r.Context().Value(CtxUser).(*db.User)
-	user.Avatar = nil
-	c.DB.Save(user)
-	return &Response{redirect: "/admin/home"}
-}
-
 func (c *Controller) ServeLinkLastFMDo(r *http.Request) *Response {
 	token := r.URL.Query().Get("token")
 	if token == "" {
@@ -166,11 +105,11 @@ func (c *Controller) ServeLinkLastFMDo(r *http.Request) *Response {
 	}
 	apiKey, err := c.DB.GetSetting("lastfm_api_key")
 	if err != nil {
-		return &Response{code: 500, err: fmt.Sprintf("couldn't get api key: %v", err)}
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't get api key: %v", err)}}
 	}
 	secret, err := c.DB.GetSetting("lastfm_secret")
 	if err != nil {
-		return &Response{code: 500, err: fmt.Sprintf("couldn't get secret: %v", err)}
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't get secret: %v", err)}}
 	}
 	sessionKey, err := lastfm.GetSession(apiKey, secret, token)
 	if err != nil {
@@ -181,14 +120,18 @@ func (c *Controller) ServeLinkLastFMDo(r *http.Request) *Response {
 	}
 	user := r.Context().Value(CtxUser).(*db.User)
 	user.LastFMSession = sessionKey
-	c.DB.Save(&user)
+	if err := c.DB.Save(user).Error; err != nil {
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("save user: %v", err)}}
+	}
 	return &Response{redirect: "/admin/home"}
 }
 
 func (c *Controller) ServeUnlinkLastFMDo(r *http.Request) *Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	user.LastFMSession = ""
-	c.DB.Save(&user)
+	if err := c.DB.Save(user).Error; err != nil {
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("save user: %v", err)}}
+	}
 	return &Response{redirect: "/admin/home"}
 }
 
@@ -204,7 +147,9 @@ func (c *Controller) ServeLinkListenBrainzDo(r *http.Request) *Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	user.ListenBrainzURL = url
 	user.ListenBrainzToken = token
-	c.DB.Save(&user)
+	if err := c.DB.Save(user).Error; err != nil {
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("save user: %v", err)}}
+	}
 	return &Response{redirect: "/admin/home"}
 }
 
@@ -212,18 +157,16 @@ func (c *Controller) ServeUnlinkListenBrainzDo(r *http.Request) *Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	user.ListenBrainzURL = ""
 	user.ListenBrainzToken = ""
-	c.DB.Save(&user)
+	if err := c.DB.Save(user).Error; err != nil {
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("save user: %v", err)}}
+	}
 	return &Response{redirect: "/admin/home"}
 }
 
 func (c *Controller) ServeChangeUsername(r *http.Request) *Response {
-	username := r.URL.Query().Get("user")
-	if username == "" {
-		return &Response{code: 400, err: "please provide a username"}
-	}
-	user := c.DB.GetUserByName(username)
-	if user == nil {
-		return &Response{code: 400, err: "couldn't find a user with that name"}
+	user, err := selectedUserIfAdmin(c, r)
+	if err != nil {
+		return &Response{code: 400, err: err.Error()}
 	}
 	data := &templateData{}
 	data.SelectedUser = user
@@ -234,7 +177,10 @@ func (c *Controller) ServeChangeUsername(r *http.Request) *Response {
 }
 
 func (c *Controller) ServeChangeUsernameDo(r *http.Request) *Response {
-	username := r.URL.Query().Get("user")
+	user, err := selectedUserIfAdmin(c, r)
+	if err != nil {
+		return &Response{code: 400, err: err.Error()}
+	}
 	usernameNew := r.FormValue("username")
 	if err := validateUsername(usernameNew); err != nil {
 		return &Response{
@@ -242,20 +188,17 @@ func (c *Controller) ServeChangeUsernameDo(r *http.Request) *Response {
 			flashW:   []string{err.Error()},
 		}
 	}
-	user := c.DB.GetUserByName(username)
 	user.Name = usernameNew
-	c.DB.Save(user)
+	if err := c.DB.Save(user).Error; err != nil {
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("save username: %v", err)}}
+	}
 	return &Response{redirect: "/admin/home"}
 }
 
 func (c *Controller) ServeChangePassword(r *http.Request) *Response {
-	username := r.URL.Query().Get("user")
-	if username == "" {
-		return &Response{code: 400, err: "please provide a username"}
-	}
-	user := c.DB.GetUserByName(username)
-	if user == nil {
-		return &Response{code: 400, err: "couldn't find a user with that name"}
+	user, err := selectedUserIfAdmin(c, r)
+	if err != nil {
+		return &Response{code: 400, err: err.Error()}
 	}
 	data := &templateData{}
 	data.SelectedUser = user
@@ -266,7 +209,10 @@ func (c *Controller) ServeChangePassword(r *http.Request) *Response {
 }
 
 func (c *Controller) ServeChangePasswordDo(r *http.Request) *Response {
-	username := r.URL.Query().Get("user")
+	user, err := selectedUserIfAdmin(c, r)
+	if err != nil {
+		return &Response{code: 400, err: err.Error()}
+	}
 	passwordOne := r.FormValue("password_one")
 	passwordTwo := r.FormValue("password_two")
 	if err := validatePasswords(passwordOne, passwordTwo); err != nil {
@@ -275,20 +221,17 @@ func (c *Controller) ServeChangePasswordDo(r *http.Request) *Response {
 			flashW:   []string{err.Error()},
 		}
 	}
-	user := c.DB.GetUserByName(username)
 	user.Password = passwordOne
-	c.DB.Save(user)
+	if err := c.DB.Save(user).Error; err != nil {
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("save user: %v", err)}}
+	}
 	return &Response{redirect: "/admin/home"}
 }
 
 func (c *Controller) ServeChangeAvatar(r *http.Request) *Response {
-	username := r.URL.Query().Get("user")
-	if username == "" {
-		return &Response{code: 400, err: "please provide a username"}
-	}
-	user := c.DB.GetUserByName(username)
-	if user == nil {
-		return &Response{code: 400, err: "couldn't find a user with that name"}
+	user, err := selectedUserIfAdmin(c, r)
+	if err != nil {
+		return &Response{code: 400, err: err.Error()}
 	}
 	data := &templateData{}
 	data.SelectedUser = user
@@ -299,8 +242,10 @@ func (c *Controller) ServeChangeAvatar(r *http.Request) *Response {
 }
 
 func (c *Controller) ServeChangeAvatarDo(r *http.Request) *Response {
-	username := r.URL.Query().Get("user")
-	user := c.DB.GetUserByName(username)
+	user, err := selectedUserIfAdmin(c, r)
+	if err != nil {
+		return &Response{code: 400, err: err.Error()}
+	}
 	avatar, err := getAvatarFile(r)
 	if err != nil {
 		return &Response{
@@ -309,26 +254,34 @@ func (c *Controller) ServeChangeAvatarDo(r *http.Request) *Response {
 		}
 	}
 	user.Avatar = avatar
-	c.DB.Save(user)
-	return &Response{redirect: "/admin/home"}
+	if err := c.DB.Save(user).Error; err != nil {
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("save user: %v", err)}}
+	}
+	return &Response{
+		redirect: r.Referer(),
+		flashN:   []string{"avatar saved successfully"},
+	}
 }
 
 func (c *Controller) ServeDeleteAvatarDo(r *http.Request) *Response {
-	username := r.URL.Query().Get("user")
-	user := c.DB.GetUserByName(username)
+	user, err := selectedUserIfAdmin(c, r)
+	if err != nil {
+		return &Response{code: 400, err: err.Error()}
+	}
 	user.Avatar = nil
-	c.DB.Save(user)
-	return &Response{redirect: "/admin/home"}
+	if err := c.DB.Save(user).Error; err != nil {
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("save user: %v", err)}}
+	}
+	return &Response{
+		redirect: r.Referer(),
+		flashN:   []string{"avatar deleted successfully"},
+	}
 }
 
 func (c *Controller) ServeDeleteUser(r *http.Request) *Response {
-	username := r.URL.Query().Get("user")
-	if username == "" {
-		return &Response{code: 400, err: "please provide a username"}
-	}
-	user := c.DB.GetUserByName(username)
-	if user == nil {
-		return &Response{code: 400, err: "couldn't find a user with that name"}
+	user, err := selectedUserIfAdmin(c, r)
+	if err != nil {
+		return &Response{code: 400, err: err.Error()}
 	}
 	data := &templateData{}
 	data.SelectedUser = user
@@ -339,15 +292,19 @@ func (c *Controller) ServeDeleteUser(r *http.Request) *Response {
 }
 
 func (c *Controller) ServeDeleteUserDo(r *http.Request) *Response {
-	username := r.URL.Query().Get("user")
-	user := c.DB.GetUserByName(username)
+	user, err := selectedUserIfAdmin(c, r)
+	if err != nil {
+		return &Response{code: 400, err: err.Error()}
+	}
 	if user.IsAdmin {
 		return &Response{
 			redirect: "/admin/home",
 			flashW:   []string{"can't delete the admin user"},
 		}
 	}
-	c.DB.Delete(user)
+	if err := c.DB.Delete(user).Error; err != nil {
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("delete user: %v", err)}}
+	}
 	return &Response{redirect: "/admin/home"}
 }
 
@@ -388,10 +345,10 @@ func (c *Controller) ServeUpdateLastFMAPIKey(r *http.Request) *Response {
 	data := &templateData{}
 	var err error
 	if data.CurrentLastFMAPIKey, err = c.DB.GetSetting("lastfm_api_key"); err != nil {
-		return &Response{code: 500, err: fmt.Sprintf("couldn't get api key: %v", err)}
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't get api key: %v", err)}}
 	}
 	if data.CurrentLastFMAPISecret, err = c.DB.GetSetting("lastfm_secret"); err != nil {
-		return &Response{code: 500, err: fmt.Sprintf("couldn't get secret: %v", err)}
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't get secret: %v", err)}}
 	}
 	return &Response{
 		template: "update_lastfm_api_key.tmpl",
@@ -409,10 +366,10 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(r *http.Request) *Response {
 		}
 	}
 	if err := c.DB.SetSetting("lastfm_api_key", apiKey); err != nil {
-		return &Response{code: 500, err: fmt.Sprintf("couldn't set api key: %v", err)}
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't set api key: %v", err)}}
 	}
 	if err := c.DB.SetSetting("lastfm_secret", secret); err != nil {
-		return &Response{code: 500, err: fmt.Sprintf("couldn't set secret: %v", err)}
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't set secret: %v", err)}}
 	}
 	return &Response{redirect: "/admin/home"}
 }
@@ -570,7 +527,7 @@ func (c *Controller) ServeInternetRadioStationAddDo(r *http.Request) *Response {
 	station.Name = name
 	station.HomepageURL = homepageURL
 	if err := c.DB.Save(&station).Error; err != nil {
-		return &Response{code: 500, err: fmt.Sprintf("error saving station: %v", err)}
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("error saving station: %v", err)}}
 	}
 
 	return &Response{
@@ -613,7 +570,7 @@ func (c *Controller) ServeInternetRadioStationUpdateDo(r *http.Request) *Respons
 
 	var station db.InternetRadioStation
 	if err := c.DB.Where("id=?", stationID).First(&station).Error; err != nil {
-		return &Response{code: 404, err: fmt.Sprintf("find station by id: %v", err)}
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("find station by id: %v", err)}}
 	}
 
 	station.StreamURL = streamURL
@@ -636,11 +593,11 @@ func (c *Controller) ServeInternetRadioStationDeleteDo(r *http.Request) *Respons
 
 	var station db.InternetRadioStation
 	if err := c.DB.Where("id=?", stationID).First(&station).Error; err != nil {
-		return &Response{code: 404, err: fmt.Sprintf("find station by id: %v", err)}
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("find station by id: %v", err)}}
 	}
 
 	if err := c.DB.Where("id=?", stationID).Delete(&db.InternetRadioStation{}).Error; err != nil {
-		return &Response{code: 500, err: fmt.Sprintf("deleting radio station: %v", err)}
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("deleting radio station: %v", err)}}
 	}
 
 	return &Response{
@@ -667,4 +624,17 @@ func getAvatarFile(r *http.Request) ([]byte, error) {
 		return nil, err
 	}
 	return buff.Bytes(), nil
+}
+
+func selectedUserIfAdmin(c *Controller, r *http.Request) (*db.User, error) {
+	selectedUsername := r.URL.Query().Get("user")
+	if selectedUsername == "" {
+		return nil, fmt.Errorf("please provide a username")
+	}
+	user := r.Context().Value(CtxUser).(*db.User)
+	if !user.IsAdmin && user.Name != selectedUsername {
+		return nil, fmt.Errorf("must be admin to perform actions for other users")
+	}
+	selectedUser := c.DB.GetUserByName(selectedUsername)
+	return selectedUser, nil
 }

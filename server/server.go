@@ -22,8 +22,8 @@ import (
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/scrobble/lastfm"
 	"go.senan.xyz/gonic/scrobble/listenbrainz"
-	"go.senan.xyz/gonic/server/assets"
 	"go.senan.xyz/gonic/server/ctrladmin"
+	"go.senan.xyz/gonic/server/ctrladmin/adminui"
 	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/ctrlsubsonic"
 	"go.senan.xyz/gonic/transcode"
@@ -149,7 +149,7 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	r.Handle("/login", ctrl.H(ctrl.ServeLogin))
 	r.Handle("/login_do", ctrl.HR(ctrl.ServeLoginDo)) // "raw" handler, updates session
 
-	staticHandler := http.StripPrefix("/admin", http.FileServer(http.FS(assets.Static)))
+	staticHandler := http.StripPrefix("/admin", http.FileServer(http.FS(adminui.StaticFS)))
 	r.PathPrefix("/static").Handler(staticHandler)
 
 	// user routes (if session is valid)
@@ -157,13 +157,15 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	routUser.Use(ctrl.WithUserSession)
 	routUser.Handle("/logout", ctrl.HR(ctrl.ServeLogout)) // "raw" handler, updates session
 	routUser.Handle("/home", ctrl.H(ctrl.ServeHome))
-	routUser.Handle("/change_own_username", ctrl.H(ctrl.ServeChangeOwnUsername))
-	routUser.Handle("/change_own_username_do", ctrl.H(ctrl.ServeChangeOwnUsernameDo))
-	routUser.Handle("/change_own_password", ctrl.H(ctrl.ServeChangeOwnPassword))
-	routUser.Handle("/change_own_password_do", ctrl.H(ctrl.ServeChangeOwnPasswordDo))
-	routUser.Handle("/change_own_avatar", ctrl.H(ctrl.ServeChangeOwnAvatar))
-	routUser.Handle("/change_own_avatar_do", ctrl.H(ctrl.ServeChangeOwnAvatarDo))
-	routUser.Handle("/delete_own_avatar_do", ctrl.H(ctrl.ServeDeleteOwnAvatarDo))
+	routUser.Handle("/change_username", ctrl.H(ctrl.ServeChangeUsername))
+	routUser.Handle("/change_username_do", ctrl.H(ctrl.ServeChangeUsernameDo))
+	routUser.Handle("/change_password", ctrl.H(ctrl.ServeChangePassword))
+	routUser.Handle("/change_password_do", ctrl.H(ctrl.ServeChangePasswordDo))
+	routUser.Handle("/change_avatar", ctrl.H(ctrl.ServeChangeAvatar))
+	routUser.Handle("/change_avatar_do", ctrl.H(ctrl.ServeChangeAvatarDo))
+	routUser.Handle("/delete_avatar_do", ctrl.H(ctrl.ServeDeleteAvatarDo))
+	routUser.Handle("/delete_user", ctrl.H(ctrl.ServeDeleteUser))
+	routUser.Handle("/delete_user_do", ctrl.H(ctrl.ServeDeleteUserDo))
 	routUser.Handle("/link_lastfm_do", ctrl.H(ctrl.ServeLinkLastFMDo))
 	routUser.Handle("/unlink_lastfm_do", ctrl.H(ctrl.ServeUnlinkLastFMDo))
 	routUser.Handle("/link_listenbrainz_do", ctrl.H(ctrl.ServeLinkListenBrainzDo))
@@ -176,15 +178,6 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	// admin routes (if session is valid, and is admin)
 	routAdmin := routUser.NewRoute().Subrouter()
 	routAdmin.Use(ctrl.WithAdminSession)
-	routAdmin.Handle("/change_username", ctrl.H(ctrl.ServeChangeUsername))
-	routAdmin.Handle("/change_username_do", ctrl.H(ctrl.ServeChangeUsernameDo))
-	routAdmin.Handle("/change_password", ctrl.H(ctrl.ServeChangePassword))
-	routAdmin.Handle("/change_password_do", ctrl.H(ctrl.ServeChangePasswordDo))
-	routAdmin.Handle("/change_avatar", ctrl.H(ctrl.ServeChangeAvatar))
-	routAdmin.Handle("/change_avatar_do", ctrl.H(ctrl.ServeChangeAvatarDo))
-	routAdmin.Handle("/delete_avatar_do", ctrl.H(ctrl.ServeDeleteAvatarDo))
-	routAdmin.Handle("/delete_user", ctrl.H(ctrl.ServeDeleteUser))
-	routAdmin.Handle("/delete_user_do", ctrl.H(ctrl.ServeDeleteUserDo))
 	routAdmin.Handle("/create_user", ctrl.H(ctrl.ServeCreateUser))
 	routAdmin.Handle("/create_user_do", ctrl.H(ctrl.ServeCreateUserDo))
 	routAdmin.Handle("/update_lastfm_api_key", ctrl.H(ctrl.ServeUpdateLastFMAPIKey))

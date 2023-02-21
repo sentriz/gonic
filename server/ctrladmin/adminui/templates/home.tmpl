@@ -1,0 +1,220 @@
+{{ component "layout" . }}
+{{ component "layout_user" . }}
+
+{{ component "block" (props .
+    "Icon" "chart-pie"
+    "Name" "stats"
+    "Desc" "total items found in all watched folders"
+) }}
+    <div class="grid grid-cols-2 gap-2">
+        <div class="text-gray-500">artists</div>
+        <div class="text-right font-bold">{{ .ArtistCount }}</div>
+        <div class="text-gray-500">albums</div>
+        <div class="text-right font-bold">{{ .AlbumCount }}</div>
+        <div class="text-gray-500">tracks</div>
+        <div class="text-right font-bold">{{ .TrackCount }}</div>
+    </div>
+{{ end }}
+
+{{ component "block" (props .
+    "Icon" "users"
+    "Name" "user management"
+    "Desc" "manage user accounts for subsonic api and web interface access"
+) }}
+<div class="contents md:grid grid-cols-[repeat(6,auto)] gap-x-3 gap-y-2 items-center text-right">
+    {{ range $user := .AllUsers }}
+        <i class="text-right">{{ $user.Name }}</i>
+        <span class="text-gray-500">{{ $user.CreatedAt | date }}</span>
+        {{ component "link" (props . "To" (printf "/admin/change_username?user=%s" $user.Name | path)) }}username{{ end }}
+        {{ component "link" (props . "To" (printf "/admin/change_password?user=%s" $user.Name | path)) }}password{{ end }}
+        {{ component "link" (props . "To" (printf "/admin/change_avatar?user=%s" $user.Name | path)) }}avatar{{ end }}
+        {{ if $user.IsAdmin }}
+            <span class="text-gray-500">delete&#8230;</span>
+        {{ else }}
+            {{ component "link" (props . "To" (printf "/admin/delete_user?user=%s" $user.Name | path)) }}delete{{ end }}
+        {{ end }}
+    {{ end }}
+    {{ if .User.IsAdmin }}
+        <div class="col-span-full">{{ component "link" (props . "To" (path "/admin/create_user")) }}create new{{ end }}</div>
+    {{ end }}
+</div>
+{{ end }}
+
+{{ component "block" (props .
+    "Icon" "folder-tree"
+    "Name" "recent folders"
+) }}
+    <div class="contents md:grid grid-cols-[1fr,auto] gap-x-3 gap-y-2 items-center justify-items-end">
+        {{ if eq (len .RecentFolders) 0 }}
+            <div class="col-span-full text-gray-500">no folders yet</div>
+        {{ end }}
+        {{ range $folder := .RecentFolders }}
+            <div class="text-left ellipsis">{{ $folder.RightPath }}</div>
+            <div class="text-gray-500" title="{{ $folder.ModifiedAt }}">{{ $folder.ModifiedAt | dateHuman }}</div>
+        {{ end }}
+        {{ if and (not .IsScanning) (.User.IsAdmin) }}
+            {{ if not .LastScanTime.IsZero }}
+                <p class="col-span-full text-gray-500" title="{{ .LastScanTime }}">scanned {{ .LastScanTime | dateHuman }}</p>
+            {{ end }}
+            <form class="col-span-full" action="{{ path "/admin/start_scan_inc_do" }}" method="post">
+                <input type="submit" title="start a incremental scan" value="scan now">
+            </form>
+        {{ end }}
+        {{ if .IsScanning }}<p class="text-green-500 col-span-full">scan in progress...</p>{{ end }}
+    </div>
+{{ end }}
+
+{{ component "block" (props .
+    "Icon" "music"
+    "Name" "transcoding device profiles"
+    "Desc" "you can find your device's client name in the gonic logs. some common client names are <span class='italic text-gray-800'>DSub</span>, <span class='italic text-gray-800'>Jamstash</span>, <span class=\"italic text-gray-800\">Soundwaves</span>, or use <span class=\"italic text-gray-800\">*</span> as fallback rule for any client. see the \"transcoding profiles\" page on the wiki for more info"
+) }}
+    <div class="contents md:grid grid-cols-[1fr_auto_auto] gap-2 items-center justify-items-end">
+        {{ range $pref := .TranscodePreferences }}
+            {{ $formSuffix := kebabcase $pref.Client }}
+            <form class="hidden" id="form-transcode-pref-client-{{ $formSuffix }}" action="{{ printf "/admin/delete_transcode_pref_do?client=%s" $pref.Client | path }}" method="post"></form>
+            <div>{{ $pref.Client }}</div>
+            <div>{{ $pref.Profile }}</div>
+            <input form="form-transcode-pref-client-{{ $formSuffix }}" type="submit" value="delete">
+        {{ end }}
+        <form class="hidden" id="form-transcode-pref-add" action="{{ path "/admin/create_transcode_pref_do" }}" method="post"></form>
+        <input form="form-transcode-pref-add" type="text" name="client" placeholder="client name">
+        <select form="form-transcode-pref-add" name="profile">
+            {{ range $profile := .TranscodeProfiles }}<option value="{{ $profile }}">{{ $profile }}</option>{{ end }}
+        </select>
+        <input form="form-transcode-pref-add" type="submit" value="save">
+    </div>
+{{ end }}
+
+{{ component "block" (props .
+    "Icon" "lastfm"
+    "Name" "last.fm"
+    "Desc" "scrobble to last.fm on a per user basis (the admin must set a global api key first)"
+) }}
+    {{ if .CurrentLastFMAPIKey }}
+        {{ if .User.LastFMSession }}
+            <p class="text-gray-500">current status <span class="font-bold text-green-500">linked</span></p>
+            <form action="{{ path "/admin/unlink_lastfm_do" }}" method="post">
+                <input type="submit" value="unlink">
+            </form>
+        {{ else }}
+            <p class="text-gray-500">current status <span class="font-bold text-red-400">unlinked</span></p>
+            {{ $cbPath := path "/admin/link_lastfm_do" }}
+            {{ $cbURL := printf "%s%s" .RequestRoot $cbPath }}
+            {{ component "link" (props . "To" (printf "https://www.last.fm/api/auth/?api_key=%s&cb=%s" .CurrentLastFMAPIKey $cbURL)) }}link{{ end }}
+        {{ end }}
+    {{ else }}
+        <p class="font-bold">api key not set</p>
+        {{ if not .User.IsAdmin }}
+            <p class="text-gray-500">please ask your admin to set it</p>
+        {{ end }}
+    {{ end }}
+    {{ if .User.IsAdmin }}
+        <p>{{ component "link" (props . "To" (path "/admin/update_lastfm_api_key" )) }}update api key{{ end }}</p>
+    {{ end }}
+{{ end }}
+
+{{ component "block" (props .
+    "Icon" "brain"
+    "Name" "listenbrainz"
+    "Desc" "scrobble to listenbrainz and compatible sites on a per user basis"
+) }}
+    {{ if .User.ListenBrainzToken }}
+        <p class="text-gray-500">current status <span class="font-bold text-green-500">linked</span></p>
+        <form action="{{ path "/admin/unlink_listenbrainz_do" }}" method="post">
+            <input type="submit" value="unlink">
+        </form>
+    {{ else }}
+        <p class="text-gray-500">current status <span class="font-bold text-red-400">unlinked</span></p>
+        <form class="hidden" id="form-listenbrainz-add" action="{{ path "/admin/link_listenbrainz_do" }}" method="post"></form>
+        <div class="contents md:grid grid-cols-[1fr,1fr,auto] items-center gap-x-2" action="{{ path "/admin/link_listenbrainz_do" }}" method="post">
+            <input form="form-listenbrainz-add" type="text" name="url" placeholder="server addr" value="{{ default .DefaultListenBrainzURL .User.ListenBrainzURL }}">
+            <input form="form-listenbrainz-add" type="text" name="token" placeholder="api key" value="{{ .User.ListenBrainzToken }}">
+            <input form="form-listenbrainz-add" type="submit" value="update">
+        </div>
+    {{ end }}
+{{ end }}
+
+{{ if .User.IsAdmin }}
+{{ component "block" (props .
+    "Icon" "rss"
+    "Name" "podcasts"
+    "Desc" "you can add podcasts rss feeds here"
+) }}
+    <div class="contents md:grid grid-cols-[1fr_1fr_auto_auto_auto] gap-2 items-center">
+        {{ range $pref := .Podcasts }}
+            <form class="hidden" id="form-podcast-pref-{{ $pref.ID }}-download" action="{{ printf "/admin/download_podcast_do?id=%d" $pref.ID | path }}" method="post"></form>
+            <form class="hidden" id="form-podcast-pref-{{ $pref.ID }}-auto-download" action="{{ printf "/admin/update_podcast_do?id=%d" $pref.ID | path }}" method="post"></form>
+            <form class="hidden" id="form-podcast-pref-{{ $pref.ID }}-delete" action="{{ printf "/admin/delete_podcast_do?id=%d" $pref.ID | path }}" method="post"></form>
+            <div>{{ $pref.Title }}</div>
+            <select form="form-podcast-pref-{{ $pref.ID }}-auto-download" name="setting">
+                {{ if eq $pref.AutoDownload "latest" }}
+                  <option value="latest" selected="selected">download latest</option>
+                  <option value="none">no auto download</option>
+                {{ else }}
+                  <option value="none" selected="selected" >no auto download</option>
+                  <option value="latest">download latest</option>
+                {{ end }}
+            </select>
+            <input form="form-podcast-pref-{{ $pref.ID }}-download" type="submit" value="download all">
+            <input form="form-podcast-pref-{{ $pref.ID }}-auto-download" type="submit" value="save">
+            <input form="form-podcast-pref-{{ $pref.ID }}-delete" type="submit" value="delete">
+        {{ end }}
+        <form class="hidden" id="form-podcast-add" action="{{ path "/admin/add_podcast_do" }}" method="post"></form>
+        <input class="md:col-start-2 md:col-span-3" form="form-podcast-add" type="text" name="feed" placeholder="rss feed url">
+        <input form="form-podcast-add" type="submit" value="save">
+    </div>
+{{ end }}
+{{ end }}
+
+{{ if .User.IsAdmin }}
+{{ component "block" (props .
+    "Icon" "rss"
+    "Name" "internet radio stations"
+    "Desc" "you can add and update internet radio stations here"
+) }}
+    <div class="contents md:grid grid-cols-[1fr_1fr_1fr_auto_auto] gap-2 items-center justify-items-end">
+        {{ range $pref := .InternetRadioStations }}
+            <form class="hidden" id="form-irs-{{ $pref.ID }}-update" action="{{ printf "/admin/update_internet_radio_station_do?id=%d" $pref.ID | path }}" method="post"></form>
+            <form class="hidden" id="form-irs-{{ $pref.ID }}-delete" action="{{ printf "/admin/delete_internet_radio_station_do?id=%d" $pref.ID | path }}" method="post"></form>
+            <input form="form-irs-{{ $pref.ID }}-update" type="text" name="name" value={{ $pref.Name }}>
+            <input form="form-irs-{{ $pref.ID }}-update" type="text" name="streamURL" value={{ $pref.StreamURL }}>
+            <input form="form-irs-{{ $pref.ID }}-update" type="text" name="homepageURL" value={{ $pref.HomepageURL }}>
+            <input form="form-irs-{{ $pref.ID }}-update" type="submit" value="update">
+            <input form="form-irs-{{ $pref.ID }}-delete" type="submit" value="delete">
+        {{ end }}
+        <form class="hidden" id="form-irs-add" action="{{ path "/admin/add_internet_radio_station_do" }}" method="post"></form>
+        <input form="form-irs-add" type="text" name="name" placeholder="name">
+        <input form="form-irs-add" type="text" name="streamURL" placeholder="stream url">
+        <input form="form-irs-add" type="text" name="homepageURL" placeholder="homepage url">
+        <input class="col-span-2" form="form-irs-add" type="submit" value="add">
+    </div>
+{{ end }}
+{{ end }}
+
+{{ component "block" (props .
+    "Icon" "list"
+    "Name" "playlists"
+    "Desc" "choose a local <span class='italic text-gray-800'>.m3u8</span> file containing paths to music files that gonic has scanned. paths should be absolute, prefixed by the <span class='italic text-gray-800'>music-path</span> option that you started gonic with. a playlist will be created from the file and available to subsonic clients"
+) }}
+    {{ if eq (len .Playlists) 0 }}
+        <span class="text-gray-500">no playlists yet</span>
+    {{ end }}
+    <div class="contents md:grid grid-cols-[auto_1fr_1fr_auto] gap-x-3 gap-y-2 items-center justify-items-end">
+        {{ range $i, $playlist := .Playlists }}
+            <form class="hidden" id="form-recent-playlists-{{ $i }}" action="{{ printf "/admin/delete_playlist_do?id=%d" $playlist.ID | path }}" method="post"></form>
+            <div class="text-right ellipsis">{{ $playlist.Name }}</div>
+            <div class="text-gray-500 whitespace-nowrap">({{ $playlist.TrackCount }} tracks)</div>
+            <div class="text-right text-gray-500 whitespace-nowrap" title="{{ $playlist.CreatedAt }}">{{ $playlist.CreatedAt | dateHuman }}</div>
+            <input form="form-recent-playlists-{{ $i }}" type="submit" value="delete">
+        {{ end }}
+        <form class="hidden" id="form-upload-playlist" enctype="multipart/form-data" action="{{ path "/admin/upload_playlist_do" }}" method="post"></form>
+        <div class="col-span-full relative pointer-events-auto">
+            <input form="form-upload-playlist" class="auto-submit absolute opacity-0" name="playlist-files" type="file" multiple />
+            <input form="form-upload-playlist" type="button" value="choose m3u8">
+        </div>
+    </div>
+{{ end }}
+
+{{ end }}
+{{ end }}

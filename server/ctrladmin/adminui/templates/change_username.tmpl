@@ -1,0 +1,14 @@
+{{ component "layout" . }}
+{{ component "layout_user" . }}
+
+{{ component "block" (props .
+    "Icon" "user"
+    "Name" (printf "changing %s's username" .SelectedUser.Name)
+) }}
+    <form class="hidden" id="form-username" action="{{ printf "/admin/change_username_do?user=%s" .SelectedUser.Name | path }}" method="post"></form>
+    <input form="form-username" type="text" id="username" name="username" placeholder="new username">
+    <input form="form-username" type="submit" value="change">
+{{ end }}
+
+{{ end }}
+{{ end }}
