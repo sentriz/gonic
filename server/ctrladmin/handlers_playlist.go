@@ -83,6 +83,7 @@ func playlistParseUpload(c *Controller, userID int, header *multipart.FileHeader
 		if err != nil {
 			// trim length of error to not overflow cookie flash
 			errors = append(errors, fmt.Sprintf("%.100s", err.Error()))
+			continue
 		}
 		if trackID.Value != 0 {
 			trackIDs = append(trackIDs, *trackID)
