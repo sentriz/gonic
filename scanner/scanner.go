@@ -578,19 +578,24 @@ func (s *Scanner) cleanGenres(c *Context) error {
 	return nil
 }
 
-func isCover(name string) bool {
-	switch path := strings.ToLower(name); path {
-	case
-		"cover.png", "cover.jpg", "cover.jpeg",
-		"folder.png", "folder.jpg", "folder.jpeg",
-		"album.png", "album.jpg", "album.jpeg",
-		"albumart.png", "albumart.jpg", "albumart.jpeg",
-		"front.png", "front.jpg", "front.jpeg",
-		"artist.png", "artist.jpg", "artist.jpeg":
-		return true
-	default:
-		return false
+//nolint:gochecknoglobals
+var coverNames = map[string]struct{}{}
+
+//nolint:gochecknoinits
+func init() {
+	for _, name := range []string{"cover", "folder", "front", "albumart", "album", "artist"} {
+		for _, ext := range []string{"jpg", "jpeg", "png", "bmp", "gif"} {
+			coverNames[fmt.Sprintf("%s.%s", name, ext)] = struct{}{}
+			for i := 0; i < 3; i++ {
+				coverNames[fmt.Sprintf("%s.%d.%s", name, i, ext)] = struct{}{} // support beets extras
+			}
+		}
 	}
+}
+
+func isCover(name string) bool {
+	_, ok := coverNames[strings.ToLower(name)]
+	return ok
 }
 
 // decoded converts a string to it's latin equivalent.
