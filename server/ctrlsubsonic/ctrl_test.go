@@ -1,4 +1,3 @@
-//nolint:deadcode
 package ctrlsubsonic
 
 import (

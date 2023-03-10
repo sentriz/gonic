@@ -7,7 +7,6 @@ linters:
   disable-all: true
   enable:
     - bodyclose
-    - deadcode
     - depguard
     - dogsled
     - errcheck
@@ -28,11 +27,9 @@ linters:
     - revive
     - rowserrcheck
     - staticcheck
-    - structcheck
     - stylecheck
     - typecheck
     - unconvert
-    - varcheck
 
 issues:
   exclude-rules:
