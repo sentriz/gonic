@@ -112,8 +112,7 @@ func (s *Scanner) ScanAndClean(opts ScanOptions) (*Context, error) {
 		return nil, fmt.Errorf("clean genres: %w", err)
 	}
 
-	var playlistWalker func(string, fs.DirEntry, error) error
-	playlistWalker = func(absPath string, d fs.DirEntry, err error) error {
+	playlistWalker := func(absPath string, d fs.DirEntry, err error) error {
 		if d.IsDir() {
 			return nil
 		}
@@ -297,7 +296,10 @@ func (s *Scanner) loadPlaylistCallback(c *Context, dir string, absPath string, d
 	// TODO admin is always user ID 1, but hard-coding it here is smelly
 	errs, success := PlaylistParse(s.db, 1, d.Name(), file)
 	if !success {
-		return fmt.Errorf(strings.Join(errs, "\n"))
+		for _, err := range errs {
+			log.Printf(err)
+		}
+		return fmt.Errorf("errors encountered during parsing playlists; check the logs")
 	}
 	return nil
 }
