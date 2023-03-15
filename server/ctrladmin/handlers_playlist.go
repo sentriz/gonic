@@ -1,54 +1,15 @@
 package ctrladmin
 
 import (
-	"bufio"
-	"errors"
 	"fmt"
 	"mime/multipart"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 
-	"github.com/jinzhu/gorm"
-
 	"go.senan.xyz/gonic/db"
-	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
+	"go.senan.xyz/gonic/scanner"
 )
-
-var (
-	errPlaylistNoMatch = errors.New("couldn't match track")
-)
-
-func playlistParseLine(c *Controller, absPath string) (*specid.ID, error) {
-	if strings.HasPrefix(absPath, "#") || strings.TrimSpace(absPath) == "" {
-		return nil, nil
-	}
-	var track db.Track
-	query := c.DB.Raw(`
-		SELECT tracks.id FROM TRACKS
-		JOIN albums ON tracks.album_id=albums.id
-		WHERE (albums.root_dir || ? || albums.left_path || albums.right_path || ? || tracks.filename)=?`,
-		string(os.PathSeparator), string(os.PathSeparator), absPath)
-	err := query.First(&track).Error
-	if err == nil {
-		return &specid.ID{Type: specid.Track, Value: track.ID}, nil
-	}
-	if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, fmt.Errorf("while matching: %w", err)
-	}
-
-	var pe db.PodcastEpisode
-	err = c.DB.Where("path=?", absPath).First(&pe).Error
-	if err == nil {
-		return &specid.ID{Type: specid.PodcastEpisode, Value: pe.ID}, nil
-	}
-	if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, fmt.Errorf("while matching: %w", err)
-	}
-
-	return nil, fmt.Errorf("%v: %w", err, errPlaylistNoMatch)
-}
 
 func playlistCheckContentType(contentType string) bool {
 	switch ct := strings.ToLower(contentType); ct {
@@ -67,39 +28,12 @@ func playlistParseUpload(c *Controller, userID int, header *multipart.FileHeader
 	if err != nil {
 		return []string{fmt.Sprintf("couldn't open file %q", header.Filename)}, false
 	}
-	playlistName := strings.TrimSuffix(header.Filename, ".m3u8")
-	if playlistName == "" {
-		return []string{fmt.Sprintf("invalid filename %q", header.Filename)}, false
-	}
+	defer file.Close()
 	contentType := header.Header.Get("Content-Type")
 	if !playlistCheckContentType(contentType) {
 		return []string{fmt.Sprintf("invalid content-type %q", contentType)}, false
 	}
-	var trackIDs []specid.ID
-	var errors []string
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		trackID, err := playlistParseLine(c, scanner.Text())
-		if err != nil {
-			// trim length of error to not overflow cookie flash
-			errors = append(errors, fmt.Sprintf("%.100s", err.Error()))
-			continue
-		}
-		if trackID.Value != 0 {
-			trackIDs = append(trackIDs, *trackID)
-		}
-	}
-	if err := scanner.Err(); err != nil {
-		return []string{fmt.Sprintf("iterating playlist file: %v", err)}, true
-	}
-	playlist := &db.Playlist{}
-	c.DB.FirstOrCreate(playlist, db.Playlist{
-		Name:   playlistName,
-		UserID: userID,
-	})
-	playlist.SetItems(trackIDs)
-	c.DB.Save(playlist)
-	return errors, true
+	return scanner.PlaylistParse(c.DB, userID, header.Filename, file)
 }
 
 func (c *Controller) ServeUploadPlaylist(r *http.Request) *Response {

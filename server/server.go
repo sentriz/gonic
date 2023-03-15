@@ -35,6 +35,7 @@ type Options struct {
 	PodcastPath    string
 	CachePath      string
 	CoverCachePath string
+	PlaylistPath   string
 	ProxyPrefix    string
 	GenreSplit     string
 	HTTPLog        bool
@@ -52,7 +53,7 @@ type Server struct {
 func New(opts Options) (*Server, error) {
 	tagger := &tags.TagReader{}
 
-	scanner := scanner.New(opts.MusicPaths.Paths(), opts.DB, opts.GenreSplit, tagger)
+	scanner := scanner.New(opts.MusicPaths.Paths(), opts.PlaylistPath, opts.DB, opts.GenreSplit, tagger)
 	base := &ctrlbase.Controller{
 		DB:          opts.DB,
 		ProxyPrefix: opts.ProxyPrefix,
@@ -98,6 +99,7 @@ func New(opts Options) (*Server, error) {
 		CoverCachePath: opts.CoverCachePath,
 		PodcastsPath:   opts.PodcastPath,
 		MusicPaths:     opts.MusicPaths,
+		PlaylistPath:   opts.PlaylistPath,
 		Scrobblers:     []scrobble.Scrobbler{&lastfm.Scrobbler{DB: opts.DB}, &listenbrainz.Scrobbler{}},
 		Podcasts:       podcast,
 		Transcoder:     cacheTranscoder,

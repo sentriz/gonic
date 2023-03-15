@@ -39,6 +39,7 @@ func main() {
 	confPodcastPath := set.String("podcast-path", "", "path to podcasts")
 	confCachePath := set.String("cache-path", "", "path to cache")
 	confDBPath := set.String("db-path", "gonic.db", "path to database (optional)")
+	confPlaylistPath := set.String("playlist-path", "", "path to directory containing m3u playlist files")
 	confScanIntervalMins := set.Int("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
 	confScanAtStart := set.Bool("scan-at-start-enabled", false, "whether to perform an initial scan at startup (optional)")
 	confScanWatcher := set.Bool("scan-watcher-enabled", false, "whether to watch file system for new music and rescan (optional)")
@@ -127,6 +128,7 @@ func main() {
 		ProxyPrefix:    *confProxyPrefix,
 		GenreSplit:     *confGenreSplit,
 		PodcastPath:    filepath.Clean(*confPodcastPath),
+		PlaylistPath:   *confPlaylistPath,
 		HTTPLog:        *confHTTPLog,
 		JukeboxEnabled: *confJukeboxEnabled,
 	})

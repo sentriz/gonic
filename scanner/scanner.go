@@ -1,8 +1,10 @@
 package scanner
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -21,6 +23,7 @@ import (
 	"go.senan.xyz/gonic/mime"
 	"go.senan.xyz/gonic/multierr"
 	"go.senan.xyz/gonic/scanner/tags"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
 var (
@@ -29,25 +32,27 @@ var (
 )
 
 type Scanner struct {
-	db         *db.DB
-	musicDirs  []string
-	genreSplit string
-	tagger     tags.Reader
-	scanning   *int32
-	watcher    *fsnotify.Watcher
-	watchMap   map[string]string // maps watched dirs back to root music dir
-	watchDone  chan bool
+	db          *db.DB
+	musicDirs   []string
+	playlistDir string
+	genreSplit  string
+	tagger      tags.Reader
+	scanning    *int32
+	watcher     *fsnotify.Watcher
+	watchMap    map[string]string // maps watched dirs back to root music dir
+	watchDone   chan bool
 }
 
-func New(musicDirs []string, db *db.DB, genreSplit string, tagger tags.Reader) *Scanner {
+func New(musicDirs []string, playlistDir string, db *db.DB, genreSplit string, tagger tags.Reader) *Scanner {
 	return &Scanner{
-		db:         db,
-		musicDirs:  musicDirs,
-		genreSplit: genreSplit,
-		tagger:     tagger,
-		scanning:   new(int32),
-		watchMap:   make(map[string]string),
-		watchDone:  make(chan bool),
+		db:          db,
+		musicDirs:   musicDirs,
+		playlistDir: playlistDir,
+		genreSplit:  genreSplit,
+		tagger:      tagger,
+		scanning:    new(int32),
+		watchMap:    make(map[string]string),
+		watchDone:   make(chan bool),
 	}
 }
 
@@ -105,6 +110,23 @@ func (s *Scanner) ScanAndClean(opts ScanOptions) (*Context, error) {
 	}
 	if err := s.cleanGenres(c); err != nil {
 		return nil, fmt.Errorf("clean genres: %w", err)
+	}
+
+	var playlistWalker func(string, fs.DirEntry, error) error
+	playlistWalker = func(absPath string, d fs.DirEntry, err error) error {
+		if d.IsDir() {
+			return nil
+		}
+		ext := strings.ToLower(filepath.Ext(d.Name()))
+		if ext != ".m3u" && ext != ".m3u8" {
+			// Skip non-playlist files
+			return nil
+		}
+		return s.loadPlaylistCallback(c, s.playlistDir, absPath, d)
+	}
+	err := filepath.WalkDir(s.playlistDir, playlistWalker)
+	if err != nil {
+		return nil, fmt.Errorf("playlist scan: %w", err)
 	}
 
 	if err := s.db.SetSetting("last_scan_time", strconv.FormatInt(time.Now().Unix(), 10)); err != nil {
@@ -265,6 +287,94 @@ func (s *Scanner) scanCallback(c *Context, dir string, absPath string, d fs.DirE
 
 	return nil
 }
+
+func (s *Scanner) loadPlaylistCallback(c *Context, dir string, absPath string, d fs.DirEntry) error {
+	file, err := os.Open(absPath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	// TODO admin is always user ID 1, but hard-coding it here is smelly
+	errs, success := PlaylistParse(s.db, 1, d.Name(), file)
+	if !success {
+		return fmt.Errorf(strings.Join(errs, "\n"))
+	}
+	return nil
+}
+
+// PlaylistParse creates or updates a playlist from a playlist file, returning a
+// list of errors and whether the playlist was created.
+func PlaylistParse(mdb *db.DB, userID int, filename string, file io.Reader) ([]string, bool) {
+	playlistName := strings.TrimSuffix(filename, ".m3u8")
+	playlistName = strings.TrimSuffix(playlistName, ".m3u")
+	if playlistName == "" {
+		return []string{fmt.Sprintf("invalid filename %q", filename)}, false
+	}
+	var trackIDs []specid.ID
+	var errors []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		trackID, err := playlistParseLine(mdb, scanner.Text())
+		if err != nil {
+			// trim length of error to not overflow cookie flash
+			errors = append(errors, fmt.Sprintf("%.100s", err.Error()))
+			continue
+		}
+		if trackID.Value != 0 {
+			trackIDs = append(trackIDs, *trackID)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return []string{fmt.Sprintf("iterating playlist file: %v", err)}, false
+	}
+	if len(trackIDs) == 0 && len(errors) > 0 {
+		// We didn't get *anything*
+		return errors, false
+	}
+	playlist := &db.Playlist{}
+	mdb.FirstOrCreate(playlist, db.Playlist{
+		Name:   playlistName,
+		UserID: userID,
+	})
+	playlist.SetItems(trackIDs)
+	playlist.IsPublic = true
+	mdb.Save(playlist)
+	return errors, true
+}
+
+func playlistParseLine(cdb *db.DB, absPath string) (*specid.ID, error) {
+	if strings.HasPrefix(absPath, "#") || strings.TrimSpace(absPath) == "" {
+		return nil, nil
+	}
+	var track db.Track
+	query := cdb.Raw(`
+		SELECT tracks.id FROM TRACKS
+		JOIN albums ON tracks.album_id=albums.id
+		WHERE (albums.root_dir || ? || albums.left_path || albums.right_path || ? || tracks.filename)=?`,
+		string(os.PathSeparator), string(os.PathSeparator), absPath)
+	err := query.First(&track).Error
+	if err == nil {
+		return &specid.ID{Type: specid.Track, Value: track.ID}, nil
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, fmt.Errorf("while matching: %w", err)
+	}
+
+	var pe db.PodcastEpisode
+	err = cdb.Where("path=?", absPath).First(&pe).Error
+	if err == nil {
+		return &specid.ID{Type: specid.PodcastEpisode, Value: pe.ID}, nil
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, fmt.Errorf("while matching: %w", err)
+	}
+
+	return nil, fmt.Errorf("%v: %w", err, errPlaylistNoMatch)
+}
+
+var (
+	errPlaylistNoMatch = errors.New("couldn't match track")
+)
 
 func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string) error {
 	items, err := os.ReadDir(absPath)

@@ -33,6 +33,7 @@ type Controller struct {
 	CoverCachePath string
 	PodcastsPath   string
 	MusicPaths     paths.MusicPaths
+	PlaylistPath   string
 	Jukebox        *jukebox.Jukebox
 	Scrobblers     []scrobble.Scrobbler
 	Podcasts       *podcasts.Podcasts

@@ -33,6 +33,10 @@ music-path                  <path to your music dir>
 # podcast-path                /var/cache/podcast
 podcast-path                <path to your podcasts dir>
 
+# Path to playlist files. Optional, and must be specified only once.
+# playlist-path              /srv/audio/playlists
+playlist-path                <path to your playlists dir>
+
 # Age (in days) to purge podcast episodes if not accessed. Disabled by default.
 #podcast-purge-age           0
 
