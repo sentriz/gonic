@@ -3,6 +3,7 @@
     "status": "ok",
     "version": "1.15.0",
     "type": "gonic",
+    "serverVersion": "",
     "searchResult3": {
       "artist": [
         { "id": "ar-1", "name": "artist-0", "albumCount": 3 },

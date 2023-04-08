@@ -62,7 +62,7 @@
             {{ end }}
             {{ slot }}
             <div class="px-5 text-right whitespace-nowrap">
-                <span class="text-gray-500">{{ .Version }}</span>
+                <span class="text-gray-500">v{{ .Version }}</span>
                 senan kelly, 2020
                 <span class="text-gray-500">&#124;</span>
                 {{ component "ext_link" (props . "To" "https://github.com/sentriz/gonic") }}github{{ end }}

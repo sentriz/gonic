@@ -3,6 +3,7 @@
     "status": "ok",
     "version": "1.15.0",
     "type": "gonic",
+    "serverVersion": "",
     "directory": {
       "id": "al-2",
       "parent": "al-1",

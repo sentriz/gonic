@@ -64,11 +64,11 @@ func main() {
 	}
 
 	if *confShowVersion {
-		fmt.Println(gonic.Version)
+		fmt.Printf("v%s\n", gonic.Version)
 		os.Exit(0)
 	}
 
-	log.Printf("starting gonic %s\n", gonic.Version)
+	log.Printf("starting gonic v%s\n", gonic.Version)
 	log.Printf("provided config\n")
 	set.VisitAll(func(f *flag.Flag) {
 		value := strings.ReplaceAll(f.Value.String(), "\n", "")

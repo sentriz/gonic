@@ -3,8 +3,22 @@
     "status": "ok",
     "version": "1.15.0",
     "type": "gonic",
+    "serverVersion": "",
     "albumList": {
       "album": [
+        {
+          "id": "al-13",
+          "coverArt": "al-13",
+          "artist": "artist-2",
+          "created": "2019-11-30T00:00:00Z",
+          "title": "album-2",
+          "album": "",
+          "parent": "al-10",
+          "isDir": true,
+          "name": "",
+          "songCount": 3,
+          "duration": 300
+        },
         {
           "id": "al-12",
           "coverArt": "al-12",
@@ -32,26 +46,13 @@
           "duration": 300
         },
         {
-          "id": "al-4",
-          "coverArt": "al-4",
+          "id": "al-5",
+          "coverArt": "al-5",
           "artist": "artist-0",
-          "created": "2019-11-30T00:00:00Z",
-          "title": "album-1",
-          "album": "",
-          "parent": "al-2",
-          "isDir": true,
-          "name": "",
-          "songCount": 3,
-          "duration": 300
-        },
-        {
-          "id": "al-13",
-          "coverArt": "al-13",
-          "artist": "artist-2",
           "created": "2019-11-30T00:00:00Z",
           "title": "album-2",
           "album": "",
-          "parent": "al-10",
+          "parent": "al-2",
           "isDir": true,
           "name": "",
           "songCount": 3,
@@ -110,11 +111,11 @@
           "duration": 300
         },
         {
-          "id": "al-5",
-          "coverArt": "al-5",
+          "id": "al-4",
+          "coverArt": "al-4",
           "artist": "artist-0",
           "created": "2019-11-30T00:00:00Z",
-          "title": "album-2",
+          "title": "album-1",
           "album": "",
           "parent": "al-2",
           "isDir": true,

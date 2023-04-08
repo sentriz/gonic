@@ -21,10 +21,14 @@ type SubsonicResponse struct {
 }
 
 type Response struct {
-	Status                string                 `xml:"status,attr"           json:"status"`
-	Version               string                 `xml:"version,attr"          json:"version"`
-	XMLNS                 string                 `xml:"xmlns,attr"            json:"-"`
-	Type                  string                 `xml:"type,attr"             json:"type"`
+	Status  string `xml:"status,attr"           json:"status"`
+	Version string `xml:"version,attr"          json:"version"`
+	XMLNS   string `xml:"xmlns,attr"            json:"-"`
+
+	// https://opensubsonic.netlify.app/docs/responses/subsonic-response/
+	Type          string `xml:"type,attr"          json:"type"`
+	ServerVersion string `xml:"serverVersion,attr" json:"serverVersion"`
+
 	Error                 *Error                 `xml:"error"                 json:"error,omitempty"`
 	Albums                *Albums                `xml:"albumList"             json:"albumList,omitempty"`
 	AlbumsTwo             *Albums                `xml:"albumList2"            json:"albumList2,omitempty"`
@@ -64,10 +68,11 @@ type Response struct {
 
 func NewResponse() *Response {
 	return &Response{
-		Status:  "ok",
-		XMLNS:   xmlns,
-		Version: apiVersion,
-		Type:    gonic.Name,
+		Status:        "ok",
+		XMLNS:         xmlns,
+		Version:       apiVersion,
+		Type:          gonic.Name,
+		ServerVersion: gonic.Version,
 	}
 }
 
@@ -97,7 +102,8 @@ func NewError(code int, message string, a ...interface{}) *Response {
 			Code:    code,
 			Message: fmt.Sprintf(message, a...),
 		},
-		Type: gonic.Name,
+		Type:          gonic.Name,
+		ServerVersion: gonic.Version,
 	}
 }
 

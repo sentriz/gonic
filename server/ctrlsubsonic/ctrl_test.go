@@ -16,6 +16,7 @@ import (
 
 	jd "github.com/josephburnett/jd/lib"
 
+	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/mockfs"
 	"go.senan.xyz/gonic/paths"
@@ -174,6 +175,7 @@ func makec(t *testing.T, roots []string, audio bool) *Controller {
 }
 
 func TestMain(m *testing.M) {
+	gonic.Version = ""
 	log.SetOutput(io.Discard)
 	os.Exit(m.Run())
 }
