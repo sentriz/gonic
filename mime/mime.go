@@ -4,6 +4,7 @@ package mime
 import (
 	"log"
 	stdmime "mime"
+	"strings"
 )
 
 var supportedAudioTypes = map[string]string{
@@ -31,7 +32,7 @@ var ParseMediaType = stdmime.ParseMediaType
 var FormatMediaType = stdmime.FormatMediaType
 
 func TypeByAudioExtension(ext string) string {
-	if _, ok := supportedAudioTypes[ext]; !ok {
+	if _, ok := supportedAudioTypes[strings.ToLower(ext)]; !ok {
 		return ""
 	}
 	return stdmime.TypeByExtension(ext)
