@@ -15,7 +15,6 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/jukebox"
-	"go.senan.xyz/gonic/paths"
 	"go.senan.xyz/gonic/podcasts"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/scanner/tags"
@@ -31,9 +30,9 @@ import (
 
 type Options struct {
 	DB             *db.DB
-	MusicPaths     paths.MusicPaths
+	MusicPaths     []ctrlsubsonic.MusicPath
 	PodcastPath    string
-	CachePath      string
+	CacheAudioPath string
 	CoverCachePath string
 	ProxyPrefix    string
 	GenreSplit     string
@@ -52,7 +51,7 @@ type Server struct {
 func New(opts Options) (*Server, error) {
 	tagger := &tags.TagReader{}
 
-	scanner := scanner.New(opts.MusicPaths.Paths(), opts.DB, opts.GenreSplit, tagger)
+	scanner := scanner.New(ctrlsubsonic.PathsOf(opts.MusicPaths), opts.DB, opts.GenreSplit, tagger)
 	base := &ctrlbase.Controller{
 		DB:          opts.DB,
 		ProxyPrefix: opts.ProxyPrefix,
@@ -85,7 +84,7 @@ func New(opts Options) (*Server, error) {
 
 	cacheTranscoder := transcode.NewCachingTranscoder(
 		transcode.NewFFmpegTranscoder(),
-		opts.CachePath,
+		opts.CacheAudioPath,
 	)
 
 	ctrlAdmin, err := ctrladmin.New(base, sessDB, podcast)
@@ -94,10 +93,10 @@ func New(opts Options) (*Server, error) {
 	}
 	ctrlSubsonic := &ctrlsubsonic.Controller{
 		Controller:     base,
-		CachePath:      opts.CachePath,
-		CoverCachePath: opts.CoverCachePath,
-		PodcastsPath:   opts.PodcastPath,
 		MusicPaths:     opts.MusicPaths,
+		PodcastsPath:    opts.PodcastPath,
+		CacheAudioPath: opts.CacheAudioPath,
+		CoverCachePath: opts.CoverCachePath,
 		Scrobblers:     []scrobble.Scrobbler{&lastfm.Scrobbler{DB: opts.DB}, &listenbrainz.Scrobbler{}},
 		Podcasts:       podcast,
 		Transcoder:     cacheTranscoder,

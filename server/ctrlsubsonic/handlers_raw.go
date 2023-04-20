@@ -17,6 +17,7 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/specidpaths"
 	"go.senan.xyz/gonic/transcode"
 )
 
@@ -56,32 +57,6 @@ func streamGetTransPrefProfile(dbc *db.DB, userID int, client string) (mime stri
 }
 
 var errUnknownMediaType = fmt.Errorf("media type is unknown")
-
-// TODO: there is a mismatch between abs paths for podcasts and music. if they were the same, db.AudioFile
-// could have an AbsPath() method. and we wouldn't need to pass podcastsPath or return 3 values
-func streamGetAudio(dbc *db.DB, podcastsPath string, user *db.User, id specid.ID) (db.AudioFile, string, error) {
-	switch t := id.Type; t {
-	case specid.Track:
-		var track db.Track
-		if err := dbc.Preload("Album").Preload("Artist").First(&track, id.Value).Error; err != nil {
-			return nil, "", fmt.Errorf("find track: %w", err)
-		}
-		if track.Artist != nil && track.Album != nil {
-			log.Printf("%s requests %s - %s from %s", user.Name, track.Artist.Name, track.TagTitle, track.Album.TagTitle)
-		}
-		return &track, path.Join(track.AbsPath()), nil
-
-	case specid.PodcastEpisode:
-		var podcast db.PodcastEpisode
-		if err := dbc.First(&podcast, id.Value).Error; err != nil {
-			return nil, "", fmt.Errorf("find podcast: %w", err)
-		}
-		return &podcast, path.Join(podcastsPath, podcast.Path), nil
-
-	default:
-		return nil, "", fmt.Errorf("%w: %q", errUnknownMediaType, t)
-	}
-}
 
 func streamUpdateStats(dbc *db.DB, userID, albumID int, playTime time.Time) error {
 	var play db.Play
@@ -134,6 +109,7 @@ var (
 	errCoverEmpty    = errors.New("no cover found for that folder")
 )
 
+// TODO: can we use specidpaths.Locate here?
 func coverGetPath(dbc *db.DB, podcastPath string, id specid.ID) (string, error) {
 	switch id.Type {
 	case specid.Album:
@@ -281,12 +257,17 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 
-	file, audioPath, err := streamGetAudio(c.DB, c.PodcastsPath, user, id)
+	file, err := specidpaths.Locate(c.DB, c.PodcastsPath, id)
 	if err != nil {
-		return spec.NewError(70, "error finding media: %v", err)
+		return spec.NewError(0, "error looking up id %s: %v", id, err)
 	}
 
-	if track, ok := file.(*db.Track); ok && track.Album != nil {
+	audioFile, ok := file.(db.AudioFile)
+	if !ok {
+		return spec.NewError(0, "type of id does not contain audio")
+	}
+
+	if track, ok := audioFile.(*db.Track); ok && track.Album != nil {
 		defer func() {
 			if err := streamUpdateStats(c.DB, user.ID, track.Album.ID, time.Now()); err != nil {
 				log.Printf("error updating track status: %v", err)
@@ -294,7 +275,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		}()
 	}
 
-	if pe, ok := file.(*db.PodcastEpisode); ok {
+	if pe, ok := audioFile.(*db.PodcastEpisode); ok {
 		defer func() {
 			if err := streamUpdatePodcastEpisodeStats(c.DB, pe.ID); err != nil {
 				log.Printf("error updating podcast episode status: %v", err)
@@ -305,8 +286,8 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	maxBitRate, _ := params.GetInt("maxBitRate")
 	format, _ := params.Get("format")
 
-	if format == "raw" || maxBitRate >= file.AudioBitrate() {
-		http.ServeFile(w, r, audioPath)
+	if format == "raw" || maxBitRate >= audioFile.AudioBitrate() {
+		http.ServeFile(w, r, file.AbsPath())
 		return nil
 	}
 
@@ -315,7 +296,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		return spec.NewError(0, "couldn't find transcode preference: %v", err)
 	}
 	if pref == nil {
-		http.ServeFile(w, r, audioPath)
+		http.ServeFile(w, r, file.AbsPath())
 		return nil
 	}
 
@@ -330,7 +311,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	log.Printf("trancoding to %q with max bitrate %dk", profile.MIME(), profile.BitRate())
 
 	w.Header().Set("Content-Type", profile.MIME())
-	if err := c.Transcoder.Transcode(r.Context(), profile, audioPath, w); err != nil && !errors.Is(err, transcode.ErrFFmpegKilled) {
+	if err := c.Transcoder.Transcode(r.Context(), profile, file.AbsPath(), w); err != nil && !errors.Is(err, transcode.ErrFFmpegKilled) {
 		return spec.NewError(0, "error transcoding: %v", err)
 	}
 

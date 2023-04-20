@@ -6,7 +6,6 @@ import (
 	"log"
 	"math"
 	"net/http"
-	"os"
 	"path/filepath"
 	"time"
 	"unicode"
@@ -15,11 +14,11 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/multierr"
-	"go.senan.xyz/gonic/paths"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/specidpaths"
 )
 
 func lowerUDecOrHash(in string) string {
@@ -30,7 +29,7 @@ func lowerUDecOrHash(in string) string {
 	return string(lower)
 }
 
-func getMusicFolder(musicPaths paths.MusicPaths, p params.Params) string {
+func getMusicFolder(musicPaths []MusicPath, p params.Params) string {
 	idx, err := p.GetInt("musicFolderId")
 	if err != nil {
 		return ""
@@ -90,9 +89,12 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 func (c *Controller) ServeGetMusicFolders(r *http.Request) *spec.Response {
 	sub := spec.NewResponse()
 	sub.MusicFolders = &spec.MusicFolders{}
-	sub.MusicFolders.List = make([]*spec.MusicFolder, len(c.MusicPaths))
-	for i, path := range c.MusicPaths {
-		sub.MusicFolders.List[i] = &spec.MusicFolder{ID: i, Name: path.DisplayAlias()}
+	for i, mp := range c.MusicPaths {
+		alias := mp.Alias
+		if alias == "" {
+			alias = filepath.Base(mp.Path)
+		}
+		sub.MusicFolders.List = append(sub.MusicFolders.List, &spec.MusicFolder{ID: i, Name: alias})
 	}
 	return sub
 }
@@ -289,17 +291,18 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	return sub
 }
 
+var errNotATrack = errors.New("not a track")
+
 func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:gocyclo
 	params := r.Context().Value(CtxParams).(params.Params)
-	user := r.Context().Value(CtxUser).(*db.User)
 	trackPaths := func(ids []specid.ID) ([]string, error) {
 		var paths []string
 		for _, id := range ids {
-			var track db.Track
-			if err := c.DB.Preload("Album").Preload("TrackStar", "user_id=?", user.ID).Preload("TrackRating", "user_id=?", user.ID).First(&track, id.Value).Error; err != nil {
+			r, err := specidpaths.Locate(c.DB, c.PodcastsPath, id)
+			if err != nil {
 				return nil, fmt.Errorf("find track by id: %w", err)
 			}
-			paths = append(paths, track.AbsPath())
+			paths = append(paths, r.AbsPath())
 		}
 		return paths, nil
 	}
@@ -322,20 +325,15 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 			return nil, fmt.Errorf("get playlist: %w", err)
 		}
 		for _, path := range playlist {
-			cwd, _ := os.Getwd()
-			path, _ = filepath.Rel(cwd, path)
-			var track db.Track
-			err := c.DB.
-				Preload("Album").
-				Where(`(albums.root_dir || ? || albums.left_path || albums.right_path || ? || tracks.filename)=?`,
-					string(filepath.Separator), string(filepath.Separator), path).
-				Joins(`JOIN albums ON tracks.album_id=albums.id`).
-				First(&track).
-				Error
+			file, err := specidpaths.Lookup(c.DB, PathsOf(c.MusicPaths), c.PodcastsPath, path)
 			if err != nil {
 				return nil, fmt.Errorf("fetch track: %w", err)
 			}
-			ret = append(ret, spec.NewTrackByTags(&track, track.Album))
+			track, ok := file.(*db.Track)
+			if !ok {
+				return nil, fmt.Errorf("%q: %w", path, errNotATrack)
+			}
+			ret = append(ret, spec.NewTrackByTags(track, track.Album))
 		}
 		return ret, nil
 	}
