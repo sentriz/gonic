@@ -31,17 +31,17 @@ func (c *Controller) ServeGetBookmarks(r *http.Request) *spec.Response {
 			Type:  specid.IDT(bookmark.EntryIDType),
 			Value: bookmark.EntryID,
 		}
-		entries := []*spec.BookmarkEntry{{
+		entry := spec.BookmarkEntry{
 			ID:   specid,
 			Type: bookmark.EntryIDType,
-		}}
+		}
 		sub.Bookmarks.List = append(sub.Bookmarks.List, &spec.Bookmark{
 			Username: user.Name,
 			Position: bookmark.Position,
 			Comment:  bookmark.Comment,
 			Created:  bookmark.CreatedAt,
 			Changed:  bookmark.UpdatedAt,
-			Entries:  entries,
+			Entry:    entry,
 		})
 	}
 	return sub
