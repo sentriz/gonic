@@ -115,7 +115,6 @@ type templateData struct {
 	AllUsers             []*db.User
 	LastScanTime         time.Time
 	IsScanning           bool
-	Playlists            []*db.Playlist
 	TranscodePreferences []*db.TranscodePreference
 	TranscodeProfiles    []string
 

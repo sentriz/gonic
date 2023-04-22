@@ -73,11 +73,6 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 		data.LastScanTime = time.Unix(i, 0)
 	}
 
-	// playlists box
-	c.DB.
-		Where("user_id=?", user.ID).
-		Limit(20).
-		Find(&data.Playlists)
 	// transcoding box
 	c.DB.
 		Where("user_id=?", user.ID).

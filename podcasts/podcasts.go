@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -385,7 +386,7 @@ func (p *Podcasts) DownloadEpisode(episodeID int) error {
 		return fmt.Errorf("create audio file: %w", err)
 	}
 	podcastEpisode.Filename = filename
-	podcastEpisode.Path = path.Join(pathSafe(podcast.Title), filename)
+	podcastEpisode.Path = path.Join(safeFilename(podcast.Title), filename)
 	p.db.Save(&podcastEpisode)
 	go func() {
 		if err := p.doPodcastDownload(&podcastEpisode, audioFile, resp.Body); err != nil {
@@ -400,7 +401,7 @@ func (p *Podcasts) findUniqueEpisodeName(podcast *db.Podcast, podcastEpisode *db
 	if _, err := os.Stat(podcastPath); os.IsNotExist(err) {
 		return filename
 	}
-	titlePath := fmt.Sprintf("%s%s", pathSafe(podcastEpisode.Title), filepath.Ext(filename))
+	titlePath := fmt.Sprintf("%s%s", safeFilename(podcastEpisode.Title), filepath.Ext(filename))
 	podcastPath = path.Join(absPath(p.baseDir, podcast), titlePath)
 	if _, err := os.Stat(podcastPath); os.IsNotExist(err) {
 		return titlePath
@@ -456,7 +457,7 @@ func (p *Podcasts) downloadPodcastCover(podPath string, podcast *db.Podcast) err
 	if _, err := io.Copy(coverFile, resp.Body); err != nil {
 		return fmt.Errorf("writing podcast cover: %w", err)
 	}
-	podcast.ImagePath = path.Join(pathSafe(podcast.Title), fmt.Sprintf("cover%s", ext))
+	podcast.ImagePath = path.Join(safeFilename(podcast.Title), fmt.Sprintf("cover%s", ext))
 	if err := p.db.Save(podcast).Error; err != nil {
 		return fmt.Errorf("save podcast: %w", err)
 	}
@@ -545,10 +546,13 @@ func (p *Podcasts) PurgeOldPodcasts(maxAge time.Duration) error {
 	return nil
 }
 
-func pathSafe(in string) string {
-	return filepath.Clean(strings.ReplaceAll(in, string(filepath.Separator), "_"))
+var nonAlphaNum = regexp.MustCompile("[^a-zA-Z0-9_.]+")
+
+func safeFilename(filename string) string {
+	filename = nonAlphaNum.ReplaceAllString(filename, "")
+	return filename
 }
 
 func absPath(base string, p *db.Podcast) string {
-	return filepath.Join(base, pathSafe(p.Title))
+	return filepath.Join(base, safeFilename(p.Title))
 }

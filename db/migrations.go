@@ -1,16 +1,23 @@
+//nolint:goerr113
 package db
 
 import (
 	"errors"
 	"fmt"
 	"log"
+	"path/filepath"
+	"time"
 
 	"github.com/jinzhu/gorm"
+	"go.senan.xyz/gonic/playlist"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"gopkg.in/gormigrate.v1"
 )
 
 type MigrationContext struct {
 	OriginalMusicPath string
+	PlaylistsPath     string
+	PodcastsPath      string
 }
 
 func (db *DB) Migrate(ctx MigrationContext) error {
@@ -46,6 +53,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202206101425", migrateUser),
 		construct(ctx, "202207251148", migrateStarRating),
 		construct(ctx, "202211111057", migratePlaylistsQueuesToFullID),
+		construct(ctx, "202304221528", migratePlaylistsToM3U),
 	}
 
 	return gormigrate.
@@ -82,7 +90,6 @@ func migrateInitSchema(tx *gorm.DB, _ MigrationContext) error {
 		Setting{},
 		Play{},
 		Album{},
-		Playlist{},
 		PlayQueue{},
 	).
 		Error
@@ -110,6 +117,9 @@ func migrateCreateInitUser(tx *gorm.DB, _ MigrationContext) error {
 }
 
 func migrateMergePlaylist(tx *gorm.DB, _ MigrationContext) error {
+	if !tx.HasTable("playlists") {
+		return nil
+	}
 	if !tx.HasTable("playlist_items") {
 		return nil
 	}
@@ -335,7 +345,10 @@ func migrateAlbumRootDirAgain(tx *gorm.DB, ctx MigrationContext) error {
 }
 
 func migratePublicPlaylist(tx *gorm.DB, ctx MigrationContext) error {
-	return tx.AutoMigrate(Playlist{}).Error
+	if !tx.HasTable("playlists") {
+		return nil
+	}
+	return tx.AutoMigrate(_OldPlaylist{}).Error
 }
 
 func migratePodcastDropUserID(tx *gorm.DB, _ MigrationContext) error {
@@ -389,6 +402,10 @@ func migrateStarRating(tx *gorm.DB, _ MigrationContext) error {
 }
 
 func migratePlaylistsQueuesToFullID(tx *gorm.DB, _ MigrationContext) error {
+	if !tx.HasTable("playlists") {
+		return nil
+	}
+
 	step := tx.Exec(`
 		UPDATE playlists SET items=('tr-' || items) WHERE items IS NOT NULL;
 	`)
@@ -437,6 +454,64 @@ func migratePlaylistsQueuesToFullID(tx *gorm.DB, _ MigrationContext) error {
 	`)
 	if err := step.Error; err != nil {
 		return fmt.Errorf("step migrate play_queues to full id: %w", err)
+	}
+
+	return nil
+}
+
+func migratePlaylistsToM3U(tx *gorm.DB, ctx MigrationContext) error {
+	if ctx.PlaylistsPath == "" || !tx.HasTable("playlists") {
+		return nil
+	}
+
+	// local copy of specidpaths.Locate to avoid circular dep
+	locate := func(id specid.ID) string {
+		switch id.Type {
+		case specid.Track:
+			var track Track
+			tx.Preload("Album").Where("id=?", id.Value).Find(&track)
+			return track.AbsPath()
+		case specid.PodcastEpisode:
+			var pe PodcastEpisode
+			tx.Where("id=?", id.Value).Find(&pe)
+			if pe.Path == "" {
+				return ""
+			}
+			return filepath.Join(ctx.PodcastsPath, pe.Path)
+		}
+		return ""
+	}
+
+	store, err := playlist.NewStore(ctx.PlaylistsPath)
+	if err != nil {
+		return fmt.Errorf("create playlists store: %w", err)
+	}
+
+	var prevs []*_OldPlaylist
+	if err := tx.Find(&prevs).Error; err != nil {
+		return fmt.Errorf("fetch old playlists: %w", err)
+	}
+
+	for _, prev := range prevs {
+		var pl playlist.Playlist
+		pl.UpdatedAt = time.Now()
+		pl.UserID = prev.UserID
+		pl.Name = prev.Name
+		pl.Comment = prev.Comment
+		pl.IsPublic = prev.IsPublic
+
+		for _, id := range splitIDs(prev.Items, ",") {
+			path := locate(id)
+			if path == "" {
+				log.Printf("migrating: can't find item %s from playlist %q on filesystem", id, prev.Name)
+				continue
+			}
+			pl.Items = append(pl.Items, path)
+		}
+
+		if err := store.Write(playlist.NewPath(prev.UserID, prev.Name), &pl); err != nil {
+			return fmt.Errorf("write playlist: %w", err)
+		}
 	}
 
 	return nil

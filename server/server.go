@@ -15,6 +15,7 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/jukebox"
+	"go.senan.xyz/gonic/playlist"
 	"go.senan.xyz/gonic/podcasts"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/scanner/tags"
@@ -35,6 +36,7 @@ type Options struct {
 	PodcastPath    string
 	CacheAudioPath string
 	CoverCachePath string
+	PlaylistsPath  string
 	ProxyPrefix    string
 	GenreSplit     string
 	HTTPLog        bool
@@ -53,10 +55,17 @@ func New(opts Options) (*Server, error) {
 	tagger := &tags.TagReader{}
 
 	scanner := scanner.New(ctrlsubsonic.PathsOf(opts.MusicPaths), opts.DB, opts.GenreSplit, tagger, opts.ExcludePattern)
+
+	playlistStore, err := playlist.NewStore(opts.PlaylistsPath)
+	if err != nil {
+		return nil, fmt.Errorf("create playlists store: %w", err)
+	}
+
 	base := &ctrlbase.Controller{
-		DB:          opts.DB,
-		ProxyPrefix: opts.ProxyPrefix,
-		Scanner:     scanner,
+		DB:            opts.DB,
+		PlaylistStore: playlistStore,
+		ProxyPrefix:   opts.ProxyPrefix,
+		Scanner:       scanner,
 	}
 
 	// router with common wares for admin / subsonic
@@ -170,8 +179,6 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	routUser.Handle("/unlink_lastfm_do", ctrl.H(ctrl.ServeUnlinkLastFMDo))
 	routUser.Handle("/link_listenbrainz_do", ctrl.H(ctrl.ServeLinkListenBrainzDo))
 	routUser.Handle("/unlink_listenbrainz_do", ctrl.H(ctrl.ServeUnlinkListenBrainzDo))
-	routUser.Handle("/upload_playlist_do", ctrl.H(ctrl.ServeUploadPlaylistDo))
-	routUser.Handle("/delete_playlist_do", ctrl.H(ctrl.ServeDeletePlaylistDo))
 	routUser.Handle("/create_transcode_pref_do", ctrl.H(ctrl.ServeCreateTranscodePrefDo))
 	routUser.Handle("/delete_transcode_pref_do", ctrl.H(ctrl.ServeDeleteTranscodePrefDo))
 
