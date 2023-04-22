@@ -198,29 +198,5 @@
 {{ end }}
 {{ end }}
 
-{{ component "block" (props .
-    "Icon" "list"
-    "Name" "playlists"
-    "Desc" "choose a local <span class='italic text-gray-800'>.m3u8</span> file containing paths to music files that gonic has scanned. paths should be absolute, prefixed by the <span class='italic text-gray-800'>music-path</span> option that you started gonic with. a playlist will be created from the file and available to subsonic clients"
-) }}
-    {{ if eq (len .Playlists) 0 }}
-        <span class="text-gray-500">no playlists yet</span>
-    {{ end }}
-    <div class="grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_repeat(3,min-content)] gap-x-3 gap-y-2 items-center justify-items-end">
-        {{ range $i, $playlist := .Playlists }}
-            <div class="text-right ellipsis">{{ $playlist.Name }}</div>
-            <div class="text-gray-500 whitespace-nowrap">({{ $playlist.TrackCount }} tracks)</div>
-            <div class="text-right text-gray-500 whitespace-nowrap hidden md:block" title="{{ $playlist.CreatedAt }}">{{ $playlist.CreatedAt | dateHuman }}</div>
-            <form class="contents" action="{{ printf "/admin/delete_playlist_do?id=%d" $playlist.ID | path }}" method="post">
-            <input type="submit" value="delete">
-            </form>
-        {{ end }}
-        <form class="col-span-full relative pointer-events-auto" enctype="multipart/form-data" action="{{ path "/admin/upload_playlist_do" }}" method="post">
-            <input class="auto-submit absolute opacity-0" name="playlist-files" type="file" multiple />
-            <input type="button" value="choose m3u8">
-        </form>
-    </div>
-{{ end }}
-
 {{ end }}
 {{ end }}

@@ -242,28 +242,6 @@ func (a *Album) GenreStrings() []string {
 	return strs
 }
 
-type Playlist struct {
-	ID         int `gorm:"primary_key"`
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	User       *User
-	UserID     int `sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
-	Name       string
-	Comment    string
-	TrackCount int
-	Items      string
-	IsPublic   bool `sql:"default: null"`
-}
-
-func (p *Playlist) GetItems() []specid.ID {
-	return splitIDs(p.Items, ",")
-}
-
-func (p *Playlist) SetItems(items []specid.ID) {
-	p.Items = joinIds(items, ",")
-	p.TrackCount = len(items)
-}
-
 type PlayQueue struct {
 	ID        int `gorm:"primary_key"`
 	CreatedAt time.Time

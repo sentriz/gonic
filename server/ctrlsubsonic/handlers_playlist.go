@@ -1,165 +1,137 @@
 package ctrlsubsonic
 
 import (
+	"encoding/base64"
 	"errors"
-	"log"
+	"fmt"
 	"net/http"
 	"sort"
+	"time"
 
 	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/db"
+	playlistp "go.senan.xyz/gonic/playlist"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/specidpaths"
 )
-
-func playlistRender(c *Controller, playlist *db.Playlist, params params.Params) *spec.Playlist {
-	user := &db.User{}
-	c.DB.Where("id=?", playlist.UserID).Find(user)
-
-	resp := &spec.Playlist{
-		ID:        playlist.ID,
-		Name:      playlist.Name,
-		Comment:   playlist.Comment,
-		Created:   playlist.CreatedAt,
-		SongCount: playlist.TrackCount,
-		Public:    playlist.IsPublic,
-		Owner:     user.Name,
-	}
-
-	trackIDs := playlist.GetItems()
-	resp.List = make([]*spec.TrackChild, len(trackIDs))
-
-	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
-
-	for i, id := range trackIDs {
-		switch id.Type {
-		case specid.Track:
-			track := db.Track{}
-			err := c.DB.
-				Where("id=?", id.Value).
-				Preload("Album").
-				Preload("Album.TagArtist").
-				Preload("TrackStar", "user_id=?", user.ID).
-				Preload("TrackRating", "user_id=?", user.ID).
-				Find(&track).
-				Error
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				log.Printf("wasn't able to find track with id %d", id.Value)
-				continue
-			}
-			resp.List[i] = spec.NewTCTrackByFolder(&track, track.Album)
-			resp.Duration += track.Length
-		case specid.PodcastEpisode:
-			pe := db.PodcastEpisode{}
-			err := c.DB.
-				Where("id=?", id.Value).
-				Find(&pe).
-				Error
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				log.Printf("wasn't able to find podcast episode with id %d", id.Value)
-				continue
-			}
-			p := db.Podcast{}
-			err = c.DB.
-				Where("id=?", pe.PodcastID).
-				Find(&p).
-				Error
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				log.Printf("wasn't able to find podcast with id %d", pe.PodcastID)
-				continue
-			}
-			resp.List[i] = spec.NewTCPodcastEpisode(&pe, &p)
-			resp.Duration += pe.Length
-		}
-		resp.List[i].TranscodedContentType = transcodeMIME
-		resp.List[i].TranscodedSuffix = transcodeSuffix
-	}
-	return resp
-}
 
 func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
-	var playlists []*db.Playlist
-	c.DB.Where("user_id=?", user.ID).Or("is_public=?", true).Find(&playlists)
+	paths, err := c.PlaylistStore.List()
+	if err != nil {
+		return spec.NewError(0, "error listing playlists: %v", err)
+	}
 	sub := spec.NewResponse()
 	sub.Playlists = &spec.Playlists{
-		List: make([]*spec.Playlist, len(playlists)),
+		List: []*spec.Playlist{},
 	}
-	for i, playlist := range playlists {
-		sub.Playlists.List[i] = playlistRender(c, playlist, params)
+	for _, path := range paths {
+		playlist, err := c.PlaylistStore.Read(path)
+		if err != nil {
+			return spec.NewError(0, "error reading playlist %q: %v", path, err)
+		}
+		if playlist.UserID != user.ID && !playlist.IsPublic {
+			continue
+		}
+		playlistID := playlistIDEncode(path)
+		rendered, err := playlistRender(c, params, playlistID, playlist, false)
+		if err != nil {
+			return spec.NewError(0, "error rendering playlist %q: %v", path, err)
+		}
+		sub.Playlists.List = append(sub.Playlists.List, rendered)
 	}
 	return sub
 }
 
 func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	playlistID, err := params.GetFirstInt("id", "playlistId")
+	playlistID, err := params.GetFirst("id", "playlistId")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	playlist := db.Playlist{}
-	err = c.DB.
-		Where("id=?", playlistID).
-		Find(&playlist).
-		Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return spec.NewError(70, "playlist with id `%d` not found", playlistID)
+	playlist, err := c.PlaylistStore.Read(playlistIDDecode(playlistID))
+	if err != nil {
+		return spec.NewError(70, "playlist with id %s not found", playlistID)
 	}
 	sub := spec.NewResponse()
-	sub.Playlist = playlistRender(c, &playlist, params)
+	rendered, err := playlistRender(c, params, playlistID, playlist, true)
+	if err != nil {
+		return spec.NewError(0, "error rendering playlist: %v", err)
+	}
+	sub.Playlist = rendered
 	return sub
 }
 
 func (c *Controller) ServeCreatePlaylist(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	params := r.Context().Value(CtxParams).(params.Params)
-	playlistID := params.GetFirstOrInt( /* default */ 0, "id", "playlistId")
-	// playlistID may be 0 from above. in that case we get a new playlist
-	// as intended
-	var playlist db.Playlist
-	c.DB.
-		Where("id=?", playlistID).
-		FirstOrCreate(&playlist)
 
-		// update meta info
+	playlistID := params.GetFirstOr( /* default */ "", "id", "playlistId")
+	playlistPath := playlistIDDecode(playlistID)
+
+	var playlist playlistp.Playlist
+	if pl, _ := c.PlaylistStore.Read(playlistPath); pl != nil {
+		playlist = *pl
+	}
+
+	// update meta info
 	if playlist.UserID != 0 && playlist.UserID != user.ID {
 		return spec.NewResponse()
 	}
+
 	playlist.UserID = user.ID
+	playlist.UpdatedAt = time.Now()
+
 	if val, err := params.Get("name"); err == nil {
 		playlist.Name = val
 	}
 
-	// replace song IDs
-	trackIDs, _ := params.GetIDList("songId")
-	// Set the items of the playlist
-	playlist.SetItems(trackIDs)
-	c.DB.Save(playlist)
+	playlist.Items = nil
+	ids := params.GetOrIDList("songId", nil)
+	for _, id := range ids {
+		r, err := specidpaths.Locate(c.DB, c.PodcastsPath, id)
+		if err != nil {
+			return spec.NewError(0, "lookup id %v: %v", id, err)
+		}
+		playlist.Items = append(playlist.Items, r.AbsPath())
+	}
+
+	if playlistPath == "" {
+		playlistPath = playlistp.NewPath(user.ID, fmt.Sprint(time.Now().UnixMilli()))
+	}
+	if err := c.PlaylistStore.Write(playlistPath, &playlist); err != nil {
+		return spec.NewError(0, "save playlist: %v", err)
+	}
 
 	sub := spec.NewResponse()
-	sub.Playlist = playlistRender(c, &playlist, params)
+	rendered, err := playlistRender(c, params, playlistID, &playlist, true)
+	if err != nil {
+		return spec.NewError(0, "error rendering playlist: %v", err)
+	}
+	sub.Playlist = rendered
 	return sub
 }
 
 func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	params := r.Context().Value(CtxParams).(params.Params)
-	playlistID := params.GetFirstOrInt( /* default */ 0, "id", "playlistId")
-	// playlistID may be 0 from above. in that case we get a new playlist
-	// as intended
-	var playlist db.Playlist
-	c.DB.
-		Where("id=?", playlistID).
-		FirstOrCreate(&playlist)
 
-		// update meta info
+	playlistID := params.GetFirstOr( /* default */ "", "id", "playlistId")
+	playlistPath := playlistIDDecode(playlistID)
+	playlist, err := c.PlaylistStore.Read(playlistPath)
+	if err != nil {
+		return spec.NewError(0, "find playlist: %v", err)
+	}
+
+	// update meta info
 	if playlist.UserID != 0 && playlist.UserID != user.ID {
 		return spec.NewResponse()
 	}
-	playlist.UserID = user.ID
+
 	if val, err := params.Get("name"); err == nil {
 		playlist.Name = val
 	}
@@ -169,30 +141,101 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 	if val, err := params.GetBool("public"); err == nil {
 		playlist.IsPublic = val
 	}
-	trackIDs := playlist.GetItems()
 
 	// delete items
-	if p, err := params.GetIntList("songIndexToRemove"); err == nil {
-		sort.Sort(sort.Reverse(sort.IntSlice(p)))
-		for _, i := range p {
-			trackIDs = append(trackIDs[:i], trackIDs[i+1:]...)
+	if indexes, err := params.GetIntList("songIndexToRemove"); err == nil {
+		sort.Sort(sort.Reverse(sort.IntSlice(indexes)))
+		for _, i := range indexes {
+			playlist.Items = append(playlist.Items[:i], playlist.Items[i+1:]...)
 		}
 	}
 
 	// add items
-	if p, err := params.GetIDList("songIdToAdd"); err == nil {
-		trackIDs = append(trackIDs, p...)
+	if ids, err := params.GetIDList("songIdToAdd"); err == nil {
+		for _, id := range ids {
+			item, err := specidpaths.Locate(c.DB, c.PodcastsPath, id)
+			if err != nil {
+				return spec.NewError(0, "locate id %q: %v", id, err)
+			}
+			playlist.Items = append(playlist.Items, item.AbsPath())
+		}
 	}
 
-	playlist.SetItems(trackIDs)
-	c.DB.Save(playlist)
+	if err := c.PlaylistStore.Write(playlistPath, playlist); err != nil {
+		return spec.NewError(0, "save playlist: %v", err)
+	}
 	return spec.NewResponse()
 }
 
 func (c *Controller) ServeDeletePlaylist(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	c.DB.
-		Where("id=?", params.GetOrInt("id", 0)).
-		Delete(&db.Playlist{})
+	playlistID := params.GetFirstOr( /* default */ "", "id", "playlistId")
+	if err := c.PlaylistStore.Delete(playlistIDDecode(playlistID)); err != nil {
+		return spec.NewError(0, "delete playlist: %v", err)
+	}
 	return spec.NewResponse()
+}
+
+func playlistIDEncode(path string) string {
+	return base64.URLEncoding.EncodeToString([]byte(path))
+}
+func playlistIDDecode(id string) string {
+	path, _ := base64.URLEncoding.DecodeString(id)
+	return string(path)
+}
+
+func playlistRender(c *Controller, params params.Params, playlistID string, playlist *playlistp.Playlist, withItems bool) (*spec.Playlist, error) {
+	user := &db.User{}
+	if err := c.DB.Where("id=?", playlist.UserID).Find(user).Error; err != nil {
+		return nil, fmt.Errorf("find user by id: %w", err)
+	}
+
+	resp := &spec.Playlist{
+		ID:        playlistID,
+		Name:      playlist.Name,
+		Comment:   playlist.Comment,
+		Created:   playlist.UpdatedAt,
+		SongCount: len(playlist.Items),
+		Public:    playlist.IsPublic,
+		Owner:     user.Name,
+	}
+	if !withItems {
+		return resp, nil
+	}
+
+	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+
+	for _, path := range playlist.Items {
+		file, err := specidpaths.Lookup(c.DB, PathsOf(c.MusicPaths), c.PodcastsPath, path)
+		if err != nil {
+			return nil, fmt.Errorf("lookup path %q: %w", path, err)
+		}
+		var trch *spec.TrackChild
+		switch id := file.SID(); id.Type {
+		case specid.Track:
+			var track db.Track
+			if err := c.DB.Where("id=?", id.Value).Preload("Album").Preload("Album.TagArtist").Preload("TrackStar", "user_id=?", user.ID).Preload("TrackRating", "user_id=?", user.ID).Find(&track).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, fmt.Errorf("load track by id: %w", err)
+			}
+			trch = spec.NewTCTrackByFolder(&track, track.Album)
+			resp.Duration += track.Length
+		case specid.PodcastEpisode:
+			var pe db.PodcastEpisode
+			if err := c.DB.Where("id=?", id.Value).Find(&pe).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, fmt.Errorf("load podcast episode by id: %w", err)
+			}
+			var p db.Podcast
+			if err := c.DB.Where("id=?", pe.PodcastID).Find(&p).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, fmt.Errorf("load podcast by id: %w", err)
+			}
+			trch = spec.NewTCPodcastEpisode(&pe, &p)
+			resp.Duration += pe.Length
+		default:
+			continue
+		}
+		trch.TranscodedContentType = transcodeMIME
+		trch.TranscodedSuffix = transcodeSuffix
+		resp.List = append(resp.List, trch)
+	}
+	return resp, nil
 }

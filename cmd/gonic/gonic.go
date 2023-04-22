@@ -45,6 +45,8 @@ func main() {
 	var confMusicPaths pathAliases
 	set.Var(&confMusicPaths, "music-path", "path to music")
 
+	confPlaylistsPath := set.String("playlists-path", "", "path to your list of new or existing m3u playlists that gonic can manage")
+
 	confDBPath := set.String("db-path", "gonic.db", "path to database (optional)")
 
 	confScanIntervalMins := set.Int("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
@@ -98,6 +100,9 @@ func main() {
 	if *confCachePath, err = validatePath(*confCachePath); err != nil {
 		log.Fatalf("checking cache directory: %v", err)
 	}
+	if *confPlaylistsPath, err = validatePath(*confPlaylistsPath); err != nil {
+		log.Fatalf("checking playlist directory: %v", err)
+	}
 
 	cacheDirAudio := path.Join(*confCachePath, "audio")
 	cacheDirCovers := path.Join(*confCachePath, "covers")
@@ -116,6 +121,8 @@ func main() {
 
 	err = dbc.Migrate(db.MigrationContext{
 		OriginalMusicPath: confMusicPaths[0].path,
+		PlaylistsPath:     *confPlaylistsPath,
+		PodcastsPath:      *confPodcastPath,
 	})
 	if err != nil {
 		log.Panicf("error migrating database: %v\n", err)
@@ -135,6 +142,7 @@ func main() {
 		CacheAudioPath: cacheDirAudio,
 		CoverCachePath: cacheDirCovers,
 		PodcastPath:    *confPodcastPath,
+		PlaylistsPath:  *confPlaylistsPath,
 		ProxyPrefix:    *confProxyPrefix,
 		GenreSplit:     *confGenreSplit,
 		HTTPLog:        *confHTTPLog,

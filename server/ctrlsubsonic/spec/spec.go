@@ -266,15 +266,15 @@ type Playlists struct {
 }
 
 type Playlist struct {
-	ID        int           `xml:"id,attr"        json:"id"`
-	Name      string        `xml:"name,attr"      json:"name"`
-	Comment   string        `xml:"comment,attr"   json:"comment"`
-	Owner     string        `xml:"owner,attr"     json:"owner"`
-	SongCount int           `xml:"songCount,attr" json:"songCount"`
-	Created   time.Time     `xml:"created,attr"   json:"created"`
-	Duration  int           `xml:"duration,attr"  json:"duration,omitempty"`
-	Public    bool          `xml:"public,attr"    json:"public,omitempty"`
-	List      []*TrackChild `xml:"entry"          json:"entry"`
+	ID        string        `xml:"id,attr"         json:"id"`
+	Name      string        `xml:"name,attr"       json:"name"`
+	Comment   string        `xml:"comment,attr"    json:"comment"`
+	Owner     string        `xml:"owner,attr"      json:"owner"`
+	SongCount int           `xml:"songCount,attr"  json:"songCount"`
+	Created   time.Time     `xml:"created,attr"    json:"created"`
+	Duration  int           `xml:"duration,attr"   json:"duration,omitempty"`
+	Public    bool          `xml:"public,attr"     json:"public,omitempty"`
+	List      []*TrackChild `xml:"entry,omitempty" json:"entry,omitempty"`
 }
 
 type SimilarArtist struct {

@@ -7,6 +7,7 @@ import (
 	"path"
 
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/playlist"
 	"go.senan.xyz/gonic/scanner"
 )
 
@@ -45,9 +46,10 @@ func statusToBlock(code int) string {
 }
 
 type Controller struct {
-	DB          *db.DB
-	Scanner     *scanner.Scanner
-	ProxyPrefix string
+	DB            *db.DB
+	PlaylistStore *playlist.Store
+	Scanner       *scanner.Scanner
+	ProxyPrefix   string
 }
 
 // Path returns a URL path with the proxy prefix included
