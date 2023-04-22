@@ -398,6 +398,7 @@ type PodcastEpisode struct {
 	Filename    string
 	Status      PodcastEpisodeStatus
 	Error       string
+	AbsP        string `gorm:"-"` // TODO: not this. instead we need some consistent way to get the AbsPath for both tracks and podcast episodes. or just files in general
 }
 
 func (pe *PodcastEpisode) AudioLength() int  { return pe.Length }
@@ -421,6 +422,10 @@ func (pe *PodcastEpisode) Ext() string {
 
 func (pe *PodcastEpisode) MIME() string {
 	return mime.TypeByExtension(filepath.Ext(pe.Filename))
+}
+
+func (pe *PodcastEpisode) AbsPath() string {
+	return pe.AbsP
 }
 
 type Bookmark struct {

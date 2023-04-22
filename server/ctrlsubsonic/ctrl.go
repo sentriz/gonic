@@ -1,4 +1,4 @@
-// Package ctrlsubsonic provides HTTP handlers for subsonic api
+// Package ctrlsubsonic provides HTTP handlers for subsonic API
 package ctrlsubsonic
 
 import (
@@ -10,7 +10,6 @@ import (
 	"net/http"
 
 	"go.senan.xyz/gonic/jukebox"
-	"go.senan.xyz/gonic/paths"
 	"go.senan.xyz/gonic/podcasts"
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/server/ctrlbase"
@@ -27,12 +26,24 @@ const (
 	CtxParams
 )
 
+type MusicPath struct {
+	Alias, Path string
+}
+
+func PathsOf(paths []MusicPath) []string {
+	var r []string
+	for _, p := range paths {
+		r = append(r, p.Path)
+	}
+	return r
+}
+
 type Controller struct {
 	*ctrlbase.Controller
-	CachePath      string
-	CoverCachePath string
+	MusicPaths     []MusicPath
 	PodcastsPath   string
-	MusicPaths     paths.MusicPaths
+	CacheAudioPath string
+	CoverCachePath string
 	Jukebox        *jukebox.Jukebox
 	Scrobblers     []scrobble.Scrobbler
 	Podcasts       *podcasts.Podcasts

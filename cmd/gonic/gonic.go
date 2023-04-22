@@ -4,6 +4,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -21,38 +22,44 @@ import (
 
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/db"
-	"go.senan.xyz/gonic/paths"
 	"go.senan.xyz/gonic/server"
+	"go.senan.xyz/gonic/server/ctrlsubsonic"
 )
 
 const (
 	cleanTimeDuration = 10 * time.Minute
-	cachePrefixAudio  = "audio"
-	cachePrefixCovers = "covers"
 )
 
 func main() {
 	set := flag.NewFlagSet(gonic.Name, flag.ExitOnError)
 	confListenAddr := set.String("listen-addr", "0.0.0.0:4747", "listen address (optional)")
+
 	confTLSCert := set.String("tls-cert", "", "path to TLS certificate (optional)")
 	confTLSKey := set.String("tls-key", "", "path to TLS private key (optional)")
+
+	confPodcastPurgeAgeDays := set.Int("podcast-purge-age", 0, "age (in days) to purge podcast episodes if not accessed (optional)")
 	confPodcastPath := set.String("podcast-path", "", "path to podcasts")
+
 	confCachePath := set.String("cache-path", "", "path to cache")
+
+	var confMusicPaths pathAliases
+	set.Var(&confMusicPaths, "music-path", "path to music")
+
 	confDBPath := set.String("db-path", "gonic.db", "path to database (optional)")
+
 	confScanIntervalMins := set.Int("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
 	confScanAtStart := set.Bool("scan-at-start-enabled", false, "whether to perform an initial scan at startup (optional)")
 	confScanWatcher := set.Bool("scan-watcher-enabled", false, "whether to watch file system for new music and rescan (optional)")
+
 	confJukeboxEnabled := set.Bool("jukebox-enabled", false, "whether the subsonic jukebox api should be enabled (optional)")
 	confJukeboxMPVExtraArgs := set.String("jukebox-mpv-extra-args", "", "extra command line arguments to pass to the jukebox mpv daemon (optional)")
-	confPodcastPurgeAgeDays := set.Int("podcast-purge-age", 0, "age (in days) to purge podcast episodes if not accessed (optional)")
+
 	confProxyPrefix := set.String("proxy-prefix", "", "url path prefix to use if behind proxy. eg '/gonic' (optional)")
-	confGenreSplit := set.String("genre-split", "\n", "character or string to split genre tag data on (optional)")
 	confHTTPLog := set.Bool("http-log", true, "http request logging (optional)")
+
+	confGenreSplit := set.String("genre-split", "\n", "character or string to split genre tag data on (optional)")
+
 	confShowVersion := set.Bool("version", false, "show gonic version")
-
-	var confMusicPaths paths.MusicPaths
-	set.Var(&confMusicPaths, "music-path", "path to music")
-
 	_ = set.String("config-path", "", "path to config (optional)")
 
 	if err := ff.Parse(set, os.Args[1:],
@@ -68,40 +75,31 @@ func main() {
 		os.Exit(0)
 	}
 
-	log.Printf("starting gonic v%s\n", gonic.Version)
-	log.Printf("provided config\n")
-	set.VisitAll(func(f *flag.Flag) {
-		value := strings.ReplaceAll(f.Value.String(), "\n", "")
-		log.Printf("    %-25s %s\n", f.Name, value)
-	})
-
 	if len(confMusicPaths) == 0 {
 		log.Fatalf("please provide a music directory")
 	}
-	for _, confMusicPath := range confMusicPaths {
-		if _, err := os.Stat(confMusicPath.Path); os.IsNotExist(err) {
-			log.Fatalf("music directory %q not found", confMusicPath.Path)
+
+	var err error
+	for i, confMusicPath := range confMusicPaths {
+		if confMusicPaths[i].path, err = validatePath(confMusicPath.path); err != nil {
+			log.Fatalf("checking music dir %q: %v", confMusicPath.path, err)
 		}
-	}
-	if _, err := os.Stat(*confPodcastPath); os.IsNotExist(err) {
-		log.Fatal("please provide a valid podcast directory")
 	}
 
-	if *confCachePath == "" {
-		log.Fatal("please provide a cache directory")
+	if *confPodcastPath, err = validatePath(*confPodcastPath); err != nil {
+		log.Fatalf("checking podcast directory: %v", err)
+	}
+	if *confCachePath, err = validatePath(*confCachePath); err != nil {
+		log.Fatalf("checking cache directory: %v", err)
 	}
 
-	cacheDirAudio := path.Join(*confCachePath, cachePrefixAudio)
-	cacheDirCovers := path.Join(*confCachePath, cachePrefixCovers)
-	if _, err := os.Stat(cacheDirAudio); os.IsNotExist(err) {
-		if err := os.MkdirAll(cacheDirAudio, os.ModePerm); err != nil {
-			log.Fatalf("couldn't create audio cache path: %v\n", err)
-		}
+	cacheDirAudio := path.Join(*confCachePath, "audio")
+	cacheDirCovers := path.Join(*confCachePath, "covers")
+	if err := os.MkdirAll(cacheDirAudio, os.ModePerm); err != nil {
+		log.Fatalf("couldn't create audio cache path: %v\n", err)
 	}
-	if _, err := os.Stat(cacheDirCovers); os.IsNotExist(err) {
-		if err := os.MkdirAll(cacheDirCovers, os.ModePerm); err != nil {
-			log.Fatalf("couldn't create covers cache path: %v\n", err)
-		}
+	if err := os.MkdirAll(cacheDirCovers, os.ModePerm); err != nil {
+		log.Fatalf("couldn't create covers cache path: %v\n", err)
 	}
 
 	dbc, err := db.New(*confDBPath, db.DefaultOptions())
@@ -111,28 +109,40 @@ func main() {
 	defer dbc.Close()
 
 	err = dbc.Migrate(db.MigrationContext{
-		OriginalMusicPath: confMusicPaths[0].Path,
+		OriginalMusicPath: confMusicPaths[0].path,
 	})
 	if err != nil {
 		log.Panicf("error migrating database: %v\n", err)
+	}
+
+	var musicPaths []ctrlsubsonic.MusicPath
+	for _, pa := range confMusicPaths {
+		musicPaths = append(musicPaths, ctrlsubsonic.MusicPath{Alias: pa.alias, Path: pa.path})
 	}
 
 	proxyPrefixExpr := regexp.MustCompile(`^\/*(.*?)\/*$`)
 	*confProxyPrefix = proxyPrefixExpr.ReplaceAllString(*confProxyPrefix, `/$1`)
 	server, err := server.New(server.Options{
 		DB:             dbc,
-		MusicPaths:     confMusicPaths,
-		CachePath:      filepath.Clean(cacheDirAudio),
+		MusicPaths:     musicPaths,
+		CacheAudioPath: cacheDirAudio,
 		CoverCachePath: cacheDirCovers,
+		PodcastPath:    *confPodcastPath,
 		ProxyPrefix:    *confProxyPrefix,
 		GenreSplit:     *confGenreSplit,
-		PodcastPath:    filepath.Clean(*confPodcastPath),
 		HTTPLog:        *confHTTPLog,
 		JukeboxEnabled: *confJukeboxEnabled,
 	})
 	if err != nil {
 		log.Panicf("error creating server: %v\n", err)
 	}
+
+	log.Printf("starting gonic v%s\n", gonic.Version)
+	log.Printf("provided config\n")
+	set.VisitAll(func(f *flag.Flag) {
+		value := strings.ReplaceAll(f.Value.String(), "\n", "")
+		log.Printf("    %-25s %s\n", f.Name, value)
+	})
 
 	var g run.Group
 	g.Add(server.StartHTTP(*confListenAddr, *confTLSCert, *confTLSKey))
@@ -159,4 +169,46 @@ func main() {
 	if err := g.Run(); err != nil {
 		log.Panicf("error in job: %v", err)
 	}
+}
+
+const pathAliasSep = "->"
+
+type pathAliases []pathAlias
+type pathAlias struct{ alias, path string }
+
+func (pa pathAliases) String() string {
+	var strs []string
+	for _, p := range pa {
+		if p.alias != "" {
+			strs = append(strs, fmt.Sprintf("%s %s %s", p.alias, pathAliasSep, p.path))
+			continue
+		}
+		strs = append(strs, p.path)
+	}
+	return strings.Join(strs, ", ")
+}
+
+func (pa *pathAliases) Set(value string) error {
+	if name, path, ok := strings.Cut(value, pathAliasSep); ok {
+		*pa = append(*pa, pathAlias{alias: name, path: path})
+		return nil
+	}
+	*pa = append(*pa, pathAlias{path: value})
+	return nil
+}
+
+var errNotExists = errors.New("path does not exist, please provide one")
+
+func validatePath(p string) (string, error) {
+	if p == "" {
+		return "", errNotExists
+	}
+	if _, err := os.Stat(p); os.IsNotExist(err) {
+		return "", errNotExists
+	}
+	p, err := filepath.Abs(p)
+	if err != nil {
+		return "", fmt.Errorf("make absolute: %w", err)
+	}
+	return p, nil
 }

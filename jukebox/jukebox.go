@@ -125,10 +125,8 @@ func (j *Jukebox) SetPlaylist(items []string) error {
 		return item.Current
 	})
 
-	cwd, _ := os.Getwd()
-	currFilename, _ := filepath.Rel(cwd, current.Filename)
 	filteredItems, foundExistingTrack := filter(items, func(filename string) bool {
-		return filename != currFilename
+		return filename != current.Filename
 	})
 
 	tmp, cleanup, err := tmp()
