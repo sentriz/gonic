@@ -42,12 +42,17 @@ type Scanner struct {
 }
 
 func New(musicDirs []string, db *db.DB, genreSplit string, tagger tags.Reader, excludePattern string) *Scanner {
+	var excludePatternRegExp *regexp.Regexp
+	if excludePattern != "" {
+		excludePatternRegExp = regexp.MustCompile(excludePattern)
+	}
+
 	return &Scanner{
 		db:             db,
 		musicDirs:      musicDirs,
 		genreSplit:     genreSplit,
 		tagger:         tagger,
-		excludePattern: regexp.MustCompile(excludePattern),
+		excludePattern: excludePatternRegExp,
 		scanning:       new(int32),
 		watchMap:       make(map[string]string),
 		watchDone:      make(chan bool),
