@@ -45,6 +45,27 @@ func TestTableCounts(t *testing.T) {
 	is.Equal(artists, 3)                                       // not all artists
 }
 
+func TestWithExcludePattern(t *testing.T) {
+	t.Parallel()
+	is := is.NewRelaxed(t)
+	m := mockfs.NewWithExcludePattern(t, "\\/artist-1\\/|track-0.flac$")
+
+	m.AddItems()
+	m.ScanAndClean()
+
+	var tracks int
+	is.NoErr(m.DB().Model(&db.Track{}).Count(&tracks).Error) // not all tracks
+	is.Equal(tracks, 12)
+
+	var albums int
+	is.NoErr(m.DB().Model(&db.Album{}).Count(&albums).Error) // not all albums
+	is.Equal(albums, 10)                                     // not all albums
+
+	var artists int
+	is.NoErr(m.DB().Model(&db.Artist{}).Count(&artists).Error) // not all artists
+	is.Equal(artists, 2)                                       // not all artists
+}
+
 func TestParentID(t *testing.T) {
 	t.Parallel()
 	is := is.New(t)

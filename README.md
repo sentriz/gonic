@@ -73,6 +73,7 @@ password can then be changed from the web interface
 | `GONIC_JUKEBOX_MPV_EXTRA_ARGS` | `-jukebox-mpv-extra-args` | **optional** extra command line arguments to pass to the jukebox mpv daemon                                 |
 | `GONIC_PODCAST_PURGE_AGE`      | `-podcast-purge-age`      | **optional** age (in days) to purge podcast episodes if not accessed                                        |
 | `GONIC_GENRE_SPLIT`            | `-genre-split`            | **optional** a string or character to split genre tags on for multi-genre support (eg. `;`)                 |
+| `GONIC_EXCLUDE_PATTERN`        | `-exclude-pattern`        | **optional** files matching this regex pattern will not be imported                                         |
 
 ## screenshots
 

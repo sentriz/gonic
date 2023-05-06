@@ -27,10 +27,13 @@ type MockFS struct {
 	db        *db.DB
 }
 
-func New(t testing.TB) *MockFS                        { return new(t, []string{""}) }
-func NewWithDirs(t testing.TB, dirs []string) *MockFS { return new(t, dirs) }
+func New(t testing.TB) *MockFS                        { return new(t, []string{""}, "") }
+func NewWithDirs(t testing.TB, dirs []string) *MockFS { return new(t, dirs, "") }
+func NewWithExcludePattern(t testing.TB, excludePattern string) *MockFS {
+	return new(t, []string{""}, excludePattern)
+}
 
-func new(t testing.TB, dirs []string) *MockFS {
+func new(t testing.TB, dirs []string, excludePattern string) *MockFS {
 	dbc, err := db.NewMock()
 	if err != nil {
 		t.Fatalf("create db: %v", err)
@@ -59,7 +62,7 @@ func new(t testing.TB, dirs []string) *MockFS {
 	}
 
 	tagReader := &tagReader{paths: map[string]*tagReaderResult{}}
-	scanner := scanner.New(absDirs, dbc, ";", tagReader)
+	scanner := scanner.New(absDirs, dbc, ";", tagReader, excludePattern)
 
 	return &MockFS{
 		t:         t,

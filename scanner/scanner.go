@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -29,25 +30,32 @@ var (
 )
 
 type Scanner struct {
-	db         *db.DB
-	musicDirs  []string
-	genreSplit string
-	tagger     tags.Reader
-	scanning   *int32
-	watcher    *fsnotify.Watcher
-	watchMap   map[string]string // maps watched dirs back to root music dir
-	watchDone  chan bool
+	db             *db.DB
+	musicDirs      []string
+	genreSplit     string
+	tagger         tags.Reader
+	excludePattern *regexp.Regexp
+	scanning       *int32
+	watcher        *fsnotify.Watcher
+	watchMap       map[string]string // maps watched dirs back to root music dir
+	watchDone      chan bool
 }
 
-func New(musicDirs []string, db *db.DB, genreSplit string, tagger tags.Reader) *Scanner {
+func New(musicDirs []string, db *db.DB, genreSplit string, tagger tags.Reader, excludePattern string) *Scanner {
+	var excludePatternRegExp *regexp.Regexp
+	if excludePattern != "" {
+		excludePatternRegExp = regexp.MustCompile(excludePattern)
+	}
+
 	return &Scanner{
-		db:         db,
-		musicDirs:  musicDirs,
-		genreSplit: genreSplit,
-		tagger:     tagger,
-		scanning:   new(int32),
-		watchMap:   make(map[string]string),
-		watchDone:  make(chan bool),
+		db:             db,
+		musicDirs:      musicDirs,
+		genreSplit:     genreSplit,
+		tagger:         tagger,
+		excludePattern: excludePatternRegExp,
+		scanning:       new(int32),
+		watchMap:       make(map[string]string),
+		watchDone:      make(chan bool),
 	}
 }
 
@@ -251,6 +259,11 @@ func (s *Scanner) scanCallback(c *Context, dir string, absPath string, d fs.DirE
 		return nil
 	}
 
+	if s.excludePattern != nil && s.excludePattern.MatchString(absPath) {
+		log.Printf("excluding folder `%s`", absPath)
+		return nil
+	}
+
 	log.Printf("processing folder `%s`", absPath)
 
 	tx := s.db.Begin()
@@ -275,6 +288,12 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string
 	var tracks []string
 	var cover string
 	for _, item := range items {
+		fullpath := filepath.Join(absPath, item.Name())
+		if s.excludePattern != nil && s.excludePattern.MatchString(fullpath) {
+			log.Printf("excluding path `%s`", fullpath)
+			continue
+		}
+
 		if isCover(item.Name()) {
 			cover = item.Name()
 			continue
