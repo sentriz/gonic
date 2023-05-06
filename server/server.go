@@ -31,6 +31,7 @@ import (
 type Options struct {
 	DB             *db.DB
 	MusicPaths     []ctrlsubsonic.MusicPath
+	ExcludePattern string
 	PodcastPath    string
 	CacheAudioPath string
 	CoverCachePath string
@@ -51,7 +52,7 @@ type Server struct {
 func New(opts Options) (*Server, error) {
 	tagger := &tags.TagReader{}
 
-	scanner := scanner.New(ctrlsubsonic.PathsOf(opts.MusicPaths), opts.DB, opts.GenreSplit, tagger)
+	scanner := scanner.New(ctrlsubsonic.PathsOf(opts.MusicPaths), opts.DB, opts.GenreSplit, tagger, opts.ExcludePattern)
 	base := &ctrlbase.Controller{
 		DB:          opts.DB,
 		ProxyPrefix: opts.ProxyPrefix,
@@ -94,7 +95,7 @@ func New(opts Options) (*Server, error) {
 	ctrlSubsonic := &ctrlsubsonic.Controller{
 		Controller:     base,
 		MusicPaths:     opts.MusicPaths,
-		PodcastsPath:    opts.PodcastPath,
+		PodcastsPath:   opts.PodcastPath,
 		CacheAudioPath: opts.CacheAudioPath,
 		CoverCachePath: opts.CoverCachePath,
 		Scrobblers:     []scrobble.Scrobbler{&lastfm.Scrobbler{DB: opts.DB}, &listenbrainz.Scrobbler{}},

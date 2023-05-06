@@ -62,6 +62,12 @@ func main() {
 	confShowVersion := set.Bool("version", false, "show gonic version")
 	_ = set.String("config-path", "", "path to config (optional)")
 
+	confExcludePatterns := set.String("exclude-pattern", "", "regex pattern to exclude files from scan (optional)")
+
+	if _, err := regexp.Compile(*confExcludePatterns); err != nil {
+		log.Fatalf("invalid exclude pattern: %v\n", err)
+	}
+
 	if err := ff.Parse(set, os.Args[1:],
 		ff.WithConfigFileFlag("config-path"),
 		ff.WithConfigFileParser(ff.PlainParser),
@@ -125,6 +131,7 @@ func main() {
 	server, err := server.New(server.Options{
 		DB:             dbc,
 		MusicPaths:     musicPaths,
+		ExcludePattern: *confExcludePatterns,
 		CacheAudioPath: cacheDirAudio,
 		CoverCachePath: cacheDirCovers,
 		PodcastPath:    *confPodcastPath,
