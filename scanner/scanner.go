@@ -290,7 +290,7 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string
 	for _, item := range items {
 		fullpath := filepath.Join(absPath, item.Name())
 		if s.excludePattern != nil && s.excludePattern.MatchString(fullpath) {
-			log.Printf("skipping excluded path `%s`", fullpath)
+			log.Printf("excluding path `%s`", fullpath)
 			continue
 		}
 
