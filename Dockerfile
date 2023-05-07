@@ -31,7 +31,7 @@ COPY --from=builder \
 COPY --from=builder \
     /src/gonic \
     /bin/
-VOLUME ["/cache", "/data", "/music", "/podcasts"]
+VOLUME ["/cache", "/data", "/music", "/playlists", "/podcasts"]
 EXPOSE 80
 ENV TZ ""
 ENV GONIC_DB_PATH /data/gonic.db
