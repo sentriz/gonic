@@ -107,7 +107,7 @@ func New(opts Options) (*Server, error) {
 		PodcastsPath:   opts.PodcastPath,
 		CacheAudioPath: opts.CacheAudioPath,
 		CoverCachePath: opts.CoverCachePath,
-		Scrobblers:     []scrobble.Scrobbler{&lastfm.Scrobbler{DB: opts.DB}, &listenbrainz.Scrobbler{}},
+		Scrobblers:     []scrobble.Scrobbler{&lastfm.Scrobbler{DB: opts.DB}, listenbrainz.NewScrobbler()},
 		Podcasts:       podcast,
 		Transcoder:     cacheTranscoder,
 	}

@@ -52,7 +52,15 @@ type Scrobble struct {
 	Payload    []*Payload `json:"payload"`
 }
 
-type Scrobbler struct{}
+type Scrobbler struct {
+	httpClient *http.Client
+}
+
+func NewScrobbler() *Scrobbler {
+	return &Scrobbler{
+		httpClient: http.DefaultClient,
+	}
+}
 
 func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, submission bool) error {
 	if user.ListenBrainzURL == "" || user.ListenBrainzToken == "" {
@@ -96,7 +104,7 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 	req, _ := http.NewRequest(http.MethodPost, submitURL, &payloadBuf)
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", authHeader)
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := s.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("http post: %w", err)
 	}
