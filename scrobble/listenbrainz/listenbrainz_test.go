@@ -3,19 +3,18 @@ package listenbrainz
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path"
 	"regexp"
 	"strings"
 	"testing"
 	"time"
 
-	jd "github.com/josephburnett/jd/lib"
-	"github.com/matryer/is"
+	"github.com/stretchr/testify/assert"
 	"go.senan.xyz/gonic/db"
 )
 
@@ -36,17 +35,18 @@ func httpClientMock(handler http.Handler) (http.Client, func()) {
 }
 
 func TestScrobble(t *testing.T) {
-	// arrange
 	t.Parallel()
-	is := is.NewRelaxed(t)
+	assert := assert.New(t)
 
+	// arrange
 	client, close := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		is.Equal(http.MethodPost, r.Method)
-		is.Equal("/1/submit-listens", r.URL.Path)
-		is.Equal("application/json", r.Header.Get("Content-Type"))
-		is.Equal("Token token1", r.Header.Get("Authorization"))
-		bodyBytes, _ := io.ReadAll(r.Body)
-		jsonEqual(t, string(bodyBytes))
+		assert.Equal(http.MethodPost, r.Method)
+		assert.Equal("/1/submit-listens", r.URL.Path)
+		assert.Equal("application/json", r.Header.Get("Content-Type"))
+		assert.Equal("Token token1", r.Header.Get("Authorization"))
+		bodyBytes, err := io.ReadAll(r.Body)
+		assert.NoError(err)
+		assert.JSONEq(getTestData(t), string(bodyBytes))
 
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"accepted": 1}`))
@@ -71,19 +71,19 @@ func TestScrobble(t *testing.T) {
 	}, time.Unix(1683804525, 0), true)
 
 	// assert
-	is.NoErr(err)
+	assert.NoError(err)
 }
 
 func TestScrobble_unauthorized(t *testing.T) {
-	// arrange
 	t.Parallel()
-	is := is.NewRelaxed(t)
+	assert := assert.New(t)
 
+	// arrange
 	client, close := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		is.Equal(http.MethodPost, r.Method)
-		is.Equal("/1/submit-listens", r.URL.Path)
-		is.Equal("application/json", r.Header.Get("Content-Type"))
-		is.Equal("Token token1", r.Header.Get("Authorization"))
+		assert.Equal(http.MethodPost, r.Method)
+		assert.Equal("/1/submit-listens", r.URL.Path)
+		assert.Equal("application/json", r.Header.Get("Content-Type"))
+		assert.Equal("Token token1", r.Header.Get("Authorization"))
 
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(`{"code": 401, "error": "Invalid authorization token."}`))
@@ -108,19 +108,19 @@ func TestScrobble_unauthorized(t *testing.T) {
 	}, time.Now(), true)
 
 	// assert
-	is.True(errors.Is(err, ErrListenBrainz))
+	assert.ErrorIs(err, ErrListenBrainz)
 }
 
 func TestScrobble_serverError(t *testing.T) {
-	// arrange
 	t.Parallel()
-	is := is.NewRelaxed(t)
+	assert := assert.New(t)
 
+	// arrange
 	client, close := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		is.Equal(http.MethodPost, r.Method)
-		is.Equal("/1/submit-listens", r.URL.Path)
-		is.Equal("application/json", r.Header.Get("Content-Type"))
-		is.Equal("Token token1", r.Header.Get("Authorization"))
+		assert.Equal(http.MethodPost, r.Method)
+		assert.Equal("/1/submit-listens", r.URL.Path)
+		assert.Equal("application/json", r.Header.Get("Content-Type"))
+		assert.Equal("Token token1", r.Header.Get("Authorization"))
 
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
@@ -144,32 +144,18 @@ func TestScrobble_serverError(t *testing.T) {
 	}, time.Now(), true)
 
 	// assert
-	is.True(errors.Is(err, ErrListenBrainz))
+	assert.ErrorIs(err, ErrListenBrainz)
 }
 
-func jsonEqual(t *testing.T, body string) bool {
+func getTestData(t *testing.T) string {
 	t.Helper()
 
 	dataPath := getTestDataPath(t.Name())
-
-	expected, err := jd.ReadJsonFile(dataPath)
+	bytes, err := os.ReadFile(dataPath)
 	if err != nil {
-		t.Fatalf("parsing expected: %v", err)
+		t.Fatalf("failed to read test data: %v", err)
 	}
-	actual, err := jd.ReadJsonString(body)
-	if err != nil {
-		t.Fatalf("parsing actual: %v", err)
-	}
-	diffOpts := []jd.Metadata{}
-	diff := expected.Diff(actual, diffOpts...)
-
-	if len(diff) > 0 {
-		t.Errorf("\u001b[31;1mactual json differs from expected json\u001b[0m")
-		t.Error(diff.Render())
-		return false
-	}
-
-	return true
+	return string(bytes)
 }
 
 var testCamelExpr = regexp.MustCompile("([a-z0-9])([A-Z])")
