@@ -26,7 +26,9 @@ func httpClientMock(handler http.Handler) (http.Client, func()) {
 			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 				return net.Dial(network, server.Listener.Addr().String())
 			},
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true, //nolint:gosec
+			},
 		},
 	}
 
