@@ -27,31 +27,6 @@ var (
 	ErrListenBrainz = errors.New("listenbrainz error")
 )
 
-// https://listenbrainz.readthedocs.io/en/latest/users/json.html#submission-json
-type Payload struct {
-	ListenedAt    int            `json:"listened_at,omitempty"`
-	TrackMetadata *TrackMetadata `json:"track_metadata"`
-}
-
-type AdditionalInfo struct {
-	TrackNumber   int    `json:"tracknumber,omitempty"`
-	TrackMBID     string `json:"track_mbid,omitempty"`
-	RecordingMBID string `json:"recording_mbid,omitempty"`
-	TrackLength   int    `json:"track_length,omitempty"`
-}
-
-type TrackMetadata struct {
-	AdditionalInfo *AdditionalInfo `json:"additional_info"`
-	ArtistName     string          `json:"artist_name,omitempty"`
-	TrackName      string          `json:"track_name,omitempty"`
-	ReleaseName    string          `json:"release_name,omitempty"`
-}
-
-type Scrobble struct {
-	ListenType string     `json:"listen_type,omitempty"`
-	Payload    []*Payload `json:"payload"`
-}
-
 type Scrobbler struct {
 	httpClient *http.Client
 }
