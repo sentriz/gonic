@@ -74,7 +74,7 @@ func TestScrobble(t *testing.T) {
 	assert.NoError(err)
 }
 
-func TestScrobble_unauthorized(t *testing.T) {
+func TestScrobbleUnauthorized(t *testing.T) {
 	t.Parallel()
 	assert := assert.New(t)
 
@@ -111,7 +111,7 @@ func TestScrobble_unauthorized(t *testing.T) {
 	assert.ErrorIs(err, ErrListenBrainz)
 }
 
-func TestScrobble_serverError(t *testing.T) {
+func TestScrobbleServerError(t *testing.T) {
 	t.Parallel()
 	assert := assert.New(t)
 
