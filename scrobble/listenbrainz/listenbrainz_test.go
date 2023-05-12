@@ -3,14 +3,11 @@ package listenbrainz
 import (
 	"context"
 	"crypto/tls"
+	_ "embed"
 	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path"
-	"regexp"
-	"strings"
 	"testing"
 	"time"
 
@@ -34,6 +31,9 @@ func httpClientMock(handler http.Handler) (http.Client, func()) {
 	return client, server.Close
 }
 
+//go:embed testdata/submit_listens_response.json
+var submitListensResponse string
+
 func TestScrobble(t *testing.T) {
 	t.Parallel()
 	assert := assert.New(t)
@@ -46,7 +46,7 @@ func TestScrobble(t *testing.T) {
 		assert.Equal("Token token1", r.Header.Get("Authorization"))
 		bodyBytes, err := io.ReadAll(r.Body)
 		assert.NoError(err)
-		assert.JSONEq(getTestData(t), string(bodyBytes))
+		assert.JSONEq(submitListensResponse, string(bodyBytes))
 
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"accepted": 1}`))
@@ -145,25 +145,4 @@ func TestScrobble_serverError(t *testing.T) {
 
 	// assert
 	assert.ErrorIs(err, ErrListenBrainz)
-}
-
-func getTestData(t *testing.T) string {
-	t.Helper()
-
-	dataPath := getTestDataPath(t.Name())
-	bytes, err := os.ReadFile(dataPath)
-	if err != nil {
-		t.Fatalf("failed to read test data: %v", err)
-	}
-	return string(bytes)
-}
-
-var testCamelExpr = regexp.MustCompile("([a-z0-9])([A-Z])")
-
-func getTestDataPath(test string) string {
-	// convert test name to query case path
-	snake := testCamelExpr.ReplaceAllString(test, "${1}_${2}")
-	lower := strings.ToLower(snake)
-	relPath := strings.ReplaceAll(lower, "/", "_") + ".json"
-	return path.Join("testdata", relPath)
 }
