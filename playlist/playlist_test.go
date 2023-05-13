@@ -3,25 +3,25 @@ package playlist_test
 import (
 	"testing"
 
-	"github.com/matryer/is"
+	"github.com/stretchr/testify/require"
 	"go.senan.xyz/gonic/playlist"
 )
 
 func TestPlaylist(t *testing.T) {
-	is := is.New(t)
+	require := require.New(t)
 
 	tmp := t.TempDir()
 	store, err := playlist.NewStore(tmp)
-	is.NoErr(err)
+	require.NoError(err)
 
 	playlistIDs, err := store.List()
-	is.NoErr(err)
-	is.True(len(playlistIDs) == 0)
+	require.NoError(err)
+	require.Empty(playlistIDs)
 
 	for _, playlistID := range playlistIDs {
 		playlist, err := store.Read(playlistID)
-		is.NoErr(err)
-		is.True(!playlist.UpdatedAt.IsZero())
+		require.NoError(err)
+		require.NotZero(playlist.UpdatedAt)
 	}
 
 	before := playlist.Playlist{
@@ -40,18 +40,18 @@ It has multiple lines 👍
 	}
 
 	newPath := playlist.NewPath(before.UserID, before.Name)
-	is.NoErr(store.Write(newPath, &before))
+	require.NoError(store.Write(newPath, &before))
 
 	after, err := store.Read(newPath)
-	is.NoErr(err)
+	require.NoError(err)
 
-	is.Equal(before.UserID, after.UserID)
-	is.Equal(before.Name, after.Name)
-	is.Equal(before.Comment, after.Comment)
-	is.Equal(before.Items, after.Items)
-	is.Equal(before.IsPublic, after.IsPublic)
+	require.Equal(before.UserID, after.UserID)
+	require.Equal(before.Name, after.Name)
+	require.Equal(before.Comment, after.Comment)
+	require.Equal(before.Items, after.Items)
+	require.Equal(before.IsPublic, after.IsPublic)
 
 	playlistIDs, err = store.List()
-	is.NoErr(err)
-	is.True(len(playlistIDs) == 1)
+	require.NoError(err)
+	require.True(len(playlistIDs) == 1)
 }

@@ -18,7 +18,6 @@ require (
 	github.com/gorilla/sessions v1.2.1
 	github.com/jinzhu/gorm v1.9.17-0.20211120011537-5c235b72a414
 	github.com/josephburnett/jd v1.5.2
-	github.com/matryer/is v1.4.0
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mmcdole/gofeed v1.2.0
