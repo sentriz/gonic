@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"github.com/matryer/is"
+	"github.com/stretchr/testify/assert"
 )
 
 func randKey() string {
@@ -24,7 +24,7 @@ func TestGetSetting(t *testing.T) {
 	key := randKey()
 	value := "howdy"
 
-	is := is.New(t)
+	assert := assert.New(t)
 
 	testDB, err := NewMock()
 	if err != nil {
@@ -34,16 +34,16 @@ func TestGetSetting(t *testing.T) {
 		t.Fatalf("error migrating db: %v", err)
 	}
 
-	is.NoErr(testDB.SetSetting(key, value))
+	assert.NoError(testDB.SetSetting(key, value))
 
 	actual, err := testDB.GetSetting(key)
-	is.NoErr(err)
-	is.Equal(actual, value)
+	assert.NoError(err)
+	assert.Equal(actual, value)
 
-	is.NoErr(testDB.SetSetting(key, value))
+	assert.NoError(testDB.SetSetting(key, value))
 	actual, err = testDB.GetSetting(key)
-	is.NoErr(err)
-	is.Equal(actual, value)
+	assert.NoError(err)
+	assert.Equal(actual, value)
 }
 
 func TestMain(m *testing.M) {

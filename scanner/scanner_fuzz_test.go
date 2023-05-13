@@ -10,25 +10,23 @@ import (
 	"testing"
 
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"github.com/matryer/is"
+	"github.com/stretchr/testify/assert"
 	"go.senan.xyz/gonic/mockfs"
 )
 
 func FuzzScanner(f *testing.F) {
-	checkDelta := func(is *is.I, m *mockfs.MockFS, expSeen, expNew int) {
-		is.Helper()
-
+	checkDelta := func(assert *assert.Assertions, m *mockfs.MockFS, expSeen, expNew int) {
 		ctx := m.ScanAndClean()
-		is.Equal(ctx.SeenTracks(), expSeen)
-		is.Equal(ctx.SeenTracksNew(), expNew)
-		is.Equal(ctx.TracksMissing(), 0)
-		is.Equal(ctx.AlbumsMissing(), 0)
-		is.Equal(ctx.ArtistsMissing(), 0)
-		is.Equal(ctx.GenresMissing(), 0)
+		assert.Equal(ctx.SeenTracks(), expSeen)
+		assert.Equal(ctx.SeenTracksNew(), expNew)
+		assert.Equal(ctx.TracksMissing(), 0)
+		assert.Equal(ctx.AlbumsMissing(), 0)
+		assert.Equal(ctx.ArtistsMissing(), 0)
+		assert.Equal(ctx.GenresMissing(), 0)
 	}
 
 	f.Fuzz(func(t *testing.T, data []byte, seed int64) {
-		is := is.NewRelaxed(t)
+		assert := assert.New(t)
 		m := mockfs.New(t)
 
 		const toAdd = 1000
@@ -41,8 +39,8 @@ func FuzzScanner(f *testing.F) {
 			})
 		}
 
-		checkDelta(is, m, toAdd, toAdd) // we added all tracks, 0 delta
-		checkDelta(is, m, toAdd, 0)     // we added 0 tracks, 0 delta
+		checkDelta(assert, m, toAdd, toAdd) // we added all tracks, 0 delta
+		checkDelta(assert, m, toAdd, 0)     // we added 0 tracks, 0 delta
 	})
 }
 
