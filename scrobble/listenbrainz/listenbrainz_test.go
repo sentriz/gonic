@@ -31,22 +31,22 @@ func httpClientMock(handler http.Handler) (http.Client, func()) {
 	return client, server.Close
 }
 
-//go:embed testdata/submit_listens_response.json
-var submitListensResponse string
+//go:embed testdata/submit_listens_request.json
+var submitListensRequest string
 
 func TestScrobble(t *testing.T) {
 	t.Parallel()
-	assert := require.New(t)
+	require := require.New(t)
 
 	// arrange
 	client, close := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(http.MethodPost, r.Method)
-		assert.Equal("/1/submit-listens", r.URL.Path)
-		assert.Equal("application/json", r.Header.Get("Content-Type"))
-		assert.Equal("Token token1", r.Header.Get("Authorization"))
+		require.Equal(http.MethodPost, r.Method)
+		require.Equal("/1/submit-listens", r.URL.Path)
+		require.Equal("application/json", r.Header.Get("Content-Type"))
+		require.Equal("Token token1", r.Header.Get("Authorization"))
 		bodyBytes, err := io.ReadAll(r.Body)
-		assert.NoError(err)
-		assert.JSONEq(submitListensResponse, string(bodyBytes))
+		require.NoError(err)
+		require.JSONEq(submitListensRequest, string(bodyBytes))
 
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"accepted": 1}`))
@@ -71,7 +71,7 @@ func TestScrobble(t *testing.T) {
 	}, time.Unix(1683804525, 0), true)
 
 	// assert
-	assert.NoError(err)
+	require.NoError(err)
 }
 
 func TestScrobbleUnauthorized(t *testing.T) {
