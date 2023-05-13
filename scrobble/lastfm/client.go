@@ -33,6 +33,11 @@ func NewClient(apiKey, secret string) *Client {
 	}
 }
 
+func (c *Client) UpdateAPIKey(apiKey, secret string) {
+	c.apiKey = apiKey
+	c.secret = secret
+}
+
 func (c *Client) getParamSignature(params url.Values) string {
 	// the parameters must be in order before hashing
 	paramKeys := make([]string, 0, len(params))

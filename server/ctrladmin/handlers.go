@@ -357,6 +357,7 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(r *http.Request) *Response {
 	if err := c.DB.SetSetting("lastfm_secret", secret); err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't set secret: %v", err)}}
 	}
+	c.lastfmClient.UpdateAPIKey(apiKey, secret)
 	return &Response{redirect: "/admin/home"}
 }
 
