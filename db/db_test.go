@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func randKey() string {
@@ -24,7 +24,7 @@ func TestGetSetting(t *testing.T) {
 	key := randKey()
 	value := "howdy"
 
-	assert := assert.New(t)
+	require := require.New(t)
 
 	testDB, err := NewMock()
 	if err != nil {
@@ -34,16 +34,16 @@ func TestGetSetting(t *testing.T) {
 		t.Fatalf("error migrating db: %v", err)
 	}
 
-	assert.NoError(testDB.SetSetting(key, value))
+	require.NoError(testDB.SetSetting(key, value))
 
 	actual, err := testDB.GetSetting(key)
-	assert.NoError(err)
-	assert.Equal(actual, value)
+	require.NoError(err)
+	require.Equal(actual, value)
 
-	assert.NoError(testDB.SetSetting(key, value))
+	require.NoError(testDB.SetSetting(key, value))
 	actual, err = testDB.GetSetting(key)
-	assert.NoError(err)
-	assert.Equal(actual, value)
+	require.NoError(err)
+	require.Equal(actual, value)
 }
 
 func TestMain(m *testing.M) {

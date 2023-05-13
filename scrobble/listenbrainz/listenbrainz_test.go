@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.senan.xyz/gonic/db"
 )
 
@@ -36,7 +36,7 @@ var submitListensResponse string
 
 func TestScrobble(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
+	assert := require.New(t)
 
 	// arrange
 	client, close := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -76,14 +76,14 @@ func TestScrobble(t *testing.T) {
 
 func TestScrobbleUnauthorized(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
+	require := require.New(t)
 
 	// arrange
 	client, close := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(http.MethodPost, r.Method)
-		assert.Equal("/1/submit-listens", r.URL.Path)
-		assert.Equal("application/json", r.Header.Get("Content-Type"))
-		assert.Equal("Token token1", r.Header.Get("Authorization"))
+		require.Equal(http.MethodPost, r.Method)
+		require.Equal("/1/submit-listens", r.URL.Path)
+		require.Equal("application/json", r.Header.Get("Content-Type"))
+		require.Equal("Token token1", r.Header.Get("Authorization"))
 
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(`{"code": 401, "error": "Invalid authorization token."}`))
@@ -108,19 +108,19 @@ func TestScrobbleUnauthorized(t *testing.T) {
 	}, time.Now(), true)
 
 	// assert
-	assert.ErrorIs(err, ErrListenBrainz)
+	require.ErrorIs(err, ErrListenBrainz)
 }
 
 func TestScrobbleServerError(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
+	require := require.New(t)
 
 	// arrange
 	client, close := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(http.MethodPost, r.Method)
-		assert.Equal("/1/submit-listens", r.URL.Path)
-		assert.Equal("application/json", r.Header.Get("Content-Type"))
-		assert.Equal("Token token1", r.Header.Get("Authorization"))
+		require.Equal(http.MethodPost, r.Method)
+		require.Equal("/1/submit-listens", r.URL.Path)
+		require.Equal("application/json", r.Header.Get("Content-Type"))
+		require.Equal("Token token1", r.Header.Get("Authorization"))
 
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
@@ -144,5 +144,5 @@ func TestScrobbleServerError(t *testing.T) {
 	}, time.Now(), true)
 
 	// assert
-	assert.ErrorIs(err, ErrListenBrainz)
+	require.ErrorIs(err, ErrListenBrainz)
 }

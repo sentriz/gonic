@@ -11,6 +11,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/mockfs"
@@ -67,25 +68,25 @@ func TestWithExcludePattern(t *testing.T) {
 
 func TestParentID(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
+	require := require.New(t)
 	m := mockfs.New(t)
 
 	m.AddItems()
 	m.ScanAndClean()
 
 	var nullParentAlbums []*db.Album
-	assert.NoError(m.DB().Where("parent_id IS NULL").Find(&nullParentAlbums).Error) // one parent_id=NULL which is root folder
-	assert.Equal(len(nullParentAlbums), 1)                                          // one parent_id=NULL which is root folder
-	assert.Equal(nullParentAlbums[0].LeftPath, "")
-	assert.Equal(nullParentAlbums[0].RightPath, ".")
+	require.NoError(m.DB().Where("parent_id IS NULL").Find(&nullParentAlbums).Error) // one parent_id=NULL which is root folder
+	require.Equal(len(nullParentAlbums), 1)                                          // one parent_id=NULL which is root folder
+	require.Equal(nullParentAlbums[0].LeftPath, "")
+	require.Equal(nullParentAlbums[0].RightPath, ".")
 
-	assert.Equal(m.DB().Where("id=parent_id").Find(&db.Album{}).Error, gorm.ErrRecordNotFound) // no self-referencing albums
+	require.Equal(m.DB().Where("id=parent_id").Find(&db.Album{}).Error, gorm.ErrRecordNotFound) // no self-referencing albums
 
 	var album db.Album
 	var parent db.Album
-	assert.NoError(m.DB().Find(&album, "left_path=? AND right_path=?", "artist-0/", "album-0").Error) // album has parent ID
-	assert.NoError(m.DB().Find(&parent, "right_path=?", "artist-0").Error)                            // album has parent ID
-	assert.Equal(album.ParentID, parent.ID)                                                           // album has parent ID
+	require.NoError(m.DB().Find(&album, "left_path=? AND right_path=?", "artist-0/", "album-0").Error) // album has parent ID
+	require.NoError(m.DB().Find(&parent, "right_path=?", "artist-0").Error)                            // album has parent ID
+	require.Equal(album.ParentID, parent.ID)                                                           // album has parent ID
 }
 
 func TestUpdatedCover(t *testing.T) {
@@ -105,7 +106,7 @@ func TestUpdatedCover(t *testing.T) {
 
 func TestCoverBeforeTracks(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
+	require := require.New(t)
 	m := mockfs.New(t)
 
 	m.AddCover("artist-2/album-2/cover.jpg")
@@ -114,18 +115,18 @@ func TestCoverBeforeTracks(t *testing.T) {
 	m.ScanAndClean()
 
 	var album db.Album
-	assert.NoError(m.DB().Preload("TagArtist").Where("left_path=? AND right_path=?", "artist-2/", "album-2").Find(&album).Error) // album has cover
-	assert.Equal(album.Cover, "cover.jpg")                                                                                       // album has cover
-	assert.Equal(album.TagArtist.Name, "artist-2")                                                                               // album artist
+	require.NoError(m.DB().Preload("TagArtist").Where("left_path=? AND right_path=?", "artist-2/", "album-2").Find(&album).Error) // album has cover
+	require.Equal(album.Cover, "cover.jpg")                                                                                       // album has cover
+	require.Equal(album.TagArtist.Name, "artist-2")                                                                               // album artist
 
 	var tracks []*db.Track
-	assert.NoError(m.DB().Where("album_id=?", album.ID).Find(&tracks).Error) // album has tracks
-	assert.Equal(len(tracks), 3)                                             // album has tracks
+	require.NoError(m.DB().Where("album_id=?", album.ID).Find(&tracks).Error) // album has tracks
+	require.Equal(len(tracks), 3)                                             // album has tracks
 }
 
 func TestUpdatedTags(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
+	require := require.New(t)
 	m := mockfs.New(t)
 
 	m.AddTrack("artist-10/album-10/track-10.flac")
@@ -140,11 +141,11 @@ func TestUpdatedTags(t *testing.T) {
 	m.ScanAndClean()
 
 	var track db.Track
-	assert.NoError(m.DB().Preload("Album").Preload("Artist").Where("filename=?", "track-10.flac").Find(&track).Error) // track has tags
-	assert.Equal(track.TagTrackArtist, "artist")                                                                      // track has tags
-	assert.Equal(track.Artist.Name, "album-artist")                                                                   // track has tags
-	assert.Equal(track.Album.TagTitle, "album")                                                                       // track has tags
-	assert.Equal(track.TagTitle, "title")                                                                             // track has tags
+	require.NoError(m.DB().Preload("Album").Preload("Artist").Where("filename=?", "track-10.flac").Find(&track).Error) // track has tags
+	require.Equal(track.TagTrackArtist, "artist")                                                                      // track has tags
+	require.Equal(track.Artist.Name, "album-artist")                                                                   // track has tags
+	require.Equal(track.Album.TagTitle, "album")                                                                       // track has tags
+	require.Equal(track.TagTitle, "title")                                                                             // track has tags
 
 	m.SetTags("artist-10/album-10/track-10.flac", func(tags *mockfs.Tags) error {
 		tags.RawArtist = "artist-upd"
@@ -157,18 +158,18 @@ func TestUpdatedTags(t *testing.T) {
 	m.ScanAndClean()
 
 	var updated db.Track
-	assert.NoError(m.DB().Preload("Album").Preload("Artist").Where("filename=?", "track-10.flac").Find(&updated).Error) // updated has tags
-	assert.Equal(updated.ID, track.ID)                                                                                  // updated has tags
-	assert.Equal(updated.TagTrackArtist, "artist-upd")                                                                  // updated has tags
-	assert.Equal(updated.Artist.Name, "album-artist-upd")                                                               // updated has tags
-	assert.Equal(updated.Album.TagTitle, "album-upd")                                                                   // updated has tags
-	assert.Equal(updated.TagTitle, "title-upd")                                                                         // updated has tags
+	require.NoError(m.DB().Preload("Album").Preload("Artist").Where("filename=?", "track-10.flac").Find(&updated).Error) // updated has tags
+	require.Equal(updated.ID, track.ID)                                                                                  // updated has tags
+	require.Equal(updated.TagTrackArtist, "artist-upd")                                                                  // updated has tags
+	require.Equal(updated.Artist.Name, "album-artist-upd")                                                               // updated has tags
+	require.Equal(updated.Album.TagTitle, "album-upd")                                                                   // updated has tags
+	require.Equal(updated.TagTitle, "title-upd")                                                                         // updated has tags
 }
 
 // https://github.com/sentriz/gonic/issues/225
 func TestUpdatedAlbumGenre(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
+	require := require.New(t)
 	m := mockfs.New(t)
 
 	m.AddItems()
@@ -180,8 +181,8 @@ func TestUpdatedAlbumGenre(t *testing.T) {
 	m.ScanAndClean()
 
 	var album db.Album
-	assert.NoError(m.DB().Preload("Genres").Where("left_path=? AND right_path=?", "artist-0/", "album-0").Find(&album).Error)
-	assert.Equal(album.GenreStrings(), []string{"gen-a", "gen-b"})
+	require.NoError(m.DB().Preload("Genres").Where("left_path=? AND right_path=?", "artist-0/", "album-0").Find(&album).Error)
+	require.Equal(album.GenreStrings(), []string{"gen-a", "gen-b"})
 
 	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.Tags) error {
 		tags.RawGenre = "gen-a-upd;gen-b-upd"
@@ -191,8 +192,8 @@ func TestUpdatedAlbumGenre(t *testing.T) {
 	m.ScanAndClean()
 
 	var updated db.Album
-	assert.NoError(m.DB().Preload("Genres").Where("left_path=? AND right_path=?", "artist-0/", "album-0").Find(&updated).Error)
-	assert.Equal(updated.GenreStrings(), []string{"gen-a-upd", "gen-b-upd"})
+	require.NoError(m.DB().Preload("Genres").Where("left_path=? AND right_path=?", "artist-0/", "album-0").Find(&updated).Error)
+	require.Equal(updated.GenreStrings(), []string{"gen-a-upd", "gen-b-upd"})
 }
 
 func TestDeleteAlbum(t *testing.T) {
@@ -315,7 +316,7 @@ func TestGenres(t *testing.T) {
 
 func TestMultiFolders(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
+	require := require.New(t)
 	m := mockfs.NewWithDirs(t, []string{"m-1", "m-2", "m-3"})
 
 	m.AddItemsPrefix("m-1")
@@ -324,13 +325,13 @@ func TestMultiFolders(t *testing.T) {
 	m.ScanAndClean()
 
 	var rootDirs []*db.Album
-	assert.NoError(m.DB().Where("parent_id IS NULL").Find(&rootDirs).Error)
-	assert.Equal(len(rootDirs), 3)
+	require.NoError(m.DB().Where("parent_id IS NULL").Find(&rootDirs).Error)
+	require.Equal(len(rootDirs), 3)
 	for i, r := range rootDirs {
-		assert.Equal(r.RootDir, filepath.Join(m.TmpDir(), fmt.Sprintf("m-%d", i+1)))
-		assert.Equal(r.ParentID, 0)
-		assert.Equal(r.LeftPath, "")
-		assert.Equal(r.RightPath, ".")
+		require.Equal(r.RootDir, filepath.Join(m.TmpDir(), fmt.Sprintf("m-%d", i+1)))
+		require.Equal(r.ParentID, 0)
+		require.Equal(r.LeftPath, "")
+		require.Equal(r.RightPath, ".")
 	}
 
 	m.AddCover("m-3/artist-0/album-0/cover.jpg")
@@ -338,7 +339,7 @@ func TestMultiFolders(t *testing.T) {
 	m.LogItems()
 
 	checkCover := func(root string, q string) {
-		assert.NoError(m.DB().Where(q, filepath.Join(m.TmpDir(), root)).Find(&db.Album{}).Error)
+		require.NoError(m.DB().Where(q, filepath.Join(m.TmpDir(), root)).Find(&db.Album{}).Error)
 	}
 
 	checkCover("m-1", "root_dir=? AND cover IS NULL")     // mf 1 no cover
@@ -348,7 +349,7 @@ func TestMultiFolders(t *testing.T) {
 
 func TestNewAlbumForExistingArtist(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
+	require := require.New(t)
 	m := mockfs.New(t)
 
 	m.AddItems()
@@ -358,8 +359,8 @@ func TestNewAlbumForExistingArtist(t *testing.T) {
 	m.LogArtists()
 
 	var artist db.Artist
-	assert.NoError(m.DB().Where("name=?", "artist-2").Find(&artist).Error) // find orig artist
-	assert.Greater(artist.ID, 0)
+	require.NoError(m.DB().Where("name=?", "artist-2").Find(&artist).Error) // find orig artist
+	require.Greater(artist.ID, 0)
 
 	for tr := 0; tr < 3; tr++ {
 		m.AddTrack(fmt.Sprintf("artist-2/new-album/track-%d.mp3", tr))
@@ -373,17 +374,17 @@ func TestNewAlbumForExistingArtist(t *testing.T) {
 	}
 
 	var updated db.Artist
-	assert.NoError(m.DB().Where("name=?", "artist-2").Find(&updated).Error) // find updated artist
-	assert.Equal(artist.ID, updated.ID)                                     // find updated artist
+	require.NoError(m.DB().Where("name=?", "artist-2").Find(&updated).Error) // find updated artist
+	require.Equal(artist.ID, updated.ID)                                     // find updated artist
 
 	var all []*db.Artist
-	assert.NoError(m.DB().Find(&all).Error) // still only 3?
-	assert.Equal(len(all), 3)               // still only 3?
+	require.NoError(m.DB().Find(&all).Error) // still only 3?
+	require.Equal(len(all), 3)               // still only 3?
 }
 
 func TestMultiFolderWithSharedArtist(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
+	require := require.New(t)
 	m := mockfs.NewWithDirs(t, []string{"m-0", "m-1"})
 
 	const artistName = "artist-a"
@@ -416,21 +417,21 @@ func TestMultiFolderWithSharedArtist(t *testing.T) {
 	}
 
 	var artist db.Artist
-	assert.NoError(m.DB().Where("name=?", artistName).Preload("Albums", sq).First(&artist).Error)
-	assert.Equal(artist.Name, artistName)
-	assert.Equal(len(artist.Albums), 2)
+	require.NoError(m.DB().Where("name=?", artistName).Preload("Albums", sq).First(&artist).Error)
+	require.Equal(artist.Name, artistName)
+	require.Equal(len(artist.Albums), 2)
 
 	for _, album := range artist.Albums {
-		assert.Greater(album.TagYear, 0)
-		assert.Equal(album.TagArtistID, artist.ID)
-		assert.Greater(album.ChildCount, 0)
-		assert.Greater(album.Duration, 0)
+		require.Greater(album.TagYear, 0)
+		require.Equal(album.TagArtistID, artist.ID)
+		require.Greater(album.ChildCount, 0)
+		require.Greater(album.Duration, 0)
 	}
 }
 
 func TestSymlinkedAlbum(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
+	require := require.New(t)
 	m := mockfs.NewWithDirs(t, []string{"scan"})
 
 	m.AddItemsPrefixWithCovers("temp")
@@ -444,20 +445,20 @@ func TestSymlinkedAlbum(t *testing.T) {
 	m.LogAlbums()
 
 	var track db.Track
-	assert.NoError(m.DB().Preload("Album.Parent").Find(&track).Error) // track exists
-	assert.NotNil(track.Album)                                        // track has album
-	assert.NotZero(track.Album.Cover)                                 // album has cover
-	assert.Equal(track.Album.Parent.RightPath, "artist-sym")          // artist is sym
+	require.NoError(m.DB().Preload("Album.Parent").Find(&track).Error) // track exists
+	require.NotNil(track.Album)                                        // track has album
+	require.NotZero(track.Album.Cover)                                 // album has cover
+	require.Equal(track.Album.Parent.RightPath, "artist-sym")          // artist is sym
 
 	info, err := os.Stat(track.AbsPath())
-	assert.NoError(err)            // track resolves
-	assert.False(info.IsDir())     // track resolves
-	assert.NotZero(info.ModTime()) // track resolves
+	require.NoError(err)            // track resolves
+	require.False(info.IsDir())     // track resolves
+	require.NotZero(info.ModTime()) // track resolves
 }
 
 func TestSymlinkedSubdiscs(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
+	require := require.New(t)
 	m := mockfs.NewWithDirs(t, []string{"scan"})
 
 	addItem := func(prefix, artist, album, disc, track string) {
@@ -488,19 +489,19 @@ func TestSymlinkedSubdiscs(t *testing.T) {
 	m.LogAlbums()
 
 	var track db.Track
-	assert.NoError(m.DB().Preload("Album.Parent").Find(&track).Error) // track exists
-	assert.NotNil(track.Album)                                        // track has album
-	assert.Equal(track.Album.Parent.RightPath, "album-sym")           // artist is sym
+	require.NoError(m.DB().Preload("Album.Parent").Find(&track).Error) // track exists
+	require.NotNil(track.Album)                                        // track has album
+	require.Equal(track.Album.Parent.RightPath, "album-sym")           // artist is sym
 
 	info, err := os.Stat(track.AbsPath())
-	assert.NoError(err)            // track resolves
-	assert.False(info.IsDir())     // track resolves
-	assert.NotZero(info.ModTime()) // track resolves
+	require.NoError(err)            // track resolves
+	require.False(info.IsDir())     // track resolves
+	require.NotZero(info.ModTime()) // track resolves
 }
 
 func TestArtistHasCover(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
+	require := require.New(t)
 	m := mockfs.New(t)
 
 	m.AddItemsWithCovers()
@@ -508,17 +509,17 @@ func TestArtistHasCover(t *testing.T) {
 	m.ScanAndClean()
 
 	var artistWith db.Artist
-	assert.NoError(m.DB().Where("name=?", "artist-2").First(&artistWith).Error)
-	assert.Equal(artistWith.Cover, "artist.png")
+	require.NoError(m.DB().Where("name=?", "artist-2").First(&artistWith).Error)
+	require.Equal(artistWith.Cover, "artist.png")
 
 	var artistWithout db.Artist
-	assert.NoError(m.DB().Where("name=?", "artist-0").First(&artistWithout).Error)
-	assert.Equal(artistWithout.Cover, "")
+	require.NoError(m.DB().Where("name=?", "artist-0").First(&artistWithout).Error)
+	require.Equal(artistWithout.Cover, "")
 }
 
 func TestTagErrors(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
+	require := require.New(t)
 	m := mockfs.New(t)
 
 	m.AddItemsWithCovers()
@@ -531,22 +532,22 @@ func TestTagErrors(t *testing.T) {
 
 	var errs *multierr.Err
 	ctx, err := m.ScanAndCleanErr()
-	assert.ErrorAs(err, &errs)
-	assert.Equal(errs.Len(), 2)                            // we have 2 dir errors
-	assert.Equal(ctx.SeenTracks(), m.NumTracks()-(3*2))    // we saw all tracks bar 2 album contents
-	assert.Equal(ctx.SeenTracksNew(), m.NumTracks()-(3*2)) // we have all tracks bar 2 album contents
+	require.ErrorAs(err, &errs)
+	require.Equal(errs.Len(), 2)                            // we have 2 dir errors
+	require.Equal(ctx.SeenTracks(), m.NumTracks()-(3*2))    // we saw all tracks bar 2 album contents
+	require.Equal(ctx.SeenTracksNew(), m.NumTracks()-(3*2)) // we have all tracks bar 2 album contents
 
 	ctx, err = m.ScanAndCleanErr()
-	assert.ErrorAs(err, &errs)
-	assert.Equal(errs.Len(), 2)                         // we have 2 dir errors
-	assert.Equal(ctx.SeenTracks(), m.NumTracks()-(3*2)) // we saw all tracks bar 2 album contents
-	assert.Equal(ctx.SeenTracksNew(), 0)                // we have no new tracks
+	require.ErrorAs(err, &errs)
+	require.Equal(errs.Len(), 2)                         // we have 2 dir errors
+	require.Equal(ctx.SeenTracks(), m.NumTracks()-(3*2)) // we saw all tracks bar 2 album contents
+	require.Equal(ctx.SeenTracksNew(), 0)                // we have no new tracks
 }
 
 // https://github.com/sentriz/gonic/issues/185#issuecomment-1050092128
 func TestCompilationAlbumWithoutAlbumArtist(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
+	require := require.New(t)
 	m := mockfs.New(t)
 
 	const pathArtist = "various-artists"
@@ -569,34 +570,34 @@ func TestCompilationAlbumWithoutAlbumArtist(t *testing.T) {
 	m.ScanAndClean()
 
 	var trackCount int
-	assert.NoError(m.DB().Model(&db.Track{}).Count(&trackCount).Error)
-	assert.Equal(trackCount, 5)
+	require.NoError(m.DB().Model(&db.Track{}).Count(&trackCount).Error)
+	require.Equal(trackCount, 5)
 
 	var artists []*db.Artist
-	assert.NoError(m.DB().Preload("Albums").Find(&artists).Error)
-	assert.Equal(len(artists), 1)             // we only have one album artist
-	assert.Equal(artists[0].Name, "artist 0") // it came from the first track's fallback to artist tag
-	assert.Equal(len(artists[0].Albums), 1)   // the artist has one album
-	assert.Equal(artists[0].Albums[0].RightPath, pathAlbum)
-	assert.Equal(artists[0].Albums[0].LeftPath, pathArtist+"/")
+	require.NoError(m.DB().Preload("Albums").Find(&artists).Error)
+	require.Equal(len(artists), 1)             // we only have one album artist
+	require.Equal(artists[0].Name, "artist 0") // it came from the first track's fallback to artist tag
+	require.Equal(len(artists[0].Albums), 1)   // the artist has one album
+	require.Equal(artists[0].Albums[0].RightPath, pathAlbum)
+	require.Equal(artists[0].Albums[0].LeftPath, pathArtist+"/")
 }
 
 func TestIncrementalScanNoChangeNoUpdatedAt(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
+	require := require.New(t)
 	m := mockfs.New(t)
 
 	m.AddItems()
 
 	m.ScanAndClean()
 	var albumA db.Album
-	assert.NoError(m.DB().Where("tag_artist_id NOT NULL").Order("updated_at DESC").Find(&albumA).Error)
+	require.NoError(m.DB().Where("tag_artist_id NOT NULL").Order("updated_at DESC").Find(&albumA).Error)
 
 	m.ScanAndClean()
 	var albumB db.Album
-	assert.NoError(m.DB().Where("tag_artist_id NOT NULL").Order("updated_at DESC").Find(&albumB).Error)
+	require.NoError(m.DB().Where("tag_artist_id NOT NULL").Order("updated_at DESC").Find(&albumB).Error)
 
-	assert.Equal(albumA.UpdatedAt, albumB.UpdatedAt)
+	require.Equal(albumA.UpdatedAt, albumB.UpdatedAt)
 }
 
 // https://github.com/sentriz/gonic/issues/230
