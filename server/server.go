@@ -97,19 +97,31 @@ func New(opts Options) (*Server, error) {
 		opts.CacheAudioPath,
 	)
 
-	ctrlAdmin, err := ctrladmin.New(base, sessDB, podcast)
+	apiKey, err := opts.DB.GetSetting("lastfm_api_key")
 	if err != nil {
-		return nil, fmt.Errorf("create admin controller: %w", err)
+		return nil, fmt.Errorf("get api key: %w", err)
 	}
+	secret, err := opts.DB.GetSetting("lastfm_secret")
+	if err != nil {
+		return nil, fmt.Errorf("get secret: %w", err)
+	}
+	lastfmClient := lastfm.NewClient(apiKey, secret)
+
 	ctrlSubsonic := &ctrlsubsonic.Controller{
 		Controller:     base,
 		MusicPaths:     opts.MusicPaths,
 		PodcastsPath:   opts.PodcastPath,
 		CacheAudioPath: opts.CacheAudioPath,
 		CoverCachePath: opts.CoverCachePath,
-		Scrobblers:     []scrobble.Scrobbler{&lastfm.Scrobbler{DB: opts.DB}, listenbrainz.NewScrobbler()},
+		Scrobblers:     []scrobble.Scrobbler{lastfm.NewScrobbler(lastfmClient), listenbrainz.NewScrobbler()},
 		Podcasts:       podcast,
 		Transcoder:     cacheTranscoder,
+		LastFMClient:   lastfmClient,
+	}
+
+	ctrlAdmin, err := ctrladmin.New(base, sessDB, podcast, lastfmClient)
+	if err != nil {
+		return nil, fmt.Errorf("create admin controller: %w", err)
 	}
 
 	setupMisc(r, base)
