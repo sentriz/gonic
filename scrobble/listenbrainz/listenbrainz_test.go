@@ -31,8 +31,8 @@ func httpClientMock(handler http.Handler) (http.Client, func()) {
 	return client, server.Close
 }
 
-//go:embed testdata/submit_listens_response.json
-var submitListensResponse string
+//go:embed testdata/submit_listens_request.json
+var submitListensRequest string
 
 func TestScrobble(t *testing.T) {
 	t.Parallel()
@@ -46,7 +46,7 @@ func TestScrobble(t *testing.T) {
 		assert.Equal("Token token1", r.Header.Get("Authorization"))
 		bodyBytes, err := io.ReadAll(r.Body)
 		assert.NoError(err)
-		assert.JSONEq(submitListensResponse, string(bodyBytes))
+		assert.JSONEq(submitListensRequest, string(bodyBytes))
 
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"accepted": 1}`))
