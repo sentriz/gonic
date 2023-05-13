@@ -1,0 +1,16 @@
+{
+    "listen_type": "single",
+    "payload": [
+        {
+            "listened_at": 1683804525,
+            "track_metadata": {
+                "additional_info": {
+                    "tracknumber": 1
+                },
+                "artist_name": "artist",
+                "track_name": "title",
+                "release_name": "album"
+            }
+        }
+    ]
+}

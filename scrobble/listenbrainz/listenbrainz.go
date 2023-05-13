@@ -27,32 +27,15 @@ var (
 	ErrListenBrainz = errors.New("listenbrainz error")
 )
 
-// https://listenbrainz.readthedocs.io/en/latest/users/json.html#submission-json
-type Payload struct {
-	ListenedAt    int            `json:"listened_at,omitempty"`
-	TrackMetadata *TrackMetadata `json:"track_metadata"`
+type Scrobbler struct {
+	httpClient *http.Client
 }
 
-type AdditionalInfo struct {
-	TrackNumber   int    `json:"tracknumber,omitempty"`
-	TrackMBID     string `json:"track_mbid,omitempty"`
-	RecordingMBID string `json:"recording_mbid,omitempty"`
-	TrackLength   int    `json:"track_length,omitempty"`
+func NewScrobbler() *Scrobbler {
+	return &Scrobbler{
+		httpClient: http.DefaultClient,
+	}
 }
-
-type TrackMetadata struct {
-	AdditionalInfo *AdditionalInfo `json:"additional_info"`
-	ArtistName     string          `json:"artist_name,omitempty"`
-	TrackName      string          `json:"track_name,omitempty"`
-	ReleaseName    string          `json:"release_name,omitempty"`
-}
-
-type Scrobble struct {
-	ListenType string     `json:"listen_type,omitempty"`
-	Payload    []*Payload `json:"payload"`
-}
-
-type Scrobbler struct{}
 
 func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, submission bool) error {
 	if user.ListenBrainzURL == "" || user.ListenBrainzToken == "" {
@@ -96,7 +79,7 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 	req, _ := http.NewRequest(http.MethodPost, submitURL, &payloadBuf)
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", authHeader)
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := s.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("http post: %w", err)
 	}
@@ -104,7 +87,7 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 
 	switch {
 	case resp.StatusCode == http.StatusUnauthorized:
-		return fmt.Errorf("unathorized: %w", ErrListenBrainz)
+		return fmt.Errorf("unauthorized: %w", ErrListenBrainz)
 	case resp.StatusCode >= 400:
 		respBytes, _ := httputil.DumpResponse(resp, true)
 		log.Printf("received bad listenbrainz response:\n%s", string(respBytes))
