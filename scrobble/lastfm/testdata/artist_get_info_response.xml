@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lfm status="ok">
+    <artist>
+        <name>Artist 1</name>
+        <mbid>366c1119-ec4f-4312-b729-a5637d148e3e</mbid>
+        <url>https://www.last.fm/music/Artist+1</url>
+        <image size="small">https://last.fm/artist-1-small.png</image>
+        <streamable>0</streamable>
+        <ontour>0</ontour>
+        <stats>
+            <listeners>1</listeners>
+            <playcount>2</playcount>
+        </stats>
+        <similar>
+            <artist>
+                <name>Similar Artist 1</name>
+                <url>https://www.last.fm/music/Similar+Artist+1</url>
+                <image size="small">https://last.fm/similar-artist-1-small.png</image>
+            </artist>
+        </similar>
+        <tags>
+            <tag>
+                <name>tag1</name>
+                <url>https://www.last.fm/tag/tag1</url>
+            </tag>
+        </tags>
+        <bio>
+            <links>
+                <link rel="original" href="https://last.fm/music/Artist+1/+wiki"></link>
+            </links>
+            <published>13 May 2023, 00:24</published>
+            <summary>Summary</summary>
+            <content>Content</content>
+        </bio>
+    </artist>
+</lfm>

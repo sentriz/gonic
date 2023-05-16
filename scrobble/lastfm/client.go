@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -89,9 +90,9 @@ func (c *Client) ArtistGetInfo(artistName string) (Artist, error) {
 	params.Add("method", "artist.getInfo")
 	params.Add("api_key", c.apiKey)
 	params.Add("artist", artistName)
-	resp, err := c.makeRequest("GET", params)
+	resp, err := c.makeRequest(http.MethodGet, params)
 	if err != nil {
-		return Artist{}, fmt.Errorf("making artist GET: %w", err)
+		return Artist{}, fmt.Errorf("making artist info GET: %w", err)
 	}
 	return resp.Artist, nil
 }
@@ -103,7 +104,7 @@ func (c *Client) ArtistGetTopTracks(artistName string) (TopTracks, error) {
 	params.Add("artist", artistName)
 	resp, err := c.makeRequest("GET", params)
 	if err != nil {
-		return TopTracks{}, fmt.Errorf("making track GET: %w", err)
+		return TopTracks{}, fmt.Errorf("making top tracks GET: %w", err)
 	}
 	return resp.TopTracks, nil
 }
@@ -116,7 +117,7 @@ func (c *Client) TrackGetSimilarTracks(artistName, trackName string) (SimilarTra
 	params.Add("artist", artistName)
 	resp, err := c.makeRequest("GET", params)
 	if err != nil {
-		return SimilarTracks{}, fmt.Errorf("making track GET: %w", err)
+		return SimilarTracks{}, fmt.Errorf("making similar tracks GET: %w", err)
 	}
 	return resp.SimilarTracks, nil
 }
