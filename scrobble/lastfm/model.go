@@ -51,7 +51,7 @@ type (
 		Streamable string        `xml:"streamable"`
 		Stats      struct {
 			Listeners string `xml:"listeners"`
-			Plays     string `xml:"plays"`
+			Playcount string `xml:"playcount"`
 		} `xml:"stats"`
 		Similar struct {
 			Artists []Artist `xml:"artist"`
