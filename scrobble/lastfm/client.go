@@ -15,9 +15,15 @@ import (
 	"golang.org/x/net/html"
 )
 
+const (
+	baseURL = "https://ws.audioscrobbler.com/2.0/"
+)
+
 var (
 	//nolint:gochecknoglobals
 	artistOpenGraphQuery = cascadia.MustCompile(`html > head > meta[property="og:image"]`)
+
+	ErrLastFM = errors.New("last.fm error")
 )
 
 type Client struct {

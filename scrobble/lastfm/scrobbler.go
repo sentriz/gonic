@@ -1,7 +1,6 @@
 package lastfm
 
 import (
-	"errors"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -12,15 +11,7 @@ import (
 	"go.senan.xyz/gonic/scrobble"
 )
 
-const (
-	baseURL = "https://ws.audioscrobbler.com/2.0/"
-)
-
-var (
-	ErrLastFM = errors.New("last.fm error")
-
-	_ scrobble.Scrobbler = (*Scrobbler)(nil)
-)
+var _ scrobble.Scrobbler = (*Scrobbler)(nil)
 
 type (
 	Scrobbler struct {
