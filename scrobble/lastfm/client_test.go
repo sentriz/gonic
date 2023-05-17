@@ -75,7 +75,7 @@ func TestArtistGetInfo(t *testing.T) {
 			Playcount: "2",
 		},
 		URL: "https://www.last.fm/music/Artist+1",
-		Image: []ArtistImage{
+		Image: []Image{
 			{
 				Size: "small",
 				Text: "https://last.fm/artist-1-small.png",
@@ -96,7 +96,7 @@ func TestArtistGetInfo(t *testing.T) {
 					},
 					Name: "Similar Artist 1",
 					URL:  "https://www.last.fm/music/Similar+Artist+1",
-					Image: []ArtistImage{
+					Image: []Image{
 						{
 							Size: "small",
 							Text: "https://last.fm/similar-artist-1-small.png",
@@ -180,10 +180,7 @@ func TestArtistGetTopTracks(t *testing.T) {
 		},
 		Tracks: []Track{
 			{
-				Image: []struct {
-					Text string `xml:",chardata"`
-					Size string `xml:"size,attr"`
-				}{
+				Image: []Image{
 					{
 						Text: "https://last.fm/track-1-small.png",
 						Size: "small",
@@ -201,10 +198,7 @@ func TestArtistGetTopTracks(t *testing.T) {
 				URL:       "https://www.last.fm/music/Artist+1/_/Track+1",
 			},
 			{
-				Image: []struct {
-					Text string `xml:",chardata"`
-					Size string `xml:"size,attr"`
-				}{
+				Image: []Image{
 					{
 						Text: "https://last.fm/track-2-small.png",
 						Size: "small",
