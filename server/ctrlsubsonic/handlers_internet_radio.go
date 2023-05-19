@@ -9,7 +9,7 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 )
 
-func (c *Controller) ServeGetInternetRadioStations(r *http.Request) *spec.Response {
+func (c *Controller) ServeGetInternetRadioStations(_ *http.Request) *spec.Response {
 	var stations []*db.InternetRadioStation
 	if err := c.DB.Find(&stations).Error; err != nil {
 		return spec.NewError(0, "find stations: %v", err)

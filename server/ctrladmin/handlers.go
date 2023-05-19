@@ -33,11 +33,11 @@ func doScan(scanner *scanner.Scanner, opts scanner.ScanOptions) {
 	}()
 }
 
-func (c *Controller) ServeNotFound(r *http.Request) *Response {
+func (c *Controller) ServeNotFound(_ *http.Request) *Response {
 	return &Response{template: "not_found.tmpl", code: 404}
 }
 
-func (c *Controller) ServeLogin(r *http.Request) *Response {
+func (c *Controller) ServeLogin(_ *http.Request) *Response {
 	return &Response{template: "login.tmpl"}
 }
 
@@ -303,7 +303,7 @@ func (c *Controller) ServeDeleteUserDo(r *http.Request) *Response {
 	return &Response{redirect: "/admin/home"}
 }
 
-func (c *Controller) ServeCreateUser(r *http.Request) *Response {
+func (c *Controller) ServeCreateUser(_ *http.Request) *Response {
 	return &Response{template: "create_user.tmpl"}
 }
 
@@ -369,7 +369,7 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(r *http.Request) *Response {
 	return &Response{redirect: "/admin/home"}
 }
 
-func (c *Controller) ServeStartScanIncDo(r *http.Request) *Response {
+func (c *Controller) ServeStartScanIncDo(_ *http.Request) *Response {
 	defer doScan(c.Scanner, scanner.ScanOptions{})
 	return &Response{
 		redirect: "/admin/home",
@@ -377,7 +377,7 @@ func (c *Controller) ServeStartScanIncDo(r *http.Request) *Response {
 	}
 }
 
-func (c *Controller) ServeStartScanFullDo(r *http.Request) *Response {
+func (c *Controller) ServeStartScanFullDo(_ *http.Request) *Response {
 	defer doScan(c.Scanner, scanner.ScanOptions{IsFull: true})
 	return &Response{
 		redirect: "/admin/home",

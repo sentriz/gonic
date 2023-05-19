@@ -279,7 +279,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	return sub
 }
 
-func (c *Controller) ServeGetArtistInfo(r *http.Request) *spec.Response {
+func (c *Controller) ServeGetArtistInfo(_ *http.Request) *spec.Response {
 	return spec.NewResponse()
 }
 

@@ -17,7 +17,7 @@ import (
 
 func httpClientMock(handler http.Handler) (http.Client, func()) {
 	server := httptest.NewTLSServer(handler)
-	client := http.Client{
+	shutdown := http.Client{
 		Transport: &http.Transport{
 			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 				return net.Dial(network, server.Listener.Addr().String())
@@ -28,7 +28,7 @@ func httpClientMock(handler http.Handler) (http.Client, func()) {
 		},
 	}
 
-	return client, server.Close
+	return shutdown, server.Close
 }
 
 //go:embed testdata/submit_listens_request.json
@@ -39,7 +39,7 @@ func TestScrobble(t *testing.T) {
 	require := require.New(t)
 
 	// arrange
-	client, close := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	client, shutdown := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(http.MethodPost, r.Method)
 		require.Equal("/1/submit-listens", r.URL.Path)
 		require.Equal("application/json", r.Header.Get("Content-Type"))
@@ -51,7 +51,7 @@ func TestScrobble(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"accepted": 1}`))
 	}))
-	defer close()
+	defer shutdown()
 
 	scrobbler := Scrobbler{
 		httpClient: &client,
@@ -79,7 +79,7 @@ func TestScrobbleUnauthorized(t *testing.T) {
 	require := require.New(t)
 
 	// arrange
-	client, close := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	client, shutdown := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(http.MethodPost, r.Method)
 		require.Equal("/1/submit-listens", r.URL.Path)
 		require.Equal("application/json", r.Header.Get("Content-Type"))
@@ -88,7 +88,7 @@ func TestScrobbleUnauthorized(t *testing.T) {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(`{"code": 401, "error": "Invalid authorization token."}`))
 	}))
-	defer close()
+	defer shutdown()
 
 	scrobbler := Scrobbler{
 		httpClient: &client,
@@ -116,7 +116,7 @@ func TestScrobbleServerError(t *testing.T) {
 	require := require.New(t)
 
 	// arrange
-	client, close := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	client, shutdown := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(http.MethodPost, r.Method)
 		require.Equal("/1/submit-listens", r.URL.Path)
 		require.Equal("application/json", r.Header.Get("Content-Type"))
@@ -124,7 +124,7 @@ func TestScrobbleServerError(t *testing.T) {
 
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
-	defer close()
+	defer shutdown()
 
 	scrobbler := Scrobbler{
 		httpClient: &client,

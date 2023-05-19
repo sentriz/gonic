@@ -78,22 +78,6 @@ func makeHTTPMockWithAdmin(query url.Values) (*httptest.ResponseRecorder, *http.
 	return rr, req
 }
 
-func serveRaw(t *testing.T, contr *Controller, h handlerSubsonicRaw, rr *httptest.ResponseRecorder, req *http.Request) {
-	type middleware func(http.Handler) http.Handler
-	middlewares := []middleware{
-		contr.WithParams,
-		contr.WithRequiredParams,
-		contr.WithUser,
-	}
-
-	handler := contr.HR(h)
-	for _, m := range middlewares {
-		handler = m(handler)
-	}
-
-	handler.ServeHTTP(rr, req)
-}
-
 func runQueryCases(t *testing.T, contr *Controller, h handlerSubsonic, cases []*queryCase) {
 	t.Helper()
 	for _, qc := range cases {

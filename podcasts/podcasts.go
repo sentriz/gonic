@@ -235,7 +235,7 @@ func (p *Podcasts) AddEpisode(podcastID int, item *gofeed.Item) (*db.PodcastEpis
 	return nil, ErrNoAudioInFeedItem
 }
 
-func isAudio(mediaType, rawItemURL string) (bool, error) {
+func isAudio(rawItemURL string) (bool, error) {
 	itemURL, err := url.Parse(rawItemURL)
 	if err != nil {
 		return false, err
@@ -260,7 +260,7 @@ func itemToEpisode(podcastID, size, duration int, audio string,
 
 func (p *Podcasts) findEnclosureAudio(podcastID, duration int, item *gofeed.Item) (*db.PodcastEpisode, bool) {
 	for _, enc := range item.Enclosures {
-		if t, err := isAudio(enc.Type, enc.URL); !t || err != nil {
+		if t, err := isAudio(enc.URL); !t || err != nil {
 			continue
 		}
 		size, _ := strconv.Atoi(enc.Length)
@@ -275,7 +275,7 @@ func (p *Podcasts) findMediaAudio(podcastID, duration int, item *gofeed.Item) (*
 		return nil, false
 	}
 	for _, ext := range extensions {
-		if t, err := isAudio(ext.Attrs["type"], ext.Attrs["url"]); !t || err != nil {
+		if t, err := isAudio(ext.Attrs["url"]); !t || err != nil {
 			continue
 		}
 		return itemToEpisode(podcastID, 0, duration, ext.Attrs["url"], item), true

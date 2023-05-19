@@ -354,14 +354,14 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 	}
 
 	genreNames := strings.Split(trags.SomeGenre(), s.genreSplit)
-	genreIDs, err := populateGenres(tx, &track, genreNames)
+	genreIDs, err := populateGenres(tx, genreNames)
 	if err != nil {
 		return fmt.Errorf("populate genres: %w", err)
 	}
 
 	// metadata for the album table comes only from the the first track's tags
 	if i == 0 || album.TagArtist == nil {
-		albumArtist, err := populateAlbumArtist(tx, album, parent, trags.SomeAlbumArtist())
+		albumArtist, err := populateAlbumArtist(tx, parent, trags.SomeAlbumArtist())
 		if err != nil {
 			return fmt.Errorf("populate album artist: %w", err)
 		}
@@ -453,7 +453,7 @@ func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trags tags.Parse
 	return nil
 }
 
-func populateAlbumArtist(tx *db.DB, album, parent *db.Album, artistName string) (*db.Artist, error) {
+func populateAlbumArtist(tx *db.DB, parent *db.Album, artistName string) (*db.Artist, error) {
 	var update db.Artist
 	update.Name = artistName
 	update.NameUDec = decoded(artistName)
@@ -467,7 +467,7 @@ func populateAlbumArtist(tx *db.DB, album, parent *db.Album, artistName string) 
 	return &artist, nil
 }
 
-func populateGenres(tx *db.DB, track *db.Track, names []string) ([]int, error) {
+func populateGenres(tx *db.DB, names []string) ([]int, error) {
 	var filteredNames []string
 	for _, name := range names {
 		if clean := strings.TrimSpace(name); clean != "" {
