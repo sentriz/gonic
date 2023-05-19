@@ -15,7 +15,7 @@ func NewNoneTranscoder() *NoneTranscoder {
 	return &NoneTranscoder{}
 }
 
-func (*NoneTranscoder) Transcode(ctx context.Context, _ Profile, in string, out io.Writer) error {
+func (*NoneTranscoder) Transcode(_ context.Context, _ Profile, in string, out io.Writer) error {
 	file, err := os.Open(in)
 	if err != nil {
 		return fmt.Errorf("open file: %w", err)

@@ -20,10 +20,9 @@ jobs:
           sudo apt update -qq
           sudo apt install -y -qq build-essential git sqlite libtag1-dev ffmpeg mpv zlib1g-dev
       - name: Lint
-        uses: golangci/golangci-lint-action@v2
+        uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.50.1
-          skip-go-installation: true
+          version: v1.52.2
           args: --timeout=5m
       - name: Test
         run: go test ./...

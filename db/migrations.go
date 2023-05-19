@@ -314,11 +314,11 @@ func migrateAlbumRootDir(tx *gorm.DB, ctx MigrationContext) error {
 	return nil
 }
 
-func migrateArtistGuessedFolder(tx *gorm.DB, ctx MigrationContext) error {
+func migrateArtistGuessedFolder(tx *gorm.DB, _ MigrationContext) error {
 	return tx.AutoMigrate(Artist{}).Error
 }
 
-func migrateArtistCover(tx *gorm.DB, ctx MigrationContext) error {
+func migrateArtistCover(tx *gorm.DB, _ MigrationContext) error {
 	step := tx.AutoMigrate(
 		Artist{},
 	)
@@ -344,7 +344,7 @@ func migrateAlbumRootDirAgain(tx *gorm.DB, ctx MigrationContext) error {
 	return migrateAlbumRootDir(tx, ctx)
 }
 
-func migratePublicPlaylist(tx *gorm.DB, ctx MigrationContext) error {
+func migratePublicPlaylist(tx *gorm.DB, _ MigrationContext) error {
 	if !tx.HasTable("playlists") {
 		return nil
 	}

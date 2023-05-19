@@ -382,7 +382,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	return sub
 }
 
-func (c *Controller) ServeGetGenres(r *http.Request) *spec.Response {
+func (c *Controller) ServeGetGenres(_ *http.Request) *spec.Response {
 	var genres []*db.Genre
 	c.DB.
 		Select(`*,

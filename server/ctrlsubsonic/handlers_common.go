@@ -40,7 +40,7 @@ func getMusicFolder(musicPaths []MusicPath, p params.Params) string {
 	return musicPaths[idx].Path
 }
 
-func (c *Controller) ServeGetLicence(r *http.Request) *spec.Response {
+func (c *Controller) ServeGetLicence(_ *http.Request) *spec.Response {
 	sub := spec.NewResponse()
 	sub.Licence = &spec.Licence{
 		Valid: true,
@@ -48,7 +48,7 @@ func (c *Controller) ServeGetLicence(r *http.Request) *spec.Response {
 	return sub
 }
 
-func (c *Controller) ServePing(r *http.Request) *spec.Response {
+func (c *Controller) ServePing(_ *http.Request) *spec.Response {
 	return spec.NewResponse()
 }
 
@@ -86,7 +86,7 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 	return spec.NewResponse()
 }
 
-func (c *Controller) ServeGetMusicFolders(r *http.Request) *spec.Response {
+func (c *Controller) ServeGetMusicFolders(_ *http.Request) *spec.Response {
 	sub := spec.NewResponse()
 	sub.MusicFolders = &spec.MusicFolders{}
 	for i, mp := range c.MusicPaths {
@@ -108,7 +108,7 @@ func (c *Controller) ServeStartScan(r *http.Request) *spec.Response {
 	return c.ServeGetScanStatus(r)
 }
 
-func (c *Controller) ServeGetScanStatus(r *http.Request) *spec.Response {
+func (c *Controller) ServeGetScanStatus(_ *http.Request) *spec.Response {
 	var trackCount int
 	if err := c.DB.Model(db.Track{}).Count(&trackCount).Error; err != nil {
 		return spec.NewError(0, "error finding track count: %v", err)
@@ -140,7 +140,7 @@ func (c *Controller) ServeGetUser(r *http.Request) *spec.Response {
 	return sub
 }
 
-func (c *Controller) ServeNotFound(r *http.Request) *spec.Response {
+func (c *Controller) ServeNotFound(_ *http.Request) *spec.Response {
 	return spec.NewError(70, "view not found")
 }
 
@@ -420,7 +420,7 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 	return sub
 }
 
-func (c *Controller) ServeGetLyrics(r *http.Request) *spec.Response {
+func (c *Controller) ServeGetLyrics(_ *http.Request) *spec.Response {
 	sub := spec.NewResponse()
 	sub.Lyrics = &spec.Lyrics{}
 	return sub
