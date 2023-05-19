@@ -38,7 +38,7 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 	} else {
 		params.Add("method", "track.updateNowPlaying")
 	}
-	params.Add("api_key", s.client.apiKey)
+	params.Add("api_key", s.client.config.APIKey)
 	params.Add("sk", user.LastFMSession)
 	params.Add("artist", track.TagTrackArtist)
 	params.Add("track", track.TagTitle)

@@ -105,7 +105,8 @@ func New(opts Options) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("get secret: %w", err)
 	}
-	lastfmClient := lastfm.NewClient(apiKey, secret)
+	lastfmConfig := lastfm.Config{APIKey: apiKey, Secret: secret}
+	lastfmClient := lastfm.NewClient(lastfmConfig)
 
 	ctrlSubsonic := &ctrlsubsonic.Controller{
 		Controller:     base,

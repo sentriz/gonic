@@ -40,7 +40,8 @@ func TestGetParamSignature(t *testing.T) {
 		"ccc": []string{"CCC"},
 		"ddd": []string{"DDD"},
 	}
-	client := Client{"apiKey", "secret", nil}
+	config := Config{APIKey: "apiKey", Secret: "secret"}
+	client := Client{config, nil}
 
 	// act
 	actual := client.getParamSignature(params)
@@ -73,7 +74,8 @@ func TestArtistGetInfo(t *testing.T) {
 	}))
 	defer shutdown()
 
-	client := Client{"apiKey", "secret", &httpClient}
+	config := Config{APIKey: "apiKey", Secret: "secret"}
+	client := Client{config, &httpClient}
 
 	// act
 	actual, err := client.ArtistGetInfo("artist")
@@ -155,7 +157,8 @@ func TestArtistGetInfo_clientRequestFails(t *testing.T) {
 	}))
 	defer shutdown()
 
-	client := Client{"apiKey", "secret", &httpClient}
+	config := Config{APIKey: "apiKey", Secret: "secret"}
+	client := Client{config, &httpClient}
 
 	// act
 	actual, err := client.ArtistGetInfo("artist")

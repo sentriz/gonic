@@ -27,22 +27,27 @@ var (
 	ErrLastFM = errors.New("last.fm error")
 )
 
-type Client struct {
-	apiKey, secret string
-	httpClient     *http.Client
-}
+type (
+	Client struct {
+		config     Config
+		httpClient *http.Client
+	}
 
-func NewClient(apiKey, secret string) *Client {
+	Config struct {
+		APIKey string
+		Secret string
+	}
+)
+
+func NewClient(config Config) *Client {
 	return &Client{
-		apiKey:     apiKey,
-		secret:     secret,
+		config:     config,
 		httpClient: http.DefaultClient,
 	}
 }
 
-func (c *Client) UpdateAPIKey(apiKey, secret string) {
-	c.apiKey = apiKey
-	c.secret = secret
+func (c *Client) UpdateConfig(config Config) {
+	c.config = config
 }
 
 func (c *Client) getParamSignature(params url.Values) string {
@@ -57,7 +62,7 @@ func (c *Client) getParamSignature(params url.Values) string {
 		toHash += k
 		toHash += params[k][0]
 	}
-	toHash += c.secret
+	toHash += c.config.Secret
 	hash := md5.Sum([]byte(toHash))
 	return hex.EncodeToString(hash[:])
 }
@@ -88,7 +93,7 @@ func (c *Client) makeRequest(method string, params url.Values) (LastFM, error) {
 func (c *Client) ArtistGetInfo(artistName string) (Artist, error) {
 	params := url.Values{}
 	params.Add("method", "artist.getInfo")
-	params.Add("api_key", c.apiKey)
+	params.Add("api_key", c.config.APIKey)
 	params.Add("artist", artistName)
 	resp, err := c.makeRequest(http.MethodGet, params)
 	if err != nil {
@@ -100,7 +105,7 @@ func (c *Client) ArtistGetInfo(artistName string) (Artist, error) {
 func (c *Client) ArtistGetTopTracks(artistName string) (TopTracks, error) {
 	params := url.Values{}
 	params.Add("method", "artist.getTopTracks")
-	params.Add("api_key", c.apiKey)
+	params.Add("api_key", c.config.APIKey)
 	params.Add("artist", artistName)
 	resp, err := c.makeRequest("GET", params)
 	if err != nil {
@@ -112,7 +117,7 @@ func (c *Client) ArtistGetTopTracks(artistName string) (TopTracks, error) {
 func (c *Client) TrackGetSimilarTracks(artistName, trackName string) (SimilarTracks, error) {
 	params := url.Values{}
 	params.Add("method", "track.getSimilar")
-	params.Add("api_key", c.apiKey)
+	params.Add("api_key", c.config.APIKey)
 	params.Add("track", trackName)
 	params.Add("artist", artistName)
 	resp, err := c.makeRequest("GET", params)
@@ -125,7 +130,7 @@ func (c *Client) TrackGetSimilarTracks(artistName, trackName string) (SimilarTra
 func (c *Client) ArtistGetSimilar(artistName string) (SimilarArtists, error) {
 	params := url.Values{}
 	params.Add("method", "artist.getSimilar")
-	params.Add("api_key", c.apiKey)
+	params.Add("api_key", c.config.APIKey)
 	params.Add("artist", artistName)
 	resp, err := c.makeRequest("GET", params)
 	if err != nil {
@@ -137,7 +142,7 @@ func (c *Client) ArtistGetSimilar(artistName string) (SimilarArtists, error) {
 func (c *Client) GetSession(token string) (string, error) {
 	params := url.Values{}
 	params.Add("method", "auth.getSession")
-	params.Add("api_key", c.apiKey)
+	params.Add("api_key", c.config.APIKey)
 	params.Add("token", token)
 	params.Add("api_sig", c.getParamSignature(params))
 	resp, err := c.makeRequest("GET", params)

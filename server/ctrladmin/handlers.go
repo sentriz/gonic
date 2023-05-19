@@ -20,6 +20,7 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/scanner"
+	"go.senan.xyz/gonic/scrobble/lastfm"
 	"go.senan.xyz/gonic/scrobble/listenbrainz"
 	"go.senan.xyz/gonic/transcode"
 )
@@ -357,7 +358,8 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(r *http.Request) *Response {
 	if err := c.DB.SetSetting("lastfm_secret", secret); err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't set secret: %v", err)}}
 	}
-	c.lastfmClient.UpdateAPIKey(apiKey, secret)
+	lastfmConfig := lastfm.Config{APIKey: apiKey, Secret: secret}
+	c.lastfmClient.UpdateConfig(lastfmConfig)
 	return &Response{redirect: "/admin/home"}
 }
 
