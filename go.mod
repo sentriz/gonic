@@ -1,10 +1,10 @@
 module go.senan.xyz/gonic
 
-go 1.19
+go 1.20
 
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
-	github.com/andybalholm/cascadia v1.3.1
+	github.com/andybalholm/cascadia v1.3.2
 	github.com/dexterlb/mpvipc v0.0.0-20221227161445-38b9935eae9d
 	github.com/disintegration/imaging v1.6.2
 	github.com/dustin/go-humanize v1.0.1
@@ -20,7 +20,7 @@ require (
 	github.com/josephburnett/jd v1.5.2
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/mmcdole/gofeed v1.2.0
+	github.com/mmcdole/gofeed v1.2.1
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/nicksellen/audiotags v0.0.0-20160226222119-94015fa599bd
 	github.com/oklog/run v1.1.0
@@ -30,8 +30,8 @@ require (
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
 	github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981
 	github.com/stretchr/testify v1.8.1
-	golang.org/x/exp v0.0.0-20230224173230-c95f2b4c22f2
-	golang.org/x/net v0.7.0
+	golang.org/x/exp v0.0.0-20230515195305-f3d0a9c9a5cc
+	golang.org/x/net v0.10.0
 	gopkg.in/gormigrate.v1 v1.6.0
 )
 
@@ -45,7 +45,7 @@ require (
 	github.com/go-openapi/swag v0.21.1 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
-	github.com/imdario/mergo v0.3.13 // indirect
+	github.com/imdario/mergo v0.3.15 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.2 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
@@ -58,10 +58,10 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	golang.org/x/crypto v0.6.0 // indirect
-	golang.org/x/image v0.5.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/text v0.7.0 // indirect
+	golang.org/x/crypto v0.9.0 // indirect
+	golang.org/x/image v0.7.0 // indirect
+	golang.org/x/sys v0.8.0 // indirect
+	golang.org/x/text v0.9.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
