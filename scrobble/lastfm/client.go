@@ -11,13 +11,8 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"sort"
-	"strconv"
-	"time"
 
 	"github.com/andybalholm/cascadia"
-	"github.com/google/uuid"
-	"go.senan.xyz/gonic/db"
-	"go.senan.xyz/gonic/scrobble"
 	"golang.org/x/net/html"
 )
 
@@ -27,7 +22,20 @@ const (
 
 var (
 	ErrLastFM = errors.New("last.fm error")
+
+	//nolint:gochecknoglobals
+	artistOpenGraphQuery = cascadia.MustCompile(`html > head > meta[property="og:image"]`)
 )
+
+type Client struct {
+	httpClient *http.Client
+}
+
+func NewClient() *Client {
+	return &Client{
+		httpClient: http.DefaultClient,
+	}
+}
 
 func getParamSignature(params url.Values, secret string) string {
 	// the parameters must be in order before hashing
@@ -46,10 +54,10 @@ func getParamSignature(params url.Values, secret string) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func makeRequest(method string, params url.Values) (LastFM, error) {
+func (c *Client) makeRequest(method string, params url.Values) (LastFM, error) {
 	req, _ := http.NewRequest(method, baseURL, nil)
 	req.URL.RawQuery = params.Encode()
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return LastFM{}, fmt.Errorf("get: %w", err)
 	}
@@ -69,119 +77,69 @@ func makeRequest(method string, params url.Values) (LastFM, error) {
 	return lastfm, nil
 }
 
-func ArtistGetInfo(apiKey string, artistName string) (Artist, error) {
+func (c *Client) ArtistGetInfo(apiKey string, artistName string) (Artist, error) {
 	params := url.Values{}
 	params.Add("method", "artist.getInfo")
 	params.Add("api_key", apiKey)
 	params.Add("artist", artistName)
-	resp, err := makeRequest("GET", params)
+	resp, err := c.makeRequest("GET", params)
 	if err != nil {
 		return Artist{}, fmt.Errorf("making artist GET: %w", err)
 	}
 	return resp.Artist, nil
 }
 
-func ArtistGetTopTracks(apiKey, artistName string) (TopTracks, error) {
+func (c *Client) ArtistGetTopTracks(apiKey, artistName string) (TopTracks, error) {
 	params := url.Values{}
 	params.Add("method", "artist.getTopTracks")
 	params.Add("api_key", apiKey)
 	params.Add("artist", artistName)
-	resp, err := makeRequest("GET", params)
+	resp, err := c.makeRequest("GET", params)
 	if err != nil {
 		return TopTracks{}, fmt.Errorf("making track GET: %w", err)
 	}
 	return resp.TopTracks, nil
 }
 
-func TrackGetSimilarTracks(apiKey string, artistName, trackName string) (SimilarTracks, error) {
+func (c *Client) TrackGetSimilarTracks(apiKey string, artistName, trackName string) (SimilarTracks, error) {
 	params := url.Values{}
 	params.Add("method", "track.getSimilar")
 	params.Add("api_key", apiKey)
 	params.Add("track", trackName)
 	params.Add("artist", artistName)
-	resp, err := makeRequest("GET", params)
+	resp, err := c.makeRequest("GET", params)
 	if err != nil {
 		return SimilarTracks{}, fmt.Errorf("making track GET: %w", err)
 	}
 	return resp.SimilarTracks, nil
 }
 
-func ArtistGetSimilar(apiKey string, artistName string) (SimilarArtists, error) {
+func (c *Client) ArtistGetSimilar(apiKey string, artistName string) (SimilarArtists, error) {
 	params := url.Values{}
 	params.Add("method", "artist.getSimilar")
 	params.Add("api_key", apiKey)
 	params.Add("artist", artistName)
-	resp, err := makeRequest("GET", params)
+	resp, err := c.makeRequest("GET", params)
 	if err != nil {
 		return SimilarArtists{}, fmt.Errorf("making similar artists GET:  %w", err)
 	}
 	return resp.SimilarArtists, nil
 }
 
-func GetSession(apiKey, secret, token string) (string, error) {
+func (c *Client) GetSession(apiKey, secret, token string) (string, error) {
 	params := url.Values{}
 	params.Add("method", "auth.getSession")
 	params.Add("api_key", apiKey)
 	params.Add("token", token)
 	params.Add("api_sig", getParamSignature(params, secret))
-	resp, err := makeRequest("GET", params)
+	resp, err := c.makeRequest("GET", params)
 	if err != nil {
 		return "", fmt.Errorf("making session GET: %w", err)
 	}
 	return resp.Session.Key, nil
 }
 
-type Scrobbler struct {
-	DB *db.DB
-}
-
-func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, submission bool) error {
-	if user.LastFMSession == "" {
-		return nil
-	}
-	apiKey, err := s.DB.GetSetting("lastfm_api_key")
-	if err != nil {
-		return fmt.Errorf("get api key: %w", err)
-	}
-	secret, err := s.DB.GetSetting("lastfm_secret")
-	if err != nil {
-		return fmt.Errorf("get secret: %w", err)
-	}
-
-	params := url.Values{}
-	if submission {
-		params.Add("method", "track.Scrobble")
-		// last.fm wants the timestamp in seconds
-		params.Add("timestamp", strconv.Itoa(int(stamp.Unix())))
-	} else {
-		params.Add("method", "track.updateNowPlaying")
-	}
-	params.Add("api_key", apiKey)
-	params.Add("sk", user.LastFMSession)
-	params.Add("artist", track.TagTrackArtist)
-	params.Add("track", track.TagTitle)
-	params.Add("trackNumber", strconv.Itoa(track.TagTrackNumber))
-	params.Add("album", track.Album.TagTitle)
-	params.Add("albumArtist", track.Artist.Name)
-	params.Add("duration", strconv.Itoa(track.Length))
-
-	// make sure we provide a valid uuid, since some users may have an incorrect mbid in their tags
-	if _, err := uuid.Parse(track.TagBrainzID); err == nil {
-		params.Add("mbid", track.TagBrainzID)
-	}
-
-	params.Add("api_sig", getParamSignature(params, secret))
-
-	_, err = makeRequest("POST", params)
-	return err
-}
-
-var _ scrobble.Scrobbler = (*Scrobbler)(nil)
-
-//nolint:gochecknoglobals
-var artistOpenGraphQuery = cascadia.MustCompile(`html > head > meta[property="og:image"]`)
-
-func StealArtistImage(artistURL string) (string, error) {
+func (c *Client) StealArtistImage(artistURL string) (string, error) {
 	resp, err := http.Get(artistURL) //nolint:gosec
 	if err != nil {
 		return "", fmt.Errorf("get artist url: %w", err)
