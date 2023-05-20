@@ -24,6 +24,7 @@ import (
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/podcasts"
+	"go.senan.xyz/gonic/scrobble/lastfm"
 	"go.senan.xyz/gonic/server/ctrladmin/adminui"
 	"go.senan.xyz/gonic/server/ctrlbase"
 )
@@ -74,13 +75,14 @@ func funcMap() template.FuncMap {
 
 type Controller struct {
 	*ctrlbase.Controller
-	buffPool *bpool.BufferPool
-	template *template.Template
-	sessDB   *gormstore.Store
-	Podcasts *podcasts.Podcasts
+	buffPool     *bpool.BufferPool
+	template     *template.Template
+	sessDB       *gormstore.Store
+	Podcasts     *podcasts.Podcasts
+	lastfmClient *lastfm.Client
 }
 
-func New(b *ctrlbase.Controller, sessDB *gormstore.Store, podcasts *podcasts.Podcasts) (*Controller, error) {
+func New(b *ctrlbase.Controller, sessDB *gormstore.Store, podcasts *podcasts.Podcasts, lastfmClient *lastfm.Client) (*Controller, error) {
 	tmpl, err := template.
 		New("layout").
 		Funcs(template.FuncMap(sprig.FuncMap())).
@@ -93,11 +95,12 @@ func New(b *ctrlbase.Controller, sessDB *gormstore.Store, podcasts *podcasts.Pod
 		return nil, fmt.Errorf("build template: %w", err)
 	}
 	return &Controller{
-		Controller: b,
-		buffPool:   bpool.NewBufferPool(64),
-		template:   tmpl,
-		sessDB:     sessDB,
-		Podcasts:   podcasts,
+		Controller:   b,
+		buffPool:     bpool.NewBufferPool(64),
+		template:     tmpl,
+		sessDB:       sessDB,
+		Podcasts:     podcasts,
+		lastfmClient: lastfmClient,
 	}, nil
 }
 
