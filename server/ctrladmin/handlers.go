@@ -20,7 +20,6 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/scanner"
-	"go.senan.xyz/gonic/scrobble/lastfm"
 	"go.senan.xyz/gonic/scrobble/listenbrainz"
 	"go.senan.xyz/gonic/transcode"
 )
@@ -106,7 +105,7 @@ func (c *Controller) ServeLinkLastFMDo(r *http.Request) *Response {
 	if err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't get secret: %v", err)}}
 	}
-	sessionKey, err := lastfm.GetSession(apiKey, secret, token)
+	sessionKey, err := c.lastfmClient.GetSession(apiKey, secret, token)
 	if err != nil {
 		return &Response{
 			redirect: "/admin/home",

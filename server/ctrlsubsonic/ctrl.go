@@ -12,6 +12,7 @@ import (
 	"go.senan.xyz/gonic/jukebox"
 	"go.senan.xyz/gonic/podcasts"
 	"go.senan.xyz/gonic/scrobble"
+	"go.senan.xyz/gonic/scrobble/lastfm"
 	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
@@ -48,6 +49,7 @@ type Controller struct {
 	Scrobblers     []scrobble.Scrobbler
 	Podcasts       *podcasts.Podcasts
 	Transcoder     transcode.Transcoder
+	LastFMClient   *lastfm.Client
 }
 
 type metaResponse struct {

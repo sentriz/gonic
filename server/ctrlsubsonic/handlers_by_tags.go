@@ -13,7 +13,6 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/db"
-	"go.senan.xyz/gonic/scrobble/lastfm"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
@@ -318,7 +317,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	if apiKey == "" {
 		return sub
 	}
-	info, err := lastfm.ArtistGetInfo(apiKey, artist.Name)
+	info, err := c.LastFMClient.ArtistGetInfo(apiKey, artist.Name)
 	if err != nil {
 		return spec.NewError(0, "fetching artist info: %v", err)
 	}
@@ -338,7 +337,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 				sub.ArtistInfoTwo.LargeImageURL = image.Text
 			}
 		}
-		if url, _ := lastfm.StealArtistImage(info.URL); url != "" {
+		if url, _ := c.LastFMClient.StealArtistImage(info.URL); url != "" {
 			sub.ArtistInfoTwo.SmallImageURL = url
 			sub.ArtistInfoTwo.MediumImageURL = url
 			sub.ArtistInfoTwo.LargeImageURL = url
@@ -348,7 +347,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 
 	count := params.GetOrInt("count", 20)
 	inclNotPresent := params.GetOrBool("includeNotPresent", false)
-	similarArtists, err := lastfm.ArtistGetSimilar(apiKey, artist.Name)
+	similarArtists, err := c.LastFMClient.ArtistGetSimilar(apiKey, artist.Name)
 	if err != nil {
 		return spec.NewError(0, "fetching artist similar: %v", err)
 	}
@@ -542,7 +541,7 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 	if apiKey == "" {
 		return spec.NewResponse()
 	}
-	topTracks, err := lastfm.ArtistGetTopTracks(apiKey, artist.Name)
+	topTracks, err := c.LastFMClient.ArtistGetTopTracks(apiKey, artist.Name)
 	if err != nil {
 		return spec.NewError(0, "fetching artist top tracks: %v", err)
 	}
@@ -610,7 +609,7 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 		return spec.NewError(10, "couldn't find a track with that id")
 	}
 
-	similarTracks, err := lastfm.TrackGetSimilarTracks(apiKey, track.Artist.Name, track.TagTitle)
+	similarTracks, err := c.LastFMClient.TrackGetSimilarTracks(apiKey, track.Artist.Name, track.TagTitle)
 	if err != nil {
 		return spec.NewError(0, "fetching track similar tracks: %v", err)
 	}
@@ -680,7 +679,7 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 		return spec.NewError(0, "artist with id `%s` not found", id)
 	}
 
-	similarArtists, err := lastfm.ArtistGetSimilar(apiKey, artist.Name)
+	similarArtists, err := c.LastFMClient.ArtistGetSimilar(apiKey, artist.Name)
 	if err != nil {
 		return spec.NewError(0, "fetching artist similar artists: %v", err)
 	}
