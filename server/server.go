@@ -110,6 +110,7 @@ func New(opts Options) (*Server, error) {
 		PodcastsPath:   opts.PodcastPath,
 		CacheAudioPath: opts.CacheAudioPath,
 		CoverCachePath: opts.CoverCachePath,
+		LastFMClient:   lastfmClient,
 		Scrobblers: []scrobble.Scrobbler{
 			lastfm.NewScrobbler(opts.DB, lastfmClient),
 			listenbrainz.NewScrobbler(),
