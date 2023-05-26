@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lfm status="ok">
+    <toptracks artist="Artist 1" page="1" perPage="50" totalPages="5" total="225">
+        <track rank="1">
+            <name>Track 1</name>
+            <playcount>1</playcount>
+            <listeners>2</listeners>
+            <mbid>fdfc47cb-69d3-4318-ba71-d54fbc20169a</mbid>
+            <url>https://www.last.fm/music/Artist+1/_/Track+1</url>
+            <streamable>0</streamable>
+            <artist>
+                <name>Artist 1</name>
+                <mbid>366c1119-ec4f-4312-b729-a5637d148e3e</mbid>
+                <url>https://www.last.fm/music/Artist+1</url>
+            </artist>
+            <image size="small">https://last.fm/track-1-small.png</image>
+            <image size="large">https://last.fm/track-1-large.png</image>
+        </track>
+        <track rank="2">
+            <name>Track 2</name>
+            <playcount>2</playcount>
+            <listeners>3</listeners>
+            <mbid>cf32e694-1ea6-4ba0-9e8b-d5f1950da9c8</mbid>
+            <url>https://www.last.fm/music/Artist+1/_/Track+2</url>
+            <streamable>0</streamable>
+            <artist>
+                <name>Artist 1</name>
+                <mbid>366c1119-ec4f-4312-b729-a5637d148e3e</mbid>
+                <url>https://www.last.fm/music/Artist+1</url>
+            </artist>
+            <image size="small">https://last.fm/track-2-small.png</image>
+            <image size="large">https://last.fm/track-2-large.png</image>
+        </track>
+    </toptracks>
+</lfm>
