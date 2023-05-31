@@ -190,6 +190,7 @@ type Play struct {
 	AlbumID int       `gorm:"not null; index" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Time    time.Time `sql:"default: null"`
 	Count   int
+	Length	int
 }
 
 type Album struct {

@@ -150,7 +150,7 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 			JOIN plays
 			ON albums.id=plays.album_id AND plays.user_id=?`,
 			user.ID)
-		q = q.Order("plays.count DESC")
+		q = q.Order("plays.length DESC")
 	case "newest":
 		q = q.Order("created_at DESC")
 	case "random":

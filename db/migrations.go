@@ -54,6 +54,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202207251148", migrateStarRating),
 		construct(ctx, "202211111057", migratePlaylistsQueuesToFullID),
 		construct(ctx, "202304221528", migratePlaylistsToM3U),
+		construct(ctx, "202305301718", migratePlayCountToLength),
 	}
 
 	return gormigrate.
@@ -516,3 +517,19 @@ func migratePlaylistsToM3U(tx *gorm.DB, ctx MigrationContext) error {
 
 	return nil
 }
+
+func migratePlayCountToLength(tx *gorm.DB, _ MigrationContext) error {
+	// As a best guess, we set length played so far as length of album * current count / number of tracks in album
+	step := tx.Exec(`
+		UPDATE plays SET length=
+		((SELECT SUM(length) FROM tracks WHERE tracks.album_id=plays.album_id)*plays.count/
+		 (SELECT COUNT(*) FROM tracks WHERE tracks.album_id=plays.album_id));
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("calculate length: %w", err)
+	}
+	
+	return nil
+}
+
+
