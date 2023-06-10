@@ -23,12 +23,12 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	var artists []*db.Artist
 	q := c.DB.
-		Select("*, count(sub.id) album_count").
+		Select("artists.*, count(sub.id) album_count").
 		Joins("LEFT JOIN albums sub ON artists.id=sub.tag_artist_id").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
 		Group("artists.id").
-		Order("artists.name COLLATE NOCASE")
+		Order("artists.name")
 	if m := getMusicFolder(c.MusicPaths, params); m != "" {
 		q = q.Where("sub.root_dir=?", m)
 	}
@@ -67,7 +67,7 @@ func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 	c.DB.
 		Preload("Albums", func(db *gorm.DB) *gorm.DB {
 			return db.
-				Select("*, count(sub.id) child_count, sum(sub.length) duration").
+				Select("albums.*, count(sub.id) child_count, sum(sub.length) duration").
 				Joins("LEFT JOIN tracks sub ON albums.id=sub.album_id").
 				Preload("AlbumStar", "user_id=?", user.ID).
 				Preload("AlbumRating", "user_id=?", user.ID).
@@ -98,6 +98,7 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 	err = c.DB.
 		Select("albums.*, count(tracks.id) child_count, sum(tracks.length) duration").
 		Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
+		Group("albums.id").
 		Preload("TagArtist").
 		Preload("Genres").
 		Preload("Tracks", func(db *gorm.DB) *gorm.DB {
@@ -162,14 +163,14 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	case "frequent":
 		user := r.Context().Value(CtxUser).(*db.User)
 		q = q.Joins("JOIN plays ON albums.id=plays.album_id AND plays.user_id=?", user.ID)
-		q = q.Order("plays.count DESC")
+		q = q.Order("SUM(plays.count) DESC")
 	case "newest":
 		q = q.Order("created_at DESC")
 	case "random":
 		q = q.Order(gorm.Expr("random()"))
 	case "recent":
 		q = q.Joins("JOIN plays ON albums.id=plays.album_id AND plays.user_id=?", user.ID)
-		q = q.Order("plays.time DESC")
+		q = q.Order("MAX(plays.time) DESC")
 	case "starred":
 		q = q.Joins("JOIN album_stars ON albums.id=album_stars.album_id AND album_stars.user_id=?", user.ID)
 		q = q.Order("tag_title")
@@ -217,7 +218,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	// search artists
 	var artists []*db.Artist
 	q := c.DB.
-		Select("*, count(albums.id) album_count").
+		Select("artists.*, count(albums.id) album_count").
 		Group("artists.id").
 		Where("name LIKE ? OR name_u_dec LIKE ?", query, query).
 		Joins("JOIN albums ON albums.tag_artist_id=artists.id").

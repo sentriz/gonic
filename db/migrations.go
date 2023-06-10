@@ -82,14 +82,14 @@ func construct(ctx MigrationContext, id string, f func(*gorm.DB, MigrationContex
 func migrateInitSchema(tx *gorm.DB, _ MigrationContext) error {
 	return tx.AutoMigrate(
 		Genre{},
+		Artist{},
+		Album{},
+		Track{},
 		TrackGenre{},
 		AlbumGenre{},
-		Track{},
-		Artist{},
 		User{},
 		Setting{},
 		Play{},
-		Album{},
 		PlayQueue{},
 	).
 		Error
@@ -155,12 +155,18 @@ func migrateAddGenre(tx *gorm.DB, _ MigrationContext) error {
 
 func migrateUpdateTranscodePrefIDX(tx *gorm.DB, _ MigrationContext) error {
 	var hasIDX int
-	tx.
-		Select("1").
-		Table("sqlite_master").
-		Where("type = ?", "index").
-		Where("name = ?", "idx_user_id_client").
-		Count(&hasIDX)
+	if tx.Dialect().GetName() == "sqlite3" {
+		tx.Select("1").
+			Table("sqlite_master").
+			Where("type = ?", "index").
+			Where("name = ?", "idx_user_id_client").
+			Count(&hasIDX)
+	} else if tx.Dialect().GetName() == "postgres" {
+		tx.Select("1").
+			Table("pg_indexes").
+			Where("indexname = ?", "idx_user_id_client").
+			Count(&hasIDX)
+	}
 	if hasIDX == 1 {
 		// index already exists
 		return nil
@@ -437,9 +443,15 @@ func migratePlaylistsQueuesToFullID(tx *gorm.DB, _ MigrationContext) error {
 	if err := step.Error; err != nil {
 		return fmt.Errorf("step migrate play_queues to full id: %w", err)
 	}
-	step = tx.Exec(`
+	if tx.Dialect().GetName() == "postgres" {
+		step = tx.Exec(`
+		UPDATE play_queues SET newcurrent=('tr-' || current)::varchar[200];
+	`)
+	} else {
+		step = tx.Exec(`
 		UPDATE play_queues SET newcurrent=('tr-' || CAST(current AS varchar(10)));
 	`)
+	}
 	if err := step.Error; err != nil {
 		return fmt.Errorf("step migrate play_queues to full id: %w", err)
 	}

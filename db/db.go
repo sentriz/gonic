@@ -34,7 +34,7 @@ type DB struct {
 	*gorm.DB
 }
 
-func New(path string, options url.Values) (*DB, error) {
+func NewSqlite3(path string, options url.Values) (*DB, error) {
 	// https://github.com/mattn/go-sqlite3#connection-string
 	url := url.URL{
 		Scheme: "file",
@@ -45,13 +45,26 @@ func New(path string, options url.Values) (*DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("with gorm: %w", err)
 	}
+	return newDB(db)
+}
+
+func NewPostgres(host string, port int, databaseName string, username string, password string, sslmode string) (*DB, error) {
+	pathAndArgs := fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=%s", host, port, username, databaseName, password, sslmode)
+	db, err := gorm.Open("postgres", pathAndArgs)
+	if err != nil {
+		return nil, fmt.Errorf("with gorm: %w", err)
+	}
+	return newDB(db)
+}
+
+func newDB(db *gorm.DB) (*DB, error) {
 	db.SetLogger(log.New(os.Stdout, "gorm ", 0))
 	db.DB().SetMaxOpenConns(1)
 	return &DB{DB: db}, nil
 }
 
 func NewMock() (*DB, error) {
-	return New(":memory:", mockOptions())
+	return NewSqlite3(":memory:", mockOptions())
 }
 
 func (db *DB) GetSetting(key string) (string, error) {
@@ -80,10 +93,11 @@ func (db *DB) InsertBulkLeftMany(table string, head []string, left int, col []in
 		rows = append(rows, "(?, ?)")
 		values = append(values, left, c)
 	}
-	q := fmt.Sprintf("INSERT OR IGNORE INTO %q (%s) VALUES %s",
+	q := fmt.Sprintf("INSERT INTO %q (%s) VALUES %s ON CONFLICT (%s) DO NOTHING",
 		table,
 		strings.Join(head, ", "),
 		strings.Join(rows, ", "),
+		strings.Join(head, ", "),
 	)
 	return db.Exec(q, values...).Error
 }

@@ -411,7 +411,7 @@ func TestMultiFolderWithSharedArtist(t *testing.T) {
 
 	sq := func(db *gorm.DB) *gorm.DB {
 		return db.
-			Select("*, count(sub.id) child_count, sum(sub.length) duration").
+			Select("albums.*, count(sub.id) child_count, sum(sub.length) duration").
 			Joins("LEFT JOIN tracks sub ON albums.id=sub.album_id").
 			Group("albums.id")
 	}

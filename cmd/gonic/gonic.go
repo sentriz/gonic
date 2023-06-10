@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/google/shlex"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/oklog/run"
 	"github.com/peterbourgon/ff"
@@ -47,7 +48,12 @@ func main() {
 
 	confPlaylistsPath := set.String("playlists-path", "", "path to your list of new or existing m3u playlists that gonic can manage")
 
-	confDBPath := set.String("db-path", "gonic.db", "path to database (optional)")
+	confSqlitePath := set.String("db-path", "gonic.db", "path to database (optional, default: gonic.db)")
+	confPostgresHost := set.String("postgres-host", "", "name of the PostgreSQL gonicServer (optional)")
+	confPostgresPort := set.Int("postgres-port", 5432, "port to use for PostgreSQL connection (optional, default: 5432)")
+	confPostgresName := set.String("postgres-db", "gonic", "name of the PostgreSQL database (optional, default: gonic)")
+	confPostgresUser := set.String("postgres-user", "gonic", "name of the PostgreSQL user (optional, default: gonic)")
+	confPostgresSslModel := set.String("postgres-ssl-mode", "verify-full", "the ssl mode used for connecting to the PostreSQL instance (optional, default: verify-full)")
 
 	confScanIntervalMins := set.Int("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
 	confScanAtStart := set.Bool("scan-at-start-enabled", false, "whether to perform an initial scan at startup (optional)")
@@ -113,7 +119,12 @@ func main() {
 		log.Fatalf("couldn't create covers cache path: %v\n", err)
 	}
 
-	dbc, err := db.New(*confDBPath, db.DefaultOptions())
+	var dbc *db.DB
+	if len(*confPostgresHost) > 0 {
+		dbc, err = db.NewPostgres(*confPostgresHost, *confPostgresPort, *confPostgresName, *confPostgresUser, os.Getenv("GONIC_POSTGRES_PW"), *confPostgresSslModel)
+	} else {
+		dbc, err = db.NewSqlite3(*confSqlitePath, db.DefaultOptions())
+	}
 	if err != nil {
 		log.Fatalf("error opening database: %v\n", err)
 	}
