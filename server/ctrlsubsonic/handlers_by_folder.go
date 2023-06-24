@@ -199,10 +199,13 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
 	query, err := params.Get("query")
+	var queries []string
 	if err != nil {
 		return spec.NewError(10, "please provide a `query` parameter")
 	}
-	query = fmt.Sprintf("%%%s%%", strings.Trim(query, `*"'`))
+	for _, s := range strings.Fields(query) {
+		queries = append(queries, fmt.Sprintf("%%%s%%", strings.Trim(s, `*"'`)))
+	}
 
 	results := &spec.SearchResultTwo{}
 
@@ -216,9 +219,11 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	}
 
 	var artists []*db.Album
-	q := c.DB.
-		Where(`parent_id IN ? AND (right_path LIKE ? OR right_path_u_dec LIKE ?)`, rootQ.SubQuery(), query, query).
-		Preload("AlbumStar", "user_id=?", user.ID).
+	q := c.DB.Where(`parent_id IN ?`, rootQ.SubQuery())
+	for _, s := range queries {
+		q = q.Where(`right_path LIKE ? OR right_path_u_dec LIKE ?`, s, s)
+	}
+	q = q.Preload("AlbumStar", "user_id=?", user.ID).
 		Preload("AlbumRating", "user_id=?", user.ID).
 		Offset(params.GetOrInt("artistOffset", 0)).
 		Limit(params.GetOrInt("artistCount", 20))
@@ -231,9 +236,11 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 
 	// search "albums"
 	var albums []*db.Album
-	q = c.DB.
-		Where(`tag_artist_id IS NOT NULL AND (right_path LIKE ? OR right_path_u_dec LIKE ?)`, query, query).
-		Preload("AlbumStar", "user_id=?", user.ID).
+	q = c.DB.Where(`tag_artist_id IS NOT NULL`)
+	for _, s := range queries {
+		q = q.Where(`right_path LIKE ? OR right_path_u_dec LIKE ?`, s, s)
+	}
+	q = q.Preload("AlbumStar", "user_id=?", user.ID).
 		Preload("AlbumRating", "user_id=?", user.ID).
 		Offset(params.GetOrInt("albumOffset", 0)).
 		Limit(params.GetOrInt("albumCount", 20))
@@ -249,10 +256,11 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 
 	// search tracks
 	var tracks []*db.Track
-	q = c.DB.
-		Preload("Album").
-		Where("filename LIKE ? OR filename_u_dec LIKE ?", query, query).
-		Preload("TrackStar", "user_id=?", user.ID).
+	q = c.DB.Preload("Album")
+	for _, s := range queries {
+		q = q.Where(`filename LIKE ? OR filename LIKE ?`, s, s)
+	}
+	q = q.Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Offset(params.GetOrInt("songOffset", 0)).
 		Limit(params.GetOrInt("songCount", 20))

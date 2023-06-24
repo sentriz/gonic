@@ -207,10 +207,13 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
 	query, err := params.Get("query")
+	var queries []string
 	if err != nil {
 		return spec.NewError(10, "please provide a `query` parameter")
 	}
-	query = fmt.Sprintf("%%%s%%", strings.Trim(query, `*"'`))
+	for _, s := range strings.Fields(query) {
+		queries = append(queries, fmt.Sprintf("%%%s%%", strings.Trim(s, `*"'`)))
+	}
 
 	results := &spec.SearchResultThree{}
 
@@ -218,9 +221,11 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	var artists []*db.Artist
 	q := c.DB.
 		Select("*, count(albums.id) album_count").
-		Group("artists.id").
-		Where("name LIKE ? OR name_u_dec LIKE ?", query, query).
-		Joins("JOIN albums ON albums.tag_artist_id=artists.id").
+		Group("artists.id")
+	for _, s := range queries {
+		q = q.Where(`name LIKE ? OR name_u_dec LIKE ?`, s, s)
+	}
+	q = q.Joins("JOIN albums ON albums.tag_artist_id=artists.id").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
 		Offset(params.GetOrInt("artistOffset", 0)).
@@ -241,9 +246,11 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		Preload("TagArtist").
 		Preload("Genres").
 		Preload("AlbumStar", "user_id=?", user.ID).
-		Preload("AlbumRating", "user_id=?", user.ID).
-		Where("tag_title LIKE ? OR tag_title_u_dec LIKE ?", query, query).
-		Offset(params.GetOrInt("albumOffset", 0)).
+		Preload("AlbumRating", "user_id=?", user.ID)
+	for _, s := range queries {
+		q = q.Where(`tag_title LIKE ? OR tag_title_u_dec LIKE ?`, s, s)
+	}
+	q = q.Offset(params.GetOrInt("albumOffset", 0)).
 		Limit(params.GetOrInt("albumCount", 20))
 	if m := getMusicFolder(c.MusicPaths, params); m != "" {
 		q = q.Where("root_dir=?", m)
@@ -262,9 +269,11 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		Preload("Album.TagArtist").
 		Preload("Genres").
 		Preload("TrackStar", "user_id=?", user.ID).
-		Preload("TrackRating", "user_id=?", user.ID).
-		Where("tag_title LIKE ? OR tag_title_u_dec LIKE ?", query, query).
-		Offset(params.GetOrInt("songOffset", 0)).
+		Preload("TrackRating", "user_id=?", user.ID)
+	for _, s := range queries {
+		q = q.Where(`tag_title LIKE ? OR tag_title_u_dec LIKE ?`, s, s)
+	}
+	q = q.Offset(params.GetOrInt("songOffset", 0)).
 		Limit(params.GetOrInt("songCount", 20))
 	if m := getMusicFolder(c.MusicPaths, params); m != "" {
 		q = q.
