@@ -36,6 +36,45 @@ type Podcasts struct {
 }
 
 func New(db *db.DB, base string, tagger tags.Reader) *Podcasts {
+	// Walk podcast path making filenames safe. Phase 1: Files
+	err := filepath.WalkDir(base, func(path string, d os.DirEntry, err error) error {
+		if (path == base) || d.IsDir() {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		localBase := d.Name()
+		dir := filepath.Dir(path)
+		safeBase := safeFilename(localBase)
+		if localBase == safeBase {
+			return nil
+		}
+		return os.Rename(strings.Join([]string{dir, localBase}, "/"), strings.Join([]string{dir, safeBase}, "/"))
+	})
+	if err != nil {
+		log.Fatalf("error making podcast episode filenames safe: %v\n", err)
+	}
+	// Phase 2: Directories
+	err = filepath.WalkDir(base, func(path string, d os.DirEntry, err error) error {
+		var pathError *os.PathError
+		if (path == base) || !d.IsDir() || errors.As(err, &pathError) { // Spurious path errors after move
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		localBase := d.Name()
+		dir := filepath.Dir(path)
+		safeBase := safeFilename(localBase)
+		if localBase == safeBase {
+			return nil
+		}
+		return os.Rename(strings.Join([]string{dir, localBase}, "/"), strings.Join([]string{dir, safeBase}, "/"))
+	})
+	if err != nil {
+		log.Fatalf("error making podcast directory names safe: %v\n", err)
+	}
 	return &Podcasts{
 		db:      db,
 		baseDir: base,
