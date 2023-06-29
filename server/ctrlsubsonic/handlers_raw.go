@@ -58,19 +58,20 @@ func streamGetTransPrefProfile(dbc *db.DB, userID int, client string) (mime stri
 
 var errUnknownMediaType = fmt.Errorf("media type is unknown")
 
-func streamUpdateStats(dbc *db.DB, userID, albumID int, playTime time.Time) error {
+func streamUpdateStats(dbc *db.DB, userID int, track *db.Track, playTime time.Time) error {
 	var play db.Play
 	err := dbc.
-		Where("album_id=? AND user_id=?", albumID, userID).
+		Where("album_id=? AND user_id=?", track.AlbumID, userID).
 		First(&play).
 		Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return fmt.Errorf("find stat: %w", err)
 	}
 
-	play.AlbumID = albumID
+	play.AlbumID = track.AlbumID
 	play.UserID = userID
 	play.Count++ // for getAlbumList?type=frequent
+	play.Length += track.Length
 	if playTime.After(play.Time) {
 		play.Time = playTime // for getAlbumList?type=recent
 	}
@@ -269,7 +270,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 
 	if track, ok := audioFile.(*db.Track); ok && track.Album != nil {
 		defer func() {
-			if err := streamUpdateStats(c.DB, user.ID, track.Album.ID, time.Now()); err != nil {
+			if err := streamUpdateStats(c.DB, user.ID, track, time.Now()); err != nil {
 				log.Printf("error updating track status: %v", err)
 			}
 		}()

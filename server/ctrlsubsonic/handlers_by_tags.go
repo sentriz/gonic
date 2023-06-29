@@ -162,7 +162,7 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	case "frequent":
 		user := r.Context().Value(CtxUser).(*db.User)
 		q = q.Joins("JOIN plays ON albums.id=plays.album_id AND plays.user_id=?", user.ID)
-		q = q.Order("plays.count DESC")
+		q = q.Order("plays.length DESC")
 	case "newest":
 		q = q.Order("created_at DESC")
 	case "random":
