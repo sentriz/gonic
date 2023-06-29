@@ -145,6 +145,113 @@ func TestArtistGetInfo_clientRequestFails(t *testing.T) {
 	require.Zero(actual)
 }
 
+//go:embed testdata/artist_get_top_tracks_response.xml
+var artistGetTopTracksResponse string
+
+func TestArtistGetTopTracks(t *testing.T) {
+	// arrange
+	require := require.New(t)
+	httpClient, shutdown := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(http.MethodGet, r.Method)
+		require.Equal(url.Values{
+			"method":  []string{"artist.getTopTracks"},
+			"api_key": []string{"apiKey1"},
+			"artist":  []string{"artist1"},
+		}, r.URL.Query())
+		require.Equal("/2.0/", r.URL.Path)
+		require.Equal(baseURL, "https://"+r.Host+r.URL.Path)
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(artistGetTopTracksResponse))
+	}))
+	defer shutdown()
+
+	client := Client{&httpClient}
+
+	// act
+	actual, err := client.ArtistGetTopTracks("apiKey1", "artist1")
+
+	// assert
+	require.NoError(err)
+	require.Equal(TopTracks{
+		Artist: "Artist 1",
+		XMLName: xml.Name{
+			Local: "toptracks",
+		},
+		Tracks: []Track{
+			{
+				Image: []struct {
+					Text string `xml:",chardata"`
+					Size string `xml:"size,attr"`
+				}{
+					{
+						Text: "https://last.fm/track-1-small.png",
+						Size: "small",
+					},
+					{
+						Text: "https://last.fm/track-1-large.png",
+						Size: "large",
+					},
+				},
+				Listeners: 2,
+				MBID:      "fdfc47cb-69d3-4318-ba71-d54fbc20169a",
+				Name:      "Track 1",
+				PlayCount: 1,
+				Rank:      1,
+				URL:       "https://www.last.fm/music/Artist+1/_/Track+1",
+			},
+			{
+				Image: []struct {
+					Text string `xml:",chardata"`
+					Size string `xml:"size,attr"`
+				}{
+					{
+						Text: "https://last.fm/track-2-small.png",
+						Size: "small",
+					},
+					{
+						Text: "https://last.fm/track-2-large.png",
+						Size: "large",
+					},
+				},
+				Listeners: 3,
+				MBID:      "cf32e694-1ea6-4ba0-9e8b-d5f1950da9c8",
+				Name:      "Track 2",
+				PlayCount: 2,
+				Rank:      2,
+				URL:       "https://www.last.fm/music/Artist+1/_/Track+2",
+			},
+		},
+	}, actual)
+}
+
+func TestArtistGetTopTracks_clientRequestFails(t *testing.T) {
+	// arrange
+	require := require.New(t)
+	httpClient, shutdown := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(http.MethodGet, r.Method)
+		require.Equal(url.Values{
+			"method":  []string{"artist.getTopTracks"},
+			"api_key": []string{"apiKey1"},
+			"artist":  []string{"artist1"},
+		}, r.URL.Query())
+		require.Equal("/2.0/", r.URL.Path)
+		require.Equal(baseURL, "https://"+r.Host+r.URL.Path)
+
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer shutdown()
+
+	client := Client{&httpClient}
+
+	// act
+	actual, err := client.ArtistGetTopTracks("apiKey1", "artist1")
+
+	// assert
+	require.Error(err)
+	require.Zero(actual)
+}
+
 func TestGetParamSignature(t *testing.T) {
 	params := url.Values{}
 	params.Add("ccc", "CCC")
