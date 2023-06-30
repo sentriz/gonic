@@ -519,8 +519,15 @@ func migratePlaylistsToM3U(tx *gorm.DB, ctx MigrationContext) error {
 }
 
 func migratePlayCountToLength(tx *gorm.DB, _ MigrationContext) error {
+	step := tx.AutoMigrate(
+		Play{},
+	)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step auto migrate: %w", err)
+	}
+
 	// As a best guess, we set length played so far as length of album * current count / number of tracks in album
-	step := tx.Exec(`
+	step = tx.Exec(`
 		UPDATE plays SET length=
 		((SELECT SUM(length) FROM tracks WHERE tracks.album_id=plays.album_id)*plays.count/
 		 (SELECT COUNT(*) FROM tracks WHERE tracks.album_id=plays.album_id));
@@ -528,8 +535,6 @@ func migratePlayCountToLength(tx *gorm.DB, _ MigrationContext) error {
 	if err := step.Error; err != nil {
 		return fmt.Errorf("calculate length: %w", err)
 	}
-	
+
 	return nil
 }
-
-
