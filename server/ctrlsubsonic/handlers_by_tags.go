@@ -554,8 +554,14 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(0, "fetching artist top tracks: %v", err)
 	}
+
+	sub := spec.NewResponse()
+	sub.TopSongs = &spec.TopSongs{
+		Tracks: make([]*spec.TrackChild, 0),
+	}
+
 	if len(topTracks.Tracks) == 0 {
-		return spec.NewError(70, "no top tracks found for artist: %s", artist.Name)
+		return sub
 	}
 
 	topTrackNames := make([]string, len(topTracks.Tracks))
@@ -576,20 +582,16 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 		return spec.NewError(0, "error finding tracks: %v", err)
 	}
 	if len(tracks) == 0 {
-		return spec.NewError(70, "no tracks found matching last fm top songs for artist: %s", artist.Name)
-	}
-
-	sub := spec.NewResponse()
-	sub.TopSongs = &spec.TopSongs{
-		Tracks: make([]*spec.TrackChild, len(tracks)),
+		return sub
 	}
 
 	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
 
-	for i, track := range tracks {
-		sub.TopSongs.Tracks[i] = spec.NewTrackByTags(track, track.Album)
-		sub.TopSongs.Tracks[i].TranscodedContentType = transcodeMIME
-		sub.TopSongs.Tracks[i].TranscodedSuffix = transcodeSuffix
+	for _, track := range tracks {
+		tc := spec.NewTrackByTags(track, track.Album)
+		tc.TranscodedContentType = transcodeMIME
+		tc.TranscodedSuffix = transcodeSuffix
+		sub.TopSongs.Tracks = append(sub.TopSongs.Tracks, tc)
 	}
 	return sub
 }
