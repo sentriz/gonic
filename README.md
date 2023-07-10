@@ -8,7 +8,9 @@
 </p>
 
 <p align="center">
-  <b>libera.chat</b> <a href="ircs://irc.libera.chat/#gonic" title="#gonic on Libera Chat">#gonic</a>
+  <b>irc</b> <a href="https://web.libera.chat/#gonic">#gonic</a> on libera.chat
+  &nbsp;|&nbsp; 
+  <b>matrix</b> <a href="https://matrix.to/#/#gonic:libera.chat">#gonic:libera.chat</a>
 </p>
 
 ## features
