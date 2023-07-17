@@ -419,7 +419,7 @@ func (p *Podcasts) DownloadEpisode(episodeID int) error {
 		}
 		filename = path.Base(audioURL.Path)
 	}
-	filename = p.findUniqueEpisodeName(&podcast, &podcastEpisode, filename)
+	filename = p.findUniqueEpisodeName(&podcast, &podcastEpisode, safeFilename(filename))
 	audioFile, err := os.Create(path.Join(absPath(p.baseDir, &podcast), filename))
 	if err != nil {
 		return fmt.Errorf("create audio file: %w", err)
