@@ -23,12 +23,12 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mmcdole/gofeed v1.2.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
-	github.com/nicksellen/audiotags v0.0.0-20160226222119-94015fa599bd
 	github.com/oklog/run v1.1.0
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c
 	github.com/peterbourgon/ff v1.7.1
 	github.com/philippta/go-template v0.0.0-20220911145045-4556aca435e4
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
+	github.com/sentriz/audiotags v0.0.0-20230419125925-8886243b2137
 	github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981
 	github.com/stretchr/testify v1.8.1
 	golang.org/x/exp v0.0.0-20230224173230-c95f2b4c22f2

@@ -353,7 +353,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 		return fmt.Errorf("%v: %w", err, ErrReadingTags)
 	}
 
-	genreNames := strings.Split(trags.SomeGenre(), s.genreSplit)
+	genreNames := strings.Split(tags.MustGenre(trags), s.genreSplit)
 	genreIDs, err := populateGenres(tx, genreNames)
 	if err != nil {
 		return fmt.Errorf("populate genres: %w", err)
@@ -361,7 +361,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 
 	// metadata for the album table comes only from the the first track's tags
 	if i == 0 || album.TagArtist == nil {
-		albumArtist, err := populateAlbumArtist(tx, parent, trags.SomeAlbumArtist())
+		albumArtist, err := populateAlbumArtist(tx, parent, tags.MustAlbumArtist(trags))
 		if err != nil {
 			return fmt.Errorf("populate album artist: %w", err)
 		}
@@ -387,7 +387,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 }
 
 func populateAlbum(tx *db.DB, album *db.Album, albumArtist *db.Artist, trags tags.Parser, modTime time.Time) error {
-	albumName := trags.SomeAlbum()
+	albumName := tags.MustAlbum(trags)
 	album.TagTitle = albumName
 	album.TagTitleUDec = decoded(albumName)
 	album.TagBrainzID = trags.AlbumBrainzID()

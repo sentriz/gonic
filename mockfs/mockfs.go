@@ -351,34 +351,31 @@ func (m *tagReader) Read(abspath string) (tags.Parser, error) {
 var _ tags.Reader = (*tagReader)(nil)
 
 type Tags struct {
-	RawTitle       string
-	RawArtist      string
-	RawAlbum       string
-	RawAlbumArtist string
-	RawGenre       string
+	RawTitle        string
+	RawArtist       string
+	RawAlbum        string
+	RawAlbumArtist  string
+	RawAlbumArtists []string
+	RawGenre        string
 
 	RawBitrate int
 	RawLength  int
 }
 
-func (m *Tags) Title() string         { return m.RawTitle }
-func (m *Tags) BrainzID() string      { return "" }
-func (m *Tags) Artist() string        { return m.RawArtist }
-func (m *Tags) Album() string         { return m.RawAlbum }
-func (m *Tags) AlbumArtist() string   { return m.RawAlbumArtist }
-func (m *Tags) AlbumBrainzID() string { return "" }
-func (m *Tags) Genre() string         { return m.RawGenre }
-func (m *Tags) TrackNumber() int      { return 1 }
-func (m *Tags) DiscNumber() int       { return 1 }
-func (m *Tags) Year() int             { return 2021 }
+func (m *Tags) Title() string          { return m.RawTitle }
+func (m *Tags) BrainzID() string       { return "" }
+func (m *Tags) Artist() string         { return m.RawArtist }
+func (m *Tags) Album() string          { return m.RawAlbum }
+func (m *Tags) AlbumArtist() string    { return m.RawAlbumArtist }
+func (m *Tags) AlbumArtists() []string { return m.RawAlbumArtists }
+func (m *Tags) AlbumBrainzID() string  { return "" }
+func (m *Tags) Genre() string          { return m.RawGenre }
+func (m *Tags) TrackNumber() int       { return 1 }
+func (m *Tags) DiscNumber() int        { return 1 }
+func (m *Tags) Year() int              { return 2021 }
 
 func (m *Tags) Length() int  { return firstInt(100, m.RawLength) }
 func (m *Tags) Bitrate() int { return firstInt(100, m.RawBitrate) }
-
-func (m *Tags) SomeAlbum() string       { return first("Unknown Album", m.Album()) }
-func (m *Tags) SomeArtist() string      { return first("Unknown Artist", m.Artist()) }
-func (m *Tags) SomeAlbumArtist() string { return first("Unknown Artist", m.AlbumArtist(), m.Artist()) }
-func (m *Tags) SomeGenre() string       { return first("Unknown Genre", m.Genre()) }
 
 var _ tags.Parser = (*Tags)(nil)
 
