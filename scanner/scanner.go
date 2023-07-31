@@ -360,14 +360,24 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 	}
 
 	// metadata for the album table comes only from the the first track's tags
-	if i == 0 || album.TagArtist == nil {
-		albumArtist, err := populateAlbumArtist(tx, parent, tags.MustAlbumArtist(trags))
-		if err != nil {
-			return fmt.Errorf("populate album artist: %w", err)
+	if i == 0 {
+		albumArtists := tags.MustAlbumArtists(trags)
+		var albumArtistIDs []int
+		for _, albumArtistName := range albumArtists {
+			albumArtist, err := populateArtist(tx, parent, albumArtistName)
+			if err != nil {
+				return fmt.Errorf("populate album artist: %w", err)
+			}
+			albumArtistIDs = append(albumArtistIDs, albumArtist.ID)
 		}
-		if err := populateAlbum(tx, album, albumArtist, trags, stat.ModTime()); err != nil {
+		if err := populateAlbumArtists(tx, album, albumArtistIDs); err != nil {
+			return fmt.Errorf("populate album artists: %w", err)
+		}
+
+		if err := populateAlbum(tx, album, trags, stat.ModTime()); err != nil {
 			return fmt.Errorf("populate album: %w", err)
 		}
+
 		if err := populateAlbumGenres(tx, album, genreIDs); err != nil {
 			return fmt.Errorf("populate album genres: %w", err)
 		}
@@ -386,13 +396,12 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 	return nil
 }
 
-func populateAlbum(tx *db.DB, album *db.Album, albumArtist *db.Artist, trags tags.Parser, modTime time.Time) error {
+func populateAlbum(tx *db.DB, album *db.Album, trags tags.Parser, modTime time.Time) error {
 	albumName := tags.MustAlbum(trags)
 	album.TagTitle = albumName
 	album.TagTitleUDec = decoded(albumName)
 	album.TagBrainzID = trags.AlbumBrainzID()
 	album.TagYear = trags.Year()
-	album.TagArtist = albumArtist
 
 	album.ModifiedAt = modTime
 	album.CreatedAt = modTime
@@ -434,7 +443,6 @@ func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trags tags.Parse
 	track.FilenameUDec = decoded(basename)
 	track.Size = size
 	track.AlbumID = album.ID
-	track.ArtistID = album.TagArtist.ID
 
 	track.TagTitle = trags.Title()
 	track.TagTitleUDec = decoded(trags.Title())
@@ -453,7 +461,7 @@ func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trags tags.Parse
 	return nil
 }
 
-func populateAlbumArtist(tx *db.DB, parent *db.Album, artistName string) (*db.Artist, error) {
+func populateArtist(tx *db.DB, parent *db.Album, artistName string) (*db.Artist, error) {
 	var update db.Artist
 	update.Name = artistName
 	update.NameUDec = decoded(artistName)
@@ -510,6 +518,17 @@ func populateAlbumGenres(tx *db.DB, album *db.Album, genreIDs []int) error {
 	return nil
 }
 
+func populateAlbumArtists(tx *db.DB, album *db.Album, albumArtistIDs []int) error {
+	if err := tx.Where("album_id=?", album.ID).Delete(db.AlbumArtist{}).Error; err != nil {
+		return fmt.Errorf("delete old album album artists: %w", err)
+	}
+
+	if err := tx.InsertBulkLeftMany("album_artists", []string{"album_id", "artist_id"}, album.ID, albumArtistIDs); err != nil {
+		return fmt.Errorf("insert bulk album artists: %w", err)
+	}
+	return nil
+}
+
 func (s *Scanner) cleanTracks(c *Context) error {
 	start := time.Now()
 	defer func() { log.Printf("finished clean tracks in %s, %d removed", durSince(start), c.TracksMissing()) }()
@@ -561,8 +580,8 @@ func (s *Scanner) cleanArtists(c *Context) error {
 	sub := s.db.
 		Select("artists.id").
 		Model(&db.Artist{}).
-		Joins("LEFT JOIN albums ON albums.tag_artist_id=artists.id").
-		Where("albums.id IS NULL").
+		Joins("LEFT JOIN album_artists ON album_artists.artist_id=artists.id").
+		Where("album_artists.artist_id IS NULL").
 		SubQuery()
 	q := s.db.
 		Where("artists.id IN ?", sub).

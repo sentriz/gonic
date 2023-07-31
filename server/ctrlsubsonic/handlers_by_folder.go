@@ -90,7 +90,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	c.DB.
 		Where("album_id=?", id.Value).
 		Preload("Album").
-		Preload("Album.TagArtist").
+		Preload("Album.Artists").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Order("filename").
@@ -178,7 +178,7 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 		Select("albums.*, count(tracks.id) child_count, sum(tracks.length) duration").
 		Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
 		Group("albums.id").
-		Where("albums.tag_artist_id IS NOT NULL").
+		Joins("JOIN album_artists ON album_artists.album_id=albums.id").
 		Offset(params.GetOrInt("offset", 0)).
 		Limit(params.GetOrInt("size", 10)).
 		Preload("Parent").
@@ -236,7 +236,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 
 	// search "albums"
 	var albums []*db.Album
-	q = c.DB.Where(`tag_artist_id IS NOT NULL`)
+	q = c.DB.Joins("JOIN album_artists ON album_artists.album_id=albums.id")
 	for _, s := range queries {
 		q = q.Where(`right_path LIKE ? OR right_path_u_dec LIKE ?`, s, s)
 	}
@@ -323,7 +323,7 @@ func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {
 	// "albums"
 	var albums []*db.Album
 	q = c.DB.
-		Where("tag_artist_id IS NOT NULL").
+		Joins("JOIN album_artists ON album_artists.album_id=albums.id").
 		Joins("JOIN album_stars ON albums.id=album_stars.album_id").
 		Where("album_stars.user_id=?", user.ID).
 		Preload("AlbumStar", "user_id=?", user.ID).

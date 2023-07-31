@@ -9,6 +9,8 @@
       "coverArt": "al-3",
       "artistId": "ar-1",
       "artist": "artist-0",
+      "artistIds": ["ar-1"],
+      "artists": ["artist-0"],
       "created": "2019-11-30T00:00:00Z",
       "title": "",
       "album": "",

@@ -9,6 +9,7 @@ package db
 import (
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -46,7 +47,7 @@ type Artist struct {
 	ID            int      `gorm:"primary_key"`
 	Name          string   `gorm:"not null; unique_index"`
 	NameUDec      string   `sql:"default: null"`
-	Albums        []*Album `gorm:"foreignkey:TagArtistID"`
+	Albums        []*Album `gorm:"many2many:album_artists"`
 	AlbumCount    int      `sql:"-"`
 	Cover         string   `sql:"default: null"`
 	ArtistStar    *ArtistStar
@@ -89,9 +90,7 @@ type Track struct {
 	Filename       string `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null"`
 	FilenameUDec   string `sql:"default: null"`
 	Album          *Album
-	AlbumID        int `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
-	Artist         *Artist
-	ArtistID       int      `gorm:"not null" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
+	AlbumID        int      `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Genres         []*Genre `gorm:"many2many:track_genres"`
 	Size           int      `sql:"default: null"`
 	Length         int      `sql:"default: null"`
@@ -116,10 +115,6 @@ func (t *Track) SID() *specid.ID {
 
 func (t *Track) AlbumSID() *specid.ID {
 	return &specid.ID{Type: specid.Album, Value: t.AlbumID}
-}
-
-func (t *Track) ArtistSID() *specid.ID {
-	return &specid.ID{Type: specid.Artist, Value: t.ArtistID}
 }
 
 func (t *Track) Ext() string {
@@ -190,7 +185,7 @@ type Play struct {
 	AlbumID int       `gorm:"not null; index" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Time    time.Time `sql:"default: null"`
 	Count   int
-	Length	int
+	Length  int
 }
 
 type Album struct {
@@ -202,16 +197,15 @@ type Album struct {
 	RightPath     string `gorm:"not null; unique_index:idx_album_abs_path" sql:"default: null"`
 	RightPathUDec string `sql:"default: null"`
 	Parent        *Album
-	ParentID      int      `sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
-	RootDir       string   `gorm:"unique_index:idx_album_abs_path" sql:"default: null"`
-	Genres        []*Genre `gorm:"many2many:album_genres"`
-	Cover         string   `sql:"default: null"`
-	TagArtist     *Artist
-	TagArtistID   int    `gorm:"index" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
-	TagTitle      string `sql:"default: null"`
-	TagTitleUDec  string `sql:"default: null"`
-	TagBrainzID   string `sql:"default: null"`
-	TagYear       int    `sql:"default: null"`
+	ParentID      int       `sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	RootDir       string    `gorm:"unique_index:idx_album_abs_path" sql:"default: null"`
+	Genres        []*Genre  `gorm:"many2many:album_genres"`
+	Cover         string    `sql:"default: null"`
+	Artists       []*Artist `gorm:"many2many:album_artists"`
+	TagTitle      string    `sql:"default: null"`
+	TagTitleUDec  string    `sql:"default: null"`
+	TagBrainzID   string    `sql:"default: null"`
+	TagYear       int       `sql:"default: null"`
 	Tracks        []*Track
 	ChildCount    int `sql:"-"`
 	Duration      int `sql:"-"`
@@ -241,6 +235,18 @@ func (a *Album) GenreStrings() []string {
 		strs = append(strs, genre.Name)
 	}
 	return strs
+}
+
+func (a *Album) ArtistsString() string {
+	var artists = append([]*Artist(nil), a.Artists...)
+	sort.Slice(artists, func(i, j int) bool {
+		return artists[i].ID < artists[j].ID
+	})
+	var names []string
+	for _, artist := range artists {
+		names = append(names, artist.Name)
+	}
+	return strings.Join(names, " & ")
 }
 
 type PlayQueue struct {
@@ -273,6 +279,13 @@ type TranscodePreference struct {
 	UserID  int    `gorm:"not null; unique_index:idx_user_id_client" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
 	Client  string `gorm:"not null; unique_index:idx_user_id_client" sql:"default: null"`
 	Profile string `gorm:"not null" sql:"default: null"`
+}
+
+type AlbumArtist struct {
+	Album    *Album
+	AlbumID  int `gorm:"not null; unique_index:idx_album_id_artist_id" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	Artist   *Artist
+	ArtistID int `gorm:"not null; unique_index:idx_album_id_artist_id" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
 }
 
 type TrackGenre struct {

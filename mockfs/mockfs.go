@@ -208,8 +208,8 @@ func (m *MockFS) LogAlbums() {
 
 	m.t.Logf("\nalbums")
 	for _, album := range albums {
-		m.t.Logf("id %-3d root %-3s lr %-15s %-10s pid %-3d aid %-3d cov %-10s",
-			album.ID, album.RootDir, album.LeftPath, album.RightPath, album.ParentID, album.TagArtistID, album.Cover)
+		m.t.Logf("id %-3d root %-3s lr %-15s %-10s pid %-3d cov %-10s",
+			album.ID, album.RootDir, album.LeftPath, album.RightPath, album.ParentID, album.Cover)
 	}
 	m.t.Logf("total %d", len(albums))
 }
@@ -341,7 +341,7 @@ func (m *MockFS) DumpDB(suffix ...string) {
 		m.t.Fatalf("backing up: %v", err)
 	}
 
-	m.t.Error("DumpDB left behind")
+	m.t.Error(destPath)
 }
 
 type tagReaderResult struct {

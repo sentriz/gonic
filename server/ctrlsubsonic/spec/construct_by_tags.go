@@ -2,12 +2,13 @@ package spec
 
 import (
 	"path"
+	"sort"
 	"strings"
 
 	"go.senan.xyz/gonic/db"
 )
 
-func NewAlbumByTags(a *db.Album, artist *db.Artist) *Album {
+func NewAlbumByTags(a *db.Album, artists []*db.Artist) *Album {
 	ret := &Album{
 		Created:       a.CreatedAt,
 		ID:            a.SID(),
@@ -27,9 +28,16 @@ func NewAlbumByTags(a *db.Album, artist *db.Artist) *Album {
 	if a.AlbumRating != nil {
 		ret.UserRating = a.AlbumRating.Rating
 	}
-	if artist != nil {
-		ret.Artist = artist.Name
-		ret.ArtistID = artist.SID()
+	sort.Slice(artists, func(i, j int) bool {
+		return artists[i].ID < artists[j].ID
+	})
+	if len(artists) > 0 {
+		ret.Artist = artists[0].Name
+		ret.ArtistID = artists[0].SID()
+	}
+	for _, a := range artists {
+		ret.Artists = append(ret.Artists, a.Name)
+		ret.ArtistIDs = append(ret.ArtistIDs, a.SID())
 	}
 	return ret
 }
@@ -69,8 +77,11 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 	if t.TrackRating != nil {
 		ret.UserRating = t.TrackRating.Rating
 	}
-	if album.TagArtist != nil {
-		ret.ArtistID = album.TagArtist.SID()
+	if len(album.Artists) > 0 {
+		sort.Slice(album.Artists, func(i, j int) bool {
+			return album.Artists[i].ID < album.Artists[j].ID
+		})
+		ret.ArtistID = album.Artists[0].SID()
 	}
 	// replace tags that we're present
 	if ret.Title == "" {

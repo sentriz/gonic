@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -55,6 +56,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202211111057", migratePlaylistsQueuesToFullID),
 		construct(ctx, "202304221528", migratePlaylistsToM3U),
 		construct(ctx, "202305301718", migratePlayCountToLength),
+		construct(ctx, "202307281628", migrateAlbumArtistsMany2Many),
 	}
 
 	return gormigrate.
@@ -534,6 +536,55 @@ func migratePlayCountToLength(tx *gorm.DB, _ MigrationContext) error {
 	`)
 	if err := step.Error; err != nil {
 		return fmt.Errorf("calculate length: %w", err)
+	}
+
+	return nil
+}
+
+func migrateAlbumArtistsMany2Many(tx *gorm.DB, _ MigrationContext) error {
+	// gorms seems to want to create the table automatically without ON DELETE rules
+	step := tx.DropTableIfExists(AlbumArtist{})
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step drop prev: %w", err)
+	}
+
+	step = tx.AutoMigrate(
+		AlbumArtist{},
+		Album{},
+		Artist{},
+	)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step auto migrate: %w", err)
+	}
+
+	if tx.Dialect().HasColumn("albums", "tag_artist_id") {
+		tx = tx.LogMode(false)
+		step = tx.Exec(`
+			INSERT INTO album_artists (album_id, artist_id)
+			SELECT id album_id, tag_artist_id artist_id
+			FROM albums
+			WHERE tag_artist_id IS NOT NULL;
+		`)
+		if err := step.Error; err != nil && !strings.Contains(err.Error(), "no such column") {
+			return fmt.Errorf("step insert from albums: %w", err)
+		}
+
+		step = tx.Exec(`DROP INDEX idx_albums_tag_artist_id`)
+		if err := step.Error; err != nil {
+			return fmt.Errorf("step drop index: %w", err)
+		}
+
+		step = tx.Exec(`ALTER TABLE albums DROP COLUMN tag_artist_id;`)
+		if err := step.Error; err != nil {
+			return fmt.Errorf("step drop albums tag artist id: %w", err)
+		}
+	}
+
+	if tx.Dialect().HasColumn("tracks", "artist_id") {
+		step = tx.Exec(`ALTER TABLE tracks DROP COLUMN artist_id;`)
+		if err := step.Error; err != nil {
+			return fmt.Errorf("step drop track tag artist: %w", err)
+		}
 	}
 
 	return nil

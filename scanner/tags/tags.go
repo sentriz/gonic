@@ -127,16 +127,6 @@ func MustArtist(p Parser) string {
 	return "Unknown Artist"
 }
 
-func MustAlbumArtist(p Parser) string {
-	if r := p.AlbumArtist(); r != "" {
-		return r
-	}
-	if r := p.Artist(); r != "" {
-		return r
-	}
-	return "Unknown Artist"
-}
-
 func MustAlbumArtists(p Parser) []string {
 	if r := p.AlbumArtists(); len(r) > 0 {
 		return r

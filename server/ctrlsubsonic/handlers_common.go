@@ -62,7 +62,7 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 	}
 
 	track := &db.Track{}
-	if err := c.DB.Preload("Album").Preload("Artist").First(track, id.Value).Error; err != nil {
+	if err := c.DB.Preload("Album").Preload("Album.Artists").First(track, id.Value).Error; err != nil {
 		return spec.NewError(0, "error finding track: %v", err)
 	}
 
@@ -236,7 +236,7 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 	err = c.DB.
 		Where("id=?", id.Value).
 		Preload("Album").
-		Preload("Album.TagArtist").
+		Preload("Album.Artists").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		First(&track).
@@ -256,7 +256,7 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	q := c.DB.DB.
 		Limit(params.GetOrInt("size", 10)).
 		Preload("Album").
-		Preload("Album.TagArtist").
+		Preload("Album.Artists").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Joins("JOIN albums ON tracks.album_id=albums.id").
