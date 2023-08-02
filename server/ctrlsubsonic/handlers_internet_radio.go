@@ -44,7 +44,7 @@ func (c *Controller) ServeCreateInternetRadioStation(r *http.Request) *spec.Resp
 		return spec.NewError(10, "no name provided: %v", err)
 	}
 	homepageURL, err := params.Get("homepageUrl")
-	if err == nil {
+	if err == nil && homepageURL != "" {
 		if _, err := url.ParseRequestURI(homepageURL); err != nil {
 			return spec.NewError(70, "bad homepage URL provided: %v", err)
 		}
