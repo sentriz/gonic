@@ -1,0 +1,69 @@
+{{ component "layout" . }}
+{{ component "layout_user" . }}
+
+{{ component "block" (props .
+    "Icon" "user"
+		"Name" "configuring LDAP"
+) }}
+		<form class="flex flex-col gap-2 items-end" action="{{ path 
+		"/admin/ldap_do" }}" method="post">
+				<input
+					type="username"
+					id="bind_user_uid"
+					name="bind_user"
+					placeholder="bind username"
+				>
+				<input
+					type="password"
+					id="bind_user_password"
+					name="bind_user_password"
+					placeholder="bind password"
+				>
+				
+				<input
+					type="text"
+					id="fqdn"
+					name="fqdn"
+					placeholder="LDAP server"
+				>
+				
+				<input
+					type="number"
+					id="port"
+					name="port"
+					placeholder="port"
+					value="389"
+				>
+
+				
+
+				<label>
+					<input
+						type="checkbox"
+						id="tls"
+						name="tls"
+					>
+					TLS
+				</label>
+
+				<input
+					type="text"
+					id="base_cn"
+					name="base_cn"
+					placeholder="Base CN"
+				>
+				
+				<input
+					type="text"
+					id="filter"
+					name="filter"
+					placeholder="filter"
+				>
+				
+
+				<input type="submit" value="update">
+    </form>
+{{ end }}
+
+{{ end }}
+{{ end }}
