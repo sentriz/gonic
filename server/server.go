@@ -173,6 +173,7 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	routUser.Use(ctrl.WithUserSession)
 	routUser.Handle("/logout", ctrl.HR(ctrl.ServeLogout)) // "raw" handler, updates session
 	routUser.Handle("/home", ctrl.H(ctrl.ServeHome))
+	routUser.Handle("/ldap", ctrl.H(ctrl.ServeLDAPConfig))
 	routUser.Handle("/change_username", ctrl.H(ctrl.ServeChangeUsername))
 	routUser.Handle("/change_username_do", ctrl.H(ctrl.ServeChangeUsernameDo))
 	routUser.Handle("/change_password", ctrl.H(ctrl.ServeChangePassword))

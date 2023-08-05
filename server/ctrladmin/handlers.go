@@ -157,6 +157,15 @@ func (c *Controller) ServeUnlinkListenBrainzDo(r *http.Request) *Response {
 	return &Response{redirect: "/admin/home"}
 }
 
+func (c *Controller) ServeLDAPConfig(r *http.Request) *Response {
+	data := &templateData{}
+
+	return &Response{
+		template: "ldap.tmpl",
+		data: data,
+	}
+}
+
 func (c *Controller) ServeChangeUsername(r *http.Request) *Response {
 	user, err := selectedUserIfAdmin(c, r)
 	if err != nil {
