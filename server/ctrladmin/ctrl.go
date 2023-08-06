@@ -129,6 +129,13 @@ type templateData struct {
 	Podcasts              []*db.Podcast
 	InternetRadioStations []*db.InternetRadioStation
 
+	CurrentBindUID		string
+	CurrentFQDN				string
+	CurrentPort				string
+	CurrentNoTLS			string
+	CurrentBaseDN			string
+	CurrentFilter			string
+
 	// avatar
 	Avatar []byte
 }

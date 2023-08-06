@@ -160,20 +160,6 @@ func (c *Controller) ServeUnlinkListenBrainzDo(r *http.Request) *Response {
 func (c *Controller) ServeLDAPConfig(r *http.Request) *Response {
 	data := &templateData{}
 
-	data.CurrentBindUID, _ = c.DB.GetSetting("ldap_bind_user")
-	data.CurrentFQDN, _ = c.DB.GetSetting("ldap_fqdn")
-	data.CurrentPort, _ = c.DB.GetSetting("ldap_port")
-	data.CurrentBaseDN, _ = c.DB.GetSetting("ldap_base_dn")
-	data.CurrentFilter, _ = c.DB.GetSetting("ldap_filter")
-	
-	// This is to fix the fact that select boxes are strange.
-	currentTLS, _ := c.DB.GetSetting("ldap_tls")
-	data.CurrentNoTLS = "selected"
-
-	if currentTLS == "true" {
-		data.CurrentNoTLS = ""
-	}
-
 	return &Response{
 		template: "ldap.tmpl",
 		data: data,
@@ -189,10 +175,7 @@ func (c *Controller) ServeLDAPConfigDo(r *http.Request) *Response {
 	baseDN := r.FormValue("base_dn")
 	filter := r.FormValue("filter")
 	
-	log.Print("AHHH")
-	log.Print(tls)
-
-	if bindUID == "" || bindPSWD == "" || fqdn == "" || port == "" || baseDN == "" || filter == "" {
+	if bindUID == "" || bindPSWD == "" || fqdn == "" || port == "" || port == "" || baseDN == "" || filter == "" {
 		return &Response{
 			redirect: r.Referer(),
 			flashW:   []string{"please provide a bind username and password, a FQDN, port, base CN, and filter"},

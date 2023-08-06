@@ -12,6 +12,7 @@
 					id="bind_user"
 					name="bind_user"
 					placeholder="bind username"
+					value={{ default "" .CurrentBindUID }}
 				>
 				<input
 					type="password"
@@ -25,6 +26,7 @@
 					id="fqdn"
 					name="fqdn"
 					placeholder="LDAP server"
+					value={{ default "" .CurrentFQDN }}
 				>
 				
 				<input
@@ -32,28 +34,20 @@
 					id="port"
 					name="port"
 					placeholder="port"
-					value="389"
+					value={{ default "389" .CurrentPort }}
 				>
-
-				<label >
-					<input
-						type="checkbox"
-						id="tls"
-						name="tls"
-						value="TLS"
-						style="
-						all: revert !important;
-						width: 20px !important;
-						height: 20px !important;"
-					>
-					TLS
-				</label>
+				
+				<select name="tls" id="tls">
+					<option value="true">TLS</option>
+					<option value="false" {{ .CurrentNoTLS }}>None</option>
+				</select>
 
 				<input
 					type="text"
 					id="base_dn"
 					name="base_dn"
 					placeholder="Base DN"
+					value={{ default "" .CurrentBaseDN }}
 				>
 				
 				<input
@@ -61,6 +55,7 @@
 					id="filter"
 					name="filter"
 					placeholder="filter"
+					value={{ default "" .CurrentFilter }}
 				>
 				
 
