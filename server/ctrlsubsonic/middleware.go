@@ -96,7 +96,6 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 				
 				// Now, we can try to connect to the LDAP server.
 				l, err := ldap.DialURL(fmt.Sprintf("%s://%s:%s", protocol, ldapFQDN, ldapPort))
-				defer l.Close()
 				if err != nil {
 					newLDAPUser = true
 					
@@ -106,7 +105,8 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 					_ = writeResp(w, r, spec.NewError(0, "Failed to connect to LDAP server."))
 					return
 				}
-
+				defer l.Close()
+				
 				// After we have a connection, let's try binding
 				_, err = l.SimpleBind(&ldap.SimpleBindRequest{
 					Username: fmt.Sprintf("uid=%s,%s", bindUID, baseDN),
@@ -177,7 +177,6 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 				
 				// Now, we can try to connect to the LDAP server.
 				l, err := ldap.DialURL(fmt.Sprintf("%s://%s:%s", protocol, ldapFQDN, ldapPort))
-				defer l.Close()
 				if err != nil {
 					// Warn the server and return a generic error.
 					log.Println("Failed to connect to LDAP server", err)
@@ -185,6 +184,7 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 					_ = writeResp(w, r, spec.NewError(0, "Failed to connect to LDAP server."))
 					return
 				}
+				defer l.Close()
 				
 				// After we have a connection, let's try binding
 				_, err = l.SimpleBind(&ldap.SimpleBindRequest{
