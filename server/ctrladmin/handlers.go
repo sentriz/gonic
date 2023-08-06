@@ -168,7 +168,7 @@ func (c *Controller) ServeLDAPConfig(r *http.Request) *Response {
 
 func (c *Controller) ServeLDAPConfigDo(r *http.Request) *Response {
 	bindUID := r.FormValue("bind_user")
-	bindPSWD := r.FormValue("bind_user_password")
+	bindPSWD := r.FormValue("bind_user_password") // TODO: Secure this better.
 	fqdn := r.FormValue("fqdn")
 	port := r.FormValue("port")
 	tls := r.FormValue("tls")
