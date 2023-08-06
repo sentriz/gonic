@@ -157,7 +157,7 @@ func (c *Controller) ServeUnlinkListenBrainzDo(r *http.Request) *Response {
 	return &Response{redirect: "/admin/home"}
 }
 
-func (c *Controller) ServeLDAPConfig(r *http.Request) *Response {
+func (c *Controller) ServeLDAPConfig(_ *http.Request) *Response {
 	data := &templateData{}
 
 	data.CurrentBindUID, _ = c.DB.GetSetting("ldap_bind_user")
