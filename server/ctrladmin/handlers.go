@@ -196,14 +196,75 @@ func (c *Controller) ServeLDAPConfigDo(r *http.Request) *Response {
 		}
 	}
 	
-	c.DB.SetSetting("ldap_bind_user", bindUID)
-	c.DB.SetSetting("ldap_bind_user_password", bindPSWD)
+	err := c.DB.SetSetting("ldap_bind_user", bindUID)
+	if err != nil {
+		log.Println("Failed to set bind user:", err)
+
+		return &Response{
+			redirect: r.Refer(),
+			flashW:   []string{"Failed to set bind user."}
+		}
+	}
 	
+	c.DB.SetSetting("ldap_bind_user_password", bindPSWD)
+	if err != nil {
+		log.Println("Failed to set bind user password:", err)
+
+		return &Response{
+			redirect: r.Refer(),
+			flashW:   []string{"Failed to set bind user password."}
+		}
+	}	
+
 	c.DB.SetSetting("ldap_fqdn", fqdn)
+	if err != nil {
+		log.Println("Failed to set server:", err)
+
+		return &Response{
+			redirect: r.Refer(),
+			flashW:   []string{"Failed to set server."}
+		}
+	}
+
 	c.DB.SetSetting("ldap_port", port)
+	if err != nil {
+		log.Println("Failed to set port:", err)
+
+		return &Response{
+			redirect: r.Refer(),
+			flashW:   []string{"Failed to set port."}
+		}
+	}
+
 	c.DB.SetSetting("ldap_tls", tls)
+	if err != nil {
+		log.Println("Failed to set TLS:", err)
+
+		return &Response{
+			redirect: r.Refer(),
+			flashW:   []string{"Failed to set TLS."}
+		}
+	}
+
 	c.DB.SetSetting("ldap_base_dn", baseDN)
+	if err != nil {
+		log.Println("Failed to set base DN:", err)
+
+		return &Response{
+			redirect: r.Refer(),
+			flashW:   []string{"Failed to set base DN."}
+		}
+	}
+
 	c.DB.SetSetting("ldap_filter", filter)
+	if err != nil {
+		log.Println("Failed to set filter:", err)
+
+		return &Response{
+			redirect: r.Refer(),
+			flashW:   []string{"Failed to set filter."}
+		}
+	}
 
 	if fqdn == "" {
 		return &Response{
