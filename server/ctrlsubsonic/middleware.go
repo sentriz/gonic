@@ -153,10 +153,8 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 		var credsOk bool
 		if tokenAuth && newLDAPUser {
 			credsOk = checkCredsToken(user.Password, token, salt)
-		} else {
-			if newLDAPUser {
-				credsOk = checkCredsBasic(user.Password, password)
-			}
+		} else if newLDAPUser {
+			credsOk = checkCredsBasic(user.Password, password)
 		}
 		if !credsOk {
 			// Because internal authentication failed, we can now try to use LDAP, if 
