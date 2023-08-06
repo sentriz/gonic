@@ -192,7 +192,7 @@ func (c *Controller) ServeLDAPConfigDo(r *http.Request) *Response {
 	if bindUID == "" || bindPSWD == ""|| port == "" || baseDN == "" || filter == "" {
 		return &Response{
 			redirect: r.Referer(),
-			flashW:   []string{"please provide a bind username and password, port, base CN, and filter (group name)"},
+			flashW:   []string{"please provide a bind username and password, port, base CN, and filter"},
 		}
 	}
 	
