@@ -6,9 +6,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/http"
+	"log"
 
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
+
+	"github.com/go-ldap/ldap"
 )
 
 func checkCredsToken(password, token, salt string) bool {
@@ -80,6 +83,49 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 			credsOk = checkCredsBasic(user.Password, password)
 		}
 		if !credsOk {
+			// Because internal authentication failed, we can now try to use LDAP, if 
+			// it was enabled by the user.
+			ldapFQDN, err := c.DB.GetSetting("ldap_fqdn")
+
+			if ldapFQDN != "" && err == nil {
+				// The configuration page wouldn't allow these setting to not be set 
+				// while LDAP is enabled (a FQDN/IP is set).
+				//bindUID, _ := c.DB.GetSetting("ldap_bind_user")
+				//bindPWD, _ := c.DB.GetSetting("ldap_bind_user_password")
+				ldapPort, _ := c.DB.GetSetting("ldap_port")
+				baseDN, _ := c.DB.GetSetting("ldap_base_dn")
+				//filter, _ := c.DB.GetSetting("ldap_filter")
+				tls, _ := c.DB.GetSetting("ldap_tls")
+				
+				protocol := "ldap"
+				if tls == "true" {
+					protocol = "ldaps"
+				}
+				
+				// Now, we can try to connect to the LDAP server.
+				l, err := ldap.DialURL(fmt.Sprintf("%s://%s:%s", protocol, ldapFQDN, ldapPort))
+				defer l.Close()
+				if err != nil {
+					// Warn the server and return a generic error.
+					log.Println("Failed to connect to LDAP server", err)
+					
+					_ = writeResp(w, r, spec.NewError(0, "Failed to connect to LDAP server."))
+					return
+				}
+				
+				// After we have a connection, let's try binding
+				err = l.Bind(username, password)
+				_, err = l.SimpleBind(&ldap.SimpleBindRequest{
+					Username: fmt.Sprintf("uid=%s,%s", username, baseDN),
+					Password: password,
+				})
+
+				if err == nil {
+					withUser := context.WithValue(r.Context(), CtxUser, user)
+					next.ServeHTTP(w, r.WithContext(withUser))
+				}
+			}
+			
 			_ = writeResp(w, r, spec.NewError(40, "invalid password"))
 			return
 		}
