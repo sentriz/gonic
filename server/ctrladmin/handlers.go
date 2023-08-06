@@ -188,14 +188,11 @@ func (c *Controller) ServeLDAPConfigDo(r *http.Request) *Response {
 	tls := r.FormValue("tls")
 	baseDN := r.FormValue("base_dn")
 	filter := r.FormValue("filter")
-	
-	log.Print("AHHH")
-	log.Print(tls)
 
-	if bindUID == "" || bindPSWD == "" || fqdn == "" || port == "" || baseDN == "" || filter == "" {
+	if bindUID == "" || bindPSWD == ""|| port == "" || baseDN == "" || filter == "" {
 		return &Response{
 			redirect: r.Referer(),
-			flashW:   []string{"please provide a bind username and password, a FQDN, port, base CN, and filter"},
+			flashW:   []string{"please provide a bind username and password, port, base CN, and filter"},
 		}
 	}
 	
@@ -207,6 +204,13 @@ func (c *Controller) ServeLDAPConfigDo(r *http.Request) *Response {
 	c.DB.SetSetting("ldap_tls", tls)
 	c.DB.SetSetting("ldap_base_dn", baseDN)
 	c.DB.SetSetting("ldap_filter", filter)
+
+	if fqdn == "" {
+		return &Response{
+			redirect: "/admin/home",
+			flashW:   []string{"LDAP server was left empty, LDAP authentication will be disabled."},
+		}
+	}
 
 	return &Response{redirect: "/admin/home"}
 }
