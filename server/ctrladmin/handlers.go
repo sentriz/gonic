@@ -201,8 +201,8 @@ func (c *Controller) ServeLDAPConfigDo(r *http.Request) *Response {
 		log.Println("Failed to set bind user:", err)
 
 		return &Response{
-			redirect: r.Refer(),
-			flashW:   []string{"Failed to set bind user."}
+			redirect: r.Referer(),
+			flashW:   []string{"Failed to set bind user."},
 		}
 	}
 	
@@ -211,8 +211,8 @@ func (c *Controller) ServeLDAPConfigDo(r *http.Request) *Response {
 		log.Println("Failed to set bind user password:", err)
 
 		return &Response{
-			redirect: r.Refer(),
-			flashW:   []string{"Failed to set bind user password."}
+			redirect: r.Referer(),
+			flashW:   []string{"Failed to set bind user password."},
 		}
 	}	
 
@@ -221,8 +221,8 @@ func (c *Controller) ServeLDAPConfigDo(r *http.Request) *Response {
 		log.Println("Failed to set server:", err)
 
 		return &Response{
-			redirect: r.Refer(),
-			flashW:   []string{"Failed to set server."}
+			redirect: r.Referer(),
+			flashW:   []string{"Failed to set server."},
 		}
 	}
 
@@ -231,8 +231,8 @@ func (c *Controller) ServeLDAPConfigDo(r *http.Request) *Response {
 		log.Println("Failed to set port:", err)
 
 		return &Response{
-			redirect: r.Refer(),
-			flashW:   []string{"Failed to set port."}
+			redirect: r.Referer(),
+			flashW:   []string{"Failed to set port."},
 		}
 	}
 
@@ -241,8 +241,8 @@ func (c *Controller) ServeLDAPConfigDo(r *http.Request) *Response {
 		log.Println("Failed to set TLS:", err)
 
 		return &Response{
-			redirect: r.Refer(),
-			flashW:   []string{"Failed to set TLS."}
+			redirect: r.Referer(),
+			flashW:   []string{"Failed to set TLS."},
 		}
 	}
 
@@ -251,8 +251,8 @@ func (c *Controller) ServeLDAPConfigDo(r *http.Request) *Response {
 		log.Println("Failed to set base DN:", err)
 
 		return &Response{
-			redirect: r.Refer(),
-			flashW:   []string{"Failed to set base DN."}
+			redirect: r.Referer(),
+			flashW:   []string{"Failed to set base DN."},
 		}
 	}
 
@@ -261,8 +261,8 @@ func (c *Controller) ServeLDAPConfigDo(r *http.Request) *Response {
 		log.Println("Failed to set filter:", err)
 
 		return &Response{
-			redirect: r.Refer(),
-			flashW:   []string{"Failed to set filter."}
+			redirect: r.Referer(),
+			flashW:   []string{"Failed to set filter."},
 		}
 	}
 
