@@ -166,6 +166,34 @@ func (c *Controller) ServeLDAPConfig(r *http.Request) *Response {
 	}
 }
 
+func (c *Controller) ServeLDAPConfigDo(r *http.Request) *Response {
+	bindUID := r.FormValue("bind_user")
+	bindPSWD := r.FormValue("bind_user_password")
+	fqdn := r.FormValue("fqdn")
+	port := r.FormValue("port")
+	tls := r.FormValue("tls")
+	baseDN := r.FormValue("base_dn")
+	filter := r.FormValue("filter")
+	
+	if bindUID == "" || bindPSWD == "" || fqdn == "" || port == "" || port == "" || baseDN == "" || filter == "" {
+		return &Response{
+			redirect: r.Referer(),
+			flashW:   []string{"please provide a bind username and password, a FQDN, port, base CN, and filter"},
+		}
+	}
+	
+	c.DB.SetSetting("ldap_bind_user", bindUID)
+	c.DB.SetSetting("ldap_bind_user_password", bindPSWD)
+	
+	c.DB.SetSetting("ldap_fqdn", fqdn)
+	c.DB.SetSetting("ldap_port", port)
+	c.DB.SetSetting("ldap_tls", tls)
+	c.DB.SetSetting("ldap_base_dn", baseDN)
+	c.DB.SetSetting("ldap_filter", filter)
+
+	return &Response{redirect: "/admin/home"}
+}
+
 func (c *Controller) ServeChangeUsername(r *http.Request) *Response {
 	user, err := selectedUserIfAdmin(c, r)
 	if err != nil {
