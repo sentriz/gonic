@@ -26,29 +26,26 @@ type (
 	}
 
 	SimilarArtist struct {
-		XMLName xml.Name `xml:"artist"`
-		Name    string   `xml:"name"`
-		MBID    string   `xml:"mbid"`
-		URL     string   `xml:"url"`
-		Image   []struct {
-			Text string `xml:",chardata"`
-			Size string `xml:"size,attr"`
-		} `xml:"image"`
-		Streamable string `xml:"streamable"`
+		XMLName    xml.Name `xml:"artist"`
+		Name       string   `xml:"name"`
+		MBID       string   `xml:"mbid"`
+		URL        string   `xml:"url"`
+		Image      []Image  `xml:"image"`
+		Streamable string   `xml:"streamable"`
 	}
 
-	ArtistImage struct {
+	Image struct {
 		Text string `xml:",chardata"`
 		Size string `xml:"size,attr"`
 	}
 
 	Artist struct {
-		XMLName    xml.Name      `xml:"artist"`
-		Name       string        `xml:"name"`
-		MBID       string        `xml:"mbid"`
-		URL        string        `xml:"url"`
-		Image      []ArtistImage `xml:"image"`
-		Streamable string        `xml:"streamable"`
+		XMLName    xml.Name `xml:"artist"`
+		Name       string   `xml:"name"`
+		MBID       string   `xml:"mbid"`
+		URL        string   `xml:"url"`
+		Image      []Image  `xml:"image"`
+		Streamable string   `xml:"streamable"`
 		Stats      struct {
 			Listeners string `xml:"listeners"`
 			Playcount string `xml:"playcount"`
@@ -100,9 +97,6 @@ type (
 		PlayCount int     `xml:"playcount"`
 		Listeners int     `xml:"listeners"`
 		URL       string  `xml:"url"`
-		Image     []struct {
-			Text string `xml:",chardata"`
-			Size string `xml:"size,attr"`
-		} `xml:"image"`
+		Image     []Image `xml:"image"`
 	}
 )
