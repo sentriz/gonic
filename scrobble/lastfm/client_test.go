@@ -75,7 +75,7 @@ func TestArtistGetInfo(t *testing.T) {
 			Playcount: "2",
 		},
 		URL: "https://www.last.fm/music/Artist+1",
-		Image: []ArtistImage{
+		Image: []Image{
 			{
 				Size: "small",
 				Text: "https://last.fm/artist-1-small.png",
@@ -96,7 +96,7 @@ func TestArtistGetInfo(t *testing.T) {
 					},
 					Name: "Similar Artist 1",
 					URL:  "https://www.last.fm/music/Similar+Artist+1",
-					Image: []ArtistImage{
+					Image: []Image{
 						{
 							Size: "small",
 							Text: "https://last.fm/similar-artist-1-small.png",
@@ -180,10 +180,7 @@ func TestArtistGetTopTracks(t *testing.T) {
 		},
 		Tracks: []Track{
 			{
-				Image: []struct {
-					Text string `xml:",chardata"`
-					Size string `xml:"size,attr"`
-				}{
+				Image: []Image{
 					{
 						Text: "https://last.fm/track-1-small.png",
 						Size: "small",
@@ -201,10 +198,7 @@ func TestArtistGetTopTracks(t *testing.T) {
 				URL:       "https://www.last.fm/music/Artist+1/_/Track+1",
 			},
 			{
-				Image: []struct {
-					Text string `xml:",chardata"`
-					Size string `xml:"size,attr"`
-				}{
+				Image: []Image{
 					{
 						Text: "https://last.fm/track-2-small.png",
 						Size: "small",
@@ -246,6 +240,106 @@ func TestArtistGetTopTracks_clientRequestFails(t *testing.T) {
 
 	// act
 	actual, err := client.ArtistGetTopTracks("apiKey1", "artist1")
+
+	// assert
+	require.Error(err)
+	require.Zero(actual)
+}
+
+//go:embed testdata/track_get_similar_response.xml
+var trackGetSimilaResponse string
+
+func TestTrackGetSimilarTracks(t *testing.T) {
+	// arrange
+	require := require.New(t)
+	httpClient, shutdown := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(http.MethodGet, r.Method)
+		require.Equal(url.Values{
+			"method":  []string{"track.getSimilar"},
+			"api_key": []string{"apiKey1"},
+			"artist":  []string{"artist1"},
+			"track":   []string{"track1"},
+		}, r.URL.Query())
+		require.Equal("/2.0/", r.URL.Path)
+		require.Equal(baseURL, "https://"+r.Host+r.URL.Path)
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(trackGetSimilaResponse))
+	}))
+	defer shutdown()
+
+	client := Client{&httpClient}
+
+	// act
+	actual, err := client.TrackGetSimilarTracks("apiKey1", "artist1", "track1")
+
+	// assert
+	require.NoError(err)
+	require.Equal(SimilarTracks{
+		Artist: "Artist 1",
+		Track:  "Track 1",
+		XMLName: xml.Name{
+			Local: "similartracks",
+		},
+		Tracks: []Track{
+			{
+				Image: []Image{
+					{
+						Text: "https://last.fm/track-1-small.png",
+						Size: "small",
+					},
+					{
+						Text: "https://last.fm/track-1-large.png",
+						Size: "large",
+					},
+				},
+				MBID:      "7096931c-bf82-4896-b1e7-42b60a0e16ea",
+				Name:      "Track 1",
+				PlayCount: 1,
+				URL:       "https://www.last.fm/music/Artist+1/_/Track+1",
+			},
+			{
+				Image: []Image{
+					{
+						Text: "https://last.fm/track-2-small.png",
+						Size: "small",
+					},
+					{
+						Text: "https://last.fm/track-2-large.png",
+						Size: "large",
+					},
+				},
+				MBID:      "2aff1321-149f-4000-8762-3468c917600c",
+				Name:      "Track 2",
+				PlayCount: 2,
+				URL:       "https://www.last.fm/music/Artist+2/_/Track+2",
+			},
+		},
+	}, actual)
+}
+
+func TestTrackGetSimilarTracks_clientRequestFails(t *testing.T) {
+	// arrange
+	require := require.New(t)
+	httpClient, shutdown := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(http.MethodGet, r.Method)
+		require.Equal(url.Values{
+			"method":  []string{"track.getSimilar"},
+			"api_key": []string{"apiKey1"},
+			"artist":  []string{"artist1"},
+			"track":   []string{"track1"},
+		}, r.URL.Query())
+		require.Equal("/2.0/", r.URL.Path)
+		require.Equal(baseURL, "https://"+r.Host+r.URL.Path)
+
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer shutdown()
+
+	client := Client{&httpClient}
+
+	// act
+	actual, err := client.TrackGetSimilarTracks("apiKey1", "artist1", "track1")
 
 	// assert
 	require.Error(err)
