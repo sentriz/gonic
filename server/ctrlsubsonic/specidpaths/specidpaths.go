@@ -12,6 +12,7 @@ import (
 
 var ErrNotAbs = errors.New("not abs")
 var ErrNotFound = errors.New("not found")
+var ErrPodcastStatus = errors.New("wrong podcast status is ")
 
 type Result interface {
 	SID() *specid.ID
@@ -32,7 +33,7 @@ func Locate(dbc *db.DB, podcastsPath string, id specid.ID) (Result, error) {
 			if pe.Status == db.PodcastEpisodeStatusCompleted {
 				pe.AbsP = filepath.Join(podcastsPath, pe.Path)
 			} else {
-				err = fmt.Errorf("podcast status is %s", pe.Status)
+				err = fmt.Errorf("%w %s", ErrPodcastStatus, pe.Status)
 			}
 			return &pe, err
 		}

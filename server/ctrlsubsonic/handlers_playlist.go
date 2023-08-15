@@ -210,7 +210,7 @@ func playlistRender(c *Controller, params params.Params, playlistID string, play
 		file, err := specidpaths.Lookup(c.DB, PathsOf(c.MusicPaths), c.PodcastsPath, path)
 		if err != nil {
 			// TODO return track for manual deleting from Playlist or delete it silent
-			log.Printf("lookup path %q: %w", path, err)
+			log.Printf("lookup path %q: %s", path, err)
 			resp.SongCount--
 			continue
 		}
