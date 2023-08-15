@@ -45,11 +45,11 @@ It has multiple lines 👍
 	after, err := store.Read(newPath)
 	require.NoError(err)
 
-	require.Equal(before.UserID, after.UserID)
-	require.Equal(before.Name, after.Name)
-	require.Equal(before.Comment, after.Comment)
-	require.Equal(before.Items, after.Items)
-	require.Equal(before.IsPublic, after.IsPublic)
+	require.Equal(after.UserID, before.UserID)
+	require.Equal(after.Name, before.Name)
+	require.Equal(after.Comment, before.Comment)
+	require.Equal(after.Items, before.Items)
+	require.Equal(after.IsPublic, before.IsPublic)
 
 	playlistIDs, err = store.List()
 	require.NoError(err)

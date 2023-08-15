@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lfm status="ok">
+    <similartracks artist="Artist 1" track="Track 1">
+        <track>
+            <name>Track 1</name>
+            <playcount>1</playcount>
+            <mbid>7096931c-bf82-4896-b1e7-42b60a0e16ea</mbid>
+            <match>1.000</match>
+            <url>https://www.last.fm/music/Artist+1/_/Track+1</url>
+            <streamable fulltrack="0">0</streamable>
+            <duration>80</duration>
+            <artist>
+                <name>Artist+1</name>
+                <mbid>366c1119-ec4f-4312-b729-a5637d148e3e</mbid>
+                <url>https://www.last.fm/music/Artist+1</url>
+            </artist>
+            <image size="small">https://last.fm/track-1-small.png</image>
+            <image size="large">https://last.fm/track-1-large.png</image>
+        </track>
+        <track>
+            <name>Track 2</name>
+            <playcount>2</playcount>
+            <mbid>2aff1321-149f-4000-8762-3468c917600c</mbid>
+            <match>0.422</match>
+            <url>https://www.last.fm/music/Artist+2/_/Track+2</url>
+            <streamable fulltrack="0">0</streamable>
+            <duration>80</duration>
+            <artist>
+                <name>Artist+2</name>
+                <mbid>9842b07f-956b-4c36-8ce1-884b4b96254d</mbid>
+                <url>https://www.last.fm/music/Artist+1</url>
+            </artist>
+            <image size="small">https://last.fm/track-2-small.png</image>
+            <image size="large">https://last.fm/track-2-large.png</image>
+        </track>
+    </similartracks>
+</lfm>

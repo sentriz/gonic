@@ -27,7 +27,7 @@ func Locate(dbc *db.DB, podcastsPath string, id specid.ID) (Result, error) {
 		}
 	case specid.PodcastEpisode:
 		var pe db.PodcastEpisode
-		if err := dbc.Where("id=?", id.Value).Find(&pe).Error; err == nil {
+		if err := dbc.Where("id=? AND status=?", id.Value, db.PodcastEpisodeStatusCompleted).Find(&pe).Error; err == nil {
 			pe.AbsP = filepath.Join(podcastsPath, pe.Path)
 			return &pe, err
 		}
