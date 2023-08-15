@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"sort"
 	"time"
@@ -208,7 +209,10 @@ func playlistRender(c *Controller, params params.Params, playlistID string, play
 	for _, path := range playlist.Items {
 		file, err := specidpaths.Lookup(c.DB, PathsOf(c.MusicPaths), c.PodcastsPath, path)
 		if err != nil {
-			return nil, fmt.Errorf("lookup path %q: %w", path, err)
+			// TODO return track for manual deleting from Playlist or delete it silent
+			log.Printf("lookup path %q: %w", path, err)
+			resp.SongCount--
+			continue
 		}
 		var trch *spec.TrackChild
 		switch id := file.SID(); id.Type {

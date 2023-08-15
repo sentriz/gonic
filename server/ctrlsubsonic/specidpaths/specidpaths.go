@@ -2,6 +2,7 @@ package specidpaths
 
 import (
 	"errors"
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -28,7 +29,11 @@ func Locate(dbc *db.DB, podcastsPath string, id specid.ID) (Result, error) {
 	case specid.PodcastEpisode:
 		var pe db.PodcastEpisode
 		if err := dbc.Where("id=?", id.Value).Find(&pe).Error; err == nil {
-			pe.AbsP = filepath.Join(podcastsPath, pe.Path)
+			if pe.Status == db.PodcastEpisodeStatusCompleted {
+				pe.AbsP = filepath.Join(podcastsPath, pe.Path)
+			} else {
+				err = fmt.Errorf("podcast status is %s", pe.Status)
+			}
 			return &pe, err
 		}
 	}
