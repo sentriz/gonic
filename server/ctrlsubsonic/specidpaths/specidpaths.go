@@ -11,7 +11,6 @@ import (
 
 var ErrNotAbs = errors.New("not abs")
 var ErrNotFound = errors.New("not found")
-var ErrPodcastStatus = errors.New("wrong podcast status is ")
 
 type Result interface {
 	SID() *specid.ID
