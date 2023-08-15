@@ -39,6 +39,7 @@ func main() {
 
 	confPodcastPurgeAgeDays := set.Int("podcast-purge-age", 0, "age (in days) to purge podcast episodes if not accessed (optional)")
 	confPodcastPath := set.String("podcast-path", "", "path to podcasts")
+	confPodcastDescriptionRAW := set.Bool("podcast-description-raw", false, "will return raw podcast and episode description (with HTML tags)")
 
 	confCachePath := set.String("cache-path", "", "path to cache")
 
@@ -136,17 +137,18 @@ func main() {
 	proxyPrefixExpr := regexp.MustCompile(`^\/*(.*?)\/*$`)
 	*confProxyPrefix = proxyPrefixExpr.ReplaceAllString(*confProxyPrefix, `/$1`)
 	server, err := server.New(server.Options{
-		DB:             dbc,
-		MusicPaths:     musicPaths,
-		ExcludePattern: *confExcludePatterns,
-		CacheAudioPath: cacheDirAudio,
-		CoverCachePath: cacheDirCovers,
-		PodcastPath:    *confPodcastPath,
-		PlaylistsPath:  *confPlaylistsPath,
-		ProxyPrefix:    *confProxyPrefix,
-		GenreSplit:     *confGenreSplit,
-		HTTPLog:        *confHTTPLog,
-		JukeboxEnabled: *confJukeboxEnabled,
+		DB:                    dbc,
+		MusicPaths:            musicPaths,
+		ExcludePattern:        *confExcludePatterns,
+		CacheAudioPath:        cacheDirAudio,
+		CoverCachePath:        cacheDirCovers,
+		PodcastPath:           *confPodcastPath,
+		PlaylistsPath:         *confPlaylistsPath,
+		ProxyPrefix:           *confProxyPrefix,
+		GenreSplit:            *confGenreSplit,
+		HTTPLog:               *confHTTPLog,
+		JukeboxEnabled:        *confJukeboxEnabled,
+		PodcastDescriptionRAW: *confPodcastDescriptionRAW,
 	})
 	if err != nil {
 		log.Panicf("error creating server: %v\n", err)

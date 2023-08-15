@@ -22,7 +22,7 @@ func (c *Controller) ServeGetPodcasts(r *http.Request) *spec.Response {
 	sub := spec.NewResponse()
 	sub.Podcasts = &spec.Podcasts{}
 	for _, podcast := range podcasts {
-		channel := spec.NewPodcastChannel(podcast)
+		channel := spec.NewPodcastChannel(podcast, c.Podcasts.DescriptionRaw)
 		sub.Podcasts.List = append(sub.Podcasts.List, channel)
 	}
 	return sub
@@ -38,7 +38,7 @@ func (c *Controller) ServeGetNewestPodcasts(r *http.Request) *spec.Response {
 	sub := spec.NewResponse()
 	sub.NewestPodcasts = &spec.NewestPodcasts{}
 	for _, episode := range episodes {
-		sub.NewestPodcasts.List = append(sub.NewestPodcasts.List, spec.NewPodcastEpisode(episode))
+		sub.NewestPodcasts.List = append(sub.NewestPodcasts.List, spec.NewPodcastEpisode(episode, c.Podcasts.DescriptionRaw))
 	}
 	return sub
 }

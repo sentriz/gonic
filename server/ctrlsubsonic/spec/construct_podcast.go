@@ -1,34 +1,46 @@
 package spec
 
 import (
-	"jaytaylor.com/html2text"
 	"go.senan.xyz/gonic/db"
+	"jaytaylor.com/html2text"
 )
 
-func NewPodcastChannel(p *db.Podcast) *PodcastChannel {
+func NewPodcastChannel(p *db.Podcast, descRaw bool) *PodcastChannel {
+	desc := p.Description
+	if !descRaw {
+		var err error
+		desc, err = html2text.FromString(p.Description, html2text.Options{TextOnly: true})
+		if err != nil {
+			desc = ""
+		}
+	}
 	ret := &PodcastChannel{
 		ID:               p.SID(),
 		OriginalImageURL: p.ImageURL,
 		Title:            p.Title,
-		Description:      p.Description,
+		Description:      desc,
 		URL:              p.URL,
 		CoverArt:         p.SID(),
 		Status:           "skipped",
 	}
 	for _, episode := range p.Episodes {
-		specEpisode := NewPodcastEpisode(episode)
+		specEpisode := NewPodcastEpisode(episode, descRaw)
 		ret.Episode = append(ret.Episode, specEpisode)
 	}
 	return ret
 }
 
-func NewPodcastEpisode(e *db.PodcastEpisode) *PodcastEpisode {
+func NewPodcastEpisode(e *db.PodcastEpisode, descRaw bool) *PodcastEpisode {
 	if e == nil {
 		return nil
 	}
-	desc, err := html2text.FromString(e.Description, html2text.Options{TextOnly: true})
-	if (err != nil) {
-		desc = ""
+	desc := e.Description
+	if !descRaw {
+		var err error
+		desc, err = html2text.FromString(e.Description, html2text.Options{TextOnly: true})
+		if err != nil {
+			desc = ""
+		}
 	}
 	return &PodcastEpisode{
 		ID:          e.SID(),

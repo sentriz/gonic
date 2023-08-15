@@ -30,17 +30,18 @@ import (
 )
 
 type Options struct {
-	DB             *db.DB
-	MusicPaths     []ctrlsubsonic.MusicPath
-	ExcludePattern string
-	PodcastPath    string
-	CacheAudioPath string
-	CoverCachePath string
-	PlaylistsPath  string
-	ProxyPrefix    string
-	GenreSplit     string
-	HTTPLog        bool
-	JukeboxEnabled bool
+	DB                    *db.DB
+	MusicPaths            []ctrlsubsonic.MusicPath
+	ExcludePattern        string
+	PodcastPath           string
+	CacheAudioPath        string
+	CoverCachePath        string
+	PlaylistsPath         string
+	ProxyPrefix           string
+	GenreSplit            string
+	HTTPLog               bool
+	JukeboxEnabled        bool
+	PodcastDescriptionRAW bool
 }
 
 type Server struct {
@@ -90,7 +91,7 @@ func New(opts Options) (*Server, error) {
 	sessDB.SessionOpts.HttpOnly = true
 	sessDB.SessionOpts.SameSite = http.SameSiteLaxMode
 
-	podcast := podcasts.New(opts.DB, opts.PodcastPath, tagger)
+	podcast := podcasts.New(opts.DB, opts.PodcastPath, tagger, opts.PodcastDescriptionRAW)
 
 	cacheTranscoder := transcode.NewCachingTranscoder(
 		transcode.NewFFmpegTranscoder(),

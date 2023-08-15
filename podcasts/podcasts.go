@@ -30,12 +30,13 @@ const downloadAllWaitInterval = 3 * time.Second
 const fetchUserAgent = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11`
 
 type Podcasts struct {
-	db      *db.DB
-	baseDir string
-	tagger  tags.Reader
+	db             *db.DB
+	baseDir        string
+	tagger         tags.Reader
+	DescriptionRaw bool
 }
 
-func New(db *db.DB, base string, tagger tags.Reader) *Podcasts {
+func New(db *db.DB, base string, tagger tags.Reader, descriptionRaw bool) *Podcasts {
 	// Walk podcast path making filenames safe. Phase 1: Files
 	err := filepath.WalkDir(base, func(path string, d os.DirEntry, err error) error {
 		if (path == base) || d.IsDir() {
@@ -76,9 +77,10 @@ func New(db *db.DB, base string, tagger tags.Reader) *Podcasts {
 		log.Fatalf("error making podcast directory names safe: %v\n", err)
 	}
 	return &Podcasts{
-		db:      db,
-		baseDir: base,
-		tagger:  tagger,
+		db:             db,
+		baseDir:        base,
+		tagger:         tagger,
+		DescriptionRaw: descriptionRaw,
 	}
 }
 
