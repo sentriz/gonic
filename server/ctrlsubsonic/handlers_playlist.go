@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"sort"
 	"time"
@@ -208,8 +209,10 @@ func playlistRender(c *Controller, params params.Params, playlistID string, play
 	for _, path := range playlist.Items {
 		file, err := specidpaths.Lookup(c.DB, PathsOf(c.MusicPaths), c.PodcastsPath, path)
 		if err != nil {
-			return nil, fmt.Errorf("lookup path %q: %w", path, err)
+			log.Printf("error looking up path %q: %s", path, err)
+			continue
 		}
+
 		var trch *spec.TrackChild
 		switch id := file.SID(); id.Type {
 		case specid.Track:
@@ -237,5 +240,8 @@ func playlistRender(c *Controller, params params.Params, playlistID string, play
 		trch.TranscodedSuffix = transcodeSuffix
 		resp.List = append(resp.List, trch)
 	}
+
+	resp.SongCount = len(resp.List)
+
 	return resp, nil
 }
