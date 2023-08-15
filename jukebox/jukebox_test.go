@@ -48,29 +48,29 @@ func TestPlaySkipReset(t *testing.T) {
 
 	status, err := j.GetStatus()
 	require.NoError(err)
-	require.Equal(status.CurrentIndex, 0)
-	require.Equal(status.CurrentFilename, testPath("tr_0.mp3"))
-	require.Equal(status.Length, 5)
-	require.Equal(status.Playing, true)
+	require.Equal(0, status.CurrentIndex)
+	require.Equal(testPath("tr_0.mp3"), status.CurrentFilename)
+	require.Equal(5, status.Length)
+	require.Equal(true, status.Playing)
 
 	items, err := j.GetPlaylist()
 	require.NoError(err)
 
 	itemsSorted := append([]string(nil), items...)
 	sort.Strings(itemsSorted)
-	require.Equal(items, itemsSorted)
+	require.Equal(itemsSorted, items)
 
 	require.NoError(j.Play())
 
 	status, err = j.GetStatus()
 	require.NoError(err)
-	require.Equal(status.Playing, true)
+	require.Equal(true, status.Playing)
 
 	require.NoError(j.Pause())
 
 	status, err = j.GetStatus()
 	require.NoError(err)
-	require.Equal(status.Playing, false)
+	require.Equal(false, status.Playing)
 
 	require.NoError(j.Play())
 
@@ -79,20 +79,20 @@ func TestPlaySkipReset(t *testing.T) {
 
 	status, err = j.GetStatus()
 	require.NoError(err)
-	require.Equal(status.CurrentIndex, 2)
-	require.Equal(status.CurrentFilename, testPath("tr_2.mp3"))
-	require.Equal(status.Length, 5)
-	require.Equal(status.Playing, true)
+	require.Equal(2, status.CurrentIndex)
+	require.Equal(testPath("tr_2.mp3"), status.CurrentFilename)
+	require.Equal(5, status.Length)
+	require.Equal(true, status.Playing)
 
 	// skip to 3
 	require.NoError(j.SkipToPlaylistIndex(3, 0))
 
 	status, err = j.GetStatus()
 	require.NoError(err)
-	require.Equal(status.CurrentIndex, 3)
-	require.Equal(status.CurrentFilename, testPath("tr_3.mp3"))
-	require.Equal(status.Length, 5)
-	require.Equal(status.Playing, true)
+	require.Equal(3, status.CurrentIndex)
+	require.Equal(testPath("tr_3.mp3"), status.CurrentFilename)
+	require.Equal(5, status.Length)
+	require.Equal(true, status.Playing)
 
 	// just add one more by overwriting the playlist like some clients do
 	// we should keep the current track unchaned if we find it
@@ -107,20 +107,20 @@ func TestPlaySkipReset(t *testing.T) {
 
 	status, err = j.GetStatus()
 	require.NoError(err)
-	require.Equal(status.CurrentIndex, 3) // index unchanged
-	require.Equal(status.CurrentFilename, testPath("tr_3.mp3"))
-	require.Equal(status.Length, 6) // we added one more track
-	require.Equal(status.Playing, true)
+	require.Equal(3, status.CurrentIndex) // index unchanged
+	require.Equal(testPath("tr_3.mp3"), status.CurrentFilename)
+	require.Equal(6, status.Length) // we added one more track
+	require.Equal(true, status.Playing)
 
 	// skip to 3 again
 	require.NoError(j.SkipToPlaylistIndex(3, 0))
 
 	status, err = j.GetStatus()
 	require.NoError(err)
-	require.Equal(status.CurrentIndex, 3)
-	require.Equal(status.CurrentFilename, testPath("tr_3.mp3"))
-	require.Equal(status.Length, 6)
-	require.Equal(status.Playing, true)
+	require.Equal(3, status.CurrentIndex)
+	require.Equal(testPath("tr_3.mp3"), status.CurrentFilename)
+	require.Equal(6, status.Length)
+	require.Equal(true, status.Playing)
 
 	// remove all but 3
 	require.NoError(j.SetPlaylist([]string{
@@ -132,21 +132,21 @@ func TestPlaySkipReset(t *testing.T) {
 
 	status, err = j.GetStatus()
 	require.NoError(err)
-	require.Equal(status.CurrentIndex, 3) // index unchanged
-	require.Equal(status.CurrentFilename, testPath("tr_3.mp3"))
-	require.Equal(status.Length, 4)
-	require.Equal(status.Playing, true)
+	require.Equal(3, status.CurrentIndex) // index unchanged
+	require.Equal(testPath("tr_3.mp3"), status.CurrentFilename)
+	require.Equal(4, status.Length)
+	require.Equal(true, status.Playing)
 
 	// skip to 2 (5s long) in the middle of the track
 	require.NoError(j.SkipToPlaylistIndex(2, 2))
 
 	status, err = j.GetStatus()
 	require.NoError(err)
-	require.Equal(status.CurrentIndex, 2) // index unchanged
-	require.Equal(status.CurrentFilename, testPath("tr_2.mp3"))
-	require.Equal(status.Length, 4)
-	require.Equal(status.Playing, true)
-	require.Equal(status.Position, 2) // at new position
+	require.Equal(2, status.CurrentIndex) // index unchanged
+	require.Equal(testPath("tr_2.mp3"), status.CurrentFilename)
+	require.Equal(4, status.Length)
+	require.Equal(true, status.Playing)
+	require.Equal(2, status.Position) // at new position
 
 	// overwrite completely
 	require.NoError(j.SetPlaylist([]string{
@@ -159,10 +159,10 @@ func TestPlaySkipReset(t *testing.T) {
 
 	status, err = j.GetStatus()
 	require.NoError(err)
-	require.Equal(status.CurrentIndex, 0) // index unchanged
-	require.Equal(status.CurrentFilename, testPath("tr_5.mp3"))
-	require.Equal(status.Length, 5)
-	require.Equal(status.Playing, true)
+	require.Equal(0, status.CurrentIndex) // index unchanged
+	require.Equal(testPath("tr_5.mp3"), status.CurrentFilename)
+	require.Equal(5, status.Length)
+	require.Equal(true, status.Playing)
 }
 
 func TestVolume(t *testing.T) {
@@ -172,19 +172,19 @@ func TestVolume(t *testing.T) {
 
 	vol, err := j.GetVolumePct()
 	require.NoError(err)
-	require.Equal(vol, 100.0)
+	require.Equal(100.0, vol)
 
 	require.NoError(j.SetVolumePct(69.0))
 
 	vol, err = j.GetVolumePct()
 	require.NoError(err)
-	require.Equal(vol, 69.0)
+	require.Equal(69.0, vol)
 
 	require.NoError(j.SetVolumePct(0.0))
 
 	vol, err = j.GetVolumePct()
 	require.NoError(err)
-	require.Equal(vol, 0.0)
+	require.Equal(0.0, vol)
 }
 
 func testPath(path string) string {

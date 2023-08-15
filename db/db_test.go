@@ -38,12 +38,12 @@ func TestGetSetting(t *testing.T) {
 
 	actual, err := testDB.GetSetting(key)
 	require.NoError(err)
-	require.Equal(actual, value)
+	require.Equal(value, actual)
 
 	require.NoError(testDB.SetSetting(key, value))
 	actual, err = testDB.GetSetting(key)
 	require.NoError(err)
-	require.Equal(actual, value)
+	require.Equal(value, actual)
 }
 
 func TestMain(m *testing.M) {
