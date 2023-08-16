@@ -624,3 +624,25 @@ func TestAlbumAndArtistSameNameWeirdness(t *testing.T) {
 	assert.NoError(m.DB().Find(&albums).Error)
 	assert.Equal(len(albums), 5) // root, 2 artists, 2 albums
 }
+
+func TestNoOrphanedGenres(t *testing.T) {
+	t.Parallel()
+	require := assert.New(t)
+	m := mockfs.New(t)
+
+	m.AddItems()
+	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.Tags) error { tags.RawGenre = "genre-a;genre-b"; return nil })
+	m.SetTags("artist-0/album-0/track-1.flac", func(tags *mockfs.Tags) error { tags.RawGenre = "genre-c;genre-d"; return nil })
+	m.SetTags("artist-1/album-2/track-0.flac", func(tags *mockfs.Tags) error { tags.RawGenre = "genre-e;genre-f"; return nil })
+	m.SetTags("artist-1/album-2/track-1.flac", func(tags *mockfs.Tags) error { tags.RawGenre = "genre-g;genre-h"; return nil })
+	m.ScanAndClean()
+
+	m.RemoveAll("artist-0")
+	m.RemoveAll("artist-1")
+	m.RemoveAll("artist-2")
+	m.ScanAndClean()
+
+	var genreCount int
+	require.NoError(m.DB().Model(&db.Genre{}).Count(&genreCount).Error)
+	require.Equal(0, genreCount)
+}
