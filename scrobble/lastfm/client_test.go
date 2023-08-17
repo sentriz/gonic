@@ -246,8 +246,117 @@ func TestArtistGetTopTracks_clientRequestFails(t *testing.T) {
 	require.Zero(actual)
 }
 
+//go:embed testdata/artist_get_similar_response.xml
+var artistGetSimilarResponse string
+
+func TestArtistGetSimilar(t *testing.T) {
+	// arrange
+	require := require.New(t)
+	httpClient, shutdown := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(http.MethodGet, r.Method)
+		require.Equal(url.Values{
+			"method":  []string{"artist.getSimilar"},
+			"api_key": []string{"apiKey1"},
+			"artist":  []string{"artist1"},
+		}, r.URL.Query())
+		require.Equal("/2.0/", r.URL.Path)
+		require.Equal(baseURL, "https://"+r.Host+r.URL.Path)
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(artistGetSimilarResponse))
+	}))
+	defer shutdown()
+
+	client := Client{&httpClient}
+
+	// act
+	actual, err := client.ArtistGetSimilar("apiKey1", "artist1")
+
+	// assert
+	require.NoError(err)
+	require.Equal(SimilarArtists{
+		XMLName: xml.Name{
+			Local: "similarartists",
+		},
+		Artist: "Artist 1",
+		Artists: []Artist{
+			{
+				XMLName: xml.Name{
+					Local: "artist",
+				},
+				Image: []Image{
+					{
+						Text: "https://last.fm/artist-2-small.png",
+						Size: "small",
+					},
+					{
+						Text: "https://last.fm/artist-2-large.png",
+						Size: "large",
+					},
+				},
+				MBID: "d2addad9-3fc4-4ce8-9cd4-63f2a19bb922",
+				Name: "Artist 2",
+				Similar: struct {
+					Artists []Artist `xml:"artist"`
+				}{},
+				Streamable: "0",
+				URL:        "https://www.last.fm/music/Artist+2",
+			},
+			{
+				XMLName: xml.Name{
+					Local: "artist",
+				},
+				Image: []Image{
+					{
+						Text: "https://last.fm/artist-3-small.png",
+						Size: "small",
+					},
+					{
+						Text: "https://last.fm/artist-3-large.png",
+						Size: "large",
+					},
+				},
+				MBID: "dc95d067-df3e-4b83-a5fe-5ec773b1883f",
+				Name: "Artist 3",
+				Similar: struct {
+					Artists []Artist `xml:"artist"`
+				}{},
+				Streamable: "0",
+				URL:        "https://www.last.fm/music/Artist+3",
+			},
+		},
+	}, actual)
+}
+
+func TestArtistGetSimilar_clientRequestFails(t *testing.T) {
+	// arrange
+	require := require.New(t)
+	httpClient, shutdown := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(http.MethodGet, r.Method)
+		require.Equal(url.Values{
+			"method":  []string{"artist.getSimilar"},
+			"api_key": []string{"apiKey1"},
+			"artist":  []string{"artist1"},
+		}, r.URL.Query())
+		require.Equal("/2.0/", r.URL.Path)
+		require.Equal(baseURL, "https://"+r.Host+r.URL.Path)
+
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer shutdown()
+
+	client := Client{&httpClient}
+
+	// act
+	actual, err := client.ArtistGetSimilar("apiKey1", "artist1")
+
+	// assert
+	require.Error(err)
+	require.Zero(actual)
+}
+
 //go:embed testdata/track_get_similar_response.xml
-var trackGetSimilaResponse string
+var trackGetSimilarResponse string
 
 func TestTrackGetSimilarTracks(t *testing.T) {
 	// arrange
@@ -264,7 +373,7 @@ func TestTrackGetSimilarTracks(t *testing.T) {
 		require.Equal(baseURL, "https://"+r.Host+r.URL.Path)
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(trackGetSimilaResponse))
+		w.Write([]byte(trackGetSimilarResponse))
 	}))
 	defer shutdown()
 
