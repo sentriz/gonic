@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<lfm status="ok">
+    <similarartists artist="Artist 1">
+        <artist>
+            <name>Artist 2</name>
+            <mbid>d2addad9-3fc4-4ce8-9cd4-63f2a19bb922</mbid>
+            <match>1</match>
+            <url>https://www.last.fm/music/Artist+2</url>
+            <image size="small">https://last.fm/artist-2-small.png</image>
+            <image size="large">https://last.fm/artist-2-large.png</image>
+            <streamable>0</streamable>
+        </artist>
+        <artist>
+            <name>Artist 3</name>
+            <mbid>dc95d067-df3e-4b83-a5fe-5ec773b1883f</mbid>
+            <match>0.790991</match>
+            <url>https://www.last.fm/music/Artist+3</url>
+            <image size="small">https://last.fm/artist-3-small.png</image>
+            <image size="large">https://last.fm/artist-3-large.png</image>
+            <streamable>0</streamable>
+        </artist>
+    </similarartists>
+</lfm>
