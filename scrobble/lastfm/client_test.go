@@ -356,7 +356,7 @@ func TestArtistGetSimilar_clientRequestFails(t *testing.T) {
 }
 
 //go:embed testdata/track_get_similar_response.xml
-var trackGetSimilaResponse string
+var trackGetSimilarResponse string
 
 func TestTrackGetSimilarTracks(t *testing.T) {
 	// arrange
@@ -373,7 +373,7 @@ func TestTrackGetSimilarTracks(t *testing.T) {
 		require.Equal(baseURL, "https://"+r.Host+r.URL.Path)
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(trackGetSimilaResponse))
+		w.Write([]byte(trackGetSimilarResponse))
 	}))
 	defer shutdown()
 
