@@ -455,6 +455,66 @@ func TestTrackGetSimilarTracks_clientRequestFails(t *testing.T) {
 	require.Zero(actual)
 }
 
+//go:embed testdata/get_session_response.xml
+var getSessionResponse string
+
+func TestGetSession(t *testing.T) {
+	// arrange
+	require := require.New(t)
+	httpClient, shutdown := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(http.MethodGet, r.Method)
+		require.Equal(url.Values{
+			"method":  []string{"auth.getSession"},
+			"api_key": []string{"apiKey1"},
+			"api_sig": []string{"b872a708a0b8b1d9fc1230b1cb6493f8"},
+			"token":   []string{"token1"},
+		}, r.URL.Query())
+		require.Equal("/2.0/", r.URL.Path)
+		require.Equal(baseURL, "https://"+r.Host+r.URL.Path)
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(getSessionResponse))
+	}))
+	defer shutdown()
+
+	client := Client{&httpClient}
+
+	// act
+	actual, err := client.GetSession("apiKey1", "secret1", "token1")
+
+	// assert
+	require.NoError(err)
+	require.Equal("sessionKey1", actual)
+}
+
+func TestGetSession_clientRequestFails(t *testing.T) {
+	// arrange
+	require := require.New(t)
+	httpClient, shutdown := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(http.MethodGet, r.Method)
+		require.Equal(url.Values{
+			"method":  []string{"auth.getSession"},
+			"api_key": []string{"apiKey1"},
+			"api_sig": []string{"b872a708a0b8b1d9fc1230b1cb6493f8"},
+			"token":   []string{"token1"},
+		}, r.URL.Query())
+		require.Equal("/2.0/", r.URL.Path)
+		require.Equal(baseURL, "https://"+r.Host+r.URL.Path)
+
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer shutdown()
+
+	client := Client{&httpClient}
+
+	// act
+	actual, err := client.GetSession("apiKey1", "secret1", "token1")
+
+	// assert
+	require.Error(err)
+	require.Zero(actual)
+}
+
 func TestGetParamSignature(t *testing.T) {
 	params := url.Values{}
 	params.Add("ccc", "CCC")
