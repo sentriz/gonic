@@ -98,20 +98,26 @@ func (m *MockFS) ResetDates() {
 	}
 }
 
-func (m *MockFS) AddItems()                              { m.addItems("", false) }
-func (m *MockFS) AddItemsPrefix(prefix string)           { m.addItems(prefix, false) }
-func (m *MockFS) AddItemsWithCovers()                    { m.addItems("", true) }
-func (m *MockFS) AddItemsPrefixWithCovers(prefix string) { m.addItems(prefix, true) }
+func (m *MockFS) AddItems()                              { m.addItems("", "", false) }
+func (m *MockFS) AddItemsGlob(onlyGlob string)           { m.addItems("", onlyGlob, false) }
+func (m *MockFS) AddItemsPrefix(prefix string)           { m.addItems(prefix, "", false) }
+func (m *MockFS) AddItemsWithCovers()                    { m.addItems("", "", true) }
+func (m *MockFS) AddItemsPrefixWithCovers(prefix string) { m.addItems(prefix, "", true) }
 
-func (m *MockFS) addItems(prefix string, covers bool) {
+func (m *MockFS) addItems(prefix string, onlyGlob string, covers bool) {
 	p := func(format string, a ...interface{}) string {
 		return filepath.Join(prefix, fmt.Sprintf(format, a...))
 	}
 	for ar := 0; ar < 3; ar++ {
 		for al := 0; al < 3; al++ {
 			for tr := 0; tr < 3; tr++ {
-				m.AddTrack(p("artist-%d/album-%d/track-%d.flac", ar, al, tr))
-				m.SetTags(p("artist-%d/album-%d/track-%d.flac", ar, al, tr), func(tags *Tags) error {
+				path := p("artist-%d/album-%d/track-%d.flac", ar, al, tr)
+				if !match(onlyGlob, path) {
+					continue
+				}
+
+				m.AddTrack(path)
+				m.SetTags(path, func(tags *Tags) error {
 					tags.RawArtist = fmt.Sprintf("artist-%d", ar)
 					tags.RawAlbumArtist = fmt.Sprintf("artist-%d", ar)
 					tags.RawAlbum = fmt.Sprintf("album-%d", al)
@@ -120,7 +126,12 @@ func (m *MockFS) addItems(prefix string, covers bool) {
 				})
 			}
 			if covers {
-				m.AddCover(p("artist-%d/album-%d/cover.png", ar, al))
+				path := p("artist-%d/album-%d/cover.png", ar, al)
+				if !match(onlyGlob, path) {
+					continue
+				}
+
+				m.AddCover(path)
 			}
 		}
 	}
@@ -395,4 +406,12 @@ func firstInt(or int, ints ...int) int {
 		}
 	}
 	return or
+}
+
+func match(pattern, name string) bool {
+	if pattern == "" {
+		return true
+	}
+	ok, _ := filepath.Match(pattern, name)
+	return ok
 }
