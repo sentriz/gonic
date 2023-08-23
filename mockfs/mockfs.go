@@ -340,6 +340,8 @@ func (m *MockFS) DumpDB(suffix ...string) {
 	if err != nil {
 		m.t.Fatalf("backing up: %v", err)
 	}
+
+	m.t.Error("DumpDB left behind")
 }
 
 type tagReaderResult struct {
