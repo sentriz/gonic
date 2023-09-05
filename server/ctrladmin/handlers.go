@@ -449,7 +449,7 @@ func (c *Controller) ServePodcastDownloadDo(r *http.Request) *Response {
 		return &Response{code: 400, err: "please provide a valid podcast id"}
 	}
 	if err := c.Podcasts.DownloadPodcastAll(id); err != nil {
-		return &Response{code: 400, err: "please provide a valid podcast id"}
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("error downloading: %v", err)}}
 	}
 	return &Response{
 		redirect: "/admin/home",
@@ -490,7 +490,7 @@ func (c *Controller) ServePodcastDeleteDo(r *http.Request) *Response {
 		return &Response{code: 400, err: "please provide a valid podcast id"}
 	}
 	if err := c.Podcasts.DeletePodcast(id); err != nil {
-		return &Response{code: 400, err: "please provide a valid podcast id"}
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("error deleting: %v", err)}}
 	}
 	return &Response{
 		redirect: "/admin/home",
