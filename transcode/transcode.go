@@ -20,6 +20,7 @@ type Transcoder interface {
 
 var UserProfiles = map[string]Profile{
 	"mp3":          MP3,
+  "mp3_320":      MP3320,
 	"mp3_rg":       MP3RG,
 	"opus_car":     OpusRGLoud,
 	"opus":         Opus,
@@ -32,8 +33,9 @@ var UserProfiles = map[string]Profile{
 
 // Store as simple strings, since we may let the user provide their own profiles soon
 var (
-	MP3   = NewProfile("audio/mpeg", "mp3", 128, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -b:a <bitrate> -c:a libmp3lame -f mp3 -`)
-	MP3RG = NewProfile("audio/mpeg", "mp3", 128, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -b:a <bitrate> -c:a libmp3lame -af "volume=replaygain=track:replaygain_preamp=6dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f mp3 -`)
+	MP3    = NewProfile("audio/mpeg", "mp3", 128, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -b:a <bitrate> -c:a libmp3lame -f mp3 -`)
+	MP3320 = NewProfile("audio/mpeg", "mp3", 320, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -b:a <bitrate> -c:a libmp3lame -f mp3 -`)
+	MP3RG  = NewProfile("audio/mpeg", "mp3", 128, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -b:a <bitrate> -c:a libmp3lame -af "volume=replaygain=track:replaygain_preamp=6dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f mp3 -`)
 
 	Opus       = NewProfile("audio/ogg", "opus", 96, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -b:a <bitrate> -c:a libopus -vbr on -f opus -`)
 	OpusRG     = NewProfile("audio/ogg", "opus", 96, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -b:a <bitrate> -c:a libopus -vbr on -af "volume=replaygain=track:replaygain_preamp=6dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f opus -`)

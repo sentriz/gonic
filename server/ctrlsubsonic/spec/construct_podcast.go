@@ -6,11 +6,15 @@ import (
 )
 
 func NewPodcastChannel(p *db.Podcast) *PodcastChannel {
+	desc, err := html2text.FromString(p.Description, html2text.Options{TextOnly: true})
+	if (err != nil) {
+		desc = ""
+	}
 	ret := &PodcastChannel{
 		ID:               p.SID(),
 		OriginalImageURL: p.ImageURL,
 		Title:            p.Title,
-		Description:      p.Description,
+		Description:      desc,
 		URL:              p.URL,
 		CoverArt:         p.SID(),
 		Status:           "skipped",
