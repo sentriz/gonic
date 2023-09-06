@@ -57,6 +57,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202304221528", migratePlaylistsToM3U),
 		construct(ctx, "202305301718", migratePlayCountToLength),
 		construct(ctx, "202307281628", migrateAlbumArtistsMany2Many),
+		construct(ctx, "202309070009", migrateDeleteArtistCoverField),
 	}
 
 	return gormigrate.
@@ -585,6 +586,21 @@ func migrateAlbumArtistsMany2Many(tx *gorm.DB, _ MigrationContext) error {
 		if err := step.Error; err != nil {
 			return fmt.Errorf("step drop track tag artist: %w", err)
 		}
+	}
+
+	return nil
+}
+
+func migrateDeleteArtistCoverField(tx *gorm.DB, _ MigrationContext) error {
+	if !tx.Dialect().HasColumn("artists", "cover") {
+		return nil
+	}
+
+	step := tx.Exec(`
+		ALTER TABLE artists DROP COLUMN cover;
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step drop: %w", err)
 	}
 
 	return nil

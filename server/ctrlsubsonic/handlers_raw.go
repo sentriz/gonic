@@ -149,10 +149,10 @@ func coverGetPathAlbum(dbc *db.DB, id int) (string, error) {
 func coverGetPathArtist(dbc *db.DB, id int) (string, error) {
 	folder := &db.Album{}
 	err := dbc.DB.
-		Select("parent.id, parent.root_dir, parent.left_path, parent.right_path, parent.cover").
-		Joins("JOIN album_artists ON album_artists.album_id").
+		Select("albums.id, albums.root_dir, albums.left_path, albums.right_path, albums.cover").
+		Joins("JOIN album_artists ON album_artists.album_id=albums.id").
 		Where("album_artists.artist_id=?", id).
-		Joins("JOIN albums parent ON parent.id=albums.parent_id").
+		Group("albums.id").
 		Find(folder).
 		Error
 	if err != nil {

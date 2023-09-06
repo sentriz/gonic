@@ -509,24 +509,6 @@ func TestSymlinkedSubdiscs(t *testing.T) {
 	require.NotZero(info.ModTime()) // track resolves
 }
 
-func TestArtistHasCover(t *testing.T) {
-	t.Parallel()
-	require := require.New(t)
-	m := mockfs.New(t)
-
-	m.AddItemsWithCovers()
-	m.AddCover("artist-2/artist.png")
-	m.ScanAndClean()
-
-	var artistWith db.Artist
-	require.NoError(m.DB().Where("name=?", "artist-2").First(&artistWith).Error)
-	require.Equal("artist.png", artistWith.Cover)
-
-	var artistWithout db.Artist
-	require.NoError(m.DB().Where("name=?", "artist-0").First(&artistWithout).Error)
-	require.Equal("", artistWithout.Cover)
-}
-
 func TestTagErrors(t *testing.T) {
 	t.Parallel()
 	require := require.New(t)

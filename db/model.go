@@ -49,7 +49,6 @@ type Artist struct {
 	NameUDec      string   `sql:"default: null"`
 	Albums        []*Album `gorm:"many2many:album_artists"`
 	AlbumCount    int      `sql:"-"`
-	Cover         string   `sql:"default: null"`
 	ArtistStar    *ArtistStar
 	ArtistRating  *ArtistRating
 	AverageRating float64 `sql:"default: null"`

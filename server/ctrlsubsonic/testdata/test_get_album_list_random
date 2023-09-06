@@ -7,11 +7,37 @@
     "albumList": {
       "album": [
         {
+          "id": "al-8",
+          "coverArt": "al-8",
+          "artist": "artist-1",
+          "created": "2019-11-30T00:00:00Z",
+          "title": "album-1",
+          "album": "",
+          "parent": "al-6",
+          "isDir": true,
+          "name": "",
+          "songCount": 3,
+          "duration": 300
+        },
+        {
           "id": "al-7",
           "coverArt": "al-7",
           "artist": "artist-1",
           "created": "2019-11-30T00:00:00Z",
           "title": "album-0",
+          "album": "",
+          "parent": "al-6",
+          "isDir": true,
+          "name": "",
+          "songCount": 3,
+          "duration": 300
+        },
+        {
+          "id": "al-9",
+          "coverArt": "al-9",
+          "artist": "artist-1",
+          "created": "2019-11-30T00:00:00Z",
+          "title": "album-2",
           "album": "",
           "parent": "al-6",
           "isDir": true,
@@ -59,19 +85,6 @@
           "duration": 300
         },
         {
-          "id": "al-13",
-          "coverArt": "al-13",
-          "artist": "artist-2",
-          "created": "2019-11-30T00:00:00Z",
-          "title": "album-2",
-          "album": "",
-          "parent": "al-10",
-          "isDir": true,
-          "name": "",
-          "songCount": 3,
-          "duration": 300
-        },
-        {
           "id": "al-5",
           "coverArt": "al-5",
           "artist": "artist-0",
@@ -85,26 +98,13 @@
           "duration": 300
         },
         {
-          "id": "al-9",
-          "coverArt": "al-9",
-          "artist": "artist-1",
+          "id": "al-13",
+          "coverArt": "al-13",
+          "artist": "artist-2",
           "created": "2019-11-30T00:00:00Z",
           "title": "album-2",
           "album": "",
-          "parent": "al-6",
-          "isDir": true,
-          "name": "",
-          "songCount": 3,
-          "duration": 300
-        },
-        {
-          "id": "al-8",
-          "coverArt": "al-8",
-          "artist": "artist-1",
-          "created": "2019-11-30T00:00:00Z",
-          "title": "album-1",
-          "album": "",
-          "parent": "al-6",
+          "parent": "al-10",
           "isDir": true,
           "name": "",
           "songCount": 3,
