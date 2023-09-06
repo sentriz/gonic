@@ -26,6 +26,7 @@ import (
 	"go.senan.xyz/gonic/server/ctrladmin/adminui"
 	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/ctrlsubsonic"
+	"go.senan.xyz/gonic/share"
 	"go.senan.xyz/gonic/transcode"
 )
 
@@ -41,6 +42,7 @@ type Options struct {
 	GenreSplit     string
 	HTTPLog        bool
 	JukeboxEnabled bool
+	ShareUIURL     string
 }
 
 type Server struct {
@@ -117,10 +119,12 @@ func New(opts Options) (*Server, error) {
 		},
 		Podcasts:   podcast,
 		Transcoder: cacheTranscoder,
+		Shares:     share.New(base.DB, opts.ShareUIURL),
 	}
 
 	setupMisc(r, base)
 	setupAdmin(r.PathPrefix("/admin").Subrouter(), ctrlAdmin)
+	setupSubsonicPublic(r.PathPrefix("/rest").Subrouter(), ctrlSubsonic)
 	setupSubsonic(r.PathPrefix("/rest").Subrouter(), ctrlSubsonic)
 
 	server := &Server{
@@ -288,6 +292,27 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/createInternetRadioStation{_:(?:\\.view)?}", ctrl.H(ctrl.ServeCreateInternetRadioStation))
 	r.Handle("/updateInternetRadioStation{_:(?:\\.view)?}", ctrl.H(ctrl.ServeUpdateInternetRadioStation))
 	r.Handle("/deleteInternetRadioStation{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDeleteInternetRadioStation))
+
+	// shares
+	r.Handle("/getShares{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetShares))
+	r.Handle("/getShare{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetShare))
+	r.Handle("/createShare{_:(?:\\.view)?}", ctrl.H(ctrl.ServeCreateShare))
+	r.Handle("/updateShare{_:(?:\\.view)?}", ctrl.H(ctrl.ServeUpdateShare))
+	r.Handle("/deleteShare{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDeleteShare))
+
+	// middlewares should be run for not found handler
+	// https://github.com/gorilla/mux/issues/416
+	notFoundHandler := ctrl.H(ctrl.ServeNotFound)
+	notFoundRoute := r.NewRoute().Handler(notFoundHandler)
+	r.NotFoundHandler = notFoundRoute.GetHandler()
+}
+
+func setupSubsonicPublic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
+	r.Use(ctrl.WithParams)
+
+	// pubic endpoints
+	r.Handle("/getSharePublic{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetSharePublic))
+	r.Handle("/streamSharePublic{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeStreamSharePublic))
 
 	// middlewares should be run for not found handler
 	// https://github.com/gorilla/mux/issues/416

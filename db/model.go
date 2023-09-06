@@ -190,7 +190,7 @@ type Play struct {
 	AlbumID int       `gorm:"not null; index" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Time    time.Time `sql:"default: null"`
 	Count   int
-	Length	int
+	Length  int
 }
 
 type Album struct {
@@ -428,4 +428,24 @@ type InternetRadioStation struct {
 
 func (ir *InternetRadioStation) SID() *specid.ID {
 	return &specid.ID{Type: specid.InternetRadioStation, Value: ir.ID}
+}
+
+type Share struct {
+	ID            int `gorm:"primary_key"`
+	Title         string
+	UserID        int `sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
+	CreatedAt     time.Time
+	ExpiresAt     time.Time
+	LastVisitedAt time.Time
+	VisitCount    int
+	Description   string
+	Secret        string
+	Download      bool
+	Entries       []string `gorm:"-"`
+}
+
+type ShareEntry struct {
+	ID      int `gorm:"primary_key"`
+	ShareID int `sql:"default: null; type:int REFERENCES shares(id) ON DELETE CASCADE"`
+	Entry   string
 }

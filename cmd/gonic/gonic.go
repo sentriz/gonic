@@ -66,6 +66,8 @@ func main() {
 
 	confExcludePatterns := set.String("exclude-pattern", "", "regex pattern to exclude files from scan (optional)")
 
+	confShareUIURL := set.String("share-ui-url", "", "Shares user interface url")
+
 	if _, err := regexp.Compile(*confExcludePatterns); err != nil {
 		log.Fatalf("invalid exclude pattern: %v\n", err)
 	}
@@ -147,6 +149,7 @@ func main() {
 		GenreSplit:     *confGenreSplit,
 		HTTPLog:        *confHTTPLog,
 		JukeboxEnabled: *confJukeboxEnabled,
+		ShareUIURL:     *confShareUIURL,
 	})
 	if err != nil {
 		log.Panicf("error creating server: %v\n", err)
