@@ -226,6 +226,14 @@ func (c *Controller) ServeGetSharePublic(r *http.Request) *spec.Response {
 		}
 	}
 
+	share.LastVisitedAt = time.Now()
+	share.VisitCount++
+	go func() {
+		if err := c.Shares.Save(share); err != nil {
+			log.Printf("failed update share: %s", err)
+		}
+	}()
+
 	user := &db.User{}
 	if err := c.DB.Where("id=?", share.UserID).Find(user).Error; err != nil {
 		return spec.NewError(0, "internal server error")

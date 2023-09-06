@@ -223,6 +223,7 @@ func setupSubsonicPublic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	// pubic endpoints
 	r.Handle("/getSharePublic{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetSharePublic))
 	r.Handle("/streamSharePublic{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeStreamSharePublic))
+	r.Handle("/downloadSharePublic{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeStreamSharePublic))
 }
 
 func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
