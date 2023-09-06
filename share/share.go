@@ -35,11 +35,12 @@ func (s *Share) GetURL(title string) string {
 func (s *Share) GetShares(userID int, title string) ([]*db.Share, error) {
 	var err error
 	shares := []*db.Share{}
-	if userID == 0 {
+	switch {
+	case userID == 0:
 		err = s.db.Where("title=?", title).Find(&shares).Error
-	} else if title != "" {
+	case title != "":
 		err = s.db.Where("user_id=? AND title=?", userID, title).Find(&shares).Error
-	} else {
+	default:
 		err = s.db.Where("user_id=?", userID).Find(&shares).Error
 	}
 
