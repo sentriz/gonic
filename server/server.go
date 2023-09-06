@@ -217,6 +217,14 @@ func setupAdmin(r *mux.Router, ctrl *ctrladmin.Controller) {
 	r.NotFoundHandler = notFoundRoute.GetHandler()
 }
 
+func setupSubsonicPublic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
+	r.Use(ctrl.WithParams)
+
+	// pubic endpoints
+	r.Handle("/getSharePublic{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetSharePublic))
+	r.Handle("/streamSharePublic{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeStreamSharePublic))
+}
+
 func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Use(ctrl.WithParams)
 	r.Use(ctrl.WithRequiredParams)
@@ -299,20 +307,6 @@ func setupSubsonic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
 	r.Handle("/createShare{_:(?:\\.view)?}", ctrl.H(ctrl.ServeCreateShare))
 	r.Handle("/updateShare{_:(?:\\.view)?}", ctrl.H(ctrl.ServeUpdateShare))
 	r.Handle("/deleteShare{_:(?:\\.view)?}", ctrl.H(ctrl.ServeDeleteShare))
-
-	// middlewares should be run for not found handler
-	// https://github.com/gorilla/mux/issues/416
-	notFoundHandler := ctrl.H(ctrl.ServeNotFound)
-	notFoundRoute := r.NewRoute().Handler(notFoundHandler)
-	r.NotFoundHandler = notFoundRoute.GetHandler()
-}
-
-func setupSubsonicPublic(r *mux.Router, ctrl *ctrlsubsonic.Controller) {
-	r.Use(ctrl.WithParams)
-
-	// pubic endpoints
-	r.Handle("/getSharePublic{_:(?:\\.view)?}", ctrl.H(ctrl.ServeGetSharePublic))
-	r.Handle("/streamSharePublic{_:(?:\\.view)?}", ctrl.HR(ctrl.ServeStreamSharePublic))
 
 	// middlewares should be run for not found handler
 	// https://github.com/gorilla/mux/issues/416
