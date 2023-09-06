@@ -77,6 +77,7 @@ password can then be changed from the web interface
 | `GONIC_PODCAST_PURGE_AGE`      | `-podcast-purge-age`      | **optional** age (in days) to purge podcast episodes if not accessed                                                                                                                                                                                                              |
 | `GONIC_GENRE_SPLIT`            | `-genre-split`            | **optional** a string or character to split genre tags on for multi-genre support (eg. `;`)                                                                                                                                                                                       |
 | `GONIC_EXCLUDE_PATTERN`        | `-exclude-pattern`        | **optional** files matching this regex pattern will not be imported                                                                                                                                                                                                               |
+| `GONIC_SHARE_UI_URL`           | `-share-ui-url`           | **optional** URL of the Web interface which support sharing                                                                                                                                                                                                                |
 
 ## screenshots
 

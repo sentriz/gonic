@@ -28,6 +28,7 @@ type Response struct {
 	// https://opensubsonic.netlify.app/docs/responses/subsonic-response/
 	Type          string `xml:"type,attr"          json:"type"`
 	ServerVersion string `xml:"serverVersion,attr" json:"serverVersion"`
+	OpenSubsonic  bool   `xml:"openSubsonic,attr"  json:"openSubsonic"`
 
 	Error                 *Error                 `xml:"error"                 json:"error,omitempty"`
 	Albums                *Albums                `xml:"albumList"             json:"albumList,omitempty"`
@@ -64,6 +65,8 @@ type Response struct {
 	SimilarSongsTwo       *SimilarSongsTwo       `xml:"similarSongs2"         json:"similarSongs2,omitempty"`
 	InternetRadioStations *InternetRadioStations `xml:"internetRadioStations" json:"internetRadioStations,omitempty"`
 	Lyrics                *Lyrics                `xml:"lyrics"                json:"lyrics,omitempty"`
+	Shares                *Shares                `xml:"shares"                json:"shares,omitempty"`
+	Share                 *Share                 `xml:"share"                 json:"share,omitempty"`
 }
 
 func NewResponse() *Response {
@@ -73,6 +76,7 @@ func NewResponse() *Response {
 		Version:       apiVersion,
 		Type:          gonic.Name,
 		ServerVersion: gonic.Version,
+		OpenSubsonic:  true,
 	}
 }
 
@@ -422,6 +426,24 @@ type Lyrics struct {
 	Value  string `xml:",chardata"             json:"value,omitempty"`
 	Artist string `xml:"artist,attr,omitempty" json:"artist,omitempty"`
 	Title  string `xml:"title,attr,omitempty"  json:"title,omitempty"`
+}
+
+type Shares struct {
+	List []*Share `xml:"share" json:"share"`
+}
+
+type Share struct {
+	ID          string        `xml:"id,attr"          json:"id"`
+	URL         string        `xml:"url,attr"         json:"url"`
+	Description string        `xml:"description,attr" json:"description"`
+	User        string        `xml:"username,attr"    json:"username"`
+	Created     time.Time     `xml:"created,attr"     json:"created"`
+	Expires     time.Time     `xml:"expires,attr"     json:"expires,omitempty"`
+	LastVisited time.Time     `xml:"lastVisited,attr" json:"lastVisited,omitempty"`
+	VisitCount  int           `xml:"visitCount,attr"  json:"visitCount"`
+	Protected   bool          `xml:"protected,attr"   json:"protected"`
+	Download    bool          `xml:"download,attr"    json:"download"`
+	List        []*TrackChild `xml:"entry,omitempty"  json:"entry,omitempty"`
 }
 
 func formatRating(rating float64) string {

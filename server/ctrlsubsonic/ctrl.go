@@ -16,6 +16,7 @@ import (
 	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
+	"go.senan.xyz/gonic/share"
 	"go.senan.xyz/gonic/transcode"
 )
 
@@ -50,6 +51,7 @@ type Controller struct {
 	Podcasts       *podcasts.Podcasts
 	Transcoder     transcode.Transcoder
 	LastFMClient   *lastfm.Client
+	Shares         *share.Share
 }
 
 type metaResponse struct {

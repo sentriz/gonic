@@ -55,6 +55,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202211111057", migratePlaylistsQueuesToFullID),
 		construct(ctx, "202304221528", migratePlaylistsToM3U),
 		construct(ctx, "202305301718", migratePlayCountToLength),
+		construct(ctx, "202309051209", migrateShare),
 	}
 
 	return gormigrate.
@@ -537,4 +538,12 @@ func migratePlayCountToLength(tx *gorm.DB, _ MigrationContext) error {
 	}
 
 	return nil
+}
+
+func migrateShare(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(
+		Share{},
+		ShareEntry{},
+	).
+		Error
 }
