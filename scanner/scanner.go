@@ -324,7 +324,7 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string
 	sort.Strings(tracks)
 	for i, basename := range tracks {
 		absPath := filepath.Join(musicDir, relPath, basename)
-		if err := s.populateTrackAndAlbumArtists(tx, c, i, &parent, &album, basename, absPath); err != nil {
+		if err := s.populateTrackAndAlbumArtists(tx, c, i, &album, basename, absPath); err != nil {
 			return fmt.Errorf("populate track %q: %w", basename, err)
 		}
 	}
@@ -332,7 +332,7 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string
 	return nil
 }
 
-func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, parent, album *db.Album, basename string, absPath string) error {
+func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, album *db.Album, basename string, absPath string) error {
 	stat, err := os.Stat(absPath)
 	if err != nil {
 		return fmt.Errorf("stating %q: %w", basename, err)
@@ -364,7 +364,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 		albumArtists := tags.MustAlbumArtists(trags)
 		var albumArtistIDs []int
 		for _, albumArtistName := range albumArtists {
-			albumArtist, err := populateArtist(tx, parent, albumArtistName)
+			albumArtist, err := populateArtist(tx, albumArtistName)
 			if err != nil {
 				return fmt.Errorf("populate album artist: %w", err)
 			}
@@ -461,13 +461,10 @@ func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trags tags.Parse
 	return nil
 }
 
-func populateArtist(tx *db.DB, parent *db.Album, artistName string) (*db.Artist, error) {
+func populateArtist(tx *db.DB, artistName string) (*db.Artist, error) {
 	var update db.Artist
 	update.Name = artistName
 	update.NameUDec = decoded(artistName)
-	if parent.Cover != "" {
-		update.Cover = parent.Cover
-	}
 	var artist db.Artist
 	if err := tx.Where("name=?", artistName).Assign(update).FirstOrCreate(&artist).Error; err != nil {
 		return nil, fmt.Errorf("find or create artist: %w", err)

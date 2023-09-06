@@ -319,11 +319,6 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 
 	sub := spec.NewResponse()
 	sub.ArtistInfoTwo = &spec.ArtistInfo{}
-	if artist.Cover != "" {
-		sub.ArtistInfoTwo.SmallImageURL = c.genArtistCoverURL(r, &artist, 64)
-		sub.ArtistInfoTwo.MediumImageURL = c.genArtistCoverURL(r, &artist, 126)
-		sub.ArtistInfoTwo.LargeImageURL = c.genArtistCoverURL(r, &artist, 256)
-	}
 
 	apiKey, _ := c.DB.GetSetting("lastfm_api_key")
 	if apiKey == "" {
@@ -338,23 +333,15 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	sub.ArtistInfoTwo.MusicBrainzID = info.MBID
 	sub.ArtistInfoTwo.LastFMURL = info.URL
 
-	if artist.Cover == "" {
-		for _, image := range info.Image {
-			switch image.Size {
-			case "small":
-				sub.ArtistInfoTwo.SmallImageURL = image.Text
-			case "medium":
-				sub.ArtistInfoTwo.MediumImageURL = image.Text
-			case "large":
-				sub.ArtistInfoTwo.LargeImageURL = image.Text
-			}
-		}
-		if url, _ := c.LastFMClient.StealArtistImage(info.URL); url != "" {
-			sub.ArtistInfoTwo.SmallImageURL = url
-			sub.ArtistInfoTwo.MediumImageURL = url
-			sub.ArtistInfoTwo.LargeImageURL = url
-			sub.ArtistInfoTwo.ArtistImageURL = url
-		}
+	sub.ArtistInfoTwo.SmallImageURL = c.genArtistCoverURL(r, &artist, 64)
+	sub.ArtistInfoTwo.MediumImageURL = c.genArtistCoverURL(r, &artist, 126)
+	sub.ArtistInfoTwo.LargeImageURL = c.genArtistCoverURL(r, &artist, 256)
+
+	if url, _ := c.LastFMClient.StealArtistImage(info.URL); url != "" {
+		sub.ArtistInfoTwo.SmallImageURL = url
+		sub.ArtistInfoTwo.MediumImageURL = url
+		sub.ArtistInfoTwo.LargeImageURL = url
+		sub.ArtistInfoTwo.ArtistImageURL = url
 	}
 
 	count := params.GetOrInt("count", 20)
