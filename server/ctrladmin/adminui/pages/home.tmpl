@@ -91,7 +91,7 @@
 {{ component "block" (props .
     "Icon" "lastfm"
     "Name" "last.fm"
-    "Desc" "scrobble to last.fm on a per user basis (the admin must set a global api key first)"
+    "Desc" "scrobble to last.fm on a per user basis. adding an api key will also help gonic get rich artist info and images for subsonic clients"
 ) }}
     <div class="flex flex-col gap-2 items-end">
     {{ if .CurrentLastFMAPIKey }}
