@@ -145,15 +145,12 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	case "alphabeticalByName":
 		q = q.Order("tag_title")
 	case "byYear":
-		fromYear := params.GetOrInt("fromYear", 1800)
-		toYear := params.GetOrInt("toYear", 2200)
-		if fromYear > toYear {
-			q = q.Where("tag_year BETWEEN ? AND ?", toYear, fromYear)
-			q = q.Order("tag_year DESC")
-		} else {
-			q = q.Where("tag_year BETWEEN ? AND ?", fromYear, toYear)
-			q = q.Order("tag_year")
-		}
+		y1, y2 :=
+			params.GetOrInt("fromYear", 1800),
+			params.GetOrInt("toYear", 2200)
+		// support some clients sending wrong order like DSub
+		q = q.Where("tag_year BETWEEN ? AND ?", min(y1, y2), max(y1, y2))
+		q = q.Order("tag_year DESC")
 	case "byGenre":
 		genre, _ := params.Get("genre")
 		q = q.Joins("JOIN album_genres ON album_genres.album_id=albums.id")
