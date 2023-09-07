@@ -1,17 +1,17 @@
 module go.senan.xyz/gonic
 
-go 1.19
+go 1.21
 
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/andybalholm/cascadia v1.3.2
-	github.com/dexterlb/mpvipc v0.0.0-20221227161445-38b9935eae9d
+	github.com/dexterlb/mpvipc v0.0.0-20230829142118-145d6eabdc37
 	github.com/disintegration/imaging v1.6.2
 	github.com/dustin/go-humanize v1.0.1
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.3.1
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/securecookie v1.1.1
@@ -30,8 +30,8 @@ require (
 	github.com/sentriz/audiotags v0.0.0-20230419125925-8886243b2137
 	github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981
 	github.com/stretchr/testify v1.8.1
-	golang.org/x/exp v0.0.0-20230811145659-89c5cff77bcb
-	golang.org/x/net v0.14.0
+	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
+	golang.org/x/net v0.15.0
 	gopkg.in/gormigrate.v1 v1.6.0
 	jaytaylor.com/html2text v0.0.0-20230321000545-74c2419ad056
 )
@@ -63,10 +63,10 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
-	golang.org/x/crypto v0.12.0 // indirect
-	golang.org/x/image v0.11.0 // indirect
-	golang.org/x/sys v0.11.0 // indirect
-	golang.org/x/text v0.12.0 // indirect
+	golang.org/x/crypto v0.13.0 // indirect
+	golang.org/x/image v0.12.0 // indirect
+	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
