@@ -47,6 +47,3 @@ cache-path                  /var/cache/gonic
 #scan-watcher-enabled        false
 #jukebox-enabled             false
 #jukebox-mpv-extra-args      <extra command line arguments to pass to the jukebox mpv daemon>
-
-# A string or character to split genre tags on for multi-genre support (e.g. ;)
-#genre-split                 ;

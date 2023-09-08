@@ -30,32 +30,32 @@ var (
 )
 
 type Scanner struct {
-	db             *db.DB
-	musicDirs      []string
-	genreSplit     string
-	tagger         tags.Reader
-	excludePattern *regexp.Regexp
-	scanning       *int32
-	watcher        *fsnotify.Watcher
-	watchMap       map[string]string // maps watched dirs back to root music dir
-	watchDone      chan bool
+	db                 *db.DB
+	musicDirs          []string
+	multiValueSettings map[Tag]MultiValueSetting
+	tagger             tags.Reader
+	excludePattern     *regexp.Regexp
+	scanning           *int32
+	watcher            *fsnotify.Watcher
+	watchMap           map[string]string // maps watched dirs back to root music dir
+	watchDone          chan bool
 }
 
-func New(musicDirs []string, db *db.DB, genreSplit string, tagger tags.Reader, excludePattern string) *Scanner {
+func New(musicDirs []string, db *db.DB, multiValueSettings map[Tag]MultiValueSetting, tagger tags.Reader, excludePattern string) *Scanner {
 	var excludePatternRegExp *regexp.Regexp
 	if excludePattern != "" {
 		excludePatternRegExp = regexp.MustCompile(excludePattern)
 	}
 
 	return &Scanner{
-		db:             db,
-		musicDirs:      musicDirs,
-		genreSplit:     genreSplit,
-		tagger:         tagger,
-		excludePattern: excludePatternRegExp,
-		scanning:       new(int32),
-		watchMap:       make(map[string]string),
-		watchDone:      make(chan bool),
+		db:                 db,
+		musicDirs:          musicDirs,
+		multiValueSettings: multiValueSettings,
+		tagger:             tagger,
+		excludePattern:     excludePatternRegExp,
+		scanning:           new(int32),
+		watchMap:           make(map[string]string),
+		watchDone:          make(chan bool),
 	}
 }
 
@@ -353,7 +353,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, alb
 		return fmt.Errorf("%v: %w", err, ErrReadingTags)
 	}
 
-	genreNames := strings.Split(tags.MustGenre(trags), s.genreSplit)
+	genreNames := parseMulti(trags, s.multiValueSettings[Genre], tags.MustGenres, tags.MustGenre)
 	genreIDs, err := populateGenres(tx, genreNames)
 	if err != nil {
 		return fmt.Errorf("populate genres: %w", err)
@@ -361,9 +361,9 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, alb
 
 	// metadata for the album table comes only from the the first track's tags
 	if i == 0 {
-		albumArtists := tags.MustAlbumArtists(trags)
+		albumArtistNames := parseMulti(trags, s.multiValueSettings[AlbumArtist], tags.MustAlbumArtists, tags.MustAlbumArtist)
 		var albumArtistIDs []int
-		for _, albumArtistName := range albumArtists {
+		for _, albumArtistName := range albumArtistNames {
 			albumArtist, err := populateArtist(tx, albumArtistName)
 			if err != nil {
 				return fmt.Errorf("populate album artist: %w", err)
@@ -669,3 +669,39 @@ func (c *Context) TracksMissing() int  { return len(c.tracksMissing) }
 func (c *Context) AlbumsMissing() int  { return len(c.albumsMissing) }
 func (c *Context) ArtistsMissing() int { return c.artistsMissing }
 func (c *Context) GenresMissing() int  { return c.genresMissing }
+
+type MultiValueMode uint8
+
+const (
+	None MultiValueMode = iota
+	Delim
+	Multi
+)
+
+type Tag uint8
+
+const (
+	Genre Tag = iota
+	AlbumArtist
+)
+
+type MultiValueSetting struct {
+	Mode  MultiValueMode
+	Delim string
+}
+
+func parseMulti(parser tags.Parser, setting MultiValueSetting, getMulti func(tags.Parser) []string, get func(tags.Parser) string) []string {
+	var parts []string
+	switch setting.Mode {
+	case Multi:
+		parts = getMulti(parser)
+	case Delim:
+		parts = strings.Split(get(parser), setting.Delim)
+	default:
+		parts = []string{get(parser)}
+	}
+	for i := range parts {
+		parts[i] = strings.TrimSpace(parts[i])
+	}
+	return parts
+}

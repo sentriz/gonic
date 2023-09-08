@@ -22,6 +22,7 @@ import (
 
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/server"
 	"go.senan.xyz/gonic/server/ctrlsubsonic"
 )
@@ -59,12 +60,16 @@ func main() {
 	confProxyPrefix := set.String("proxy-prefix", "", "url path prefix to use if behind proxy. eg '/gonic' (optional)")
 	confHTTPLog := set.Bool("http-log", true, "http request logging (optional)")
 
-	confGenreSplit := set.String("genre-split", "\n", "character or string to split genre tag data on (optional)")
-
 	confShowVersion := set.Bool("version", false, "show gonic version")
 	_ = set.String("config-path", "", "path to config (optional)")
 
 	confExcludePatterns := set.String("exclude-pattern", "", "regex pattern to exclude files from scan (optional)")
+
+	var confMultiValueGenre, confMultiValueAlbumArtist multiValueSetting
+	set.Var(&confMultiValueGenre, "multi-value-genre", "setting for mutli-valued genre scanning (optional)")
+	set.Var(&confMultiValueAlbumArtist, "multi-value-album-artist", "setting for mutli-valued album artist scanning (optional)")
+
+	deprecatedConfGenreSplit := set.String("genre-split", "", "(deprecated, see multi-value settings)")
 
 	if _, err := regexp.Compile(*confExcludePatterns); err != nil {
 		log.Fatalf("invalid exclude pattern: %v\n", err)
@@ -135,6 +140,12 @@ func main() {
 
 	proxyPrefixExpr := regexp.MustCompile(`^\/*(.*?)\/*$`)
 	*confProxyPrefix = proxyPrefixExpr.ReplaceAllString(*confProxyPrefix, `/$1`)
+
+	if *deprecatedConfGenreSplit != "" && *deprecatedConfGenreSplit != "\n" {
+		confMultiValueGenre = multiValueSetting{Mode: scanner.Delim, Delim: *deprecatedConfGenreSplit}
+		*deprecatedConfGenreSplit = "<deprecated>"
+	}
+
 	server, err := server.New(server.Options{
 		DB:             dbc,
 		MusicPaths:     musicPaths,
@@ -144,7 +155,10 @@ func main() {
 		PodcastPath:    *confPodcastPath,
 		PlaylistsPath:  *confPlaylistsPath,
 		ProxyPrefix:    *confProxyPrefix,
-		GenreSplit:     *confGenreSplit,
+		MultiValueSettings: map[scanner.Tag]scanner.MultiValueSetting{
+			scanner.Genre:       scanner.MultiValueSetting(confMultiValueGenre),
+			scanner.AlbumArtist: scanner.MultiValueSetting(confMultiValueAlbumArtist),
+		},
 		HTTPLog:        *confHTTPLog,
 		JukeboxEnabled: *confJukeboxEnabled,
 	})
@@ -212,18 +226,47 @@ func (pa *pathAliases) Set(value string) error {
 	return nil
 }
 
-var errNotExists = errors.New("path does not exist, please provide one")
-
 func validatePath(p string) (string, error) {
 	if p == "" {
-		return "", errNotExists
+		return "", errors.New("path can't be empty")
 	}
 	if _, err := os.Stat(p); os.IsNotExist(err) {
-		return "", errNotExists
+		return "", errors.New("path does not exist, please provide one")
 	}
 	p, err := filepath.Abs(p)
 	if err != nil {
 		return "", fmt.Errorf("make absolute: %w", err)
 	}
 	return p, nil
+}
+
+type multiValueSetting scanner.MultiValueSetting
+
+func (mvs multiValueSetting) String() string {
+	switch mvs.Mode {
+	case scanner.Delim:
+		return fmt.Sprintf("delim(%s)", mvs.Delim)
+	case scanner.Multi:
+		return fmt.Sprint("multi", mvs.Delim)
+	default:
+		return "none"
+	}
+}
+
+func (mvs *multiValueSetting) Set(value string) error {
+	mode, delim, _ := strings.Cut(value, " ")
+	switch mode {
+	case "delim":
+		if delim == "" {
+			return fmt.Errorf("no delimiter provided for delimiter mode")
+		}
+		mvs.Mode = scanner.Delim
+		mvs.Delim = delim
+	case "multi":
+		mvs.Mode = scanner.Multi
+	case "none":
+	default:
+		return fmt.Errorf(`unknown multi value mode %q. should be "none" | "multi" | "delim <delim>"`, mode)
+	}
+	return nil
 }
