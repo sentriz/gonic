@@ -61,8 +61,13 @@ func newMockFS(t testing.TB, dirs []string, excludePattern string) *MockFS {
 		}
 	}
 
+	multiValueSettings := map[scanner.Tag]scanner.MultiValueSetting{
+		scanner.Genre:       {Mode: scanner.Delim, Delim: ";"},
+		scanner.AlbumArtist: {Mode: scanner.Multi},
+	}
+
 	tagReader := &tagReader{paths: map[string]*tagReaderResult{}}
-	scanner := scanner.New(absDirs, dbc, ";", tagReader, excludePattern)
+	scanner := scanner.New(absDirs, dbc, multiValueSettings, tagReader, excludePattern)
 
 	return &MockFS{
 		t:         t,
@@ -383,6 +388,7 @@ func (m *Tags) AlbumArtist() string    { return m.RawAlbumArtist }
 func (m *Tags) AlbumArtists() []string { return m.RawAlbumArtists }
 func (m *Tags) AlbumBrainzID() string  { return "" }
 func (m *Tags) Genre() string          { return m.RawGenre }
+func (m *Tags) Genres() []string       { return []string{m.RawGenre} }
 func (m *Tags) TrackNumber() int       { return 1 }
 func (m *Tags) DiscNumber() int        { return 1 }
 func (m *Tags) Year() int              { return 2021 }

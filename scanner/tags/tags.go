@@ -29,6 +29,7 @@ func (t *Tagger) AlbumArtist() string    { return first(find(t.raw, "albumartist
 func (t *Tagger) AlbumArtists() []string { return find(t.raw, "albumartists", "album_artists") }
 func (t *Tagger) AlbumBrainzID() string  { return first(find(t.raw, "musicbrainz_albumid")) } // musicbrainz release ID
 func (t *Tagger) Genre() string          { return first(find(t.raw, "genre")) }
+func (t *Tagger) Genres() []string       { return find(t.raw, "genres") }
 
 func (t *Tagger) TrackNumber() int {
 	return intSep("/" /* eg. 5/12 */, first(find(t.raw, "tracknumber")))
@@ -56,6 +57,7 @@ type Parser interface {
 	AlbumArtists() []string
 	AlbumBrainzID() string
 	Genre() string
+	Genres() []string
 	TrackNumber() int
 	DiscNumber() int
 	Length() int
@@ -127,17 +129,18 @@ func MustArtist(p Parser) string {
 	return "Unknown Artist"
 }
 
+func MustAlbumArtist(p Parser) string {
+	if r := p.AlbumArtist(); r != "" {
+		return r
+	}
+	return MustArtist(p)
+}
+
 func MustAlbumArtists(p Parser) []string {
 	if r := p.AlbumArtists(); len(r) > 0 {
 		return r
 	}
-	if r := p.AlbumArtist(); r != "" {
-		return []string{r}
-	}
-	if r := p.Artist(); r != "" {
-		return []string{r}
-	}
-	return []string{"Unknown Artist"}
+	return []string{MustAlbumArtist(p)}
 }
 
 func MustGenre(p Parser) string {
@@ -145,4 +148,11 @@ func MustGenre(p Parser) string {
 		return r
 	}
 	return "Unknown Genre"
+}
+
+func MustGenres(p Parser) []string {
+	if r := p.Genres(); len(r) > 0 {
+		return r
+	}
+	return []string{MustGenre(p)}
 }

@@ -30,17 +30,17 @@ import (
 )
 
 type Options struct {
-	DB             *db.DB
-	MusicPaths     []ctrlsubsonic.MusicPath
-	ExcludePattern string
-	PodcastPath    string
-	CacheAudioPath string
-	CoverCachePath string
-	PlaylistsPath  string
-	ProxyPrefix    string
-	GenreSplit     string
-	HTTPLog        bool
-	JukeboxEnabled bool
+	DB                 *db.DB
+	MusicPaths         []ctrlsubsonic.MusicPath
+	ExcludePattern     string
+	PodcastPath        string
+	CacheAudioPath     string
+	CoverCachePath     string
+	PlaylistsPath      string
+	ProxyPrefix        string
+	MultiValueSettings map[scanner.Tag]scanner.MultiValueSetting
+	HTTPLog            bool
+	JukeboxEnabled     bool
 }
 
 type Server struct {
@@ -54,7 +54,7 @@ type Server struct {
 func New(opts Options) (*Server, error) {
 	tagger := &tags.TagReader{}
 
-	scanner := scanner.New(ctrlsubsonic.PathsOf(opts.MusicPaths), opts.DB, opts.GenreSplit, tagger, opts.ExcludePattern)
+	scanner := scanner.New(ctrlsubsonic.PathsOf(opts.MusicPaths), opts.DB, opts.MultiValueSettings, tagger, opts.ExcludePattern)
 
 	playlistStore, err := playlist.NewStore(opts.PlaylistsPath)
 	if err != nil {
