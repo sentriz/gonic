@@ -73,7 +73,7 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 		}
 		user := c.DB.GetUserByName(username)
 
-		var newLDAPUser bool
+    newLDAPUser := false 
 		if user == nil {
 			// Because the user wasn't found we can now try 
 			// to use LDAP. ldapFQDN, err := c.DB.GetSetting("ldap_fqdn")
