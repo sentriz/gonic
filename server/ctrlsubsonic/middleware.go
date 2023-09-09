@@ -151,9 +151,9 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 			}
 		}
 		var credsOk bool
-		if tokenAuth && newLDAPUser {
+		if tokenAuth && !newLDAPUser {
 			credsOk = checkCredsToken(user.Password, token, salt)
-		} else if newLDAPUser {
+		} else if !newLDAPUser {
 			credsOk = checkCredsBasic(user.Password, password)
 		}
 		if !credsOk {
