@@ -75,7 +75,9 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 
     newLDAPUser := false 
 		if user == nil {
-			// Because the user wasn't found we can now try 
+			newLDAPUser = true
+			
+      // Because the user wasn't found we can now try 
 			// to use LDAP. ldapFQDN, err := c.DB.GetSetting("ldap_fqdn")
 			ldapFQDN, err := c.DB.GetSetting("ldap_fqdn")
 			
@@ -97,7 +99,6 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 				// Now, we can try to connect to the LDAP server.
 				l, err := ldap.DialURL(fmt.Sprintf("%s://%s:%s", protocol, ldapFQDN, ldapPort))
 				if err != nil {
-					newLDAPUser = true
 					
 					// Warn the server and return a generic error.
 					log.Println("Failed to connect to LDAP server", err)
