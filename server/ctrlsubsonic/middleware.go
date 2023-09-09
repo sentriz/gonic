@@ -193,6 +193,7 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 				if err == nil {
 					withUser := context.WithValue(r.Context(), CtxUser, user)
 					next.ServeHTTP(w, r.WithContext(withUser))
+          return
 				}
 			}
 			
