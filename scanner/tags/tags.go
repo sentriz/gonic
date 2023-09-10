@@ -103,15 +103,9 @@ func filterStr(ss []string) []string {
 	return r
 }
 
-func intSep(in, sep string) int {
-	if in == "" {
-		return 0
-	}
-	start := strings.SplitN(in, sep, 2)[0]
-	out, err := strconv.Atoi(start)
-	if err != nil {
-		return 0
-	}
+func intSep(sep, in string) int {
+	start, _, _ := strings.Cut(in, sep)
+	out, _ := strconv.Atoi(start)
 	return out
 }
 
