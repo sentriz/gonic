@@ -83,16 +83,6 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 		})
 		ret.ArtistID = album.Artists[0].SID()
 	}
-	// replace tags that we're present
-	if ret.Title == "" {
-		ret.Title = "<title>"
-	}
-	if ret.Artist == "" {
-		ret.Artist = "<artist>"
-	}
-	if ret.Album == "" {
-		ret.Album = "<album>"
-	}
 	return ret
 }
 

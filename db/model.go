@@ -236,16 +236,16 @@ func (a *Album) GenreStrings() []string {
 	return strs
 }
 
-func (a *Album) ArtistsString() string {
+func (a *Album) ArtistsStrings() []string {
 	var artists = append([]*Artist(nil), a.Artists...)
 	sort.Slice(artists, func(i, j int) bool {
 		return artists[i].ID < artists[j].ID
 	})
-	var names []string
+	strs := make([]string, 0, len(artists))
 	for _, artist := range artists {
-		names = append(names, artist.Name)
+		strs = append(strs, artist.Name)
 	}
-	return strings.Join(names, " & ")
+	return strs
 }
 
 type PlayQueue struct {
