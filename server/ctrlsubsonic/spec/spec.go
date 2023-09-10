@@ -111,15 +111,19 @@ type Albums struct {
 	List []*Album `xml:"album" json:"album"`
 }
 
+type ArtistRef struct {
+	ID   *specid.ID `xml:"id,attr" json:"id"`
+	Name string     `xml:"name,attr" json:"name"`
+}
+
 type Album struct {
 	// common
-	ID        *specid.ID   `xml:"id,attr,omitempty"       json:"id"`
-	CoverID   *specid.ID   `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty"`
-	ArtistID  *specid.ID   `xml:"artistId,attr,omitempty" json:"artistId,omitempty"`
-	Artist    string       `xml:"artist,attr,omitempty"   json:"artist,omitempty"`
-	ArtistIDs []*specid.ID `xml:"artistIds,attr,omitempty" json:"artistIds,omitempty"`
-	Artists   []string     `xml:"artists,attr,omitempty"   json:"artists,omitempty"`
-	Created   time.Time    `xml:"created,attr,omitempty"  json:"created,omitempty"`
+	ID       *specid.ID   `xml:"id,attr,omitempty"       json:"id"`
+	CoverID  *specid.ID   `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty"`
+	ArtistID *specid.ID   `xml:"artistId,attr,omitempty" json:"artistId,omitempty"`
+	Artist   string       `xml:"artist,attr,omitempty"   json:"artist,omitempty"`
+	Artists  []*ArtistRef `xml:"artists,omitempty"       json:"artists,omitempty"`
+	Created  time.Time    `xml:"created,attr,omitempty"  json:"created,omitempty"`
 	// browsing by folder (eg. getAlbumList)
 	Title    string     `xml:"title,attr,omitempty"  json:"title"`
 	Album    string     `xml:"album,attr,omitempty"  json:"album"`

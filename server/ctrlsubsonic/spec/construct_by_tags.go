@@ -36,8 +36,10 @@ func NewAlbumByTags(a *db.Album, artists []*db.Artist) *Album {
 		ret.ArtistID = artists[0].SID()
 	}
 	for _, a := range artists {
-		ret.Artists = append(ret.Artists, a.Name)
-		ret.ArtistIDs = append(ret.ArtistIDs, a.SID())
+		ret.Artists = append(ret.Artists, &ArtistRef{
+			ID:   a.SID(),
+			Name: a.Name,
+		})
 	}
 	return ret
 }
