@@ -65,8 +65,9 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 		Order("created_at DESC").
 		Limit(20).
 		Find(&data.RecentFolders)
+
 	data.IsScanning = c.Scanner.IsScanning()
-	if tStr, err := c.DB.GetSetting("last_scan_time"); err != nil {
+	if tStr, _ := c.DB.GetSetting("last_scan_time"); tStr != "" {
 		i, _ := strconv.ParseInt(tStr, 10, 64)
 		data.LastScanTime = time.Unix(i, 0)
 	}

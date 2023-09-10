@@ -57,7 +57,10 @@
                 <p class="col-span-full text-gray-500" title="{{ .LastScanTime }}">scanned {{ .LastScanTime | dateHuman }}</p>
             {{ end }}
             <form class="col-span-full" action="{{ path "/admin/start_scan_inc_do" }}" method="post">
-                <input type="submit" title="start a incremental scan" value="scan now">
+                <input type="submit" title="start a incremental scan. gonic will only scan files that have changed since the last scan. it is usually quite fast" value="scan (i)">
+            </form>
+            <form class="col-span-full" action="{{ path "/admin/start_scan_full_do" }}" method="post">
+                <input type="submit" title="start a slow scan. gonic will not check the timestamps of changed files. you generally shouldn't need this" value="scan slow (i)">
             </form>
         {{ end }}
         {{ if .IsScanning }}<p class="text-green-500 col-span-full">scan in progress...</p>{{ end }}
