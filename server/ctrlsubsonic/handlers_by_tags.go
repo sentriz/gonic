@@ -74,6 +74,7 @@ func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 				Group("albums.id")
 		}).
 		Preload("Albums.Artists").
+		Preload("Albums.Genres").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
 		First(artist, id.Value)

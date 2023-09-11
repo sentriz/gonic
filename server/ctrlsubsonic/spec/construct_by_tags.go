@@ -15,7 +15,6 @@ func NewAlbumByTags(a *db.Album, artists []*db.Artist) *Album {
 		Name:          a.TagTitle,
 		Year:          a.TagYear,
 		TrackCount:    a.ChildCount,
-		Genre:         strings.Join(a.GenreStrings(), ", "),
 		Duration:      a.Duration,
 		AverageRating: formatRating(a.AverageRating),
 	}
@@ -40,6 +39,12 @@ func NewAlbumByTags(a *db.Album, artists []*db.Artist) *Album {
 			ID:   a.SID(),
 			Name: a.Name,
 		})
+	}
+	if len(a.Genres) > 0 {
+		ret.Genre = a.Genres[0].Name
+	}
+	for _, g := range a.Genres {
+		ret.Genres = append(ret.Genres, g.Name)
 	}
 	return ret
 }

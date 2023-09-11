@@ -134,6 +134,7 @@ type Album struct {
 	TrackCount int           `xml:"songCount,attr"         json:"songCount"`
 	Duration   int           `xml:"duration,attr"          json:"duration"`
 	Genre      string        `xml:"genre,attr,omitempty"   json:"genre,omitempty"`
+	Genres     []string      `xml:"genres,omitempty"       json:"genres,omitempty"`
 	Year       int           `xml:"year,attr,omitempty"    json:"year,omitempty"`
 	Tracks     []*TrackChild `xml:"song,omitempty"         json:"song,omitempty"`
 	// star / rating
