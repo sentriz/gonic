@@ -353,7 +353,7 @@ func main() {
 	if lastfmAPIKey != "" {
 		g.Add(func() error {
 			log.Printf("starting job 'refresh artist info'\n")
-			return artistInfoCache.Refresh(lastfmAPIKey, 5*time.Second)
+			return artistInfoCache.Refresh(lastfmAPIKey, 8*time.Second)
 		}, nil)
 	}
 
