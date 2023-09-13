@@ -29,10 +29,12 @@ type Client struct {
 	httpClient *http.Client
 }
 
+func NewClientCustom(httpClient *http.Client) *Client {
+	return &Client{httpClient: httpClient}
+}
+
 func NewClient() *Client {
-	return &Client{
-		httpClient: http.DefaultClient,
-	}
+	return NewClientCustom(http.DefaultClient)
 }
 
 func getParamSignature(params url.Values, secret string) string {
