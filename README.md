@@ -78,6 +78,7 @@ password can then be changed from the web interface
 | `GONIC_EXCLUDE_PATTERN`          | `-exclude-pattern`          | **optional** files matching this regex pattern will not be imported                                                                                                                                                                                                               |
 | `GONIC_MULTI_VALUE_GENRE`        | `-multi-value-genre`        | **optional** setting for multi-valued genre tags when scanning ([see more](#multi-valued-tags))                                                                                                                                                                                   |
 | `GONIC_MULTI_VALUE_ALBUM_ARTIST` | `-multi-value-album-artist` | **optional** setting for multi-valued album artist tags when scanning ([see more](#multi-valued-tags))                                                                                                                                                                            |
+| `GONIC_EXPVAR`                   | `-expvar`                   | **optional** enable the /debug/vars endpoint (exposes useful debugging attributes as well as database stats)                                                                                                                                                                      |
 
 ## multi valued tags
 

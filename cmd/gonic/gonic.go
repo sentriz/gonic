@@ -5,6 +5,7 @@ package main
 
 import (
 	"errors"
+	"expvar"
 	"flag"
 	"fmt"
 	"log"
@@ -77,6 +78,8 @@ func main() {
 	var confMultiValueGenre, confMultiValueAlbumArtist multiValueSetting
 	set.Var(&confMultiValueGenre, "multi-value-genre", "setting for mutli-valued genre scanning (optional)")
 	set.Var(&confMultiValueAlbumArtist, "multi-value-album-artist", "setting for mutli-valued album artist scanning (optional)")
+
+	confExpvar := set.Bool("expvar", false, "enable the /debug/vars endpoint (optional)")
 
 	deprecatedConfGenreSplit := set.String("genre-split", "", "(deprecated, see multi-value settings)")
 
@@ -232,6 +235,19 @@ func main() {
 	ctrlbase.AddRoutes(ctrlBase, mux, *confHTTPLog)
 	ctrladmin.AddRoutes(ctrlAdmin, mux.PathPrefix("/admin").Subrouter())
 	ctrlsubsonic.AddRoutes(ctrlSubsonic, mux.PathPrefix("/rest").Subrouter())
+
+	if *confExpvar {
+		mux.Handle("/debug/vars", expvar.Handler())
+		expvar.Publish("stats", expvar.Func(func() any {
+			var stats struct{ Albums, Tracks, Artists, InternetRadioStations, Podcasts uint }
+			dbc.Model(db.Album{}).Count(&stats.Albums)
+			dbc.Model(db.Track{}).Count(&stats.Tracks)
+			dbc.Model(db.Artist{}).Count(&stats.Artists)
+			dbc.Model(db.InternetRadioStation{}).Count(&stats.InternetRadioStations)
+			dbc.Model(db.Podcast{}).Count(&stats.Podcasts)
+			return stats
+		}))
+	}
 
 	var g run.Group
 	g.Add(func() error {
