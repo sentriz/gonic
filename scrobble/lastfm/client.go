@@ -6,9 +6,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"sort"
 
@@ -65,13 +63,9 @@ func (c *Client) makeRequest(method string, params url.Values) (LastFM, error) {
 	decoder := xml.NewDecoder(resp.Body)
 	lastfm := LastFM{}
 	if err = decoder.Decode(&lastfm); err != nil {
-		respBytes, _ := httputil.DumpResponse(resp, true)
-		log.Printf("received bad lastfm response:\n%s", string(respBytes))
 		return LastFM{}, fmt.Errorf("decoding: %w", err)
 	}
 	if lastfm.Error.Code != 0 {
-		respBytes, _ := httputil.DumpResponse(resp, true)
-		log.Printf("received bad lastfm response:\n%s", string(respBytes))
 		return LastFM{}, fmt.Errorf("%v: %w", lastfm.Error.Value, ErrLastFM)
 	}
 	return lastfm, nil
