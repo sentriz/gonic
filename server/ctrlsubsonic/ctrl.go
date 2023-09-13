@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 
+	"go.senan.xyz/gonic/artistinfocache"
 	"go.senan.xyz/gonic/jukebox"
 	"go.senan.xyz/gonic/podcasts"
 	"go.senan.xyz/gonic/scrobble"
@@ -41,15 +42,16 @@ func PathsOf(paths []MusicPath) []string {
 
 type Controller struct {
 	*ctrlbase.Controller
-	MusicPaths     []MusicPath
-	PodcastsPath   string
-	CacheAudioPath string
-	CacheCoverPath string
-	Jukebox        *jukebox.Jukebox
-	Scrobblers     []scrobble.Scrobbler
-	Podcasts       *podcasts.Podcasts
-	Transcoder     transcode.Transcoder
-	LastFMClient   *lastfm.Client
+	MusicPaths      []MusicPath
+	PodcastsPath    string
+	CacheAudioPath  string
+	CacheCoverPath  string
+	Jukebox         *jukebox.Jukebox
+	Scrobblers      []scrobble.Scrobbler
+	Podcasts        *podcasts.Podcasts
+	Transcoder      transcode.Transcoder
+	LastFMClient    *lastfm.Client
+	ArtistInfoCache *artistinfocache.ArtistInfoCache
 }
 
 type metaResponse struct {

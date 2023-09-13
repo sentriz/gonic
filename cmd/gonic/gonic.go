@@ -26,6 +26,7 @@ import (
 	"github.com/sentriz/gormstore"
 
 	"go.senan.xyz/gonic"
+	"go.senan.xyz/gonic/artistinfocache"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/jukebox"
 	"go.senan.xyz/gonic/playlist"
@@ -205,6 +206,8 @@ func main() {
 	sessDB.SessionOpts.HttpOnly = true
 	sessDB.SessionOpts.SameSite = http.SameSiteLaxMode
 
+	artistInfoCache := artistinfocache.New(dbc, lastfmClient)
+
 	ctrlBase := &ctrlbase.Controller{
 		DB:            dbc,
 		PlaylistStore: playlistStore,
@@ -216,12 +219,13 @@ func main() {
 		log.Panicf("error creating admin controller: %v\n", err)
 	}
 	ctrlSubsonic := &ctrlsubsonic.Controller{
-		Controller:     ctrlBase,
-		MusicPaths:     musicPaths,
-		PodcastsPath:   *confPodcastPath,
-		CacheAudioPath: cacheDirAudio,
-		CacheCoverPath: cacheDirCovers,
-		LastFMClient:   lastfmClient,
+		Controller:      ctrlBase,
+		MusicPaths:      musicPaths,
+		PodcastsPath:    *confPodcastPath,
+		CacheAudioPath:  cacheDirAudio,
+		CacheCoverPath:  cacheDirCovers,
+		LastFMClient:    lastfmClient,
+		ArtistInfoCache: artistInfoCache,
 		Scrobblers: []scrobble.Scrobbler{
 			lastfm.NewScrobbler(dbc, lastfmClient),
 			listenbrainz.NewScrobbler(),
@@ -343,6 +347,14 @@ func main() {
 			}
 			_ = os.RemoveAll(jukeboxTempDir)
 		})
+	}
+
+	lastfmAPIKey, _ := dbc.GetSetting("lastfm_api_key")
+	if lastfmAPIKey != "" {
+		g.Add(func() error {
+			log.Printf("starting job 'refresh artist info'\n")
+			return artistInfoCache.Refresh(lastfmAPIKey, 5*time.Second)
+		}, nil)
 	}
 
 	if *confScanAtStart {

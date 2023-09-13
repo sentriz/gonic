@@ -58,6 +58,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202305301718", migratePlayCountToLength),
 		construct(ctx, "202307281628", migrateAlbumArtistsMany2Many),
 		construct(ctx, "202309070009", migrateDeleteArtistCoverField),
+		construct(ctx, "202309131743", migrateArtistInfo),
 	}
 
 	return gormigrate.
@@ -604,4 +605,11 @@ func migrateDeleteArtistCoverField(tx *gorm.DB, _ MigrationContext) error {
 	}
 
 	return nil
+}
+
+func migrateArtistInfo(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(
+		ArtistInfo{},
+	).
+		Error
 }

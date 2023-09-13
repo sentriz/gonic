@@ -322,41 +322,38 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	if apiKey == "" {
 		return sub
 	}
-	info, err := c.LastFMClient.ArtistGetInfo(apiKey, artist.Name)
+
+	info, err := c.ArtistInfoCache.GetOrLookup(r.Context(), apiKey, artist.ID)
 	if err != nil {
 		return spec.NewError(0, "fetching artist info: %v", err)
 	}
 
-	sub.ArtistInfoTwo.Biography = info.Bio.Summary
-	sub.ArtistInfoTwo.MusicBrainzID = info.MBID
-	sub.ArtistInfoTwo.LastFMURL = info.URL
+	sub.ArtistInfoTwo.Biography = info.Biography
+	sub.ArtistInfoTwo.MusicBrainzID = info.MusicBrainzID
+	sub.ArtistInfoTwo.LastFMURL = info.LastFMURL
 
 	sub.ArtistInfoTwo.SmallImageURL = c.genArtistCoverURL(r, &artist, 64)
 	sub.ArtistInfoTwo.MediumImageURL = c.genArtistCoverURL(r, &artist, 126)
 	sub.ArtistInfoTwo.LargeImageURL = c.genArtistCoverURL(r, &artist, 256)
 
-	if url, _ := c.LastFMClient.StealArtistImage(info.URL); url != "" {
-		sub.ArtistInfoTwo.SmallImageURL = url
-		sub.ArtistInfoTwo.MediumImageURL = url
-		sub.ArtistInfoTwo.LargeImageURL = url
-		sub.ArtistInfoTwo.ArtistImageURL = url
+	if info.ImageURL != "" {
+		sub.ArtistInfoTwo.SmallImageURL = info.ImageURL
+		sub.ArtistInfoTwo.MediumImageURL = info.ImageURL
+		sub.ArtistInfoTwo.LargeImageURL = info.ImageURL
+		sub.ArtistInfoTwo.ArtistImageURL = info.ImageURL
 	}
 
 	count := params.GetOrInt("count", 20)
 	inclNotPresent := params.GetOrBool("includeNotPresent", false)
-	similarArtists, err := c.LastFMClient.ArtistGetSimilar(apiKey, artist.Name)
-	if err != nil {
-		return spec.NewError(0, "fetching artist similar: %v", err)
-	}
 
-	for i, similarInfo := range similarArtists.Artists {
+	for i, similarName := range info.GetSimilarArtists() {
 		if i == count {
 			break
 		}
 		var artist db.Artist
 		err = c.DB.
 			Select("artists.*, count(albums.id) album_count").
-			Where("name=?", similarInfo.Name).
+			Where("name=?", similarName).
 			Joins("LEFT JOIN album_artists ON album_artists.artist_id=artists.id").
 			Joins("LEFT JOIN albums ON albums.id=album_artists.album_id").
 			Group("artists.id").
@@ -372,7 +369,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		}
 		sub.ArtistInfoTwo.SimilarArtist = append(sub.ArtistInfoTwo.SimilarArtist, &spec.SimilarArtist{
 			ID:         artistID,
-			Name:       similarInfo.Name,
+			Name:       similarName,
 			CoverArt:   artistID,
 			AlbumCount: artist.AlbumCount,
 		})
@@ -544,7 +541,7 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 	if apiKey == "" {
 		return spec.NewResponse()
 	}
-	topTracks, err := c.LastFMClient.ArtistGetTopTracks(apiKey, artist.Name)
+	info, err := c.ArtistInfoCache.GetOrLookup(r.Context(), apiKey, artist.ID)
 	if err != nil {
 		return spec.NewError(0, "fetching artist top tracks: %v", err)
 	}
@@ -554,13 +551,9 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 		Tracks: make([]*spec.TrackChild, 0),
 	}
 
-	if len(topTracks.Tracks) == 0 {
+	topTrackNames := info.GetTopTracks()
+	if len(topTrackNames) == 0 {
 		return sub
-	}
-
-	topTrackNames := make([]string, len(topTracks.Tracks))
-	for i, t := range topTracks.Tracks {
-		topTrackNames[i] = t.Name
 	}
 
 	var tracks []*db.Track

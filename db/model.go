@@ -7,6 +7,7 @@ package db
 // https://www.db-fiddle.com/f/wJ7z8L7mu6ZKaYmWk1xr1p/5
 
 import (
+	"fmt"
 	"path"
 	"path/filepath"
 	"sort"
@@ -32,7 +33,7 @@ func splitIDs(in, sep string) []specid.ID {
 	return ret
 }
 
-func joinIds(in []specid.ID, sep string) string {
+func join[T fmt.Stringer](in []T, sep string) string {
 	if in == nil {
 		return ""
 	}
@@ -270,7 +271,7 @@ func (p *PlayQueue) GetItems() []specid.ID {
 }
 
 func (p *PlayQueue) SetItems(items []specid.ID) {
-	p.Items = joinIds(items, ",")
+	p.Items = join(items, ",")
 }
 
 type TranscodePreference struct {
@@ -441,3 +442,21 @@ type InternetRadioStation struct {
 func (ir *InternetRadioStation) SID() *specid.ID {
 	return &specid.ID{Type: specid.InternetRadioStation, Value: ir.ID}
 }
+
+type ArtistInfo struct {
+	ID             int `gorm:"primary_key" sql:"type:int REFERENCES artists(id) ON DELETE CASCADE"`
+	CreatedAt      time.Time
+	UpdatedAt      time.Time `gorm:"index"`
+	Biography      string
+	MusicBrainzID  string
+	LastFMURL      string
+	ImageURL       string
+	SimilarArtists string
+	TopTracks      string
+}
+
+func (p *ArtistInfo) GetSimilarArtists() []string      { return strings.Split(p.SimilarArtists, ";") }
+func (p *ArtistInfo) SetSimilarArtists(items []string) { p.SimilarArtists = strings.Join(items, ";") }
+
+func (p *ArtistInfo) GetTopTracks() []string      { return strings.Split(p.TopTracks, ";") }
+func (p *ArtistInfo) SetTopTracks(items []string) { p.TopTracks = strings.Join(items, ";") }
