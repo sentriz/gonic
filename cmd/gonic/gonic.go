@@ -349,7 +349,7 @@ func main() {
 		})
 	}
 
-	lastfmAPIKey, _ := dbc.GetSetting("lastfm_api_key")
+	lastfmAPIKey, _ := dbc.GetSetting(db.LastFMAPIKey)
 	if lastfmAPIKey != "" {
 		g.Add(func() error {
 			log.Printf("starting job 'refresh artist info'\n")

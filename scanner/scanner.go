@@ -115,7 +115,7 @@ func (s *Scanner) ScanAndClean(opts ScanOptions) (*Context, error) {
 		return nil, fmt.Errorf("clean genres: %w", err)
 	}
 
-	if err := s.db.SetSetting("last_scan_time", strconv.FormatInt(time.Now().Unix(), 10)); err != nil {
+	if err := s.db.SetSetting(db.LastScanTime, strconv.FormatInt(time.Now().Unix(), 10)); err != nil {
 		return nil, fmt.Errorf("set scan time: %w", err)
 	}
 

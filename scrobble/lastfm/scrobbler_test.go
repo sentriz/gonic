@@ -22,8 +22,8 @@ func TestScrobble(t *testing.T) {
 	err = testDB.Migrate(db.MigrationContext{})
 	require.NoError(err)
 
-	testDB.SetSetting("lastfm_api_key", "apiKey1")
-	testDB.SetSetting("lastfm_secret", "secret1")
+	testDB.SetSetting(db.LastFMAPIKey, "apiKey1")
+	testDB.SetSetting(db.LastFMSecret, "secret1")
 
 	user := &db.User{
 		LastFMSession: "lastFMSession1",

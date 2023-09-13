@@ -21,7 +21,7 @@ func randKey() string {
 }
 
 func TestGetSetting(t *testing.T) {
-	key := randKey()
+	key := SettingKey(randKey())
 	value := "howdy"
 
 	require := require.New(t)

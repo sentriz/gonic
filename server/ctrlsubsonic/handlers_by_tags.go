@@ -320,7 +320,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	sub := spec.NewResponse()
 	sub.ArtistInfoTwo = &spec.ArtistInfo{}
 
-	apiKey, _ := c.DB.GetSetting("lastfm_api_key")
+	apiKey, _ := c.DB.GetSetting(db.LastFMAPIKey)
 	if apiKey == "" {
 		return sub
 	}
@@ -541,7 +541,7 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 		return spec.NewError(0, "finding artist by name: %v", err)
 	}
 
-	apiKey, _ := c.DB.GetSetting("lastfm_api_key")
+	apiKey, _ := c.DB.GetSetting(db.LastFMAPIKey)
 	if apiKey == "" {
 		return spec.NewResponse()
 	}
@@ -598,7 +598,7 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 	if err != nil || id.Type != specid.Track {
 		return spec.NewError(10, "please provide an track `id` parameter")
 	}
-	apiKey, _ := c.DB.GetSetting("lastfm_api_key")
+	apiKey, _ := c.DB.GetSetting(db.LastFMAPIKey)
 	if apiKey == "" {
 		return spec.NewResponse()
 	}
@@ -668,7 +668,7 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide an artist `id` parameter")
 	}
 
-	apiKey, _ := c.DB.GetSetting("lastfm_api_key")
+	apiKey, _ := c.DB.GetSetting(db.LastFMAPIKey)
 	if apiKey == "" {
 		return spec.NewResponse()
 	}

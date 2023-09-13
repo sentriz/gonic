@@ -54,22 +54,6 @@ func NewMock() (*DB, error) {
 	return New(":memory:", mockOptions())
 }
 
-func (db *DB) GetSetting(key string) (string, error) {
-	var setting Setting
-	if err := db.Where("key=?", key).First(&setting).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return "", err
-	}
-	return setting.Value, nil
-}
-
-func (db *DB) SetSetting(key, value string) error {
-	return db.
-		Where("key=?", key).
-		Assign(Setting{Key: key, Value: value}).
-		FirstOrCreate(&Setting{}).
-		Error
-}
-
 func (db *DB) InsertBulkLeftMany(table string, head []string, left int, col []int) error {
 	if len(col) == 0 {
 		return nil
@@ -136,4 +120,28 @@ func (db *DB) TransactionChunked(data []int64, cb ChunkFunc) error {
 		}
 		return nil
 	})
+}
+
+type SettingKey string
+
+const (
+	LastFMAPIKey SettingKey = "lastfm_api_key" //nolint:gosec
+	LastFMSecret SettingKey = "lastfm_secret"
+	LastScanTime SettingKey = "last_scan_time"
+)
+
+func (db *DB) GetSetting(key SettingKey) (string, error) {
+	var setting Setting
+	if err := db.Where("key=?", key).First(&setting).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return "", err
+	}
+	return setting.Value, nil
+}
+
+func (db *DB) SetSetting(key SettingKey, value string) error {
+	return db.
+		Where("key=?", key).
+		Assign(Setting{Key: key, Value: value}).
+		FirstOrCreate(&Setting{}).
+		Error
 }

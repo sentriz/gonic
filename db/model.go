@@ -174,8 +174,8 @@ type User struct {
 }
 
 type Setting struct {
-	Key   string `gorm:"not null; primary_key; auto_increment:false" sql:"default: null"`
-	Value string `sql:"default: null"`
+	Key   SettingKey `gorm:"not null; primary_key; auto_increment:false" sql:"default: null"`
+	Value string     `sql:"default: null"`
 }
 
 type Play struct {

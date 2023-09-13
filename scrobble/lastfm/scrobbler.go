@@ -34,11 +34,11 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 		return fmt.Errorf("track has no album artists")
 	}
 
-	apiKey, err := s.db.GetSetting("lastfm_api_key")
+	apiKey, err := s.db.GetSetting(db.LastFMAPIKey)
 	if err != nil {
 		return fmt.Errorf("get api key: %w", err)
 	}
-	secret, err := s.db.GetSetting("lastfm_secret")
+	secret, err := s.db.GetSetting(db.LastFMSecret)
 	if err != nil {
 		return fmt.Errorf("get secret: %w", err)
 	}
