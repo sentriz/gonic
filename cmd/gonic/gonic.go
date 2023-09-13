@@ -26,7 +26,6 @@ import (
 	"github.com/sentriz/gormstore"
 
 	"go.senan.xyz/gonic"
-	"go.senan.xyz/gonic/artistinfocache"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/jukebox"
 	"go.senan.xyz/gonic/playlist"
@@ -39,6 +38,7 @@ import (
 	"go.senan.xyz/gonic/server/ctrladmin"
 	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/ctrlsubsonic"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/artistinfocache"
 	"go.senan.xyz/gonic/transcode"
 )
 

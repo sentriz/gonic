@@ -9,12 +9,12 @@ import (
 	"log"
 	"net/http"
 
-	"go.senan.xyz/gonic/artistinfocache"
 	"go.senan.xyz/gonic/jukebox"
 	"go.senan.xyz/gonic/podcasts"
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/scrobble/lastfm"
 	"go.senan.xyz/gonic/server/ctrlbase"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/artistinfocache"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/transcode"
