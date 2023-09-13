@@ -52,7 +52,8 @@ type Artist struct {
 	AlbumCount    int      `sql:"-"`
 	ArtistStar    *ArtistStar
 	ArtistRating  *ArtistRating
-	AverageRating float64 `sql:"default: null"`
+	AverageRating float64     `sql:"default: null"`
+	Info          *ArtistInfo `gorm:"foreignkey:id"`
 }
 
 func (a *Artist) SID() *specid.ID {

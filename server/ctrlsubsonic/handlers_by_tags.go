@@ -75,6 +75,7 @@ func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 		}).
 		Preload("Albums.Artists").
 		Preload("Albums.Genres").
+		Preload("Info").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
 		First(artist, id.Value)
@@ -228,6 +229,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		Joins("JOIN albums ON albums.id=album_artists.album_id").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
+		Preload("Info").
 		Offset(params.GetOrInt("artistOffset", 0)).
 		Limit(params.GetOrInt("artistCount", 20))
 	if m := getMusicFolder(c.MusicPaths, params); m != "" {
@@ -357,22 +359,23 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 			Joins("LEFT JOIN album_artists ON album_artists.artist_id=artists.id").
 			Joins("LEFT JOIN albums ON albums.id=album_artists.album_id").
 			Group("artists.id").
+			Preload("Info").
 			Find(&artist).
 			Error
 		if errors.Is(err, gorm.ErrRecordNotFound) && !inclNotPresent {
 			continue
 		}
-		artistID := &specid.ID{}
-		if artist.ID != 0 {
-			// we don't always have a match if `inclNotPresent`
-			artistID = artist.SID()
+
+		if artist.ID == 0 {
+			// add a very limited artist, since we don't have everything with `inclNotPresent`
+			sub.ArtistInfoTwo.Similar = append(sub.ArtistInfoTwo.Similar, &spec.Artist{
+				ID:   &specid.ID{},
+				Name: similarName,
+			})
+			continue
 		}
-		sub.ArtistInfoTwo.SimilarArtist = append(sub.ArtistInfoTwo.SimilarArtist, &spec.SimilarArtist{
-			ID:         artistID,
-			Name:       similarName,
-			CoverArt:   artistID,
-			AlbumCount: artist.AlbumCount,
-		})
+
+		sub.ArtistInfoTwo.Similar = append(sub.ArtistInfoTwo.Similar, spec.NewArtistByTags(&artist))
 	}
 
 	return sub
@@ -452,6 +455,7 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 		Joins("JOIN albums ON albums.id=album_artists.album_id").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
+		Preload("Info").
 		Group("artists.id")
 	if m := getMusicFolder(c.MusicPaths, params); m != "" {
 		q = q.Where("albums.root_dir=?", m)

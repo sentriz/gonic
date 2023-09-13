@@ -99,7 +99,9 @@ func NewArtistByTags(a *db.Artist) *Artist {
 		Name:          a.Name,
 		AlbumCount:    a.AlbumCount,
 		AverageRating: formatRating(a.AverageRating),
-		CoverID:       a.SID(),
+	}
+	if a.Info != nil && a.Info.ImageURL != "" {
+		r.CoverID = a.SID()
 	}
 	if a.ArtistStar != nil {
 		r.Starred = &a.ArtistStar.StarDate

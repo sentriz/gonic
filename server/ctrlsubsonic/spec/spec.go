@@ -284,22 +284,15 @@ type Playlist struct {
 	List      []*TrackChild `xml:"entry,omitempty" json:"entry,omitempty"`
 }
 
-type SimilarArtist struct {
-	ID         *specid.ID `xml:"id,attr"                   json:"id"`
-	Name       string     `xml:"name,attr"                 json:"name"`
-	CoverArt   *specid.ID `xml:"coverArt,attr"             json:"coverArt"`
-	AlbumCount int        `xml:"albumCount,attr,omitempty" json:"albumCount,omitempty"`
-}
-
 type ArtistInfo struct {
-	Biography      string           `xml:"biography"               json:"biography"`
-	MusicBrainzID  string           `xml:"musicBrainzId"           json:"musicBrainzId"`
-	LastFMURL      string           `xml:"lastFmUrl"               json:"lastFmUrl"`
-	SmallImageURL  string           `xml:"smallImageUrl"           json:"smallImageUrl"`
-	MediumImageURL string           `xml:"mediumImageUrl"          json:"mediumImageUrl"`
-	LargeImageURL  string           `xml:"largeImageUrl"           json:"largeImageUrl"`
-	ArtistImageURL string           `xml:"artistImageUrl"          json:"artistImageUrl"` // not sure where this comes from but other clients seem to expect it
-	SimilarArtist  []*SimilarArtist `xml:"similarArtist,omitempty" json:"similarArtist,omitempty"`
+	Biography      string    `xml:"biography"               json:"biography"`
+	MusicBrainzID  string    `xml:"musicBrainzId"           json:"musicBrainzId"`
+	LastFMURL      string    `xml:"lastFmUrl"               json:"lastFmUrl"`
+	SmallImageURL  string    `xml:"smallImageUrl"           json:"smallImageUrl"`
+	MediumImageURL string    `xml:"mediumImageUrl"          json:"mediumImageUrl"`
+	LargeImageURL  string    `xml:"largeImageUrl"           json:"largeImageUrl"`
+	ArtistImageURL string    `xml:"artistImageUrl"          json:"artistImageUrl"` // not sure where this comes from but other clients seem to expect it
+	Similar []*Artist `xml:"similarArtist,omitempty" json:"similarArtist,omitempty"`
 }
 
 type Genres struct {

@@ -7,7 +7,6 @@
     "artist": {
       "id": "ar-3",
       "name": "artist-2",
-      "coverArt": "ar-3",
       "albumCount": 3,
       "album": [
         {
