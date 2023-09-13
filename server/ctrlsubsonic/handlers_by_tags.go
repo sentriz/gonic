@@ -367,11 +367,13 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		}
 		artistID := &specid.ID{}
 		if artist.ID != 0 {
+			// we don't always have a match if `inclNotPresent`
 			artistID = artist.SID()
 		}
 		sub.ArtistInfoTwo.SimilarArtist = append(sub.ArtistInfoTwo.SimilarArtist, &spec.SimilarArtist{
 			ID:         artistID,
 			Name:       similarInfo.Name,
+			CoverArt:   artistID,
 			AlbumCount: artist.AlbumCount,
 		})
 	}

@@ -287,6 +287,7 @@ type Playlist struct {
 type SimilarArtist struct {
 	ID         *specid.ID `xml:"id,attr"                   json:"id"`
 	Name       string     `xml:"name,attr"                 json:"name"`
+	CoverArt   *specid.ID `xml:"coverArt,attr"             json:"coverArt"`
 	AlbumCount int        `xml:"albumCount,attr,omitempty" json:"albumCount,omitempty"`
 }
 
