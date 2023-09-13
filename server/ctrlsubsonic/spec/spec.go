@@ -377,17 +377,12 @@ type Bookmarks struct {
 }
 
 type Bookmark struct {
-	Entry    BookmarkEntry `xml:"entry,omitempty" json:"entry,omitempty"`
-	Username string        `xml:"username,attr"   json:"username"`
-	Position int           `xml:"position,attr"   json:"position"`
-	Comment  string        `xml:"comment,attr"    json:"comment"`
-	Created  time.Time     `xml:"created,attr"    json:"created"`
-	Changed  time.Time     `xml:"changed,attr"    json:"changed"`
-}
-
-type BookmarkEntry struct {
-	ID   *specid.ID `xml:"id,attr"   json:"id"`
-	Type string     `xml:"type,attr" json:"type"`
+	Entry    *TrackChild `xml:"entry,omitempty" json:"entry,omitempty"`
+	Username string      `xml:"username,attr"   json:"username"`
+	Position int         `xml:"position,attr"   json:"position"`
+	Comment  string      `xml:"comment,attr"    json:"comment"`
+	Created  time.Time   `xml:"created,attr"    json:"created"`
+	Changed  time.Time   `xml:"changed,attr"    json:"changed"`
 }
 
 type Starred struct {

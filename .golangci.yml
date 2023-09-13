@@ -44,3 +44,6 @@ issues:
     - text: "at least one file in a package should have a package comment"
       linters:
         - stylecheck
+    - text: "should rewrite switch"
+      linters:
+        - gocritic
