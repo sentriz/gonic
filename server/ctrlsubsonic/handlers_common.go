@@ -165,7 +165,7 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 	trackIDs := queue.GetItems()
 	sub.PlayQueue.List = make([]*spec.TrackChild, len(trackIDs))
 
-	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+	transcodeMeta := streamGetTranscodeMeta(c.DB, user.ID, params.GetOr("c", ""))
 
 	for i, id := range trackIDs {
 		switch id.Type {
@@ -178,8 +178,7 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 				Preload("TrackRating", "user_id=?", user.ID).
 				Find(&track)
 			sub.PlayQueue.List[i] = spec.NewTCTrackByFolder(&track, track.Album)
-			sub.PlayQueue.List[i].TranscodedContentType = transcodeMIME
-			sub.PlayQueue.List[i].TranscodedSuffix = transcodeSuffix
+			sub.PlayQueue.List[i].TranscodeMeta = transcodeMeta
 		case specid.PodcastEpisode:
 			pe := db.PodcastEpisode{}
 			c.DB.
@@ -190,8 +189,7 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 				Where("id=?", pe.PodcastID).
 				Find(&p)
 			sub.PlayQueue.List[i] = spec.NewTCPodcastEpisode(&pe, &p)
-			sub.PlayQueue.List[i].TranscodedContentType = transcodeMIME
-			sub.PlayQueue.List[i].TranscodedSuffix = transcodeSuffix
+			sub.PlayQueue.List[i].TranscodeMeta = transcodeMeta
 		}
 	}
 	return sub
@@ -243,8 +241,14 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewError(10, "couldn't find a track with that id")
 	}
+
+	transcodeMeta := streamGetTranscodeMeta(c.DB, user.ID, params.GetOr("c", ""))
+
 	sub := spec.NewResponse()
 	sub.Track = spec.NewTrackByTags(&track, track.Album)
+
+	sub.Track.TranscodeMeta = transcodeMeta
+
 	return sub
 }
 
@@ -280,12 +284,11 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	sub.RandomTracks = &spec.RandomTracks{}
 	sub.RandomTracks.List = make([]*spec.TrackChild, len(tracks))
 
-	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+	transcodeMeta := streamGetTranscodeMeta(c.DB, user.ID, params.GetOr("c", ""))
 
 	for i, track := range tracks {
 		sub.RandomTracks.List[i] = spec.NewTrackByTags(track, track.Album)
-		sub.RandomTracks.List[i].TranscodedContentType = transcodeMIME
-		sub.RandomTracks.List[i].TranscodedSuffix = transcodeSuffix
+		sub.RandomTracks.List[i].TranscodeMeta = transcodeMeta
 	}
 	return sub
 }

@@ -120,12 +120,11 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 	sub.Album = spec.NewAlbumByTags(album, album.Artists)
 	sub.Album.Tracks = make([]*spec.TrackChild, len(album.Tracks))
 
-	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+	transcodeMeta := streamGetTranscodeMeta(c.DB, user.ID, params.GetOr("c", ""))
 
 	for i, track := range album.Tracks {
 		sub.Album.Tracks[i] = spec.NewTrackByTags(track, album)
-		sub.Album.Tracks[i].TranscodedContentType = transcodeMIME
-		sub.Album.Tracks[i].TranscodedSuffix = transcodeSuffix
+		sub.Album.Tracks[i].TranscodeMeta = transcodeMeta
 	}
 	return sub
 }
@@ -288,12 +287,11 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
 
-	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+	transcodeMeta := streamGetTranscodeMeta(c.DB, user.ID, params.GetOr("c", ""))
 
 	for _, t := range tracks {
 		track := spec.NewTrackByTags(t, t.Album)
-		track.TranscodedContentType = transcodeMIME
-		track.TranscodedSuffix = transcodeSuffix
+		track.TranscodeMeta = transcodeMeta
 		results.Tracks = append(results.Tracks, track)
 	}
 
@@ -430,12 +428,11 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 		List: make([]*spec.TrackChild, len(tracks)),
 	}
 
-	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+	transcodeMeta := streamGetTranscodeMeta(c.DB, user.ID, params.GetOr("c", ""))
 
 	for i, t := range tracks {
 		sub.TracksByGenre.List[i] = spec.NewTrackByTags(t, t.Album)
-		sub.TracksByGenre.List[i].TranscodedContentType = transcodeMIME
-		sub.TracksByGenre.List[i].TranscodedSuffix = transcodeSuffix
+		sub.TracksByGenre.List[i].TranscodeMeta = transcodeMeta
 	}
 
 	return sub
@@ -503,12 +500,11 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
 
-	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+	transcodeMeta := streamGetTranscodeMeta(c.DB, user.ID, params.GetOr("c", ""))
 
 	for _, t := range tracks {
 		track := spec.NewTrackByTags(t, t.Album)
-		track.TranscodedContentType = transcodeMIME
-		track.TranscodedSuffix = transcodeSuffix
+		track.TranscodeMeta = transcodeMeta
 		results.Tracks = append(results.Tracks, track)
 	}
 
@@ -580,12 +576,11 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 		return sub
 	}
 
-	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+	transcodeMeta := streamGetTranscodeMeta(c.DB, user.ID, params.GetOr("c", ""))
 
 	for _, track := range tracks {
 		tc := spec.NewTrackByTags(track, track.Album)
-		tc.TranscodedContentType = transcodeMIME
-		tc.TranscodedSuffix = transcodeSuffix
+		tc.TranscodeMeta = transcodeMeta
 		sub.TopSongs.Tracks = append(sub.TopSongs.Tracks, tc)
 	}
 	return sub
@@ -650,12 +645,11 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 		Tracks: make([]*spec.TrackChild, len(tracks)),
 	}
 
-	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+	transcodeMeta := streamGetTranscodeMeta(c.DB, user.ID, params.GetOr("c", ""))
 
 	for i, track := range tracks {
 		sub.SimilarSongs.Tracks[i] = spec.NewTrackByTags(track, track.Album)
-		sub.SimilarSongs.Tracks[i].TranscodedContentType = transcodeMIME
-		sub.SimilarSongs.Tracks[i].TranscodedSuffix = transcodeSuffix
+		sub.SimilarSongs.Tracks[i].TranscodeMeta = transcodeMeta
 	}
 	return sub
 }
@@ -721,12 +715,10 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 		Tracks: make([]*spec.TrackChild, len(tracks)),
 	}
 
-	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
-
+	transcodeMeta := streamGetTranscodeMeta(c.DB, user.ID, params.GetOr("c", ""))
 	for i, track := range tracks {
 		sub.SimilarSongsTwo.Tracks[i] = spec.NewTrackByTags(track, track.Album)
-		sub.SimilarSongsTwo.Tracks[i].TranscodedContentType = transcodeMIME
-		sub.SimilarSongsTwo.Tracks[i].TranscodedSuffix = transcodeSuffix
+		sub.SimilarSongsTwo.Tracks[i].TranscodeMeta = transcodeMeta
 	}
 	return sub
 }

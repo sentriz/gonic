@@ -204,7 +204,7 @@ func playlistRender(c *Controller, params params.Params, playlistID string, play
 		return resp, nil
 	}
 
-	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+	transcodeMeta := streamGetTranscodeMeta(c.DB, user.ID, params.GetOr("c", ""))
 
 	for _, path := range playlist.Items {
 		file, err := specidpaths.Lookup(c.DB, PathsOf(c.MusicPaths), c.PodcastsPath, path)
@@ -236,8 +236,7 @@ func playlistRender(c *Controller, params params.Params, playlistID string, play
 		default:
 			continue
 		}
-		trch.TranscodedContentType = transcodeMIME
-		trch.TranscodedSuffix = transcodeSuffix
+		trch.TranscodeMeta = transcodeMeta
 		resp.List = append(resp.List, trch)
 	}
 

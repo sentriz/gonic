@@ -30,7 +30,7 @@ import (
 //   b) return a non-nil spec.Response
 //  _but not both_
 
-func streamGetTransPref(dbc *db.DB, userID int, client string) (*db.TranscodePreference, error) {
+func streamGetTransodePreference(dbc *db.DB, userID int, client string) (*db.TranscodePreference, error) {
 	var pref db.TranscodePreference
 	err := dbc.
 		Where("user_id=?", userID).
@@ -47,16 +47,19 @@ func streamGetTransPref(dbc *db.DB, userID int, client string) (*db.TranscodePre
 	return &pref, nil
 }
 
-func streamGetTransPrefProfile(dbc *db.DB, userID int, client string) (mime string, suffix string) {
-	pref, _ := streamGetTransPref(dbc, userID, client)
+func streamGetTranscodeMeta(dbc *db.DB, userID int, client string) spec.TranscodeMeta {
+	pref, _ := streamGetTransodePreference(dbc, userID, client)
 	if pref == nil {
-		return "", ""
+		return spec.TranscodeMeta{}
 	}
 	profile, ok := transcode.UserProfiles[pref.Profile]
 	if !ok {
-		return "", ""
+		return spec.TranscodeMeta{}
 	}
-	return profile.MIME(), profile.Suffix()
+	return spec.TranscodeMeta{
+		TranscodedContentType: profile.MIME(),
+		TranscodedSuffix:      profile.Suffix(),
+	}
 }
 
 var errUnknownMediaType = fmt.Errorf("media type is unknown")
@@ -287,7 +290,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		return nil
 	}
 
-	pref, err := streamGetTransPref(c.DB, user.ID, params.GetOr("c", ""))
+	pref, err := streamGetTransodePreference(c.DB, user.ID, params.GetOr("c", ""))
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewError(0, "couldn't find transcode preference: %v", err)
 	}

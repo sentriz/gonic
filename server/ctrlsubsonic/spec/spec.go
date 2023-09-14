@@ -151,35 +151,40 @@ type TracksByGenre struct {
 	List []*TrackChild `xml:"song" json:"song"`
 }
 
+type TranscodeMeta struct {
+	TranscodedContentType string `xml:"transcodedContentType,attr,omitempty" json:"transcodedContentType,omitempty"`
+	TranscodedSuffix      string `xml:"transcodedSuffix,attr,omitempty"      json:"transcodedSuffix,omitempty"`
+}
+
 type TrackChild struct {
-	ID                    *specid.ID `xml:"id,attr,omitempty"                    json:"id,omitempty"`
-	Album                 string     `xml:"album,attr,omitempty"                 json:"album,omitempty"`
-	AlbumID               *specid.ID `xml:"albumId,attr,omitempty"               json:"albumId,omitempty"`
-	Artist                string     `xml:"artist,attr,omitempty"                json:"artist,omitempty"`
-	ArtistID              *specid.ID `xml:"artistId,attr,omitempty"              json:"artistId,omitempty"`
-	Bitrate               int        `xml:"bitRate,attr,omitempty"               json:"bitRate,omitempty"`
-	ContentType           string     `xml:"contentType,attr,omitempty"           json:"contentType,omitempty"`
-	TranscodedContentType string     `xml:"transcodedContentType,attr,omitempty" json:"transcodedContentType,omitempty"`
-	CoverID               *specid.ID `xml:"coverArt,attr,omitempty"              json:"coverArt,omitempty"`
-	CreatedAt             time.Time  `xml:"created,attr,omitempty"               json:"created,omitempty"`
-	Duration              int        `xml:"duration,attr,omitempty"              json:"duration,omitempty"`
-	Genre                 string     `xml:"genre,attr,omitempty"                 json:"genre,omitempty"`
-	IsDir                 bool       `xml:"isDir,attr"                           json:"isDir"`
-	IsVideo               bool       `xml:"isVideo,attr"                         json:"isVideo"`
-	ParentID              *specid.ID `xml:"parent,attr,omitempty"                json:"parent,omitempty"`
-	Path                  string     `xml:"path,attr,omitempty"                  json:"path,omitempty"`
-	Size                  int        `xml:"size,attr,omitempty"                  json:"size,omitempty"`
-	Suffix                string     `xml:"suffix,attr,omitempty"                json:"suffix,omitempty"`
-	TranscodedSuffix      string     `xml:"transcodedSuffix,attr,omitempty"      json:"transcodedSuffix,omitempty"`
-	Title                 string     `xml:"title,attr"                           json:"title"`
-	TrackNumber           int        `xml:"track,attr,omitempty"                 json:"track,omitempty"`
-	DiscNumber            int        `xml:"discNumber,attr,omitempty"            json:"discNumber,omitempty"`
-	Type                  string     `xml:"type,attr,omitempty"                  json:"type,omitempty"`
-	Year                  int        `xml:"year,attr,omitempty"                  json:"year,omitempty"`
+	ID          *specid.ID `xml:"id,attr,omitempty"                    json:"id,omitempty"`
+	Album       string     `xml:"album,attr,omitempty"                 json:"album,omitempty"`
+	AlbumID     *specid.ID `xml:"albumId,attr,omitempty"               json:"albumId,omitempty"`
+	Artist      string     `xml:"artist,attr,omitempty"                json:"artist,omitempty"`
+	ArtistID    *specid.ID `xml:"artistId,attr,omitempty"              json:"artistId,omitempty"`
+	Bitrate     int        `xml:"bitRate,attr,omitempty"               json:"bitRate,omitempty"`
+	ContentType string     `xml:"contentType,attr,omitempty"           json:"contentType,omitempty"`
+	CoverID     *specid.ID `xml:"coverArt,attr,omitempty"              json:"coverArt,omitempty"`
+	CreatedAt   time.Time  `xml:"created,attr,omitempty"               json:"created,omitempty"`
+	Duration    int        `xml:"duration,attr,omitempty"              json:"duration,omitempty"`
+	Genre       string     `xml:"genre,attr,omitempty"                 json:"genre,omitempty"`
+	IsDir       bool       `xml:"isDir,attr"                           json:"isDir"`
+	IsVideo     bool       `xml:"isVideo,attr"                         json:"isVideo"`
+	ParentID    *specid.ID `xml:"parent,attr,omitempty"                json:"parent,omitempty"`
+	Path        string     `xml:"path,attr,omitempty"                  json:"path,omitempty"`
+	Size        int        `xml:"size,attr,omitempty"                  json:"size,omitempty"`
+	Suffix      string     `xml:"suffix,attr,omitempty"                json:"suffix,omitempty"`
+	Title       string     `xml:"title,attr"                           json:"title"`
+	TrackNumber int        `xml:"track,attr,omitempty"                 json:"track,omitempty"`
+	DiscNumber  int        `xml:"discNumber,attr,omitempty"            json:"discNumber,omitempty"`
+	Type        string     `xml:"type,attr,omitempty"                  json:"type,omitempty"`
+	Year        int        `xml:"year,attr,omitempty"                  json:"year,omitempty"`
 	// star / rating
 	Starred       *time.Time `xml:"starred,attr,omitempty"         json:"starred,omitempty"`
 	UserRating    int        `xml:"userRating,attr,omitempty"      json:"userRating,omitempty"`
 	AverageRating string     `xml:"averageRating,attr,omitempty"   json:"averageRating,omitempty"`
+
+	TranscodeMeta
 }
 
 type Artists struct {
@@ -292,7 +297,7 @@ type ArtistInfo struct {
 	MediumImageURL string    `xml:"mediumImageUrl"          json:"mediumImageUrl"`
 	LargeImageURL  string    `xml:"largeImageUrl"           json:"largeImageUrl"`
 	ArtistImageURL string    `xml:"artistImageUrl"          json:"artistImageUrl"` // not sure where this comes from but other clients seem to expect it
-	Similar []*Artist `xml:"similarArtist,omitempty" json:"similarArtist,omitempty"`
+	Similar        []*Artist `xml:"similarArtist,omitempty" json:"similarArtist,omitempty"`
 }
 
 type Genres struct {
