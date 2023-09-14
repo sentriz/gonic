@@ -16,7 +16,6 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/mockfs"
-	"go.senan.xyz/gonic/multierr"
 	"go.senan.xyz/gonic/scanner"
 )
 
@@ -523,16 +522,20 @@ func TestTagErrors(t *testing.T) {
 		return scanner.ErrReadingTags
 	})
 
-	var errs *multierr.Err
 	ctx, err := m.ScanAndCleanErr()
+	errs, ok := err.(interface{ Unwrap() []error })
+	require.True(ok)
+
 	require.ErrorAs(err, &errs)
-	require.Equal(2, errs.Len())                            // we have 2 dir errors
+	require.Equal(2, len(errs.Unwrap()))                    // we have 2 dir errors
 	require.Equal(m.NumTracks()-(3*2), ctx.SeenTracks())    // we saw all tracks bar 2 album contents
 	require.Equal(m.NumTracks()-(3*2), ctx.SeenTracksNew()) // we have all tracks bar 2 album contents
 
 	ctx, err = m.ScanAndCleanErr()
-	require.ErrorAs(err, &errs)
-	require.Equal(2, errs.Len())                         // we have 2 dir errors
+	errs, ok = err.(interface{ Unwrap() []error })
+	require.True(ok)
+
+	require.Equal(2, len(errs.Unwrap()))                 // we have 2 dir errors
 	require.Equal(m.NumTracks()-(3*2), ctx.SeenTracks()) // we saw all tracks bar 2 album contents
 	require.Equal(0, ctx.SeenTracksNew())                // we have no new tracks
 }

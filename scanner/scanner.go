@@ -20,7 +20,6 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/mime"
-	"go.senan.xyz/gonic/multierr"
 	"go.senan.xyz/gonic/scanner/tags"
 )
 
@@ -81,7 +80,6 @@ func (s *Scanner) ScanAndClean(opts ScanOptions) (*Context, error) {
 
 	start := time.Now()
 	c := &Context{
-		errs:       &multierr.Err{},
 		seenTracks: map[int]struct{}{},
 		seenAlbums: map[int]struct{}{},
 		isFull:     opts.IsFull,
@@ -90,7 +88,7 @@ func (s *Scanner) ScanAndClean(opts ScanOptions) (*Context, error) {
 	log.Println("starting scan")
 	defer func() {
 		log.Printf("finished scan in %s, +%d/%d tracks (%d err)\n",
-			durSince(start), c.SeenTracksNew(), c.SeenTracks(), c.errs.Len())
+			durSince(start), c.SeenTracksNew(), c.SeenTracks(), len(c.errs))
 	}()
 
 	for _, dir := range s.musicDirs {
@@ -119,11 +117,7 @@ func (s *Scanner) ScanAndClean(opts ScanOptions) (*Context, error) {
 		return nil, fmt.Errorf("set scan time: %w", err)
 	}
 
-	if c.errs.Len() > 0 {
-		return c, c.errs
-	}
-
-	return c, nil
+	return c, errors.Join(c.errs...)
 }
 
 func (s *Scanner) ExecuteWatch() error {
@@ -159,7 +153,6 @@ func (s *Scanner) ExecuteWatch() error {
 			}
 			for dirName := range scanList {
 				c := &Context{
-					errs:       &multierr.Err{},
 					seenTracks: map[int]struct{}{},
 					seenAlbums: map[int]struct{}{},
 					isFull:     false,
@@ -240,7 +233,7 @@ func (s *Scanner) watchCallback(dir string, absPath string, d fs.DirEntry, err e
 
 func (s *Scanner) scanCallback(c *Context, dir string, absPath string, d fs.DirEntry, err error) error {
 	if err != nil {
-		c.errs.Add(err)
+		c.errs = append(c.errs, err)
 		return nil
 	}
 	if dir == absPath {
@@ -268,7 +261,7 @@ func (s *Scanner) scanCallback(c *Context, dir string, absPath string, d fs.DirE
 
 	tx := s.db.Begin()
 	if err := s.scanDir(tx, c, dir, absPath); err != nil {
-		c.errs.Add(fmt.Errorf("%q: %w", absPath, err))
+		c.errs = append(c.errs, fmt.Errorf("%q: %w", absPath, err))
 		tx.Rollback()
 		return nil
 	}
@@ -648,7 +641,7 @@ func durSince(t time.Time) time.Duration {
 }
 
 type Context struct {
-	errs   *multierr.Err
+	errs   []error
 	isFull bool
 
 	seenTracks    map[int]struct{}

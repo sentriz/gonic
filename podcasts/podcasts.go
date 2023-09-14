@@ -20,7 +20,6 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/mime"
-	"go.senan.xyz/gonic/multierr"
 	"go.senan.xyz/gonic/scanner/tags"
 )
 
@@ -327,28 +326,27 @@ func (p *Podcasts) RefreshPodcasts() error {
 	if err := p.db.Find(&podcasts).Error; err != nil {
 		return fmt.Errorf("find podcasts: %w", err)
 	}
-	var errs *multierr.Err
-	if errors.As(p.refreshPodcasts(podcasts), &errs) && errs.Len() > 0 {
-		return fmt.Errorf("refresh podcasts: %w", errs)
+	if err := p.refreshPodcasts(podcasts); err != nil {
+		return fmt.Errorf("refresh podcasts: %w", err)
 	}
 	return nil
 }
 
 func (p *Podcasts) refreshPodcasts(podcasts []*db.Podcast) error {
-	errs := &multierr.Err{}
+	var errs []error
 	for _, podcast := range podcasts {
 		fp := gofeed.NewParser()
 		feed, err := fp.ParseURL(podcast.URL)
 		if err != nil {
-			errs.Add(fmt.Errorf("refreshing podcast with url %q: %w", podcast.URL, err))
+			errs = append(errs, fmt.Errorf("refreshing podcast with url %q: %w", podcast.URL, err))
 			continue
 		}
 		if err = p.AddNewEpisodes(podcast, feed.Items); err != nil {
-			errs.Add(fmt.Errorf("adding episodes: %w", err))
+			errs = append(errs, fmt.Errorf("adding episodes: %w", err))
 			continue
 		}
 	}
-	return errs
+	return errors.Join(errs...)
 }
 
 func (p *Podcasts) DownloadPodcastAll(podcastID int) error {
