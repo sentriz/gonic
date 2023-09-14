@@ -238,7 +238,10 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 		log.Printf("error stating `%s`: %v", cachePath, err)
 		return nil
 	}
+
+	w.Header().Set("Cache-Control", "public, max-age=3600")
 	http.ServeFile(w, r, cachePath)
+
 	return nil
 }
 
