@@ -50,7 +50,11 @@
         {{ end }}
         {{ range $folder := .RecentFolders }}
             <div class="text-left ellipsis">{{ $folder.RightPath }}</div>
-            <div class="text-gray-500" title="{{ $folder.ModifiedAt }}">{{ $folder.ModifiedAt | dateHuman }}</div>
+            {{ if not $folder.ModifiedAt.IsZero }}
+                 <div class="text-gray-500" title="{{ $folder.ModifiedAt }}">{{ $folder.ModifiedAt | dateHuman }}</div>
+            {{ else }}
+                 <span></span>
+            {{ end }}
         {{ end }}
         {{ if and (not .IsScanning) (.User.IsAdmin) }}
             {{ if not .LastScanTime.IsZero }}

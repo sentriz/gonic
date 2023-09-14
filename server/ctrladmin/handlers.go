@@ -63,7 +63,7 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	// recent folders box
 	c.DB.
 		Order("created_at DESC").
-		Limit(20).
+		Limit(10).
 		Find(&data.RecentFolders)
 
 	data.IsScanning = c.Scanner.IsScanning()
