@@ -28,6 +28,7 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 		Joins("JOIN albums sub ON sub.id=album_artists.album_id").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
+		Preload("Info").
 		Group("artists.id").
 		Order("artists.name COLLATE NOCASE")
 	if m := getMusicFolder(c.MusicPaths, params); m != "" {
