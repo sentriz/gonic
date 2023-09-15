@@ -80,7 +80,7 @@ password can then be changed from the web interface
 | `GONIC_MULTI_VALUE_ALBUM_ARTIST` | `-multi-value-album-artist` | **optional** setting for multi-valued album artist tags when scanning ([see more](#multi-valued-tags))                                                                                                                                                                            |
 | `GONIC_EXPVAR`                   | `-expvar`                   | **optional** enable the /debug/vars endpoint (exposes useful debugging attributes as well as database stats)                                                                                                                                                                      |
 
-## multi valued tags
+## multi valued tags (v0.16+)
 
 gonic can support potentially multi valued tags like `genres` and `albumartists`. in both cases gonic will individual entries in its database for each.
 
