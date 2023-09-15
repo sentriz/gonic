@@ -1,7 +1,7 @@
 package spec
 
 import (
-	"path"
+	"path/filepath"
 	"strings"
 
 	"go.senan.xyz/gonic/db"
@@ -62,7 +62,7 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 		Title:       t.TagTitle,
 		TrackNumber: t.TagTrackNumber,
 		DiscNumber:  t.TagDiscNumber,
-		Path: path.Join(
+		Path: filepath.Join(
 			parent.LeftPath,
 			parent.RightPath,
 			t.Filename,
@@ -95,20 +95,23 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 	return trCh
 }
 
-func NewTCPodcastEpisode(pe *db.PodcastEpisode, parent *db.Podcast) *TrackChild {
+func NewTCPodcastEpisode(pe *db.PodcastEpisode) *TrackChild {
 	trCh := &TrackChild{
 		ID:          pe.SID(),
 		ContentType: pe.MIME(),
 		Suffix:      pe.Ext(),
 		Size:        pe.Size,
 		Title:       pe.Title,
-		Path:        pe.Path,
-		ParentID:    parent.SID(),
+		ParentID:    pe.SID(),
 		Duration:    pe.Length,
 		Bitrate:     pe.Bitrate,
 		IsDir:       false,
 		Type:        "podcastepisode",
 		CreatedAt:   pe.CreatedAt,
+	}
+	if pe.Podcast != nil {
+		trCh.ParentID = pe.Podcast.SID()
+		trCh.Path = pe.AbsPath()
 	}
 	return trCh
 }

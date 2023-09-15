@@ -8,7 +8,6 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -48,7 +47,7 @@ func makeGoldenPath(test string) string {
 	snake := testCamelExpr.ReplaceAllString(test, "${1}_${2}")
 	lower := strings.ToLower(snake)
 	relPath := strings.ReplaceAll(lower, "/", "_")
-	return path.Join("testdata", relPath)
+	return filepath.Join("testdata", relPath)
 }
 
 func makeHTTPMock(query url.Values) (*httptest.ResponseRecorder, *http.Request) {

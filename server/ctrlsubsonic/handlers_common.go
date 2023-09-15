@@ -184,11 +184,7 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 			c.DB.
 				Where("id=?", id.Value).
 				Find(&pe)
-			p := db.Podcast{}
-			c.DB.
-				Where("id=?", pe.PodcastID).
-				Find(&p)
-			sub.PlayQueue.List[i] = spec.NewTCPodcastEpisode(&pe, &p)
+			sub.PlayQueue.List[i] = spec.NewTCPodcastEpisode(&pe)
 			sub.PlayQueue.List[i].TranscodeMeta = transcodeMeta
 		}
 	}
@@ -300,7 +296,7 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 	trackPaths := func(ids []specid.ID) ([]string, error) {
 		var paths []string
 		for _, id := range ids {
-			r, err := specidpaths.Locate(c.DB, c.PodcastsPath, id)
+			r, err := specidpaths.Locate(c.DB, id)
 			if err != nil {
 				return nil, fmt.Errorf("find track by id: %w", err)
 			}

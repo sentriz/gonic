@@ -1,7 +1,7 @@
 package spec
 
 import (
-	"path"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -61,7 +61,7 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 		Artist:      t.TagTrackArtist,
 		TrackNumber: t.TagTrackNumber,
 		DiscNumber:  t.TagDiscNumber,
-		Path: path.Join(
+		Path: filepath.Join(
 			album.LeftPath,
 			album.RightPath,
 			t.Filename,

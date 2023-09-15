@@ -2,7 +2,7 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:cc="http://web.resource.org/cc/" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:media="http://search.yahoo.com/mrss/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
 	<channel>
 		<atom:link href="https://internetbox.libsyn.com/rss" rel="self" type="application/rss+xml"/>
-		<title>Internet Box</title>
+		<title>Internet Box!</title>
 		<pubDate>Mon, 01 Apr 2019 04:35:43 +0000</pubDate>
 		<lastBuildDate>Sun, 10 Jan 2021 00:07:33 +0000</lastBuildDate>
 		<generator>Libsyn WebEngine 2.0</generator>
@@ -70,7 +70,23 @@
 			<pubDate>Mon, 27 Jun 2016 06:33:43 +0000</pubDate>
 			<guid isPermaLink="false"><![CDATA[d5113fc98b7baf005bf66b225b166ee0]]></guid>
 			<link><![CDATA[http://internetboxpodcast.com/episode-126/]]></link>
-			<itunes:image href="https://ssl-static.libsyn.com/p/assets/d/d/3/3/dd338b309838f617/iTunes.png" />
+			<itunes:image href="file://testdata/cover.png" />
+			<description><![CDATA[<p>The Internet Box is clicking this week!</p>]]></description>
+			<content:encoded><![CDATA[<p>The Internet Box is clicking this week!</p>]]></content:encoded>
+			<enclosure length="66139165" type="audio/mpeg" url="https://traffic.libsyn.com/secure/internetbox/InternetBoxEpisode126.mp3?dest-id=79492" />
+			<itunes:duration>01:20:42</itunes:duration>
+			<itunes:explicit>yes</itunes:explicit>
+			<itunes:keywords>box,2,factory,internet,pizza,future,robots,season,farts,cake,via,reddit,313,vorarephilia</itunes:keywords>
+			<itunes:subtitle><![CDATA[The Internet Box is clicking this week!]]></itunes:subtitle>
+		</item>
+
+		<!-- dupe episode name -->
+		<item>
+			<title>Episode 126</title>
+			<pubDate>Mon, 27 Jun 2016 06:33:43 +0000</pubDate>
+			<guid isPermaLink="false"><![CDATA[d5113fc98b7baf005bf66b225b166ee0]]></guid>
+			<link><![CDATA[http://internetboxpodcast.com/episode-126/]]></link>
+			<itunes:image href="file://testdata/cover.png" />
 			<description><![CDATA[<p>The Internet Box is clicking this week!</p>]]></description>
 			<content:encoded><![CDATA[<p>The Internet Box is clicking this week!</p>]]></content:encoded>
 			<enclosure length="66139165" type="audio/mpeg" url="https://traffic.libsyn.com/secure/internetbox/InternetBoxEpisode126.mp3?dest-id=79492" />

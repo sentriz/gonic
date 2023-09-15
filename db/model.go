@@ -8,7 +8,6 @@ package db
 
 import (
 	"fmt"
-	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -134,7 +133,7 @@ func (t *Track) AbsPath() string {
 	if t.Album == nil {
 		return ""
 	}
-	return path.Join(
+	return filepath.Join(
 		t.Album.RootDir,
 		t.Album.LeftPath,
 		t.Album.RightPath,
@@ -146,7 +145,7 @@ func (t *Track) RelPath() string {
 	if t.Album == nil {
 		return ""
 	}
-	return path.Join(
+	return filepath.Join(
 		t.Album.LeftPath,
 		t.Album.RightPath,
 		t.Filename,
@@ -354,10 +353,11 @@ type Podcast struct {
 	Title        string
 	Description  string
 	ImageURL     string
-	ImagePath    string
+	Image        string
 	Error        string
 	Episodes     []*PodcastEpisode
 	AutoDownload PodcastAutoDownload
+	RootDir      string
 }
 
 func (p *Podcast) SID() *specid.ID {
@@ -387,11 +387,10 @@ type PodcastEpisode struct {
 	Bitrate     int
 	Length      int
 	Size        int
-	Path        string
 	Filename    string
 	Status      PodcastEpisodeStatus
 	Error       string
-	AbsP        string `gorm:"-"` // TODO: not this. instead we need some consistent way to get the AbsPath for both tracks and podcast episodes. or just files in general
+	Podcast     *Podcast
 }
 
 func (pe *PodcastEpisode) AudioLength() int  { return pe.Length }
@@ -418,7 +417,10 @@ func (pe *PodcastEpisode) MIME() string {
 }
 
 func (pe *PodcastEpisode) AbsPath() string {
-	return pe.AbsP
+	if pe.Podcast == nil {
+		return ""
+	}
+	return filepath.Join(pe.Podcast.RootDir, pe.Filename)
 }
 
 type Bookmark struct {

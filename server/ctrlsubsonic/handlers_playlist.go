@@ -94,7 +94,7 @@ func (c *Controller) ServeCreatePlaylist(r *http.Request) *spec.Response {
 	playlist.Items = nil
 	ids := params.GetOrIDList("songId", nil)
 	for _, id := range ids {
-		r, err := specidpaths.Locate(c.DB, c.PodcastsPath, id)
+		r, err := specidpaths.Locate(c.DB, id)
 		if err != nil {
 			return spec.NewError(0, "lookup id %v: %v", id, err)
 		}
@@ -154,7 +154,7 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 	// add items
 	if ids, err := params.GetIDList("songIdToAdd"); err == nil {
 		for _, id := range ids {
-			item, err := specidpaths.Locate(c.DB, c.PodcastsPath, id)
+			item, err := specidpaths.Locate(c.DB, id)
 			if err != nil {
 				return spec.NewError(0, "locate id %q: %v", id, err)
 			}
@@ -224,14 +224,10 @@ func playlistRender(c *Controller, params params.Params, playlistID string, play
 			resp.Duration += track.Length
 		case specid.PodcastEpisode:
 			var pe db.PodcastEpisode
-			if err := c.DB.Where("id=?", id.Value).Find(&pe).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+			if err := c.DB.Preload("Podcast").Where("id=?", id.Value).Find(&pe).Error; errors.Is(err, gorm.ErrRecordNotFound) {
 				return nil, fmt.Errorf("load podcast episode by id: %w", err)
 			}
-			var p db.Podcast
-			if err := c.DB.Where("id=?", pe.PodcastID).Find(&p).Error; errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, fmt.Errorf("load podcast by id: %w", err)
-			}
-			trch = spec.NewTCPodcastEpisode(&pe, &p)
+			trch = spec.NewTCPodcastEpisode(&pe)
 			resp.Duration += pe.Length
 		default:
 			continue
