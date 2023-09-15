@@ -1,0 +1,13 @@
+name: Notify IRC
+on:
+  push:
+    branches:
+      - master
+jobs:
+  notify:
+    name: Send request
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl "${{ secrets.IRC_NOTIFY_URL }}" -F target=#gonic -F 'message=push to master @${{ github.event.head_commit.author.username }} "${{ github.event.head_commit.message }}"' >/dev/null 2>&1
+          exit 0
