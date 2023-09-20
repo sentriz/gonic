@@ -18,21 +18,17 @@ type Result interface {
 }
 
 // Locate maps a specid to its location on the filesystem
-func Locate(dbc *db.DB, podcastsPath string, id specid.ID) (Result, error) {
+func Locate(dbc *db.DB, id specid.ID) (Result, error) {
 	switch id.Type {
 	case specid.Track:
 		var track db.Track
-		if err := dbc.Preload("Album").Where("id=?", id.Value).Find(&track).Error; err == nil {
-			return &track, nil
-		}
+		return &track, dbc.Preload("Album").Where("id=?", id.Value).Find(&track).Error
 	case specid.PodcastEpisode:
 		var pe db.PodcastEpisode
-		if err := dbc.Where("id=? AND status=?", id.Value, db.PodcastEpisodeStatusCompleted).Find(&pe).Error; err == nil {
-			pe.AbsP = filepath.Join(podcastsPath, pe.Path)
-			return &pe, err
-		}
+		return &pe, dbc.Preload("Podcast").Where("id=? AND status=?", id.Value, db.PodcastEpisodeStatusCompleted).Find(&pe).Error
+	default:
+		return nil, ErrNotFound
 	}
-	return nil, ErrNotFound
 }
 
 // Locate maps a location on the filesystem to a specid
@@ -42,9 +38,13 @@ func Lookup(dbc *db.DB, musicPaths []string, podcastsPath string, path string) (
 	}
 
 	if strings.HasPrefix(path, podcastsPath) {
-		path, _ = filepath.Rel(podcastsPath, path)
+		podcastPath, episodeFilename := filepath.Split(path)
+		q := dbc.
+			Joins(`JOIN podcasts ON podcasts.id=podcast_episodes.podcast_id`).
+			Where(`podcasts.root_dir=? AND podcast_episodes.filename=?`, filepath.Clean(podcastPath), filepath.Clean(episodeFilename))
+
 		var pe db.PodcastEpisode
-		if err := dbc.Where(`path=?`, path).First(&pe).Error; err == nil {
+		if err := q.First(&pe).Error; err == nil {
 			return &pe, nil
 		}
 		return nil, ErrNotFound

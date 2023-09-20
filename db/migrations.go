@@ -5,11 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/jinzhu/gorm"
+	"go.senan.xyz/gonic/fileutil"
 	"go.senan.xyz/gonic/playlist"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"gopkg.in/gormigrate.v1"
@@ -59,6 +61,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202307281628", migrateAlbumArtistsMany2Many),
 		construct(ctx, "202309070009", migrateDeleteArtistCoverField),
 		construct(ctx, "202309131743", migrateArtistInfo),
+		construct(ctx, "202309161411", migratePlaylistsPaths),
 	}
 
 	return gormigrate.
@@ -478,11 +481,11 @@ func migratePlaylistsToM3U(tx *gorm.DB, ctx MigrationContext) error {
 			return track.AbsPath()
 		case specid.PodcastEpisode:
 			var pe PodcastEpisode
-			tx.Where("id=?", id.Value).Find(&pe)
-			if pe.Path == "" {
+			tx.Where("id=?", id.Value).Preload("Podcast").Find(&pe)
+			if pe.Filename == "" {
 				return ""
 			}
-			return filepath.Join(ctx.PodcastsPath, pe.Path)
+			return filepath.Join(ctx.PodcastsPath, fileutil.Safe(pe.Podcast.Title), pe.Filename)
 		}
 		return ""
 	}
@@ -612,4 +615,98 @@ func migrateArtistInfo(tx *gorm.DB, _ MigrationContext) error {
 		ArtistInfo{},
 	).
 		Error
+}
+
+func migratePlaylistsPaths(tx *gorm.DB, ctx MigrationContext) error {
+	if !tx.Dialect().HasColumn("podcast_episodes", "path") {
+		return nil
+	}
+	if !tx.Dialect().HasColumn("podcasts", "image_path") {
+		return nil
+	}
+
+	step := tx.Exec(`
+			ALTER TABLE podcasts RENAME COLUMN image_path TO image
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step drop podcast_episodes path: %w", err)
+	}
+
+	step = tx.AutoMigrate(
+		Podcast{},
+		PodcastEpisode{},
+	)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step auto migrate: %w", err)
+	}
+
+	var podcasts []*Podcast
+	if err := tx.Find(&podcasts).Error; err != nil {
+		return fmt.Errorf("step load: %w", err)
+	}
+
+	for _, p := range podcasts {
+		p.Image = filepath.Base(p.Image)
+		if err := tx.Save(p).Error; err != nil {
+			return fmt.Errorf("saving podcast for cover %d: %w", p.ID, err)
+		}
+
+		oldPath, err := fileutil.First(
+			filepath.Join(ctx.PodcastsPath, fileutil.Safe(p.Title)),
+			filepath.Join(ctx.PodcastsPath, strings.ReplaceAll(p.Title, string(filepath.Separator), "_")), // old safe func
+			filepath.Join(ctx.PodcastsPath, p.Title),
+		)
+		if err != nil {
+			return fmt.Errorf("find old podcast path: %w", err)
+		}
+		newPath := filepath.Join(ctx.PodcastsPath, fileutil.Safe(p.Title))
+		p.RootDir = newPath
+		if err := tx.Save(p).Error; err != nil {
+			return fmt.Errorf("saving podcast %d: %w", p.ID, err)
+		}
+		if oldPath == newPath {
+			continue
+		}
+		if err := os.Rename(oldPath, newPath); err != nil {
+			return fmt.Errorf("rename podcast path: %w", err)
+		}
+	}
+
+	var podcastEpisodes []*PodcastEpisode
+	if err := tx.Preload("Podcast").Find(&podcastEpisodes, "status=? OR status=?", PodcastEpisodeStatusCompleted, PodcastEpisodeStatusDownloading).Error; err != nil {
+		return fmt.Errorf("step load: %w", err)
+	}
+	for _, pe := range podcastEpisodes {
+		if pe.Filename == "" {
+			continue
+		}
+		oldPath, err := fileutil.First(
+			filepath.Join(pe.Podcast.RootDir, fileutil.Safe(pe.Filename)),
+			filepath.Join(pe.Podcast.RootDir, strings.ReplaceAll(pe.Filename, string(filepath.Separator), "_")), // old safe func
+			filepath.Join(pe.Podcast.RootDir, pe.Filename),
+		)
+		if err != nil {
+			return fmt.Errorf("find old podcast episode path: %w", err)
+		}
+		newName := fileutil.Safe(filepath.Base(oldPath))
+		pe.Filename = newName
+		if err := tx.Save(pe).Error; err != nil {
+			return fmt.Errorf("saving podcast episode %d: %w", pe.ID, err)
+		}
+		newPath := filepath.Join(pe.Podcast.RootDir, newName)
+		if oldPath == newPath {
+			continue
+		}
+		if err := os.Rename(oldPath, newPath); err != nil {
+			return fmt.Errorf("rename podcast episode path: %w", err)
+		}
+	}
+
+	step = tx.Exec(`
+			ALTER TABLE podcast_episodes DROP COLUMN path
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step drop podcast_episodes path: %w", err)
+	}
+	return nil
 }

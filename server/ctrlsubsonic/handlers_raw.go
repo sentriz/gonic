@@ -9,7 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/disintegration/imaging"
@@ -117,26 +117,26 @@ var (
 )
 
 // TODO: can we use specidpaths.Locate here?
-func coverFor(dbc *db.DB, artistInfoCache *artistinfocache.ArtistInfoCache, podcastPath string, id specid.ID) (io.ReadCloser, error) {
+func coverFor(dbc *db.DB, artistInfoCache *artistinfocache.ArtistInfoCache, id specid.ID) (io.ReadCloser, error) {
 	switch id.Type {
 	case specid.Album:
 		return coverForAlbum(dbc, id.Value)
 	case specid.Artist:
 		return coverForArtist(artistInfoCache, id.Value)
 	case specid.Podcast:
-		return coverForPodcast(dbc, podcastPath, id.Value)
+		return coverForPodcast(dbc, id.Value)
 	case specid.PodcastEpisode:
-		return coverGetPathPodcastEpisode(dbc, podcastPath, id.Value)
+		return coverGetPathPodcastEpisode(dbc, id.Value)
 	default:
 		return nil, errCoverNotFound
 	}
 }
 
 func coverForAlbum(dbc *db.DB, id int) (*os.File, error) {
-	folder := &db.Album{}
+	var folder db.Album
 	err := dbc.DB.
 		Select("id, root_dir, left_path, right_path, cover").
-		First(folder, id).
+		First(&folder, id).
 		Error
 	if err != nil {
 		return nil, fmt.Errorf("select album: %w", err)
@@ -144,7 +144,7 @@ func coverForAlbum(dbc *db.DB, id int) (*os.File, error) {
 	if folder.Cover == "" {
 		return nil, errCoverEmpty
 	}
-	return os.Open(path.Join(folder.RootDir, folder.LeftPath, folder.RightPath, folder.Cover))
+	return os.Open(filepath.Join(folder.RootDir, folder.LeftPath, folder.RightPath, folder.Cover))
 }
 
 func coverForArtist(artistInfoCache *artistinfocache.ArtistInfoCache, id int) (io.ReadCloser, error) {
@@ -162,39 +162,33 @@ func coverForArtist(artistInfoCache *artistinfocache.ArtistInfoCache, id int) (i
 	return resp.Body, nil
 }
 
-func coverForPodcast(dbc *db.DB, podcastPath string, id int) (*os.File, error) {
-	podcast := &db.Podcast{}
+func coverForPodcast(dbc *db.DB, id int) (*os.File, error) {
+	var podcast db.Podcast
 	err := dbc.
-		First(podcast, id).
+		First(&podcast, id).
 		Error
 	if err != nil {
 		return nil, fmt.Errorf("select podcast: %w", err)
 	}
-	if podcast.ImagePath == "" {
+	if podcast.Image == "" {
 		return nil, errCoverEmpty
 	}
-	return os.Open(path.Join(podcastPath, podcast.ImagePath))
+	return os.Open(filepath.Join(podcast.RootDir, podcast.Image))
 }
 
-func coverGetPathPodcastEpisode(dbc *db.DB, podcastPath string, id int) (*os.File, error) {
-	episode := &db.PodcastEpisode{}
+func coverGetPathPodcastEpisode(dbc *db.DB, id int) (*os.File, error) {
+	var pe db.PodcastEpisode
 	err := dbc.
-		First(episode, id).
+		Preload("Podcast").
+		First(&pe, id).
 		Error
 	if err != nil {
 		return nil, fmt.Errorf("select episode: %w", err)
 	}
-	podcast := &db.Podcast{}
-	err = dbc.
-		First(podcast, episode.PodcastID).
-		Error
-	if err != nil {
-		return nil, fmt.Errorf("select podcast: %w", err)
-	}
-	if podcast.ImagePath == "" {
+	if pe.Podcast == nil || pe.Podcast.Image == "" {
 		return nil, errCoverEmpty
 	}
-	return os.Open(path.Join(podcastPath, podcast.ImagePath))
+	return os.Open(filepath.Join(pe.Podcast.RootDir, pe.Podcast.Image))
 }
 
 func coverScaleAndSave(reader io.Reader, cachePath string, size int) error {
@@ -220,14 +214,14 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 	size := params.GetOrInt("size", coverDefaultSize)
-	cachePath := path.Join(
+	cachePath := filepath.Join(
 		c.CacheCoverPath,
 		fmt.Sprintf("%s-%d.%s", id.String(), size, coverCacheFormat),
 	)
 	_, err = os.Stat(cachePath)
 	switch {
 	case os.IsNotExist(err):
-		reader, err := coverFor(c.DB, c.ArtistInfoCache, c.PodcastsPath, id)
+		reader, err := coverFor(c.DB, c.ArtistInfoCache, id)
 		if err != nil {
 			return spec.NewError(10, "couldn't find cover `%s`: %v", id, err)
 		}
@@ -256,7 +250,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 
-	file, err := specidpaths.Locate(c.DB, c.PodcastsPath, id)
+	file, err := specidpaths.Locate(c.DB, id)
 	if err != nil {
 		return spec.NewError(0, "error looking up id %s: %v", id, err)
 	}
