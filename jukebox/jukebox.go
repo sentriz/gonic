@@ -331,13 +331,15 @@ func (j *Jukebox) getDecode(dest any, property string) error {
 	return nil
 }
 
-type mpvPlaylist []mpvPlaylistItem
-type mpvPlaylistItem struct {
-	ID       int
-	Filename string
-	Current  bool
-	Playing  bool
-}
+type (
+	mpvPlaylist     []mpvPlaylistItem
+	mpvPlaylistItem struct {
+		ID       int
+		Filename string
+		Current  bool
+		Playing  bool
+	}
+)
 
 func waitUntil(timeout time.Duration, f func() bool) bool {
 	quit := time.NewTicker(timeout)

@@ -180,6 +180,7 @@ func (c *Controller) ServeDeletePlaylist(r *http.Request) *spec.Response {
 func playlistIDEncode(path string) string {
 	return base64.URLEncoding.EncodeToString([]byte(path))
 }
+
 func playlistIDDecode(id string) string {
 	path, _ := base64.URLEncoding.DecodeString(id)
 	return string(path)

@@ -1,6 +1,4 @@
-// Package main is the gonic server entrypoint
-//
-//nolint:lll,gocyclo
+//nolint:lll,gocyclo,forbidigo
 package main
 
 import (
@@ -370,8 +368,10 @@ func main() {
 
 const pathAliasSep = "->"
 
-type pathAliases []pathAlias
-type pathAlias struct{ alias, path string }
+type (
+	pathAliases []pathAlias
+	pathAlias   struct{ alias, path string }
+)
 
 func (pa pathAliases) String() string {
 	var strs []string

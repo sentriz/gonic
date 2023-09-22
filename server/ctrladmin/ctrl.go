@@ -1,4 +1,3 @@
-// Package ctrladmin provides HTTP handlers for admin UI
 package ctrladmin
 
 import (

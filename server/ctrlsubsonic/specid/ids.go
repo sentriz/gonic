@@ -30,18 +30,17 @@ const (
 	separator                = "-"
 )
 
+//nolint:musttag
 type ID struct {
 	Type  IDT
 	Value int
 }
 
 func New(in string) (ID, error) {
-	parts := strings.Split(in, separator)
-	if len(parts) != 2 {
+	partType, partValue, ok := strings.Cut(in, separator)
+	if !ok {
 		return ID{}, ErrBadSeparator
 	}
-	partType := parts[0]
-	partValue := parts[1]
 	val, err := strconv.Atoi(partValue)
 	if err != nil {
 		return ID{}, fmt.Errorf("%q: %w", partValue, ErrNotAnInt)

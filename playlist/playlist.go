@@ -14,9 +14,11 @@ import (
 	"time"
 )
 
-var ErrInvalidPathFormat = errors.New("invalid path format")
-var ErrInvalidBasePath = errors.New("invalid base path")
-var ErrNoUserPrefix = errors.New("no user prefix")
+var (
+	ErrInvalidPathFormat = errors.New("invalid path format")
+	ErrInvalidBasePath   = errors.New("invalid base path")
+	ErrNoUserPrefix      = errors.New("no user prefix")
+)
 
 const (
 	extM3U  = ".m3u"
@@ -31,7 +33,6 @@ type Store struct {
 func NewStore(basePath string) (*Store, error) {
 	if basePath == "" {
 		return nil, ErrInvalidBasePath
-
 	}
 
 	// sanity check layout, just in case someone tries to use an existing folder
@@ -108,6 +109,7 @@ const (
 func encodeAttr(name, value string) string {
 	return fmt.Sprintf("%s%s:%s", attrPrefix, name, strconv.Quote(value))
 }
+
 func decodeAttr(line string) (name, value string) {
 	if !strings.HasPrefix(line, attrPrefix) {
 		return "", ""
@@ -169,10 +171,10 @@ func (s *Store) Write(relPath string, playlist *Playlist) error {
 	defer lock(&s.mu)()
 
 	absPath := filepath.Join(s.basePath, relPath)
-	if err := os.MkdirAll(filepath.Dir(absPath), 0777); err != nil {
+	if err := os.MkdirAll(filepath.Dir(absPath), 0o777); err != nil {
 		return fmt.Errorf("make m3u base dir: %w", err)
 	}
-	file, err := os.OpenFile(absPath, os.O_RDWR|os.O_CREATE, 0666)
+	file, err := os.OpenFile(absPath, os.O_RDWR|os.O_CREATE, 0o666)
 	if err != nil {
 		return fmt.Errorf("create m3u: %w", err)
 	}

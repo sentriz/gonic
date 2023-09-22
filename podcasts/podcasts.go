@@ -25,8 +25,10 @@ import (
 
 var ErrNoAudioInFeedItem = errors.New("no audio in feed item")
 
-const downloadAllWaitInterval = 3 * time.Second
-const fetchUserAgent = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11`
+const (
+	downloadAllWaitInterval = 3 * time.Second
+	fetchUserAgent          = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11`
+)
 
 type Podcasts struct {
 	db      *db.DB
@@ -96,7 +98,6 @@ func (p *Podcasts) AddNewPodcast(rssURL string, feed *gofeed.Feed) (*db.Podcast,
 	rootDir, err := fileutil.Unique(filepath.Join(p.baseDir, fileutil.Safe(feed.Title)), "")
 	if err != nil {
 		return nil, fmt.Errorf("find unique podcast dir: %w", err)
-
 	}
 	podcast := db.Podcast{
 		Description: feed.Description,
@@ -105,7 +106,7 @@ func (p *Podcasts) AddNewPodcast(rssURL string, feed *gofeed.Feed) (*db.Podcast,
 		URL:         rssURL,
 		RootDir:     rootDir,
 	}
-	if err := os.Mkdir(podcast.RootDir, 0755); err != nil && !os.IsExist(err) {
+	if err := os.Mkdir(podcast.RootDir, 0o755); err != nil && !os.IsExist(err) {
 		return nil, err
 	}
 	if err := p.db.Save(&podcast).Error; err != nil {
@@ -248,7 +249,8 @@ func isAudio(rawItemURL string) (bool, error) {
 }
 
 func itemToEpisode(podcastID, size, duration int, audio string,
-	item *gofeed.Item) *db.PodcastEpisode {
+	item *gofeed.Item,
+) *db.PodcastEpisode {
 	return &db.PodcastEpisode{
 		PodcastID:   podcastID,
 		Description: item.Description,

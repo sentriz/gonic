@@ -1,5 +1,3 @@
-// Package db provides database helpers and models
-//
 //nolint:lll // struct tags get very long and can't be split
 package db
 
@@ -238,7 +236,7 @@ func (a *Album) GenreStrings() []string {
 }
 
 func (a *Album) ArtistsStrings() []string {
-	var artists = append([]*Artist(nil), a.Artists...)
+	artists := append([]*Artist(nil), a.Artists...)
 	sort.Slice(artists, func(i, j int) bool {
 		return artists[i].ID < artists[j].ID
 	})

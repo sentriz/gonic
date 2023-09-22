@@ -1,4 +1,4 @@
-//nolint:goconst
+//nolint:goconst,errorlint
 package scanner_test
 
 import (
@@ -724,7 +724,6 @@ func TestMultiArtistSupport(t *testing.T) {
 		},
 		state(),
 	)
-
 }
 
 func TestMultiArtistPreload(t *testing.T) {

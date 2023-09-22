@@ -34,9 +34,11 @@ func (t *Tagger) Genres() []string       { return find(t.raw, "genres") }
 func (t *Tagger) TrackNumber() int {
 	return intSep("/" /* eg. 5/12 */, first(find(t.raw, "tracknumber")))
 }
+
 func (t *Tagger) DiscNumber() int {
 	return intSep("/" /* eg. 1/2  */, first(find(t.raw, "discnumber")))
 }
+
 func (t *Tagger) Year() int {
 	return intSep("-" /* 2023-12-01 */, first(find(t.raw, "originaldate", "date", "year")))
 }
@@ -63,15 +65,6 @@ type Parser interface {
 	Length() int
 	Bitrate() int
 	Year() int
-}
-
-func fallback(or string, strs ...string) string {
-	for _, str := range strs {
-		if str != "" {
-			return str
-		}
-	}
-	return or
 }
 
 func first[T comparable](is []T) T {

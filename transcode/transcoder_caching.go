@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 )
 
-const perm = 0644
+const perm = 0o644
 
 type CachingTranscoder struct {
 	cachePath  string
@@ -23,7 +23,7 @@ func NewCachingTranscoder(t Transcoder, cachePath string) *CachingTranscoder {
 }
 
 func (t *CachingTranscoder) Transcode(ctx context.Context, profile Profile, in string, out io.Writer) error {
-	if err := os.MkdirAll(t.cachePath, perm^0111); err != nil {
+	if err := os.MkdirAll(t.cachePath, perm^0o111); err != nil {
 		return fmt.Errorf("make cache path: %w", err)
 	}
 
@@ -35,7 +35,7 @@ func (t *CachingTranscoder) Transcode(ctx context.Context, profile Profile, in s
 	key := cacheKey(name, args)
 	path := filepath.Join(t.cachePath, key)
 
-	cf, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
+	cf, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0o644)
 	if err != nil {
 		return fmt.Errorf("open cache file: %w", err)
 	}

@@ -17,6 +17,8 @@ import (
 var testRSS []byte
 
 func TestPodcastsAndEpisodesWithSameName(t *testing.T) {
+	t.Parallel()
+
 	t.Skip("requires network access")
 
 	m := mockfs.New(t)
@@ -62,6 +64,8 @@ func TestPodcastsAndEpisodesWithSameName(t *testing.T) {
 }
 
 func TestGetMoreRecentEpisodes(t *testing.T) {
+	t.Parallel()
+
 	fp := gofeed.NewParser()
 	newFeed, err := fp.Parse(bytes.NewReader(testRSS))
 	if err != nil {

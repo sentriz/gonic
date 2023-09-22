@@ -1,7 +1,9 @@
+//nolint:tparallel,paralleltest,thelper
 package ctrlsubsonic
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -37,8 +39,10 @@ const (
 	newstation1HomepageURL = "https://www.kcrw.com/music/shows/eclectic24"
 )
 
-const newstation2StreamURL = "http://media.kcrw.com/pls/kcrwsantabarbara.pls"
-const newstation2Name = "KCRW Santa Barbara"
+const (
+	newstation2StreamURL = "http://media.kcrw.com/pls/kcrwsantabarbara.pls"
+	newstation2Name      = "KCRW Santa Barbara"
+)
 
 const station3ID = "ir-3"
 
@@ -48,16 +52,18 @@ func TestInternetRadio(t *testing.T) {
 	t.Parallel()
 
 	contr := makeController(t)
-	t.Run("TestInternetRadioInitialEmpty", func(t *testing.T) { testInternetRadioInitialEmpty(t, contr) })
-	t.Run("TestInternetRadioBadCreates", func(t *testing.T) { testInternetRadioBadCreates(t, contr) })
-	t.Run("TestInternetRadioInitialAdds", func(t *testing.T) { testInternetRadioInitialAdds(t, contr) })
-	t.Run("TestInternetRadioUpdateHomepage", func(t *testing.T) { testInternetRadioUpdateHomepage(t, contr) })
-	t.Run("TestInternetRadioNotAdmin", func(t *testing.T) { testInternetRadioNotAdmin(t, contr) })
-	t.Run("TestInternetRadioUpdates", func(t *testing.T) { testInternetRadioUpdates(t, contr) })
-	t.Run("TestInternetRadioDeletes", func(t *testing.T) { testInternetRadioDeletes(t, contr) })
+	t.Run("initial empty", func(t *testing.T) { testInternetRadioInitialEmpty(t, contr) })
+	t.Run("bad creates", func(t *testing.T) { testInternetRadioBadCreates(t, contr) })
+	t.Run("initial adds", func(t *testing.T) { testInternetRadioInitialAdds(t, contr) })
+	t.Run("update home page", func(t *testing.T) { testInternetRadioUpdateHomepage(t, contr) })
+	t.Run("not admin", func(t *testing.T) { testInternetRadioNotAdmin(t, contr) })
+	t.Run("updates", func(t *testing.T) { testInternetRadioUpdates(t, contr) })
+	t.Run("deletes", func(t *testing.T) { testInternetRadioDeletes(t, contr) })
 }
 
 func runTestCase(t *testing.T, contr *Controller, h handlerSubsonic, q url.Values, admin bool) *spec.SubsonicResponse {
+	t.Helper()
+
 	var rr *httptest.ResponseRecorder
 	var req *http.Request
 
@@ -74,18 +80,17 @@ func runTestCase(t *testing.T, contr *Controller, h handlerSubsonic, q url.Value
 
 	var response spec.SubsonicResponse
 	if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
-		switch ty := err.(type) {
-		case *json.SyntaxError:
-			jsn := body[0:ty.Offset]
-			jsn += "<--(Invalid Character)"
-			t.Fatalf("invalid character at offset %v\n %s", ty.Offset, jsn)
-		case *json.UnmarshalTypeError:
-			jsn := body[0:ty.Offset]
-			jsn += "<--(Invalid Type)"
-			t.Fatalf("invalid type at offset %v\n %s", ty.Offset, jsn)
-		default:
-			t.Fatalf("json unmarshal failed: %s", err.Error())
+		var jsonSyntaxError *json.SyntaxError
+		if errors.As(err, &jsonSyntaxError) {
+			t.Fatalf("invalid character at offset %v\n %s <--", jsonSyntaxError.Offset, body[0:jsonSyntaxError.Offset])
 		}
+
+		var jsonUnmarshalTypeError *json.UnmarshalTypeError
+		if errors.As(err, &jsonSyntaxError) {
+			t.Fatalf("invalid type at offset %v\n %s <--", jsonUnmarshalTypeError.Offset, body[0:jsonUnmarshalTypeError.Offset])
+		}
+
+		t.Fatalf("json unmarshal failed: %v", err)
 	}
 
 	return &response

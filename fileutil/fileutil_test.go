@@ -9,6 +9,8 @@ import (
 )
 
 func TestUniquePath(t *testing.T) {
+	t.Parallel()
+
 	unq := func(base, filename string, count uint) string {
 		r, err := unique(base, filename, count)
 		require.NoError(t, err)
@@ -40,6 +42,8 @@ func TestUniquePath(t *testing.T) {
 }
 
 func TestFirst(t *testing.T) {
+	t.Parallel()
+
 	base := t.TempDir()
 	name := filepath.Join(base, "test")
 	_, err := os.Create(name)
@@ -52,5 +56,4 @@ func TestFirst(t *testing.T) {
 	r, err := First(p("one"), p("two"), p("test"), p("four"))
 	require.NoError(t, err)
 	require.Equal(t, p("test"), r)
-
 }

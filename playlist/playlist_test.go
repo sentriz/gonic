@@ -8,6 +8,8 @@ import (
 )
 
 func TestPlaylist(t *testing.T) {
+	t.Parallel()
+
 	require := require.New(t)
 
 	tmp := t.TempDir()

@@ -62,8 +62,6 @@ func streamGetTranscodeMeta(dbc *db.DB, userID int, client string) spec.Transcod
 	}
 }
 
-var errUnknownMediaType = fmt.Errorf("media type is unknown")
-
 func streamUpdateStats(dbc *db.DB, userID int, track *db.Track, playTime time.Time) error {
 	var play db.Play
 	err := dbc.

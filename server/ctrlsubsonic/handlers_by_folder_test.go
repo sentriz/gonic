@@ -8,6 +8,8 @@ import (
 )
 
 func TestGetIndexes(t *testing.T) {
+	t.Parallel()
+
 	contr := makeControllerRoots(t, []string{"m-0", "m-1"})
 
 	runQueryCases(t, contr, contr.ServeGetIndexes, []*queryCase{
@@ -18,6 +20,8 @@ func TestGetIndexes(t *testing.T) {
 }
 
 func TestGetMusicDirectory(t *testing.T) {
+	t.Parallel()
+
 	contr := makeController(t)
 
 	runQueryCases(t, contr, contr.ServeGetMusicDirectory, []*queryCase{

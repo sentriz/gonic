@@ -13,6 +13,8 @@ import (
 )
 
 func TestArtistGetInfo(t *testing.T) {
+	t.Parallel()
+
 	// arrange
 	require := require.New(t)
 	client := Client{mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
@@ -93,6 +95,8 @@ func TestArtistGetInfo(t *testing.T) {
 }
 
 func TestArtistGetInfoClientRequestFails(t *testing.T) {
+	t.Parallel()
+
 	// arrange
 	require := require.New(t)
 	client := Client{mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
@@ -117,6 +121,8 @@ func TestArtistGetInfoClientRequestFails(t *testing.T) {
 }
 
 func TestArtistGetTopTracks(t *testing.T) {
+	t.Parallel()
+
 	// arrange
 	require := require.New(t)
 	client := Client{mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
@@ -185,6 +191,8 @@ func TestArtistGetTopTracks(t *testing.T) {
 }
 
 func TestArtistGetTopTracks_clientRequestFails(t *testing.T) {
+	t.Parallel()
+
 	// arrange
 	require := require.New(t)
 	client := Client{mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
@@ -209,6 +217,8 @@ func TestArtistGetTopTracks_clientRequestFails(t *testing.T) {
 }
 
 func TestArtistGetSimilar(t *testing.T) {
+	t.Parallel()
+
 	// arrange
 	require := require.New(t)
 	client := Client{mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
@@ -285,6 +295,8 @@ func TestArtistGetSimilar(t *testing.T) {
 }
 
 func TestArtistGetSimilar_clientRequestFails(t *testing.T) {
+	t.Parallel()
+
 	// arrange
 	require := require.New(t)
 	client := Client{mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
@@ -309,6 +321,8 @@ func TestArtistGetSimilar_clientRequestFails(t *testing.T) {
 }
 
 func TestTrackGetSimilarTracks(t *testing.T) {
+	t.Parallel()
+
 	// arrange
 	require := require.New(t)
 	client := Client{mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
@@ -375,6 +389,8 @@ func TestTrackGetSimilarTracks(t *testing.T) {
 }
 
 func TestTrackGetSimilarTracks_clientRequestFails(t *testing.T) {
+	t.Parallel()
+
 	// arrange
 	require := require.New(t)
 	client := Client{mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
@@ -400,6 +416,8 @@ func TestTrackGetSimilarTracks_clientRequestFails(t *testing.T) {
 }
 
 func TestGetSession(t *testing.T) {
+	t.Parallel()
+
 	// arrange
 	require := require.New(t)
 	client := Client{mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
@@ -426,6 +444,8 @@ func TestGetSession(t *testing.T) {
 }
 
 func TestGetSessioeClientRequestFails(t *testing.T) {
+	t.Parallel()
+
 	// arrange
 	require := require.New(t)
 	client := Client{mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
@@ -451,6 +471,8 @@ func TestGetSessioeClientRequestFails(t *testing.T) {
 }
 
 func TestGetParamSignature(t *testing.T) {
+	t.Parallel()
+
 	params := url.Values{}
 	params.Add("ccc", "CCC")
 	params.Add("bbb", "BBB")

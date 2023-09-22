@@ -15,6 +15,8 @@ import (
 )
 
 func TestInfoCache(t *testing.T) {
+	t.Parallel()
+
 	m := mockfs.New(t)
 	m.AddItems()
 	m.ScanAndClean()

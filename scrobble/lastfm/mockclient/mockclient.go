@@ -10,9 +10,11 @@ import (
 	"testing"
 )
 
-func New(t testing.TB, handler http.HandlerFunc) *http.Client {
+func New(tb testing.TB, handler http.HandlerFunc) *http.Client {
+	tb.Helper()
+
 	server := httptest.NewTLSServer(handler)
-	t.Cleanup(server.Close)
+	tb.Cleanup(server.Close)
 
 	return &http.Client{
 		Transport: &http.Transport{

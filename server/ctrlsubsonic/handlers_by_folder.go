@@ -115,7 +115,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 }
 
 // ServeGetAlbumList handles the getAlbumList view.
-// changes to this function should be reflected in in _by_tags.go's
+// changes to this function should be reflected in _by_tags.go's
 // getAlbumListTwo() function
 func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
@@ -130,8 +130,7 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 	case "alphabeticalByName":
 		q = q.Order("right_path")
 	case "byYear":
-		y1, y2 :=
-			params.GetOrInt("fromYear", 1800),
+		y1, y2 := params.GetOrInt("fromYear", 1800),
 			params.GetOrInt("toYear", 2200)
 		// support some clients sending wrong order like DSub
 		q = q.Where("tag_year BETWEEN ? AND ?", min(y1, y2), max(y1, y2))

@@ -35,9 +35,7 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
-var (
-	ErrNoValues = errors.New("no values provided")
-)
+var ErrNoValues = errors.New("no values provided")
 
 // some thin wrappers
 // may be needed when cleaning up parse() below
@@ -62,7 +60,6 @@ func parse(values []string, i interface{}) error {
 	}
 	var err error
 	switch v := i.(type) {
-
 	// *T
 	case *string:
 		*v, err = parseStr(values[0])

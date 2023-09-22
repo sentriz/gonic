@@ -1,3 +1,4 @@
+//nolint:thelper
 package ctrlsubsonic
 
 import (
@@ -80,7 +81,10 @@ func makeHTTPMockWithAdmin(query url.Values) (*httptest.ResponseRecorder, *http.
 func runQueryCases(t *testing.T, contr *Controller, h handlerSubsonic, cases []*queryCase) {
 	t.Helper()
 	for _, qc := range cases {
+		qc := qc
 		t.Run(qc.expectPath, func(t *testing.T) {
+			t.Parallel()
+
 			rr, req := makeHTTPMock(qc.params)
 			contr.H(h).ServeHTTP(rr, req)
 			body := rr.Body.String()
@@ -91,7 +95,7 @@ func runQueryCases(t *testing.T, contr *Controller, h handlerSubsonic, cases []*
 			goldenPath := makeGoldenPath(t.Name())
 			goldenRegen := os.Getenv("GONIC_REGEN")
 			if goldenRegen == "*" || (goldenRegen != "" && strings.HasPrefix(t.Name(), goldenRegen)) {
-				_ = os.WriteFile(goldenPath, []byte(body), 0600)
+				_ = os.WriteFile(goldenPath, []byte(body), 0o600)
 				t.Logf("golden file %q regenerated for %s", goldenPath, t.Name())
 				t.SkipNow()
 			}
@@ -120,14 +124,13 @@ func runQueryCases(t *testing.T, contr *Controller, h handlerSubsonic, cases []*
 	}
 }
 
-func makeController(t *testing.T) *Controller                  { return makec(t, []string{""}, false) }
-func makeControllerRoots(t *testing.T, r []string) *Controller { return makec(t, r, false) }
-func makeControllerAudio(t *testing.T) *Controller             { return makec(t, []string{""}, true) }
+func makeController(tb testing.TB) *Controller                  { return makec(tb, []string{""}, false) }
+func makeControllerRoots(tb testing.TB, r []string) *Controller { return makec(tb, r, false) }
 
-func makec(t *testing.T, roots []string, audio bool) *Controller {
-	t.Helper()
+func makec(tb testing.TB, roots []string, audio bool) *Controller {
+	tb.Helper()
 
-	m := mockfs.NewWithDirs(t, roots)
+	m := mockfs.NewWithDirs(tb, roots)
 	for _, root := range roots {
 		m.AddItemsPrefixWithCovers(root)
 		if !audio {

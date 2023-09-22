@@ -28,9 +28,11 @@ func init() {
 	}
 }
 
-var TypeByExtension = stdmime.TypeByExtension
-var ParseMediaType = stdmime.ParseMediaType
-var FormatMediaType = stdmime.FormatMediaType
+var (
+	TypeByExtension = stdmime.TypeByExtension
+	ParseMediaType  = stdmime.ParseMediaType
+	FormatMediaType = stdmime.FormatMediaType
+)
 
 func TypeByAudioExtension(ext string) string {
 	if _, ok := supportedAudioTypes[strings.ToLower(ext)]; !ok {

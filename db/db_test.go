@@ -21,6 +21,8 @@ func randKey() string {
 }
 
 func TestGetSetting(t *testing.T) {
+	t.Parallel()
+
 	key := SettingKey(randKey())
 	value := "howdy"
 

@@ -1,3 +1,4 @@
+//nolint:thelper
 package mockfs
 
 import (
@@ -27,29 +28,31 @@ type MockFS struct {
 	db        *db.DB
 }
 
-func New(t testing.TB) *MockFS                        { return newMockFS(t, []string{""}, "") }
-func NewWithDirs(t testing.TB, dirs []string) *MockFS { return newMockFS(t, dirs, "") }
-func NewWithExcludePattern(t testing.TB, excludePattern string) *MockFS {
-	return newMockFS(t, []string{""}, excludePattern)
+func New(tb testing.TB) *MockFS                        { return newMockFS(tb, []string{""}, "") }
+func NewWithDirs(tb testing.TB, dirs []string) *MockFS { return newMockFS(tb, dirs, "") }
+func NewWithExcludePattern(tb testing.TB, excludePattern string) *MockFS {
+	return newMockFS(tb, []string{""}, excludePattern)
 }
 
-func newMockFS(t testing.TB, dirs []string, excludePattern string) *MockFS {
+func newMockFS(tb testing.TB, dirs []string, excludePattern string) *MockFS {
+	tb.Helper()
+
 	dbc, err := db.NewMock()
 	if err != nil {
-		t.Fatalf("create db: %v", err)
+		tb.Fatalf("create db: %v", err)
 	}
-	t.Cleanup(func() {
+	tb.Cleanup(func() {
 		if err := dbc.Close(); err != nil {
-			t.Fatalf("close db: %v", err)
+			tb.Fatalf("close db: %v", err)
 		}
 	})
 
 	if err := dbc.Migrate(db.MigrationContext{}); err != nil {
-		t.Fatalf("migrate db db: %v", err)
+		tb.Fatalf("migrate db db: %v", err)
 	}
 	dbc.LogMode(false)
 
-	tmpDir := t.TempDir()
+	tmpDir := tb.TempDir()
 
 	var absDirs []string
 	for _, dir := range dirs {
@@ -57,7 +60,7 @@ func newMockFS(t testing.TB, dirs []string, excludePattern string) *MockFS {
 	}
 	for _, absDir := range absDirs {
 		if err := os.MkdirAll(absDir, os.ModePerm); err != nil {
-			t.Fatalf("mk abs dir: %v", err)
+			tb.Fatalf("mk abs dir: %v", err)
 		}
 	}
 
@@ -70,7 +73,7 @@ func newMockFS(t testing.TB, dirs []string, excludePattern string) *MockFS {
 	scanner := scanner.New(absDirs, dbc, multiValueSettings, tagReader, excludePattern)
 
 	return &MockFS{
-		t:         t,
+		t:         tb,
 		scanner:   scanner,
 		dir:       tmpDir,
 		tagReader: tagReader,
@@ -398,15 +401,6 @@ func (m *Tags) Length() int  { return firstInt(100, m.RawLength) }
 func (m *Tags) Bitrate() int { return firstInt(100, m.RawBitrate) }
 
 var _ tags.Parser = (*Tags)(nil)
-
-func first(or string, strs ...string) string {
-	for _, str := range strs {
-		if str != "" {
-			return str
-		}
-	}
-	return or
-}
 
 func firstInt(or int, ints ...int) int {
 	for _, int := range ints {

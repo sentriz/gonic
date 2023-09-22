@@ -11,8 +11,10 @@ import (
 	"go.senan.xyz/gonic/jukebox"
 )
 
-func newJukebox(t *testing.T) *jukebox.Jukebox {
-	sockPath := filepath.Join(t.TempDir(), "mpv.sock")
+func newJukebox(tb testing.TB) *jukebox.Jukebox {
+	tb.Helper()
+
+	sockPath := filepath.Join(tb.TempDir(), "mpv.sock")
 
 	j := jukebox.New()
 	err := j.Start(
@@ -20,12 +22,12 @@ func newJukebox(t *testing.T) *jukebox.Jukebox {
 		[]string{jukebox.MPVArg("--ao", "null")},
 	)
 	if errors.Is(err, jukebox.ErrMPVTooOld) {
-		t.Skip("old mpv found, skipping")
+		tb.Skip("old mpv found, skipping")
 	}
 	if err != nil {
-		t.Fatalf("start jukebox: %v", err)
+		tb.Fatalf("start jukebox: %v", err)
 	}
-	t.Cleanup(func() {
+	tb.Cleanup(func() {
 		j.Quit()
 	})
 	return j

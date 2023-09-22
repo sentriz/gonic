@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"path"
+	"strings"
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/playlist"
@@ -94,15 +95,20 @@ func (c *Controller) WithLogging(next http.Handler) http.Handler {
 }
 
 func (c *Controller) WithCORS(next http.Handler) http.Handler {
+	allowMethods := strings.Join(
+		[]string{http.MethodPost, http.MethodGet, http.MethodOptions, http.MethodPut, http.MethodDelete},
+		", ",
+	)
+	allowHeaders := strings.Join(
+		[]string{"Accept", "Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization"},
+		", ",
+	)
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods",
-			"POST, GET, OPTIONS, PUT, DELETE",
-		)
-		w.Header().Set("Access-Control-Allow-Headers",
-			"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization",
-		)
-		if r.Method == "OPTIONS" {
+		w.Header().Set("Access-Control-Allow-Methods", allowMethods)
+		w.Header().Set("Access-Control-Allow-Headers", allowHeaders)
+		if r.Method == http.MethodOptions {
 			return
 		}
 		next.ServeHTTP(w, r)

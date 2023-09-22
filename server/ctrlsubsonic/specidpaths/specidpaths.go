@@ -9,8 +9,10 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
-var ErrNotAbs = errors.New("not abs")
-var ErrNotFound = errors.New("not found")
+var (
+	ErrNotAbs   = errors.New("not abs")
+	ErrNotFound = errors.New("not found")
+)
 
 type Result interface {
 	SID() *specid.ID

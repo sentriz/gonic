@@ -23,9 +23,7 @@ const (
 	listenTypePlayingNow = "playing_now"
 )
 
-var (
-	ErrListenBrainz = errors.New("listenbrainz error")
-)
+var ErrListenBrainz = errors.New("listenbrainz error")
 
 type Scrobbler struct {
 	httpClient *http.Client

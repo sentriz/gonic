@@ -61,9 +61,11 @@ func New(musicDirs []string, db *db.DB, multiValueSettings map[Tag]MultiValueSet
 func (s *Scanner) IsScanning() bool {
 	return atomic.LoadInt32(s.scanning) == 1
 }
+
 func (s *Scanner) StartScanning() bool {
 	return atomic.CompareAndSwapInt32(s.scanning, 0, 1)
 }
+
 func (s *Scanner) StopScanning() {
 	defer atomic.StoreInt32(s.scanning, 0)
 }
@@ -173,7 +175,6 @@ func (s *Scanner) ExecuteWatch() error {
 				if err != nil {
 					log.Printf("error walking: %v", err)
 				}
-
 			}
 			scanList = map[string]struct{}{}
 			s.StopScanning()
@@ -343,7 +344,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, alb
 
 	trags, err := s.tagger.Read(absPath)
 	if err != nil {
-		return fmt.Errorf("%v: %w", err, ErrReadingTags)
+		return fmt.Errorf("%w: %w", err, ErrReadingTags)
 	}
 
 	genreNames := parseMulti(trags, s.multiValueSettings[Genre], tags.MustGenres, tags.MustGenre)
@@ -352,7 +353,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, alb
 		return fmt.Errorf("populate genres: %w", err)
 	}
 
-	// metadata for the album table comes only from the the first track's tags
+	// metadata for the album table comes only from the first track's tags
 	if i == 0 {
 		albumArtistNames := parseMulti(trags, s.multiValueSettings[AlbumArtist], tags.MustAlbumArtists, tags.MustAlbumArtist)
 		var albumArtistIDs []int
@@ -510,7 +511,7 @@ func populateAlbumGenres(tx *db.DB, album *db.Album, genreIDs []int) error {
 
 func populateAlbumArtists(tx *db.DB, album *db.Album, albumArtistIDs []int) error {
 	if err := tx.Where("album_id=?", album.ID).Delete(db.AlbumArtist{}).Error; err != nil {
-		return fmt.Errorf("delete old album album artists: %w", err)
+		return fmt.Errorf("delete old album artists: %w", err)
 	}
 
 	if err := tx.InsertBulkLeftMany("album_artists", []string{"album_id", "artist_id"}, album.ID, albumArtistIDs); err != nil {
@@ -583,7 +584,7 @@ func (s *Scanner) cleanArtists(c *Context) error {
 	return nil
 }
 
-func (s *Scanner) cleanGenres(c *Context) error {
+func (s *Scanner) cleanGenres(c *Context) error { //nolint:unparam
 	start := time.Now()
 	defer func() { log.Printf("finished clean genres in %s, %d removed", durSince(start), c.GenresMissing()) }()
 

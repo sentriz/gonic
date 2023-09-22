@@ -10,5 +10,7 @@ import (
 var version string
 var Version = strings.TrimSpace(version)
 
-const Name = "gonic"
-const NameUpper = "GONIC"
+const (
+	Name      = "gonic"
+	NameUpper = "GONIC"
+)
