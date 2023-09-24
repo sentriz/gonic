@@ -17,6 +17,7 @@ var supportedAudioTypes = map[string]string{
 	".opus": "audio/ogg",
 	".wma":  "audio/x-ms-wma",
 	".wav":  "audio/x-wav",
+	".wv":   "audio/x-wavpack",
 }
 
 //nolint:gochecknoinits
