@@ -36,17 +36,16 @@ var submitListensRequest string
 
 func TestScrobble(t *testing.T) {
 	t.Parallel()
-	require := require.New(t)
 
 	// arrange
 	client, shutdown := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(http.MethodPost, r.Method)
-		require.Equal("/1/submit-listens", r.URL.Path)
-		require.Equal("application/json", r.Header.Get("Content-Type"))
-		require.Equal("Token token1", r.Header.Get("Authorization"))
+		require.Equal(t, http.MethodPost, r.Method)
+		require.Equal(t, "/1/submit-listens", r.URL.Path)
+		require.Equal(t, "application/json", r.Header.Get("Content-Type"))
+		require.Equal(t, "Token token1", r.Header.Get("Authorization"))
 		bodyBytes, err := io.ReadAll(r.Body)
-		require.NoError(err)
-		require.JSONEq(submitListensRequest, string(bodyBytes))
+		require.NoError(t, err)
+		require.JSONEq(t, submitListensRequest, string(bodyBytes))
 
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"accepted": 1}`))
@@ -71,19 +70,18 @@ func TestScrobble(t *testing.T) {
 	}, time.Unix(1683804525, 0), true)
 
 	// assert
-	require.NoError(err)
+	require.NoError(t, err)
 }
 
 func TestScrobbleUnauthorized(t *testing.T) {
 	t.Parallel()
-	require := require.New(t)
 
 	// arrange
 	client, shutdown := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(http.MethodPost, r.Method)
-		require.Equal("/1/submit-listens", r.URL.Path)
-		require.Equal("application/json", r.Header.Get("Content-Type"))
-		require.Equal("Token token1", r.Header.Get("Authorization"))
+		require.Equal(t, http.MethodPost, r.Method)
+		require.Equal(t, "/1/submit-listens", r.URL.Path)
+		require.Equal(t, "application/json", r.Header.Get("Content-Type"))
+		require.Equal(t, "Token token1", r.Header.Get("Authorization"))
 
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(`{"code": 401, "error": "Invalid authorization token."}`))
@@ -108,19 +106,18 @@ func TestScrobbleUnauthorized(t *testing.T) {
 	}, time.Now(), true)
 
 	// assert
-	require.ErrorIs(err, ErrListenBrainz)
+	require.ErrorIs(t, err, ErrListenBrainz)
 }
 
 func TestScrobbleServerError(t *testing.T) {
 	t.Parallel()
-	require := require.New(t)
 
 	// arrange
 	client, shutdown := httpClientMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(http.MethodPost, r.Method)
-		require.Equal("/1/submit-listens", r.URL.Path)
-		require.Equal("application/json", r.Header.Get("Content-Type"))
-		require.Equal("Token token1", r.Header.Get("Authorization"))
+		require.Equal(t, http.MethodPost, r.Method)
+		require.Equal(t, "/1/submit-listens", r.URL.Path)
+		require.Equal(t, "application/json", r.Header.Get("Content-Type"))
+		require.Equal(t, "Token token1", r.Header.Get("Authorization"))
 
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
@@ -144,5 +141,5 @@ func TestScrobbleServerError(t *testing.T) {
 	}, time.Now(), true)
 
 	// assert
-	require.ErrorIs(err, ErrListenBrainz)
+	require.ErrorIs(t, err, ErrListenBrainz)
 }

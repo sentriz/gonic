@@ -15,12 +15,11 @@ import (
 func TestScrobble(t *testing.T) {
 	// arrange
 	t.Parallel()
-	require := require.New(t)
 
 	testDB, err := db.NewMock()
-	require.NoError(err)
+	require.NoError(t, err)
 	err = testDB.Migrate(db.MigrationContext{})
-	require.NoError(err)
+	require.NoError(t, err)
 
 	testDB.SetSetting(db.LastFMAPIKey, "apiKey1")
 	testDB.SetSetting(db.LastFMSecret, "secret1")
@@ -46,8 +45,8 @@ func TestScrobble(t *testing.T) {
 	stamp := time.Date(2023, 8, 12, 12, 34, 1, 200, time.UTC)
 
 	client := Client{mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(http.MethodPost, r.Method)
-		require.Equal(url.Values{
+		require.Equal(t, http.MethodPost, r.Method)
+		require.Equal(t, url.Values{
 			"album":       []string{"album1"},
 			"albumArtist": []string{"artist1"},
 			"api_key":     []string{"apiKey1"},
@@ -61,8 +60,9 @@ func TestScrobble(t *testing.T) {
 			"track":       []string{"title1"},
 			"trackNumber": []string{"1"},
 		}, r.URL.Query())
-		require.Equal("/2.0/", r.URL.Path)
-		require.Equal(baseURL, "https://"+r.Host+r.URL.Path)
+
+		require.Equal(t, "/2.0/", r.URL.Path)
+		require.Equal(t, baseURL, "https://"+r.Host+r.URL.Path)
 
 		w.WriteHeader(http.StatusOK)
 		w.Write(mockclient.ArtistGetTopTracksResponse)
@@ -74,13 +74,12 @@ func TestScrobble(t *testing.T) {
 	err = scrobbler.Scrobble(user, track, stamp, true)
 
 	// assert
-	require.NoError(err)
+	require.NoError(t, err)
 }
 
 func TestScrobbleReturnsWithoutLastFMSession(t *testing.T) {
 	// arrange
 	t.Parallel()
-	require := require.New(t)
 
 	scrobbler := Scrobbler{}
 
@@ -88,16 +87,15 @@ func TestScrobbleReturnsWithoutLastFMSession(t *testing.T) {
 	err := scrobbler.Scrobble(&db.User{}, &db.Track{}, time.Now(), false)
 
 	// assert
-	require.NoError(err)
+	require.NoError(t, err)
 }
 
 func TestScrobbleFailsWithoutLastFMAPIKey(t *testing.T) {
 	// arrange
 	t.Parallel()
-	require := require.New(t)
 
 	testDB, err := db.NewMock()
-	require.NoError(err)
+	require.NoError(t, err)
 
 	user := &db.User{
 		LastFMSession: "lastFMSession1",
@@ -109,5 +107,5 @@ func TestScrobbleFailsWithoutLastFMAPIKey(t *testing.T) {
 	err = scrobbler.Scrobble(user, &db.Track{}, time.Now(), false)
 
 	// assert
-	require.Error(err)
+	require.Error(t, err)
 }
