@@ -22,7 +22,6 @@ func TestPodcastsAndEpisodesWithSameName(t *testing.T) {
 	t.Skip("requires network access")
 
 	m := mockfs.New(t)
-	require := require.New(t)
 
 	base := t.TempDir()
 	podcasts := New(m.DB(), base, m.TagReader())
@@ -34,33 +33,33 @@ func TestPodcastsAndEpisodesWithSameName(t *testing.T) {
 	}
 
 	podcast, err := podcasts.AddNewPodcast("file://testdata/rss.new", newFeed)
-	require.NoError(err)
+	require.NoError(t, err)
 
-	require.Equal(podcast.RootDir, filepath.Join(base, "InternetBox"))
+	require.Equal(t, podcast.RootDir, filepath.Join(base, "InternetBox"))
 
 	podcast, err = podcasts.AddNewPodcast("file://testdata/rss.new", newFeed)
-	require.NoError(err)
+	require.NoError(t, err)
 
 	// check we made a unique podcast name
-	require.Equal(podcast.RootDir, filepath.Join(base, "InternetBox (1)"))
+	require.Equal(t, podcast.RootDir, filepath.Join(base, "InternetBox (1)"))
 
 	podcastEpisodes, err := podcasts.GetNewestPodcastEpisodes(10)
-	require.NoError(err)
-	require.Greater(len(podcastEpisodes), 0)
+	require.NoError(t, err)
+	require.Greater(t, len(podcastEpisodes), 0)
 
 	var pe []*db.PodcastEpisode
-	require.NoError(m.DB().Order("id").Find(&pe, "podcast_id=? AND title=?", podcast.ID, "Episode 126").Error)
-	require.Len(pe, 2)
+	require.NoError(t, m.DB().Order("id").Find(&pe, "podcast_id=? AND title=?", podcast.ID, "Episode 126").Error)
+	require.Len(t, pe, 2)
 
-	require.NoError(podcasts.DownloadEpisode(pe[0].ID))
-	require.NoError(podcasts.DownloadEpisode(pe[1].ID))
+	require.NoError(t, podcasts.DownloadEpisode(pe[0].ID))
+	require.NoError(t, podcasts.DownloadEpisode(pe[1].ID))
 
-	require.NoError(m.DB().Order("id").Preload("Podcast").Find(&pe, "podcast_id=? AND title=?", podcast.ID, "Episode 126").Error)
-	require.Len(pe, 2)
+	require.NoError(t, m.DB().Order("id").Preload("Podcast").Find(&pe, "podcast_id=? AND title=?", podcast.ID, "Episode 126").Error)
+	require.Len(t, pe, 2)
 
 	// check we made a unique podcast episode names
-	require.Equal("InternetBoxEpisode126.mp3", pe[0].Filename)
-	require.Equal("InternetBoxEpisode126 (1).mp3", pe[1].Filename)
+	require.Equal(t, "InternetBoxEpisode126.mp3", pe[0].Filename)
+	require.Equal(t, "InternetBoxEpisode126 (1).mp3", pe[1].Filename)
 }
 
 func TestGetMoreRecentEpisodes(t *testing.T) {

@@ -26,8 +26,6 @@ func TestGetSetting(t *testing.T) {
 	key := SettingKey(randKey())
 	value := "howdy"
 
-	require := require.New(t)
-
 	testDB, err := NewMock()
 	if err != nil {
 		t.Fatalf("error creating db: %v", err)
@@ -36,16 +34,16 @@ func TestGetSetting(t *testing.T) {
 		t.Fatalf("error migrating db: %v", err)
 	}
 
-	require.NoError(testDB.SetSetting(key, value))
+	require.NoError(t, testDB.SetSetting(key, value))
 
 	actual, err := testDB.GetSetting(key)
-	require.NoError(err)
-	require.Equal(value, actual)
+	require.NoError(t, err)
+	require.Equal(t, value, actual)
 
-	require.NoError(testDB.SetSetting(key, value))
+	require.NoError(t, testDB.SetSetting(key, value))
 	actual, err = testDB.GetSetting(key)
-	require.NoError(err)
-	require.Equal(value, actual)
+	require.NoError(t, err)
+	require.Equal(t, value, actual)
 }
 
 func TestMain(m *testing.M) {

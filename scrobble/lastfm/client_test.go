@@ -16,16 +16,16 @@ func TestArtistGetInfo(t *testing.T) {
 	t.Parallel()
 
 	// arrange
-	require := require.New(t)
 	client := Client{mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(http.MethodGet, r.Method)
-		require.Equal(url.Values{
+		require.Equal(t, http.MethodGet, r.Method)
+		require.Equal(t, url.Values{
 			"method":  []string{"artist.getInfo"},
 			"api_key": []string{"apiKey1"},
 			"artist":  []string{"Artist 1"},
 		}, r.URL.Query())
-		require.Equal("/2.0/", r.URL.Path)
-		require.Equal(baseURL, "https://"+r.Host+r.URL.Path)
+
+		require.Equal(t, "/2.0/", r.URL.Path)
+		require.Equal(t, baseURL, "https://"+r.Host+r.URL.Path)
 
 		w.WriteHeader(http.StatusOK)
 		w.Write(mockclient.ArtistGetInfoResponse)
@@ -35,8 +35,8 @@ func TestArtistGetInfo(t *testing.T) {
 	actual, err := client.ArtistGetInfo("apiKey1", "Artist 1")
 
 	// assert
-	require.NoError(err)
-	require.Equal(Artist{
+	require.NoError(t, err)
+	require.Equal(t, Artist{
 		XMLName: xml.Name{
 			Local: "artist",
 		},
@@ -98,16 +98,16 @@ func TestArtistGetInfoClientRequestFails(t *testing.T) {
 	t.Parallel()
 
 	// arrange
-	require := require.New(t)
 	client := Client{mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(http.MethodGet, r.Method)
-		require.Equal(url.Values{
+		require.Equal(t, http.MethodGet, r.Method)
+		require.Equal(t, url.Values{
 			"method":  []string{"artist.getInfo"},
 			"api_key": []string{"apiKey1"},
 			"artist":  []string{"Artist 1"},
 		}, r.URL.Query())
-		require.Equal("/2.0/", r.URL.Path)
-		require.Equal(baseURL, "https://"+r.Host+r.URL.Path)
+
+		require.Equal(t, "/2.0/", r.URL.Path)
+		require.Equal(t, baseURL, "https://"+r.Host+r.URL.Path)
 
 		w.WriteHeader(http.StatusInternalServerError)
 	})}
@@ -116,24 +116,24 @@ func TestArtistGetInfoClientRequestFails(t *testing.T) {
 	actual, err := client.ArtistGetInfo("apiKey1", "Artist 1")
 
 	// assert
-	require.Error(err)
-	require.Zero(actual)
+	require.Error(t, err)
+	require.Zero(t, actual)
 }
 
 func TestArtistGetTopTracks(t *testing.T) {
 	t.Parallel()
 
 	// arrange
-	require := require.New(t)
 	client := Client{mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(http.MethodGet, r.Method)
-		require.Equal(url.Values{
+		require.Equal(t, http.MethodGet, r.Method)
+		require.Equal(t, url.Values{
 			"method":  []string{"artist.getTopTracks"},
 			"api_key": []string{"apiKey1"},
 			"artist":  []string{"artist1"},
 		}, r.URL.Query())
-		require.Equal("/2.0/", r.URL.Path)
-		require.Equal(baseURL, "https://"+r.Host+r.URL.Path)
+
+		require.Equal(t, "/2.0/", r.URL.Path)
+		require.Equal(t, baseURL, "https://"+r.Host+r.URL.Path)
 
 		w.WriteHeader(http.StatusOK)
 		w.Write(mockclient.ArtistGetTopTracksResponse)
@@ -143,8 +143,8 @@ func TestArtistGetTopTracks(t *testing.T) {
 	actual, err := client.ArtistGetTopTracks("apiKey1", "artist1")
 
 	// assert
-	require.NoError(err)
-	require.Equal(TopTracks{
+	require.NoError(t, err)
+	require.Equal(t, TopTracks{
 		Artist: "Artist 1",
 		XMLName: xml.Name{
 			Local: "toptracks",
@@ -194,16 +194,16 @@ func TestArtistGetTopTracks_clientRequestFails(t *testing.T) {
 	t.Parallel()
 
 	// arrange
-	require := require.New(t)
 	client := Client{mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(http.MethodGet, r.Method)
-		require.Equal(url.Values{
+		require.Equal(t, http.MethodGet, r.Method)
+		require.Equal(t, url.Values{
 			"method":  []string{"artist.getTopTracks"},
 			"api_key": []string{"apiKey1"},
 			"artist":  []string{"artist1"},
 		}, r.URL.Query())
-		require.Equal("/2.0/", r.URL.Path)
-		require.Equal(baseURL, "https://"+r.Host+r.URL.Path)
+
+		require.Equal(t, "/2.0/", r.URL.Path)
+		require.Equal(t, baseURL, "https://"+r.Host+r.URL.Path)
 
 		w.WriteHeader(http.StatusInternalServerError)
 	})}
@@ -212,24 +212,24 @@ func TestArtistGetTopTracks_clientRequestFails(t *testing.T) {
 	actual, err := client.ArtistGetTopTracks("apiKey1", "artist1")
 
 	// assert
-	require.Error(err)
-	require.Zero(actual)
+	require.Error(t, err)
+	require.Zero(t, actual)
 }
 
 func TestArtistGetSimilar(t *testing.T) {
 	t.Parallel()
 
 	// arrange
-	require := require.New(t)
 	client := Client{mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(http.MethodGet, r.Method)
-		require.Equal(url.Values{
+		require.Equal(t, http.MethodGet, r.Method)
+		require.Equal(t, url.Values{
 			"method":  []string{"artist.getSimilar"},
 			"api_key": []string{"apiKey1"},
 			"artist":  []string{"artist1"},
 		}, r.URL.Query())
-		require.Equal("/2.0/", r.URL.Path)
-		require.Equal(baseURL, "https://"+r.Host+r.URL.Path)
+
+		require.Equal(t, "/2.0/", r.URL.Path)
+		require.Equal(t, baseURL, "https://"+r.Host+r.URL.Path)
 
 		w.WriteHeader(http.StatusOK)
 		w.Write(mockclient.ArtistGetSimilarResponse)
@@ -239,8 +239,8 @@ func TestArtistGetSimilar(t *testing.T) {
 	actual, err := client.ArtistGetSimilar("apiKey1", "artist1")
 
 	// assert
-	require.NoError(err)
-	require.Equal(SimilarArtists{
+	require.NoError(t, err)
+	require.Equal(t, SimilarArtists{
 		XMLName: xml.Name{
 			Local: "similarartists",
 		},
@@ -298,16 +298,16 @@ func TestArtistGetSimilar_clientRequestFails(t *testing.T) {
 	t.Parallel()
 
 	// arrange
-	require := require.New(t)
 	client := Client{mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(http.MethodGet, r.Method)
-		require.Equal(url.Values{
+		require.Equal(t, http.MethodGet, r.Method)
+		require.Equal(t, url.Values{
 			"method":  []string{"artist.getSimilar"},
 			"api_key": []string{"apiKey1"},
 			"artist":  []string{"artist1"},
 		}, r.URL.Query())
-		require.Equal("/2.0/", r.URL.Path)
-		require.Equal(baseURL, "https://"+r.Host+r.URL.Path)
+
+		require.Equal(t, "/2.0/", r.URL.Path)
+		require.Equal(t, baseURL, "https://"+r.Host+r.URL.Path)
 
 		w.WriteHeader(http.StatusInternalServerError)
 	})}
@@ -316,25 +316,25 @@ func TestArtistGetSimilar_clientRequestFails(t *testing.T) {
 	actual, err := client.ArtistGetSimilar("apiKey1", "artist1")
 
 	// assert
-	require.Error(err)
-	require.Zero(actual)
+	require.Error(t, err)
+	require.Zero(t, actual)
 }
 
 func TestTrackGetSimilarTracks(t *testing.T) {
 	t.Parallel()
 
 	// arrange
-	require := require.New(t)
 	client := Client{mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(http.MethodGet, r.Method)
-		require.Equal(url.Values{
+		require.Equal(t, http.MethodGet, r.Method)
+		require.Equal(t, url.Values{
 			"method":  []string{"track.getSimilar"},
 			"api_key": []string{"apiKey1"},
 			"artist":  []string{"artist1"},
 			"track":   []string{"track1"},
 		}, r.URL.Query())
-		require.Equal("/2.0/", r.URL.Path)
-		require.Equal(baseURL, "https://"+r.Host+r.URL.Path)
+
+		require.Equal(t, "/2.0/", r.URL.Path)
+		require.Equal(t, baseURL, "https://"+r.Host+r.URL.Path)
 
 		w.WriteHeader(http.StatusOK)
 		w.Write(mockclient.TrackGetSimilarResponse)
@@ -344,8 +344,8 @@ func TestTrackGetSimilarTracks(t *testing.T) {
 	actual, err := client.TrackGetSimilarTracks("apiKey1", "artist1", "track1")
 
 	// assert
-	require.NoError(err)
-	require.Equal(SimilarTracks{
+	require.NoError(t, err)
+	require.Equal(t, SimilarTracks{
 		Artist: "Artist 1",
 		Track:  "Track 1",
 		XMLName: xml.Name{
@@ -392,17 +392,17 @@ func TestTrackGetSimilarTracks_clientRequestFails(t *testing.T) {
 	t.Parallel()
 
 	// arrange
-	require := require.New(t)
 	client := Client{mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(http.MethodGet, r.Method)
-		require.Equal(url.Values{
+		require.Equal(t, http.MethodGet, r.Method)
+		require.Equal(t, url.Values{
 			"method":  []string{"track.getSimilar"},
 			"api_key": []string{"apiKey1"},
 			"artist":  []string{"artist1"},
 			"track":   []string{"track1"},
 		}, r.URL.Query())
-		require.Equal("/2.0/", r.URL.Path)
-		require.Equal(baseURL, "https://"+r.Host+r.URL.Path)
+
+		require.Equal(t, "/2.0/", r.URL.Path)
+		require.Equal(t, baseURL, "https://"+r.Host+r.URL.Path)
 
 		w.WriteHeader(http.StatusInternalServerError)
 	})}
@@ -411,25 +411,25 @@ func TestTrackGetSimilarTracks_clientRequestFails(t *testing.T) {
 	actual, err := client.TrackGetSimilarTracks("apiKey1", "artist1", "track1")
 
 	// assert
-	require.Error(err)
-	require.Zero(actual)
+	require.Error(t, err)
+	require.Zero(t, actual)
 }
 
 func TestGetSession(t *testing.T) {
 	t.Parallel()
 
 	// arrange
-	require := require.New(t)
 	client := Client{mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(http.MethodGet, r.Method)
-		require.Equal(url.Values{
+		require.Equal(t, http.MethodGet, r.Method)
+		require.Equal(t, url.Values{
 			"method":  []string{"auth.getSession"},
 			"api_key": []string{"apiKey1"},
 			"api_sig": []string{"b872a708a0b8b1d9fc1230b1cb6493f8"},
 			"token":   []string{"token1"},
 		}, r.URL.Query())
-		require.Equal("/2.0/", r.URL.Path)
-		require.Equal(baseURL, "https://"+r.Host+r.URL.Path)
+
+		require.Equal(t, "/2.0/", r.URL.Path)
+		require.Equal(t, baseURL, "https://"+r.Host+r.URL.Path)
 
 		w.WriteHeader(http.StatusOK)
 		w.Write(mockclient.GetSessionResponse)
@@ -439,25 +439,25 @@ func TestGetSession(t *testing.T) {
 	actual, err := client.GetSession("apiKey1", "secret1", "token1")
 
 	// assert
-	require.NoError(err)
-	require.Equal("sessionKey1", actual)
+	require.NoError(t, err)
+	require.Equal(t, "sessionKey1", actual)
 }
 
 func TestGetSessioeClientRequestFails(t *testing.T) {
 	t.Parallel()
 
 	// arrange
-	require := require.New(t)
 	client := Client{mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(http.MethodGet, r.Method)
-		require.Equal(url.Values{
+		require.Equal(t, http.MethodGet, r.Method)
+		require.Equal(t, url.Values{
 			"method":  []string{"auth.getSession"},
 			"api_key": []string{"apiKey1"},
 			"api_sig": []string{"b872a708a0b8b1d9fc1230b1cb6493f8"},
 			"token":   []string{"token1"},
 		}, r.URL.Query())
-		require.Equal("/2.0/", r.URL.Path)
-		require.Equal(baseURL, "https://"+r.Host+r.URL.Path)
+
+		require.Equal(t, "/2.0/", r.URL.Path)
+		require.Equal(t, baseURL, "https://"+r.Host+r.URL.Path)
 
 		w.WriteHeader(http.StatusInternalServerError)
 	})}
@@ -466,8 +466,8 @@ func TestGetSessioeClientRequestFails(t *testing.T) {
 	actual, err := client.GetSession("apiKey1", "secret1", "token1")
 
 	// assert
-	require.Error(err)
-	require.Zero(actual)
+	require.Error(t, err)
+	require.Zero(t, actual)
 }
 
 func TestGetParamSignature(t *testing.T) {
