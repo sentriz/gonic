@@ -122,6 +122,19 @@ func (c *Client) ArtistGetSimilar(apiKey string, artistName string) (SimilarArti
 	return resp.SimilarArtists, nil
 }
 
+func (c *Client) UserGetLovedTracks(apiKey string, userName string) (LovedTracks, error) {
+	params := url.Values{}
+	params.Add("method", "user.getLovedTracks")
+	params.Add("api_key", apiKey)
+	params.Add("user", userName)
+	params.Add("limit", "1000") // TODO: paginate
+	resp, err := c.makeRequest("GET", params)
+	if err != nil {
+		return LovedTracks{}, fmt.Errorf("making lovedTracks users GET:  %w", err)
+	}
+	return resp.LovedTracks, nil
+}
+
 func (c *Client) GetSession(apiKey, secret, token string) (string, error) {
 	params := url.Values{}
 	params.Add("method", "auth.getSession")

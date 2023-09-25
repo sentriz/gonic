@@ -12,6 +12,7 @@ type (
 		TopTracks      TopTracks      `xml:"toptracks"`
 		SimilarTracks  SimilarTracks  `xml:"similartracks"`
 		SimilarArtists SimilarArtists `xml:"similarartists"`
+		LovedTracks    LovedTracks    `xml:"lovedtracks"`
 	}
 
 	Session struct {
@@ -98,5 +99,15 @@ type (
 		Listeners int     `xml:"listeners"`
 		URL       string  `xml:"url"`
 		Image     []Image `xml:"image"`
+	}
+
+	TrackWithArtist struct {
+		Track
+		Artist Artist `xml:"artist"`
+	}
+
+	LovedTracks struct {
+		XMLName xml.Name          `xml:"lovedtracks"`
+		Tracks  []TrackWithArtist `xml:"track"`
 	}
 )
