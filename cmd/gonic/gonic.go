@@ -251,6 +251,8 @@ func main() {
 		}))
 	}
 
+	noCleanup := func(_ error) {}
+
 	var g run.Group
 	g.Add(func() error {
 		log.Print("starting job 'http'\n")
@@ -266,7 +268,7 @@ func main() {
 			return server.ListenAndServeTLS(*confTLSCert, *confTLSKey)
 		}
 		return server.ListenAndServe()
-	}, nil)
+	}, noCleanup)
 
 	g.Add(func() error {
 		log.Printf("starting job 'session clean'\n")
@@ -275,7 +277,7 @@ func main() {
 			sessDB.Cleanup()
 		}
 		return nil
-	}, nil)
+	}, noCleanup)
 
 	g.Add(func() error {
 		log.Printf("starting job 'podcast refresher'\n")
@@ -286,7 +288,7 @@ func main() {
 			}
 		}
 		return nil
-	}, nil)
+	}, noCleanup)
 
 	g.Add(func() error {
 		log.Printf("starting job 'podcast purger'\n")
@@ -297,7 +299,7 @@ func main() {
 			}
 		}
 		return nil
-	}, nil)
+	}, noCleanup)
 
 	if *confScanIntervalMins > 0 {
 		g.Add(func() error {
@@ -309,7 +311,7 @@ func main() {
 				}
 			}
 			return nil
-		}, nil)
+		}, noCleanup)
 	}
 
 	if *confScanWatcher {
@@ -352,7 +354,7 @@ func main() {
 		g.Add(func() error {
 			log.Printf("starting job 'refresh artist info'\n")
 			return artistInfoCache.Refresh(lastfmAPIKey, 8*time.Second)
-		}, nil)
+		}, noCleanup)
 	}
 
 	if *confScanAtStart {
