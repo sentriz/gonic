@@ -20,6 +20,7 @@ type Scrobbler struct {
 
 var _ scrobble.Scrobbler = (*Scrobbler)(nil)
 
+// TODO: remove dependency on db here
 func NewScrobbler(db *db.DB, client *Client) *Scrobbler {
 	return &Scrobbler{
 		db:     db,
@@ -66,6 +67,33 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 	if _, err := uuid.Parse(track.TagBrainzID); err == nil {
 		params.Add("mbid", track.TagBrainzID)
 	}
+
+	params.Add("api_sig", getParamSignature(params, secret))
+
+	_, err = s.client.makeRequest(http.MethodPost, params)
+	return err
+}
+
+func (s *Scrobbler) LoveTrack(user *db.User, track *db.Track) error {
+	if user.LastFMSession == "" {
+		return nil
+	}
+
+	apiKey, err := s.db.GetSetting(db.LastFMAPIKey)
+	if err != nil {
+		return fmt.Errorf("get api key: %w", err)
+	}
+	secret, err := s.db.GetSetting(db.LastFMSecret)
+	if err != nil {
+		return fmt.Errorf("get secret: %w", err)
+	}
+
+	params := url.Values{}
+	params.Add("method", "track.love")
+	params.Add("track", track.TagTitle)
+	params.Add("artist", track.TagTrackArtist)
+	params.Add("api_key", apiKey)
+	params.Add("sk", user.LastFMSession)
 
 	params.Add("api_sig", getParamSignature(params, secret))
 
