@@ -2,6 +2,7 @@ package lastfm
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -68,6 +69,6 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 
 	params.Add("api_sig", getParamSignature(params, secret))
 
-	_, err = s.client.makeRequest("POST", params)
+	_, err = s.client.makeRequest(http.MethodPost, params)
 	return err
 }

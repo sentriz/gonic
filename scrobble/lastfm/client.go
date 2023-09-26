@@ -78,7 +78,7 @@ func (c *Client) ArtistGetInfo(apiKey string, artistName string) (Artist, error)
 	params.Add("method", "artist.getInfo")
 	params.Add("api_key", apiKey)
 	params.Add("artist", artistName)
-	resp, err := c.makeRequest("GET", params)
+	resp, err := c.makeRequest(http.MethodGet, params)
 	if err != nil {
 		return Artist{}, fmt.Errorf("making artist GET: %w", err)
 	}
@@ -90,7 +90,7 @@ func (c *Client) ArtistGetTopTracks(apiKey, artistName string) (TopTracks, error
 	params.Add("method", "artist.getTopTracks")
 	params.Add("api_key", apiKey)
 	params.Add("artist", artistName)
-	resp, err := c.makeRequest("GET", params)
+	resp, err := c.makeRequest(http.MethodGet, params)
 	if err != nil {
 		return TopTracks{}, fmt.Errorf("making track GET: %w", err)
 	}
@@ -103,7 +103,7 @@ func (c *Client) TrackGetSimilarTracks(apiKey string, artistName, trackName stri
 	params.Add("api_key", apiKey)
 	params.Add("track", trackName)
 	params.Add("artist", artistName)
-	resp, err := c.makeRequest("GET", params)
+	resp, err := c.makeRequest(http.MethodGet, params)
 	if err != nil {
 		return SimilarTracks{}, fmt.Errorf("making track GET: %w", err)
 	}
@@ -115,7 +115,7 @@ func (c *Client) ArtistGetSimilar(apiKey string, artistName string) (SimilarArti
 	params.Add("method", "artist.getSimilar")
 	params.Add("api_key", apiKey)
 	params.Add("artist", artistName)
-	resp, err := c.makeRequest("GET", params)
+	resp, err := c.makeRequest(http.MethodGet, params)
 	if err != nil {
 		return SimilarArtists{}, fmt.Errorf("making similar artists GET:  %w", err)
 	}
@@ -128,9 +128,9 @@ func (c *Client) UserGetLovedTracks(apiKey string, userName string) (LovedTracks
 	params.Add("api_key", apiKey)
 	params.Add("user", userName)
 	params.Add("limit", "1000") // TODO: paginate
-	resp, err := c.makeRequest("GET", params)
+	resp, err := c.makeRequest(http.MethodGet, params)
 	if err != nil {
-		return LovedTracks{}, fmt.Errorf("making lovedTracks users GET:  %w", err)
+		return LovedTracks{}, fmt.Errorf("making user get loved tracks GET:  %w", err)
 	}
 	return resp.LovedTracks, nil
 }
@@ -141,7 +141,7 @@ func (c *Client) GetSession(apiKey, secret, token string) (string, error) {
 	params.Add("api_key", apiKey)
 	params.Add("token", token)
 	params.Add("api_sig", getParamSignature(params, secret))
-	resp, err := c.makeRequest("GET", params)
+	resp, err := c.makeRequest(http.MethodGet, params)
 	if err != nil {
 		return "", fmt.Errorf("making session GET: %w", err)
 	}
