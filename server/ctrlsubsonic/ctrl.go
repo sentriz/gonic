@@ -7,11 +7,12 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
+	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/jukebox"
+	"go.senan.xyz/gonic/lastfm"
 	"go.senan.xyz/gonic/podcasts"
-	"go.senan.xyz/gonic/scrobble"
-	"go.senan.xyz/gonic/scrobble/lastfm"
 	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/artistinfocache"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
@@ -39,6 +40,11 @@ func PathsOf(paths []MusicPath) []string {
 	return r
 }
 
+type Scrobbler interface {
+	IsUserAuthenticated(user *db.User) bool
+	Scrobble(user *db.User, track *db.Track, stamp time.Time, submission bool) error
+}
+
 type Controller struct {
 	*ctrlbase.Controller
 	MusicPaths      []MusicPath
@@ -46,7 +52,7 @@ type Controller struct {
 	CacheAudioPath  string
 	CacheCoverPath  string
 	Jukebox         *jukebox.Jukebox
-	Scrobblers      []scrobble.Scrobbler
+	Scrobblers      []Scrobbler
 	Podcasts        *podcasts.Podcasts
 	Transcoder      transcode.Transcoder
 	LastFMClient    *lastfm.Client

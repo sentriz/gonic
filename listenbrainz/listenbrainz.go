@@ -12,7 +12,6 @@ import (
 
 	"github.com/google/uuid"
 	"go.senan.xyz/gonic/db"
-	"go.senan.xyz/gonic/scrobble"
 )
 
 const (
@@ -25,21 +24,23 @@ const (
 
 var ErrListenBrainz = errors.New("listenbrainz error")
 
-type Scrobbler struct {
+type Client struct {
 	httpClient *http.Client
 }
 
-func NewScrobbler() *Scrobbler {
-	return &Scrobbler{
-		httpClient: http.DefaultClient,
-	}
+func NewClient() *Client {
+	return NewClientCustom(http.DefaultClient)
 }
 
-func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, submission bool) error {
-	if user.ListenBrainzURL == "" || user.ListenBrainzToken == "" {
-		return nil
-	}
+func NewClientCustom(httpClient *http.Client) *Client {
+	return &Client{httpClient: httpClient}
+}
 
+func (c *Client) IsUserAuthenticated(user *db.User) bool {
+	return user.ListenBrainzURL != "" && user.ListenBrainzToken != ""
+}
+
+func (c *Client) Scrobble(user *db.User, track *db.Track, stamp time.Time, submission bool) error {
 	// make sure we provide a valid uuid, since some users may have an incorrect mbid in their tags
 	var trackMBID string
 	if _, err := uuid.Parse(track.TagBrainzID); err == nil {
@@ -61,6 +62,7 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 	scrobble := Scrobble{
 		Payload: []*Payload{payload},
 	}
+
 	if submission && len(scrobble.Payload) > 0 {
 		scrobble.ListenType = listenTypeSingle
 		scrobble.Payload[0].ListenedAt = int(stamp.Unix())
@@ -72,12 +74,15 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 	if err := json.NewEncoder(&payloadBuf).Encode(scrobble); err != nil {
 		return err
 	}
+
 	submitURL := fmt.Sprintf("%s%s", user.ListenBrainzURL, submitPath)
 	authHeader := fmt.Sprintf("Token %s", user.ListenBrainzToken)
+
 	req, _ := http.NewRequest(http.MethodPost, submitURL, &payloadBuf)
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", authHeader)
-	resp, err := s.httpClient.Do(req)
+
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("http post: %w", err)
 	}
@@ -93,5 +98,3 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 	}
 	return nil
 }
-
-var _ scrobble.Scrobbler = (*Scrobbler)(nil)

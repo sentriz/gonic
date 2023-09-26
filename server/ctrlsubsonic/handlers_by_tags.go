@@ -3,6 +3,7 @@ package ctrlsubsonic
 import (
 	"errors"
 	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"net/url"
@@ -318,14 +319,10 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	sub := spec.NewResponse()
 	sub.ArtistInfoTwo = &spec.ArtistInfo{}
 
-	apiKey, _ := c.DB.GetSetting(db.LastFMAPIKey)
-	if apiKey == "" {
-		return sub
-	}
-
-	info, err := c.ArtistInfoCache.GetOrLookup(r.Context(), apiKey, artist.ID)
+	info, err := c.ArtistInfoCache.GetOrLookup(r.Context(), artist.ID)
 	if err != nil {
-		return spec.NewError(0, "fetching artist info: %v", err)
+		log.Printf("error fetching artist info from lastfm: %v", err)
+		return sub
 	}
 
 	sub.ArtistInfoTwo.Biography = info.Biography
@@ -541,13 +538,10 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 		return spec.NewError(0, "finding artist by name: %v", err)
 	}
 
-	apiKey, _ := c.DB.GetSetting(db.LastFMAPIKey)
-	if apiKey == "" {
-		return spec.NewResponse()
-	}
-	info, err := c.ArtistInfoCache.GetOrLookup(r.Context(), apiKey, artist.ID)
+	info, err := c.ArtistInfoCache.GetOrLookup(r.Context(), artist.ID)
 	if err != nil {
-		return spec.NewError(0, "fetching artist top tracks: %v", err)
+		log.Printf("error fetching artist info from lastfm: %v", err)
+		return spec.NewResponse()
 	}
 
 	sub := spec.NewResponse()
@@ -597,10 +591,6 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 	if err != nil || id.Type != specid.Track {
 		return spec.NewError(10, "please provide an track `id` parameter")
 	}
-	apiKey, _ := c.DB.GetSetting(db.LastFMAPIKey)
-	if apiKey == "" {
-		return spec.NewResponse()
-	}
 
 	var track db.Track
 	err = c.DB.
@@ -612,10 +602,12 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 		return spec.NewError(10, "couldn't find a track with that id")
 	}
 
-	similarTracks, err := c.LastFMClient.TrackGetSimilarTracks(apiKey, track.TagTrackArtist, track.TagTitle)
+	similarTracks, err := c.LastFMClient.TrackGetSimilarTracks(track.TagTrackArtist, track.TagTitle)
 	if err != nil {
-		return spec.NewError(0, "fetching track similar tracks: %v", err)
+		log.Printf("error fetching similar songs from lastfm: %v", err)
+		return spec.NewResponse()
 	}
+
 	if len(similarTracks.Tracks) == 0 {
 		return spec.NewError(70, "no similar songs found for track: %v", track.TagTitle)
 	}
@@ -666,11 +658,6 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide an artist `id` parameter")
 	}
 
-	apiKey, _ := c.DB.GetSetting(db.LastFMAPIKey)
-	if apiKey == "" {
-		return spec.NewResponse()
-	}
-
 	var artist db.Artist
 	err = c.DB.
 		Where("id=?", id.Value).
@@ -680,9 +667,10 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 		return spec.NewError(0, "artist with id `%s` not found", id)
 	}
 
-	similarArtists, err := c.LastFMClient.ArtistGetSimilar(apiKey, artist.Name)
+	similarArtists, err := c.LastFMClient.ArtistGetSimilar(artist.Name)
 	if err != nil {
-		return spec.NewError(0, "fetching artist similar artists: %v", err)
+		log.Printf("error fetching artist info from lastfm: %v", err)
+		return spec.NewResponse()
 	}
 	if len(similarArtists.Artists) == 0 {
 		return spec.NewError(0, "no similar artist found for: %v", artist.Name)

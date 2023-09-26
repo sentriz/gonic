@@ -10,7 +10,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"go.senan.xyz/gonic/db"
-	"go.senan.xyz/gonic/scrobble/lastfm"
+	"go.senan.xyz/gonic/lastfm"
 )
 
 const keepFor = 30 * time.Hour * 24
@@ -24,7 +24,7 @@ func New(db *db.DB, lastfmClient *lastfm.Client) *ArtistInfoCache {
 	return &ArtistInfoCache{db: db, lastfmClient: lastfmClient}
 }
 
-func (a *ArtistInfoCache) GetOrLookup(ctx context.Context, apiKey string, artistID int) (*db.ArtistInfo, error) {
+func (a *ArtistInfoCache) GetOrLookup(ctx context.Context, artistID int) (*db.ArtistInfo, error) {
 	var artist db.Artist
 	if err := a.db.Find(&artist, "id=?", artistID).Error; err != nil {
 		return nil, fmt.Errorf("find artist in db: %w", err)
@@ -36,7 +36,7 @@ func (a *ArtistInfoCache) GetOrLookup(ctx context.Context, apiKey string, artist
 	}
 
 	if artistInfo.ID == 0 || artistInfo.Biography == "" /* prev not found maybe */ || time.Since(artistInfo.UpdatedAt) > keepFor {
-		return a.Lookup(ctx, apiKey, &artist)
+		return a.Lookup(ctx, &artist)
 	}
 
 	return &artistInfo, nil
@@ -50,7 +50,7 @@ func (a *ArtistInfoCache) Get(ctx context.Context, artistID int) (*db.ArtistInfo
 	return &artistInfo, nil
 }
 
-func (a *ArtistInfoCache) Lookup(ctx context.Context, apiKey string, artist *db.Artist) (*db.ArtistInfo, error) {
+func (a *ArtistInfoCache) Lookup(ctx context.Context, artist *db.Artist) (*db.ArtistInfo, error) {
 	var artistInfo db.ArtistInfo
 	artistInfo.ID = artist.ID
 
@@ -58,7 +58,7 @@ func (a *ArtistInfoCache) Lookup(ctx context.Context, apiKey string, artist *db.
 		return nil, fmt.Errorf("first or create artist info: %w", err)
 	}
 
-	info, err := a.lastfmClient.ArtistGetInfo(apiKey, artist.Name)
+	info, err := a.lastfmClient.ArtistGetInfo(artist.Name)
 	if err != nil {
 		return nil, fmt.Errorf("get upstream info: %w", err)
 	}
@@ -77,7 +77,7 @@ func (a *ArtistInfoCache) Lookup(ctx context.Context, apiKey string, artist *db.
 	url, _ := a.lastfmClient.StealArtistImage(info.URL)
 	artistInfo.ImageURL = url
 
-	topTracksResponse, err := a.lastfmClient.ArtistGetTopTracks(apiKey, artist.Name)
+	topTracksResponse, err := a.lastfmClient.ArtistGetTopTracks(artist.Name)
 	if err != nil {
 		return nil, fmt.Errorf("get top tracks: %w", err)
 	}
@@ -94,7 +94,7 @@ func (a *ArtistInfoCache) Lookup(ctx context.Context, apiKey string, artist *db.
 	return &artistInfo, nil
 }
 
-func (a *ArtistInfoCache) Refresh(apiKey string, interval time.Duration) error {
+func (a *ArtistInfoCache) Refresh(interval time.Duration) error {
 	ticker := time.NewTicker(interval)
 	for range ticker.C {
 		q := a.db.
@@ -110,7 +110,7 @@ func (a *ArtistInfoCache) Refresh(apiKey string, interval time.Duration) error {
 			continue
 		}
 
-		if _, err := a.Lookup(context.Background(), apiKey, &artist); err != nil {
+		if _, err := a.Lookup(context.Background(), &artist); err != nil {
 			log.Printf("error looking up non cached artist %s: %v", artist.Name, err)
 			continue
 		}

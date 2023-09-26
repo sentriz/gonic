@@ -26,13 +26,12 @@ import (
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/jukebox"
+	"go.senan.xyz/gonic/lastfm"
+	"go.senan.xyz/gonic/listenbrainz"
 	"go.senan.xyz/gonic/playlist"
 	"go.senan.xyz/gonic/podcasts"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/scanner/tags"
-	"go.senan.xyz/gonic/scrobble"
-	"go.senan.xyz/gonic/scrobble/lastfm"
-	"go.senan.xyz/gonic/scrobble/listenbrainz"
 	"go.senan.xyz/gonic/server/ctrladmin"
 	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/ctrlsubsonic"
@@ -180,7 +179,19 @@ func main() {
 		transcode.NewFFmpegTranscoder(),
 		cacheDirAudio,
 	)
-	lastfmClient := lastfm.NewClient()
+
+	lastfmClientKeySecretFunc := func() (string, string, error) {
+		apiKey, _ := dbc.GetSetting(db.LastFMAPIKey)
+		secret, _ := dbc.GetSetting(db.LastFMSecret)
+		if apiKey == "" || secret == "" {
+			return "", "", fmt.Errorf("not configured")
+		}
+		return apiKey, secret, nil
+	}
+
+	listenbrainzClient := listenbrainz.NewClient()
+	lastfmClient := lastfm.NewClient(lastfmClientKeySecretFunc)
+
 	playlistStore, err := playlist.NewStore(*confPlaylistsPath)
 	if err != nil {
 		log.Panicf("error creating playlists store: %v", err)
@@ -224,9 +235,9 @@ func main() {
 		CacheCoverPath:  cacheDirCovers,
 		LastFMClient:    lastfmClient,
 		ArtistInfoCache: artistInfoCache,
-		Scrobblers: []scrobble.Scrobbler{
-			lastfm.NewScrobbler(dbc, lastfmClient),
-			listenbrainz.NewScrobbler(),
+		Scrobblers: []ctrlsubsonic.Scrobbler{
+			lastfmClient,
+			listenbrainzClient,
 		},
 		Podcasts:   podcast,
 		Transcoder: transcoder,
@@ -349,11 +360,10 @@ func main() {
 		})
 	}
 
-	lastfmAPIKey, _ := dbc.GetSetting(db.LastFMAPIKey)
-	if lastfmAPIKey != "" {
+	if _, _, err := lastfmClientKeySecretFunc(); err == nil {
 		g.Add(func() error {
 			log.Printf("starting job 'refresh artist info'\n")
-			return artistInfoCache.Refresh(lastfmAPIKey, 8*time.Second)
+			return artistInfoCache.Refresh(8 * time.Second)
 		}, noCleanup)
 	}
 
