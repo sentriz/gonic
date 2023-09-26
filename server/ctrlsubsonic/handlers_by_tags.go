@@ -450,6 +450,7 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 		Where("artist_stars.user_id=?", user.ID).
 		Joins("JOIN album_artists ON album_artists.artist_id=artists.id").
 		Joins("JOIN albums ON albums.id=album_artists.album_id").
+		Order("artist_stars.star_date DESC").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
 		Preload("Info").
@@ -469,6 +470,7 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 	q = c.DB.
 		Joins("JOIN album_stars ON album_stars.album_id=albums.id").
 		Where("album_stars.user_id=?", user.ID).
+		Order("album_stars.star_date DESC").
 		Preload("Artists").
 		Preload("AlbumStar", "user_id=?", user.ID).
 		Preload("AlbumRating", "user_id=?", user.ID)
@@ -487,6 +489,7 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 	q = c.DB.
 		Joins("JOIN track_stars ON tracks.id=track_stars.track_id").
 		Where("track_stars.user_id=?", user.ID).
+		Order("track_stars.star_date DESC").
 		Preload("Album").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID)
