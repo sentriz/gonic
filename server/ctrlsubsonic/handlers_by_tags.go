@@ -491,6 +491,7 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 		Where("track_stars.user_id=?", user.ID).
 		Order("track_stars.star_date DESC").
 		Preload("Album").
+		Preload("Album.Artists").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID)
 	if m := getMusicFolder(c.MusicPaths, params); m != "" {
