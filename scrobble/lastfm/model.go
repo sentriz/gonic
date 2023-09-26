@@ -101,13 +101,15 @@ type (
 		Image     []Image `xml:"image"`
 	}
 
-	TrackWithArtist struct {
-		Track
-		Artist Artist `xml:"artist"`
-	}
-
 	LovedTracks struct {
-		XMLName xml.Name          `xml:"lovedtracks"`
-		Tracks  []TrackWithArtist `xml:"track"`
+		XMLName xml.Name `xml:"lovedtracks"`
+		Tracks  []struct {
+			Track
+			Date struct {
+				Text string `xml:",chardata"`
+				UTS  string `xml:"uts,attr"`
+			} `xml:"date"`
+			Artist Artist `xml:"artist"`
+		} `xml:"track"`
 	}
 )
