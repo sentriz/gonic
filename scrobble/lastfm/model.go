@@ -13,6 +13,7 @@ type (
 		SimilarTracks  SimilarTracks  `xml:"similartracks"`
 		SimilarArtists SimilarArtists `xml:"similarartists"`
 		LovedTracks    LovedTracks    `xml:"lovedtracks"`
+		User           User           `xml:"user"`
 	}
 
 	Session struct {
@@ -111,5 +112,31 @@ type (
 			} `xml:"date"`
 			Artist Artist `xml:"artist"`
 		} `xml:"track"`
+	}
+
+	User struct {
+		Text     string `xml:",chardata"`
+		Name     string `xml:"name"`
+		Realname string `xml:"realname"`
+		Image    []struct {
+			Text string `xml:",chardata"`
+			Size string `xml:"size,attr"`
+		} `xml:"image"`
+		URL        string `xml:"url"`
+		Country    string `xml:"country"`
+		Age        string `xml:"age"`
+		Gender     string `xml:"gender"`
+		Subscriber string `xml:"subscriber"`
+		Playcount  string `xml:"playcount"`
+		Playlists  string `xml:"playlists"`
+		Bootstrap  string `xml:"bootstrap"`
+		Registered struct {
+			Text     string `xml:",chardata"`
+			Unixtime string `xml:"unixtime,attr"`
+		} `xml:"registered"`
+		Type        string `xml:"type"`
+		ArtistCount string `xml:"artist_count"`
+		AlbumCount  string `xml:"album_count"`
+		TrackCount  string `xml:"track_count"`
 	}
 )

@@ -14,8 +14,8 @@ import (
 )
 
 type Scrobbler struct {
-	db     *db.DB
-	client *Client
+	db *db.DB
+	*Client
 }
 
 var _ scrobble.Scrobbler = (*Scrobbler)(nil)
@@ -24,7 +24,7 @@ var _ scrobble.Scrobbler = (*Scrobbler)(nil)
 func NewScrobbler(db *db.DB, client *Client) *Scrobbler {
 	return &Scrobbler{
 		db:     db,
-		client: client,
+		Client: client,
 	}
 }
 
@@ -70,7 +70,7 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 
 	params.Add("api_sig", getParamSignature(params, secret))
 
-	_, err = s.client.makeRequest(http.MethodPost, params)
+	_, err = s.Client.makeRequest(http.MethodPost, params)
 	return err
 }
 
@@ -94,9 +94,35 @@ func (s *Scrobbler) LoveTrack(user *db.User, track *db.Track) error {
 	params.Add("artist", track.TagTrackArtist)
 	params.Add("api_key", apiKey)
 	params.Add("sk", user.LastFMSession)
-
 	params.Add("api_sig", getParamSignature(params, secret))
 
-	_, err = s.client.makeRequest(http.MethodPost, params)
+	_, err = s.makeRequest(http.MethodPost, params)
 	return err
+}
+
+func (s *Scrobbler) GetCurrentUser(user *db.User) (User, error) {
+	if user.LastFMSession == "" {
+		return User{}, nil
+	}
+
+	apiKey, err := s.db.GetSetting(db.LastFMAPIKey)
+	if err != nil {
+		return User{}, fmt.Errorf("get api key: %w", err)
+	}
+	secret, err := s.db.GetSetting(db.LastFMSecret)
+	if err != nil {
+		return User{}, fmt.Errorf("get secret: %w", err)
+	}
+
+	params := url.Values{}
+	params.Add("method", "user.getInfo")
+	params.Add("api_key", apiKey)
+	params.Add("sk", user.LastFMSession)
+	params.Add("api_sig", getParamSignature(params, secret))
+
+	resp, err := s.makeRequest(http.MethodGet, params)
+	if err != nil {
+		return User{}, fmt.Errorf("making user GET: %w", err)
+	}
+	return resp.User, nil
 }
