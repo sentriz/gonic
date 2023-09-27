@@ -74,6 +74,9 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 
 	var scrobbleErrs []error
 	for _, scrobbler := range c.Scrobblers {
+		if !scrobbler.IsUserAuthenticated(user) {
+			continue
+		}
 		if err := scrobbler.Scrobble(user, track, optStamp, optSubmission); err != nil {
 			scrobbleErrs = append(scrobbleErrs, err)
 		}

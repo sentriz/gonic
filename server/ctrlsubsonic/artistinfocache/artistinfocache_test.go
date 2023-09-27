@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/lastfm"
+	"go.senan.xyz/gonic/lastfm/mockclient"
 	"go.senan.xyz/gonic/mockfs"
-	"go.senan.xyz/gonic/scrobble/lastfm"
-	"go.senan.xyz/gonic/scrobble/lastfm/mockclient"
 )
 
 func TestInfoCache(t *testing.T) {
@@ -29,20 +29,25 @@ func TestInfoCache(t *testing.T) {
 	assert.Nil(artist.Info)
 
 	var count atomic.Int32
-	lastfmClient := lastfm.NewClientCustom(mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
-		switch method := r.URL.Query().Get("method"); method {
-		case "artist.getInfo":
-			count.Add(1)
-			w.Write(mockclient.ArtistGetInfoResponse)
-		case "artist.getTopTracks":
-			w.Write(mockclient.ArtistGetTopTracksResponse)
-		}
-	}))
+	lastfmClient := lastfm.NewClientCustom(
+		mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
+			switch method := r.URL.Query().Get("method"); method {
+			case "artist.getInfo":
+				count.Add(1)
+				w.Write(mockclient.ArtistGetInfoResponse)
+			case "artist.getTopTracks":
+				w.Write(mockclient.ArtistGetTopTracksResponse)
+			}
+		}),
+		func() (apiKey string, secret string, err error) {
+			return "", "", nil
+		},
+	)
 
 	cache := New(m.DB(), lastfmClient)
-	_, err := cache.GetOrLookup(context.Background(), "", artist.ID)
+	_, err := cache.GetOrLookup(context.Background(), artist.ID)
 	require.NoError(t, err)
-	_, err = cache.GetOrLookup(context.Background(), "", artist.ID)
+	_, err = cache.GetOrLookup(context.Background(), artist.ID)
 	require.NoError(t, err)
 
 	require.Equal(t, int32(1), count.Load())
