@@ -301,16 +301,18 @@ func main() {
 		return nil
 	}, noCleanup)
 
-	g.Add(func() error {
-		log.Printf("starting job 'podcast purger'\n")
-		ticker := time.NewTicker(24 * time.Hour)
-		for range ticker.C {
-			if err := podcast.PurgeOldPodcasts(time.Duration(*confPodcastPurgeAgeDays) * 24 * time.Hour); err != nil {
-				log.Printf("error purging old podcasts: %v", err)
+	if *confPodcastPurgeAgeDays > 0 {
+		g.Add(func() error {
+			log.Printf("starting job 'podcast purger'\n")
+			ticker := time.NewTicker(24 * time.Hour)
+			for range ticker.C {
+				if err := podcast.PurgeOldPodcasts(time.Duration(*confPodcastPurgeAgeDays) * 24 * time.Hour); err != nil {
+					log.Printf("error purging old podcasts: %v", err)
+				}
 			}
-		}
-		return nil
-	}, noCleanup)
+			return nil
+		}, noCleanup)
+	}
 
 	if *confScanIntervalMins > 0 {
 		g.Add(func() error {
