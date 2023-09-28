@@ -32,6 +32,7 @@ import (
 	"go.senan.xyz/gonic/podcasts"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/scanner/tags"
+	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/server/ctrladmin"
 	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/ctrlsubsonic"
@@ -235,7 +236,7 @@ func main() {
 		CacheCoverPath:  cacheDirCovers,
 		LastFMClient:    lastfmClient,
 		ArtistInfoCache: artistInfoCache,
-		Scrobblers: []ctrlsubsonic.Scrobbler{
+		Scrobblers: []scrobble.Scrobbler{
 			lastfmClient,
 			listenbrainzClient,
 		},

@@ -14,6 +14,7 @@ import (
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/lastfm"
 	"go.senan.xyz/gonic/lastfm/mockclient"
+	"go.senan.xyz/gonic/scrobble"
 )
 
 func TestArtistGetInfo(t *testing.T) {
@@ -485,26 +486,6 @@ func TestGetSessionClientRequestFails(t *testing.T) {
 func TestScrobble(t *testing.T) {
 	t.Parallel()
 
-	user := &db.User{
-		LastFMSession: "lastFMSession1",
-	}
-
-	track := &db.Track{
-		Album: &db.Album{
-			TagTitle: "album1",
-			Artists: []*db.Artist{{
-				Name: "artist1",
-			}},
-		},
-		Length:         100,
-		TagBrainzID:    "916b242d-d439-4ae4-a439-556eef99c06e",
-		TagTitle:       "title1",
-		TagTrackArtist: "trackArtist1",
-		TagTrackNumber: 1,
-	}
-
-	stamp := time.Date(2023, 8, 12, 12, 34, 1, 200, time.UTC)
-
 	client := lastfm.NewClientCustom(
 		mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, http.MethodPost, r.Method)
@@ -534,6 +515,21 @@ func TestScrobble(t *testing.T) {
 		},
 	)
 
+	user := db.User{
+		LastFMSession: "lastFMSession1",
+	}
+	track := scrobble.Track{
+		Track:         "title1",
+		Artist:        "trackArtist1",
+		Album:         "album1",
+		AlbumArtist:   "artist1",
+		TrackNumber:   1,
+		Duration:      100 * time.Second,
+		MusicBrainzID: "916b242d-d439-4ae4-a439-556eef99c06e",
+	}
+
+	stamp := time.Date(2023, 8, 12, 12, 34, 1, 200, time.UTC)
+
 	err := client.Scrobble(user, track, stamp, true)
 	require.NoError(t, err)
 }
@@ -545,14 +541,14 @@ func TestScrobbleErrorsWithoutLastFMSession(t *testing.T) {
 		return "", "", nil
 	})
 
-	err := client.Scrobble(&db.User{}, &db.Track{}, time.Now(), false)
+	err := client.Scrobble(db.User{}, scrobble.Track{}, time.Now(), false)
 	require.ErrorIs(t, err, lastfm.ErrNoUserSession)
 }
 
 func TestScrobbleFailsWithoutLastFMAPIKey(t *testing.T) {
 	t.Parallel()
 
-	user := &db.User{
+	user := db.User{
 		LastFMSession: "lastFMSession1",
 	}
 
@@ -560,7 +556,7 @@ func TestScrobbleFailsWithoutLastFMAPIKey(t *testing.T) {
 		return "", "", fmt.Errorf("no keys")
 	})
 
-	err := scrobbler.Scrobble(user, &db.Track{}, time.Now(), false)
+	err := scrobbler.Scrobble(user, scrobble.Track{}, time.Now(), false)
 
 	require.Error(t, err)
 }

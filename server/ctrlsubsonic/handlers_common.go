@@ -7,37 +7,21 @@ import (
 	"math"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"time"
 	"unicode"
 
+	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/scanner"
+	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specidpaths"
 )
-
-func lowerUDecOrHash(in string) string {
-	lower := unicode.ToLower(rune(in[0]))
-	if !unicode.IsLetter(lower) {
-		return "#"
-	}
-	return string(lower)
-}
-
-func getMusicFolder(musicPaths []MusicPath, p params.Params) string {
-	idx, err := p.GetInt("musicFolderId")
-	if err != nil {
-		return ""
-	}
-	if idx < 0 || idx >= len(musicPaths) {
-		return ""
-	}
-	return musicPaths[idx].Path
-}
 
 func (c *Controller) ServeGetLicence(_ *http.Request) *spec.Response {
 	sub := spec.NewResponse()
@@ -56,28 +40,60 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 
 	id, err := params.GetID("id")
-	if err != nil || id.Type != specid.Track {
-		return spec.NewError(10, "please provide a track `id` track parameter")
-	}
-
-	track := &db.Track{}
-	if err := c.DB.Preload("Album").Preload("Album.Artists").First(track, id.Value).Error; err != nil {
-		return spec.NewError(0, "error finding track: %v", err)
+	if err != nil {
+		return spec.NewError(10, "please provide a `id` parameter")
 	}
 
 	optStamp := params.GetOrTime("time", time.Now())
 	optSubmission := params.GetOrBool("submission", true)
 
-	if err := streamUpdateStats(c.DB, user.ID, track, optStamp); err != nil {
-		return spec.NewError(0, "error updating stats: %v", err)
+	var scrobbleTrack scrobble.Track
+
+	switch id.Type {
+	case specid.Track:
+		var track db.Track
+		if err := c.DB.Preload("Album").Preload("Album.Artists").First(&track, id.Value).Error; err != nil {
+			return spec.NewError(0, "error finding track: %v", err)
+		}
+		if track.Album == nil {
+			return spec.NewError(0, "track has no album %d", track.ID)
+		}
+
+		scrobbleTrack.Track = track.TagTitle
+		scrobbleTrack.Artist = track.TagTrackArtist
+		scrobbleTrack.Album = track.Album.TagTitle
+		scrobbleTrack.AlbumArtist = strings.Join(track.Album.ArtistsStrings(), ", ")
+		scrobbleTrack.TrackNumber = uint(track.TagTrackNumber)
+		scrobbleTrack.Duration = time.Second * time.Duration(track.Length)
+		if _, err := uuid.Parse(track.TagBrainzID); err == nil {
+			scrobbleTrack.MusicBrainzID = track.TagBrainzID
+		}
+
+		if err := scrobbleStatsUpdateTrack(c.DB, &track, user.ID, optStamp); err != nil {
+			return spec.NewError(0, "error updating stats: %v", err)
+		}
+
+	case specid.PodcastEpisode:
+		var podcastEpisode db.PodcastEpisode
+		if err := c.DB.Preload("Podcast").First(&podcastEpisode, id.Value).Error; err != nil {
+			return spec.NewError(0, "error finding podcast episode: %v", err)
+		}
+
+		scrobbleTrack.Track = podcastEpisode.Title
+		scrobbleTrack.Artist = podcastEpisode.Podcast.Title
+		scrobbleTrack.Duration = time.Second * time.Duration(podcastEpisode.Length)
+
+		if err := scrobbleStatsUpdatePodcastEpisode(c.DB, id.Value); err != nil {
+			return spec.NewError(0, "error updating stats: %v", err)
+		}
 	}
 
 	var scrobbleErrs []error
 	for _, scrobbler := range c.Scrobblers {
-		if !scrobbler.IsUserAuthenticated(user) {
+		if !scrobbler.IsUserAuthenticated(*user) {
 			continue
 		}
-		if err := scrobbler.Scrobble(user, track, optStamp, optSubmission); err != nil {
+		if err := scrobbler.Scrobble(*user, scrobbleTrack, optStamp, optSubmission); err != nil {
 			scrobbleErrs = append(scrobbleErrs, err)
 		}
 	}
@@ -425,4 +441,57 @@ func (c *Controller) ServeGetLyrics(_ *http.Request) *spec.Response {
 	sub := spec.NewResponse()
 	sub.Lyrics = &spec.Lyrics{}
 	return sub
+}
+
+func scrobbleStatsUpdateTrack(dbc *db.DB, track *db.Track, userID int, playTime time.Time) error {
+	var play db.Play
+	if err := dbc.Where("album_id=? AND user_id=?", track.AlbumID, userID).First(&play).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return fmt.Errorf("find stat: %w", err)
+	}
+
+	play.AlbumID = track.AlbumID
+	play.UserID = userID
+	play.Count++ // for getAlbumList?type=frequent
+	play.Length += track.Length
+	if playTime.After(play.Time) {
+		play.Time = playTime // for getAlbumList?type=recent
+	}
+
+	if err := dbc.Save(&play).Error; err != nil {
+		return fmt.Errorf("save stat: %w", err)
+	}
+	return nil
+}
+
+func scrobbleStatsUpdatePodcastEpisode(dbc *db.DB, peID int) error {
+	var pe db.PodcastEpisode
+	if err := dbc.Where("id=?", peID).First(&pe).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return fmt.Errorf("find podcast episode: %w", err)
+	}
+
+	pe.ModifiedAt = time.Now()
+
+	if err := dbc.Save(&pe).Error; err != nil {
+		return fmt.Errorf("save podcast episode: %w", err)
+	}
+	return nil
+}
+
+func getMusicFolder(musicPaths []MusicPath, p params.Params) string {
+	idx, err := p.GetInt("musicFolderId")
+	if err != nil {
+		return ""
+	}
+	if idx < 0 || idx >= len(musicPaths) {
+		return ""
+	}
+	return musicPaths[idx].Path
+}
+
+func lowerUDecOrHash(in string) string {
+	lower := unicode.ToLower(rune(in[0]))
+	if !unicode.IsLetter(lower) {
+		return "#"
+	}
+	return string(lower)
 }

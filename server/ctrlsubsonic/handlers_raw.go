@@ -62,48 +62,6 @@ func streamGetTranscodeMeta(dbc *db.DB, userID int, client string) spec.Transcod
 	}
 }
 
-func streamUpdateStats(dbc *db.DB, userID int, track *db.Track, playTime time.Time) error {
-	var play db.Play
-	err := dbc.
-		Where("album_id=? AND user_id=?", track.AlbumID, userID).
-		First(&play).
-		Error
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return fmt.Errorf("find stat: %w", err)
-	}
-
-	play.AlbumID = track.AlbumID
-	play.UserID = userID
-	play.Count++ // for getAlbumList?type=frequent
-	play.Length += track.Length
-	if playTime.After(play.Time) {
-		play.Time = playTime // for getAlbumList?type=recent
-	}
-
-	if err := dbc.Save(&play).Error; err != nil {
-		return fmt.Errorf("save stat: %w", err)
-	}
-	return nil
-}
-
-func streamUpdatePodcastEpisodeStats(dbc *db.DB, peID int) error {
-	var pe db.PodcastEpisode
-	err := dbc.
-		Where("id=?", peID).
-		First(&pe).
-		Error
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return fmt.Errorf("find podcast episode: %w", err)
-	}
-
-	pe.ModifiedAt = time.Now()
-
-	if err := dbc.Save(&pe).Error; err != nil {
-		return fmt.Errorf("save podcast episode: %w", err)
-	}
-	return nil
-}
-
 const (
 	coverDefaultSize = 600
 	coverCacheFormat = "png"
@@ -256,22 +214,6 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	audioFile, ok := file.(db.AudioFile)
 	if !ok {
 		return spec.NewError(0, "type of id does not contain audio")
-	}
-
-	if track, ok := audioFile.(*db.Track); ok && track.Album != nil {
-		defer func() {
-			if err := streamUpdateStats(c.DB, user.ID, track, time.Now()); err != nil {
-				log.Printf("error updating track status: %v", err)
-			}
-		}()
-	}
-
-	if pe, ok := audioFile.(*db.PodcastEpisode); ok {
-		defer func() {
-			if err := streamUpdatePodcastEpisodeStats(c.DB, pe.ID); err != nil {
-				log.Printf("error updating podcast episode status: %v", err)
-			}
-		}()
 	}
 
 	maxBitRate, _ := params.GetInt("maxBitRate")

@@ -10,8 +10,8 @@ import (
 	"net/http/httputil"
 	"time"
 
-	"github.com/google/uuid"
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/scrobble"
 )
 
 const (
@@ -36,27 +36,21 @@ func NewClientCustom(httpClient *http.Client) *Client {
 	return &Client{httpClient: httpClient}
 }
 
-func (c *Client) IsUserAuthenticated(user *db.User) bool {
+func (c *Client) IsUserAuthenticated(user db.User) bool {
 	return user.ListenBrainzURL != "" && user.ListenBrainzToken != ""
 }
 
-func (c *Client) Scrobble(user *db.User, track *db.Track, stamp time.Time, submission bool) error {
-	// make sure we provide a valid uuid, since some users may have an incorrect mbid in their tags
-	var trackMBID string
-	if _, err := uuid.Parse(track.TagBrainzID); err == nil {
-		trackMBID = track.TagBrainzID
-	}
-
+func (c *Client) Scrobble(user db.User, track scrobble.Track, stamp time.Time, submission bool) error {
 	payload := &Payload{
 		TrackMetadata: &TrackMetadata{
 			AdditionalInfo: &AdditionalInfo{
-				TrackNumber:   track.TagTrackNumber,
-				RecordingMBID: trackMBID,
-				TrackLength:   track.Length,
+				TrackNumber:   int(track.TrackNumber),
+				RecordingMBID: track.MusicBrainzID,
+				TrackLength:   int(track.Duration.Seconds()),
 			},
-			ArtistName:  track.TagTrackArtist,
-			TrackName:   track.TagTitle,
-			ReleaseName: track.Album.TagTitle,
+			ArtistName:  track.Artist,
+			TrackName:   track.Track,
+			ReleaseName: track.Album,
 		},
 	}
 	scrobble := Scrobble{

@@ -10,12 +10,11 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/andybalholm/cascadia"
-	"github.com/google/uuid"
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/scrobble"
 	"golang.org/x/net/html"
 )
 
@@ -185,11 +184,11 @@ func (c *Client) StealArtistImage(artistURL string) (string, error) {
 	return imageURL, nil
 }
 
-func (c *Client) IsUserAuthenticated(user *db.User) bool {
+func (c *Client) IsUserAuthenticated(user db.User) bool {
 	return user.LastFMSession != ""
 }
 
-func (c *Client) Scrobble(user *db.User, track *db.Track, stamp time.Time, submission bool) error {
+func (c *Client) Scrobble(user db.User, track scrobble.Track, stamp time.Time, submission bool) error {
 	apiKey, secret, err := c.keySecret()
 	if err != nil {
 		return fmt.Errorf("get key and secret: %w", err)
@@ -198,33 +197,27 @@ func (c *Client) Scrobble(user *db.User, track *db.Track, stamp time.Time, submi
 		return ErrNoUserSession
 	}
 
-	if track.Album == nil || len(track.Album.Artists) == 0 {
-		return fmt.Errorf("track has no album artists")
-	}
-
 	params := url.Values{}
 	if submission {
 		params.Add("method", "track.Scrobble")
-		// last.fm wants the timestamp in seconds
-		params.Add("timestamp", strconv.Itoa(int(stamp.Unix())))
+		params.Add("timestamp", strconv.Itoa(int(stamp.Unix()))) // last.fm wants the timestamp in seconds
 	} else {
 		params.Add("method", "track.updateNowPlaying")
 	}
 
-	params.Add("api_key", apiKey)
-	params.Add("sk", user.LastFMSession)
-	params.Add("artist", track.TagTrackArtist)
-	params.Add("track", track.TagTitle)
-	params.Add("trackNumber", strconv.Itoa(track.TagTrackNumber))
-	params.Add("album", track.Album.TagTitle)
-	params.Add("albumArtist", strings.Join(track.Album.ArtistsStrings(), ", "))
-	params.Add("duration", strconv.Itoa(track.Length))
+	params.Add("artist", track.Artist)
+	params.Add("track", track.Track)
+	params.Add("trackNumber", strconv.Itoa(int(track.TrackNumber)))
+	params.Add("album", track.Album)
+	params.Add("albumArtist", track.AlbumArtist)
+	params.Add("duration", strconv.Itoa(int(track.Duration.Seconds())))
 
-	// make sure we provide a valid uuid, since some users may have an incorrect mbid in their tags
-	if _, err := uuid.Parse(track.TagBrainzID); err == nil {
-		params.Add("mbid", track.TagBrainzID)
+	if track.MusicBrainzID != "" {
+		params.Add("mbid", track.MusicBrainzID)
 	}
 
+	params.Add("sk", user.LastFMSession)
+	params.Add("api_key", apiKey)
 	params.Add("api_sig", GetParamSignature(params, secret))
 
 	_, err = c.makeRequest(http.MethodPost, params)
@@ -236,7 +229,7 @@ func (c *Client) LoveTrack(user *db.User, track *db.Track) error {
 	if err != nil {
 		return fmt.Errorf("get key and secret: %w", err)
 	}
-	if !c.IsUserAuthenticated(user) {
+	if !c.IsUserAuthenticated(*user) {
 		return ErrNoUserSession
 	}
 
@@ -257,7 +250,7 @@ func (c *Client) GetCurrentUser(user *db.User) (User, error) {
 	if err != nil {
 		return User{}, fmt.Errorf("get key and secret: %w", err)
 	}
-	if !c.IsUserAuthenticated(user) {
+	if !c.IsUserAuthenticated(*user) {
 		return User{}, ErrNoUserSession
 	}
 
@@ -277,6 +270,7 @@ func (c *Client) GetCurrentUser(user *db.User) (User, error) {
 func (c *Client) makeRequest(method string, params url.Values) (LastFM, error) {
 	req, _ := http.NewRequest(method, BaseURL, nil)
 	req.URL.RawQuery = params.Encode()
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return LastFM{}, fmt.Errorf("get: %w", err)

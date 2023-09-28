@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/listenbrainz"
+	"go.senan.xyz/gonic/scrobble"
 )
 
 func TestScrobble(t *testing.T) {
@@ -35,8 +36,8 @@ func TestScrobble(t *testing.T) {
 	)
 
 	err := client.Scrobble(
-		&db.User{ListenBrainzURL: "https://listenbrainz.org", ListenBrainzToken: "token1"},
-		&db.Track{Album: &db.Album{TagTitle: "album"}, TagTitle: "title", TagTrackArtist: "artist", TagTrackNumber: 1},
+		db.User{ListenBrainzURL: "https://listenbrainz.org", ListenBrainzToken: "token1"},
+		scrobble.Track{Track: "title", Artist: "artist", Album: "album", TrackNumber: 1},
 		time.Unix(1683804525, 0),
 		true,
 	)
@@ -59,8 +60,8 @@ func TestScrobbleUnauthorized(t *testing.T) {
 	)
 
 	err := client.Scrobble(
-		&db.User{ListenBrainzURL: "https://listenbrainz.org", ListenBrainzToken: "token1"},
-		&db.Track{Album: &db.Album{TagTitle: "album"}, TagTitle: "title", TagTrackArtist: "artist", TagTrackNumber: 1},
+		db.User{ListenBrainzURL: "https://listenbrainz.org", ListenBrainzToken: "token1"},
+		scrobble.Track{Track: "title", Artist: "artist", Album: "album", TrackNumber: 1},
 		time.Now(),
 		true,
 	)
@@ -83,8 +84,8 @@ func TestScrobbleServerError(t *testing.T) {
 	)
 
 	err := client.Scrobble(
-		&db.User{ListenBrainzURL: "https://listenbrainz.org", ListenBrainzToken: "token1"},
-		&db.Track{Album: &db.Album{TagTitle: "album"}, TagTitle: "title", TagTrackArtist: "artist", TagTrackNumber: 1},
+		db.User{ListenBrainzURL: "https://listenbrainz.org", ListenBrainzToken: "token1"},
+		scrobble.Track{Track: "title", Artist: "artist", Album: "album", TrackNumber: 1},
 		time.Now(),
 		true,
 	)
