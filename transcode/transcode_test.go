@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"os/exec"
 	"testing"
 	"time"
@@ -13,30 +14,42 @@ import (
 	"go.senan.xyz/gonic/transcode"
 )
 
+var testProfile = transcode.PCM16le
+
+const (
+	// assuming above profile is 48kHz 16bit stereo
+	sampleRate     = 48_000
+	bytesPerSample = 2
+	numChannels    = 2
+)
+
+const bytesPerSec = sampleRate * bytesPerSample * numChannels
+
+func TestMain(m *testing.M) {
+	if _, err := exec.LookPath("ffmpeg"); err != nil {
+		return // no ffmpeg, skip these tests
+	}
+	os.Exit(m.Run())
+}
+
 // TestTranscode starts a web server that transcodes a 5s FLAC file to PCM audio. A client
 // consumes the result over a 5 second period.
 func TestTranscode(t *testing.T) {
 	t.Parallel()
 
-	if _, err := exec.LookPath("ffmpeg"); err != nil {
-		t.Skip("ffmpeg not in PATH")
-	}
+	testFile := "testdata/5s.flac"
+	testFileLen := 5
 
 	tr := transcode.NewFFmpegTranscoder()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		require.NoError(t, tr.Transcode(r.Context(), transcode.PCM16le, "testdata/5s.flac", w))
-		f, ok := w.(http.Flusher)
-		require.True(t, ok)
-		f.Flush()
+		require.NoError(t, tr.Transcode(r.Context(), testProfile, testFile, w))
+		w.(http.Flusher).Flush()
 	}))
 	defer server.Close()
 
 	resp, err := server.Client().Get(server.URL)
 	require.NoError(t, err)
 	defer resp.Body.Close()
-
-	const sampleRate, bytesPerSample, numChannels = 48_000, 2, 2
-	const bytesPerSec = sampleRate * bytesPerSample * numChannels
 
 	var buf bytes.Buffer
 	for {
@@ -49,5 +62,5 @@ func TestTranscode(t *testing.T) {
 	}
 
 	// we should have 5 seconds of PCM data
-	require.Equal(t, 5*bytesPerSec, buf.Len())
+	require.Equal(t, testFileLen*bytesPerSec, buf.Len())
 }
