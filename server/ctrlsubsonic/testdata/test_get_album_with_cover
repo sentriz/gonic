@@ -17,7 +17,7 @@
       "songCount": 3,
       "duration": 300,
       "genre": "Unknown Genre",
-      "genres": ["Unknown Genre"],
+      "genres": [{ "name": "Unknown Genre" }],
       "year": 2021,
       "song": [
         {

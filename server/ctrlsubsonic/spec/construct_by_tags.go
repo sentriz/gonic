@@ -44,7 +44,7 @@ func NewAlbumByTags(a *db.Album, artists []*db.Artist) *Album {
 		ret.Genre = a.Genres[0].Name
 	}
 	for _, g := range a.Genres {
-		ret.Genres = append(ret.Genres, g.Name)
+		ret.Genres = append(ret.Genres, &GenreRef{Name: g.Name})
 	}
 	return ret
 }
