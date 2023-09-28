@@ -35,6 +35,12 @@ func (c *Controller) ServePing(_ *http.Request) *spec.Response {
 	return spec.NewResponse()
 }
 
+func (c *Controller) ServeGetOpenSubsonicExtensions(_ *http.Request) *spec.Response {
+	sub := spec.NewResponse()
+	sub.OpenSubsonicExtensions = spec.OpenSubsonicExtensions{}
+	return sub
+}
+
 func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	params := r.Context().Value(CtxParams).(params.Params)

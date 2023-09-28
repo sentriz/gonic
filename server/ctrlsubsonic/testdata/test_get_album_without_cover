@@ -4,6 +4,7 @@
     "version": "1.15.0",
     "type": "gonic",
     "serverVersion": "",
+    "openSubsonic": true,
     "album": {
       "id": "al-2",
       "created": "2019-11-30T00:00:00Z",

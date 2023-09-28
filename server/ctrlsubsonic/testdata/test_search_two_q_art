@@ -4,6 +4,7 @@
     "version": "1.15.0",
     "type": "gonic",
     "serverVersion": "",
+    "openSubsonic": true,
     "searchResult2": {
       "artist": [
         { "id": "al-2", "parent": "al-1", "name": "artist-0" },

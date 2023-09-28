@@ -26,8 +26,10 @@ type Response struct {
 	XMLNS   string `xml:"xmlns,attr"            json:"-"`
 
 	// https://opensubsonic.netlify.app/docs/responses/subsonic-response/
-	Type          string `xml:"type,attr"          json:"type"`
-	ServerVersion string `xml:"serverVersion,attr" json:"serverVersion"`
+	Type                   string                 `xml:"type,attr"              json:"type"`
+	ServerVersion          string                 `xml:"serverVersion,attr"     json:"serverVersion"`
+	OpenSubsonic           bool                   `xml:"openSubsonic,attr"      json:"openSubsonic"`
+	OpenSubsonicExtensions OpenSubsonicExtensions `xml:"openSubsonicExtensions" json:"openSubsonicExtensions,omitempty"`
 
 	Error                 *Error                 `xml:"error"                 json:"error,omitempty"`
 	Albums                *Albums                `xml:"albumList"             json:"albumList,omitempty"`
@@ -73,6 +75,7 @@ func NewResponse() *Response {
 		Version:       apiVersion,
 		Type:          gonic.Name,
 		ServerVersion: gonic.Version,
+		OpenSubsonic:  true,
 	}
 }
 
@@ -428,6 +431,8 @@ type Lyrics struct {
 	Artist string `xml:"artist,attr,omitempty" json:"artist,omitempty"`
 	Title  string `xml:"title,attr,omitempty"  json:"title,omitempty"`
 }
+
+type OpenSubsonicExtensions map[string][]int
 
 func formatRating(rating float64) string {
 	if rating == 0 {

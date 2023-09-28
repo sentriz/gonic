@@ -4,6 +4,7 @@
     "version": "1.15.0",
     "type": "gonic",
     "serverVersion": "",
+    "openSubsonic": true,
     "albumList2": {
       "album": [
         {

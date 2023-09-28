@@ -9,9 +9,11 @@ func AddRoutes(c *Controller, r *mux.Router) {
 
 	// common
 	r.Handle("/getLicense{_:(?:\\.view)?}", c.H(c.ServeGetLicence))
+	r.Handle("/ping{_:(?:\\.view)?}", c.H(c.ServePing))
+	r.Handle("/getOpenSubsonicExtensions{_:(?:\\.view)?}", c.H(c.ServeGetOpenSubsonicExtensions))
+
 	r.Handle("/getMusicFolders{_:(?:\\.view)?}", c.H(c.ServeGetMusicFolders))
 	r.Handle("/getScanStatus{_:(?:\\.view)?}", c.H(c.ServeGetScanStatus))
-	r.Handle("/ping{_:(?:\\.view)?}", c.H(c.ServePing))
 	r.Handle("/scrobble{_:(?:\\.view)?}", c.H(c.ServeScrobble))
 	r.Handle("/startScan{_:(?:\\.view)?}", c.H(c.ServeStartScan))
 	r.Handle("/getUser{_:(?:\\.view)?}", c.H(c.ServeGetUser))
