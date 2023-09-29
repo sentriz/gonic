@@ -11,7 +11,7 @@ import (
 
 func (c *Controller) ServeGetInternetRadioStations(_ *http.Request) *spec.Response {
 	var stations []*db.InternetRadioStation
-	if err := c.DB.Find(&stations).Error; err != nil {
+	if err := c.dbc.Find(&stations).Error; err != nil {
 		return spec.NewError(0, "find stations: %v", err)
 	}
 	sub := spec.NewResponse()
@@ -55,7 +55,7 @@ func (c *Controller) ServeCreateInternetRadioStation(r *http.Request) *spec.Resp
 	station.Name = name
 	station.HomepageURL = homepageURL
 
-	if err := c.DB.Save(&station).Error; err != nil {
+	if err := c.dbc.Save(&station).Error; err != nil {
 		return spec.NewError(0, "save station: %v", err)
 	}
 
@@ -92,7 +92,7 @@ func (c *Controller) ServeUpdateInternetRadioStation(r *http.Request) *spec.Resp
 	}
 
 	var station db.InternetRadioStation
-	if err := c.DB.Where("id=?", stationID.Value).First(&station).Error; err != nil {
+	if err := c.dbc.Where("id=?", stationID.Value).First(&station).Error; err != nil {
 		return spec.NewError(70, "id not found: %v", err)
 	}
 
@@ -100,7 +100,7 @@ func (c *Controller) ServeUpdateInternetRadioStation(r *http.Request) *spec.Resp
 	station.Name = name
 	station.HomepageURL = homepageURL
 
-	if err := c.DB.Save(&station).Error; err != nil {
+	if err := c.dbc.Save(&station).Error; err != nil {
 		return spec.NewError(0, "save station: %v", err)
 	}
 	return spec.NewResponse()
@@ -119,11 +119,11 @@ func (c *Controller) ServeDeleteInternetRadioStation(r *http.Request) *spec.Resp
 	}
 
 	var station db.InternetRadioStation
-	if err := c.DB.Where("id=?", stationID.Value).First(&station).Error; err != nil {
+	if err := c.dbc.Where("id=?", stationID.Value).First(&station).Error; err != nil {
 		return spec.NewError(70, "id not found: %v", err)
 	}
 
-	if err := c.DB.Delete(&station).Error; err != nil {
+	if err := c.dbc.Delete(&station).Error; err != nil {
 		return spec.NewError(70, "id not found: %v", err)
 	}
 

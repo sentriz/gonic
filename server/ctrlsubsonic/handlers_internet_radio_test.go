@@ -61,7 +61,7 @@ func TestInternetRadio(t *testing.T) {
 	t.Run("deletes", func(t *testing.T) { testInternetRadioDeletes(t, contr) })
 }
 
-func runTestCase(t *testing.T, contr *Controller, h handlerSubsonic, q url.Values, admin bool) *spec.SubsonicResponse {
+func runTestCase(t *testing.T, h handlerSubsonic, q url.Values, admin bool) *spec.SubsonicResponse {
 	t.Helper()
 
 	var rr *httptest.ResponseRecorder
@@ -72,7 +72,7 @@ func runTestCase(t *testing.T, contr *Controller, h handlerSubsonic, q url.Value
 	} else {
 		rr, req = makeHTTPMock(q)
 	}
-	contr.H(h).ServeHTTP(rr, req)
+	resp(h).ServeHTTP(rr, req)
 	body := rr.Body.String()
 	if status := rr.Code; status != http.StatusOK {
 		t.Fatalf("didn't give a 200\n%s", body)
@@ -134,29 +134,29 @@ func testInternetRadioBadCreates(t *testing.T, contr *Controller) {
 	var response *spec.SubsonicResponse
 
 	// no parameters
-	response = runTestCase(t, contr, contr.ServeCreateInternetRadioStation, url.Values{}, true)
+	response = runTestCase(t, contr.ServeCreateInternetRadioStation, url.Values{}, true)
 	checkMissingParameter(t, response)
 
 	// just one required parameter
-	response = runTestCase(t, contr, contr.ServeCreateInternetRadioStation,
+	response = runTestCase(t, contr.ServeCreateInternetRadioStation,
 		url.Values{"streamUrl": {station1StreamURL}}, true)
 	checkMissingParameter(t, response)
 
-	response = runTestCase(t, contr, contr.ServeCreateInternetRadioStation,
+	response = runTestCase(t, contr.ServeCreateInternetRadioStation,
 		url.Values{"name": {station1Name}}, true)
 	checkMissingParameter(t, response)
 
 	// bad URLs
-	response = runTestCase(t, contr, contr.ServeCreateInternetRadioStation,
+	response = runTestCase(t, contr.ServeCreateInternetRadioStation,
 		url.Values{"streamUrl": {station1StreamURL}, "name": {station1Name}, "homepageUrl": {notAURL}}, true)
 	checkBadParameter(t, response)
 
-	response = runTestCase(t, contr, contr.ServeCreateInternetRadioStation,
+	response = runTestCase(t, contr.ServeCreateInternetRadioStation,
 		url.Values{"streamUrl": {notAURL}, "name": {station1Name}, "homepageUrl": {station1HomepageURL}}, true)
 	checkBadParameter(t, response)
 
 	// check for empty get after
-	response = runTestCase(t, contr, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
+	response = runTestCase(t, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
 	checkSuccess(t, response)
 
 	if (response.Response.InternetRadioStations == nil) || (len(response.Response.InternetRadioStations.List) != 0) {
@@ -166,7 +166,7 @@ func testInternetRadioBadCreates(t *testing.T, contr *Controller) {
 
 func testInternetRadioInitialEmpty(t *testing.T, contr *Controller) {
 	// check for empty get on new DB
-	response := runTestCase(t, contr, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
+	response := runTestCase(t, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
 	checkSuccess(t, response)
 
 	if (response.Response.InternetRadioStations == nil) || (len(response.Response.InternetRadioStations.List) != 0) {
@@ -176,15 +176,15 @@ func testInternetRadioInitialEmpty(t *testing.T, contr *Controller) {
 
 func testInternetRadioInitialAdds(t *testing.T, contr *Controller) {
 	// successful adds and read back
-	response := runTestCase(t, contr, contr.ServeCreateInternetRadioStation,
+	response := runTestCase(t, contr.ServeCreateInternetRadioStation,
 		url.Values{"streamUrl": {station1StreamURL}, "name": {station1Name}, "homepageUrl": {station1HomepageURL}}, true)
 	checkSuccess(t, response)
 
-	response = runTestCase(t, contr, contr.ServeCreateInternetRadioStation,
+	response = runTestCase(t, contr.ServeCreateInternetRadioStation,
 		url.Values{"streamUrl": {station2StreamURL}, "name": {station2Name}}, true) // NOTE: no homepage Url
 	checkSuccess(t, response)
 
-	response = runTestCase(t, contr, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
+	response = runTestCase(t, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
 	checkSuccess(t, response)
 
 	if response.Response.InternetRadioStations == nil {
@@ -207,16 +207,16 @@ func testInternetRadioInitialAdds(t *testing.T, contr *Controller) {
 
 func testInternetRadioUpdateHomepage(t *testing.T, contr *Controller) {
 	// update empty homepage URL without other parameters (fails)
-	response := runTestCase(t, contr, contr.ServeUpdateInternetRadioStation,
+	response := runTestCase(t, contr.ServeUpdateInternetRadioStation,
 		url.Values{"id": {station2ID}, "homepageUrl": {station2HomepageURL}}, true)
 	checkMissingParameter(t, response)
 
 	// update empty homepage URL properly and read back
-	response = runTestCase(t, contr, contr.ServeUpdateInternetRadioStation,
+	response = runTestCase(t, contr.ServeUpdateInternetRadioStation,
 		url.Values{"id": {station2ID}, "streamUrl": {station2StreamURL}, "name": {station2Name}, "homepageUrl": {station2HomepageURL}}, true)
 	checkSuccess(t, response)
 
-	response = runTestCase(t, contr, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
+	response = runTestCase(t, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
 	checkSuccess(t, response)
 
 	if response.Response.InternetRadioStations == nil {
@@ -239,19 +239,19 @@ func testInternetRadioUpdateHomepage(t *testing.T, contr *Controller) {
 
 func testInternetRadioNotAdmin(t *testing.T, contr *Controller) {
 	// create, update, delete w/o admin privileges (fails and does not modify data)
-	response := runTestCase(t, contr, contr.ServeCreateInternetRadioStation,
+	response := runTestCase(t, contr.ServeCreateInternetRadioStation,
 		url.Values{"streamUrl": {station1StreamURL}, "name": {station1Name}, "homepageUrl": {station1HomepageURL}}, false)
 	checkNotAdmin(t, response)
 
-	response = runTestCase(t, contr, contr.ServeUpdateInternetRadioStation,
+	response = runTestCase(t, contr.ServeUpdateInternetRadioStation,
 		url.Values{"id": {station1ID}, "streamUrl": {newstation1StreamURL}, "name": {newstation1Name}, "homepageUrl": {newstation1HomepageURL}}, false)
 	checkNotAdmin(t, response)
 
-	response = runTestCase(t, contr, contr.ServeDeleteInternetRadioStation,
+	response = runTestCase(t, contr.ServeDeleteInternetRadioStation,
 		url.Values{"id": {station1ID}}, false)
 	checkNotAdmin(t, response)
 
-	response = runTestCase(t, contr, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
+	response = runTestCase(t, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
 	checkSuccess(t, response)
 
 	if response.Response.InternetRadioStations == nil {
@@ -274,11 +274,11 @@ func testInternetRadioNotAdmin(t *testing.T, contr *Controller) {
 
 func testInternetRadioUpdates(t *testing.T, contr *Controller) {
 	// replace station 1 and read back
-	response := runTestCase(t, contr, contr.ServeUpdateInternetRadioStation,
+	response := runTestCase(t, contr.ServeUpdateInternetRadioStation,
 		url.Values{"id": {station1ID}, "streamUrl": {newstation1StreamURL}, "name": {newstation1Name}, "homepageUrl": {newstation1HomepageURL}}, true)
 
 	checkSuccess(t, response)
-	response = runTestCase(t, contr, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
+	response = runTestCase(t, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
 	checkSuccess(t, response)
 
 	if response.Response.InternetRadioStations == nil {
@@ -299,11 +299,11 @@ func testInternetRadioUpdates(t *testing.T, contr *Controller) {
 	}
 
 	// update station 2 but without homepage URL and read back
-	response = runTestCase(t, contr, contr.ServeUpdateInternetRadioStation,
+	response = runTestCase(t, contr.ServeUpdateInternetRadioStation,
 		url.Values{"id": {station2ID}, "streamUrl": {newstation2StreamURL}, "name": {newstation2Name}}, true)
 	checkSuccess(t, response)
 
-	response = runTestCase(t, contr, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
+	response = runTestCase(t, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
 	checkSuccess(t, response)
 
 	if response.Response.InternetRadioStations == nil {
@@ -326,11 +326,11 @@ func testInternetRadioUpdates(t *testing.T, contr *Controller) {
 
 func testInternetRadioDeletes(t *testing.T, contr *Controller) {
 	// delete non-existent station 3 (fails and does not modify data)
-	response := runTestCase(t, contr, contr.ServeDeleteInternetRadioStation,
+	response := runTestCase(t, contr.ServeDeleteInternetRadioStation,
 		url.Values{"id": {station3ID}}, true)
 	checkBadParameter(t, response)
 
-	response = runTestCase(t, contr, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
+	response = runTestCase(t, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
 	checkSuccess(t, response)
 
 	if response.Response.InternetRadioStations == nil {
@@ -351,11 +351,11 @@ func testInternetRadioDeletes(t *testing.T, contr *Controller) {
 	}
 
 	// delete station 1 and recheck
-	response = runTestCase(t, contr, contr.ServeDeleteInternetRadioStation,
+	response = runTestCase(t, contr.ServeDeleteInternetRadioStation,
 		url.Values{"id": {station1ID}}, true)
 	checkSuccess(t, response)
 
-	response = runTestCase(t, contr, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
+	response = runTestCase(t, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
 	checkSuccess(t, response)
 
 	if response.Response.InternetRadioStations == nil {
@@ -372,11 +372,11 @@ func testInternetRadioDeletes(t *testing.T, contr *Controller) {
 	}
 
 	// delete station 2 and check that they're all gone
-	response = runTestCase(t, contr, contr.ServeDeleteInternetRadioStation,
+	response = runTestCase(t, contr.ServeDeleteInternetRadioStation,
 		url.Values{"id": {station2ID}}, true)
 	checkSuccess(t, response)
 
-	response = runTestCase(t, contr, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
+	response = runTestCase(t, contr.ServeGetInternetRadioStations, url.Values{}, false) // no need to be admin
 	checkSuccess(t, response)
 
 	if (response.Response.InternetRadioStations == nil) || (len(response.Response.InternetRadioStations.List) != 0) {

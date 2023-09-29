@@ -171,13 +171,13 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 	}
 	size := params.GetOrInt("size", coverDefaultSize)
 	cachePath := filepath.Join(
-		c.CacheCoverPath,
+		c.cacheCoverPath,
 		fmt.Sprintf("%s-%d.%s", id.String(), size, coverCacheFormat),
 	)
 	_, err = os.Stat(cachePath)
 	switch {
 	case os.IsNotExist(err):
-		reader, err := coverFor(c.DB, c.ArtistInfoCache, id)
+		reader, err := coverFor(c.dbc, c.artistInfoCache, id)
 		if err != nil {
 			return spec.NewError(10, "couldn't find cover `%s`: %v", id, err)
 		}
@@ -206,7 +206,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 
-	file, err := specidpaths.Locate(c.DB, id)
+	file, err := specidpaths.Locate(c.dbc, id)
 	if err != nil {
 		return spec.NewError(0, "error looking up id %s: %v", id, err)
 	}
@@ -224,7 +224,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		return nil
 	}
 
-	pref, err := streamGetTransodePreference(c.DB, user.ID, params.GetOr("c", ""))
+	pref, err := streamGetTransodePreference(c.dbc, user.ID, params.GetOr("c", ""))
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewError(0, "couldn't find transcode preference: %v", err)
 	}
@@ -244,7 +244,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	log.Printf("trancoding to %q with max bitrate %dk", profile.MIME(), profile.BitRate())
 
 	w.Header().Set("Content-Type", profile.MIME())
-	if err := c.Transcoder.Transcode(r.Context(), profile, file.AbsPath(), w); err != nil && !errors.Is(err, transcode.ErrFFmpegKilled) {
+	if err := c.transcoder.Transcode(r.Context(), profile, file.AbsPath(), w); err != nil && !errors.Is(err, transcode.ErrFFmpegKilled) {
 		return spec.NewError(0, "error transcoding: %v", err)
 	}
 
@@ -261,7 +261,7 @@ func (c *Controller) ServeGetAvatar(w http.ResponseWriter, r *http.Request) *spe
 	if err != nil {
 		return spec.NewError(10, "please provide an `username` parameter")
 	}
-	reqUser := c.DB.GetUserByName(username)
+	reqUser := c.dbc.GetUserByName(username)
 	if (user != reqUser) && !user.IsAdmin {
 		return spec.NewError(50, "user not admin")
 	}

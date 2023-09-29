@@ -19,7 +19,6 @@ import (
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/mockfs"
-	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/transcode"
 )
@@ -78,7 +77,7 @@ func makeHTTPMockWithAdmin(query url.Values) (*httptest.ResponseRecorder, *http.
 	return rr, req
 }
 
-func runQueryCases(t *testing.T, contr *Controller, h handlerSubsonic, cases []*queryCase) {
+func runQueryCases(t *testing.T, h handlerSubsonic, cases []*queryCase) {
 	t.Helper()
 	for _, qc := range cases {
 		qc := qc
@@ -86,7 +85,7 @@ func runQueryCases(t *testing.T, contr *Controller, h handlerSubsonic, cases []*
 			t.Parallel()
 
 			rr, req := makeHTTPMock(qc.params)
-			contr.H(h).ServeHTTP(rr, req)
+			resp(h).ServeHTTP(rr, req)
 			body := rr.Body.String()
 			if status := rr.Code; status != http.StatusOK {
 				t.Fatalf("didn't give a 200\n%s", body)
@@ -149,11 +148,10 @@ func makec(tb testing.TB, roots []string, audio bool) *Controller {
 		absRoots = append(absRoots, MusicPath{Path: filepath.Join(m.TmpDir(), root)})
 	}
 
-	base := &ctrlbase.Controller{DB: m.DB()}
 	contr := &Controller{
-		Controller: base,
-		MusicPaths: absRoots,
-		Transcoder: transcode.NewFFmpegTranscoder(),
+		dbc:        m.DB(),
+		musicPaths: absRoots,
+		transcoder: transcode.NewFFmpegTranscoder(),
 	}
 
 	return contr

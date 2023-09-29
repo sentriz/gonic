@@ -9,10 +9,8 @@ import (
 
 func TestGetIndexes(t *testing.T) {
 	t.Parallel()
-
 	contr := makeControllerRoots(t, []string{"m-0", "m-1"})
-
-	runQueryCases(t, contr, contr.ServeGetIndexes, []*queryCase{
+	runQueryCases(t, contr.ServeGetIndexes, []*queryCase{
 		{url.Values{}, "no_args", false},
 		{url.Values{"musicFolderId": {"0"}}, "with_music_folder_1", false},
 		{url.Values{"musicFolderId": {"1"}}, "with_music_folder_2", false},
@@ -21,10 +19,8 @@ func TestGetIndexes(t *testing.T) {
 
 func TestGetMusicDirectory(t *testing.T) {
 	t.Parallel()
-
 	contr := makeController(t)
-
-	runQueryCases(t, contr, contr.ServeGetMusicDirectory, []*queryCase{
+	runQueryCases(t, contr.ServeGetMusicDirectory, []*queryCase{
 		{url.Values{"id": {"al-2"}}, "without_tracks", false},
 		{url.Values{"id": {"al-3"}}, "with_tracks", false},
 	})
@@ -33,8 +29,7 @@ func TestGetMusicDirectory(t *testing.T) {
 func TestGetAlbumList(t *testing.T) {
 	t.Parallel()
 	contr := makeController(t)
-
-	runQueryCases(t, contr, contr.ServeGetAlbumList, []*queryCase{
+	runQueryCases(t, contr.ServeGetAlbumList, []*queryCase{
 		{url.Values{"type": {"alphabeticalByArtist"}}, "alpha_artist", false},
 		{url.Values{"type": {"alphabeticalByName"}}, "alpha_name", false},
 		{url.Values{"type": {"newest"}}, "newest", false},
@@ -45,8 +40,7 @@ func TestGetAlbumList(t *testing.T) {
 func TestSearchTwo(t *testing.T) {
 	t.Parallel()
 	contr := makeController(t)
-
-	runQueryCases(t, contr, contr.ServeSearchTwo, []*queryCase{
+	runQueryCases(t, contr.ServeSearchTwo, []*queryCase{
 		{url.Values{"query": {"art"}}, "q_art", false},
 		{url.Values{"query": {"alb"}}, "q_alb", false},
 		{url.Values{"query": {"tra"}}, "q_tra", false},

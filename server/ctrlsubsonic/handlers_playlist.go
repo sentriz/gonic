@@ -22,7 +22,7 @@ import (
 func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
-	paths, err := c.PlaylistStore.List()
+	paths, err := c.playlistStore.List()
 	if err != nil {
 		return spec.NewError(0, "error listing playlists: %v", err)
 	}
@@ -31,7 +31,7 @@ func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
 		List: []*spec.Playlist{},
 	}
 	for _, path := range paths {
-		playlist, err := c.PlaylistStore.Read(path)
+		playlist, err := c.playlistStore.Read(path)
 		if err != nil {
 			return spec.NewError(0, "error reading playlist %q: %v", path, err)
 		}
@@ -54,7 +54,7 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	playlist, err := c.PlaylistStore.Read(playlistIDDecode(playlistID))
+	playlist, err := c.playlistStore.Read(playlistIDDecode(playlistID))
 	if err != nil {
 		return spec.NewError(70, "playlist with id %s not found", playlistID)
 	}
@@ -75,7 +75,7 @@ func (c *Controller) ServeCreatePlaylist(r *http.Request) *spec.Response {
 	playlistPath := playlistIDDecode(playlistID)
 
 	var playlist playlistp.Playlist
-	if pl, _ := c.PlaylistStore.Read(playlistPath); pl != nil {
+	if pl, _ := c.playlistStore.Read(playlistPath); pl != nil {
 		playlist = *pl
 	}
 
@@ -94,7 +94,7 @@ func (c *Controller) ServeCreatePlaylist(r *http.Request) *spec.Response {
 	playlist.Items = nil
 	ids := params.GetOrIDList("songId", nil)
 	for _, id := range ids {
-		r, err := specidpaths.Locate(c.DB, id)
+		r, err := specidpaths.Locate(c.dbc, id)
 		if err != nil {
 			return spec.NewError(0, "lookup id %v: %v", id, err)
 		}
@@ -104,7 +104,7 @@ func (c *Controller) ServeCreatePlaylist(r *http.Request) *spec.Response {
 	if playlistPath == "" {
 		playlistPath = playlistp.NewPath(user.ID, fmt.Sprint(time.Now().UnixMilli()))
 	}
-	if err := c.PlaylistStore.Write(playlistPath, &playlist); err != nil {
+	if err := c.playlistStore.Write(playlistPath, &playlist); err != nil {
 		return spec.NewError(0, "save playlist: %v", err)
 	}
 
@@ -123,7 +123,7 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 
 	playlistID := params.GetFirstOr( /* default */ "", "id", "playlistId")
 	playlistPath := playlistIDDecode(playlistID)
-	playlist, err := c.PlaylistStore.Read(playlistPath)
+	playlist, err := c.playlistStore.Read(playlistPath)
 	if err != nil {
 		return spec.NewError(0, "find playlist: %v", err)
 	}
@@ -154,7 +154,7 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 	// add items
 	if ids, err := params.GetIDList("songIdToAdd"); err == nil {
 		for _, id := range ids {
-			item, err := specidpaths.Locate(c.DB, id)
+			item, err := specidpaths.Locate(c.dbc, id)
 			if err != nil {
 				return spec.NewError(0, "locate id %q: %v", id, err)
 			}
@@ -162,7 +162,7 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 		}
 	}
 
-	if err := c.PlaylistStore.Write(playlistPath, playlist); err != nil {
+	if err := c.playlistStore.Write(playlistPath, playlist); err != nil {
 		return spec.NewError(0, "save playlist: %v", err)
 	}
 	return spec.NewResponse()
@@ -171,7 +171,7 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 func (c *Controller) ServeDeletePlaylist(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	playlistID := params.GetFirstOr( /* default */ "", "id", "playlistId")
-	if err := c.PlaylistStore.Delete(playlistIDDecode(playlistID)); err != nil {
+	if err := c.playlistStore.Delete(playlistIDDecode(playlistID)); err != nil {
 		return spec.NewError(0, "delete playlist: %v", err)
 	}
 	return spec.NewResponse()
@@ -188,7 +188,7 @@ func playlistIDDecode(id string) string {
 
 func playlistRender(c *Controller, params params.Params, playlistID string, playlist *playlistp.Playlist, withItems bool) (*spec.Playlist, error) {
 	user := &db.User{}
-	if err := c.DB.Where("id=?", playlist.UserID).Find(user).Error; err != nil {
+	if err := c.dbc.Where("id=?", playlist.UserID).Find(user).Error; err != nil {
 		return nil, fmt.Errorf("find user by id: %w", err)
 	}
 
@@ -205,10 +205,10 @@ func playlistRender(c *Controller, params params.Params, playlistID string, play
 		return resp, nil
 	}
 
-	transcodeMeta := streamGetTranscodeMeta(c.DB, user.ID, params.GetOr("c", ""))
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
 
 	for _, path := range playlist.Items {
-		file, err := specidpaths.Lookup(c.DB, PathsOf(c.MusicPaths), c.PodcastsPath, path)
+		file, err := specidpaths.Lookup(c.dbc, MusicPaths(c.musicPaths), c.podcastsPath, path)
 		if err != nil {
 			log.Printf("error looking up path %q: %s", path, err)
 			continue
@@ -218,14 +218,14 @@ func playlistRender(c *Controller, params params.Params, playlistID string, play
 		switch id := file.SID(); id.Type {
 		case specid.Track:
 			var track db.Track
-			if err := c.DB.Where("id=?", id.Value).Preload("Album").Preload("Album.Artists").Preload("TrackStar", "user_id=?", user.ID).Preload("TrackRating", "user_id=?", user.ID).Find(&track).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+			if err := c.dbc.Where("id=?", id.Value).Preload("Album").Preload("Album.Artists").Preload("TrackStar", "user_id=?", user.ID).Preload("TrackRating", "user_id=?", user.ID).Find(&track).Error; errors.Is(err, gorm.ErrRecordNotFound) {
 				return nil, fmt.Errorf("load track by id: %w", err)
 			}
 			trch = spec.NewTCTrackByFolder(&track, track.Album)
 			resp.Duration += track.Length
 		case specid.PodcastEpisode:
 			var pe db.PodcastEpisode
-			if err := c.DB.Preload("Podcast").Where("id=?", id.Value).Find(&pe).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+			if err := c.dbc.Preload("Podcast").Where("id=?", id.Value).Find(&pe).Error; errors.Is(err, gorm.ErrRecordNotFound) {
 				return nil, fmt.Errorf("load podcast episode by id: %w", err)
 			}
 			trch = spec.NewTCPodcastEpisode(&pe)

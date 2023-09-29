@@ -58,7 +58,7 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 	switch id.Type {
 	case specid.Track:
 		var track db.Track
-		if err := c.DB.Preload("Album").Preload("Album.Artists").First(&track, id.Value).Error; err != nil {
+		if err := c.dbc.Preload("Album").Preload("Album.Artists").First(&track, id.Value).Error; err != nil {
 			return spec.NewError(0, "error finding track: %v", err)
 		}
 		if track.Album == nil {
@@ -75,13 +75,13 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 			scrobbleTrack.MusicBrainzID = track.TagBrainzID
 		}
 
-		if err := scrobbleStatsUpdateTrack(c.DB, &track, user.ID, optStamp); err != nil {
+		if err := scrobbleStatsUpdateTrack(c.dbc, &track, user.ID, optStamp); err != nil {
 			return spec.NewError(0, "error updating stats: %v", err)
 		}
 
 	case specid.PodcastEpisode:
 		var podcastEpisode db.PodcastEpisode
-		if err := c.DB.Preload("Podcast").First(&podcastEpisode, id.Value).Error; err != nil {
+		if err := c.dbc.Preload("Podcast").First(&podcastEpisode, id.Value).Error; err != nil {
 			return spec.NewError(0, "error finding podcast episode: %v", err)
 		}
 
@@ -89,13 +89,13 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 		scrobbleTrack.Artist = podcastEpisode.Podcast.Title
 		scrobbleTrack.Duration = time.Second * time.Duration(podcastEpisode.Length)
 
-		if err := scrobbleStatsUpdatePodcastEpisode(c.DB, id.Value); err != nil {
+		if err := scrobbleStatsUpdatePodcastEpisode(c.dbc, id.Value); err != nil {
 			return spec.NewError(0, "error updating stats: %v", err)
 		}
 	}
 
 	var scrobbleErrs []error
-	for _, scrobbler := range c.Scrobblers {
+	for _, scrobbler := range c.scrobblers {
 		if !scrobbler.IsUserAuthenticated(*user) {
 			continue
 		}
@@ -113,7 +113,7 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 func (c *Controller) ServeGetMusicFolders(_ *http.Request) *spec.Response {
 	sub := spec.NewResponse()
 	sub.MusicFolders = &spec.MusicFolders{}
-	for i, mp := range c.MusicPaths {
+	for i, mp := range c.musicPaths {
 		alias := mp.Alias
 		if alias == "" {
 			alias = filepath.Base(mp.Path)
@@ -125,7 +125,7 @@ func (c *Controller) ServeGetMusicFolders(_ *http.Request) *spec.Response {
 
 func (c *Controller) ServeStartScan(r *http.Request) *spec.Response {
 	go func() {
-		if _, err := c.Scanner.ScanAndClean(scanner.ScanOptions{}); err != nil {
+		if _, err := c.scanner.ScanAndClean(scanner.ScanOptions{}); err != nil {
 			log.Printf("error while scanning: %v\n", err)
 		}
 	}()
@@ -134,13 +134,13 @@ func (c *Controller) ServeStartScan(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetScanStatus(_ *http.Request) *spec.Response {
 	var trackCount int
-	if err := c.DB.Model(db.Track{}).Count(&trackCount).Error; err != nil {
+	if err := c.dbc.Model(db.Track{}).Count(&trackCount).Error; err != nil {
 		return spec.NewError(0, "error finding track count: %v", err)
 	}
 
 	sub := spec.NewResponse()
 	sub.ScanStatus = &spec.ScanStatus{
-		Scanning: c.Scanner.IsScanning(),
+		Scanning: c.scanner.IsScanning(),
 		Count:    trackCount,
 	}
 	return sub
@@ -155,8 +155,8 @@ func (c *Controller) ServeGetUser(r *http.Request) *spec.Response {
 	sub.User = &spec.User{
 		Username:          user.Name,
 		AdminRole:         user.IsAdmin,
-		JukeboxRole:       c.Jukebox != nil,
-		PodcastRole:       c.Podcasts != nil,
+		JukeboxRole:       c.jukebox != nil,
+		PodcastRole:       c.podcasts != nil,
 		DownloadRole:      true,
 		ScrobblingEnabled: hasLastFM || hasListenBrainz,
 		Folder:            []int{1},
@@ -172,7 +172,7 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
 	var queue db.PlayQueue
-	err := c.DB.
+	err := c.dbc.
 		Where("user_id=?", user.ID).
 		Find(&queue).
 		Error
@@ -190,13 +190,13 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 	trackIDs := queue.GetItems()
 	sub.PlayQueue.List = make([]*spec.TrackChild, len(trackIDs))
 
-	transcodeMeta := streamGetTranscodeMeta(c.DB, user.ID, params.GetOr("c", ""))
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
 
 	for i, id := range trackIDs {
 		switch id.Type {
 		case specid.Track:
 			track := db.Track{}
-			c.DB.
+			c.dbc.
 				Where("id=?", id.Value).
 				Preload("Album").
 				Preload("TrackStar", "user_id=?", user.ID).
@@ -206,7 +206,7 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 			sub.PlayQueue.List[i].TranscodeMeta = transcodeMeta
 		case specid.PodcastEpisode:
 			pe := db.PodcastEpisode{}
-			c.DB.
+			c.dbc.
 				Where("id=?", id.Value).
 				Find(&pe)
 			sub.PlayQueue.List[i] = spec.NewTCPodcastEpisode(&pe)
@@ -233,13 +233,13 @@ func (c *Controller) ServeSavePlayQueue(r *http.Request) *spec.Response {
 	}
 	user := r.Context().Value(CtxUser).(*db.User)
 	var queue db.PlayQueue
-	c.DB.Where("user_id=?", user.ID).First(&queue)
+	c.dbc.Where("user_id=?", user.ID).First(&queue)
 	queue.UserID = user.ID
 	queue.Current = params.GetOrID("current", specid.ID{}).String()
 	queue.Position = params.GetOrInt("position", 0)
 	queue.ChangedBy = params.GetOr("c", "") // must exist, middleware checks
 	queue.SetItems(trackIDs)
-	c.DB.Save(&queue)
+	c.dbc.Save(&queue)
 	return spec.NewResponse()
 }
 
@@ -251,7 +251,7 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 		return spec.NewError(10, "provide an `id` parameter")
 	}
 	var track db.Track
-	err = c.DB.
+	err = c.dbc.
 		Where("id=?", id.Value).
 		Preload("Album").
 		Preload("Album.Artists").
@@ -263,7 +263,7 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 		return spec.NewError(10, "couldn't find a track with that id")
 	}
 
-	transcodeMeta := streamGetTranscodeMeta(c.DB, user.ID, params.GetOr("c", ""))
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
 
 	sub := spec.NewResponse()
 	sub.Track = spec.NewTrackByTags(&track, track.Album)
@@ -277,7 +277,7 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
 	var tracks []*db.Track
-	q := c.DB.DB.
+	q := c.dbc.DB.
 		Limit(params.GetOrInt("size", 10)).
 		Preload("Album").
 		Preload("Album.Artists").
@@ -295,7 +295,7 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 		q = q.Joins("JOIN track_genres ON track_genres.track_id=tracks.id")
 		q = q.Joins("JOIN genres ON genres.id=track_genres.genre_id AND genres.name=?", genre)
 	}
-	if m := getMusicFolder(c.MusicPaths, params); m != "" {
+	if m := getMusicFolder(c.musicPaths, params); m != "" {
 		q = q.Where("albums.root_dir=?", m)
 	}
 	if err := q.Find(&tracks).Error; err != nil {
@@ -305,7 +305,7 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	sub.RandomTracks = &spec.RandomTracks{}
 	sub.RandomTracks.List = make([]*spec.TrackChild, len(tracks))
 
-	transcodeMeta := streamGetTranscodeMeta(c.DB, user.ID, params.GetOr("c", ""))
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
 
 	for i, track := range tracks {
 		sub.RandomTracks.List[i] = spec.NewTrackByTags(track, track.Album)
@@ -321,7 +321,7 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 	trackPaths := func(ids []specid.ID) ([]string, error) {
 		var paths []string
 		for _, id := range ids {
-			r, err := specidpaths.Locate(c.DB, id)
+			r, err := specidpaths.Locate(c.dbc, id)
 			if err != nil {
 				return nil, fmt.Errorf("find track by id: %w", err)
 			}
@@ -330,7 +330,7 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 		return paths, nil
 	}
 	getSpecStatus := func() (*spec.JukeboxStatus, error) {
-		status, err := c.Jukebox.GetStatus()
+		status, err := c.jukebox.GetStatus()
 		if err != nil {
 			return nil, fmt.Errorf("get status: %w", err)
 		}
@@ -343,12 +343,12 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 	}
 	getSpecPlaylist := func() ([]*spec.TrackChild, error) {
 		var ret []*spec.TrackChild
-		playlist, err := c.Jukebox.GetPlaylist()
+		playlist, err := c.jukebox.GetPlaylist()
 		if err != nil {
 			return nil, fmt.Errorf("get playlist: %w", err)
 		}
 		for _, path := range playlist {
-			file, err := specidpaths.Lookup(c.DB, PathsOf(c.MusicPaths), c.PodcastsPath, path)
+			file, err := specidpaths.Lookup(c.dbc, MusicPaths(c.musicPaths), c.podcastsPath, path)
 			if err != nil {
 				return nil, fmt.Errorf("fetch track: %w", err)
 			}
@@ -368,7 +368,7 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 		if err != nil {
 			return spec.NewError(0, "error creating playlist items: %v", err)
 		}
-		if err := c.Jukebox.SetPlaylist(paths); err != nil {
+		if err := c.jukebox.SetPlaylist(paths); err != nil {
 			return spec.NewError(0, "error setting playlist: %v", err)
 		}
 	case "add":
@@ -377,11 +377,11 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 		if err != nil {
 			return spec.NewError(10, "error creating playlist items: %v", err)
 		}
-		if err := c.Jukebox.AppendToPlaylist(paths); err != nil {
+		if err := c.jukebox.AppendToPlaylist(paths); err != nil {
 			return spec.NewError(0, "error appending to playlist: %v", err)
 		}
 	case "clear":
-		if err := c.Jukebox.ClearPlaylist(); err != nil {
+		if err := c.jukebox.ClearPlaylist(); err != nil {
 			return spec.NewError(0, "error clearing playlist: %v", err)
 		}
 	case "remove":
@@ -389,15 +389,15 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 		if err != nil {
 			return spec.NewError(10, "please provide an id for remove actions")
 		}
-		if err := c.Jukebox.RemovePlaylistIndex(index); err != nil {
+		if err := c.jukebox.RemovePlaylistIndex(index); err != nil {
 			return spec.NewError(0, "error removing: %v", err)
 		}
 	case "stop":
-		if err := c.Jukebox.Pause(); err != nil {
+		if err := c.jukebox.Pause(); err != nil {
 			return spec.NewError(0, "error stopping: %v", err)
 		}
 	case "start":
-		if err := c.Jukebox.Play(); err != nil {
+		if err := c.jukebox.Play(); err != nil {
 			return spec.NewError(0, "error starting: %v", err)
 		}
 	case "skip":
@@ -406,7 +406,7 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 			return spec.NewError(10, "please provide an index for skip actions")
 		}
 		offset, _ := params.GetInt("offset")
-		if err := c.Jukebox.SkipToPlaylistIndex(index, offset); err != nil {
+		if err := c.jukebox.SkipToPlaylistIndex(index, offset); err != nil {
 			return spec.NewError(0, "error skipping: %v", err)
 		}
 	case "get":
@@ -429,7 +429,7 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 		if err != nil {
 			return spec.NewError(10, "please provide a valid gain param")
 		}
-		if err := c.Jukebox.SetVolumePct(int(math.Min(gain, 1) * 100)); err != nil {
+		if err := c.jukebox.SetVolumePct(int(math.Min(gain, 1) * 100)); err != nil {
 			return spec.NewError(0, "error setting gain: %v", err)
 		}
 	}

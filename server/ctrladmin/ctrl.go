@@ -1,6 +1,8 @@
 package ctrladmin
 
 import (
+	"context"
+	"embed"
 	"encoding/base64"
 	"encoding/gob"
 	"encoding/json"
@@ -22,10 +24,11 @@ import (
 
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/handlerutil"
 	"go.senan.xyz/gonic/lastfm"
 	"go.senan.xyz/gonic/podcasts"
+	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/server/ctrladmin/adminui"
-	"go.senan.xyz/gonic/server/ctrlbase"
 )
 
 type CtxKey int
@@ -34,6 +37,263 @@ const (
 	CtxUser CtxKey = iota
 	CtxSession
 )
+
+type Controller struct {
+	*http.ServeMux
+
+	dbc              *db.DB
+	sessDB           *gormstore.Store
+	scanner          *scanner.Scanner
+	podcasts         *podcasts.Podcasts
+	lastfmClient     *lastfm.Client
+	resolveProxyPath ProxyPathResolver
+}
+
+type ProxyPathResolver func(in string) string
+
+func New(dbc *db.DB, sessDB *gormstore.Store, scanner *scanner.Scanner, podcasts *podcasts.Podcasts, lastfmClient *lastfm.Client, resolveProxyPath ProxyPathResolver) (*Controller, error) {
+	c := Controller{
+		ServeMux: http.NewServeMux(),
+
+		dbc:              dbc,
+		sessDB:           sessDB,
+		scanner:          scanner,
+		podcasts:         podcasts,
+		lastfmClient:     lastfmClient,
+		resolveProxyPath: resolveProxyPath,
+	}
+
+	resp := respHandler(adminui.TemplatesFS, resolveProxyPath)
+
+	baseChain := withSession(sessDB)
+	userChain := handlerutil.Chain(
+		baseChain,
+		withUserSession(dbc, resolveProxyPath),
+	)
+	adminChain := handlerutil.Chain(
+		userChain,
+		withAdminSession,
+	)
+
+	c.Handle("/static/", http.FileServer(http.FS(adminui.StaticFS)))
+
+	// public routes (creates session)
+	c.Handle("/login", baseChain(resp(c.ServeLogin)))
+	c.Handle("/login_do", baseChain(respRaw(c.ServeLoginDo)))
+
+	// user routes (if session is valid)
+	c.Handle("/logout", userChain(respRaw(c.ServeLogout)))
+	c.Handle("/home", userChain(resp(c.ServeHome)))
+	c.Handle("/change_username", userChain(resp(c.ServeChangeUsername)))
+	c.Handle("/change_username_do", userChain(resp(c.ServeChangeUsernameDo)))
+	c.Handle("/change_password", userChain(resp(c.ServeChangePassword)))
+	c.Handle("/change_password_do", userChain(resp(c.ServeChangePasswordDo)))
+	c.Handle("/change_avatar", userChain(resp(c.ServeChangeAvatar)))
+	c.Handle("/change_avatar_do", userChain(resp(c.ServeChangeAvatarDo)))
+	c.Handle("/delete_avatar_do", userChain(resp(c.ServeDeleteAvatarDo)))
+	c.Handle("/delete_user", userChain(resp(c.ServeDeleteUser)))
+	c.Handle("/delete_user_do", userChain(resp(c.ServeDeleteUserDo)))
+	c.Handle("/link_lastfm_do", userChain(resp(c.ServeLinkLastFMDo)))
+	c.Handle("/unlink_lastfm_do", userChain(resp(c.ServeUnlinkLastFMDo)))
+	c.Handle("/link_listenbrainz_do", userChain(resp(c.ServeLinkListenBrainzDo)))
+	c.Handle("/unlink_listenbrainz_do", userChain(resp(c.ServeUnlinkListenBrainzDo)))
+	c.Handle("/create_transcode_pref_do", userChain(resp(c.ServeCreateTranscodePrefDo)))
+	c.Handle("/delete_transcode_pref_do", userChain(resp(c.ServeDeleteTranscodePrefDo)))
+
+	// admin routes (if session is valid, and is admin)
+	c.Handle("/create_user", adminChain(resp(c.ServeCreateUser)))
+	c.Handle("/create_user_do", adminChain(resp(c.ServeCreateUserDo)))
+	c.Handle("/update_lastfm_api_key", adminChain(resp(c.ServeUpdateLastFMAPIKey)))
+	c.Handle("/update_lastfm_api_key_do", adminChain(resp(c.ServeUpdateLastFMAPIKeyDo)))
+	c.Handle("/start_scan_inc_do", adminChain(resp(c.ServeStartScanIncDo)))
+	c.Handle("/start_scan_full_do", adminChain(resp(c.ServeStartScanFullDo)))
+	c.Handle("/add_podcast_do", adminChain(resp(c.ServePodcastAddDo)))
+	c.Handle("/delete_podcast_do", adminChain(resp(c.ServePodcastDeleteDo)))
+	c.Handle("/download_podcast_do", adminChain(resp(c.ServePodcastDownloadDo)))
+	c.Handle("/update_podcast_do", adminChain(resp(c.ServePodcastUpdateDo)))
+	c.Handle("/add_internet_radio_station_do", adminChain(resp(c.ServeInternetRadioStationAddDo)))
+	c.Handle("/delete_internet_radio_station_do", adminChain(resp(c.ServeInternetRadioStationDeleteDo)))
+	c.Handle("/update_internet_radio_station_do", adminChain(resp(c.ServeInternetRadioStationUpdateDo)))
+
+	c.Handle("/", baseChain(resp(c.ServeNotFound)))
+
+	return &c, nil
+}
+
+func withSession(sessDB *gormstore.Store) handlerutil.Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			session, err := sessDB.Get(r, gonic.Name)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("error getting session: %s", err), 500)
+				return
+			}
+			withSession := context.WithValue(r.Context(), CtxSession, session)
+			next.ServeHTTP(w, r.WithContext(withSession))
+		})
+	}
+}
+
+func withUserSession(dbc *db.DB, resolvePath func(string) string) handlerutil.Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// session exists at this point
+			session := r.Context().Value(CtxSession).(*sessions.Session)
+			userID, ok := session.Values["user"].(int)
+			if !ok {
+				sessAddFlashW(session, []string{"you are not authenticated"})
+				sessLogSave(session, w, r)
+				http.Redirect(w, r, resolvePath("/admin/login"), http.StatusSeeOther)
+				return
+			}
+			// take username from sesion and add the user row to the context
+			user := dbc.GetUserByID(userID)
+			if user == nil {
+				// the username in the client's session no longer relates to a
+				// user in the database (maybe the user was deleted)
+				session.Options.MaxAge = -1
+				sessLogSave(session, w, r)
+				http.Redirect(w, r, "/", http.StatusSeeOther)
+				return
+			}
+			withUser := context.WithValue(r.Context(), CtxUser, user)
+			next.ServeHTTP(w, r.WithContext(withUser))
+		})
+	}
+}
+
+func withAdminSession(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// session and user exist at this point
+		session := r.Context().Value(CtxSession).(*sessions.Session)
+		user := r.Context().Value(CtxUser).(*db.User)
+		if !user.IsAdmin {
+			sessAddFlashW(session, []string{"you are not an admin"})
+			sessLogSave(session, w, r)
+			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+type Response struct {
+	// code is 200
+	template string
+	data     *templateData
+	// code is 303
+	redirect string
+	flashN   []string // normal
+	flashW   []string // warning
+	// code is >= 400
+	code int
+	err  string
+}
+
+type (
+	handlerAdmin func(r *http.Request) *Response
+)
+
+func respHandler(templateFS embed.FS, resolvePath func(string) string) func(next handlerAdmin) http.Handler {
+	tmpl := template.Must(template.
+		New("layout").
+		Funcs(template.FuncMap(sprig.FuncMap())).
+		Funcs(funcMap()).
+		Funcs(template.FuncMap{"path": resolvePath}).
+		ParseFS(templateFS, "*.tmpl", "**/*.tmpl"),
+	)
+	buffPool := bpool.NewBufferPool(64)
+
+	return func(next handlerAdmin) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			resp := next(r)
+			session, ok := r.Context().Value(CtxSession).(*sessions.Session)
+			if ok {
+				sessAddFlashN(session, resp.flashN)
+				sessAddFlashW(session, resp.flashW)
+				if err := session.Save(r, w); err != nil {
+					http.Error(w, fmt.Sprintf("error saving session: %v", err), 500)
+					return
+				}
+			}
+			if resp.redirect != "" {
+				http.Redirect(w, r, resolvePath(resp.redirect), http.StatusSeeOther)
+				return
+			}
+			if resp.err != "" {
+				http.Error(w, resp.err, resp.code)
+				return
+			}
+			if resp.template == "" {
+				http.Error(w, "useless handler return", 500)
+				return
+			}
+
+			if resp.data == nil {
+				resp.data = &templateData{}
+			}
+			resp.data.Version = gonic.Version
+			if session != nil {
+				resp.data.Flashes = session.Flashes()
+				if err := session.Save(r, w); err != nil {
+					http.Error(w, fmt.Sprintf("error saving session: %v", err), 500)
+					return
+				}
+			}
+			if user, ok := r.Context().Value(CtxUser).(*db.User); ok {
+				resp.data.User = user
+			}
+
+			buff := buffPool.Get()
+			defer buffPool.Put(buff)
+			if err := tmpl.ExecuteTemplate(buff, resp.template, resp.data); err != nil {
+				http.Error(w, fmt.Sprintf("executing template: %v", err), 500)
+				return
+			}
+
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			if resp.code != 0 {
+				w.WriteHeader(resp.code)
+			}
+			if _, err := buff.WriteTo(w); err != nil {
+				log.Printf("error writing to response buffer: %v\n", err)
+			}
+		})
+	}
+}
+
+func respRaw(h http.HandlerFunc) http.Handler {
+	return h // stub
+}
+
+type templateData struct {
+	// common
+	Flashes []interface{}
+	User    *db.User
+	Version string
+	// home
+	AlbumCount           int
+	ArtistCount          int
+	TrackCount           int
+	RequestRoot          string
+	RecentFolders        []*db.Album
+	AllUsers             []*db.User
+	LastScanTime         time.Time
+	IsScanning           bool
+	TranscodePreferences []*db.TranscodePreference
+	TranscodeProfiles    []string
+
+	CurrentLastFMAPIKey    string
+	CurrentLastFMAPISecret string
+	DefaultListenBrainzURL string
+	SelectedUser           *db.User
+
+	Podcasts              []*db.Podcast
+	InternetRadioStations []*db.InternetRadioStation
+
+	// avatar
+	Avatar []byte
+}
 
 func funcMap() template.FuncMap {
 	return template.FuncMap{
@@ -72,153 +332,7 @@ func funcMap() template.FuncMap {
 	}
 }
 
-type Controller struct {
-	*ctrlbase.Controller
-	buffPool     *bpool.BufferPool
-	template     *template.Template
-	sessDB       *gormstore.Store
-	Podcasts     *podcasts.Podcasts
-	lastfmClient *lastfm.Client
-}
-
-func New(b *ctrlbase.Controller, sessDB *gormstore.Store, podcasts *podcasts.Podcasts, lastfmClient *lastfm.Client) (*Controller, error) {
-	tmpl, err := template.
-		New("layout").
-		Funcs(template.FuncMap(sprig.FuncMap())).
-		Funcs(funcMap()).       // static
-		Funcs(template.FuncMap{ // from base
-			"path": b.Path,
-		}).
-		ParseFS(adminui.TemplatesFS, "*.tmpl", "**/*.tmpl")
-	if err != nil {
-		return nil, fmt.Errorf("build template: %w", err)
-	}
-	return &Controller{
-		Controller:   b,
-		buffPool:     bpool.NewBufferPool(64),
-		template:     tmpl,
-		sessDB:       sessDB,
-		Podcasts:     podcasts,
-		lastfmClient: lastfmClient,
-	}, nil
-}
-
-type templateData struct {
-	// common
-	Flashes []interface{}
-	User    *db.User
-	Version string
-	// home
-	AlbumCount           int
-	ArtistCount          int
-	TrackCount           int
-	RequestRoot          string
-	RecentFolders        []*db.Album
-	AllUsers             []*db.User
-	LastScanTime         time.Time
-	IsScanning           bool
-	TranscodePreferences []*db.TranscodePreference
-	TranscodeProfiles    []string
-
-	CurrentLastFMAPIKey    string
-	CurrentLastFMAPISecret string
-	DefaultListenBrainzURL string
-	SelectedUser           *db.User
-
-	Podcasts              []*db.Podcast
-	InternetRadioStations []*db.InternetRadioStation
-
-	// avatar
-	Avatar []byte
-}
-
-type Response struct {
-	// code is 200
-	template string
-	data     *templateData
-	// code is 303
-	redirect string
-	flashN   []string // normal
-	flashW   []string // warning
-	// code is >= 400
-	code int
-	err  string
-}
-
-type (
-	handlerAdmin    func(r *http.Request) *Response
-	handlerAdminRaw func(w http.ResponseWriter, r *http.Request)
-)
-
-func (c *Controller) H(h handlerAdmin) http.Handler {
-	// TODO: break this up a bit
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := h(r)
-		session, ok := r.Context().Value(CtxSession).(*sessions.Session)
-		if ok {
-			sessAddFlashN(session, resp.flashN)
-			sessAddFlashW(session, resp.flashW)
-			if err := session.Save(r, w); err != nil {
-				http.Error(w, fmt.Sprintf("error saving session: %v", err), 500)
-				return
-			}
-		}
-		if resp.redirect != "" {
-			to := resp.redirect
-			if strings.HasPrefix(to, "/") {
-				to = c.Path(to)
-			}
-			http.Redirect(w, r, to, http.StatusSeeOther)
-			return
-		}
-		if resp.err != "" {
-			http.Error(w, resp.err, resp.code)
-			return
-		}
-		if resp.template == "" {
-			http.Error(w, "useless handler return", 500)
-			return
-		}
-
-		if resp.data == nil {
-			resp.data = &templateData{}
-		}
-		resp.data.Version = gonic.Version
-		if session != nil {
-			resp.data.Flashes = session.Flashes()
-			if err := session.Save(r, w); err != nil {
-				http.Error(w, fmt.Sprintf("error saving session: %v", err), 500)
-				return
-			}
-		}
-		if user, ok := r.Context().Value(CtxUser).(*db.User); ok {
-			resp.data.User = user
-		}
-
-		buff := c.buffPool.Get()
-		defer c.buffPool.Put(buff)
-		if err := c.template.ExecuteTemplate(buff, resp.template, resp.data); err != nil {
-			http.Error(w, fmt.Sprintf("executing template: %v", err), 500)
-			return
-		}
-
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		if resp.code != 0 {
-			w.WriteHeader(resp.code)
-		}
-		if _, err := buff.WriteTo(w); err != nil {
-			log.Printf("error writing to response buffer: %v\n", err)
-		}
-	})
-}
-
-func (c *Controller) HR(h handlerAdminRaw) http.Handler {
-	return http.HandlerFunc(h)
-}
-
-// ## begin utilities
-// ## begin utilities
-// ## begin utilities
+//  utilities
 
 type FlashType string
 
@@ -268,9 +382,7 @@ func sessLogSave(s *sessions.Session, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// ## begin validation
-// ## begin validation
-// ## begin validation
+// validation
 
 var (
 	errValiNoUsername        = errors.New("please enter a username")
