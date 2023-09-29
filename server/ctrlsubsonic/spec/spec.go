@@ -26,10 +26,10 @@ type Response struct {
 	XMLNS   string `xml:"xmlns,attr"            json:"-"`
 
 	// https://opensubsonic.netlify.app/docs/responses/subsonic-response/
-	Type                   string                 `xml:"type,attr"              json:"type"`
-	ServerVersion          string                 `xml:"serverVersion,attr"     json:"serverVersion"`
-	OpenSubsonic           bool                   `xml:"openSubsonic,attr"      json:"openSubsonic"`
-	OpenSubsonicExtensions OpenSubsonicExtensions `xml:"openSubsonicExtensions" json:"openSubsonicExtensions,omitempty"`
+	Type                   string                  `xml:"type,attr"              json:"type"`
+	ServerVersion          string                  `xml:"serverVersion,attr"     json:"serverVersion"`
+	OpenSubsonic           bool                    `xml:"openSubsonic,attr"      json:"openSubsonic"`
+	OpenSubsonicExtensions *OpenSubsonicExtensions `xml:"openSubsonicExtensions" json:"openSubsonicExtensions,omitempty"`
 
 	Error                 *Error                 `xml:"error"                 json:"error,omitempty"`
 	Albums                *Albums                `xml:"albumList"             json:"albumList,omitempty"`
@@ -97,17 +97,13 @@ type Error struct {
 }
 
 func NewError(code int, message string, a ...interface{}) *Response {
-	return &Response{
-		Status:  "failed",
-		XMLNS:   xmlns,
-		Version: apiVersion,
-		Error: &Error{
-			Code:    code,
-			Message: fmt.Sprintf(message, a...),
-		},
-		Type:          gonic.Name,
-		ServerVersion: gonic.Version,
+	r := NewResponse()
+	r.Status = "failed"
+	r.Error = &Error{
+		Code:    code,
+		Message: fmt.Sprintf(message, a...),
 	}
+	return r
 }
 
 type Albums struct {
@@ -432,7 +428,12 @@ type Lyrics struct {
 	Title  string `xml:"title,attr,omitempty"  json:"title,omitempty"`
 }
 
-type OpenSubsonicExtensions map[string][]int
+type OpenSubsonicExtension struct {
+	Name     string `xml:"name,attr" json:"name"`
+	Versions []int  `xml:"versions"  json:"versions"`
+}
+
+type OpenSubsonicExtensions []OpenSubsonicExtension
 
 func formatRating(rating float64) string {
 	if rating == 0 {

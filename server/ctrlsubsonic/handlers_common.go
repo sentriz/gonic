@@ -37,7 +37,7 @@ func (c *Controller) ServePing(_ *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetOpenSubsonicExtensions(_ *http.Request) *spec.Response {
 	sub := spec.NewResponse()
-	sub.OpenSubsonicExtensions = spec.OpenSubsonicExtensions{}
+	sub.OpenSubsonicExtensions = &spec.OpenSubsonicExtensions{}
 	return sub
 }
 
