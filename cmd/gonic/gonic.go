@@ -15,8 +15,11 @@ import (
 	"strings"
 	"time"
 
+	// avatar encode/decode
+	_ "image/gif"
+	_ "image/png"
+
 	"github.com/google/shlex"
-	"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/oklog/run"
@@ -25,6 +28,7 @@ import (
 
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/handlerutil"
 	"go.senan.xyz/gonic/jukebox"
 	"go.senan.xyz/gonic/lastfm"
 	"go.senan.xyz/gonic/listenbrainz"
@@ -34,7 +38,6 @@ import (
 	"go.senan.xyz/gonic/scanner/tags"
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/server/ctrladmin"
-	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/ctrlsubsonic"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/artistinfocache"
 	"go.senan.xyz/gonic/transcode"
@@ -166,7 +169,7 @@ func main() {
 
 	tagger := &tags.TagReader{}
 	scannr := scanner.New(
-		ctrlsubsonic.PathsOf(musicPaths),
+		ctrlsubsonic.MusicPaths(musicPaths),
 		dbc,
 		map[scanner.Tag]scanner.MultiValueSetting{
 			scanner.Genre:       scanner.MultiValueSetting(confMultiValueGenre),
@@ -218,37 +221,36 @@ func main() {
 
 	artistInfoCache := artistinfocache.New(dbc, lastfmClient)
 
-	ctrlBase := &ctrlbase.Controller{
-		DB:            dbc,
-		PlaylistStore: playlistStore,
-		ProxyPrefix:   *confProxyPrefix,
-		Scanner:       scannr,
+	scrobblers := []scrobble.Scrobbler{lastfmClient, listenbrainzClient}
+
+	resolveProxyPath := func(in string) string {
+		return path.Join(*confProxyPrefix, in)
 	}
-	ctrlAdmin, err := ctrladmin.New(ctrlBase, sessDB, podcast, lastfmClient)
+
+	ctrlAdmin, err := ctrladmin.New(dbc, sessDB, scannr, podcast, lastfmClient, resolveProxyPath)
 	if err != nil {
 		log.Panicf("error creating admin controller: %v\n", err)
 	}
-	ctrlSubsonic := &ctrlsubsonic.Controller{
-		Controller:      ctrlBase,
-		MusicPaths:      musicPaths,
-		PodcastsPath:    *confPodcastPath,
-		CacheAudioPath:  cacheDirAudio,
-		CacheCoverPath:  cacheDirCovers,
-		LastFMClient:    lastfmClient,
-		ArtistInfoCache: artistInfoCache,
-		Scrobblers: []scrobble.Scrobbler{
-			lastfmClient,
-			listenbrainzClient,
-		},
-		Podcasts:   podcast,
-		Transcoder: transcoder,
-		Jukebox:    jukebx,
+	ctrlSubsonic, err := ctrlsubsonic.New(dbc, scannr, musicPaths, *confPodcastPath, cacheDirAudio, cacheDirCovers, jukebx, playlistStore, scrobblers, podcast, transcoder, lastfmClient, artistInfoCache, resolveProxyPath)
+	if err != nil {
+		log.Panicf("error creating subsonic controller: %v\n", err)
 	}
 
-	mux := mux.NewRouter()
-	ctrlbase.AddRoutes(ctrlBase, mux, *confHTTPLog)
-	ctrladmin.AddRoutes(ctrlAdmin, mux.PathPrefix("/admin").Subrouter())
-	ctrlsubsonic.AddRoutes(ctrlSubsonic, mux.PathPrefix("/rest").Subrouter())
+	chain := handlerutil.Chain()
+	if *confHTTPLog {
+		chain = handlerutil.Chain(handlerutil.Log)
+	}
+	chain = handlerutil.Chain(
+		chain,
+		handlerutil.BasicCORS,
+	)
+	trim := handlerutil.TrimPathSuffix(".view") // /x.view and /x should match the same
+
+	mux := http.NewServeMux()
+	mux.Handle("/admin/", http.StripPrefix("/admin", chain(ctrlAdmin)))
+	mux.Handle("/rest/", http.StripPrefix("/rest", chain(trim(ctrlSubsonic))))
+	mux.Handle("/ping", chain(handlerutil.Message("ok")))
+	mux.Handle("/", chain(handlerutil.Redirect(resolveProxyPath("/admin/home"))))
 
 	if *confExpvar {
 		mux.Handle("/debug/vars", expvar.Handler())

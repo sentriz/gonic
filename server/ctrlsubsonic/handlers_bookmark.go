@@ -15,7 +15,7 @@ import (
 func (c *Controller) ServeGetBookmarks(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	bookmarks := []*db.Bookmark{}
-	err := c.DB.
+	err := c.dbc.
 		Where("user_id=?", user.ID).
 		Find(&bookmarks).
 		Error
@@ -40,7 +40,7 @@ func (c *Controller) ServeGetBookmarks(r *http.Request) *spec.Response {
 		switch specid.IDT(bookmark.EntryIDType) {
 		case specid.Track:
 			var track db.Track
-			err := c.DB.
+			err := c.dbc.
 				Preload("Album").
 				Find(&track, "id=?", bookmark.EntryID).
 				Error
@@ -64,14 +64,14 @@ func (c *Controller) ServeCreateBookmark(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 	bookmark := &db.Bookmark{}
-	c.DB.FirstOrCreate(bookmark, db.Bookmark{
+	c.dbc.FirstOrCreate(bookmark, db.Bookmark{
 		UserID:      user.ID,
 		EntryIDType: string(id.Type),
 		EntryID:     id.Value,
 	})
 	bookmark.Comment = params.GetOr("comment", "")
 	bookmark.Position = params.GetOrInt("position", 0)
-	c.DB.Save(bookmark)
+	c.dbc.Save(bookmark)
 	return spec.NewResponse()
 }
 
@@ -82,7 +82,7 @@ func (c *Controller) ServeDeleteBookmark(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	c.DB.
+	c.dbc.
 		Where("user_id=? AND entry_id_type=? AND entry_id=?", user.ID, id.Type, id.Value).
 		Delete(&db.Bookmark{})
 	return spec.NewResponse()
