@@ -37,96 +37,6 @@ import (
 
 var ErrNoValues = errors.New("no values provided")
 
-// some thin wrappers
-// may be needed when cleaning up parse() below
-func parseStr(in string) (string, error)    { return in, nil }
-func parseInt(in string) (int, error)       { return strconv.Atoi(in) }
-func parseFloat(in string) (float64, error) { return strconv.ParseFloat(in, 64) }
-func parseID(in string) (specid.ID, error)  { return specid.New(in) }
-func parseBool(in string) (bool, error)     { return strconv.ParseBool(in) }
-
-func parseTime(in string) (time.Time, error) {
-	ms, err := strconv.Atoi(in)
-	if err != nil {
-		return time.Time{}, err
-	}
-	ns := int64(ms) * 1e6
-	return time.Unix(0, ns), nil
-}
-
-func parse(values []string, i interface{}) error {
-	if len(values) == 0 {
-		return ErrNoValues
-	}
-	var err error
-	switch v := i.(type) {
-	// *T
-	case *string:
-		*v, err = parseStr(values[0])
-	case *int:
-		*v, err = parseInt(values[0])
-	case *float64:
-		*v, err = parseFloat(values[0])
-	case *specid.ID:
-		*v, err = parseID(values[0])
-	case *bool:
-		*v, err = parseBool(values[0])
-	case *time.Time:
-		*v, err = parseTime(values[0])
-
-		// *[]T
-	case *[]string:
-		for _, value := range values {
-			parsed, err := parseStr(value)
-			if err != nil {
-				return err
-			}
-			*v = append(*v, parsed)
-		}
-	case *[]int:
-		for _, value := range values {
-			parsed, err := parseInt(value)
-			if err != nil {
-				return err
-			}
-			*v = append(*v, parsed)
-		}
-	case *[]float64:
-		for _, value := range values {
-			parsed, err := parseFloat(value)
-			if err != nil {
-				return err
-			}
-			*v = append(*v, parsed)
-		}
-	case *[]specid.ID:
-		for _, value := range values {
-			parsed, err := parseID(value)
-			if err != nil {
-				return err
-			}
-			*v = append(*v, parsed)
-		}
-	case *[]bool:
-		for _, value := range values {
-			parsed, err := parseBool(value)
-			if err != nil {
-				return err
-			}
-			*v = append(*v, parsed)
-		}
-	case *[]time.Time:
-		for _, value := range values {
-			parsed, err := parseTime(value)
-			if err != nil {
-				return err
-			}
-			*v = append(*v, parsed)
-		}
-	}
-	return err
-}
-
 type Params url.Values
 
 func New(r *http.Request) Params {
@@ -460,4 +370,94 @@ func (p Params) GetFirstOrTime(or time.Time, keys ...string) time.Time {
 		return ret
 	}
 	return or
+}
+
+// some thin wrappers
+// may be needed when cleaning up parse() below
+func parseStr(in string) (string, error)    { return in, nil }
+func parseInt(in string) (int, error)       { return strconv.Atoi(in) }
+func parseFloat(in string) (float64, error) { return strconv.ParseFloat(in, 64) }
+func parseID(in string) (specid.ID, error)  { return specid.New(in) }
+func parseBool(in string) (bool, error)     { return strconv.ParseBool(in) }
+
+func parseTime(in string) (time.Time, error) {
+	ms, err := strconv.Atoi(in)
+	if err != nil {
+		return time.Time{}, err
+	}
+	ns := int64(ms) * 1e6
+	return time.Unix(0, ns), nil
+}
+
+func parse(values []string, i interface{}) error {
+	if len(values) == 0 {
+		return ErrNoValues
+	}
+	var err error
+	switch v := i.(type) {
+	// *T
+	case *string:
+		*v, err = parseStr(values[0])
+	case *int:
+		*v, err = parseInt(values[0])
+	case *float64:
+		*v, err = parseFloat(values[0])
+	case *specid.ID:
+		*v, err = parseID(values[0])
+	case *bool:
+		*v, err = parseBool(values[0])
+	case *time.Time:
+		*v, err = parseTime(values[0])
+
+		// *[]T
+	case *[]string:
+		for _, value := range values {
+			parsed, err := parseStr(value)
+			if err != nil {
+				return err
+			}
+			*v = append(*v, parsed)
+		}
+	case *[]int:
+		for _, value := range values {
+			parsed, err := parseInt(value)
+			if err != nil {
+				return err
+			}
+			*v = append(*v, parsed)
+		}
+	case *[]float64:
+		for _, value := range values {
+			parsed, err := parseFloat(value)
+			if err != nil {
+				return err
+			}
+			*v = append(*v, parsed)
+		}
+	case *[]specid.ID:
+		for _, value := range values {
+			parsed, err := parseID(value)
+			if err != nil {
+				return err
+			}
+			*v = append(*v, parsed)
+		}
+	case *[]bool:
+		for _, value := range values {
+			parsed, err := parseBool(value)
+			if err != nil {
+				return err
+			}
+			*v = append(*v, parsed)
+		}
+	case *[]time.Time:
+		for _, value := range values {
+			parsed, err := parseTime(value)
+			if err != nil {
+				return err
+			}
+			*v = append(*v, parsed)
+		}
+	}
+	return err
 }

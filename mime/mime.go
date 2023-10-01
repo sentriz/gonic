@@ -7,19 +7,6 @@ import (
 	"strings"
 )
 
-var supportedAudioTypes = map[string]string{
-	".mp3":  "audio/mpeg",
-	".flac": "audio/x-flac",
-	".aac":  "audio/x-aac",
-	".m4a":  "audio/m4a",
-	".m4b":  "audio/m4b",
-	".ogg":  "audio/ogg",
-	".opus": "audio/ogg",
-	".wma":  "audio/x-ms-wma",
-	".wav":  "audio/x-wav",
-	".wv":   "audio/x-wavpack",
-}
-
 //nolint:gochecknoinits
 func init() {
 	for ext, mime := range supportedAudioTypes {
@@ -40,4 +27,17 @@ func TypeByAudioExtension(ext string) string {
 		return ""
 	}
 	return stdmime.TypeByExtension(ext)
+}
+
+var supportedAudioTypes = map[string]string{
+	".mp3":  "audio/mpeg",
+	".flac": "audio/x-flac",
+	".aac":  "audio/x-aac",
+	".m4a":  "audio/m4a",
+	".m4b":  "audio/m4b",
+	".ogg":  "audio/ogg",
+	".opus": "audio/ogg",
+	".wma":  "audio/x-ms-wma",
+	".wav":  "audio/x-wav",
+	".wv":   "audio/x-wavpack",
 }

@@ -1,9 +1,6 @@
 //nolint:lll // struct tags get very long and can't be split
 package db
 
-// see this db fiddle to mess around with the schema
-// https://www.db-fiddle.com/f/wJ7z8L7mu6ZKaYmWk1xr1p/5
-
 import (
 	"fmt"
 	"path/filepath"
@@ -16,30 +13,6 @@ import (
 	// TODO: remove this dep
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
-
-func splitIDs(in, sep string) []specid.ID {
-	if in == "" {
-		return []specid.ID{}
-	}
-	parts := strings.Split(in, sep)
-	ret := make([]specid.ID, 0, len(parts))
-	for _, p := range parts {
-		id, _ := specid.New(p)
-		ret = append(ret, id)
-	}
-	return ret
-}
-
-func join[T fmt.Stringer](in []T, sep string) string {
-	if in == nil {
-		return ""
-	}
-	strs := make([]string, 0, len(in))
-	for _, id := range in {
-		strs = append(strs, id.String())
-	}
-	return strings.Join(strs, sep)
-}
 
 type Artist struct {
 	ID            int      `gorm:"primary_key"`
@@ -461,3 +434,27 @@ func (p *ArtistInfo) SetSimilarArtists(items []string) { p.SimilarArtists = stri
 
 func (p *ArtistInfo) GetTopTracks() []string      { return strings.Split(p.TopTracks, ";") }
 func (p *ArtistInfo) SetTopTracks(items []string) { p.TopTracks = strings.Join(items, ";") }
+
+func splitIDs(in, sep string) []specid.ID {
+	if in == "" {
+		return []specid.ID{}
+	}
+	parts := strings.Split(in, sep)
+	ret := make([]specid.ID, 0, len(parts))
+	for _, p := range parts {
+		id, _ := specid.New(p)
+		ret = append(ret, id)
+	}
+	return ret
+}
+
+func join[T fmt.Stringer](in []T, sep string) string {
+	if in == nil {
+		return ""
+	}
+	strs := make([]string, 0, len(in))
+	for _, id := range in {
+		strs = append(strs, id.String())
+	}
+	return strings.Join(strs, sep)
+}

@@ -23,6 +23,12 @@ import (
 	"go.senan.xyz/gonic/transcode"
 )
 
+func TestMain(m *testing.M) {
+	gonic.Version = ""
+	log.SetOutput(io.Discard)
+	os.Exit(m.Run())
+}
+
 var testCamelExpr = regexp.MustCompile("([a-z0-9])([A-Z])")
 
 const (
@@ -155,10 +161,4 @@ func makec(tb testing.TB, roots []string, audio bool) *Controller {
 	}
 
 	return contr
-}
-
-func TestMain(m *testing.M) {
-	gonic.Version = ""
-	log.SetOutput(io.Discard)
-	os.Exit(m.Run())
 }

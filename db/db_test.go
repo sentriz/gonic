@@ -11,13 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func randKey() string {
-	letters := []rune("abcdef0123456789")
-	b := make([]rune, 16)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(b)
+func TestMain(m *testing.M) {
+	log.SetOutput(io.Discard)
+	os.Exit(m.Run())
 }
 
 func TestGetSetting(t *testing.T) {
@@ -46,7 +42,11 @@ func TestGetSetting(t *testing.T) {
 	require.Equal(t, value, actual)
 }
 
-func TestMain(m *testing.M) {
-	log.SetOutput(io.Discard)
-	os.Exit(m.Run())
+func randKey() string {
+	letters := []rune("abcdef0123456789")
+	b := make([]rune, 16)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
 }

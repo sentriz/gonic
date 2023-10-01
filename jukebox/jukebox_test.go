@@ -11,28 +11,6 @@ import (
 	"go.senan.xyz/gonic/jukebox"
 )
 
-func newJukebox(tb testing.TB) *jukebox.Jukebox {
-	tb.Helper()
-
-	sockPath := filepath.Join(tb.TempDir(), "mpv.sock")
-
-	j := jukebox.New()
-	err := j.Start(
-		sockPath,
-		[]string{jukebox.MPVArg("--ao", "null")},
-	)
-	if errors.Is(err, jukebox.ErrMPVTooOld) {
-		tb.Skip("old mpv found, skipping")
-	}
-	if err != nil {
-		tb.Fatalf("start jukebox: %v", err)
-	}
-	tb.Cleanup(func() {
-		j.Quit()
-	})
-	return j
-}
-
 func TestPlaySkipReset(t *testing.T) {
 	t.Skip("bit flakey currently")
 
@@ -185,6 +163,28 @@ func TestVolume(t *testing.T) {
 	vol, err = j.GetVolumePct()
 	require.NoError(t, err)
 	require.Equal(t, 0.0, vol)
+}
+
+func newJukebox(tb testing.TB) *jukebox.Jukebox {
+	tb.Helper()
+
+	sockPath := filepath.Join(tb.TempDir(), "mpv.sock")
+
+	j := jukebox.New()
+	err := j.Start(
+		sockPath,
+		[]string{jukebox.MPVArg("--ao", "null")},
+	)
+	if errors.Is(err, jukebox.ErrMPVTooOld) {
+		tb.Skip("old mpv found, skipping")
+	}
+	if err != nil {
+		tb.Fatalf("start jukebox: %v", err)
+	}
+	tb.Cleanup(func() {
+		j.Quit()
+	})
+	return j
 }
 
 func testPath(path string) string {

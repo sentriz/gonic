@@ -30,42 +30,45 @@ import (
 //   b) return a non-nil spec.Response
 //  _but not both_
 
-func streamGetTransodePreference(dbc *db.DB, userID int, client string) (*db.TranscodePreference, error) {
-	var pref db.TranscodePreference
-	err := dbc.
-		Where("user_id=?", userID).
-		Where("client COLLATE NOCASE IN (?)", []string{"*", client}).
-		Order("client DESC"). // ensure "*" is last if it's there
-		First(&pref).
-		Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, fmt.Errorf("find transcode preference: %w", err)
-	}
-	return &pref, nil
-}
-
-func streamGetTranscodeMeta(dbc *db.DB, userID int, client string) spec.TranscodeMeta {
-	pref, _ := streamGetTransodePreference(dbc, userID, client)
-	if pref == nil {
-		return spec.TranscodeMeta{}
-	}
-	profile, ok := transcode.UserProfiles[pref.Profile]
-	if !ok {
-		return spec.TranscodeMeta{}
-	}
-	return spec.TranscodeMeta{
-		TranscodedContentType: profile.MIME(),
-		TranscodedSuffix:      profile.Suffix(),
-	}
-}
-
 const (
 	coverDefaultSize = 600
 	coverCacheFormat = "png"
 )
+
+func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	id, err := params.GetID("id")
+	if err != nil {
+		return spec.NewError(10, "please provide an `id` parameter")
+	}
+	size := params.GetOrInt("size", coverDefaultSize)
+	cachePath := filepath.Join(
+		c.cacheCoverPath,
+		fmt.Sprintf("%s-%d.%s", id.String(), size, coverCacheFormat),
+	)
+	_, err = os.Stat(cachePath)
+	switch {
+	case os.IsNotExist(err):
+		reader, err := coverFor(c.dbc, c.artistInfoCache, id)
+		if err != nil {
+			return spec.NewError(10, "couldn't find cover `%s`: %v", id, err)
+		}
+		defer reader.Close()
+
+		if err := coverScaleAndSave(reader, cachePath, size); err != nil {
+			log.Printf("error scaling cover: %v", err)
+			return nil
+		}
+	case err != nil:
+		log.Printf("error stating `%s`: %v", cachePath, err)
+		return nil
+	}
+
+	w.Header().Set("Cache-Control", "public, max-age=3600")
+	http.ServeFile(w, r, cachePath)
+
+	return nil
+}
 
 var (
 	errCoverNotFound = errors.New("could not find a cover with that id")
@@ -163,41 +166,6 @@ func coverScaleAndSave(reader io.Reader, cachePath string, size int) error {
 	return nil
 }
 
-func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *spec.Response {
-	params := r.Context().Value(CtxParams).(params.Params)
-	id, err := params.GetID("id")
-	if err != nil {
-		return spec.NewError(10, "please provide an `id` parameter")
-	}
-	size := params.GetOrInt("size", coverDefaultSize)
-	cachePath := filepath.Join(
-		c.cacheCoverPath,
-		fmt.Sprintf("%s-%d.%s", id.String(), size, coverCacheFormat),
-	)
-	_, err = os.Stat(cachePath)
-	switch {
-	case os.IsNotExist(err):
-		reader, err := coverFor(c.dbc, c.artistInfoCache, id)
-		if err != nil {
-			return spec.NewError(10, "couldn't find cover `%s`: %v", id, err)
-		}
-		defer reader.Close()
-
-		if err := coverScaleAndSave(reader, cachePath, size); err != nil {
-			log.Printf("error scaling cover: %v", err)
-			return nil
-		}
-	case err != nil:
-		log.Printf("error stating `%s`: %v", cachePath, err)
-		return nil
-	}
-
-	w.Header().Set("Cache-Control", "public, max-age=3600")
-	http.ServeFile(w, r, cachePath)
-
-	return nil
-}
-
 func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
@@ -267,4 +235,36 @@ func (c *Controller) ServeGetAvatar(w http.ResponseWriter, r *http.Request) *spe
 	}
 	http.ServeContent(w, r, "", time.Now(), bytes.NewReader(reqUser.Avatar))
 	return nil
+}
+
+func streamGetTransodePreference(dbc *db.DB, userID int, client string) (*db.TranscodePreference, error) {
+	var pref db.TranscodePreference
+	err := dbc.
+		Where("user_id=?", userID).
+		Where("client COLLATE NOCASE IN (?)", []string{"*", client}).
+		Order("client DESC"). // ensure "*" is last if it's there
+		First(&pref).
+		Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("find transcode preference: %w", err)
+	}
+	return &pref, nil
+}
+
+func streamGetTranscodeMeta(dbc *db.DB, userID int, client string) spec.TranscodeMeta {
+	pref, _ := streamGetTransodePreference(dbc, userID, client)
+	if pref == nil {
+		return spec.TranscodeMeta{}
+	}
+	profile, ok := transcode.UserProfiles[pref.Profile]
+	if !ok {
+		return spec.TranscodeMeta{}
+	}
+	return spec.TranscodeMeta{
+		TranscodedContentType: profile.MIME(),
+		TranscodedSuffix:      profile.Suffix(),
+	}
 }
