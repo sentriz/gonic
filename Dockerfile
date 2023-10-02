@@ -21,7 +21,8 @@ RUN apk add -U --no-cache \
     mpv \
     ca-certificates \
     tzdata \
-    tini
+    tini \
+    shared-mime-info
 
 COPY --from=builder \
     /usr/lib/libgcc_s.so.1 \

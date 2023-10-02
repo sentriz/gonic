@@ -35,7 +35,8 @@ import (
 	"go.senan.xyz/gonic/playlist"
 	"go.senan.xyz/gonic/podcasts"
 	"go.senan.xyz/gonic/scanner"
-	"go.senan.xyz/gonic/scanner/tags"
+	"go.senan.xyz/gonic/scanner/tags/tagcommon"
+	"go.senan.xyz/gonic/scanner/tags/taglib"
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/server/ctrladmin"
 	"go.senan.xyz/gonic/server/ctrlsubsonic"
@@ -167,7 +168,12 @@ func main() {
 		log.Printf("    %-25s %s\n", f.Name, value)
 	})
 
-	tagger := &tags.TagReader{}
+	tagReader := tagcommon.ChainReader{
+		taglib.TagLib{},
+		// ffprobe reader?
+		// nfo reader?
+	}
+
 	scannr := scanner.New(
 		ctrlsubsonic.MusicPaths(musicPaths),
 		dbc,
@@ -175,10 +181,10 @@ func main() {
 			scanner.Genre:       scanner.MultiValueSetting(confMultiValueGenre),
 			scanner.AlbumArtist: scanner.MultiValueSetting(confMultiValueAlbumArtist),
 		},
-		tagger,
+		tagReader,
 		*confExcludePatterns,
 	)
-	podcast := podcasts.New(dbc, *confPodcastPath, tagger)
+	podcast := podcasts.New(dbc, *confPodcastPath, tagReader)
 	transcoder := transcode.NewCachingTranscoder(
 		transcode.NewFFmpegTranscoder(),
 		cacheDirAudio,

@@ -19,8 +19,7 @@ import (
 	"github.com/rainycape/unidecode"
 
 	"go.senan.xyz/gonic/db"
-	"go.senan.xyz/gonic/mime"
-	"go.senan.xyz/gonic/scanner/tags"
+	"go.senan.xyz/gonic/scanner/tags/tagcommon"
 )
 
 var (
@@ -32,7 +31,7 @@ type Scanner struct {
 	db                 *db.DB
 	musicDirs          []string
 	multiValueSettings map[Tag]MultiValueSetting
-	tagger             tags.Reader
+	tagReader          tagcommon.Reader
 	excludePattern     *regexp.Regexp
 	scanning           *int32
 	watcher            *fsnotify.Watcher
@@ -40,7 +39,7 @@ type Scanner struct {
 	watchDone          chan bool
 }
 
-func New(musicDirs []string, db *db.DB, multiValueSettings map[Tag]MultiValueSetting, tagger tags.Reader, excludePattern string) *Scanner {
+func New(musicDirs []string, db *db.DB, multiValueSettings map[Tag]MultiValueSetting, tagReader tagcommon.Reader, excludePattern string) *Scanner {
 	var excludePatternRegExp *regexp.Regexp
 	if excludePattern != "" {
 		excludePatternRegExp = regexp.MustCompile(excludePattern)
@@ -50,7 +49,7 @@ func New(musicDirs []string, db *db.DB, multiValueSettings map[Tag]MultiValueSet
 		db:                 db,
 		musicDirs:          musicDirs,
 		multiValueSettings: multiValueSettings,
-		tagger:             tagger,
+		tagReader:          tagReader,
 		excludePattern:     excludePatternRegExp,
 		scanning:           new(int32),
 		watchMap:           make(map[string]string),
@@ -282,9 +281,12 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string
 	var tracks []string
 	var cover string
 	for _, item := range items {
-		fullpath := filepath.Join(absPath, item.Name())
-		if s.excludePattern != nil && s.excludePattern.MatchString(fullpath) {
-			log.Printf("excluding path `%s`", fullpath)
+		absPath := filepath.Join(absPath, item.Name())
+		if s.excludePattern != nil && s.excludePattern.MatchString(absPath) {
+			log.Printf("excluding path `%s`", absPath)
+			continue
+		}
+		if item.IsDir() {
 			continue
 		}
 
@@ -292,7 +294,7 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string
 			cover = item.Name()
 			continue
 		}
-		if mime := mime.TypeByAudioExtension(filepath.Ext(item.Name())); mime != "" {
+		if s.tagReader.CanRead(absPath) {
 			tracks = append(tracks, item.Name())
 			continue
 		}
@@ -342,12 +344,12 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, alb
 		return nil
 	}
 
-	trags, err := s.tagger.Read(absPath)
+	trags, err := s.tagReader.Read(absPath)
 	if err != nil {
 		return fmt.Errorf("%w: %w", err, ErrReadingTags)
 	}
 
-	genreNames := parseMulti(trags, s.multiValueSettings[Genre], tags.MustGenres, tags.MustGenre)
+	genreNames := parseMulti(trags, s.multiValueSettings[Genre], tagcommon.MustGenres, tagcommon.MustGenre)
 	genreIDs, err := populateGenres(tx, genreNames)
 	if err != nil {
 		return fmt.Errorf("populate genres: %w", err)
@@ -355,7 +357,7 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, alb
 
 	// metadata for the album table comes only from the first track's tags
 	if i == 0 {
-		albumArtistNames := parseMulti(trags, s.multiValueSettings[AlbumArtist], tags.MustAlbumArtists, tags.MustAlbumArtist)
+		albumArtistNames := parseMulti(trags, s.multiValueSettings[AlbumArtist], tagcommon.MustAlbumArtists, tagcommon.MustAlbumArtist)
 		var albumArtistIDs []int
 		for _, albumArtistName := range albumArtistNames {
 			albumArtist, err := populateArtist(tx, albumArtistName)
@@ -390,8 +392,8 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, alb
 	return nil
 }
 
-func populateAlbum(tx *db.DB, album *db.Album, trags tags.Parser, modTime time.Time) error {
-	albumName := tags.MustAlbum(trags)
+func populateAlbum(tx *db.DB, album *db.Album, trags tagcommon.Info, modTime time.Time) error {
+	albumName := tagcommon.MustAlbum(trags)
 	album.TagTitle = albumName
 	album.TagTitleUDec = decoded(albumName)
 	album.TagBrainzID = trags.AlbumBrainzID()
@@ -431,7 +433,7 @@ func populateAlbumBasics(tx *db.DB, musicDir string, parent, album *db.Album, di
 	return nil
 }
 
-func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trags tags.Parser, absPath string, size int) error {
+func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trags tagcommon.Info, absPath string, size int) error {
 	basename := filepath.Base(absPath)
 	track.Filename = basename
 	track.FilenameUDec = decoded(basename)
@@ -684,7 +686,7 @@ type MultiValueSetting struct {
 	Delim string
 }
 
-func parseMulti(parser tags.Parser, setting MultiValueSetting, getMulti func(tags.Parser) []string, get func(tags.Parser) string) []string {
+func parseMulti(parser tagcommon.Info, setting MultiValueSetting, getMulti func(tagcommon.Info) []string, get func(tagcommon.Info) string) []string {
 	var parts []string
 	switch setting.Mode {
 	case Multi:

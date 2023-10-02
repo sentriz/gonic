@@ -3,12 +3,11 @@ package db
 
 import (
 	"fmt"
+	"mime"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
-
-	"go.senan.xyz/gonic/mime"
 
 	// TODO: remove this dep
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"

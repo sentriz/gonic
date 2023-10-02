@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime"
 	"net/http"
 	"net/url"
 	"os"
@@ -19,8 +20,7 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/fileutil"
-	"go.senan.xyz/gonic/mime"
-	"go.senan.xyz/gonic/scanner/tags"
+	"go.senan.xyz/gonic/scanner/tags/tagcommon"
 )
 
 var ErrNoAudioInFeedItem = errors.New("no audio in feed item")
@@ -31,16 +31,16 @@ const (
 )
 
 type Podcasts struct {
-	db      *db.DB
-	baseDir string
-	tagger  tags.Reader
+	db        *db.DB
+	baseDir   string
+	tagReader tagcommon.Reader
 }
 
-func New(db *db.DB, base string, tagger tags.Reader) *Podcasts {
+func New(db *db.DB, base string, tagReader tagcommon.Reader) *Podcasts {
 	return &Podcasts{
-		db:      db,
-		baseDir: base,
-		tagger:  tagger,
+		db:        db,
+		baseDir:   base,
+		tagReader: tagReader,
 	}
 }
 
@@ -239,13 +239,12 @@ func (p *Podcasts) AddEpisode(podcastID int, item *gofeed.Item) (*db.PodcastEpis
 	return nil, ErrNoAudioInFeedItem
 }
 
-func isAudio(rawItemURL string) (bool, error) {
+func (p *Podcasts) isAudio(rawItemURL string) (bool, error) {
 	itemURL, err := url.Parse(rawItemURL)
 	if err != nil {
 		return false, err
 	}
-
-	return mime.TypeByAudioExtension(path.Ext(itemURL.Path)) != "", nil
+	return p.tagReader.CanRead(itemURL.Path), nil
 }
 
 func itemToEpisode(podcastID, size, duration int, audio string,
@@ -265,7 +264,7 @@ func itemToEpisode(podcastID, size, duration int, audio string,
 
 func (p *Podcasts) findEnclosureAudio(podcastID, duration int, item *gofeed.Item) (*db.PodcastEpisode, bool) {
 	for _, enc := range item.Enclosures {
-		if t, err := isAudio(enc.URL); !t || err != nil {
+		if t, err := p.isAudio(enc.URL); !t || err != nil {
 			continue
 		}
 		size, _ := strconv.Atoi(enc.Length)
@@ -280,7 +279,7 @@ func (p *Podcasts) findMediaAudio(podcastID, duration int, item *gofeed.Item) (*
 		return nil, false
 	}
 	for _, ext := range extensions {
-		if t, err := isAudio(ext.Attrs["url"]); !t || err != nil {
+		if t, err := p.isAudio(ext.Attrs["url"]); !t || err != nil {
 			continue
 		}
 		return itemToEpisode(podcastID, 0, duration, ext.Attrs["url"], item), true
@@ -415,29 +414,33 @@ func (p *Podcasts) downloadPodcastCover(podcast *db.Podcast) error {
 	if err != nil {
 		return fmt.Errorf("parse image url: %w", err)
 	}
-	ext := path.Ext(imageURL.Path)
-	client := &http.Client{}
 	req, err := http.NewRequest("GET", podcast.ImageURL, nil)
 	if err != nil {
 		return fmt.Errorf("create http request: %w", err)
 	}
 	req.Header.Add("User-Agent", fetchUserAgent)
-	// nolint: bodyclose
+
+	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("fetch image url: %w", err)
 	}
+	defer resp.Body.Close()
+
+	ext := path.Ext(imageURL.Path)
 	if ext == "" {
 		contentHeader := resp.Header.Get("content-disposition")
 		filename, _ := getContentDispositionFilename(contentHeader)
 		ext = filepath.Ext(filename)
 	}
+
 	cover := "cover" + ext
 	coverFile, err := os.Create(filepath.Join(podcast.RootDir, cover))
 	if err != nil {
 		return fmt.Errorf("creating podcast cover: %w", err)
 	}
 	defer coverFile.Close()
+
 	if _, err := io.Copy(coverFile, resp.Body); err != nil {
 		return fmt.Errorf("writing podcast cover: %w", err)
 	}
@@ -453,19 +456,25 @@ func (p *Podcasts) doPodcastDownload(podcastEpisode *db.PodcastEpisode, file *os
 		return fmt.Errorf("writing podcast episode: %w", err)
 	}
 	defer file.Close()
-	stat, _ := file.Stat()
-	podcastTags, err := p.tagger.Read(podcastEpisode.AbsPath())
+
+	podcastTags, err := p.tagReader.Read(podcastEpisode.AbsPath())
 	if err != nil {
 		log.Printf("error parsing podcast audio: %e", err)
 		podcastEpisode.Status = db.PodcastEpisodeStatusError
 		p.db.Save(podcastEpisode)
 		return nil
 	}
+
+	stat, _ := file.Stat()
 	podcastEpisode.Bitrate = podcastTags.Bitrate()
 	podcastEpisode.Status = db.PodcastEpisodeStatusCompleted
 	podcastEpisode.Length = podcastTags.Length()
 	podcastEpisode.Size = int(stat.Size())
-	return p.db.Save(podcastEpisode).Error
+
+	if err := p.db.Save(podcastEpisode).Error; err != nil {
+		return fmt.Errorf("save podcast episode: %w", err)
+	}
+	return nil
 }
 
 func (p *Podcasts) DeletePodcast(podcastID int) error {
