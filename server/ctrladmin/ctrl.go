@@ -1,6 +1,7 @@
 package ctrladmin
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"encoding/base64"
@@ -12,13 +13,13 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Masterminds/sprig"
 	"github.com/dustin/go-humanize"
 	"github.com/fatih/structs"
 	"github.com/gorilla/sessions"
-	"github.com/oxtoacart/bpool"
 	"github.com/philippta/go-template/html/template"
 	"github.com/sentriz/gormstore"
 
@@ -202,7 +203,7 @@ func respHandler(templateFS embed.FS, resolvePath func(string) string) func(next
 		Funcs(template.FuncMap{"path": resolvePath}).
 		ParseFS(templateFS, "*.tmpl", "**/*.tmpl"),
 	)
-	buffPool := bpool.NewBufferPool(64)
+	buffPool := sync.Pool{New: func() any { return new(bytes.Buffer) }}
 
 	return func(next handlerAdmin) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -244,8 +245,10 @@ func respHandler(templateFS embed.FS, resolvePath func(string) string) func(next
 				resp.data.User = user
 			}
 
-			buff := buffPool.Get()
+			buff := buffPool.Get().(*bytes.Buffer)
 			defer buffPool.Put(buff)
+			buff.Reset()
+
 			if err := tmpl.ExecuteTemplate(buff, resp.template, resp.data); err != nil {
 				http.Error(w, fmt.Sprintf("executing template: %v", err), 500)
 				return
