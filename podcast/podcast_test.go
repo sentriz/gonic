@@ -1,4 +1,4 @@
-package podcasts
+package podcast
 
 import (
 	"bytes"

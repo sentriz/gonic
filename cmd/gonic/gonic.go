@@ -30,20 +30,20 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"go.senan.xyz/gonic"
+	"go.senan.xyz/gonic/artistinfocache"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/handlerutil"
 	"go.senan.xyz/gonic/jukebox"
 	"go.senan.xyz/gonic/lastfm"
 	"go.senan.xyz/gonic/listenbrainz"
 	"go.senan.xyz/gonic/playlist"
-	"go.senan.xyz/gonic/podcasts"
+	"go.senan.xyz/gonic/podcast"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/scanner/tags/tagcommon"
 	"go.senan.xyz/gonic/scanner/tags/taglib"
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/server/ctrladmin"
 	"go.senan.xyz/gonic/server/ctrlsubsonic"
-	"go.senan.xyz/gonic/server/ctrlsubsonic/artistinfocache"
 	"go.senan.xyz/gonic/transcode"
 )
 
@@ -187,7 +187,7 @@ func main() {
 		tagReader,
 		*confExcludePatterns,
 	)
-	podcast := podcasts.New(dbc, *confPodcastPath, tagReader)
+	podcast := podcast.New(dbc, *confPodcastPath, tagReader)
 	transcoder := transcode.NewCachingTranscoder(
 		transcode.NewFFmpegTranscoder(),
 		cacheDirAudio,
