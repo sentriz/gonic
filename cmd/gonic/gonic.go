@@ -293,28 +293,32 @@ func main() {
 		defer logJob("session clean")()
 
 		ticker := time.NewTicker(10 * time.Minute)
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-ticker.C:
-			sessDB.Cleanup()
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return nil
+			case <-ticker.C:
+				sessDB.Cleanup()
+			}
 		}
-		return nil
 	})
 
 	errgrp.Go(func() error {
 		defer logJob("podcast refresh")()
 
 		ticker := time.NewTicker(time.Hour)
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-ticker.C:
-			if err := podcast.RefreshPodcasts(); err != nil {
-				log.Printf("failed to refresh some feeds: %s", err)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return nil
+			case <-ticker.C:
+				if err := podcast.RefreshPodcasts(); err != nil {
+					log.Printf("failed to refresh some feeds: %s", err)
+				}
 			}
 		}
-		return nil
 	})
 
 	errgrp.Go(func() error {
@@ -325,15 +329,17 @@ func main() {
 		defer logJob("podcast purge")()
 
 		ticker := time.NewTicker(24 * time.Hour)
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-ticker.C:
-			if err := podcast.PurgeOldPodcasts(time.Duration(*confPodcastPurgeAgeDays) * 24 * time.Hour); err != nil {
-				log.Printf("error purging old podcasts: %v", err)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return nil
+			case <-ticker.C:
+				if err := podcast.PurgeOldPodcasts(time.Duration(*confPodcastPurgeAgeDays) * 24 * time.Hour); err != nil {
+					log.Printf("error purging old podcasts: %v", err)
+				}
 			}
 		}
-		return nil
 	})
 
 	errgrp.Go(func() error {
@@ -344,15 +350,17 @@ func main() {
 		defer logJob("scan timer")()
 
 		ticker := time.NewTicker(time.Duration(*confScanIntervalMins) * time.Minute)
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-ticker.C:
-			if _, err := scannr.ScanAndClean(scanner.ScanOptions{}); err != nil {
-				log.Printf("error scanning: %v", err)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return nil
+			case <-ticker.C:
+				if _, err := scannr.ScanAndClean(scanner.ScanOptions{}); err != nil {
+					log.Printf("error scanning: %v", err)
+				}
 			}
 		}
-		return nil
 	})
 
 	errgrp.Go(func() error {
@@ -412,14 +420,17 @@ func main() {
 		defer logJob("refresh artist info")()
 
 		ticker := time.NewTicker(8 * time.Second)
-		select {
-		case <-ctx.Done():
-		case <-ticker.C:
-			if err := artistInfoCache.Refresh(); err != nil {
-				log.Printf("error in artist info cache: %v", err)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return nil
+			case <-ticker.C:
+				if err := artistInfoCache.Refresh(); err != nil {
+					log.Printf("error in artist info cache: %v", err)
+				}
 			}
 		}
-		return nil
 	})
 
 	errgrp.Go(func() error {
