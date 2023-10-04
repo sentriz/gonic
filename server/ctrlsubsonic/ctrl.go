@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 
+	"go.senan.xyz/gonic/artistinfocache"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/handlerutil"
 	"go.senan.xyz/gonic/jukebox"
@@ -19,7 +20,6 @@ import (
 	"go.senan.xyz/gonic/podcast"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/scrobble"
-	"go.senan.xyz/gonic/artistinfocache"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/transcode"

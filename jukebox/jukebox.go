@@ -311,7 +311,7 @@ func (j *Jukebox) Quit() error {
 		return nil
 	}
 	go func() {
-		j.conn.Call("quit")
+		_, _ = j.conn.Call("quit")
 	}()
 	if err := j.conn.Close(); err != nil {
 		return fmt.Errorf("close: %w", err)
