@@ -94,29 +94,24 @@ func (a *ArtistInfoCache) Lookup(ctx context.Context, artist *db.Artist) (*db.Ar
 	return &artistInfo, nil
 }
 
-func (a *ArtistInfoCache) Refresh(interval time.Duration) error {
-	ticker := time.NewTicker(interval)
-	for range ticker.C {
-		q := a.db.
-			Where("artist_infos.id IS NULL OR artist_infos.updated_at<?", time.Now().Add(-keepFor)).
-			Joins("LEFT JOIN artist_infos ON artist_infos.id=artists.id")
+func (a *ArtistInfoCache) Refresh() error {
+	q := a.db.
+		Where("artist_infos.id IS NULL OR artist_infos.updated_at<?", time.Now().Add(-keepFor)).
+		Joins("LEFT JOIN artist_infos ON artist_infos.id=artists.id")
 
-		var artist db.Artist
-		if err := q.Find(&artist).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Printf("error finding non cached artist: %v", err)
-			continue
-		}
-		if artist.ID == 0 {
-			continue
-		}
-
-		if _, err := a.Lookup(context.Background(), &artist); err != nil {
-			log.Printf("error looking up non cached artist %s: %v", artist.Name, err)
-			continue
-		}
-
-		log.Printf("cached artist info for %q", artist.Name)
+	var artist db.Artist
+	if err := q.Find(&artist).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return fmt.Errorf("finding non cached artist: %w", err)
 	}
+	if artist.ID == 0 {
+		return nil
+	}
+
+	if _, err := a.Lookup(context.Background(), &artist); err != nil {
+		return fmt.Errorf("looking up non cached artist %s: %w", artist.Name, err)
+	}
+
+	log.Printf("cached artist info for %q", artist.Name)
 
 	return nil
 }

@@ -20,7 +20,6 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mmcdole/gofeed v1.2.1
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
-	github.com/oklog/run v1.1.0
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c
 	github.com/peterbourgon/ff v1.7.1
 	github.com/philippta/go-template v0.0.0-20220911145045-4556aca435e4
@@ -30,6 +29,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
 	golang.org/x/net v0.15.0
+	golang.org/x/sync v0.3.0
 	gopkg.in/gormigrate.v1 v1.6.0
 	jaytaylor.com/html2text v0.0.0-20230321000545-74c2419ad056
 )

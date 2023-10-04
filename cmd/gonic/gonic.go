@@ -1,7 +1,8 @@
-//nolint:lll,gocyclo,forbidigo
+//nolint:lll,gocyclo,forbidigo,nilerr
 package main
 
 import (
+	"context"
 	"errors"
 	"expvar"
 	"flag"
@@ -9,10 +10,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"syscall"
 	"time"
 
 	// avatar encode/decode
@@ -22,9 +25,9 @@ import (
 	"github.com/google/shlex"
 	"github.com/gorilla/securecookie"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"github.com/oklog/run"
 	"github.com/peterbourgon/ff"
 	"github.com/sentriz/gormstore"
+	"golang.org/x/sync/errgroup"
 
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/db"
@@ -51,7 +54,7 @@ func main() {
 	confTLSCert := set.String("tls-cert", "", "path to TLS certificate (optional)")
 	confTLSKey := set.String("tls-key", "", "path to TLS private key (optional)")
 
-	confPodcastPurgeAgeDays := set.Int("podcast-purge-age", 0, "age (in days) to purge podcast episodes if not accessed (optional)")
+	confPodcastPurgeAgeDays := set.Uint("podcast-purge-age", 0, "age (in days) to purge podcast episodes if not accessed (optional)")
 	confPodcastPath := set.String("podcast-path", "", "path to podcasts")
 
 	confCachePath := set.String("cache-path", "", "path to cache")
@@ -63,7 +66,7 @@ func main() {
 
 	confDBPath := set.String("db-path", "gonic.db", "path to database (optional)")
 
-	confScanIntervalMins := set.Int("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
+	confScanIntervalMins := set.Uint("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
 	confScanAtStart := set.Bool("scan-at-start-enabled", false, "whether to perform an initial scan at startup (optional)")
 	confScanWatcher := set.Bool("scan-watcher-enabled", false, "whether to watch file system for new music and rescan (optional)")
 
@@ -263,7 +266,6 @@ func main() {
 		expvar.Publish("stats", expvar.Func(func() any {
 			var stats struct{ Albums, Tracks, Artists, InternetRadioStations, Podcasts uint }
 			dbc.Model(db.Album{}).Count(&stats.Albums)
-			dbc.Model(db.Track{}).Count(&stats.Tracks)
 			dbc.Model(db.Artist{}).Count(&stats.Artists)
 			dbc.Model(db.InternetRadioStation{}).Count(&stats.InternetRadioStations)
 			dbc.Model(db.Podcast{}).Count(&stats.Podcasts)
@@ -271,122 +273,184 @@ func main() {
 		}))
 	}
 
-	noCleanup := func(_ error) {}
+	errgrp, ctx := errgroup.WithContext(context.Background())
 
-	var g run.Group
-	g.Add(func() error {
-		log.Print("starting job 'http'\n")
-		server := &http.Server{
-			Addr:              *confListenAddr,
-			Handler:           mux,
-			ReadTimeout:       5 * time.Second,
-			ReadHeaderTimeout: 5 * time.Second,
-			WriteTimeout:      80 * time.Second,
-			IdleTimeout:       60 * time.Second,
-		}
+	errgrp.Go(func() error {
+		defer logJob("http")()
+
+		server := &http.Server{Addr: *confListenAddr, Handler: mux, ReadHeaderTimeout: 5 * time.Second}
+		errgrp.Go(func() error {
+			<-ctx.Done()
+			return server.Shutdown(context.Background())
+		})
 		if *confTLSCert != "" && *confTLSKey != "" {
 			return server.ListenAndServeTLS(*confTLSCert, *confTLSKey)
 		}
 		return server.ListenAndServe()
-	}, noCleanup)
+	})
 
-	g.Add(func() error {
-		log.Printf("starting job 'session clean'\n")
+	errgrp.Go(func() error {
+		defer logJob("session clean")()
+
 		ticker := time.NewTicker(10 * time.Minute)
-		for range ticker.C {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-ticker.C:
 			sessDB.Cleanup()
 		}
 		return nil
-	}, noCleanup)
+	})
 
-	g.Add(func() error {
-		log.Printf("starting job 'podcast refresher'\n")
+	errgrp.Go(func() error {
+		defer logJob("podcast refresh")()
+
 		ticker := time.NewTicker(time.Hour)
-		for range ticker.C {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-ticker.C:
 			if err := podcast.RefreshPodcasts(); err != nil {
 				log.Printf("failed to refresh some feeds: %s", err)
 			}
 		}
 		return nil
-	}, noCleanup)
+	})
 
-	if *confPodcastPurgeAgeDays > 0 {
-		g.Add(func() error {
-			log.Printf("starting job 'podcast purger'\n")
-			ticker := time.NewTicker(24 * time.Hour)
-			for range ticker.C {
-				if err := podcast.PurgeOldPodcasts(time.Duration(*confPodcastPurgeAgeDays) * 24 * time.Hour); err != nil {
-					log.Printf("error purging old podcasts: %v", err)
-				}
-			}
+	errgrp.Go(func() error {
+		if *confPodcastPurgeAgeDays == 0 {
 			return nil
-		}, noCleanup)
-	}
-
-	if *confScanIntervalMins > 0 {
-		g.Add(func() error {
-			log.Printf("starting job 'scan timer'\n")
-			ticker := time.NewTicker(time.Duration(*confScanIntervalMins) * time.Minute)
-			for range ticker.C {
-				if _, err := scannr.ScanAndClean(scanner.ScanOptions{}); err != nil {
-					log.Printf("error scanning: %v", err)
-				}
-			}
-			return nil
-		}, noCleanup)
-	}
-
-	if *confScanWatcher {
-		g.Add(func() error {
-			log.Printf("starting job 'scan watcher'\n")
-			return scannr.ExecuteWatch()
-		}, func(_ error) {
-			scannr.CancelWatch()
-		})
-	}
-
-	if jukebx != nil {
-		var jukeboxTempDir string
-		g.Add(func() error {
-			log.Printf("starting job 'jukebox'\n")
-			extraArgs, _ := shlex.Split(*confJukeboxMPVExtraArgs)
-			var err error
-			jukeboxTempDir, err = os.MkdirTemp("", "gonic-jukebox-*")
-			if err != nil {
-				return fmt.Errorf("create tmp sock file: %w", err)
-			}
-			sockPath := filepath.Join(jukeboxTempDir, "sock")
-			if err := jukebx.Start(sockPath, extraArgs); err != nil {
-				return fmt.Errorf("start jukebox: %w", err)
-			}
-			if err := jukebx.Wait(); err != nil {
-				return fmt.Errorf("start jukebox: %w", err)
-			}
-			return nil
-		}, func(_ error) {
-			if err := jukebx.Quit(); err != nil {
-				log.Printf("error quitting jukebox: %v", err)
-			}
-			_ = os.RemoveAll(jukeboxTempDir)
-		})
-	}
-
-	if _, _, err := lastfmClientKeySecretFunc(); err == nil {
-		g.Add(func() error {
-			log.Printf("starting job 'refresh artist info'\n")
-			return artistInfoCache.Refresh(8 * time.Second)
-		}, noCleanup)
-	}
-
-	if *confScanAtStart {
-		if _, err := scannr.ScanAndClean(scanner.ScanOptions{}); err != nil {
-			log.Panicf("error scanning at start: %v\n", err)
 		}
+
+		defer logJob("podcast purge")()
+
+		ticker := time.NewTicker(24 * time.Hour)
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-ticker.C:
+			if err := podcast.PurgeOldPodcasts(time.Duration(*confPodcastPurgeAgeDays) * 24 * time.Hour); err != nil {
+				log.Printf("error purging old podcasts: %v", err)
+			}
+		}
+		return nil
+	})
+
+	errgrp.Go(func() error {
+		if *confScanIntervalMins == 0 {
+			return nil
+		}
+
+		defer logJob("scan timer")()
+
+		ticker := time.NewTicker(time.Duration(*confScanIntervalMins) * time.Minute)
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-ticker.C:
+			if _, err := scannr.ScanAndClean(scanner.ScanOptions{}); err != nil {
+				log.Printf("error scanning: %v", err)
+			}
+		}
+		return nil
+	})
+
+	errgrp.Go(func() error {
+		if !*confScanWatcher {
+			return nil
+		}
+
+		defer logJob("scan watcher")()
+
+		errgrp.Go(func() error {
+			<-ctx.Done()
+			scannr.CancelWatch()
+			return nil
+		})
+		return scannr.ExecuteWatch()
+	})
+
+	errgrp.Go(func() error {
+		if jukebx == nil {
+			return nil
+		}
+
+		defer logJob("jukebox")()
+
+		extraArgs, _ := shlex.Split(*confJukeboxMPVExtraArgs)
+		var err error
+		cacheDir, err := os.UserCacheDir()
+		if err != nil {
+			return fmt.Errorf("get user cache dir: %w", err)
+		}
+		jukeboxTempDir := filepath.Join(cacheDir, "gonic-jukebox")
+		if err := os.RemoveAll(jukeboxTempDir); err != nil {
+			return fmt.Errorf("remove jubebox tmp dir: %w", err)
+		}
+		if err := os.MkdirAll(jukeboxTempDir, os.ModePerm); err != nil {
+			return fmt.Errorf("create tmp sock file: %w", err)
+		}
+		sockPath := filepath.Join(jukeboxTempDir, "sock")
+		if err := jukebx.Start(sockPath, extraArgs); err != nil {
+			return fmt.Errorf("start jukebox: %w", err)
+		}
+		errgrp.Go(func() error {
+			<-ctx.Done()
+			return jukebx.Quit()
+		})
+		if err := jukebx.Wait(); err != nil {
+			return fmt.Errorf("start jukebox: %w", err)
+		}
+		return nil
+	})
+
+	errgrp.Go(func() error {
+		if _, _, err := lastfmClientKeySecretFunc(); err != nil {
+			return nil
+		}
+
+		defer logJob("refresh artist info")()
+
+		ticker := time.NewTicker(8 * time.Second)
+		select {
+		case <-ctx.Done():
+		case <-ticker.C:
+			if err := artistInfoCache.Refresh(); err != nil {
+				log.Printf("error in artist info cache: %v", err)
+			}
+		}
+		return nil
+	})
+
+	errgrp.Go(func() error {
+		if !*confScanAtStart {
+			return nil
+		}
+
+		defer logJob("scan at start")()
+
+		_, err := scannr.ScanAndClean(scanner.ScanOptions{})
+		return err
+	})
+
+	errShutdown := errors.New("shutdown")
+
+	errgrp.Go(func() error {
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-sigChan:
+			return errShutdown
+		}
+	})
+
+	if err := errgrp.Wait(); err != nil && !errors.Is(err, errShutdown) {
+		log.Panic(err)
 	}
 
-	if err := g.Run(); err != nil {
-		log.Panicf("error in job: %v", err)
-	}
+	fmt.Println("shutdown complete")
 }
 
 const pathAliasSep = "->"
@@ -460,4 +524,9 @@ func (mvs *multiValueSetting) Set(value string) error {
 		return fmt.Errorf(`unknown multi value mode %q. should be "none" | "multi" | "delim <delim>"`, mode)
 	}
 	return nil
+}
+
+func logJob(jobName string) func() {
+	log.Printf("starting job %q", jobName)
+	return func() { log.Printf("stopped job %q", jobName) }
 }
