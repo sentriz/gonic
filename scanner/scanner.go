@@ -19,7 +19,7 @@ import (
 	"github.com/rainycape/unidecode"
 
 	"go.senan.xyz/gonic/db"
-	"go.senan.xyz/gonic/scanner/tags/tagcommon"
+	"go.senan.xyz/gonic/tags/tagcommon"
 )
 
 var (

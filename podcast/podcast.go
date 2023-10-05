@@ -20,7 +20,7 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/fileutil"
-	"go.senan.xyz/gonic/scanner/tags/tagcommon"
+	"go.senan.xyz/gonic/tags/tagcommon"
 )
 
 var ErrNoAudioInFeedItem = errors.New("no audio in feed item")
