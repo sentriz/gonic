@@ -39,11 +39,11 @@ import (
 	"go.senan.xyz/gonic/playlist"
 	"go.senan.xyz/gonic/podcast"
 	"go.senan.xyz/gonic/scanner"
-	"go.senan.xyz/gonic/tags/tagcommon"
-	"go.senan.xyz/gonic/tags/taglib"
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/server/ctrladmin"
 	"go.senan.xyz/gonic/server/ctrlsubsonic"
+	"go.senan.xyz/gonic/tags/tagcommon"
+	"go.senan.xyz/gonic/tags/taglib"
 	"go.senan.xyz/gonic/transcode"
 )
 
