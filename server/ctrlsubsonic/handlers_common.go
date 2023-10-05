@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 
@@ -94,17 +95,26 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 		}
 	}
 
-	var scrobbleErrs []error
-	for _, scrobbler := range c.scrobblers {
-		if !scrobbler.IsUserAuthenticated(*user) {
+	var wg sync.WaitGroup
+
+	scrobbleErrs := make([]error, len(c.scrobblers))
+	for i := range c.scrobblers {
+		if !c.scrobblers[i].IsUserAuthenticated(*user) {
 			continue
 		}
-		if err := scrobbler.Scrobble(*user, scrobbleTrack, optStamp, optSubmission); err != nil {
-			scrobbleErrs = append(scrobbleErrs, err)
-		}
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			if err := c.scrobblers[i].Scrobble(*user, scrobbleTrack, optStamp, optSubmission); err != nil {
+				scrobbleErrs[i] = err
+			}
+		}(i)
 	}
-	if len(scrobbleErrs) > 0 {
-		return spec.NewError(0, "error when submitting: %v", errors.Join(scrobbleErrs...))
+
+	wg.Wait()
+
+	if err := errors.Join(scrobbleErrs...); err != nil {
+		return spec.NewError(0, "error when submitting: %v", err)
 	}
 
 	return spec.NewResponse()
