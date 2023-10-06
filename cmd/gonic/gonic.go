@@ -290,80 +290,6 @@ func main() {
 	})
 
 	errgrp.Go(func() error {
-		defer logJob("session clean")()
-
-		ticker := time.NewTicker(10 * time.Minute)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return nil
-			case <-ticker.C:
-				sessDB.Cleanup()
-			}
-		}
-	})
-
-	errgrp.Go(func() error {
-		defer logJob("podcast refresh")()
-
-		ticker := time.NewTicker(time.Hour)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return nil
-			case <-ticker.C:
-				if err := podcast.RefreshPodcasts(); err != nil {
-					log.Printf("failed to refresh some feeds: %s", err)
-				}
-			}
-		}
-	})
-
-	errgrp.Go(func() error {
-		if *confPodcastPurgeAgeDays == 0 {
-			return nil
-		}
-
-		defer logJob("podcast purge")()
-
-		ticker := time.NewTicker(24 * time.Hour)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return nil
-			case <-ticker.C:
-				if err := podcast.PurgeOldPodcasts(time.Duration(*confPodcastPurgeAgeDays) * 24 * time.Hour); err != nil {
-					log.Printf("error purging old podcasts: %v", err)
-				}
-			}
-		}
-	})
-
-	errgrp.Go(func() error {
-		if *confScanIntervalMins == 0 {
-			return nil
-		}
-
-		defer logJob("scan timer")()
-
-		ticker := time.NewTicker(time.Duration(*confScanIntervalMins) * time.Minute)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return nil
-			case <-ticker.C:
-				if _, err := scannr.ScanAndClean(scanner.ScanOptions{}); err != nil {
-					log.Printf("error scanning: %v", err)
-				}
-			}
-		}
-	})
-
-	errgrp.Go(func() error {
 		if !*confScanWatcher {
 			return nil
 		}
@@ -413,24 +339,68 @@ func main() {
 	})
 
 	errgrp.Go(func() error {
+		defer logJob("session clean")()
+
+		ctxTick(ctx, 10*time.Minute, func() {
+			sessDB.Cleanup()
+		})
+		return nil
+	})
+
+	errgrp.Go(func() error {
+		defer logJob("podcast refresh")()
+
+		ctxTick(ctx, 1*time.Hour, func() {
+			if err := podcast.RefreshPodcasts(); err != nil {
+				log.Printf("failed to refresh some feeds: %s", err)
+			}
+		})
+		return nil
+	})
+
+	errgrp.Go(func() error {
+		if *confPodcastPurgeAgeDays == 0 {
+			return nil
+		}
+
+		defer logJob("podcast purge")()
+
+		ctxTick(ctx, 24*time.Hour, func() {
+			if err := podcast.PurgeOldPodcasts(time.Duration(*confPodcastPurgeAgeDays) * 24 * time.Hour); err != nil {
+				log.Printf("error purging old podcasts: %v", err)
+			}
+		})
+		return nil
+	})
+
+	errgrp.Go(func() error {
+		if *confScanIntervalMins == 0 {
+			return nil
+		}
+
+		defer logJob("scan timer")()
+
+		ctxTick(ctx, time.Duration(*confScanIntervalMins)*time.Minute, func() {
+			if _, err := scannr.ScanAndClean(scanner.ScanOptions{}); err != nil {
+				log.Printf("error scanning: %v", err)
+			}
+		})
+		return nil
+	})
+
+	errgrp.Go(func() error {
 		if _, _, err := lastfmClientKeySecretFunc(); err != nil {
 			return nil
 		}
 
 		defer logJob("refresh artist info")()
 
-		ticker := time.NewTicker(8 * time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return nil
-			case <-ticker.C:
-				if err := artistInfoCache.Refresh(); err != nil {
-					log.Printf("error in artist info cache: %v", err)
-				}
+		ctxTick(ctx, 8*time.Second, func() {
+			if err := artistInfoCache.Refresh(); err != nil {
+				log.Printf("error in artist info cache: %v", err)
 			}
-		}
+		})
+		return nil
 	})
 
 	errgrp.Go(func() error {
@@ -540,4 +510,18 @@ func (mvs *multiValueSetting) Set(value string) error {
 func logJob(jobName string) func() {
 	log.Printf("starting job %q", jobName)
 	return func() { log.Printf("stopped job %q", jobName) }
+}
+
+func ctxTick(ctx context.Context, interval time.Duration, f func()) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			f()
+		}
+	}
 }
