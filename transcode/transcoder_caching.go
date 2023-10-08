@@ -23,6 +23,11 @@ func NewCachingTranscoder(t Transcoder, cachePath string) *CachingTranscoder {
 }
 
 func (t *CachingTranscoder) Transcode(ctx context.Context, profile Profile, in string, out io.Writer) error {
+	// don't try cache partial transcodes
+	if profile.Seek() > 0 {
+		return t.transcoder.Transcode(ctx, profile, in, out)
+	}
+
 	if err := os.MkdirAll(t.cachePath, perm^0o111); err != nil {
 		return fmt.Errorf("make cache path: %w", err)
 	}

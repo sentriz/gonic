@@ -186,6 +186,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 
 	maxBitRate, _ := params.GetInt("maxBitRate")
 	format, _ := params.Get("format")
+	timeOffset, _ := params.GetInt("timeOffset")
 
 	if format == "raw" || maxBitRate >= audioFile.AudioBitrate() {
 		http.ServeFile(w, r, file.AbsPath())
@@ -207,6 +208,9 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	}
 	if maxBitRate > 0 && int(profile.BitRate()) > maxBitRate {
 		profile = transcode.WithBitrate(profile, transcode.BitRate(maxBitRate))
+	}
+	if timeOffset > 0 {
+		profile = transcode.WithSeek(profile, time.Second*time.Duration(timeOffset))
 	}
 
 	log.Printf("trancoding to %q with max bitrate %dk", profile.MIME(), profile.BitRate())
