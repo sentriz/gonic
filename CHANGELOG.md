@@ -1,5 +1,70 @@
 # Changelog
 
+## [0.16.0](https://www.github.com/sentriz/gonic/compare/v0.15.2...v0.16.0) (2023-10-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* **build:** bump to go 1.21
+* **subsonic:** drop support for guessed artist covers in filesystem
+
+### Features
+
+* add .wav to list of supported audio types ([#322](https://www.github.com/sentriz/gonic/issues/322)) ([ab07b87](https://www.github.com/sentriz/gonic/commit/ab07b876b8686d2e2c792f2d422dd227d6f9d94b))
+* add option for /debug/vars endpoint to expose database and media stats ([2a7a455](https://www.github.com/sentriz/gonic/commit/2a7a455ce27c3f8007a6114f815ae8ae94648533)), closes [#372](https://www.github.com/sentriz/gonic/issues/372) [#150](https://www.github.com/sentriz/gonic/issues/150)
+* add support for wavpack ([#380](https://www.github.com/sentriz/gonic/issues/380)) ([827baf2](https://www.github.com/sentriz/gonic/commit/827baf2036dfe581bfddba1c5b88510c13b8bba6))
+* **admin:** sort transcode profile names ([ae5bc2e](https://www.github.com/sentriz/gonic/commit/ae5bc2e1494f983993be7a053c953ca2f8555fae)), closes [#288](https://www.github.com/sentriz/gonic/issues/288)
+* **admin:** support application/x-mpegurl playlist uploads ([6aa4c42](https://www.github.com/sentriz/gonic/commit/6aa4c42ce556f5a503bd9d5a4d1ee957c167dafa)), closes [#282](https://www.github.com/sentriz/gonic/issues/282)
+* **admin:** update stylesheet ([222256c](https://www.github.com/sentriz/gonic/commit/222256cccbeb791168070ba5fe04a3bc1632cb94))
+* allow multi valued tag modes to be configurable ([8f6610f](https://www.github.com/sentriz/gonic/commit/8f6610ff860ad18d56545b903d9edb6a1254ddec))
+* **ci:** add a bunch more linters ([e3dd812](https://www.github.com/sentriz/gonic/commit/e3dd812b6c13c5f74690a868d0a5c37f30e33053))
+* **ci:** update checkout and setup-go actions ([#326](https://www.github.com/sentriz/gonic/issues/326)) ([6144ac7](https://www.github.com/sentriz/gonic/commit/6144ac7979e03d704f8f721ba378eb612538d284))
+* **ci:** update golangci-lint and action ([#325](https://www.github.com/sentriz/gonic/issues/325)) ([85eeb86](https://www.github.com/sentriz/gonic/commit/85eeb860bf1f97091fbd101b3bc827ff6502ccdb))
+* **contrib:** improve system related contrib files ([ac74b35](https://www.github.com/sentriz/gonic/commit/ac74b354653b7353466eda3d81ca519bfa9f816e))
+* enable profile-guided optimization ([e842b89](https://www.github.com/sentriz/gonic/commit/e842b896ec5acde6acdefbf3ec66610bd6cf7e22))
+* **lastfm:** add user get loved tracks method ([9026c9e](https://www.github.com/sentriz/gonic/commit/9026c9e2c0463c467958b7032e4e6f7a889c3c76))
+* **podcast:** parse podcast episode descriptions from HTML to plain text ([#351](https://www.github.com/sentriz/gonic/issues/351)) ([7d2c4fb](https://www.github.com/sentriz/gonic/commit/7d2c4fbb5c4cec3e7bcb4852214c17999bf320bb))
+* **scanner:** add a new option for excluding paths based on a regexp ([1d38776](https://www.github.com/sentriz/gonic/commit/1d3877668f9bf925cae7c548b5d8e683d9676af2))
+* **scanner:** support more cover types ([906164a](https://www.github.com/sentriz/gonic/commit/906164a5de34047444efe75b52b014737c111bc4))
+* **scanner:** support non lowercase extensions like .Mp3 ([d83fe56](https://www.github.com/sentriz/gonic/commit/d83fe560d3df980c0bf99d03e026af9bce30e0c7))
+* store and use m3u files on filesystem for playlists ([7dc9575](https://www.github.com/sentriz/gonic/commit/7dc9575e52538cf4fd39715193b5c760e1cc477b)), closes [#306](https://www.github.com/sentriz/gonic/issues/306) [#307](https://www.github.com/sentriz/gonic/issues/307) [#66](https://www.github.com/sentriz/gonic/issues/66)
+* **subsonic:** add getOpenSubsonicExtensions endpoint and openSubsonic response key ([2caee44](https://www.github.com/sentriz/gonic/commit/2caee441ca49e7b2ca148f5b698365085db0cfc8))
+* **subsonic:** add support for multi-valued album artist tags ([3ac7782](https://www.github.com/sentriz/gonic/commit/3ac77823c3bdc2e2be543f18e7b78295a7eb2fb8))
+* **subsonic:** add support for podcast episodes in both playlists and play queues ([aecee3d](https://www.github.com/sentriz/gonic/commit/aecee3d2d859ca9e754db9f65bf031290d0ce4a5))
+* **subsonic:** cache and use lastfm responses for covers, bios, top songs ([c374577](https://www.github.com/sentriz/gonic/commit/c374577328c17b6c3c7b6edbf901585e1f6644ee))
+* **subsonic:** change frequent album list to use total time played per album instead of play count. ([#331](https://www.github.com/sentriz/gonic/issues/331)) ([7982ffc](https://www.github.com/sentriz/gonic/commit/7982ffc0b46bc3e14eb753cfb3791e183a75834b))
+* **subsonic:** drop support for guessed artist covers in filesystem ([657fb22](https://www.github.com/sentriz/gonic/commit/657fb221db002ffebbf2a8d603566191acb40d17))
+* **subsonic:** expose all album genres in a list of subsonic api ([749233d](https://www.github.com/sentriz/gonic/commit/749233db4effbdc7c3288f7cb8052784379be44f))
+* **subsonic:** fetch artist images from lastfm opengraph ([4757495](https://www.github.com/sentriz/gonic/commit/475749534f784eb803eec9cb83c72d49f30d1994)), closes [#295](https://www.github.com/sentriz/gonic/issues/295)
+* **subsonic:** gracefully handle missing podcast episode paths when returning playlists ([d5f8e23](https://www.github.com/sentriz/gonic/commit/d5f8e23a89cf1677e6ced124df4c0e07cdb7d114))
+* **subsonic:** improve search2 and search3 when there are multiple words searched on. ([#335](https://www.github.com/sentriz/gonic/issues/335)) ([cbab68b](https://www.github.com/sentriz/gonic/commit/cbab68b05700aeb8b1fc2192ae5263ead248baf4))
+* **subsonic:** make it easier to add more tag reading backends ([8382f61](https://www.github.com/sentriz/gonic/commit/8382f6123c2ac39d12b266730d76301faaf168f4))
+* **subsonic:** order results from getStarred reverse chronologically based on star date ([b3c863c](https://www.github.com/sentriz/gonic/commit/b3c863c386adb830cdb45f45644f4779a4b73e86))
+* **subsonic:** return artist cover ids for similar artists response ([c15349f](https://www.github.com/sentriz/gonic/commit/c15349f79667e71138c6088f52f8efbd9966c33a))
+* **subsonic:** scrobble to different scrobble backends in parallel ([1ea2402](https://www.github.com/sentriz/gonic/commit/1ea240255927986b90a39c9ea67736f1b6808441))
+* **subsonic:** support timeOffset in stream.view ([#384](https://www.github.com/sentriz/gonic/issues/384)) ([7eaf602](https://www.github.com/sentriz/gonic/commit/7eaf602e6990d6840f2fc5792599abb09bbef24b))
+* **subsonic:** update track play stats on scrobble instead of stream ([e0b1603](https://www.github.com/sentriz/gonic/commit/e0b1603c00f7c24ce9b57085f5447bc0d7b016d7))
+* **sunsonic:** expose type serverVersion in subsonic responses ([b8fceae](https://www.github.com/sentriz/gonic/commit/b8fceae3834d29f447fbb23eeb77f6216018e55a))
+* **tags:** support multi valued tags like albumartists ([623d5c3](https://www.github.com/sentriz/gonic/commit/623d5c370906784b3ba8b21b89e435eafd41771e))
+* **transcode:** add MP3 320 transcoding profile ([#363](https://www.github.com/sentriz/gonic/issues/363)) ([a644f0f](https://www.github.com/sentriz/gonic/commit/a644f0ff5c47c0f196c937dd76189de1e6099594))
+* **transcode:** add opus 192 profile ([5dcc8c1](https://www.github.com/sentriz/gonic/commit/5dcc8c18a1f0cedf1ce6772aafe6dbdec1ded03c))
+* **transcode:** lock the destination transcode cache path ([c9a2d2f](https://www.github.com/sentriz/gonic/commit/c9a2d2f9ce3fd7b9c724d8d2079abf43c2aa339b))
+
+
+### Bug Fixes
+
+* **admin:** continue on track match error ([16e6046](https://www.github.com/sentriz/gonic/commit/16e6046e85b99ebadc08f07b75404d7e67f6b77f))
+* **podcasts:** make sure we use safeFilename for podcast episodes too ([#339](https://www.github.com/sentriz/gonic/issues/339)) ([5fb9c49](https://www.github.com/sentriz/gonic/commit/5fb9c49ed2810a1b63fce8930320eb7de0356c33))
+* **podcasts:** remove query parameters from URL when getting the extension ([19be6f0](https://www.github.com/sentriz/gonic/commit/19be6f0881ed6c0c3311793c55dbbbe0a5571f51))
+* **scanner:** fix watcher panic ([78d0c52](https://www.github.com/sentriz/gonic/commit/78d0c52d2240671a1e529339727bd013b7feb5c6))
+* **scanner:** remove redundant mod time look up ([e0a8c18](https://www.github.com/sentriz/gonic/commit/e0a8c18b8df9b148053ed5dbe535f76c245e7df8)), closes [#293](https://www.github.com/sentriz/gonic/issues/293)
+* **subsonic:** only return one bookmark entry per row in getBookmarks ([efe72fc](https://www.github.com/sentriz/gonic/commit/efe72fc447a23f48f0a49d92a7b3ed3c68d03722)), closes [#310](https://www.github.com/sentriz/gonic/issues/310)
+
+
+### Miscellaneous Chores
+
+* **build:** bump to go 1.21 ([658bae2](https://www.github.com/sentriz/gonic/commit/658bae2b43d170fa249ef2a0e953a494e0b2061a))
+
 ### [0.15.2](https://www.github.com/sentriz/gonic/compare/v0.15.1...v0.15.2) (2022-12-27)
 
 
