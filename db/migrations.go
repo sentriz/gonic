@@ -2,6 +2,7 @@
 package db
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -18,6 +19,7 @@ import (
 )
 
 type MigrationContext struct {
+	DBPath            string
 	OriginalMusicPath string
 	PlaylistsPath     string
 	PodcastsPath      string
@@ -56,6 +58,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202206101425", migrateUser),
 		construct(ctx, "202207251148", migrateStarRating),
 		construct(ctx, "202211111057", migratePlaylistsQueuesToFullID),
+		constructNoTx(ctx, "202212272312", backupDBPre016),
 		construct(ctx, "202304221528", migratePlaylistsToM3U),
 		construct(ctx, "202305301718", migratePlayCountToLength),
 		construct(ctx, "202307281628", migrateAlbumArtistsMany2Many),
@@ -70,12 +73,18 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 }
 
 func construct(ctx MigrationContext, id string, f func(*gorm.DB, MigrationContext) error) *gormigrate.Migration {
+	return constructNoTx(ctx, id, func(db *gorm.DB, ctx MigrationContext) error {
+		tx := db.Begin()
+		defer tx.Commit()
+		return f(tx, ctx)
+	})
+}
+
+func constructNoTx(ctx MigrationContext, id string, f func(*gorm.DB, MigrationContext) error) *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: id,
 		Migrate: func(db *gorm.DB) error {
-			tx := db.Begin()
-			defer tx.Commit()
-			if err := f(tx, ctx); err != nil {
+			if err := f(db, ctx); err != nil {
 				return fmt.Errorf("%q: %w", id, err)
 			}
 			log.Printf("migration '%s' finished", id)
@@ -709,4 +718,8 @@ func migratePlaylistsPaths(tx *gorm.DB, ctx MigrationContext) error {
 		return fmt.Errorf("step drop podcast_episodes path: %w", err)
 	}
 	return nil
+}
+
+func backupDBPre016(tx *gorm.DB, ctx MigrationContext) error {
+	return Dump(context.Background(), tx, fmt.Sprintf("%s.%d.bak", ctx.DBPath, time.Now().Unix()))
 }
