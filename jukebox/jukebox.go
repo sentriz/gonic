@@ -313,6 +313,10 @@ func (j *Jukebox) Quit() error {
 	go func() {
 		_, _ = j.conn.Call("quit")
 	}()
+
+	time.Sleep(250 * time.Millisecond)
+	_ = j.cmd.Process.Kill()
+
 	if err := j.conn.Close(); err != nil {
 		return fmt.Errorf("close: %w", err)
 	}
