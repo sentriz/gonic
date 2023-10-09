@@ -74,9 +74,9 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 
 func construct(ctx MigrationContext, id string, f func(*gorm.DB, MigrationContext) error) *gormigrate.Migration {
 	return constructNoTx(ctx, id, func(db *gorm.DB, ctx MigrationContext) error {
-		tx := db.Begin()
-		defer tx.Commit()
-		return f(tx, ctx)
+		return db.Transaction(func(tx *gorm.DB) error {
+			return f(tx, ctx)
+		})
 	})
 }
 
