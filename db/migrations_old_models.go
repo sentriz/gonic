@@ -2,7 +2,7 @@ package db
 
 import "time"
 
-type _OldPlaylist struct {
+type __OldPlaylist struct { //nolint: revive,stylecheck
 	ID         int `gorm:"primary_key"`
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
@@ -15,6 +15,6 @@ type _OldPlaylist struct {
 	IsPublic   bool `sql:"default: null"`
 }
 
-func (_OldPlaylist) TableName() string {
+func (__OldPlaylist) TableName() string {
 	return "playlists"
 }

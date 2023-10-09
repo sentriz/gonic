@@ -5,14 +5,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/mattn/go-sqlite3"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/tags/tagcommon"
@@ -311,42 +309,8 @@ func (m *MockFS) DumpDB(suffix ...string) {
 	p = append(p, suffix...)
 
 	destPath := filepath.Join(os.TempDir(), strings.Join(p, "-"))
-	dest, err := db.New(destPath, url.Values{})
-	if err != nil {
-		m.t.Fatalf("create dest db: %v", err)
-	}
-	defer dest.Close()
-
-	connSrc, err := m.db.DB.DB().Conn(context.Background())
-	if err != nil {
-		m.t.Fatalf("getting src raw conn: %v", err)
-	}
-	defer connSrc.Close()
-	connDest, err := dest.DB.DB().Conn(context.Background())
-	if err != nil {
-		m.t.Fatalf("getting dest raw conn: %v", err)
-	}
-	defer connDest.Close()
-
-	err = connDest.Raw(func(connDest interface{}) error {
-		return connSrc.Raw(func(connSrc interface{}) error {
-			connDestq := connDest.(*sqlite3.SQLiteConn)
-			connSrcq := connSrc.(*sqlite3.SQLiteConn)
-			bk, err := connDestq.Backup("main", connSrcq, "main")
-			if err != nil {
-				return fmt.Errorf("create backup db: %w", err)
-			}
-			for done, _ := bk.Step(-1); !done; {
-				m.t.Logf("dumping db...")
-			}
-			if err := bk.Finish(); err != nil {
-				return fmt.Errorf("finishing dump: %w", err)
-			}
-			return nil
-		})
-	})
-	if err != nil {
-		m.t.Fatalf("backing up: %v", err)
+	if err := db.Dump(context.Background(), m.db.DB, destPath); err != nil {
+		m.t.Fatalf("dumping db: %v", err)
 	}
 
 	m.t.Error(destPath)

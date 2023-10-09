@@ -356,7 +356,7 @@ func migratePublicPlaylist(tx *gorm.DB, _ MigrationContext) error {
 	if !tx.HasTable("playlists") {
 		return nil
 	}
-	return tx.AutoMigrate(_OldPlaylist{}).Error
+	return tx.AutoMigrate(__OldPlaylist{}).Error
 }
 
 func migratePodcastDropUserID(tx *gorm.DB, _ MigrationContext) error {
@@ -495,7 +495,7 @@ func migratePlaylistsToM3U(tx *gorm.DB, ctx MigrationContext) error {
 		return fmt.Errorf("create playlists store: %w", err)
 	}
 
-	var prevs []*_OldPlaylist
+	var prevs []*__OldPlaylist
 	if err := tx.Find(&prevs).Error; err != nil {
 		return fmt.Errorf("fetch old playlists: %w", err)
 	}
