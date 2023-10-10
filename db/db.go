@@ -264,14 +264,6 @@ func (t *Track) RelPath() string {
 	)
 }
 
-func (t *Track) GenreStrings() []string {
-	strs := make([]string, 0, len(t.Genres))
-	for _, genre := range t.Genres {
-		strs = append(strs, genre.Name)
-	}
-	return strs
-}
-
 type User struct {
 	ID                int `gorm:"primary_key"`
 	CreatedAt         time.Time

@@ -45,27 +45,27 @@ type Response struct {
 	MusicFolders          *MusicFolders          `xml:"musicFolders"          json:"musicFolders,omitempty"`
 	ScanStatus            *ScanStatus            `xml:"scanStatus"            json:"scanStatus,omitempty"`
 	Licence               *Licence               `xml:"license"               json:"license,omitempty"`
-	SearchResultTwo       *SearchResultTwo       `xml:"searchResult2"         json:"searchResult2,omitempty"`
-	SearchResultThree     *SearchResultThree     `xml:"searchResult3"         json:"searchResult3,omitempty"`
-	User                  *User                  `xml:"user"                  json:"user,omitempty"`
-	Playlists             *Playlists             `xml:"playlists"             json:"playlists,omitempty"`
-	Playlist              *Playlist              `xml:"playlist"              json:"playlist,omitempty"`
-	ArtistInfo            *ArtistInfo            `xml:"artistInfo"            json:"artistInfo,omitempty"`
-	ArtistInfoTwo         *ArtistInfo            `xml:"artistInfo2"           json:"artistInfo2,omitempty"`
-	Genres                *Genres                `xml:"genres"                json:"genres,omitempty"`
-	PlayQueue             *PlayQueue             `xml:"playQueue"             json:"playQueue,omitempty"`
-	JukeboxStatus         *JukeboxStatus         `xml:"jukeboxStatus"         json:"jukeboxStatus,omitempty"`
-	JukeboxPlaylist       *JukeboxPlaylist       `xml:"jukeboxPlaylist"       json:"jukeboxPlaylist,omitempty"`
-	Podcasts              *Podcasts              `xml:"podcasts"              json:"podcasts,omitempty"`
-	NewestPodcasts        *NewestPodcasts        `xml:"newestPodcasts"        json:"newestPodcasts,omitempty"`
-	Bookmarks             *Bookmarks             `xml:"bookmarks"             json:"bookmarks,omitempty"`
-	Starred               *Starred               `xml:"starred"               json:"starred,omitempty"`
-	StarredTwo            *StarredTwo            `xml:"starred2"              json:"starred2,omitempty"`
-	TopSongs              *TopSongs              `xml:"topSongs"              json:"topSongs,omitempty"`
-	SimilarSongs          *SimilarSongs          `xml:"similarSongs"          json:"similarSongs,omitempty"`
-	SimilarSongsTwo       *SimilarSongsTwo       `xml:"similarSongs2"         json:"similarSongs2,omitempty"`
-	InternetRadioStations *InternetRadioStations `xml:"internetRadioStations" json:"internetRadioStations,omitempty"`
-	Lyrics                *Lyrics                `xml:"lyrics"                json:"lyrics,omitempty"`
+	SearchResultTwo       *SearchResultTwo       `xml:"searchResult2"                    json:"searchResult2,omitempty"`
+	SearchResultThree     *SearchResultThree     `xml:"searchResult3"                    json:"searchResult3,omitempty"`
+	User                  *User                  `xml:"user"                             json:"user,omitempty"`
+	Playlists             *Playlists             `xml:"playlists"                        json:"playlists,omitempty"`
+	Playlist              *Playlist              `xml:"playlist"                         json:"playlist,omitempty"`
+	ArtistInfo            *ArtistInfo            `xml:"artistInfo"                       json:"artistInfo,omitempty"`
+	ArtistInfoTwo         *ArtistInfo            `xml:"artistInfo2"                      json:"artistInfo2,omitempty"`
+	Genres                *Genres                `xml:"genres"                           json:"genres,omitempty"`
+	PlayQueue             *PlayQueue             `xml:"playQueue"                        json:"playQueue,omitempty"`
+	JukeboxStatus         *JukeboxStatus         `xml:"jukeboxStatus"                    json:"jukeboxStatus,omitempty"`
+	JukeboxPlaylist       *JukeboxPlaylist       `xml:"jukeboxPlaylist"                  json:"jukeboxPlaylist,omitempty"`
+	Podcasts              *Podcasts              `xml:"podcasts"                         json:"podcasts,omitempty"`
+	NewestPodcasts        *NewestPodcasts        `xml:"newestPodcasts"                   json:"newestPodcasts,omitempty"`
+	Bookmarks             *Bookmarks             `xml:"bookmarks"                        json:"bookmarks,omitempty"`
+	Starred               *Starred               `xml:"starred"                          json:"starred,omitempty"`
+	StarredTwo            *StarredTwo            `xml:"starred2"                         json:"starred2,omitempty"`
+	TopSongs              *TopSongs              `xml:"topSongs"                         json:"topSongs,omitempty"`
+	SimilarSongs          *SimilarSongs          `xml:"similarSongs"                     json:"similarSongs,omitempty"`
+	SimilarSongsTwo       *SimilarSongsTwo       `xml:"similarSongs2"                    json:"similarSongs2,omitempty"`
+	InternetRadioStations *InternetRadioStations `xml:"internetRadioStations"            json:"internetRadioStations,omitempty"`
+	Lyrics                *Lyrics                `xml:"lyrics"                           json:"lyrics,omitempty"`
 }
 
 func NewResponse() *Response {
@@ -160,28 +160,29 @@ type TranscodeMeta struct {
 }
 
 type TrackChild struct {
-	ID          *specid.ID `xml:"id,attr,omitempty"                    json:"id,omitempty"`
-	Album       string     `xml:"album,attr,omitempty"                 json:"album,omitempty"`
-	AlbumID     *specid.ID `xml:"albumId,attr,omitempty"               json:"albumId,omitempty"`
-	Artist      string     `xml:"artist,attr,omitempty"                json:"artist,omitempty"`
-	ArtistID    *specid.ID `xml:"artistId,attr,omitempty"              json:"artistId,omitempty"`
-	Bitrate     int        `xml:"bitRate,attr,omitempty"               json:"bitRate,omitempty"`
-	ContentType string     `xml:"contentType,attr,omitempty"           json:"contentType,omitempty"`
-	CoverID     *specid.ID `xml:"coverArt,attr,omitempty"              json:"coverArt,omitempty"`
-	CreatedAt   time.Time  `xml:"created,attr,omitempty"               json:"created,omitempty"`
-	Duration    int        `xml:"duration,attr,omitempty"              json:"duration,omitempty"`
-	Genre       string     `xml:"genre,attr,omitempty"                 json:"genre,omitempty"`
-	IsDir       bool       `xml:"isDir,attr"                           json:"isDir"`
-	IsVideo     bool       `xml:"isVideo,attr"                         json:"isVideo"`
-	ParentID    *specid.ID `xml:"parent,attr,omitempty"                json:"parent,omitempty"`
-	Path        string     `xml:"path,attr,omitempty"                  json:"path,omitempty"`
-	Size        int        `xml:"size,attr,omitempty"                  json:"size,omitempty"`
-	Suffix      string     `xml:"suffix,attr,omitempty"                json:"suffix,omitempty"`
-	Title       string     `xml:"title,attr"                           json:"title"`
-	TrackNumber int        `xml:"track,attr,omitempty"                 json:"track,omitempty"`
-	DiscNumber  int        `xml:"discNumber,attr,omitempty"            json:"discNumber,omitempty"`
-	Type        string     `xml:"type,attr,omitempty"                  json:"type,omitempty"`
-	Year        int        `xml:"year,attr,omitempty"                  json:"year,omitempty"`
+	ID          *specid.ID  `xml:"id,attr,omitempty"          json:"id,omitempty"`
+	Album       string      `xml:"album,attr,omitempty"       json:"album,omitempty"`
+	AlbumID     *specid.ID  `xml:"albumId,attr,omitempty"     json:"albumId,omitempty"`
+	Artist      string      `xml:"artist,attr,omitempty"      json:"artist,omitempty"`
+	ArtistID    *specid.ID  `xml:"artistId,attr,omitempty"    json:"artistId,omitempty"`
+	Bitrate     int         `xml:"bitRate,attr,omitempty"     json:"bitRate,omitempty"`
+	ContentType string      `xml:"contentType,attr,omitempty" json:"contentType,omitempty"`
+	CoverID     *specid.ID  `xml:"coverArt,attr,omitempty"    json:"coverArt,omitempty"`
+	CreatedAt   time.Time   `xml:"created,attr,omitempty"     json:"created,omitempty"`
+	Duration    int         `xml:"duration,attr,omitempty"    json:"duration,omitempty"`
+	Genre       string      `xml:"genre,attr,omitempty"       json:"genre,omitempty"`
+	Genres      []*GenreRef `xml:"genres,omitempty"           json:"genres,omitempty"`
+	IsDir       bool        `xml:"isDir,attr"                 json:"isDir"`
+	IsVideo     bool        `xml:"isVideo,attr"               json:"isVideo"`
+	ParentID    *specid.ID  `xml:"parent,attr,omitempty"      json:"parent,omitempty"`
+	Path        string      `xml:"path,attr,omitempty"        json:"path,omitempty"`
+	Size        int         `xml:"size,attr,omitempty"        json:"size,omitempty"`
+	Suffix      string      `xml:"suffix,attr,omitempty"      json:"suffix,omitempty"`
+	Title       string      `xml:"title,attr"                 json:"title"`
+	TrackNumber int         `xml:"track,attr,omitempty"       json:"track,omitempty"`
+	DiscNumber  int         `xml:"discNumber,attr,omitempty"  json:"discNumber,omitempty"`
+	Type        string      `xml:"type,attr,omitempty"        json:"type,omitempty"`
+	Year        int         `xml:"year,attr,omitempty"        json:"year,omitempty"`
 	// star / rating
 	Starred       *time.Time `xml:"starred,attr,omitempty"         json:"starred,omitempty"`
 	UserRating    int        `xml:"userRating,attr,omitempty"      json:"userRating,omitempty"`

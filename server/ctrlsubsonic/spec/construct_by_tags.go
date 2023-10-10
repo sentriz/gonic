@@ -3,7 +3,6 @@ package spec
 import (
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"go.senan.xyz/gonic/db"
 )
@@ -68,7 +67,6 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 		),
 		Album:         album.TagTitle,
 		AlbumID:       album.SID(),
-		Genre:         strings.Join(t.GenreStrings(), ", "),
 		Duration:      t.Length,
 		Bitrate:       t.Bitrate,
 		Type:          "music",
@@ -89,6 +87,12 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 			return album.Artists[i].ID < album.Artists[j].ID
 		})
 		ret.ArtistID = album.Artists[0].SID()
+	}
+	if len(t.Genres) > 0 {
+		ret.Genre = t.Genres[0].Name
+	}
+	for _, g := range t.Genres {
+		ret.Genres = append(ret.Genres, &GenreRef{Name: g.Name})
 	}
 	return ret
 }
