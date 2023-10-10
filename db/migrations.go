@@ -19,6 +19,7 @@ import (
 )
 
 type MigrationContext struct {
+	Production        bool
 	DBPath            string
 	OriginalMusicPath string
 	PlaylistsPath     string
@@ -721,5 +722,8 @@ func migratePlaylistsPaths(tx *gorm.DB, ctx MigrationContext) error {
 }
 
 func backupDBPre016(tx *gorm.DB, ctx MigrationContext) error {
+	if !ctx.Production {
+		return nil
+	}
 	return Dump(context.Background(), tx, fmt.Sprintf("%s.%d.bak", ctx.DBPath, time.Now().Unix()))
 }

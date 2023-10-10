@@ -143,6 +143,7 @@ func main() {
 	defer dbc.Close()
 
 	err = dbc.Migrate(db.MigrationContext{
+		Production:        true,
 		DBPath:            *confDBPath,
 		OriginalMusicPath: confMusicPaths[0].path,
 		PlaylistsPath:     *confPlaylistsPath,
