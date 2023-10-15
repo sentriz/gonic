@@ -314,12 +314,7 @@ func main() {
 		defer logJob("jukebox")()
 
 		extraArgs, _ := shlex.Split(*confJukeboxMPVExtraArgs)
-		var err error
-		cacheDir, err := os.UserCacheDir()
-		if err != nil {
-			return fmt.Errorf("get user cache dir: %w", err)
-		}
-		jukeboxTempDir := filepath.Join(cacheDir, "gonic-jukebox")
+		jukeboxTempDir := filepath.Join(*confCachePath, "gonic-jukebox")
 		if err := os.RemoveAll(jukeboxTempDir); err != nil {
 			return fmt.Errorf("remove jubebox tmp dir: %w", err)
 		}
