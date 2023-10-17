@@ -267,6 +267,7 @@ func main() {
 		mux.Handle("/debug/vars", expvar.Handler())
 		expvar.Publish("stats", expvar.Func(func() any {
 			var stats struct{ Albums, Tracks, Artists, InternetRadioStations, Podcasts uint }
+			dbc.Model(db.Track{}).Count(&stats.Tracks)
 			dbc.Model(db.Album{}).Count(&stats.Albums)
 			dbc.Model(db.Artist{}).Count(&stats.Artists)
 			dbc.Model(db.InternetRadioStation{}).Count(&stats.InternetRadioStations)
