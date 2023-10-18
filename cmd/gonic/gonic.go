@@ -300,12 +300,13 @@ func main() {
 
 		defer logJob("scan watcher")()
 
+		done := make(chan struct{})
 		errgrp.Go(func() error {
 			<-ctx.Done()
-			scannr.CancelWatch()
+			done <- struct{}{}
 			return nil
 		})
-		return scannr.ExecuteWatch()
+		return scannr.ExecuteWatch(done)
 	})
 
 	errgrp.Go(func() error {
