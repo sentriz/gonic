@@ -667,7 +667,8 @@ func migratePlaylistsPaths(tx *gorm.DB, ctx MigrationContext) error {
 			filepath.Join(ctx.PodcastsPath, p.Title),
 		)
 		if err != nil {
-			return fmt.Errorf("find old podcast path: %w", err)
+			log.Printf("error finding old podcast path: %v. ignoring", err)
+			continue
 		}
 		newPath := filepath.Join(ctx.PodcastsPath, fileutil.Safe(p.Title))
 		p.RootDir = newPath
@@ -696,7 +697,8 @@ func migratePlaylistsPaths(tx *gorm.DB, ctx MigrationContext) error {
 			filepath.Join(pe.Podcast.RootDir, pe.Filename),
 		)
 		if err != nil {
-			return fmt.Errorf("find old podcast episode path: %w", err)
+			log.Printf("error finding old podcast episode path: %v. ignoring", err)
+			continue
 		}
 		newName := fileutil.Safe(filepath.Base(oldPath))
 		pe.Filename = newName
