@@ -51,7 +51,7 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 	case os.IsNotExist(err):
 		reader, err := coverFor(c.dbc, c.artistInfoCache, id)
 		if err != nil {
-			return spec.NewError(10, "couldn't find cover `%s`: %v", id, err)
+			return spec.NewError(10, "couldn't find cover %q: %v", id, err)
 		}
 		defer reader.Close()
 
@@ -60,7 +60,7 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 			return nil
 		}
 	case err != nil:
-		log.Printf("error stating `%s`: %v", cachePath, err)
+		log.Printf("error stating %q: %v", cachePath, err)
 		return nil
 	}
 
@@ -161,7 +161,7 @@ func coverScaleAndSave(reader io.Reader, cachePath string, size int) error {
 		width = src.Bounds().Dx()
 	}
 	if err = imaging.Save(imaging.Resize(src, width, 0, imaging.Lanczos), cachePath); err != nil {
-		return fmt.Errorf("caching `%s`: %w", cachePath, err)
+		return fmt.Errorf("caching %q: %w", cachePath, err)
 	}
 	return nil
 }

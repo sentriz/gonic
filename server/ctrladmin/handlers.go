@@ -312,7 +312,7 @@ func (c *Controller) ServeCreateUserDo(r *http.Request) *Response {
 	if err := c.dbc.Create(&user).Error; err != nil {
 		return &Response{
 			redirect: r.Referer(),
-			flashW:   []string{fmt.Sprintf("could not create user `%s`: %v", username, err)},
+			flashW:   []string{fmt.Sprintf("could not create user %q: %v", username, err)},
 		}
 	}
 	return &Response{redirect: "/admin/home"}

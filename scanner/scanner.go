@@ -253,11 +253,11 @@ func (s *Scanner) scanCallback(c *Context, dir string, absPath string, d fs.DirE
 	}
 
 	if s.excludePattern != nil && s.excludePattern.MatchString(absPath) {
-		log.Printf("excluding folder `%s`", absPath)
+		log.Printf("excluding folder %q", absPath)
 		return nil
 	}
 
-	log.Printf("processing folder `%s`", absPath)
+	log.Printf("processing folder %q", absPath)
 
 	tx := s.db.Begin()
 	if err := s.scanDir(tx, c, dir, absPath); err != nil {
@@ -283,7 +283,7 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string
 	for _, item := range items {
 		absPath := filepath.Join(absPath, item.Name())
 		if s.excludePattern != nil && s.excludePattern.MatchString(absPath) {
-			log.Printf("excluding path `%s`", absPath)
+			log.Printf("excluding path %q", absPath)
 			continue
 		}
 		if item.IsDir() {

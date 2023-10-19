@@ -206,7 +206,7 @@ func withRequiredParams(next http.Handler) http.Handler {
 		params := r.Context().Value(CtxParams).(params.Params)
 		for _, req := range requiredParameters {
 			if _, err := params.Get(req); err != nil {
-				_ = writeResp(w, r, spec.NewError(10, "please provide a `%s` parameter", req))
+				_ = writeResp(w, r, spec.NewError(10, "please provide a %q parameter", req))
 				return
 			}
 		}
@@ -234,7 +234,7 @@ func withUser(dbc *db.DB) handlerutil.Middleware {
 			user := dbc.GetUserByName(username)
 			if user == nil {
 				_ = writeResp(w, r, spec.NewError(40,
-					"invalid username `%s`", username))
+					"invalid username %q", username))
 				return
 			}
 			var credsOk bool

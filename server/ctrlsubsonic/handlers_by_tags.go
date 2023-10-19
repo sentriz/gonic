@@ -174,7 +174,7 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 		q = q.Joins("JOIN album_stars ON albums.id=album_stars.album_id AND album_stars.user_id=?", user.ID)
 		q = q.Order("tag_title")
 	default:
-		return spec.NewError(10, "unknown value `%s` for parameter 'type'", listType)
+		return spec.NewError(10, "unknown value %q for parameter 'type'", listType)
 	}
 	if m := getMusicFolder(c.musicPaths, params); m != "" {
 		q = q.Where("root_dir=?", m)
@@ -314,7 +314,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		Find(&artist).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return spec.NewError(70, "artist with id `%s` not found", id)
+		return spec.NewError(70, "artist with id %q not found", id)
 	}
 
 	sub := spec.NewResponse()
@@ -665,7 +665,7 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 		First(&artist).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return spec.NewError(0, "artist with id `%s` not found", id)
+		return spec.NewError(0, "artist with id %q not found", id)
 	}
 
 	similarArtists, err := c.lastFMClient.ArtistGetSimilar(artist.Name)
