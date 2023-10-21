@@ -56,7 +56,7 @@ func (a *ArtistInfoCache) GetOrLookupByAlbum(ctx context.Context, albumID int) (
 	return a.getOrLookup(ctx, album.RightPath)
 }
 
-func (a *ArtistInfoCache) Get(ctx context.Context, artistName string) (*db.ArtistInfo, error) {
+func (a *ArtistInfoCache) Get(_ context.Context, artistName string) (*db.ArtistInfo, error) {
 	var artistInfo db.ArtistInfo
 	if err := a.db.Find(&artistInfo, "name=?", strcase.ToDelimited(artistName, ' ')).Error; err != nil {
 		return nil, fmt.Errorf("find artist info in db: %w", err)
@@ -64,7 +64,7 @@ func (a *ArtistInfoCache) Get(ctx context.Context, artistName string) (*db.Artis
 	return &artistInfo, nil
 }
 
-func (a *ArtistInfoCache) Lookup(ctx context.Context, artistName string) (*db.ArtistInfo, error) {
+func (a *ArtistInfoCache) Lookup(_ context.Context, artistName string) (*db.ArtistInfo, error) {
 	var artistInfo db.ArtistInfo
 	artistInfo.Name = strcase.ToDelimited(artistName, ' ')
 
