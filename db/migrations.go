@@ -731,7 +731,7 @@ func backupDBPre016(tx *gorm.DB, ctx MigrationContext) error {
 	return Dump(context.Background(), tx, fmt.Sprintf("%s.%d.bak", ctx.DBPath, time.Now().Unix()))
 }
 
-func migrateArtistInfoIDtoName(tx *gorm.DB, ctx MigrationContext) error {
+func migrateArtistInfoIDtoName(tx *gorm.DB, _ MigrationContext) error {
 	// New primary key means new table. Dropping the old one completely since it's a cache.
 	step := tx.Exec(`
 			CREATE TABLE IF NOT EXISTS "new_artist_infos" ("name" varchar(255), "created_at" datetime, 
