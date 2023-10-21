@@ -81,7 +81,7 @@ func coverFor(dbc *db.DB, artistInfoCache *artistinfocache.ArtistInfoCache, id s
 	case specid.Album:
 		return coverForAlbum(dbc, id.Value)
 	case specid.Artist:
-		return coverForArtist(artistInfoCache, id.Value)
+		return coverForArtist(dbc, artistInfoCache, id.Value)
 	case specid.Podcast:
 		return coverForPodcast(dbc, id.Value)
 	case specid.PodcastEpisode:
@@ -106,8 +106,17 @@ func coverForAlbum(dbc *db.DB, id int) (*os.File, error) {
 	return os.Open(filepath.Join(folder.RootDir, folder.LeftPath, folder.RightPath, folder.Cover))
 }
 
-func coverForArtist(artistInfoCache *artistinfocache.ArtistInfoCache, id int) (io.ReadCloser, error) {
-	info, err := artistInfoCache.Get(context.Background(), id)
+func coverForArtist(dbc *db.DB, artistInfoCache *artistinfocache.ArtistInfoCache, id int) (io.ReadCloser, error) {
+	var artist db.Artist
+	err := dbc.
+		Where("id=?", id).
+		First(&artist).
+		Error
+	if err != nil {
+		return nil, fmt.Errorf("artist not found: %w", err)
+	}
+
+	info, err := artistInfoCache.Get(context.Background(), artist.Name)
 	if err != nil {
 		return nil, fmt.Errorf("get artist info from cache: %w", err)
 	}

@@ -320,7 +320,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	sub := spec.NewResponse()
 	sub.ArtistInfoTwo = &spec.ArtistInfo{}
 
-	info, err := c.artistInfoCache.GetOrLookup(r.Context(), artist.ID)
+	info, err := c.artistInfoCache.GetOrLookupByArtist(r.Context(), artist.ID)
 	if err != nil {
 		log.Printf("error fetching artist info from lastfm: %v", err)
 		return sub
@@ -539,7 +539,7 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 		return spec.NewError(0, "finding artist by name: %v", err)
 	}
 
-	info, err := c.artistInfoCache.GetOrLookup(r.Context(), artist.ID)
+	info, err := c.artistInfoCache.GetOrLookupByArtist(r.Context(), artist.ID)
 	if err != nil {
 		log.Printf("error fetching artist info from lastfm: %v", err)
 		return spec.NewResponse()

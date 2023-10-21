@@ -551,7 +551,7 @@ func (ir *InternetRadioStation) SID() *specid.ID {
 }
 
 type ArtistInfo struct {
-	ID             int `gorm:"primary_key" sql:"type:int REFERENCES artists(id) ON DELETE CASCADE"`
+	Name           string `gorm:"primary_key"`
 	CreatedAt      time.Time
 	UpdatedAt      time.Time `gorm:"index"`
 	Biography      string

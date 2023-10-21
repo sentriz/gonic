@@ -1,15 +1,22 @@
 package ctrlsubsonic
 
 import (
+	"errors"
 	"fmt"
+	"log"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 
+	"github.com/iancoleman/strcase"
 	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/handlerutil"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
 // the subsonic spec mentions "artist" a lot when talking about the
@@ -281,8 +288,93 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	return sub
 }
 
-func (c *Controller) ServeGetArtistInfo(_ *http.Request) *spec.Response {
-	return spec.NewResponse()
+func (c *Controller) genAlbumCoverURL(r *http.Request, album *db.Album, size int) string {
+	coverURL, _ := url.Parse(handlerutil.BaseURL(r))
+	coverURL.Path = c.resolveProxyPath("/rest/getCoverArt")
+
+	query := r.URL.Query()
+	query.Set("id", album.SID().String())
+	query.Set("size", strconv.Itoa(size))
+	coverURL.RawQuery = query.Encode()
+
+	return coverURL.String()
+}
+
+func (c *Controller) ServeGetArtistInfo(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	id, err := params.GetID("id")
+	if err != nil {
+		return spec.NewError(10, "please provide an `id` parameter")
+	}
+
+	var album db.Album
+	err = c.dbc.
+		Where("id=?", id.Value).
+		Find(&album).
+		Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return spec.NewError(70, "artist with album id %q not found", id)
+	}
+
+	sub := spec.NewResponse()
+	sub.ArtistInfo = &spec.ArtistInfo{}
+
+	info, err := c.artistInfoCache.GetOrLookupByAlbum(r.Context(), album.ID)
+	if err != nil {
+		log.Printf("error fetching artist info from lastfm: %v", err)
+		return sub
+	}
+
+	sub.ArtistInfo.Biography = info.Biography
+	sub.ArtistInfo.MusicBrainzID = info.MusicBrainzID
+	sub.ArtistInfo.LastFMURL = info.LastFMURL
+
+	sub.ArtistInfo.SmallImageURL = c.genAlbumCoverURL(r, &album, 64)
+	sub.ArtistInfo.MediumImageURL = c.genAlbumCoverURL(r, &album, 126)
+	sub.ArtistInfo.LargeImageURL = c.genAlbumCoverURL(r, &album, 256)
+
+	if info.ImageURL != "" {
+		sub.ArtistInfo.SmallImageURL = info.ImageURL
+		sub.ArtistInfo.MediumImageURL = info.ImageURL
+		sub.ArtistInfo.LargeImageURL = info.ImageURL
+		sub.ArtistInfo.ArtistImageURL = info.ImageURL
+	}
+
+	count := params.GetOrInt("count", 20)
+	inclNotPresent := params.GetOrBool("includeNotPresent", false)
+
+	for i, similarName := range info.GetSimilarArtists() {
+		if i == count {
+			break
+		}
+		var album db.Album
+		err = c.dbc.
+			Where("right_path LIKE ?", strcase.ToDelimited(similarName, '%')).
+			Find(&album).
+			Error
+		if errors.Is(err, gorm.ErrRecordNotFound) && !inclNotPresent {
+			continue
+		}
+
+		if album.ID == 0 {
+			// add a very limited artist, since we don't have everything with `inclNotPresent`
+			sub.ArtistInfo.Similar = append(sub.ArtistInfo.Similar, &spec.Artist{
+				ID:   &specid.ID{},
+				Name: similarName,
+			})
+			continue
+		}
+
+		// To do: Embed this into the query above
+		_ = c.dbc.
+			Model(&db.Album{}).
+			Where("parent_id=?", album.ID).
+			Count(&album.ChildCount)
+
+		sub.ArtistInfo.Similar = append(sub.ArtistInfo.Similar, spec.NewArtistByFolder(&album))
+	}
+
+	return sub
 }
 
 func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {

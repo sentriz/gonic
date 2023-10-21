@@ -66,6 +66,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202309070009", migrateDeleteArtistCoverField),
 		construct(ctx, "202309131743", migrateArtistInfo),
 		construct(ctx, "202309161411", migratePlaylistsPaths),
+		construct(ctx, "202310211302", migrateArtistInfoIDtoName),
 	}
 
 	return gormigrate.
@@ -728,4 +729,40 @@ func backupDBPre016(tx *gorm.DB, ctx MigrationContext) error {
 		return nil
 	}
 	return Dump(context.Background(), tx, fmt.Sprintf("%s.%d.bak", ctx.DBPath, time.Now().Unix()))
+}
+
+func migrateArtistInfoIDtoName(tx *gorm.DB, ctx MigrationContext) error {
+	// New primary key means new table. Dropping the old one completely since it's a cache.
+	step := tx.Exec(`
+			CREATE TABLE IF NOT EXISTS "new_artist_infos" ("name" varchar(255), "created_at" datetime, 
+			"updated_at" datetime, "biography" varchar(255), "music_brainz_id" varchar(255), 
+			"last_fm_url" varchar(255),"image_url" varchar(255),"similar_artists" varchar(255),
+			"top_tracks" varchar(255) , PRIMARY KEY ("name"));
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step make new artist info cache: %w", err)
+	}
+
+	step = tx.Exec(`
+			DROP TABLE artist_infos
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step drop old table: %w", err)
+	}
+
+	step = tx.Exec(`
+			ALTER TABLE new_artist_infos RENAME TO artist_infos
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("rename new table: %w", err)
+	}
+
+	step = tx.Exec(`
+			CREATE INDEX idx_artist_infos_updated_at ON "artist_infos"(updated_at) ;
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("create new index: %w", err)
+	}
+
+	return nil
 }

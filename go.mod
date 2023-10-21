@@ -14,6 +14,7 @@ require (
 	github.com/google/uuid v1.3.1
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/sessions v1.2.1
+	github.com/iancoleman/strcase v0.3.0	
 	github.com/jinzhu/gorm v1.9.17-0.20211120011537-5c235b72a414
 	github.com/josephburnett/jd v1.5.2
 	github.com/mattn/go-sqlite3 v1.14.17
@@ -42,6 +43,7 @@ require (
 	github.com/go-openapi/swag v0.21.1 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
+	github.com/iancoleman/strcase v0.3.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.2 // indirect
