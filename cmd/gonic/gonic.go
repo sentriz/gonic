@@ -266,9 +266,10 @@ func main() {
 	if *confExpvar {
 		mux.Handle("/debug/vars", expvar.Handler())
 		expvar.Publish("stats", expvar.Func(func() any {
-			var stats struct{ Albums, Tracks, Artists, InternetRadioStations, Podcasts uint }
+			var stats struct{ Folders, Albums, Tracks, Artists, InternetRadioStations, Podcasts uint }
 			dbc.Model(db.Track{}).Count(&stats.Tracks)
-			dbc.Model(db.Album{}).Count(&stats.Albums)
+			dbc.Model(db.Album{}).Count(&stats.Folders)
+			dbc.Model(db.Album{}).Joins("JOIN album_artists ON album_artists.album_id=albums.id").Group("albums.id").Count(&stats.Albums)
 			dbc.Model(db.Artist{}).Count(&stats.Artists)
 			dbc.Model(db.InternetRadioStation{}).Count(&stats.InternetRadioStations)
 			dbc.Model(db.Podcast{}).Count(&stats.Podcasts)
