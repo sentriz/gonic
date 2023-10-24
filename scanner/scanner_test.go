@@ -487,6 +487,23 @@ func TestSymlinkedSubdiscs(t *testing.T) {
 	assert.NotZero(t, info.ModTime()) // track resolves
 }
 
+func TestSymlinkEscapesMusicDirs(t *testing.T) {
+	t.Parallel()
+	m := mockfs.NewWithDirs(t, []string{"scandir"})
+
+	require.NoError(t, os.MkdirAll(filepath.Join(m.TmpDir(), "otherdir", "artist", "album-test"), os.ModePerm))
+	require.NoError(t, os.Symlink(
+		filepath.Join(m.TmpDir(), "otherdir", "artist"),
+		filepath.Join(m.TmpDir(), "scandir", "artist"),
+	))
+
+	m.ScanAndClean()
+
+	var albums []*db.Album
+	require.NoError(t, m.DB().Find(&albums).Error)
+	require.Len(t, albums, 3)
+}
+
 func TestTagErrors(t *testing.T) {
 	t.Parallel()
 	m := mockfs.New(t)
