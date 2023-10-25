@@ -88,13 +88,13 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 			return spec.NewError(0, "error finding podcast episode: %v", err)
 		}
 
-		scrobbleTrack.Track = podcastEpisode.Title
-		scrobbleTrack.Artist = podcastEpisode.Podcast.Title
-		scrobbleTrack.Duration = time.Second * time.Duration(podcastEpisode.Length)
-
 		if err := scrobbleStatsUpdatePodcastEpisode(c.dbc, id.Value); err != nil {
 			return spec.NewError(0, "error updating stats: %v", err)
 		}
+	}
+
+	if scrobbleTrack.Track == "" {
+		return spec.NewResponse()
 	}
 
 	var wg sync.WaitGroup
