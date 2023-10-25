@@ -181,7 +181,7 @@ func TestUpdatedAlbumGenre(t *testing.T) {
 
 	var album db.Album
 	assert.NoError(t, m.DB().Preload("Genres").Where("left_path=? AND right_path=?", "artist-0/", "album-0").Find(&album).Error)
-	assert.Equal(t, []string{"gen-a", "gen-b"}, album.GenreStrings())
+	assert.Equal(t, []string{"gen-a", "gen-b"}, genreStrings(album))
 
 	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.TagInfo) {
 		tags.RawGenre = "gen-a-upd;gen-b-upd"
@@ -191,7 +191,7 @@ func TestUpdatedAlbumGenre(t *testing.T) {
 
 	var updated db.Album
 	assert.NoError(t, m.DB().Preload("Genres").Where("left_path=? AND right_path=?", "artist-0/", "album-0").Find(&updated).Error)
-	assert.Equal(t, []string{"gen-a-upd", "gen-b-upd"}, updated.GenreStrings())
+	assert.Equal(t, []string{"gen-a-upd", "gen-b-upd"}, genreStrings(updated))
 }
 
 func TestDeleteAlbum(t *testing.T) {
@@ -758,4 +758,12 @@ func TestMultiArtistPreload(t *testing.T) {
 			assert.Len(t, artist.Albums, 1)
 		}
 	}
+}
+
+func genreStrings(album db.Album) []string {
+	var strs []string
+	for _, genre := range album.Genres {
+		strs = append(strs, genre.Name)
+	}
+	return strs
 }

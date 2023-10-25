@@ -333,14 +333,6 @@ func (a *Album) IndexRightPath() string {
 	return a.RightPath
 }
 
-func (a *Album) GenreStrings() []string {
-	strs := make([]string, 0, len(a.Genres))
-	for _, genre := range a.Genres {
-		strs = append(strs, genre.Name)
-	}
-	return strs
-}
-
 func (a *Album) ArtistsStrings() []string {
 	artists := append([]*Artist(nil), a.Artists...)
 	sort.Slice(artists, func(i, j int) bool {
