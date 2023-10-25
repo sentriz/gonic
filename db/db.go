@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 
@@ -293,29 +292,30 @@ type Play struct {
 }
 
 type Album struct {
-	ID            int `gorm:"primary_key"`
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
-	ModifiedAt    time.Time
-	LeftPath      string `gorm:"unique_index:idx_album_abs_path"`
-	RightPath     string `gorm:"not null; unique_index:idx_album_abs_path" sql:"default: null"`
-	RightPathUDec string `sql:"default: null"`
-	Parent        *Album
-	ParentID      int       `sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
-	RootDir       string    `gorm:"unique_index:idx_album_abs_path" sql:"default: null"`
-	Genres        []*Genre  `gorm:"many2many:album_genres"`
-	Cover         string    `sql:"default: null"`
-	Artists       []*Artist `gorm:"many2many:album_artists"`
-	TagTitle      string    `sql:"default: null"`
-	TagTitleUDec  string    `sql:"default: null"`
-	TagBrainzID   string    `sql:"default: null"`
-	TagYear       int       `sql:"default: null"`
-	Tracks        []*Track
-	ChildCount    int `sql:"-"`
-	Duration      int `sql:"-"`
-	AlbumStar     *AlbumStar
-	AlbumRating   *AlbumRating
-	AverageRating float64 `sql:"default: null"`
+	ID             int `gorm:"primary_key"`
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	ModifiedAt     time.Time
+	LeftPath       string `gorm:"unique_index:idx_album_abs_path"`
+	RightPath      string `gorm:"not null; unique_index:idx_album_abs_path" sql:"default: null"`
+	RightPathUDec  string `sql:"default: null"`
+	Parent         *Album
+	ParentID       int       `sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	RootDir        string    `gorm:"unique_index:idx_album_abs_path" sql:"default: null"`
+	Genres         []*Genre  `gorm:"many2many:album_genres"`
+	Cover          string    `sql:"default: null"`
+	Artists        []*Artist `gorm:"many2many:album_artists"`
+	TagTitle       string    `sql:"default: null"`
+	TagAlbumArtist string    // display purposes only
+	TagTitleUDec   string    `sql:"default: null"`
+	TagBrainzID    string    `sql:"default: null"`
+	TagYear        int       `sql:"default: null"`
+	Tracks         []*Track
+	ChildCount     int `sql:"-"`
+	Duration       int `sql:"-"`
+	AlbumStar      *AlbumStar
+	AlbumRating    *AlbumRating
+	AverageRating  float64 `sql:"default: null"`
 }
 
 func (a *Album) SID() *specid.ID {
@@ -331,18 +331,6 @@ func (a *Album) IndexRightPath() string {
 		return a.RightPathUDec
 	}
 	return a.RightPath
-}
-
-func (a *Album) ArtistsStrings() []string {
-	artists := append([]*Artist(nil), a.Artists...)
-	sort.Slice(artists, func(i, j int) bool {
-		return artists[i].ID < artists[j].ID
-	})
-	strs := make([]string, 0, len(artists))
-	for _, artist := range artists {
-		strs = append(strs, artist.Name)
-	}
-	return strs
 }
 
 type PlayQueue struct {

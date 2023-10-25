@@ -372,6 +372,7 @@ func populateAlbum(tx *db.DB, album *db.Album, trags tagcommon.Info, modTime tim
 	albumName := tagcommon.MustAlbum(trags)
 	album.TagTitle = albumName
 	album.TagTitleUDec = decoded(albumName)
+	album.TagAlbumArtist = tagcommon.MustAlbumArtist(trags)
 	album.TagBrainzID = trags.AlbumBrainzID()
 	album.TagYear = trags.Year()
 
@@ -381,7 +382,6 @@ func populateAlbum(tx *db.DB, album *db.Album, trags tagcommon.Info, modTime tim
 	if err := tx.Save(&album).Error; err != nil {
 		return fmt.Errorf("saving album: %w", err)
 	}
-
 	return nil
 }
 

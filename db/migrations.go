@@ -66,6 +66,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202309070009", migrateDeleteArtistCoverField),
 		construct(ctx, "202309131743", migrateArtistInfo),
 		construct(ctx, "202309161411", migratePlaylistsPaths),
+		construct(ctx, "202310252205", migrateAlbumTagArtistString),
 	}
 
 	return gormigrate.
@@ -728,4 +729,8 @@ func backupDBPre016(tx *gorm.DB, ctx MigrationContext) error {
 		return nil
 	}
 	return Dump(context.Background(), tx, fmt.Sprintf("%s.%d.bak", ctx.DBPath, time.Now().Unix()))
+}
+
+func migrateAlbumTagArtistString(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(Album{}).Error
 }

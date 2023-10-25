@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/http"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -71,7 +72,7 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 		scrobbleTrack.Track = track.TagTitle
 		scrobbleTrack.Artist = track.TagTrackArtist
 		scrobbleTrack.Album = track.Album.TagTitle
-		scrobbleTrack.AlbumArtist = strings.Join(track.Album.ArtistsStrings(), ", ")
+		scrobbleTrack.AlbumArtist = albumArtistString(track.Album)
 		scrobbleTrack.TrackNumber = uint(track.TagTrackNumber)
 		scrobbleTrack.Duration = time.Second * time.Duration(track.Length)
 		if _, err := uuid.Parse(track.TagBrainzID); err == nil {
@@ -512,4 +513,22 @@ func lowerUDecOrHash(in string) string {
 		return "#"
 	}
 	return string(lower)
+}
+
+// not everyone's records may have the album.TagAlbumArtist column set, since we didn't always store that.
+// try it first, but fallback to a list from the artists table
+func albumArtistString(album *db.Album) string {
+	if album.TagAlbumArtist != "" {
+		return album.TagAlbumArtist
+	}
+
+	artists := append([]*db.Artist(nil), album.Artists...)
+	sort.Slice(artists, func(i, j int) bool {
+		return artists[i].ID < artists[j].ID
+	})
+	names := make([]string, 0, len(artists))
+	for _, artist := range artists {
+		names = append(names, artist.Name)
+	}
+	return strings.Join(names, ", ")
 }
