@@ -5,8 +5,8 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"net/http"
 	"log"
+	"net/http"
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
@@ -115,7 +115,7 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 				})
 				if err != nil {
 					log.Println("Failed to bind to LDAP:", err)
-					_ = writeResp(w, r, spec.NewError(40, "invalid username `%s`", username))
+					_ = writeResp(w, r, spec.NewError(40, "Wrong username or password."))
 					return
 				}
 
