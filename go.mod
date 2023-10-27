@@ -16,7 +16,6 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/sessions v1.2.1
-	jaytaylor.com/html2text v0.0.0-20230321000545-74c2419ad056
 	github.com/jinzhu/gorm v1.9.17-0.20211120011537-5c235b72a414
 	github.com/josephburnett/jd v1.5.2
 	github.com/mattn/go-sqlite3 v1.14.16
@@ -34,6 +33,7 @@ require (
 	golang.org/x/exp v0.0.0-20230224173230-c95f2b4c22f2
 	golang.org/x/net v0.7.0
 	gopkg.in/gormigrate.v1 v1.6.0
+	jaytaylor.com/html2text v0.0.0-20230321000545-74c2419ad056
 )
 
 require (
@@ -71,5 +71,4 @@ require (
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	jaytaylor.com/html2text v0.0.0-20230321000545-74c2419ad056 // indirect
 )

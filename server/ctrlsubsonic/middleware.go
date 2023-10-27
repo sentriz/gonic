@@ -91,18 +91,10 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 				filter, _ := c.DB.GetSetting("ldap_filter")
 				tls, _ := c.DB.GetSetting("ldap_tls")
 
-				protocol := "ldap"
-				if tls == "true" {
-					protocol = "ldaps"
-				}
-				
 				// Now, we can try to connect to the LDAP server.
-				l, err := ldap.DialURL(fmt.Sprintf("%s://%s:%s", protocol, ldapFQDN, ldapPort))
+				l, err := createLDAPconnection(tls, ldapFQDN, ldapPort)
 				if err != nil {
-					
-					// Warn the server and return a generic error.
-					log.Println("Failed to connect to LDAP server", err)
-					
+					// Return a generic error.
 					_ = writeResp(w, r, spec.NewError(0, "Failed to connect to LDAP server."))
 					return
 				}
@@ -171,17 +163,10 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 				baseDN, _ := c.DB.GetSetting("ldap_base_dn")
 				tls, _ := c.DB.GetSetting("ldap_tls")
 				
-				protocol := "ldap"
-				if tls == "true" {
-					protocol = "ldaps"
-				}
-				
 				// Now, we can try to connect to the LDAP server.
-				l, err := ldap.DialURL(fmt.Sprintf("%s://%s:%s", protocol, ldapFQDN, ldapPort))
+				l, err := createLDAPconnection(tls, ldapFQDN, ldapPort)
 				if err != nil {
-					// Warn the server and return a generic error.
-					log.Println("Failed to connect to LDAP server", err)
-					
+					// Return a generic error.
 					_ = writeResp(w, r, spec.NewError(0, "Failed to connect to LDAP server."))
 					return
 				}
@@ -206,4 +191,21 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 		withUser := context.WithValue(r.Context(), CtxUser, user)
 		next.ServeHTTP(w, r.WithContext(withUser))
 	})
+}
+
+func createLDAPconnection(tls string, fqdn string, port string) (*ldap.Conn, error) {
+	protocol := "ldap"
+	if tls == "true" {
+		protocol = "ldaps"
+	}
+
+	// Now, we can try to connect to the LDAP server.
+	l, err := ldap.DialURL(fmt.Sprintf("%s://%s:%s", protocol, fqdn, port))
+	if err != nil {
+		// Warn the server and return a generic error.
+		log.Println("Failed to connect to LDAP server", err)
+		return nil, err
+	}
+
+	return l, nil
 }
