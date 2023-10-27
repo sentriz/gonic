@@ -131,8 +131,10 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 				if err != nil {
         	log.Println("failed to query LDAP:", err)
 				}
-
-  		  if len(result.Entries) > 0 {
+				
+				if len(result.Entries) > 1 {
+					_ = writeResp(w, r, spec.NewError(40, "Ambiguous user: `%s`", username))
+				} else if len(result.Entries) == 1 {
 					user := db.User{
 						Name: username,
 						Password: "", // no password because we want auth to fail.
