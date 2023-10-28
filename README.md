@@ -20,7 +20,7 @@
 - on-the-fly audio transcoding and caching (requires [ffmpeg](https://ffmpeg.org/)) (thank you [spijet](https://github.com/spijet/))
 - jukebox mode (thank you [lxea](https://github.com/lxea/))
 - support for podcasts (thank you [lxea](https://github.com/lxea/))
-- pretty fast scanning (with my library of ~27k tracks, initial scan takes about 10m, and about 5s after incrementally)
+- pretty fast scanning (with my library of ~50k tracks, initial scan takes about 10m, and about 6s after incrementally)
 - multiple users, each with their own transcoding preferences, playlists, top tracks, top artists, etc.
 - [last.fm](https://www.last.fm/) scrobbling
 - [listenbrainz](https://listenbrainz.org/) scrobbling (thank you [spezifisch](https://github.com/spezifisch), [lxea](https://github.com/lxea))
