@@ -339,6 +339,7 @@ func (m *tagReader) Read(absPath string) (tagcommon.Info, error) {
 type TagInfo struct {
 	RawTitle        string
 	RawArtist       string
+	RawArtists      []string
 	RawAlbum        string
 	RawAlbumArtist  string
 	RawAlbumArtists []string
@@ -351,6 +352,7 @@ type TagInfo struct {
 func (i *TagInfo) Title() string          { return i.RawTitle }
 func (i *TagInfo) BrainzID() string       { return "" }
 func (i *TagInfo) Artist() string         { return i.RawArtist }
+func (i *TagInfo) Artists() []string      { return i.RawArtists }
 func (i *TagInfo) Album() string          { return i.RawAlbum }
 func (i *TagInfo) AlbumArtist() string    { return i.RawAlbumArtist }
 func (i *TagInfo) AlbumArtists() []string { return i.RawAlbumArtists }

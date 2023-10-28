@@ -34,6 +34,7 @@ type info struct {
 func (i *info) Title() string          { return first(find(i.raw, "title")) }
 func (i *info) BrainzID() string       { return first(find(i.raw, "musicbrainz_trackid")) } // musicbrainz recording ID
 func (i *info) Artist() string         { return first(find(i.raw, "artist")) }
+func (i *info) Artists() []string      { return find(i.raw, "artists") }
 func (i *info) Album() string          { return first(find(i.raw, "album")) }
 func (i *info) AlbumArtist() string    { return first(find(i.raw, "albumartist", "album artist")) }
 func (i *info) AlbumArtists() []string { return find(i.raw, "albumartists", "album_artists") }

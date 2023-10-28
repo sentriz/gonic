@@ -81,8 +81,9 @@ func main() {
 
 	confExcludePattern := set.String("exclude-pattern", "", "regex pattern to exclude files from scan (optional)")
 
-	var confMultiValueGenre, confMultiValueAlbumArtist multiValueSetting
+	var confMultiValueGenre, confMultiValueArtist, confMultiValueAlbumArtist multiValueSetting
 	set.Var(&confMultiValueGenre, "multi-value-genre", "setting for mutli-valued genre scanning (optional)")
+	set.Var(&confMultiValueArtist, "multi-value-artist", "setting for mutli-valued track artist scanning (optional)")
 	set.Var(&confMultiValueAlbumArtist, "multi-value-album-artist", "setting for mutli-valued album artist scanning (optional)")
 
 	confExpvar := set.Bool("expvar", false, "enable the /debug/vars endpoint (optional)")
@@ -184,6 +185,7 @@ func main() {
 		dbc,
 		map[scanner.Tag]scanner.MultiValueSetting{
 			scanner.Genre:       scanner.MultiValueSetting(confMultiValueGenre),
+			scanner.Artist:      scanner.MultiValueSetting(confMultiValueArtist),
 			scanner.AlbumArtist: scanner.MultiValueSetting(confMultiValueAlbumArtist),
 		},
 		tagReader,

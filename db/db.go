@@ -201,17 +201,18 @@ type Track struct {
 	Filename       string `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null"`
 	FilenameUDec   string `sql:"default: null"`
 	Album          *Album
-	AlbumID        int      `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
-	Genres         []*Genre `gorm:"many2many:track_genres"`
-	Size           int      `sql:"default: null"`
-	Length         int      `sql:"default: null"`
-	Bitrate        int      `sql:"default: null"`
-	TagTitle       string   `sql:"default: null"`
-	TagTitleUDec   string   `sql:"default: null"`
-	TagTrackArtist string   `sql:"default: null"`
-	TagTrackNumber int      `sql:"default: null"`
-	TagDiscNumber  int      `sql:"default: null"`
-	TagBrainzID    string   `sql:"default: null"`
+	AlbumID        int       `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	Artists        []*Artist `gorm:"many2many:track_artists"`
+	Genres         []*Genre  `gorm:"many2many:track_genres"`
+	Size           int       `sql:"default: null"`
+	Length         int       `sql:"default: null"`
+	Bitrate        int       `sql:"default: null"`
+	TagTitle       string    `sql:"default: null"`
+	TagTitleUDec   string    `sql:"default: null"`
+	TagTrackArtist string    `sql:"default: null"`
+	TagTrackNumber int       `sql:"default: null"`
+	TagDiscNumber  int       `sql:"default: null"`
+	TagBrainzID    string    `sql:"default: null"`
 	TrackStar      *TrackStar
 	TrackRating    *TrackRating
 	AverageRating  float64 `sql:"default: null"`
@@ -370,6 +371,13 @@ type AlbumArtist struct {
 	AlbumID  int `gorm:"not null; unique_index:idx_album_id_artist_id" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Artist   *Artist
 	ArtistID int `gorm:"not null; unique_index:idx_album_id_artist_id" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
+}
+
+type TrackArtist struct {
+	Track    *Track
+	TrackID  int `gorm:"not null; unique_index:idx_track_id_artist_id" sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
+	Artist   *Artist
+	ArtistID int `gorm:"not null; unique_index:idx_track_id_artist_id" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
 }
 
 type TrackGenre struct {
