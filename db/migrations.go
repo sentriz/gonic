@@ -67,6 +67,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202309131743", migrateArtistInfo),
 		construct(ctx, "202309161411", migratePlaylistsPaths),
 		construct(ctx, "202310252205", migrateAlbumTagArtistString),
+		construct(ctx, "202310281803", migrateTrackArtists),
 	}
 
 	return gormigrate.
@@ -733,4 +734,13 @@ func backupDBPre016(tx *gorm.DB, ctx MigrationContext) error {
 
 func migrateAlbumTagArtistString(tx *gorm.DB, _ MigrationContext) error {
 	return tx.AutoMigrate(Album{}).Error
+}
+
+func migrateTrackArtists(tx *gorm.DB, _ MigrationContext) error {
+	// gorms seems to want to create the table automatically without ON DELETE rules
+	step := tx.DropTableIfExists(TrackArtist{})
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step drop prev: %w", err)
+	}
+	return tx.AutoMigrate(TrackArtist{}).Error
 }

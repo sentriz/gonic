@@ -91,6 +91,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 		Where("album_id=?", id.Value).
 		Preload("Album").
 		Preload("Album.Artists").
+		Preload("Artists").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Order("filename").
@@ -255,7 +256,9 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	for _, s := range queries {
 		q = q.Where(`filename LIKE ? OR filename LIKE ?`, s, s)
 	}
-	q = q.Preload("TrackStar", "user_id=?", user.ID).
+	q = q.
+		Preload("Artists").
+		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Offset(params.GetOrInt("songOffset", 0)).
 		Limit(params.GetOrInt("songCount", 20))
@@ -338,6 +341,7 @@ func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {
 		Preload("Album").
 		Joins("JOIN track_stars ON tracks.id=track_stars.track_id").
 		Where("track_stars.user_id=?", user.ID).
+		Preload("Artists").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID)
 	if m := getMusicFolder(c.musicPaths, params); m != "" {

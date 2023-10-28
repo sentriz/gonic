@@ -296,7 +296,7 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, absPath string) error {
 	sort.Strings(tracks)
 	for i, basename := range tracks {
 		absPath := filepath.Join(musicDir, relPath, basename)
-		if err := s.populateTrackAndAlbumArtists(tx, c, i, &album, basename, absPath); err != nil {
+		if err := s.populateTrackAndArtists(tx, c, i, &album, basename, absPath); err != nil {
 			return fmt.Errorf("populate track %q: %w", basename, err)
 		}
 	}
@@ -304,7 +304,7 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, absPath string) error {
 	return nil
 }
 
-func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, album *db.Album, basename string, absPath string) error {
+func (s *Scanner) populateTrackAndArtists(tx *db.DB, c *Context, i int, album *db.Album, basename string, absPath string) error {
 	stat, err := os.Stat(absPath)
 	if err != nil {
 		return fmt.Errorf("stating %q: %w", basename, err)
@@ -360,6 +360,19 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, alb
 	}
 	if err := populateTrackGenres(tx, &track, genreIDs); err != nil {
 		return fmt.Errorf("populate track genres: %w", err)
+	}
+
+	trackArtistNames := parseMulti(trags, s.multiValueSettings[Artist], tagcommon.MustArtists, tagcommon.MustArtist)
+	var trackArtistIDs []int
+	for _, trackArtistName := range trackArtistNames {
+		trackArtist, err := populateArtist(tx, trackArtistName)
+		if err != nil {
+			return fmt.Errorf("populate track artist: %w", err)
+		}
+		trackArtistIDs = append(trackArtistIDs, trackArtist.ID)
+	}
+	if err := populateTrackArtists(tx, &track, trackArtistIDs); err != nil {
+		return fmt.Errorf("populate track artists: %w", err)
 	}
 
 	c.seenTracks[track.ID] = struct{}{}
@@ -498,6 +511,17 @@ func populateAlbumArtists(tx *db.DB, album *db.Album, albumArtistIDs []int) erro
 	return nil
 }
 
+func populateTrackArtists(tx *db.DB, track *db.Track, trackArtistIDs []int) error {
+	if err := tx.Where("track_id=?", track.ID).Delete(db.TrackArtist{}).Error; err != nil {
+		return fmt.Errorf("delete old track artists: %w", err)
+	}
+
+	if err := tx.InsertBulkLeftMany("track_artists", []string{"track_id", "artist_id"}, track.ID, trackArtistIDs); err != nil {
+		return fmt.Errorf("insert bulk track artists: %w", err)
+	}
+	return nil
+}
+
 func (s *Scanner) cleanTracks(c *Context) error {
 	start := time.Now()
 	defer func() { log.Printf("finished clean tracks in %s, %d removed", durSince(start), c.TracksMissing()) }()
@@ -546,15 +570,15 @@ func (s *Scanner) cleanArtists(c *Context) error {
 	start := time.Now()
 	defer func() { log.Printf("finished clean artists in %s, %d removed", durSince(start), c.ArtistsMissing()) }()
 
-	sub := s.db.
-		Select("artists.id").
-		Model(&db.Artist{}).
-		Joins("LEFT JOIN album_artists ON album_artists.artist_id=artists.id").
-		Where("album_artists.artist_id IS NULL").
-		SubQuery()
-	q := s.db.
-		Where("artists.id IN ?", sub).
-		Delete(&db.Artist{})
+	// gorm doesn't seem to support subqueries without parens for UNION
+	q := s.db.Exec(`
+		DELETE FROM artists
+		WHERE id NOT IN (
+			SELECT artist_id FROM track_artists
+			UNION
+			SELECT artist_id FROM album_artists
+		)
+    `)
 	if err := q.Error; err != nil {
 		return err
 	}
@@ -654,6 +678,7 @@ type Tag uint8
 
 const (
 	Genre Tag = iota
+	Artist
 	AlbumArtist
 )
 
