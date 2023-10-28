@@ -15,6 +15,7 @@ type Info interface {
 	Title() string
 	BrainzID() string
 	Artist() string
+	Artists() []string
 	Album() string
 	AlbumArtist() string
 	AlbumArtists() []string
@@ -40,6 +41,13 @@ func MustArtist(p Info) string {
 		return r
 	}
 	return "Unknown Artist"
+}
+
+func MustArtists(p Info) []string {
+	if r := p.Artists(); len(r) > 0 {
+		return r
+	}
+	return []string{MustArtist(p)}
 }
 
 func MustAlbumArtist(p Info) string {

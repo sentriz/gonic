@@ -94,6 +94,9 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 	for _, g := range t.Genres {
 		ret.Genres = append(ret.Genres, &GenreRef{Name: g.Name})
 	}
+	for _, a := range t.Artists {
+		ret.Artists = append(ret.Artists, &ArtistRef{ID: a.SID(), Name: a.Name})
+	}
 	return ret
 }
 

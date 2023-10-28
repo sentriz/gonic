@@ -212,6 +212,7 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 			c.dbc.
 				Where("id=?", id.Value).
 				Preload("Album").
+				Preload("Artists").
 				Preload("TrackStar", "user_id=?", user.ID).
 				Preload("TrackRating", "user_id=?", user.ID).
 				Find(&track)
@@ -268,6 +269,7 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 		Where("id=?", id.Value).
 		Preload("Album").
 		Preload("Album.Artists").
+		Preload("Artists").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		First(&track).
@@ -294,6 +296,7 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 		Limit(params.GetOrInt("size", 10)).
 		Preload("Album").
 		Preload("Album.Artists").
+		Preload("Artists").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Joins("JOIN albums ON tracks.album_id=albums.id").

@@ -96,6 +96,9 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 	for _, g := range t.Genres {
 		trCh.Genres = append(trCh.Genres, &GenreRef{Name: g.Name})
 	}
+	for _, a := range t.Artists {
+		trCh.Artists = append(trCh.Artists, &ArtistRef{ID: a.SID(), Name: a.Name})
+	}
 	return trCh
 }
 

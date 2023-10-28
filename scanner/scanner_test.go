@@ -562,7 +562,7 @@ func TestCompilationAlbumWithoutAlbumArtist(t *testing.T) {
 	assert.Equal(t, 5, trackCount)
 
 	var artists []*db.Artist
-	assert.NoError(t, m.DB().Find(&artists).Error)
+	assert.NoError(t, m.DB().Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Group("artists.id").Find(&artists).Error)
 	assert.Equal(t, 1, len(artists))             // we only have one album artist
 	assert.Equal(t, "artist 0", artists[0].Name) // it came from the first track's fallback to artist tag
 
@@ -656,7 +656,7 @@ func TestMultiArtistSupport(t *testing.T) {
 	m.ScanAndClean()
 
 	var artists []*db.Artist
-	assert.NoError(t, m.DB().Find(&artists).Error)
+	assert.NoError(t, m.DB().Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Group("artists.id").Find(&artists).Error)
 	assert.Len(t, artists, 3) // alan, liz, mercury
 
 	var albumArtists []*db.AlbumArtist
@@ -695,7 +695,7 @@ func TestMultiArtistSupport(t *testing.T) {
 
 	m.ScanAndClean()
 
-	assert.NoError(t, m.DB().Find(&artists).Error)
+	assert.NoError(t, m.DB().Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Group("artists.id").Find(&artists).Error)
 	assert.Len(t, artists, 2) // alan, liz
 
 	assert.NoError(t, m.DB().Find(&albumArtists).Error)
@@ -745,7 +745,7 @@ func TestMultiArtistPreload(t *testing.T) {
 	}
 
 	var artists []*db.Artist
-	assert.NoError(t, m.DB().Preload("Albums").Find(&artists).Error)
+	assert.NoError(t, m.DB().Preload("Albums").Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Group("artists.id").Find(&artists).Error)
 	assert.Equal(t, 3, len(artists))
 
 	for _, artist := range artists {
