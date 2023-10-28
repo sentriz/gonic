@@ -57,6 +57,9 @@ func (a *ArtistInfoCache) Lookup(ctx context.Context, artist *db.Artist) (*db.Ar
 	if err := a.db.FirstOrCreate(&artistInfo, "id=?", artistInfo.ID).Error; err != nil {
 		return nil, fmt.Errorf("first or create artist info: %w", err)
 	}
+	if err := a.db.Save(&artistInfo).Error; err != nil {
+		return nil, fmt.Errorf("bump updated_at time: %w", err)
+	}
 
 	info, err := a.lastfmClient.ArtistGetInfo(artist.Name)
 	if err != nil {
