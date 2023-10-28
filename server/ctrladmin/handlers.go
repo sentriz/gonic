@@ -36,9 +36,7 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 
 	data := &templateData{}
 	// stats box
-	c.dbc.Model(&db.Artist{}).Count(&data.ArtistCount)
-	c.dbc.Model(&db.Album{}).Count(&data.AlbumCount)
-	c.dbc.Table("tracks").Count(&data.TrackCount)
+	data.Stats, _ = c.dbc.Stats()
 	// lastfm box
 	data.RequestRoot = handlerutil.BaseURL(r)
 	data.CurrentLastFMAPIKey, _ = c.dbc.GetSetting(db.LastFMAPIKey)

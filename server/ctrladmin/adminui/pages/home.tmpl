@@ -7,12 +7,20 @@
     "Desc" "total items found in all watched folders"
 ) }}
     <div class="grid grid-cols-[auto_min-content] gap-2 gap-x-5 text-right">
-        <div class="text-gray-500">artists</div>
-        <div class="font-bold">{{ .ArtistCount }}</div>
+        <div class="text-gray-500">folders</div>
+        <div class="font-bold">{{ .Stats.Folders }}</div>
         <div class="text-gray-500">albums</div>
-        <div class="font-bold">{{ .AlbumCount }}</div>
+        <div class="font-bold">{{ .Stats.Albums }}</div>
+        <div class="text-gray-500">artists</div>
+        <div class="font-bold">{{ .Stats.Artists }}</div>
+        <div class="text-gray-500">album artists</div>
+        <div class="font-bold">{{ .Stats.AlbumArtists }}</div>
         <div class="text-gray-500">tracks</div>
-        <div class="font-bold">{{ .TrackCount }}</div>
+        <div class="font-bold">{{ .Stats.Tracks }}</div>
+        <div class="text-gray-500">internet radio stations</div>
+        <div class="font-bold">{{ .Stats.InternetRadioStations }}</div>
+        <div class="text-gray-500">podcasts</div>
+        <div class="font-bold">{{ .Stats.Podcasts }}</div>
     </div>
 {{ end }}
 

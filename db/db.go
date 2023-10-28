@@ -80,6 +80,22 @@ func (db *DB) InsertBulkLeftMany(table string, head []string, left int, col []in
 	return db.Exec(q, values...).Error
 }
 
+type Stats struct {
+	Folders, Albums, Artists, AlbumArtists, Tracks, InternetRadioStations, Podcasts uint
+}
+
+func (db *DB) Stats() (Stats, error) {
+	var stats Stats
+	db.Model(Album{}).Count(&stats.Folders)
+	db.Model(AlbumArtist{}).Group("album_id").Count(&stats.Albums)
+	db.Model(TrackArtist{}).Group("artist_id").Count(&stats.Artists)
+	db.Model(AlbumArtist{}).Group("artist_id").Count(&stats.AlbumArtists)
+	db.Model(Track{}).Count(&stats.Tracks)
+	db.Model(InternetRadioStation{}).Count(&stats.InternetRadioStations)
+	db.Model(Podcast{}).Count(&stats.Podcasts)
+	return stats, nil
+}
+
 func (db *DB) GetUserByID(id int) *User {
 	var user User
 	err := db.

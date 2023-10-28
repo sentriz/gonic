@@ -274,10 +274,9 @@ type templateData struct {
 	Flashes []interface{}
 	User    *db.User
 	Version string
+
 	// home
-	AlbumCount           int
-	ArtistCount          int
-	TrackCount           int
+	Stats                db.Stats
 	RequestRoot          string
 	RecentFolders        []*db.Album
 	AllUsers             []*db.User
