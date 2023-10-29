@@ -1,5 +1,5 @@
 # This is the gonic server system-wide configuration file. For other
-# administrative and per user settings go th the web UI.
+# administrative and per user settings go to the web UI.
 #
 # The strategy used for options in the default config shipped with gonic is to
 # specify options with their default value where possible, and leave optional
@@ -15,9 +15,9 @@ listen-addr                 127.0.0.1:4747
 # URL path prefix to use if behind reverse proxy
 #proxy-prefix                <prefix>
 
-# Secure connection settings. Recommended to set up unless gonic sits behing an
+# Secure connection settings. Recommended to set up unless gonic sits behind an
 # SSL enabled reverse proxy server. Disabled by default.
-#tls-cert                    <path to TLS certificatie>
+#tls-cert                    <path to TLS certificate>
 #tls-key                     <path to TLS private key>
 
 # gonic's internal state database location
@@ -32,6 +32,14 @@ music-path                  <path to your music dir>
 # Path to downloaded podcast files. Must be specified. E.g.:
 # podcast-path                /var/cache/podcast
 podcast-path                <path to your podcasts dir>
+
+# gonic manages playlists as m3u files. This way users can also edit these
+# playlists themselves or add custom ones via other tools. Items in the
+# directory should be placed in subdirectories matching user IDs in the
+# database, in the format `<userid>/<name>.m3u`. For example the admin user could
+# have 1/my-playlist.m3u. E.g.:
+# playlists-path             /srv/audio/playlists
+playlists-path              <path to your m3u playlist dir>
 
 # Age (in days) to purge podcast episodes if not accessed. Disabled by default.
 #podcast-purge-age           0
