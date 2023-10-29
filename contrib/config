@@ -55,3 +55,16 @@ cache-path                  /var/cache/gonic
 #scan-watcher-enabled        false
 #jukebox-enabled             false
 #jukebox-mpv-extra-args      <extra command line arguments to pass to the jukebox mpv daemon>
+
+# Metadata multi-value handling
+# gonic supports parsing mult-valued tags in the metadata thus assigning a song
+# to several genres or album artists. This improves search and reduces clutter
+# in the artist/genre listing. Accepted options are:
+#   multi: gonic will explicitly look for multi value fields the audio metadata
+#   delim <delimiter character>: gonic will look at the regular audio metadata
+#                                fields like "genre" or "album_artist", but split
+#                                them on a delimiter. For example to split on
+#                                semicolon set the option value to be "delim ;"
+#   none: default setting, gonic won't attempt to do any multi value parsing
+#multi-value-genre          none
+#multi-value-album-artist   none
