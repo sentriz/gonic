@@ -50,7 +50,7 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	c.DB.Table("tracks").Count(&data.TrackCount)
 	// lastfm box
 	data.RequestRoot = c.BaseURL(r)
-	data.CurrentLastFMAPIKey, _ = c.DB.GetSetting("lastfm_api_key")
+	data.CurrentLastFMAPIKey, _ = c.DB.GetSetting(db.LastFMAPIKey)
 	data.DefaultListenBrainzURL = listenbrainz.BaseURL
 
 	// users box
@@ -62,12 +62,12 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 
 	// recent folders box
 	c.DB.
-		Where("tag_artist_id IS NOT NULL").
 		Order("created_at DESC").
-		Limit(8).
+		Limit(20).
 		Find(&data.RecentFolders)
+
 	data.IsScanning = c.Scanner.IsScanning()
-	if tStr, err := c.DB.GetSetting("last_scan_time"); err != nil {
+	if tStr, _ := c.DB.GetSetting(db.LastScanTime); tStr != "" {
 		i, _ := strconv.ParseInt(tStr, 10, 64)
 		data.LastScanTime = time.Unix(i, 0)
 	}
@@ -97,11 +97,11 @@ func (c *Controller) ServeLinkLastFMDo(r *http.Request) *Response {
 	if token == "" {
 		return &Response{code: 400, err: "please provide a token"}
 	}
-	apiKey, err := c.DB.GetSetting("lastfm_api_key")
+	apiKey, err := c.DB.GetSetting(db.LastFMAPIKey)
 	if err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't get api key: %v", err)}}
 	}
-	secret, err := c.DB.GetSetting("lastfm_secret")
+	secret, err := c.DB.GetSetting(db.LastFMSecret)
 	if err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't get secret: %v", err)}}
 	}
@@ -457,10 +457,10 @@ func (c *Controller) ServeCreateUserDo(r *http.Request) *Response {
 func (c *Controller) ServeUpdateLastFMAPIKey(r *http.Request) *Response {
 	data := &templateData{}
 	var err error
-	if data.CurrentLastFMAPIKey, err = c.DB.GetSetting("lastfm_api_key"); err != nil {
+	if data.CurrentLastFMAPIKey, err = c.DB.GetSetting(db.LastFMAPIKey); err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't get api key: %v", err)}}
 	}
-	if data.CurrentLastFMAPISecret, err = c.DB.GetSetting("lastfm_secret"); err != nil {
+	if data.CurrentLastFMAPISecret, err = c.DB.GetSetting(db.LastFMSecret); err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't get secret: %v", err)}}
 	}
 	return &Response{
@@ -478,10 +478,10 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(r *http.Request) *Response {
 			flashW:   []string{err.Error()},
 		}
 	}
-	if err := c.DB.SetSetting("lastfm_api_key", apiKey); err != nil {
+	if err := c.DB.SetSetting(db.LastFMAPIKey, apiKey); err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't set api key: %v", err)}}
 	}
-	if err := c.DB.SetSetting("lastfm_secret", secret); err != nil {
+	if err := c.DB.SetSetting(db.LastFMSecret, secret); err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't set secret: %v", err)}}
 	}
 	return &Response{redirect: "/admin/home"}
@@ -568,7 +568,7 @@ func (c *Controller) ServePodcastDownloadDo(r *http.Request) *Response {
 		return &Response{code: 400, err: "please provide a valid podcast id"}
 	}
 	if err := c.Podcasts.DownloadPodcastAll(id); err != nil {
-		return &Response{code: 400, err: "please provide a valid podcast id"}
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("error downloading: %v", err)}}
 	}
 	return &Response{
 		redirect: "/admin/home",
@@ -609,7 +609,7 @@ func (c *Controller) ServePodcastDeleteDo(r *http.Request) *Response {
 		return &Response{code: 400, err: "please provide a valid podcast id"}
 	}
 	if err := c.Podcasts.DeletePodcast(id); err != nil {
-		return &Response{code: 400, err: "please provide a valid podcast id"}
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("error deleting: %v", err)}}
 	}
 	return &Response{
 		redirect: "/admin/home",

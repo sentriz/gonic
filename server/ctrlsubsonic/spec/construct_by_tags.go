@@ -2,19 +2,19 @@ package spec
 
 import (
 	"path"
+	"sort"
 	"strings"
 
 	"go.senan.xyz/gonic/db"
 )
 
-func NewAlbumByTags(a *db.Album, artist *db.Artist) *Album {
+func NewAlbumByTags(a *db.Album, artists []*db.Artist) *Album {
 	ret := &Album{
 		Created:       a.CreatedAt,
 		ID:            a.SID(),
 		Name:          a.TagTitle,
 		Year:          a.TagYear,
 		TrackCount:    a.ChildCount,
-		Genre:         strings.Join(a.GenreStrings(), ", "),
 		Duration:      a.Duration,
 		AverageRating: formatRating(a.AverageRating),
 	}
@@ -27,9 +27,24 @@ func NewAlbumByTags(a *db.Album, artist *db.Artist) *Album {
 	if a.AlbumRating != nil {
 		ret.UserRating = a.AlbumRating.Rating
 	}
-	if artist != nil {
-		ret.Artist = artist.Name
-		ret.ArtistID = artist.SID()
+	sort.Slice(artists, func(i, j int) bool {
+		return artists[i].ID < artists[j].ID
+	})
+	if len(artists) > 0 {
+		ret.Artist = artists[0].Name
+		ret.ArtistID = artists[0].SID()
+	}
+	for _, a := range artists {
+		ret.Artists = append(ret.Artists, &ArtistRef{
+			ID:   a.SID(),
+			Name: a.Name,
+		})
+	}
+	if len(a.Genres) > 0 {
+		ret.Genre = a.Genres[0].Name
+	}
+	for _, g := range a.Genres {
+		ret.Genres = append(ret.Genres, g.Name)
 	}
 	return ret
 }
@@ -69,18 +84,11 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 	if t.TrackRating != nil {
 		ret.UserRating = t.TrackRating.Rating
 	}
-	if album.TagArtist != nil {
-		ret.ArtistID = album.TagArtist.SID()
-	}
-	// replace tags that we're present
-	if ret.Title == "" {
-		ret.Title = "<title>"
-	}
-	if ret.Artist == "" {
-		ret.Artist = "<artist>"
-	}
-	if ret.Album == "" {
-		ret.Album = "<album>"
+	if len(album.Artists) > 0 {
+		sort.Slice(album.Artists, func(i, j int) bool {
+			return album.Artists[i].ID < album.Artists[j].ID
+		})
+		ret.ArtistID = album.Artists[0].SID()
 	}
 	return ret
 }
@@ -92,7 +100,7 @@ func NewArtistByTags(a *db.Artist) *Artist {
 		AlbumCount:    a.AlbumCount,
 		AverageRating: formatRating(a.AverageRating),
 	}
-	if a.Cover != "" {
+	if a.Info != nil && a.Info.ImageURL != "" {
 		r.CoverID = a.SID()
 	}
 	if a.ArtistStar != nil {

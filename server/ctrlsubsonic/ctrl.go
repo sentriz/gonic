@@ -14,6 +14,7 @@ import (
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/scrobble/lastfm"
 	"go.senan.xyz/gonic/server/ctrlbase"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/artistinfocache"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/transcode"
@@ -41,15 +42,16 @@ func PathsOf(paths []MusicPath) []string {
 
 type Controller struct {
 	*ctrlbase.Controller
-	MusicPaths     []MusicPath
-	PodcastsPath   string
-	CacheAudioPath string
-	CoverCachePath string
-	Jukebox        *jukebox.Jukebox
-	Scrobblers     []scrobble.Scrobbler
-	Podcasts       *podcasts.Podcasts
-	Transcoder     transcode.Transcoder
-	LastFMClient   *lastfm.Client
+	MusicPaths      []MusicPath
+	PodcastsPath    string
+	CacheAudioPath  string
+	CacheCoverPath  string
+	Jukebox         *jukebox.Jukebox
+	Scrobblers      []scrobble.Scrobbler
+	Podcasts        *podcasts.Podcasts
+	Transcoder      transcode.Transcoder
+	LastFMClient    *lastfm.Client
+	ArtistInfoCache *artistinfocache.ArtistInfoCache
 }
 
 type metaResponse struct {

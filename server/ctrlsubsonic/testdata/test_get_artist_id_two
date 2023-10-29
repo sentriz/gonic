@@ -14,12 +14,15 @@
           "coverArt": "al-7",
           "artistId": "ar-2",
           "artist": "artist-1",
+          "artists": [{ "id": "ar-2", "name": "artist-1" }],
           "created": "2019-11-30T00:00:00Z",
           "title": "",
           "album": "",
           "name": "album-0",
           "songCount": 3,
           "duration": 300,
+          "genre": "Unknown Genre",
+          "genres": ["Unknown Genre"],
           "year": 2021
         },
         {
@@ -27,12 +30,15 @@
           "coverArt": "al-8",
           "artistId": "ar-2",
           "artist": "artist-1",
+          "artists": [{ "id": "ar-2", "name": "artist-1" }],
           "created": "2019-11-30T00:00:00Z",
           "title": "",
           "album": "",
           "name": "album-1",
           "songCount": 3,
           "duration": 300,
+          "genre": "Unknown Genre",
+          "genres": ["Unknown Genre"],
           "year": 2021
         },
         {
@@ -40,12 +46,15 @@
           "coverArt": "al-9",
           "artistId": "ar-2",
           "artist": "artist-1",
+          "artists": [{ "id": "ar-2", "name": "artist-1" }],
           "created": "2019-11-30T00:00:00Z",
           "title": "",
           "album": "",
           "name": "album-2",
           "songCount": 3,
           "duration": 300,
+          "genre": "Unknown Genre",
+          "genres": ["Unknown Genre"],
           "year": 2021
         }
       ]

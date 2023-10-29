@@ -13,7 +13,6 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/db"
-	"go.senan.xyz/gonic/multierr"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
@@ -62,7 +61,7 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 	}
 
 	track := &db.Track{}
-	if err := c.DB.Preload("Album").Preload("Artist").First(track, id.Value).Error; err != nil {
+	if err := c.DB.Preload("Album").Preload("Album.Artists").First(track, id.Value).Error; err != nil {
 		return spec.NewError(0, "error finding track: %v", err)
 	}
 
@@ -73,14 +72,14 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 		return spec.NewError(0, "error updating stats: %v", err)
 	}
 
-	var scrobbleErrs multierr.Err
+	var scrobbleErrs []error
 	for _, scrobbler := range c.Scrobblers {
 		if err := scrobbler.Scrobble(user, track, optStamp, optSubmission); err != nil {
-			scrobbleErrs.Add(err)
+			scrobbleErrs = append(scrobbleErrs, err)
 		}
 	}
-	if scrobbleErrs.Len() > 0 {
-		return spec.NewError(0, "error when submitting: %s", scrobbleErrs.Error())
+	if len(scrobbleErrs) > 0 {
+		return spec.NewError(0, "error when submitting: %v", errors.Join(scrobbleErrs...))
 	}
 
 	return spec.NewResponse()
@@ -236,7 +235,7 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 	err = c.DB.
 		Where("id=?", id.Value).
 		Preload("Album").
-		Preload("Album.TagArtist").
+		Preload("Album.Artists").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		First(&track).
@@ -256,7 +255,7 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	q := c.DB.DB.
 		Limit(params.GetOrInt("size", 10)).
 		Preload("Album").
-		Preload("Album.TagArtist").
+		Preload("Album.Artists").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Joins("JOIN albums ON tracks.album_id=albums.id").

@@ -1,3 +1,4 @@
+//nolint:goconst
 package scanner_test
 
 import (
@@ -15,7 +16,6 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/mockfs"
-	"go.senan.xyz/gonic/multierr"
 	"go.senan.xyz/gonic/scanner"
 )
 
@@ -115,9 +115,12 @@ func TestCoverBeforeTracks(t *testing.T) {
 	m.ScanAndClean()
 
 	var album db.Album
-	require.NoError(m.DB().Preload("TagArtist").Where("left_path=? AND right_path=?", "artist-2/", "album-2").Find(&album).Error) // album has cover
-	require.Equal("cover.jpg", album.Cover)                                                                                       // album has cover
-	require.Equal("artist-2", album.TagArtist.Name)                                                                               // album artist
+	require.NoError(m.DB().Where("left_path=? AND right_path=?", "artist-2/", "album-2").Find(&album).Error) // album has cover
+	require.Equal("cover.jpg", album.Cover)                                                                  // album has cover
+
+	var albumArtist db.Artist
+	require.NoError(m.DB().Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Where("album_artists.album_id=?", album.ID).Find(&albumArtist).Error) // album has cover
+	require.Equal("artist-2", albumArtist.Name)                                                                                                                    // album artist
 
 	var tracks []*db.Track
 	require.NoError(m.DB().Where("album_id=?", album.ID).Find(&tracks).Error) // album has tracks
@@ -141,11 +144,14 @@ func TestUpdatedTags(t *testing.T) {
 	m.ScanAndClean()
 
 	var track db.Track
-	require.NoError(m.DB().Preload("Album").Preload("Artist").Where("filename=?", "track-10.flac").Find(&track).Error) // track has tags
-	require.Equal("artist", track.TagTrackArtist)                                                                      // track has tags
-	require.Equal("album-artist", track.Artist.Name)                                                                   // track has tags
-	require.Equal("album", track.Album.TagTitle)                                                                       // track has tags
-	require.Equal("title", track.TagTitle)                                                                             // track has tags
+	require.NoError(m.DB().Preload("Album").Where("filename=?", "track-10.flac").Find(&track).Error) // track has tags
+	require.Equal("artist", track.TagTrackArtist)                                                    // track has tags
+	require.Equal("album", track.Album.TagTitle)                                                     // track has tags
+	require.Equal("title", track.TagTitle)                                                           // track has tags
+
+	var trackArtistA db.Artist
+	require.NoError(m.DB().Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Where("album_artists.album_id=?", track.AlbumID).Limit(1).Find(&trackArtistA).Error) // updated has tags
+	require.Equal("album-artist", trackArtistA.Name)                                                                                                                              // track has tags
 
 	m.SetTags("artist-10/album-10/track-10.flac", func(tags *mockfs.Tags) error {
 		tags.RawArtist = "artist-upd"
@@ -158,12 +164,15 @@ func TestUpdatedTags(t *testing.T) {
 	m.ScanAndClean()
 
 	var updated db.Track
-	require.NoError(m.DB().Preload("Album").Preload("Artist").Where("filename=?", "track-10.flac").Find(&updated).Error) // updated has tags
-	require.Equal(track.ID, updated.ID)                                                                                  // updated has tags
-	require.Equal("artist-upd", updated.TagTrackArtist)                                                                  // updated has tags
-	require.Equal("album-artist-upd", updated.Artist.Name)                                                               // updated has tags
-	require.Equal("album-upd", updated.Album.TagTitle)                                                                   // updated has tags
-	require.Equal("title-upd", updated.TagTitle)                                                                         // updated has tags
+	require.NoError(m.DB().Preload("Album").Where("filename=?", "track-10.flac").Find(&updated).Error) // updated has tags
+	require.Equal(track.ID, updated.ID)                                                                // updated has tags
+	require.Equal("artist-upd", updated.TagTrackArtist)                                                // updated has tags
+	require.Equal("album-upd", updated.Album.TagTitle)                                                 // updated has tags
+	require.Equal("title-upd", updated.TagTitle)                                                       // updated has tags
+
+	var trackArtistB db.Artist
+	require.NoError(m.DB().Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Where("album_artists.album_id=?", track.AlbumID).Limit(1).Find(&trackArtistB).Error) // updated has tags
+	require.Equal("album-artist-upd", trackArtistB.Name)                                                                                                                          // updated has tags
 }
 
 // https://github.com/sentriz/gonic/issues/225
@@ -409,21 +418,22 @@ func TestMultiFolderWithSharedArtist(t *testing.T) {
 	})
 	m.ScanAndClean()
 
-	sq := func(db *gorm.DB) *gorm.DB {
-		return db.
-			Select("*, count(sub.id) child_count, sum(sub.length) duration").
-			Joins("LEFT JOIN tracks sub ON albums.id=sub.album_id").
-			Group("albums.id")
-	}
-
 	var artist db.Artist
-	require.NoError(m.DB().Where("name=?", artistName).Preload("Albums", sq).First(&artist).Error)
+	require.NoError(m.DB().Where("name=?", artistName).First(&artist).Error)
 	require.Equal(artistName, artist.Name)
-	require.Equal(2, len(artist.Albums))
 
-	for _, album := range artist.Albums {
+	var artistAlbums []*db.Album
+	require.NoError(m.DB().
+		Select("*, count(sub.id) child_count, sum(sub.length) duration").
+		Joins("JOIN album_artists ON album_artists.album_id=albums.id").
+		Joins("LEFT JOIN tracks sub ON albums.id=sub.album_id").
+		Where("album_artists.artist_id=?", artist.ID).
+		Group("albums.id").
+		Find(&artistAlbums).Error)
+	require.Equal(2, len(artistAlbums))
+
+	for _, album := range artistAlbums {
 		require.Greater(album.TagYear, 0)
-		require.Equal(artist.ID, album.TagArtistID)
 		require.Greater(album.ChildCount, 0)
 		require.Greater(album.Duration, 0)
 	}
@@ -499,24 +509,6 @@ func TestSymlinkedSubdiscs(t *testing.T) {
 	require.NotZero(info.ModTime()) // track resolves
 }
 
-func TestArtistHasCover(t *testing.T) {
-	t.Parallel()
-	require := require.New(t)
-	m := mockfs.New(t)
-
-	m.AddItemsWithCovers()
-	m.AddCover("artist-2/artist.png")
-	m.ScanAndClean()
-
-	var artistWith db.Artist
-	require.NoError(m.DB().Where("name=?", "artist-2").First(&artistWith).Error)
-	require.Equal("artist.png", artistWith.Cover)
-
-	var artistWithout db.Artist
-	require.NoError(m.DB().Where("name=?", "artist-0").First(&artistWithout).Error)
-	require.Equal("", artistWithout.Cover)
-}
-
 func TestTagErrors(t *testing.T) {
 	t.Parallel()
 	require := require.New(t)
@@ -530,16 +522,20 @@ func TestTagErrors(t *testing.T) {
 		return scanner.ErrReadingTags
 	})
 
-	var errs *multierr.Err
 	ctx, err := m.ScanAndCleanErr()
+	errs, ok := err.(interface{ Unwrap() []error })
+	require.True(ok)
+
 	require.ErrorAs(err, &errs)
-	require.Equal(2, errs.Len())                            // we have 2 dir errors
+	require.Equal(2, len(errs.Unwrap()))                    // we have 2 dir errors
 	require.Equal(m.NumTracks()-(3*2), ctx.SeenTracks())    // we saw all tracks bar 2 album contents
 	require.Equal(m.NumTracks()-(3*2), ctx.SeenTracksNew()) // we have all tracks bar 2 album contents
 
 	ctx, err = m.ScanAndCleanErr()
-	require.ErrorAs(err, &errs)
-	require.Equal(2, errs.Len())                         // we have 2 dir errors
+	errs, ok = err.(interface{ Unwrap() []error })
+	require.True(ok)
+
+	require.Equal(2, len(errs.Unwrap()))                 // we have 2 dir errors
 	require.Equal(m.NumTracks()-(3*2), ctx.SeenTracks()) // we saw all tracks bar 2 album contents
 	require.Equal(0, ctx.SeenTracksNew())                // we have no new tracks
 }
@@ -574,12 +570,15 @@ func TestCompilationAlbumWithoutAlbumArtist(t *testing.T) {
 	require.Equal(5, trackCount)
 
 	var artists []*db.Artist
-	require.NoError(m.DB().Preload("Albums").Find(&artists).Error)
+	require.NoError(m.DB().Find(&artists).Error)
 	require.Equal(1, len(artists))             // we only have one album artist
 	require.Equal("artist 0", artists[0].Name) // it came from the first track's fallback to artist tag
-	require.Equal(1, len(artists[0].Albums))   // the artist has one album
-	require.Equal(pathAlbum, artists[0].Albums[0].RightPath)
-	require.Equal(pathArtist+"/", artists[0].Albums[0].LeftPath)
+
+	var artistAlbums []*db.Album
+	require.NoError(m.DB().Joins("JOIN album_artists ON album_artists.album_id=albums.id").Where("album_artists.artist_id=?", artists[0].ID).Find(&artistAlbums).Error)
+	require.Equal(1, len(artistAlbums)) // the artist has one album
+	require.Equal(pathAlbum, artistAlbums[0].RightPath)
+	require.Equal(pathArtist+"/", artistAlbums[0].LeftPath)
 }
 
 func TestIncrementalScanNoChangeNoUpdatedAt(t *testing.T) {
@@ -591,11 +590,11 @@ func TestIncrementalScanNoChangeNoUpdatedAt(t *testing.T) {
 
 	m.ScanAndClean()
 	var albumA db.Album
-	require.NoError(m.DB().Where("tag_artist_id NOT NULL").Order("updated_at DESC").Find(&albumA).Error)
+	require.NoError(m.DB().Joins("JOIN album_artists ON album_artists.album_id=albums.id").Order("updated_at DESC").Find(&albumA).Error)
 
 	m.ScanAndClean()
 	var albumB db.Album
-	require.NoError(m.DB().Where("tag_artist_id NOT NULL").Order("updated_at DESC").Find(&albumB).Error)
+	require.NoError(m.DB().Joins("JOIN album_artists ON album_artists.album_id=albums.id").Order("updated_at DESC").Find(&albumB).Error)
 
 	require.Equal(albumB.UpdatedAt, albumA.UpdatedAt)
 }
@@ -645,4 +644,140 @@ func TestNoOrphanedGenres(t *testing.T) {
 	var genreCount int
 	require.NoError(m.DB().Model(&db.Genre{}).Count(&genreCount).Error)
 	require.Equal(0, genreCount)
+}
+
+func TestMultiArtistSupport(t *testing.T) {
+	t.Parallel()
+	require := assert.New(t)
+	m := mockfs.New(t)
+
+	m.AddItemsGlob("artist-0/album-[012]/track-0.*")
+	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.Tags) error {
+		tags.RawAlbum = "Mutator"
+		tags.RawAlbumArtists = []string{"Alan Vega", "Liz Lamere"}
+		return nil
+	})
+	m.SetTags("artist-0/album-1/track-0.flac", func(tags *mockfs.Tags) error {
+		tags.RawAlbum = "Dead Man"
+		tags.RawAlbumArtists = []string{"Alan Vega", "Mercury Rev"}
+		return nil
+	})
+	m.SetTags("artist-0/album-2/track-0.flac", func(tags *mockfs.Tags) error {
+		tags.RawAlbum = "Yerself Is Steam"
+		tags.RawAlbumArtist = "Mercury Rev"
+		return nil
+	})
+
+	m.ScanAndClean()
+
+	var artists []*db.Artist
+	require.NoError(m.DB().Find(&artists).Error)
+	require.Len(artists, 3) // alan, liz, mercury
+
+	var albumArtists []*db.AlbumArtist
+	require.NoError(m.DB().Find(&albumArtists).Error)
+	require.Len(albumArtists, 5)
+
+	type row struct{ Artist, Albums string }
+	state := func() []row {
+		var table []row
+		require.NoError(m.DB().
+			Select("artists.name artist, group_concat(albums.tag_title, ';') albums").
+			Model(db.Artist{}).
+			Joins("JOIN album_artists ON album_artists.artist_id=artists.id").
+			Joins("JOIN albums ON albums.id=album_artists.album_id").
+			Order("artists.name, albums.tag_title").
+			Group("artists.id").
+			Scan(&table).
+			Error)
+		return table
+	}
+
+	require.Equal(
+		[]row{
+			{"Alan Vega", "Mutator;Dead Man"},
+			{"Liz Lamere", "Mutator"},
+			{"Mercury Rev", "Dead Man;Yerself Is Steam"},
+		},
+		state(),
+	)
+
+	m.RemoveAll("artist-0/album-2")
+	m.SetTags("artist-0/album-1/track-0.flac", func(tags *mockfs.Tags) error {
+		tags.RawAlbum = "Dead Man"
+		tags.RawAlbumArtists = []string{"Alan Vega"}
+		return nil
+	})
+
+	m.ScanAndClean()
+
+	require.NoError(m.DB().Find(&artists).Error)
+	require.Len(artists, 2) // alan, liz
+
+	require.NoError(m.DB().Find(&albumArtists).Error)
+	require.Len(albumArtists, 3)
+
+	require.Equal(
+		[]row{
+			{"Alan Vega", "Mutator;Dead Man"},
+			{"Liz Lamere", "Mutator"},
+		},
+		state(),
+	)
+
+}
+
+func TestMultiArtistPreload(t *testing.T) {
+	t.Parallel()
+	require := assert.New(t)
+	m := mockfs.New(t)
+
+	m.AddItemsGlob("artist-0/album-[012]/track-0.*")
+	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.Tags) error {
+		tags.RawAlbum = "Mutator"
+		tags.RawAlbumArtists = []string{"Alan Vega", "Liz Lamere"}
+		return nil
+	})
+	m.SetTags("artist-0/album-1/track-0.flac", func(tags *mockfs.Tags) error {
+		tags.RawAlbum = "Dead Man"
+		tags.RawAlbumArtists = []string{"Alan Vega", "Mercury Rev"}
+		return nil
+	})
+	m.SetTags("artist-0/album-2/track-0.flac", func(tags *mockfs.Tags) error {
+		tags.RawAlbum = "Yerself Is Steam"
+		tags.RawAlbumArtist = "Mercury Rev"
+		return nil
+	})
+
+	m.ScanAndClean()
+
+	var albums []*db.Album
+	require.NoError(m.DB().Preload("Artists").Find(&albums).Error)
+	require.GreaterOrEqual(len(albums), 3)
+
+	for _, album := range albums {
+		switch album.TagTitle {
+		case "Mutator":
+			require.Len(album.Artists, 2)
+		case "Dead Man":
+			require.Len(album.Artists, 2)
+		case "Yerself Is Steam":
+			require.Len(album.Artists, 1)
+		}
+	}
+
+	var artists []*db.Artist
+	require.NoError(m.DB().Preload("Albums").Find(&artists).Error)
+	require.Equal(3, len(artists))
+
+	for _, artist := range artists {
+		switch artist.Name {
+		case "Alan Vega":
+			require.Len(artist.Albums, 2)
+		case "Mercury Rev":
+			require.Len(artist.Albums, 2)
+		case "Liz Lamere":
+			require.Len(artist.Albums, 1)
+		}
+	}
 }

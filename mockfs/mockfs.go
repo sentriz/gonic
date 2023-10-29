@@ -61,8 +61,13 @@ func newMockFS(t testing.TB, dirs []string, excludePattern string) *MockFS {
 		}
 	}
 
+	multiValueSettings := map[scanner.Tag]scanner.MultiValueSetting{
+		scanner.Genre:       {Mode: scanner.Delim, Delim: ";"},
+		scanner.AlbumArtist: {Mode: scanner.Multi},
+	}
+
 	tagReader := &tagReader{paths: map[string]*tagReaderResult{}}
-	scanner := scanner.New(absDirs, dbc, ";", tagReader, excludePattern)
+	scanner := scanner.New(absDirs, dbc, multiValueSettings, tagReader, excludePattern)
 
 	return &MockFS{
 		t:         t,
@@ -98,20 +103,26 @@ func (m *MockFS) ResetDates() {
 	}
 }
 
-func (m *MockFS) AddItems()                              { m.addItems("", false) }
-func (m *MockFS) AddItemsPrefix(prefix string)           { m.addItems(prefix, false) }
-func (m *MockFS) AddItemsWithCovers()                    { m.addItems("", true) }
-func (m *MockFS) AddItemsPrefixWithCovers(prefix string) { m.addItems(prefix, true) }
+func (m *MockFS) AddItems()                              { m.addItems("", "", false) }
+func (m *MockFS) AddItemsGlob(onlyGlob string)           { m.addItems("", onlyGlob, false) }
+func (m *MockFS) AddItemsPrefix(prefix string)           { m.addItems(prefix, "", false) }
+func (m *MockFS) AddItemsWithCovers()                    { m.addItems("", "", true) }
+func (m *MockFS) AddItemsPrefixWithCovers(prefix string) { m.addItems(prefix, "", true) }
 
-func (m *MockFS) addItems(prefix string, covers bool) {
+func (m *MockFS) addItems(prefix string, onlyGlob string, covers bool) {
 	p := func(format string, a ...interface{}) string {
 		return filepath.Join(prefix, fmt.Sprintf(format, a...))
 	}
 	for ar := 0; ar < 3; ar++ {
 		for al := 0; al < 3; al++ {
 			for tr := 0; tr < 3; tr++ {
-				m.AddTrack(p("artist-%d/album-%d/track-%d.flac", ar, al, tr))
-				m.SetTags(p("artist-%d/album-%d/track-%d.flac", ar, al, tr), func(tags *Tags) error {
+				path := p("artist-%d/album-%d/track-%d.flac", ar, al, tr)
+				if !match(onlyGlob, path) {
+					continue
+				}
+
+				m.AddTrack(path)
+				m.SetTags(path, func(tags *Tags) error {
 					tags.RawArtist = fmt.Sprintf("artist-%d", ar)
 					tags.RawAlbumArtist = fmt.Sprintf("artist-%d", ar)
 					tags.RawAlbum = fmt.Sprintf("album-%d", al)
@@ -120,7 +131,12 @@ func (m *MockFS) addItems(prefix string, covers bool) {
 				})
 			}
 			if covers {
-				m.AddCover(p("artist-%d/album-%d/cover.png", ar, al))
+				path := p("artist-%d/album-%d/cover.png", ar, al)
+				if !match(onlyGlob, path) {
+					continue
+				}
+
+				m.AddCover(path)
 			}
 		}
 	}
@@ -197,8 +213,8 @@ func (m *MockFS) LogAlbums() {
 
 	m.t.Logf("\nalbums")
 	for _, album := range albums {
-		m.t.Logf("id %-3d root %-3s lr %-15s %-10s pid %-3d aid %-3d cov %-10s",
-			album.ID, album.RootDir, album.LeftPath, album.RightPath, album.ParentID, album.TagArtistID, album.Cover)
+		m.t.Logf("id %-3d root %-3s lr %-15s %-10s pid %-3d cov %-10s",
+			album.ID, album.RootDir, album.LeftPath, album.RightPath, album.ParentID, album.Cover)
 	}
 	m.t.Logf("total %d", len(albums))
 }
@@ -329,6 +345,8 @@ func (m *MockFS) DumpDB(suffix ...string) {
 	if err != nil {
 		m.t.Fatalf("backing up: %v", err)
 	}
+
+	m.t.Error(destPath)
 }
 
 type tagReaderResult struct {
@@ -351,34 +369,32 @@ func (m *tagReader) Read(abspath string) (tags.Parser, error) {
 var _ tags.Reader = (*tagReader)(nil)
 
 type Tags struct {
-	RawTitle       string
-	RawArtist      string
-	RawAlbum       string
-	RawAlbumArtist string
-	RawGenre       string
+	RawTitle        string
+	RawArtist       string
+	RawAlbum        string
+	RawAlbumArtist  string
+	RawAlbumArtists []string
+	RawGenre        string
 
 	RawBitrate int
 	RawLength  int
 }
 
-func (m *Tags) Title() string         { return m.RawTitle }
-func (m *Tags) BrainzID() string      { return "" }
-func (m *Tags) Artist() string        { return m.RawArtist }
-func (m *Tags) Album() string         { return m.RawAlbum }
-func (m *Tags) AlbumArtist() string   { return m.RawAlbumArtist }
-func (m *Tags) AlbumBrainzID() string { return "" }
-func (m *Tags) Genre() string         { return m.RawGenre }
-func (m *Tags) TrackNumber() int      { return 1 }
-func (m *Tags) DiscNumber() int       { return 1 }
-func (m *Tags) Year() int             { return 2021 }
+func (m *Tags) Title() string          { return m.RawTitle }
+func (m *Tags) BrainzID() string       { return "" }
+func (m *Tags) Artist() string         { return m.RawArtist }
+func (m *Tags) Album() string          { return m.RawAlbum }
+func (m *Tags) AlbumArtist() string    { return m.RawAlbumArtist }
+func (m *Tags) AlbumArtists() []string { return m.RawAlbumArtists }
+func (m *Tags) AlbumBrainzID() string  { return "" }
+func (m *Tags) Genre() string          { return m.RawGenre }
+func (m *Tags) Genres() []string       { return []string{m.RawGenre} }
+func (m *Tags) TrackNumber() int       { return 1 }
+func (m *Tags) DiscNumber() int        { return 1 }
+func (m *Tags) Year() int              { return 2021 }
 
 func (m *Tags) Length() int  { return firstInt(100, m.RawLength) }
 func (m *Tags) Bitrate() int { return firstInt(100, m.RawBitrate) }
-
-func (m *Tags) SomeAlbum() string       { return first("Unknown Album", m.Album()) }
-func (m *Tags) SomeArtist() string      { return first("Unknown Artist", m.Artist()) }
-func (m *Tags) SomeAlbumArtist() string { return first("Unknown Artist", m.AlbumArtist(), m.Artist()) }
-func (m *Tags) SomeGenre() string       { return first("Unknown Genre", m.Genre()) }
 
 var _ tags.Parser = (*Tags)(nil)
 
@@ -398,4 +414,12 @@ func firstInt(or int, ints ...int) int {
 		}
 	}
 	return or
+}
+
+func match(pattern, name string) bool {
+	if pattern == "" {
+		return true
+	}
+	ok, _ := filepath.Match(pattern, name)
+	return ok
 }

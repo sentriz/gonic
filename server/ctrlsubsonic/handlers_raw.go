@@ -2,8 +2,10 @@ package ctrlsubsonic
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -14,6 +16,7 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/artistinfocache"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
@@ -107,114 +110,101 @@ const (
 
 var (
 	errCoverNotFound = errors.New("could not find a cover with that id")
-	errCoverEmpty    = errors.New("no cover found for that folder")
+	errCoverEmpty    = errors.New("no cover found")
 )
 
 // TODO: can we use specidpaths.Locate here?
-func coverGetPath(dbc *db.DB, podcastPath string, id specid.ID) (string, error) {
+func coverFor(dbc *db.DB, artistInfoCache *artistinfocache.ArtistInfoCache, podcastPath string, id specid.ID) (io.ReadCloser, error) {
 	switch id.Type {
 	case specid.Album:
-		return coverGetPathAlbum(dbc, id.Value)
+		return coverForAlbum(dbc, id.Value)
 	case specid.Artist:
-		return coverGetPathArtist(dbc, id.Value)
+		return coverForArtist(artistInfoCache, id.Value)
 	case specid.Podcast:
-		return coverGetPathPodcast(dbc, podcastPath, id.Value)
+		return coverForPodcast(dbc, podcastPath, id.Value)
 	case specid.PodcastEpisode:
 		return coverGetPathPodcastEpisode(dbc, podcastPath, id.Value)
 	default:
-		return "", errCoverNotFound
+		return nil, errCoverNotFound
 	}
 }
 
-func coverGetPathAlbum(dbc *db.DB, id int) (string, error) {
+func coverForAlbum(dbc *db.DB, id int) (*os.File, error) {
 	folder := &db.Album{}
 	err := dbc.DB.
 		Select("id, root_dir, left_path, right_path, cover").
 		First(folder, id).
 		Error
 	if err != nil {
-		return "", fmt.Errorf("select album: %w", err)
+		return nil, fmt.Errorf("select album: %w", err)
 	}
 	if folder.Cover == "" {
-		return "", errCoverEmpty
+		return nil, errCoverEmpty
 	}
-	return path.Join(
-		folder.RootDir,
-		folder.LeftPath,
-		folder.RightPath,
-		folder.Cover,
-	), nil
+	return os.Open(path.Join(folder.RootDir, folder.LeftPath, folder.RightPath, folder.Cover))
 }
 
-func coverGetPathArtist(dbc *db.DB, id int) (string, error) {
-	folder := &db.Album{}
-	err := dbc.DB.
-		Select("parent.id, parent.root_dir, parent.left_path, parent.right_path, parent.cover").
-		Joins("JOIN albums parent ON parent.id=albums.parent_id").
-		Where("albums.tag_artist_id=?", id).
-		Find(folder).
-		Error
+func coverForArtist(artistInfoCache *artistinfocache.ArtistInfoCache, id int) (io.ReadCloser, error) {
+	info, err := artistInfoCache.Get(context.Background(), id)
 	if err != nil {
-		return "", fmt.Errorf("select guessed artist folder: %w", err)
+		return nil, fmt.Errorf("get artist info from cache: %w", err)
 	}
-	if folder.Cover == "" {
-		return "", errCoverEmpty
+	if info.ImageURL == "" {
+		return nil, fmt.Errorf("%w: cache miss", errCoverEmpty)
 	}
-	return path.Join(
-		folder.RootDir,
-		folder.LeftPath,
-		folder.RightPath,
-		folder.Cover,
-	), nil
+	resp, err := http.Get(info.ImageURL)
+	if err != nil {
+		return nil, fmt.Errorf("req image from lastfm: %w", err)
+	}
+	return resp.Body, nil
 }
 
-func coverGetPathPodcast(dbc *db.DB, podcastPath string, id int) (string, error) {
+func coverForPodcast(dbc *db.DB, podcastPath string, id int) (*os.File, error) {
 	podcast := &db.Podcast{}
 	err := dbc.
 		First(podcast, id).
 		Error
 	if err != nil {
-		return "", fmt.Errorf("select podcast: %w", err)
+		return nil, fmt.Errorf("select podcast: %w", err)
 	}
 	if podcast.ImagePath == "" {
-		return "", errCoverEmpty
+		return nil, errCoverEmpty
 	}
-	return path.Join(podcastPath, podcast.ImagePath), nil
+	return os.Open(path.Join(podcastPath, podcast.ImagePath))
 }
 
-func coverGetPathPodcastEpisode(dbc *db.DB, podcastPath string, id int) (string, error) {
+func coverGetPathPodcastEpisode(dbc *db.DB, podcastPath string, id int) (*os.File, error) {
 	episode := &db.PodcastEpisode{}
 	err := dbc.
 		First(episode, id).
 		Error
 	if err != nil {
-		return "", fmt.Errorf("select episode: %w", err)
+		return nil, fmt.Errorf("select episode: %w", err)
 	}
 	podcast := &db.Podcast{}
 	err = dbc.
 		First(podcast, episode.PodcastID).
 		Error
 	if err != nil {
-		return "", fmt.Errorf("select podcast: %w", err)
+		return nil, fmt.Errorf("select podcast: %w", err)
 	}
 	if podcast.ImagePath == "" {
-		return "", errCoverEmpty
+		return nil, errCoverEmpty
 	}
-	return path.Join(podcastPath, podcast.ImagePath), nil
+	return os.Open(path.Join(podcastPath, podcast.ImagePath))
 }
 
-func coverScaleAndSave(absPath, cachePath string, size int) error {
-	src, err := imaging.Open(absPath)
+func coverScaleAndSave(reader io.Reader, cachePath string, size int) error {
+	src, err := imaging.Decode(reader)
 	if err != nil {
-		return fmt.Errorf("resizing `%s`: %w", absPath, err)
+		return fmt.Errorf("resizing: %w", err)
 	}
 	width := size
 	if width > src.Bounds().Dx() {
 		// don't upscale images
 		width = src.Bounds().Dx()
 	}
-	err = imaging.Save(imaging.Resize(src, width, 0, imaging.Lanczos), cachePath)
-	if err != nil {
+	if err = imaging.Save(imaging.Resize(src, width, 0, imaging.Lanczos), cachePath); err != nil {
 		return fmt.Errorf("caching `%s`: %w", cachePath, err)
 	}
 	return nil
@@ -228,17 +218,19 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 	}
 	size := params.GetOrInt("size", coverDefaultSize)
 	cachePath := path.Join(
-		c.CoverCachePath,
+		c.CacheCoverPath,
 		fmt.Sprintf("%s-%d.%s", id.String(), size, coverCacheFormat),
 	)
 	_, err = os.Stat(cachePath)
 	switch {
 	case os.IsNotExist(err):
-		coverPath, err := coverGetPath(c.DB, c.PodcastsPath, id)
+		reader, err := coverFor(c.DB, c.ArtistInfoCache, c.PodcastsPath, id)
 		if err != nil {
 			return spec.NewError(10, "couldn't find cover `%s`: %v", id, err)
 		}
-		if err := coverScaleAndSave(coverPath, cachePath, size); err != nil {
+		defer reader.Close()
+
+		if err := coverScaleAndSave(reader, cachePath, size); err != nil {
 			log.Printf("error scaling cover: %v", err)
 			return nil
 		}
@@ -246,7 +238,10 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 		log.Printf("error stating `%s`: %v", cachePath, err)
 		return nil
 	}
+
+	w.Header().Set("Cache-Control", "public, max-age=3600")
 	http.ServeFile(w, r, cachePath)
+
 	return nil
 }
 

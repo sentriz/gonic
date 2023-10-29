@@ -217,7 +217,7 @@ func playlistRender(c *Controller, params params.Params, playlistID string, play
 		switch id := file.SID(); id.Type {
 		case specid.Track:
 			var track db.Track
-			if err := c.DB.Where("id=?", id.Value).Preload("Album").Preload("Album.TagArtist").Preload("TrackStar", "user_id=?", user.ID).Preload("TrackRating", "user_id=?", user.ID).Find(&track).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+			if err := c.DB.Where("id=?", id.Value).Preload("Album").Preload("Album.Artists").Preload("TrackStar", "user_id=?", user.ID).Preload("TrackRating", "user_id=?", user.ID).Find(&track).Error; errors.Is(err, gorm.ErrRecordNotFound) {
 				return nil, fmt.Errorf("load track by id: %w", err)
 			}
 			trch = spec.NewTCTrackByFolder(&track, track.Album)

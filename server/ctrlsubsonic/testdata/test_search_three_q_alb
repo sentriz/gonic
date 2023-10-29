@@ -11,6 +11,7 @@
           "coverArt": "al-3",
           "artistId": "ar-1",
           "artist": "artist-0",
+          "artists": [{ "id": "ar-1", "name": "artist-0" }],
           "created": "2019-11-30T00:00:00Z",
           "title": "",
           "album": "",
@@ -18,6 +19,7 @@
           "songCount": 0,
           "duration": 0,
           "genre": "Unknown Genre",
+          "genres": ["Unknown Genre"],
           "year": 2021
         },
         {
@@ -25,6 +27,7 @@
           "coverArt": "al-4",
           "artistId": "ar-1",
           "artist": "artist-0",
+          "artists": [{ "id": "ar-1", "name": "artist-0" }],
           "created": "2019-11-30T00:00:00Z",
           "title": "",
           "album": "",
@@ -32,6 +35,7 @@
           "songCount": 0,
           "duration": 0,
           "genre": "Unknown Genre",
+          "genres": ["Unknown Genre"],
           "year": 2021
         },
         {
@@ -39,6 +43,7 @@
           "coverArt": "al-5",
           "artistId": "ar-1",
           "artist": "artist-0",
+          "artists": [{ "id": "ar-1", "name": "artist-0" }],
           "created": "2019-11-30T00:00:00Z",
           "title": "",
           "album": "",
@@ -46,6 +51,7 @@
           "songCount": 0,
           "duration": 0,
           "genre": "Unknown Genre",
+          "genres": ["Unknown Genre"],
           "year": 2021
         },
         {
@@ -53,6 +59,7 @@
           "coverArt": "al-7",
           "artistId": "ar-2",
           "artist": "artist-1",
+          "artists": [{ "id": "ar-2", "name": "artist-1" }],
           "created": "2019-11-30T00:00:00Z",
           "title": "",
           "album": "",
@@ -60,6 +67,7 @@
           "songCount": 0,
           "duration": 0,
           "genre": "Unknown Genre",
+          "genres": ["Unknown Genre"],
           "year": 2021
         },
         {
@@ -67,6 +75,7 @@
           "coverArt": "al-8",
           "artistId": "ar-2",
           "artist": "artist-1",
+          "artists": [{ "id": "ar-2", "name": "artist-1" }],
           "created": "2019-11-30T00:00:00Z",
           "title": "",
           "album": "",
@@ -74,6 +83,7 @@
           "songCount": 0,
           "duration": 0,
           "genre": "Unknown Genre",
+          "genres": ["Unknown Genre"],
           "year": 2021
         },
         {
@@ -81,6 +91,7 @@
           "coverArt": "al-9",
           "artistId": "ar-2",
           "artist": "artist-1",
+          "artists": [{ "id": "ar-2", "name": "artist-1" }],
           "created": "2019-11-30T00:00:00Z",
           "title": "",
           "album": "",
@@ -88,6 +99,7 @@
           "songCount": 0,
           "duration": 0,
           "genre": "Unknown Genre",
+          "genres": ["Unknown Genre"],
           "year": 2021
         },
         {
@@ -95,6 +107,7 @@
           "coverArt": "al-11",
           "artistId": "ar-3",
           "artist": "artist-2",
+          "artists": [{ "id": "ar-3", "name": "artist-2" }],
           "created": "2019-11-30T00:00:00Z",
           "title": "",
           "album": "",
@@ -102,6 +115,7 @@
           "songCount": 0,
           "duration": 0,
           "genre": "Unknown Genre",
+          "genres": ["Unknown Genre"],
           "year": 2021
         },
         {
@@ -109,6 +123,7 @@
           "coverArt": "al-12",
           "artistId": "ar-3",
           "artist": "artist-2",
+          "artists": [{ "id": "ar-3", "name": "artist-2" }],
           "created": "2019-11-30T00:00:00Z",
           "title": "",
           "album": "",
@@ -116,6 +131,7 @@
           "songCount": 0,
           "duration": 0,
           "genre": "Unknown Genre",
+          "genres": ["Unknown Genre"],
           "year": 2021
         },
         {
@@ -123,6 +139,7 @@
           "coverArt": "al-13",
           "artistId": "ar-3",
           "artist": "artist-2",
+          "artists": [{ "id": "ar-3", "name": "artist-2" }],
           "created": "2019-11-30T00:00:00Z",
           "title": "",
           "album": "",
@@ -130,6 +147,7 @@
           "songCount": 0,
           "duration": 0,
           "genre": "Unknown Genre",
+          "genres": ["Unknown Genre"],
           "year": 2021
         }
       ]

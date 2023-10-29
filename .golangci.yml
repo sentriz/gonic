@@ -7,7 +7,6 @@ linters:
   disable-all: true
   enable:
     - bodyclose
-    - depguard
     - dogsled
     - errcheck
     - exportloopref
@@ -16,7 +15,6 @@ linters:
     - goconst
     - gocritic
     - gocyclo
-    - goerr113
     - goprintffuncname
     - gosec
     - gosimple
@@ -46,3 +44,6 @@ issues:
     - text: "at least one file in a package should have a package comment"
       linters:
         - stylecheck
+    - text: "should rewrite switch"
+      linters:
+        - gocritic

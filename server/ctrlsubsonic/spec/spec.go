@@ -111,13 +111,19 @@ type Albums struct {
 	List []*Album `xml:"album" json:"album"`
 }
 
+type ArtistRef struct {
+	ID   *specid.ID `xml:"id,attr" json:"id"`
+	Name string     `xml:"name,attr" json:"name"`
+}
+
 type Album struct {
 	// common
-	ID       *specid.ID `xml:"id,attr,omitempty"       json:"id"`
-	CoverID  *specid.ID `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty"`
-	ArtistID *specid.ID `xml:"artistId,attr,omitempty" json:"artistId,omitempty"`
-	Artist   string     `xml:"artist,attr,omitempty"   json:"artist,omitempty"`
-	Created  time.Time  `xml:"created,attr,omitempty"  json:"created,omitempty"`
+	ID       *specid.ID   `xml:"id,attr,omitempty"       json:"id"`
+	CoverID  *specid.ID   `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty"`
+	ArtistID *specid.ID   `xml:"artistId,attr,omitempty" json:"artistId,omitempty"`
+	Artist   string       `xml:"artist,attr,omitempty"   json:"artist,omitempty"`
+	Artists  []*ArtistRef `xml:"artists,omitempty"       json:"artists,omitempty"`
+	Created  time.Time    `xml:"created,attr,omitempty"  json:"created,omitempty"`
 	// browsing by folder (eg. getAlbumList)
 	Title    string     `xml:"title,attr,omitempty"  json:"title"`
 	Album    string     `xml:"album,attr,omitempty"  json:"album"`
@@ -128,6 +134,7 @@ type Album struct {
 	TrackCount int           `xml:"songCount,attr"         json:"songCount"`
 	Duration   int           `xml:"duration,attr"          json:"duration"`
 	Genre      string        `xml:"genre,attr,omitempty"   json:"genre,omitempty"`
+	Genres     []string      `xml:"genres,omitempty"       json:"genres,omitempty"`
 	Year       int           `xml:"year,attr,omitempty"    json:"year,omitempty"`
 	Tracks     []*TrackChild `xml:"song,omitempty"         json:"song,omitempty"`
 	// star / rating
@@ -277,21 +284,15 @@ type Playlist struct {
 	List      []*TrackChild `xml:"entry,omitempty" json:"entry,omitempty"`
 }
 
-type SimilarArtist struct {
-	ID         *specid.ID `xml:"id,attr"                   json:"id"`
-	Name       string     `xml:"name,attr"                 json:"name"`
-	AlbumCount int        `xml:"albumCount,attr,omitempty" json:"albumCount,omitempty"`
-}
-
 type ArtistInfo struct {
-	Biography      string           `xml:"biography"               json:"biography"`
-	MusicBrainzID  string           `xml:"musicBrainzId"           json:"musicBrainzId"`
-	LastFMURL      string           `xml:"lastFmUrl"               json:"lastFmUrl"`
-	SmallImageURL  string           `xml:"smallImageUrl"           json:"smallImageUrl"`
-	MediumImageURL string           `xml:"mediumImageUrl"          json:"mediumImageUrl"`
-	LargeImageURL  string           `xml:"largeImageUrl"           json:"largeImageUrl"`
-	ArtistImageURL string           `xml:"artistImageUrl"          json:"artistImageUrl"` // not sure where this comes from but other clients seem to expect it
-	SimilarArtist  []*SimilarArtist `xml:"similarArtist,omitempty" json:"similarArtist,omitempty"`
+	Biography      string    `xml:"biography"               json:"biography"`
+	MusicBrainzID  string    `xml:"musicBrainzId"           json:"musicBrainzId"`
+	LastFMURL      string    `xml:"lastFmUrl"               json:"lastFmUrl"`
+	SmallImageURL  string    `xml:"smallImageUrl"           json:"smallImageUrl"`
+	MediumImageURL string    `xml:"mediumImageUrl"          json:"mediumImageUrl"`
+	LargeImageURL  string    `xml:"largeImageUrl"           json:"largeImageUrl"`
+	ArtistImageURL string    `xml:"artistImageUrl"          json:"artistImageUrl"` // not sure where this comes from but other clients seem to expect it
+	Similar []*Artist `xml:"similarArtist,omitempty" json:"similarArtist,omitempty"`
 }
 
 type Genres struct {
@@ -370,17 +371,12 @@ type Bookmarks struct {
 }
 
 type Bookmark struct {
-	Entry    BookmarkEntry `xml:"entry,omitempty" json:"entry,omitempty"`
-	Username string        `xml:"username,attr"   json:"username"`
-	Position int           `xml:"position,attr"   json:"position"`
-	Comment  string        `xml:"comment,attr"    json:"comment"`
-	Created  time.Time     `xml:"created,attr"    json:"created"`
-	Changed  time.Time     `xml:"changed,attr"    json:"changed"`
-}
-
-type BookmarkEntry struct {
-	ID   *specid.ID `xml:"id,attr"   json:"id"`
-	Type string     `xml:"type,attr" json:"type"`
+	Entry    *TrackChild `xml:"entry,omitempty" json:"entry,omitempty"`
+	Username string      `xml:"username,attr"   json:"username"`
+	Position int         `xml:"position,attr"   json:"position"`
+	Comment  string      `xml:"comment,attr"    json:"comment"`
+	Created  time.Time   `xml:"created,attr"    json:"created"`
+	Changed  time.Time   `xml:"changed,attr"    json:"changed"`
 }
 
 type Starred struct {

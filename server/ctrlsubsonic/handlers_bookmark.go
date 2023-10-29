@@ -22,28 +22,37 @@ func (c *Controller) ServeGetBookmarks(r *http.Request) *spec.Response {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewResponse()
 	}
+
 	sub := spec.NewResponse()
 	sub.Bookmarks = &spec.Bookmarks{
 		List: []*spec.Bookmark{},
 	}
+
 	for _, bookmark := range bookmarks {
-		specid := &specid.ID{
-			Type:  specid.IDT(bookmark.EntryIDType),
-			Value: bookmark.EntryID,
-		}
-		entry := spec.BookmarkEntry{
-			ID:   specid,
-			Type: bookmark.EntryIDType,
-		}
-		sub.Bookmarks.List = append(sub.Bookmarks.List, &spec.Bookmark{
+		respBookmark := &spec.Bookmark{
 			Username: user.Name,
 			Position: bookmark.Position,
 			Comment:  bookmark.Comment,
 			Created:  bookmark.CreatedAt,
 			Changed:  bookmark.UpdatedAt,
-			Entry:    entry,
-		})
+		}
+
+		switch specid.IDT(bookmark.EntryIDType) {
+		case specid.Track:
+			var track db.Track
+			err := c.DB.
+				Preload("Album").
+				Find(&track, "id=?", bookmark.EntryID).
+				Error
+			if err != nil {
+				return spec.NewError(10, "finding entry: %v", err)
+			}
+			respBookmark.Entry = spec.NewTrackByTags(&track, track.Album)
+		}
+
+		sub.Bookmarks.List = append(sub.Bookmarks.List, respBookmark)
 	}
+
 	return sub
 }
 

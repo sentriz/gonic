@@ -20,7 +20,6 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/mime"
-	"go.senan.xyz/gonic/multierr"
 	"go.senan.xyz/gonic/scanner/tags"
 )
 
@@ -30,32 +29,32 @@ var (
 )
 
 type Scanner struct {
-	db             *db.DB
-	musicDirs      []string
-	genreSplit     string
-	tagger         tags.Reader
-	excludePattern *regexp.Regexp
-	scanning       *int32
-	watcher        *fsnotify.Watcher
-	watchMap       map[string]string // maps watched dirs back to root music dir
-	watchDone      chan bool
+	db                 *db.DB
+	musicDirs          []string
+	multiValueSettings map[Tag]MultiValueSetting
+	tagger             tags.Reader
+	excludePattern     *regexp.Regexp
+	scanning           *int32
+	watcher            *fsnotify.Watcher
+	watchMap           map[string]string // maps watched dirs back to root music dir
+	watchDone          chan bool
 }
 
-func New(musicDirs []string, db *db.DB, genreSplit string, tagger tags.Reader, excludePattern string) *Scanner {
+func New(musicDirs []string, db *db.DB, multiValueSettings map[Tag]MultiValueSetting, tagger tags.Reader, excludePattern string) *Scanner {
 	var excludePatternRegExp *regexp.Regexp
 	if excludePattern != "" {
 		excludePatternRegExp = regexp.MustCompile(excludePattern)
 	}
 
 	return &Scanner{
-		db:             db,
-		musicDirs:      musicDirs,
-		genreSplit:     genreSplit,
-		tagger:         tagger,
-		excludePattern: excludePatternRegExp,
-		scanning:       new(int32),
-		watchMap:       make(map[string]string),
-		watchDone:      make(chan bool),
+		db:                 db,
+		musicDirs:          musicDirs,
+		multiValueSettings: multiValueSettings,
+		tagger:             tagger,
+		excludePattern:     excludePatternRegExp,
+		scanning:           new(int32),
+		watchMap:           make(map[string]string),
+		watchDone:          make(chan bool),
 	}
 }
 
@@ -81,7 +80,6 @@ func (s *Scanner) ScanAndClean(opts ScanOptions) (*Context, error) {
 
 	start := time.Now()
 	c := &Context{
-		errs:       &multierr.Err{},
 		seenTracks: map[int]struct{}{},
 		seenAlbums: map[int]struct{}{},
 		isFull:     opts.IsFull,
@@ -90,7 +88,7 @@ func (s *Scanner) ScanAndClean(opts ScanOptions) (*Context, error) {
 	log.Println("starting scan")
 	defer func() {
 		log.Printf("finished scan in %s, +%d/%d tracks (%d err)\n",
-			durSince(start), c.SeenTracksNew(), c.SeenTracks(), c.errs.Len())
+			durSince(start), c.SeenTracksNew(), c.SeenTracks(), len(c.errs))
 	}()
 
 	for _, dir := range s.musicDirs {
@@ -115,15 +113,11 @@ func (s *Scanner) ScanAndClean(opts ScanOptions) (*Context, error) {
 		return nil, fmt.Errorf("clean genres: %w", err)
 	}
 
-	if err := s.db.SetSetting("last_scan_time", strconv.FormatInt(time.Now().Unix(), 10)); err != nil {
+	if err := s.db.SetSetting(db.LastScanTime, strconv.FormatInt(time.Now().Unix(), 10)); err != nil {
 		return nil, fmt.Errorf("set scan time: %w", err)
 	}
 
-	if c.errs.Len() > 0 {
-		return c, c.errs
-	}
-
-	return c, nil
+	return c, errors.Join(c.errs...)
 }
 
 func (s *Scanner) ExecuteWatch() error {
@@ -159,7 +153,6 @@ func (s *Scanner) ExecuteWatch() error {
 			}
 			for dirName := range scanList {
 				c := &Context{
-					errs:       &multierr.Err{},
 					seenTracks: map[int]struct{}{},
 					seenAlbums: map[int]struct{}{},
 					isFull:     false,
@@ -240,7 +233,7 @@ func (s *Scanner) watchCallback(dir string, absPath string, d fs.DirEntry, err e
 
 func (s *Scanner) scanCallback(c *Context, dir string, absPath string, d fs.DirEntry, err error) error {
 	if err != nil {
-		c.errs.Add(err)
+		c.errs = append(c.errs, err)
 		return nil
 	}
 	if dir == absPath {
@@ -268,7 +261,7 @@ func (s *Scanner) scanCallback(c *Context, dir string, absPath string, d fs.DirE
 
 	tx := s.db.Begin()
 	if err := s.scanDir(tx, c, dir, absPath); err != nil {
-		c.errs.Add(fmt.Errorf("%q: %w", absPath, err))
+		c.errs = append(c.errs, fmt.Errorf("%q: %w", absPath, err))
 		tx.Rollback()
 		return nil
 	}
@@ -324,7 +317,7 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string
 	sort.Strings(tracks)
 	for i, basename := range tracks {
 		absPath := filepath.Join(musicDir, relPath, basename)
-		if err := s.populateTrackAndAlbumArtists(tx, c, i, &parent, &album, basename, absPath); err != nil {
+		if err := s.populateTrackAndAlbumArtists(tx, c, i, &album, basename, absPath); err != nil {
 			return fmt.Errorf("populate track %q: %w", basename, err)
 		}
 	}
@@ -332,7 +325,7 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string
 	return nil
 }
 
-func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, parent, album *db.Album, basename string, absPath string) error {
+func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, album *db.Album, basename string, absPath string) error {
 	stat, err := os.Stat(absPath)
 	if err != nil {
 		return fmt.Errorf("stating %q: %w", basename, err)
@@ -353,21 +346,31 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 		return fmt.Errorf("%v: %w", err, ErrReadingTags)
 	}
 
-	genreNames := strings.Split(trags.SomeGenre(), s.genreSplit)
+	genreNames := parseMulti(trags, s.multiValueSettings[Genre], tags.MustGenres, tags.MustGenre)
 	genreIDs, err := populateGenres(tx, genreNames)
 	if err != nil {
 		return fmt.Errorf("populate genres: %w", err)
 	}
 
 	// metadata for the album table comes only from the the first track's tags
-	if i == 0 || album.TagArtist == nil {
-		albumArtist, err := populateAlbumArtist(tx, parent, trags.SomeAlbumArtist())
-		if err != nil {
-			return fmt.Errorf("populate album artist: %w", err)
+	if i == 0 {
+		albumArtistNames := parseMulti(trags, s.multiValueSettings[AlbumArtist], tags.MustAlbumArtists, tags.MustAlbumArtist)
+		var albumArtistIDs []int
+		for _, albumArtistName := range albumArtistNames {
+			albumArtist, err := populateArtist(tx, albumArtistName)
+			if err != nil {
+				return fmt.Errorf("populate album artist: %w", err)
+			}
+			albumArtistIDs = append(albumArtistIDs, albumArtist.ID)
 		}
-		if err := populateAlbum(tx, album, albumArtist, trags, stat.ModTime()); err != nil {
+		if err := populateAlbumArtists(tx, album, albumArtistIDs); err != nil {
+			return fmt.Errorf("populate album artists: %w", err)
+		}
+
+		if err := populateAlbum(tx, album, trags, stat.ModTime()); err != nil {
 			return fmt.Errorf("populate album: %w", err)
 		}
+
 		if err := populateAlbumGenres(tx, album, genreIDs); err != nil {
 			return fmt.Errorf("populate album genres: %w", err)
 		}
@@ -386,13 +389,12 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, par
 	return nil
 }
 
-func populateAlbum(tx *db.DB, album *db.Album, albumArtist *db.Artist, trags tags.Parser, modTime time.Time) error {
-	albumName := trags.SomeAlbum()
+func populateAlbum(tx *db.DB, album *db.Album, trags tags.Parser, modTime time.Time) error {
+	albumName := tags.MustAlbum(trags)
 	album.TagTitle = albumName
 	album.TagTitleUDec = decoded(albumName)
 	album.TagBrainzID = trags.AlbumBrainzID()
 	album.TagYear = trags.Year()
-	album.TagArtist = albumArtist
 
 	album.ModifiedAt = modTime
 	album.CreatedAt = modTime
@@ -434,7 +436,6 @@ func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trags tags.Parse
 	track.FilenameUDec = decoded(basename)
 	track.Size = size
 	track.AlbumID = album.ID
-	track.ArtistID = album.TagArtist.ID
 
 	track.TagTitle = trags.Title()
 	track.TagTitleUDec = decoded(trags.Title())
@@ -453,13 +454,10 @@ func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trags tags.Parse
 	return nil
 }
 
-func populateAlbumArtist(tx *db.DB, parent *db.Album, artistName string) (*db.Artist, error) {
+func populateArtist(tx *db.DB, artistName string) (*db.Artist, error) {
 	var update db.Artist
 	update.Name = artistName
 	update.NameUDec = decoded(artistName)
-	if parent.Cover != "" {
-		update.Cover = parent.Cover
-	}
 	var artist db.Artist
 	if err := tx.Where("name=?", artistName).Assign(update).FirstOrCreate(&artist).Error; err != nil {
 		return nil, fmt.Errorf("find or create artist: %w", err)
@@ -506,6 +504,17 @@ func populateAlbumGenres(tx *db.DB, album *db.Album, genreIDs []int) error {
 
 	if err := tx.InsertBulkLeftMany("album_genres", []string{"album_id", "genre_id"}, album.ID, genreIDs); err != nil {
 		return fmt.Errorf("insert bulk album genres: %w", err)
+	}
+	return nil
+}
+
+func populateAlbumArtists(tx *db.DB, album *db.Album, albumArtistIDs []int) error {
+	if err := tx.Where("album_id=?", album.ID).Delete(db.AlbumArtist{}).Error; err != nil {
+		return fmt.Errorf("delete old album album artists: %w", err)
+	}
+
+	if err := tx.InsertBulkLeftMany("album_artists", []string{"album_id", "artist_id"}, album.ID, albumArtistIDs); err != nil {
+		return fmt.Errorf("insert bulk album artists: %w", err)
 	}
 	return nil
 }
@@ -561,8 +570,8 @@ func (s *Scanner) cleanArtists(c *Context) error {
 	sub := s.db.
 		Select("artists.id").
 		Model(&db.Artist{}).
-		Joins("LEFT JOIN albums ON albums.tag_artist_id=artists.id").
-		Where("albums.id IS NULL").
+		Joins("LEFT JOIN album_artists ON album_artists.artist_id=artists.id").
+		Where("album_artists.artist_id IS NULL").
 		SubQuery()
 	q := s.db.
 		Where("artists.id IN ?", sub).
@@ -632,7 +641,7 @@ func durSince(t time.Time) time.Duration {
 }
 
 type Context struct {
-	errs   *multierr.Err
+	errs   []error
 	isFull bool
 
 	seenTracks    map[int]struct{}
@@ -653,3 +662,39 @@ func (c *Context) TracksMissing() int  { return len(c.tracksMissing) }
 func (c *Context) AlbumsMissing() int  { return len(c.albumsMissing) }
 func (c *Context) ArtistsMissing() int { return c.artistsMissing }
 func (c *Context) GenresMissing() int  { return c.genresMissing }
+
+type MultiValueMode uint8
+
+const (
+	None MultiValueMode = iota
+	Delim
+	Multi
+)
+
+type Tag uint8
+
+const (
+	Genre Tag = iota
+	AlbumArtist
+)
+
+type MultiValueSetting struct {
+	Mode  MultiValueMode
+	Delim string
+}
+
+func parseMulti(parser tags.Parser, setting MultiValueSetting, getMulti func(tags.Parser) []string, get func(tags.Parser) string) []string {
+	var parts []string
+	switch setting.Mode {
+	case Multi:
+		parts = getMulti(parser)
+	case Delim:
+		parts = strings.Split(get(parser), setting.Delim)
+	default:
+		parts = []string{get(parser)}
+	}
+	for i := range parts {
+		parts[i] = strings.TrimSpace(parts[i])
+	}
+	return parts
+}

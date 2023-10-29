@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -29,11 +30,15 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 	if user.LastFMSession == "" {
 		return nil
 	}
-	apiKey, err := s.db.GetSetting("lastfm_api_key")
+	if track.Album == nil || len(track.Album.Artists) == 0 {
+		return fmt.Errorf("track has no album artists")
+	}
+
+	apiKey, err := s.db.GetSetting(db.LastFMAPIKey)
 	if err != nil {
 		return fmt.Errorf("get api key: %w", err)
 	}
-	secret, err := s.db.GetSetting("lastfm_secret")
+	secret, err := s.db.GetSetting(db.LastFMSecret)
 	if err != nil {
 		return fmt.Errorf("get secret: %w", err)
 	}
@@ -46,13 +51,14 @@ func (s *Scrobbler) Scrobble(user *db.User, track *db.Track, stamp time.Time, su
 	} else {
 		params.Add("method", "track.updateNowPlaying")
 	}
+
 	params.Add("api_key", apiKey)
 	params.Add("sk", user.LastFMSession)
 	params.Add("artist", track.TagTrackArtist)
 	params.Add("track", track.TagTitle)
 	params.Add("trackNumber", strconv.Itoa(track.TagTrackNumber))
 	params.Add("album", track.Album.TagTitle)
-	params.Add("albumArtist", track.Artist.Name)
+	params.Add("albumArtist", strings.Join(track.Album.ArtistsStrings(), ", "))
 	params.Add("duration", strconv.Itoa(track.Length))
 
 	// make sure we provide a valid uuid, since some users may have an incorrect mbid in their tags
