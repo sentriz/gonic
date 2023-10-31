@@ -410,8 +410,10 @@ func main() {
 
 		defer logJob("scan at start")()
 
-		_, err := scannr.ScanAndClean(scanner.ScanOptions{})
-		return err
+		if _, err := scannr.ScanAndClean(scanner.ScanOptions{}); err != nil {
+			log.Printf("error scanning on start: %v", err)
+		}
+		return nil
 	})
 
 	errShutdown := errors.New("shutdown")
