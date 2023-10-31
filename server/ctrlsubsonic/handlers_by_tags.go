@@ -354,8 +354,8 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		err = c.dbc.
 			Select("artists.*, count(albums.id) album_count").
 			Where("name=?", similarName).
-			Joins("LEFT JOIN album_artists ON album_artists.artist_id=artists.id").
-			Joins("LEFT JOIN albums ON albums.id=album_artists.album_id").
+			Joins("JOIN album_artists ON album_artists.artist_id=artists.id").
+			Joins("JOIN albums ON albums.id=album_artists.album_id").
 			Group("artists.id").
 			Preload("Info").
 			Find(&artist).
