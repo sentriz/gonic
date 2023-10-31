@@ -25,7 +25,7 @@
 - [last.fm](https://www.last.fm/) scrobbling
 - [listenbrainz](https://listenbrainz.org/) scrobbling (thank you [spezifisch](https://github.com/spezifisch), [lxea](https://github.com/lxea))
 - artist similarities and biographies from the last.fm api
-- support for multi valued tags like albumartists and genres ([see more](#multi-valued-tags)
+- support for multi valued tags like albumartists and genres ([see more](#multi-valued-tags))
 - a web interface for configuration (set up last.fm, manage users, start scans, etc.)
 - support for the [album-artist](https://mkoby.com/2007/02/18/artist-versus-album-artist/) tag, to not clutter your artist list with compilation album appearances
 - written in [go](https://golang.org/), so lightweight and suitable for a raspberry pi, etc. (see ARM images below)
