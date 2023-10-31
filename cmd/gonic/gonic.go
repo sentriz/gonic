@@ -79,7 +79,7 @@ func main() {
 	confShowVersion := set.Bool("version", false, "show gonic version")
 	_ = set.String("config-path", "", "path to config (optional)")
 
-	confExcludePatterns := set.String("exclude-pattern", "", "regex pattern to exclude files from scan (optional)")
+	confExcludePattern := set.String("exclude-pattern", "", "regex pattern to exclude files from scan (optional)")
 
 	var confMultiValueGenre, confMultiValueAlbumArtist multiValueSetting
 	set.Var(&confMultiValueGenre, "multi-value-genre", "setting for mutli-valued genre scanning (optional)")
@@ -89,7 +89,7 @@ func main() {
 
 	deprecatedConfGenreSplit := set.String("genre-split", "", "(deprecated, see multi-value settings)")
 
-	if _, err := regexp.Compile(*confExcludePatterns); err != nil {
+	if _, err := regexp.Compile(*confExcludePattern); err != nil {
 		log.Fatalf("invalid exclude pattern: %v\n", err)
 	}
 
@@ -187,7 +187,7 @@ func main() {
 			scanner.AlbumArtist: scanner.MultiValueSetting(confMultiValueAlbumArtist),
 		},
 		tagReader,
-		*confExcludePatterns,
+		*confExcludePattern,
 	)
 	podcast := podcast.New(dbc, *confPodcastPath, tagReader)
 	transcoder := transcode.NewCachingTranscoder(
