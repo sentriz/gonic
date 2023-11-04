@@ -194,6 +194,14 @@ func TestUpdatedAlbumGenre(t *testing.T) {
 	assert.Equal(t, []string{"gen-a-upd", "gen-b-upd"}, genreStrings(updated))
 }
 
+func genreStrings(album db.Album) []string {
+	var strs []string
+	for _, genre := range album.Genres {
+		strs = append(strs, genre.Name)
+	}
+	return strs
+}
+
 func TestDeleteAlbum(t *testing.T) {
 	t.Parallel()
 	m := mockfs.New(t)
@@ -758,12 +766,4 @@ func TestMultiArtistPreload(t *testing.T) {
 			assert.Len(t, artist.Albums, 1)
 		}
 	}
-}
-
-func genreStrings(album db.Album) []string {
-	var strs []string
-	for _, genre := range album.Genres {
-		strs = append(strs, genre.Name)
-	}
-	return strs
 }
