@@ -539,7 +539,7 @@ func (s *Scanner) cleanTracks(c *Context) error {
 			c.tracksMissing = append(c.tracksMissing, int64(a))
 		}
 	}
-	return s.db.TransactionChunked(c.tracksMissing, func(tx *gorm.DB, chunk []int64) error {
+	return s.db.TransactionChunked(c.tracksMissing, func(tx *db.DB, chunk []int64) error {
 		return tx.Where(chunk).Delete(&db.Track{}).Error
 	})
 }
@@ -561,7 +561,7 @@ func (s *Scanner) cleanAlbums(c *Context) error {
 			c.albumsMissing = append(c.albumsMissing, int64(a))
 		}
 	}
-	return s.db.TransactionChunked(c.albumsMissing, func(tx *gorm.DB, chunk []int64) error {
+	return s.db.TransactionChunked(c.albumsMissing, func(tx *db.DB, chunk []int64) error {
 		return tx.Where(chunk).Delete(&db.Album{}).Error
 	})
 }

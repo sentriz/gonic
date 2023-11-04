@@ -124,15 +124,19 @@ func (db *DB) Begin() *DB {
 	return &DB{DB: db.DB.Begin()}
 }
 
-type ChunkFunc func(*gorm.DB, []int64) error
+func (db *DB) Transaction(cb func(*DB) error) error {
+	return db.DB.Transaction(func(tx *gorm.DB) error {
+		return cb(&DB{DB: tx})
+	})
+}
 
-func (db *DB) TransactionChunked(data []int64, cb ChunkFunc) error {
+func (db *DB) TransactionChunked(data []int64, cb func(*DB, []int64) error) error {
 	if len(data) == 0 {
 		return nil
 	}
 	// https://sqlite.org/limits.html
 	const size = 999
-	return db.Transaction(func(tx *gorm.DB) error {
+	return db.Transaction(func(tx *DB) error {
 		for i := 0; i < len(data); i += size {
 			end := i + size
 			if end > len(data) {
