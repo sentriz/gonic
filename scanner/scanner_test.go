@@ -767,3 +767,23 @@ func TestMultiArtistPreload(t *testing.T) {
 		}
 	}
 }
+
+// https://github.com/sentriz/gonic/issues/402
+func TestRootNoClobberOnError(t *testing.T) {
+	t.Parallel()
+	m := mockfs.New(t)
+
+	m.AddItems()
+
+	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.TagInfo) { tags.Error = fmt.Errorf("no") }) // give a track an error
+	m.AddCover("artist-0/album-0/Artwork/cover.png")                                                         // and add an extra cover dir
+
+	_, err := m.ScanAndCleanErr()
+	require.Error(t, err)
+
+	var roots []*db.Album
+	require.NoError(t, m.DB().Find(&roots, "parent_id IS NULL").Error)
+	require.Len(t, roots, 1)
+	require.Equal(t, ".", roots[0].RightPath)
+	require.Equal(t, 0, roots[0].ParentID)
+}

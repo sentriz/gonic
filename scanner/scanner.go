@@ -231,17 +231,13 @@ func (s *Scanner) scanCallback(c *Context, absPath string, d fs.DirEntry, err er
 
 	log.Printf("processing folder %q", absPath)
 
-	tx := s.db.Begin()
-	if err := s.scanDir(tx, c, absPath); err != nil {
-		c.errs = append(c.errs, fmt.Errorf("%q: %w", absPath, err))
-		tx.Rollback()
+	return s.db.Transaction(func(tx *db.DB) error {
+		if err := s.scanDir(tx, c, absPath); err != nil {
+			c.errs = append(c.errs, fmt.Errorf("%q: %w", absPath, err))
+			return nil
+		}
 		return nil
-	}
-	if err := tx.Commit().Error; err != nil {
-		return fmt.Errorf("commit tx: %w", err)
-	}
-
-	return nil
+	})
 }
 
 func (s *Scanner) scanDir(tx *db.DB, c *Context, absPath string) error {
