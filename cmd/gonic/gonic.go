@@ -166,6 +166,13 @@ func main() {
 		confMultiValueGenre = multiValueSetting{Mode: scanner.Delim, Delim: *deprecatedConfGenreSplit}
 		*deprecatedConfGenreSplit = "<deprecated>"
 	}
+	if confMultiValueArtist.Mode == scanner.None && confMultiValueAlbumArtist.Mode > scanner.None {
+		confMultiValueArtist.Mode = confMultiValueAlbumArtist.Mode
+		confMultiValueArtist.Delim = confMultiValueAlbumArtist.Delim
+	}
+	if confMultiValueArtist.Mode != confMultiValueAlbumArtist.Mode {
+		log.Panic("differing multi artist and album artist modes have been tested yet. please set them to be the same")
+	}
 
 	log.Printf("starting gonic v%s\n", gonic.Version)
 	log.Printf("provided config\n")
