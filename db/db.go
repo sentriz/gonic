@@ -380,37 +380,28 @@ func (p *PlayQueue) SetItems(items []specid.ID) {
 }
 
 type TranscodePreference struct {
-	User    *User
 	UserID  int    `gorm:"not null; unique_index:idx_user_id_client" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
 	Client  string `gorm:"not null; unique_index:idx_user_id_client" sql:"default: null"`
 	Profile string `gorm:"not null" sql:"default: null"`
 }
 
 type AlbumArtist struct {
-	Album    *Album
 	AlbumID  int `gorm:"not null; unique_index:idx_album_id_artist_id" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
-	Artist   *Artist
 	ArtistID int `gorm:"not null; unique_index:idx_album_id_artist_id" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
 }
 
 type TrackArtist struct {
-	Track    *Track
 	TrackID  int `gorm:"not null; unique_index:idx_track_id_artist_id" sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
-	Artist   *Artist
 	ArtistID int `gorm:"not null; unique_index:idx_track_id_artist_id" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
 }
 
 type TrackGenre struct {
-	Track   *Track
 	TrackID int `gorm:"not null; unique_index:idx_track_id_genre_id" sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
-	Genre   *Genre
 	GenreID int `gorm:"not null; unique_index:idx_track_id_genre_id" sql:"default: null; type:int REFERENCES genres(id) ON DELETE CASCADE"`
 }
 
 type AlbumGenre struct {
-	Album   *Album
 	AlbumID int `gorm:"not null; unique_index:idx_album_id_genre_id" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
-	Genre   *Genre
 	GenreID int `gorm:"not null; unique_index:idx_album_id_genre_id" sql:"default: null; type:int REFERENCES genres(id) ON DELETE CASCADE"`
 }
 
