@@ -26,8 +26,8 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 	var artists []*db.Artist
 	q := c.dbc.
 		Select("*, count(sub.id) album_count").
-		Joins("JOIN album_artists ON album_artists.artist_id=artists.id").
-		Joins("JOIN albums sub ON sub.id=album_artists.album_id").
+		Joins("JOIN artist_appearances ON artist_appearances.artist_id=artists.id").
+		Joins("JOIN albums sub ON sub.id=artist_appearances.album_id").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
 		Preload("Info").
@@ -69,15 +69,15 @@ func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 	}
 	var artist db.Artist
 	c.dbc.
-		Preload("Albums", func(db *gorm.DB) *gorm.DB {
+		Preload("Appearances", func(db *gorm.DB) *gorm.DB {
 			return db.
 				Select("*, count(sub.id) child_count, sum(sub.length) duration").
 				Joins("LEFT JOIN tracks sub ON albums.id=sub.album_id").
 				Order("albums.right_path").
 				Group("albums.id")
 		}).
-		Preload("Albums.Artists").
-		Preload("Albums.Genres").
+		Preload("Appearances.Artists").
+		Preload("Appearances.Genres").
 		Preload("Info").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
@@ -85,11 +85,11 @@ func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 
 	sub := spec.NewResponse()
 	sub.Artist = spec.NewArtistByTags(&artist)
-	sub.Artist.Albums = make([]*spec.Album, len(artist.Albums))
-	for i, album := range artist.Albums {
+	sub.Artist.Albums = make([]*spec.Album, len(artist.Appearances))
+	for i, album := range artist.Appearances {
 		sub.Artist.Albums[i] = spec.NewAlbumByTags(album, album.Artists)
 	}
-	sub.Artist.AlbumCount = len(artist.Albums)
+	sub.Artist.AlbumCount = len(artist.Appearances)
 	return sub
 }
 

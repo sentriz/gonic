@@ -175,15 +175,17 @@ func (db *DB) SetSetting(key SettingKey, value string) error {
 }
 
 type Artist struct {
-	ID            int      `gorm:"primary_key"`
-	Name          string   `gorm:"not null; unique_index"`
-	NameUDec      string   `sql:"default: null"`
-	Albums        []*Album `gorm:"many2many:album_artists"`
-	AlbumCount    int      `sql:"-"`
-	ArtistStar    *ArtistStar
-	ArtistRating  *ArtistRating
-	AverageRating float64     `sql:"default: null"`
-	Info          *ArtistInfo `gorm:"foreignkey:id"`
+	ID              int      `gorm:"primary_key"`
+	Name            string   `gorm:"not null; unique_index"`
+	NameUDec        string   `sql:"default: null"`
+	Albums          []*Album `gorm:"many2many:album_artists"`
+	AlbumCount      int      `sql:"-"`
+	Appearances     []*Album `gorm:"many2many:artist_appearances"`
+	AppearanceCount int      `sql:"-"`
+	ArtistStar      *ArtistStar
+	ArtistRating    *ArtistRating
+	AverageRating   float64     `sql:"default: null"`
+	Info            *ArtistInfo `gorm:"foreignkey:id"`
 }
 
 func (a *Artist) SID() *specid.ID {
@@ -393,6 +395,11 @@ type AlbumArtist struct {
 type TrackArtist struct {
 	TrackID  int `gorm:"not null; unique_index:idx_track_id_artist_id" sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
 	ArtistID int `gorm:"not null; unique_index:idx_track_id_artist_id" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
+}
+
+type ArtistAppearances struct {
+	ArtistID int `gorm:"not null; unique_index:idx_artist_id_album_id" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
+	AlbumID  int `gorm:"not null; unique_index:idx_artist_id_album_id" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 }
 
 type TrackGenre struct {

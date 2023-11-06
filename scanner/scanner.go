@@ -329,6 +329,10 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, c *Context, i int, album *d
 
 	// metadata for the album table comes only from the first track's tags
 	if i == 0 {
+		if err := tx.Where("album_id=?", album.ID).Delete(db.ArtistAppearances{}).Error; err != nil {
+			return fmt.Errorf("delete artist appearances: %w", err)
+		}
+
 		albumArtistNames := parseMulti(trags, s.multiValueSettings[AlbumArtist], tagcommon.MustAlbumArtists, tagcommon.MustAlbumArtist)
 		var albumArtistIDs []int
 		for _, albumArtistName := range albumArtistNames {
@@ -340,6 +344,10 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, c *Context, i int, album *d
 		}
 		if err := populateAlbumArtists(tx, album, albumArtistIDs); err != nil {
 			return fmt.Errorf("populate album artists: %w", err)
+		}
+
+		if err := populateArtistAppearances(tx, album, albumArtistIDs); err != nil {
+			return fmt.Errorf("populate track artists: %w", err)
 		}
 
 		if err := populateAlbum(tx, album, trags, stat.ModTime()); err != nil {
@@ -368,6 +376,10 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, c *Context, i int, album *d
 		trackArtistIDs = append(trackArtistIDs, trackArtist.ID)
 	}
 	if err := populateTrackArtists(tx, &track, trackArtistIDs); err != nil {
+		return fmt.Errorf("populate track artists: %w", err)
+	}
+
+	if err := populateArtistAppearances(tx, album, trackArtistIDs); err != nil {
 		return fmt.Errorf("populate track artists: %w", err)
 	}
 
@@ -518,6 +530,13 @@ func populateTrackArtists(tx *db.DB, track *db.Track, trackArtistIDs []int) erro
 	return nil
 }
 
+func populateArtistAppearances(tx *db.DB, album *db.Album, artistIDs []int) error {
+	if err := tx.InsertBulkLeftMany("artist_appearances", []string{"album_id", "artist_id"}, album.ID, artistIDs); err != nil {
+		return fmt.Errorf("insert bulk track artists: %w", err)
+	}
+	return nil
+}
+
 func (s *Scanner) cleanTracks(c *Context) error {
 	start := time.Now()
 	defer func() { log.Printf("finished clean tracks in %s, %d removed", durSince(start), c.TracksMissing()) }()
@@ -573,6 +592,8 @@ func (s *Scanner) cleanArtists(c *Context) error {
 			SELECT artist_id FROM track_artists
 			UNION
 			SELECT artist_id FROM album_artists
+			UNION
+			SELECT artist_id FROM artist_appearances
 		)
     `)
 	if err := q.Error; err != nil {

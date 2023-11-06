@@ -68,6 +68,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202309161411", migratePlaylistsPaths),
 		construct(ctx, "202310252205", migrateAlbumTagArtistString),
 		construct(ctx, "202310281803", migrateTrackArtists),
+		construct(ctx, "202311062259", migrateArtistAppearances),
 	}
 
 	return gormigrate.
@@ -743,4 +744,38 @@ func migrateTrackArtists(tx *gorm.DB, _ MigrationContext) error {
 		return fmt.Errorf("step drop prev: %w", err)
 	}
 	return tx.AutoMigrate(TrackArtist{}).Error
+}
+
+func migrateArtistAppearances(tx *gorm.DB, _ MigrationContext) error {
+	// gorms seems to want to create the table automatically without ON DELETE rules
+	step := tx.DropTableIfExists(ArtistAppearances{})
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step drop prev: %w", err)
+	}
+
+	step = tx.AutoMigrate(ArtistAppearances{})
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step auto migrate: %w", err)
+	}
+
+	step = tx.Exec(`
+		INSERT INTO artist_appearances (artist_id, album_id)
+		SELECT artist_id, album_id
+		FROM album_artists
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step transfer album artists: %w", err)
+	}
+
+	step = tx.Exec(`
+		INSERT OR IGNORE INTO artist_appearances (artist_id, album_id)
+		SELECT track_artists.artist_id, tracks.album_id
+		FROM track_artists
+		JOIN tracks ON tracks.id=track_artists.track_id
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step transfer album artists: %w", err)
+	}
+
+	return nil
 }
