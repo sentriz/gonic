@@ -88,6 +88,7 @@ func runQueryCases(t *testing.T, h handlerSubsonic, cases []*queryCase) {
 	for _, qc := range cases {
 		qc := qc
 		t.Run(qc.expectPath, func(t *testing.T) {
+			t.Helper()
 			t.Parallel()
 
 			rr, req := makeHTTPMock(qc.params)
