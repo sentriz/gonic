@@ -67,7 +67,7 @@ func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	artist := &db.Artist{}
+	var artist db.Artist
 	c.dbc.
 		Preload("Albums", func(db *gorm.DB) *gorm.DB {
 			return db.
@@ -81,9 +81,10 @@ func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 		Preload("Info").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
-		First(artist, id.Value)
+		First(&artist, id.Value)
+
 	sub := spec.NewResponse()
-	sub.Artist = spec.NewArtistByTags(artist)
+	sub.Artist = spec.NewArtistByTags(&artist)
 	sub.Artist.Albums = make([]*spec.Album, len(artist.Albums))
 	for i, album := range artist.Albums {
 		sub.Artist.Albums[i] = spec.NewAlbumByTags(album, album.Artists)
