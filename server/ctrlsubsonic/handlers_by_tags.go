@@ -353,7 +353,6 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		}
 		var artist db.Artist
 		err = c.dbc.
-			Debug().
 			Preload("Info").
 			Select("artists.*, count(albums.id) album_count").
 			Where("name=?", similarName).
