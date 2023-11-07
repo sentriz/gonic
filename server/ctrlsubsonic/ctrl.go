@@ -11,9 +11,10 @@ import (
 	"log"
 	"net/http"
 
-	"go.senan.xyz/gonic/artistinfocache"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/handlerutil"
+	"go.senan.xyz/gonic/infocache/albuminfocache"
+	"go.senan.xyz/gonic/infocache/artistinfocache"
 	"go.senan.xyz/gonic/jukebox"
 	"go.senan.xyz/gonic/lastfm"
 	"go.senan.xyz/gonic/playlist"
@@ -63,10 +64,11 @@ type Controller struct {
 	transcoder       transcode.Transcoder
 	lastFMClient     *lastfm.Client
 	artistInfoCache  *artistinfocache.ArtistInfoCache
+	albumInfoCache   *albuminfocache.AlbumInfoCache
 	resolveProxyPath ProxyPathResolver
 }
 
-func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPath string, cacheAudioPath string, cacheCoverPath string, jukebox *jukebox.Jukebox, playlistStore *playlist.Store, scrobblers []scrobble.Scrobbler, podcasts *podcast.Podcasts, transcoder transcode.Transcoder, lastFMClient *lastfm.Client, artistInfoCache *artistinfocache.ArtistInfoCache, resolveProxyPath ProxyPathResolver) (*Controller, error) {
+func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPath string, cacheAudioPath string, cacheCoverPath string, jukebox *jukebox.Jukebox, playlistStore *playlist.Store, scrobblers []scrobble.Scrobbler, podcasts *podcast.Podcasts, transcoder transcode.Transcoder, lastFMClient *lastfm.Client, artistInfoCache *artistinfocache.ArtistInfoCache, albumInfoCache *albuminfocache.AlbumInfoCache, resolveProxyPath ProxyPathResolver) (*Controller, error) {
 	c := Controller{
 		ServeMux: http.NewServeMux(),
 
@@ -83,6 +85,7 @@ func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPa
 		transcoder:       transcoder,
 		lastFMClient:     lastFMClient,
 		artistInfoCache:  artistInfoCache,
+		albumInfoCache:   albumInfoCache,
 		resolveProxyPath: resolveProxyPath,
 	}
 
@@ -132,8 +135,9 @@ func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPa
 	c.Handle("/getArtist", chain(resp(c.ServeGetArtist)))
 	c.Handle("/getArtists", chain(resp(c.ServeGetArtists)))
 	c.Handle("/search3", chain(resp(c.ServeSearchThree)))
-	c.Handle("/getArtistInfo2", chain(resp(c.ServeGetArtistInfoTwo)))
 	c.Handle("/getStarred2", chain(resp(c.ServeGetStarredTwo)))
+	c.Handle("/getArtistInfo2", chain(resp(c.ServeGetArtistInfoTwo)))
+	c.Handle("/getAlbumInfo2", chain(resp(c.ServeGetAlbumInfoTwo)))
 
 	// browse by folder
 	c.Handle("/getIndexes", chain(resp(c.ServeGetIndexes)))

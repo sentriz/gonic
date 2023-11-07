@@ -29,6 +29,9 @@ func (a *ArtistInfoCache) GetOrLookup(ctx context.Context, artistID int) (*db.Ar
 	if err := a.db.Find(&artist, "id=?", artistID).Error; err != nil {
 		return nil, fmt.Errorf("find artist in db: %w", err)
 	}
+	if artist.Name == "" {
+		return nil, fmt.Errorf("no metadata to look up")
+	}
 
 	var artistInfo db.ArtistInfo
 	if err := a.db.Find(&artistInfo, "id=?", artistID).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {

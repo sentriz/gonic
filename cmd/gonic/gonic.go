@@ -30,9 +30,10 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"go.senan.xyz/gonic"
-	"go.senan.xyz/gonic/artistinfocache"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/handlerutil"
+	"go.senan.xyz/gonic/infocache/albuminfocache"
+	"go.senan.xyz/gonic/infocache/artistinfocache"
 	"go.senan.xyz/gonic/jukebox"
 	"go.senan.xyz/gonic/lastfm"
 	"go.senan.xyz/gonic/listenbrainz"
@@ -240,6 +241,7 @@ func main() {
 	sessDB.SessionOpts.SameSite = http.SameSiteLaxMode
 
 	artistInfoCache := artistinfocache.New(dbc, lastfmClient)
+	albumInfoCache := albuminfocache.New(dbc, lastfmClient)
 
 	scrobblers := []scrobble.Scrobbler{lastfmClient, listenbrainzClient}
 
@@ -251,7 +253,7 @@ func main() {
 	if err != nil {
 		log.Panicf("error creating admin controller: %v\n", err)
 	}
-	ctrlSubsonic, err := ctrlsubsonic.New(dbc, scannr, musicPaths, *confPodcastPath, cacheDirAudio, cacheDirCovers, jukebx, playlistStore, scrobblers, podcast, transcoder, lastfmClient, artistInfoCache, resolveProxyPath)
+	ctrlSubsonic, err := ctrlsubsonic.New(dbc, scannr, musicPaths, *confPodcastPath, cacheDirAudio, cacheDirCovers, jukebx, playlistStore, scrobblers, podcast, transcoder, lastfmClient, artistInfoCache, albumInfoCache, resolveProxyPath)
 	if err != nil {
 		log.Panicf("error creating subsonic controller: %v\n", err)
 	}

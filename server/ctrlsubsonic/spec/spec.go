@@ -45,27 +45,28 @@ type Response struct {
 	MusicFolders          *MusicFolders          `xml:"musicFolders"          json:"musicFolders,omitempty"`
 	ScanStatus            *ScanStatus            `xml:"scanStatus"            json:"scanStatus,omitempty"`
 	Licence               *Licence               `xml:"license"               json:"license,omitempty"`
-	SearchResultTwo       *SearchResultTwo       `xml:"searchResult2"                    json:"searchResult2,omitempty"`
-	SearchResultThree     *SearchResultThree     `xml:"searchResult3"                    json:"searchResult3,omitempty"`
-	User                  *User                  `xml:"user"                             json:"user,omitempty"`
-	Playlists             *Playlists             `xml:"playlists"                        json:"playlists,omitempty"`
-	Playlist              *Playlist              `xml:"playlist"                         json:"playlist,omitempty"`
-	ArtistInfo            *ArtistInfo            `xml:"artistInfo"                       json:"artistInfo,omitempty"`
-	ArtistInfoTwo         *ArtistInfo            `xml:"artistInfo2"                      json:"artistInfo2,omitempty"`
-	Genres                *Genres                `xml:"genres"                           json:"genres,omitempty"`
-	PlayQueue             *PlayQueue             `xml:"playQueue"                        json:"playQueue,omitempty"`
-	JukeboxStatus         *JukeboxStatus         `xml:"jukeboxStatus"                    json:"jukeboxStatus,omitempty"`
-	JukeboxPlaylist       *JukeboxPlaylist       `xml:"jukeboxPlaylist"                  json:"jukeboxPlaylist,omitempty"`
-	Podcasts              *Podcasts              `xml:"podcasts"                         json:"podcasts,omitempty"`
-	NewestPodcasts        *NewestPodcasts        `xml:"newestPodcasts"                   json:"newestPodcasts,omitempty"`
-	Bookmarks             *Bookmarks             `xml:"bookmarks"                        json:"bookmarks,omitempty"`
-	Starred               *Starred               `xml:"starred"                          json:"starred,omitempty"`
-	StarredTwo            *StarredTwo            `xml:"starred2"                         json:"starred2,omitempty"`
-	TopSongs              *TopSongs              `xml:"topSongs"                         json:"topSongs,omitempty"`
-	SimilarSongs          *SimilarSongs          `xml:"similarSongs"                     json:"similarSongs,omitempty"`
-	SimilarSongsTwo       *SimilarSongsTwo       `xml:"similarSongs2"                    json:"similarSongs2,omitempty"`
-	InternetRadioStations *InternetRadioStations `xml:"internetRadioStations"            json:"internetRadioStations,omitempty"`
-	Lyrics                *Lyrics                `xml:"lyrics"                           json:"lyrics,omitempty"`
+	SearchResultTwo       *SearchResultTwo       `xml:"searchResult2"         json:"searchResult2,omitempty"`
+	SearchResultThree     *SearchResultThree     `xml:"searchResult3"         json:"searchResult3,omitempty"`
+	User                  *User                  `xml:"user"                  json:"user,omitempty"`
+	Playlists             *Playlists             `xml:"playlists"             json:"playlists,omitempty"`
+	Playlist              *Playlist              `xml:"playlist"              json:"playlist,omitempty"`
+	ArtistInfo            *ArtistInfo            `xml:"artistInfo"            json:"artistInfo,omitempty"`
+	ArtistInfoTwo         *ArtistInfo            `xml:"artistInfo2"           json:"artistInfo2,omitempty"`
+	AlbumInfo             *AlbumInfo             `xml:"albumInfo"             json:"albumInfo,omitempty"`
+	Genres                *Genres                `xml:"genres"                json:"genres,omitempty"`
+	PlayQueue             *PlayQueue             `xml:"playQueue"             json:"playQueue,omitempty"`
+	JukeboxStatus         *JukeboxStatus         `xml:"jukeboxStatus"         json:"jukeboxStatus,omitempty"`
+	JukeboxPlaylist       *JukeboxPlaylist       `xml:"jukeboxPlaylist"       json:"jukeboxPlaylist,omitempty"`
+	Podcasts              *Podcasts              `xml:"podcasts"              json:"podcasts,omitempty"`
+	NewestPodcasts        *NewestPodcasts        `xml:"newestPodcasts"        json:"newestPodcasts,omitempty"`
+	Bookmarks             *Bookmarks             `xml:"bookmarks"             json:"bookmarks,omitempty"`
+	Starred               *Starred               `xml:"starred"               json:"starred,omitempty"`
+	StarredTwo            *StarredTwo            `xml:"starred2"              json:"starred2,omitempty"`
+	TopSongs              *TopSongs              `xml:"topSongs"              json:"topSongs,omitempty"`
+	SimilarSongs          *SimilarSongs          `xml:"similarSongs"          json:"similarSongs,omitempty"`
+	SimilarSongsTwo       *SimilarSongsTwo       `xml:"similarSongs2"         json:"similarSongs2,omitempty"`
+	InternetRadioStations *InternetRadioStations `xml:"internetRadioStations" json:"internetRadioStations,omitempty"`
+	Lyrics                *Lyrics                `xml:"lyrics"                json:"lyrics,omitempty"`
 }
 
 func NewResponse() *Response {
@@ -303,6 +304,12 @@ type ArtistInfo struct {
 	LargeImageURL  string    `xml:"largeImageUrl"           json:"largeImageUrl"`
 	ArtistImageURL string    `xml:"artistImageUrl"          json:"artistImageUrl"` // not sure where this comes from but other clients seem to expect it
 	Similar        []*Artist `xml:"similarArtist,omitempty" json:"similarArtist,omitempty"`
+}
+
+type AlbumInfo struct {
+	Notes         string `xml:"notes"         json:"notes"`
+	MusicBrainzID string `xml:"musicBrainzId" json:"musicBrainzId"`
+	LastFMURL     string `xml:"lastFmUrl"     json:"lastFmUrl"`
 }
 
 type Genres struct {

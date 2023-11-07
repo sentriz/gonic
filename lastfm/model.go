@@ -9,6 +9,7 @@ type (
 		Session        Session        `xml:"session"`
 		Error          Error          `xml:"error"`
 		Artist         Artist         `xml:"artist"`
+		Album          Album          `xml:"album"`
 		TopTracks      TopTracks      `xml:"toptracks"`
 		SimilarTracks  SimilarTracks  `xml:"similartracks"`
 		SimilarArtists SimilarArtists `xml:"similarartists"`
@@ -59,6 +60,54 @@ type (
 			Tag []ArtistTag `xml:"tag"`
 		} `xml:"tags"`
 		Bio ArtistBio `xml:"bio"`
+	}
+
+	Album struct {
+		XMLName xml.Name `xml:"album"`
+		Name    string   `xml:"name"`
+		Artist  string   `xml:"artist"`
+		MBID    string   `xml:"mbid"`
+		URL     string   `xml:"url"`
+		Image   []struct {
+			Text string `xml:",chardata"`
+			Size string `xml:"size,attr"`
+		} `xml:"image"`
+		Listeners string `xml:"listeners"`
+		Playcount string `xml:"playcount"`
+		Tracks    struct {
+			Text  string `xml:",chardata"`
+			Track []struct {
+				Text       string `xml:",chardata"`
+				Rank       string `xml:"rank,attr"`
+				Name       string `xml:"name"`
+				URL        string `xml:"url"`
+				Duration   string `xml:"duration"`
+				Streamable struct {
+					Text      string `xml:",chardata"`
+					Fulltrack string `xml:"fulltrack,attr"`
+				} `xml:"streamable"`
+				Artist struct {
+					Text string `xml:",chardata"`
+					Name string `xml:"name"`
+					Mbid string `xml:"mbid"`
+					URL  string `xml:"url"`
+				} `xml:"artist"`
+			} `xml:"track"`
+		} `xml:"tracks"`
+		Tags struct {
+			Text string `xml:",chardata"`
+			Tag  []struct {
+				Text string `xml:",chardata"`
+				Name string `xml:"name"`
+				URL  string `xml:"url"`
+			} `xml:"tag"`
+		} `xml:"tags"`
+		Wiki struct {
+			Text      string `xml:",chardata"`
+			Published string `xml:"published"`
+			Summary   string `xml:"summary"`
+			Content   string `xml:"content"`
+		} `xml:"wiki"`
 	}
 
 	ArtistTag struct {

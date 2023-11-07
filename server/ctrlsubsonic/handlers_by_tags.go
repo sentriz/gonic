@@ -380,6 +380,38 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	return sub
 }
 
+func (c *Controller) ServeGetAlbumInfoTwo(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	id, err := params.GetID("id")
+	if err != nil {
+		return spec.NewError(10, "please provide an `id` parameter")
+	}
+
+	var album db.Album
+	err = c.dbc.
+		Where("id=?", id.Value).
+		Find(&album).
+		Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return spec.NewError(70, "album with id %q not found", id)
+	}
+
+	sub := spec.NewResponse()
+	sub.AlbumInfo = &spec.AlbumInfo{}
+
+	info, err := c.albumInfoCache.GetOrLookup(r.Context(), album.ID)
+	if err != nil {
+		log.Printf("error fetching album info from lastfm: %v", err)
+		return sub
+	}
+
+	sub.AlbumInfo.Notes = info.Notes
+	sub.AlbumInfo.MusicBrainzID = info.MusicBrainzID
+	sub.AlbumInfo.LastFMURL = info.LastFMURL
+
+	return sub
+}
+
 func (c *Controller) ServeGetGenres(_ *http.Request) *spec.Response {
 	var genres []*db.Genre
 	c.dbc.

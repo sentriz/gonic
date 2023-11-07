@@ -69,6 +69,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202310252205", migrateAlbumTagArtistString),
 		construct(ctx, "202310281803", migrateTrackArtists),
 		construct(ctx, "202311062259", migrateArtistAppearances),
+		construct(ctx, "202311072309", migrateAlbumInfo),
 	}
 
 	return gormigrate.
@@ -778,4 +779,11 @@ func migrateArtistAppearances(tx *gorm.DB, _ MigrationContext) error {
 	}
 
 	return nil
+}
+
+func migrateAlbumInfo(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(
+		AlbumInfo{},
+	).
+		Error
 }

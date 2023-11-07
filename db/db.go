@@ -574,6 +574,15 @@ func (p *ArtistInfo) SetSimilarArtists(items []string) { p.SimilarArtists = stri
 func (p *ArtistInfo) GetTopTracks() []string      { return strings.Split(p.TopTracks, ";") }
 func (p *ArtistInfo) SetTopTracks(items []string) { p.TopTracks = strings.Join(items, ";") }
 
+type AlbumInfo struct {
+	ID            int `gorm:"primary_key" sql:"type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	CreatedAt     time.Time
+	UpdatedAt     time.Time `gorm:"index"`
+	Notes         string
+	MusicBrainzID string
+	LastFMURL     string
+}
+
 func splitIDs(in, sep string) []specid.ID {
 	if in == "" {
 		return []specid.ID{}

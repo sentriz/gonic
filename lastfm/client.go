@@ -60,6 +60,26 @@ func (c *Client) ArtistGetInfo(artistName string) (Artist, error) {
 	return resp.Artist, nil
 }
 
+func (c *Client) AlbumGetInfo(artistName, albumName string) (Album, error) {
+	apiKey, _, err := c.keySecret()
+	if err != nil {
+		return Album{}, fmt.Errorf("get key and secret: %w", err)
+	}
+
+	params := url.Values{}
+	params.Add("method", "album.getInfo")
+	params.Add("api_key", apiKey)
+	params.Add("artist", artistName)
+	params.Add("album", albumName)
+
+	resp, err := c.makeRequest(http.MethodGet, params)
+	if err != nil {
+		return Album{}, fmt.Errorf("make request: %w", err)
+	}
+
+	return resp.Album, nil
+}
+
 func (c *Client) ArtistGetTopTracks(artistName string) (TopTracks, error) {
 	apiKey, _, err := c.keySecret()
 	if err != nil {
