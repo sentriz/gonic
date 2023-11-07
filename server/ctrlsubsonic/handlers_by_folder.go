@@ -232,11 +232,13 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 
 	// search "albums"
 	var albums []*db.Album
-	q = c.dbc.Joins("JOIN album_artists ON album_artists.album_id=albums.id")
+	q = c.dbc.
+		Joins("JOIN album_artists ON album_artists.album_id=albums.id")
 	for _, s := range queries {
 		q = q.Where(`right_path LIKE ? OR right_path_u_dec LIKE ?`, s, s)
 	}
-	q = q.Preload("AlbumStar", "user_id=?", user.ID).
+	q = q.
+		Preload("AlbumStar", "user_id=?", user.ID).
 		Preload("AlbumRating", "user_id=?", user.ID).
 		Offset(params.GetOrInt("albumOffset", 0)).
 		Limit(params.GetOrInt("albumCount", 20))

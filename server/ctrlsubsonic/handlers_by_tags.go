@@ -353,12 +353,13 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		}
 		var artist db.Artist
 		err = c.dbc.
+			Debug().
+			Preload("Info").
 			Select("artists.*, count(albums.id) album_count").
 			Where("name=?", similarName).
-			Joins("JOIN album_artists ON album_artists.artist_id=artists.id").
-			Joins("JOIN albums ON albums.id=album_artists.album_id").
+			Joins("LEFT JOIN artist_appearances ON artist_appearances.artist_id=artists.id").
+			Joins("LEFT JOIN albums ON albums.id=artist_appearances.album_id").
 			Group("artists.id").
-			Preload("Info").
 			Find(&artist).
 			Error
 		if errors.Is(err, gorm.ErrRecordNotFound) && !inclNotPresent {
@@ -448,10 +449,11 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 	// artists
 	var artists []*db.Artist
 	q := c.dbc.
+		Select("artists.*, count(albums.id) album_count").
 		Joins("JOIN artist_stars ON artist_stars.artist_id=artists.id").
 		Where("artist_stars.user_id=?", user.ID).
-		Joins("JOIN album_artists ON album_artists.artist_id=artists.id").
-		Joins("JOIN albums ON albums.id=album_artists.album_id").
+		Joins("JOIN artist_appearances ON artist_appearances.artist_id=artists.id").
+		Joins("JOIN albums ON albums.id=artist_appearances.album_id").
 		Order("artist_stars.star_date DESC").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
@@ -562,15 +564,16 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 
 	var tracks []*db.Track
 	err = c.dbc.
+		Where("tracks.tag_title IN (?)", topTrackNames).
+		Joins("JOIN track_artists ON track_artists.track_id=tracks.id").
+		Joins("JOIN artists ON artists.id=track_artists.artist_id").
+		Where("artists.id=?", artist.ID).
 		Preload("Album").
-		Joins("JOIN albums ON albums.id=tracks.album_id").
-		Joins("JOIN album_artists ON album_artists.album_id=albums.id").
-		Where("album_artists.artist_id=? AND tracks.tag_title IN (?)", artist.ID, topTrackNames).
-		Limit(count).
 		Preload("Artists").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Group("tracks.id").
+		Limit(count).
 		Find(&tracks).
 		Error
 	if err != nil {
@@ -695,8 +698,8 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 		Preload("Artists").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
-		Joins("JOIN album_artists ON album_artists.album_id=tracks.album_id").
-		Joins("JOIN artists ON artists.id=album_artists.artist_id").
+		Joins("JOIN track_artists ON track_artists.track_id=tracks.id").
+		Joins("JOIN artists ON artists.id=track_artists.artist_id").
 		Where("artists.name IN (?)", artistNames).
 		Order(gorm.Expr("random()")).
 		Group("tracks.id").
