@@ -11,7 +11,9 @@ func NewAlbumByTags(a *db.Album, artists []*db.Artist) *Album {
 	ret := &Album{
 		Created:       a.CreatedAt,
 		ID:            a.SID(),
+		Album:         a.TagTitle,
 		Name:          a.TagTitle,
+		Title:         a.TagTitle,
 		Year:          a.TagYear,
 		TrackCount:    a.ChildCount,
 		Duration:      a.Duration,
