@@ -29,18 +29,24 @@ type Info interface {
 	Year() int
 }
 
+const (
+	FallbackAlbum  = "Unknown Album"
+	FallbackArtist = "Unknown Artist"
+	FallbackGenre  = "Unknown Genre"
+)
+
 func MustAlbum(p Info) string {
 	if r := p.Album(); r != "" {
 		return r
 	}
-	return "Unknown Album"
+	return FallbackAlbum
 }
 
 func MustArtist(p Info) string {
 	if r := p.Artist(); r != "" {
 		return r
 	}
-	return "Unknown Artist"
+	return FallbackArtist
 }
 
 func MustArtists(p Info) []string {
@@ -68,7 +74,7 @@ func MustGenre(p Info) string {
 	if r := p.Genre(); r != "" {
 		return r
 	}
-	return "Unknown Genre"
+	return FallbackGenre
 }
 
 func MustGenres(p Info) []string {
