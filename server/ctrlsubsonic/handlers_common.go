@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -503,7 +504,7 @@ func getMusicFolder(musicPaths []MusicPath, p params.Params) string {
 		return ""
 	}
 	if idx < 0 || idx >= len(musicPaths) {
-		return ""
+		return os.DevNull
 	}
 	return musicPaths[idx].Path
 }
