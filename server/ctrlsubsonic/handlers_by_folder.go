@@ -160,6 +160,9 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 	case "starred":
 		q = q.Joins("JOIN album_stars ON albums.id=album_stars.album_id AND album_stars.user_id=?", user.ID)
 		q = q.Order("right_path")
+	case "highest":
+		q = q.Joins("JOIN album_ratings ON album_ratings.album_id=albums.id AND album_ratings.user_id=?", user.ID)
+		q = q.Order("album_ratings.rating DESC")
 	default:
 		return spec.NewError(10, "unknown value %q for parameter 'type'", v)
 	}
