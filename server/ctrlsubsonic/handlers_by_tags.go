@@ -25,16 +25,17 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	var artists []*db.Artist
 	q := c.dbc.
-		Select("*, count(sub.id) album_count").
-		Joins("JOIN artist_appearances ON artist_appearances.artist_id=artists.id").
-		Joins("JOIN albums sub ON sub.id=artist_appearances.album_id").
+		Select("*, count(album_artists.album_id) album_count").
+		Joins("JOIN album_artists ON album_artists.artist_id=artists.id").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
 		Preload("Info").
 		Group("artists.id").
 		Order("artists.name COLLATE NOCASE")
 	if m := getMusicFolder(c.musicPaths, params); m != "" {
-		q = q.Where("sub.root_dir=?", m)
+		q = q.
+			Joins("JOIN albums ON albums.id=album_artists.album_id").
+			Where("albums.root_dir=?", m)
 	}
 	if err := q.Find(&artists).Error; err != nil {
 		return spec.NewError(10, "error finding artists: %v", err)
