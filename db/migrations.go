@@ -70,6 +70,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202310281803", migrateTrackArtists),
 		construct(ctx, "202311062259", migrateArtistAppearances),
 		construct(ctx, "202311072309", migrateAlbumInfo),
+		construct(ctx, "202311082304", migrateTemporaryDisplayAlbumArtist),
 	}
 
 	return gormigrate.
@@ -786,4 +787,18 @@ func migrateAlbumInfo(tx *gorm.DB, _ MigrationContext) error {
 		AlbumInfo{},
 	).
 		Error
+}
+
+func migrateTemporaryDisplayAlbumArtist(tx *gorm.DB, _ MigrationContext) error {
+	// keep some things working so that people have an album.tag_artist_id until their next full scan
+	return tx.Exec(`
+		UPDATE albums
+		SET tag_album_artist=(
+			SELECT group_concat(artists.name, ', ')
+			FROM artists
+			JOIN album_artists ON album_artists.artist_id=artists.id AND album_artists.album_id=albums.id
+			GROUP BY album_artists.album_id
+		)
+		WHERE tag_album_artist=''
+	`).Error
 }
