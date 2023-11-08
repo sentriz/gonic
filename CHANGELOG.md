@@ -1,5 +1,30 @@
 # Changelog
 
+### [0.16.1](https://www.github.com/sentriz/gonic/compare/v0.16.0...v0.16.1) (2023-11-08)
+
+
+### Features
+
+* add more and unify stats ([2fdc1f4](https://www.github.com/sentriz/gonic/commit/2fdc1f41a25435f2c543ea114dd366c3c3d8394f))
+* store and expose individual track artists ([c1a34dc](https://www.github.com/sentriz/gonic/commit/c1a34dc0219b83300b427e66ef388f27a6186c9f))
+* **subsonic:** add getAlbumInfo with cache ([cc1a99f](https://www.github.com/sentriz/gonic/commit/cc1a99f03381a5afcebdbe95aaa42fb969f98b9f))
+* **subsonic:** expose all of album "name"/"title"/"album" for browse by tag and browse by folder ([2df9052](https://www.github.com/sentriz/gonic/commit/2df9052bf9862258c81a69e362c23fa35e653831)), closes [#404](https://www.github.com/sentriz/gonic/issues/404)
+* **subsonic:** expose track/album displayArtist/displayAlbumArtist ([0718aab](https://www.github.com/sentriz/gonic/commit/0718aabbacd52b7737dea606238ba64f65f2c2c6)), closes [#406](https://www.github.com/sentriz/gonic/issues/406)
+* **subsonic:** support getAlbumList/getAlbumList2 `type=highest` ([a30ee3d](https://www.github.com/sentriz/gonic/commit/a30ee3d7f91ebf24f427e7f36b6b2830299935f9)), closes [#404](https://www.github.com/sentriz/gonic/issues/404)
+
+
+### Bug Fixes
+
+* add track count to /debug/vars metrics endpoint ([69c02e8](https://www.github.com/sentriz/gonic/commit/69c02e8352c10276697184d3c24d0f3253ec8c4d)), closes [#392](https://www.github.com/sentriz/gonic/issues/392)
+* **contrib:** update config example ([d03d2dc](https://www.github.com/sentriz/gonic/commit/d03d2dc760c6c14b6f79efeca8b0111ead8912af))
+* don't panic when scan on start fails ([37e826e](https://www.github.com/sentriz/gonic/commit/37e826e02b2cdcfc2d60bc860767f7dbd89a1dcd)), closes [#399](https://www.github.com/sentriz/gonic/issues/399)
+* **metrics:** have a distinction between folders and albums ([cae3725](https://www.github.com/sentriz/gonic/commit/cae37255d68cbf493aba0bbb35dae38ca18fc4b6)), closes [#396](https://www.github.com/sentriz/gonic/issues/396)
+* **scanner:** make sure we roll back invalid parents ([ddb686b](https://www.github.com/sentriz/gonic/commit/ddb686bddc5d040912812777829e6283d15c5343)), closes [#402](https://www.github.com/sentriz/gonic/issues/402)
+* store and scrobble with real album artist info string ([fe0567a](https://www.github.com/sentriz/gonic/commit/fe0567a995dc40daeffa0460f0272b6e3af783a8))
+* **subsonic:** don't return concatenated genres strings for song/trackchilds ([f18151b](https://www.github.com/sentriz/gonic/commit/f18151b75573e6f024529ec4a134ef213dd86a78))
+* **subsonic:** songCount and albumCount in genre objects is required ([#390](https://www.github.com/sentriz/gonic/issues/390)) ([b17e76e](https://www.github.com/sentriz/gonic/commit/b17e76ea730e213d99a164c8ddff2c4b951f7f1f))
+* use conf cache-path instead of XDG_CACHE_HOME for jukebox socket ([9818523](https://www.github.com/sentriz/gonic/commit/981852317572a8c6ab357e9ce81523780801d3fe)), closes [#391](https://www.github.com/sentriz/gonic/issues/391)
+
 ## [0.16.0](https://www.github.com/sentriz/gonic/compare/v0.15.2...v0.16.0) (2023-10-09)
 
 
