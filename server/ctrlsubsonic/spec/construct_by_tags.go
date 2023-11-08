@@ -17,6 +17,7 @@ func NewAlbumByTags(a *db.Album, artists []*db.Artist) *Album {
 		Year:          a.TagYear,
 		TrackCount:    a.ChildCount,
 		Duration:      a.Duration,
+		DisplayArtist: a.TagAlbumArtist,
 		AverageRating: formatRating(a.AverageRating),
 	}
 	if a.Cover != "" {
@@ -52,16 +53,18 @@ func NewAlbumByTags(a *db.Album, artists []*db.Artist) *Album {
 
 func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 	ret := &TrackChild{
-		ID:          t.SID(),
-		ContentType: t.MIME(),
-		Suffix:      formatExt(t.Ext()),
-		ParentID:    t.AlbumSID(),
-		CreatedAt:   t.CreatedAt,
-		Size:        t.Size,
-		Title:       t.TagTitle,
-		Artist:      t.TagTrackArtist,
-		TrackNumber: t.TagTrackNumber,
-		DiscNumber:  t.TagDiscNumber,
+		ID:                 t.SID(),
+		ContentType:        t.MIME(),
+		Suffix:             formatExt(t.Ext()),
+		ParentID:           t.AlbumSID(),
+		CreatedAt:          t.CreatedAt,
+		Size:               t.Size,
+		Title:              t.TagTitle,
+		Artist:             t.TagTrackArtist,
+		DisplayArtist:      t.TagTrackArtist,
+		AlbumDisplayArtist: album.TagAlbumArtist,
+		TrackNumber:        t.TagTrackNumber,
+		DiscNumber:         t.TagDiscNumber,
 		Path: filepath.Join(
 			album.LeftPath,
 			album.RightPath,
@@ -98,6 +101,9 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 	}
 	for _, a := range t.Artists {
 		ret.Artists = append(ret.Artists, &ArtistRef{ID: a.SID(), Name: a.Name})
+	}
+	for _, a := range album.Artists {
+		ret.AlbumArtists = append(ret.AlbumArtists, &ArtistRef{ID: a.SID(), Name: a.Name})
 	}
 	return ret
 }
