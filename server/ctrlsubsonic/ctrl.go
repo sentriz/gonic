@@ -24,6 +24,8 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/transcode"
+
+	"github.com/go-ldap/ldap"
 )
 
 type CtxKey int
@@ -92,7 +94,7 @@ func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPa
 	chain := handlerutil.Chain(
 		withParams,
 		withRequiredParams,
-		withUser(dbc),
+		c.WithUser,
 	)
 
 	c.Handle("/getLicense", chain(resp(c.ServeGetLicence)))
@@ -234,25 +236,25 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 				"please provide `t` and `s`, or just `p`"))
 			return
 		}
-		user := c.DB.GetUserByName(username)
+		user := c.dbc.GetUserByName(username)
 
     newLDAPUser := false 
 		if user == nil {
 			newLDAPUser = true
 			
       // Because the user wasn't found we can now try 
-			// to use LDAP. ldapFQDN, err := c.DB.GetSetting("ldap_fqdn")
-			ldapFQDN, err := c.DB.GetSetting("ldap_fqdn")
+			// to use LDAP. ldapFQDN, err := c.dbc.GetSetting("ldap_fqdn")
+			ldapFQDN, err := c.dbc.GetSetting("ldap_fqdn")
 			
 			if ldapFQDN != "" && err == nil {
 				// The configuration page wouldn't allow these setting to not be set 
 				// while LDAP is enabled (a FQDN/IP is set).
-				bindUID, _ := c.DB.GetSetting("ldap_bind_user")
-				bindPWD, _ := c.DB.GetSetting("ldap_bind_user_password")
-				ldapPort, _ := c.DB.GetSetting("ldap_port")
-				baseDN, _ := c.DB.GetSetting("ldap_base_dn")
-				filter, _ := c.DB.GetSetting("ldap_filter")
-				tls, _ := c.DB.GetSetting("ldap_tls")
+				bindUID, _ := c.dbc.GetSetting("ldap_bind_user")
+				bindPWD, _ := c.dbc.GetSetting("ldap_bind_user_password")
+				ldapPort, _ := c.dbc.GetSetting("ldap_port")
+				baseDN, _ := c.dbc.GetSetting("ldap_base_dn")
+				filter, _ := c.dbc.GetSetting("ldap_filter")
+				tls, _ := c.dbc.GetSetting("ldap_tls")
 
 				// Now, we can try to connect to the LDAP server.
 				l, err := createLDAPconnection(tls, ldapFQDN, ldapPort)
@@ -295,7 +297,7 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 						Password: "", // no password because we want auth to fail.
 					}
 
-					if err := c.DB.Create(&user).Error; err != nil {
+					if err := c.dbc.Create(&user).Error; err != nil {
 						fmt.Println("User created via LDAP:", username)
 					}
 		    } else {
@@ -317,14 +319,14 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 		if !credsOk {
 			// Because internal authentication failed, we can now try to use LDAP, if 
 			// it was enabled by the user.
-			ldapFQDN, err := c.DB.GetSetting("ldap_fqdn")
+			ldapFQDN, err := c.dbc.GetSetting("ldap_fqdn")
 			
 			if ldapFQDN != "" && err == nil {
 				// The configuration page wouldn't allow these setting to not be set 
 				// while LDAP is enabled (a FQDN/IP is set).
-				ldapPort, _ := c.DB.GetSetting("ldap_port")
-				baseDN, _ := c.DB.GetSetting("ldap_base_dn")
-				tls, _ := c.DB.GetSetting("ldap_tls")
+				ldapPort, _ := c.dbc.GetSetting("ldap_port")
+				baseDN, _ := c.dbc.GetSetting("ldap_base_dn")
+				tls, _ := c.dbc.GetSetting("ldap_tls")
 				
 				// Now, we can try to connect to the LDAP server.
 				l, err := createLDAPconnection(tls, ldapFQDN, ldapPort)
