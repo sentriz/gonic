@@ -1,3 +1,4 @@
+//nolint:nestif
 package scanner
 
 import (
@@ -19,8 +20,7 @@ import (
 	"github.com/rainycape/unidecode"
 
 	"go.senan.xyz/gonic/db"
-	"go.senan.xyz/gonic/mime"
-	"go.senan.xyz/gonic/scanner/tags"
+	"go.senan.xyz/gonic/tags/tagcommon"
 )
 
 var (
@@ -32,15 +32,12 @@ type Scanner struct {
 	db                 *db.DB
 	musicDirs          []string
 	multiValueSettings map[Tag]MultiValueSetting
-	tagger             tags.Reader
+	tagReader          tagcommon.Reader
 	excludePattern     *regexp.Regexp
 	scanning           *int32
-	watcher            *fsnotify.Watcher
-	watchMap           map[string]string // maps watched dirs back to root music dir
-	watchDone          chan bool
 }
 
-func New(musicDirs []string, db *db.DB, multiValueSettings map[Tag]MultiValueSetting, tagger tags.Reader, excludePattern string) *Scanner {
+func New(musicDirs []string, db *db.DB, multiValueSettings map[Tag]MultiValueSetting, tagReader tagcommon.Reader, excludePattern string) *Scanner {
 	var excludePatternRegExp *regexp.Regexp
 	if excludePattern != "" {
 		excludePatternRegExp = regexp.MustCompile(excludePattern)
@@ -50,23 +47,15 @@ func New(musicDirs []string, db *db.DB, multiValueSettings map[Tag]MultiValueSet
 		db:                 db,
 		musicDirs:          musicDirs,
 		multiValueSettings: multiValueSettings,
-		tagger:             tagger,
+		tagReader:          tagReader,
 		excludePattern:     excludePatternRegExp,
 		scanning:           new(int32),
-		watchMap:           make(map[string]string),
-		watchDone:          make(chan bool),
 	}
 }
 
-func (s *Scanner) IsScanning() bool {
-	return atomic.LoadInt32(s.scanning) == 1
-}
-func (s *Scanner) StartScanning() bool {
-	return atomic.CompareAndSwapInt32(s.scanning, 0, 1)
-}
-func (s *Scanner) StopScanning() {
-	defer atomic.StoreInt32(s.scanning, 0)
-}
+func (s *Scanner) IsScanning() bool    { return atomic.LoadInt32(s.scanning) == 1 }
+func (s *Scanner) StartScanning() bool { return atomic.CompareAndSwapInt32(s.scanning, 0, 1) }
+func (s *Scanner) StopScanning()       { defer atomic.StoreInt32(s.scanning, 0) }
 
 type ScanOptions struct {
 	IsFull bool
@@ -93,7 +82,7 @@ func (s *Scanner) ScanAndClean(opts ScanOptions) (*Context, error) {
 
 	for _, dir := range s.musicDirs {
 		err := filepath.WalkDir(dir, func(absPath string, d fs.DirEntry, err error) error {
-			return s.scanCallback(c, dir, absPath, d, err)
+			return s.scanCallback(c, absPath, d, err)
 		})
 		if err != nil {
 			return nil, fmt.Errorf("walk: %w", err)
@@ -120,94 +109,82 @@ func (s *Scanner) ScanAndClean(opts ScanOptions) (*Context, error) {
 	return c, errors.Join(c.errs...)
 }
 
-func (s *Scanner) ExecuteWatch() error {
-	var err error
-	s.watcher, err = fsnotify.NewWatcher()
+func (s *Scanner) ExecuteWatch(done <-chan struct{}) error {
+	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Printf("error creating watcher: %v\n", err)
-		return err
+		return fmt.Errorf("creating watcher: %w", err)
 	}
-	defer s.watcher.Close()
+	defer watcher.Close()
 
-	t := time.NewTimer(10 * time.Second)
-	if !t.Stop() {
-		<-t.C
-	}
+	const batchInterval = 10 * time.Second
+	batchT := time.NewTimer(batchInterval)
+	batchT.Stop()
 
 	for _, dir := range s.musicDirs {
 		err := filepath.WalkDir(dir, func(absPath string, d fs.DirEntry, err error) error {
-			return s.watchCallback(dir, absPath, d, err)
+			return watchCallback(watcher, absPath, d, err)
 		})
 		if err != nil {
 			log.Printf("error watching directory tree: %v\n", err)
+			continue
 		}
 	}
 
-	scanList := map[string]struct{}{}
+	batchSeen := map[string]struct{}{}
 	for {
 		select {
-		case <-t.C:
+		case <-batchT.C:
 			if !s.StartScanning() {
-				scanList = map[string]struct{}{}
 				break
 			}
-			for dirName := range scanList {
+			for absPath := range batchSeen {
 				c := &Context{
 					seenTracks: map[int]struct{}{},
 					seenAlbums: map[int]struct{}{},
-					isFull:     false,
 				}
-				musicDirName := s.watchMap[dirName]
-				if musicDirName == "" {
-					musicDirName = s.watchMap[filepath.Dir(dirName)]
-				}
-				err = filepath.WalkDir(dirName, func(absPath string, d fs.DirEntry, err error) error {
-					return s.watchCallback(musicDirName, absPath, d, err)
+				err = filepath.WalkDir(absPath, func(absPath string, d fs.DirEntry, err error) error {
+					return watchCallback(watcher, absPath, d, err)
 				})
 				if err != nil {
 					log.Printf("error watching directory tree: %v\n", err)
+					continue
 				}
-				err = filepath.WalkDir(dirName, func(absPath string, d fs.DirEntry, err error) error {
-					return s.scanCallback(c, musicDirName, absPath, d, err)
+				err = filepath.WalkDir(absPath, func(absPath string, d fs.DirEntry, err error) error {
+					return s.scanCallback(c, absPath, d, err)
 				})
 				if err != nil {
 					log.Printf("error walking: %v", err)
+					continue
 				}
-
 			}
-			scanList = map[string]struct{}{}
 			s.StopScanning()
-		case event := <-s.watcher.Events:
-			var dirName string
+			clear(batchSeen)
+
+		case event := <-watcher.Events:
 			if event.Op&(fsnotify.Create|fsnotify.Write) == 0 {
 				break
-			}
-			if len(scanList) == 0 {
-				t.Reset(10 * time.Second)
 			}
 			fileInfo, err := os.Stat(event.Name)
 			if err != nil {
 				break
 			}
 			if fileInfo.IsDir() {
-				dirName = event.Name
+				batchSeen[event.Name] = struct{}{}
 			} else {
-				dirName = filepath.Dir(event.Name)
+				batchSeen[filepath.Dir(event.Name)] = struct{}{}
 			}
-			scanList[dirName] = struct{}{}
-		case err = <-s.watcher.Errors:
+			batchT.Reset(batchInterval)
+
+		case err = <-watcher.Errors:
 			log.Printf("error from watcher: %v\n", err)
-		case <-s.watchDone:
+
+		case <-done:
 			return nil
 		}
 	}
 }
 
-func (s *Scanner) CancelWatch() {
-	s.watchDone <- true
-}
-
-func (s *Scanner) watchCallback(dir string, absPath string, d fs.DirEntry, err error) error {
+func watchCallback(watcher *fsnotify.Watcher, absPath string, d fs.DirEntry, err error) error {
 	if err != nil {
 		return err
 	}
@@ -218,25 +195,21 @@ func (s *Scanner) watchCallback(dir string, absPath string, d fs.DirEntry, err e
 		eval, _ := filepath.EvalSymlinks(absPath)
 		return filepath.WalkDir(eval, func(subAbs string, d fs.DirEntry, err error) error {
 			subAbs = strings.Replace(subAbs, eval, absPath, 1)
-			return s.watchCallback(dir, subAbs, d, err)
+			return watchCallback(watcher, subAbs, d, err)
 		})
 	default:
 		return nil
 	}
 
-	if s.watchMap[absPath] == "" {
-		s.watchMap[absPath] = dir
-		err = s.watcher.Add(absPath)
+	if err := watcher.Add(absPath); err != nil {
+		return fmt.Errorf("add path to watcher: %w", err)
 	}
-	return err
+	return nil
 }
 
-func (s *Scanner) scanCallback(c *Context, dir string, absPath string, d fs.DirEntry, err error) error {
+func (s *Scanner) scanCallback(c *Context, absPath string, d fs.DirEntry, err error) error {
 	if err != nil {
 		c.errs = append(c.errs, err)
-		return nil
-	}
-	if dir == absPath {
 		return nil
 	}
 
@@ -246,33 +219,34 @@ func (s *Scanner) scanCallback(c *Context, dir string, absPath string, d fs.DirE
 		eval, _ := filepath.EvalSymlinks(absPath)
 		return filepath.WalkDir(eval, func(subAbs string, d fs.DirEntry, err error) error {
 			subAbs = strings.Replace(subAbs, eval, absPath, 1)
-			return s.scanCallback(c, dir, subAbs, d, err)
+			return s.scanCallback(c, subAbs, d, err)
 		})
 	default:
 		return nil
 	}
 
 	if s.excludePattern != nil && s.excludePattern.MatchString(absPath) {
-		log.Printf("excluding folder `%s`", absPath)
+		log.Printf("excluding folder %q", absPath)
 		return nil
 	}
 
-	log.Printf("processing folder `%s`", absPath)
+	log.Printf("processing folder %q", absPath)
 
-	tx := s.db.Begin()
-	if err := s.scanDir(tx, c, dir, absPath); err != nil {
-		c.errs = append(c.errs, fmt.Errorf("%q: %w", absPath, err))
-		tx.Rollback()
+	return s.db.Transaction(func(tx *db.DB) error {
+		if err := s.scanDir(tx, c, absPath); err != nil {
+			c.errs = append(c.errs, fmt.Errorf("%q: %w", absPath, err))
+			return nil
+		}
 		return nil
-	}
-	if err := tx.Commit().Error; err != nil {
-		return fmt.Errorf("commit tx: %w", err)
-	}
-
-	return nil
+	})
 }
 
-func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string) error {
+func (s *Scanner) scanDir(tx *db.DB, c *Context, absPath string) error {
+	musicDir, relPath := musicDirRelative(s.musicDirs, absPath)
+	if musicDir == absPath {
+		return nil
+	}
+
 	items, err := os.ReadDir(absPath)
 	if err != nil {
 		return err
@@ -281,9 +255,12 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string
 	var tracks []string
 	var cover string
 	for _, item := range items {
-		fullpath := filepath.Join(absPath, item.Name())
-		if s.excludePattern != nil && s.excludePattern.MatchString(fullpath) {
-			log.Printf("excluding path `%s`", fullpath)
+		absPath := filepath.Join(absPath, item.Name())
+		if s.excludePattern != nil && s.excludePattern.MatchString(absPath) {
+			log.Printf("excluding path %q", absPath)
+			continue
+		}
+		if item.IsDir() {
 			continue
 		}
 
@@ -291,13 +268,12 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string
 			cover = item.Name()
 			continue
 		}
-		if mime := mime.TypeByAudioExtension(filepath.Ext(item.Name())); mime != "" {
+		if s.tagReader.CanRead(absPath) {
 			tracks = append(tracks, item.Name())
 			continue
 		}
 	}
 
-	relPath, _ := filepath.Rel(musicDir, absPath)
 	pdir, pbasename := filepath.Split(filepath.Dir(relPath))
 	var parent db.Album
 	if err := tx.Where("root_dir=? AND left_path=? AND right_path=?", musicDir, pdir, pbasename).Assign(db.Album{RootDir: musicDir, LeftPath: pdir, RightPath: pbasename}).FirstOrCreate(&parent).Error; err != nil {
@@ -317,7 +293,7 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string
 	sort.Strings(tracks)
 	for i, basename := range tracks {
 		absPath := filepath.Join(musicDir, relPath, basename)
-		if err := s.populateTrackAndAlbumArtists(tx, c, i, &album, basename, absPath); err != nil {
+		if err := s.populateTrackAndArtists(tx, c, i, &album, basename, absPath); err != nil {
 			return fmt.Errorf("populate track %q: %w", basename, err)
 		}
 	}
@@ -325,7 +301,7 @@ func (s *Scanner) scanDir(tx *db.DB, c *Context, musicDir string, absPath string
 	return nil
 }
 
-func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, album *db.Album, basename string, absPath string) error {
+func (s *Scanner) populateTrackAndArtists(tx *db.DB, c *Context, i int, album *db.Album, basename string, absPath string) error {
 	stat, err := os.Stat(absPath)
 	if err != nil {
 		return fmt.Errorf("stating %q: %w", basename, err)
@@ -341,20 +317,24 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, alb
 		return nil
 	}
 
-	trags, err := s.tagger.Read(absPath)
+	trags, err := s.tagReader.Read(absPath)
 	if err != nil {
-		return fmt.Errorf("%v: %w", err, ErrReadingTags)
+		return fmt.Errorf("%w: %w", err, ErrReadingTags)
 	}
 
-	genreNames := parseMulti(trags, s.multiValueSettings[Genre], tags.MustGenres, tags.MustGenre)
+	genreNames := parseMulti(trags, s.multiValueSettings[Genre], tagcommon.MustGenres, tagcommon.MustGenre)
 	genreIDs, err := populateGenres(tx, genreNames)
 	if err != nil {
 		return fmt.Errorf("populate genres: %w", err)
 	}
 
-	// metadata for the album table comes only from the the first track's tags
+	// metadata for the album table comes only from the first track's tags
 	if i == 0 {
-		albumArtistNames := parseMulti(trags, s.multiValueSettings[AlbumArtist], tags.MustAlbumArtists, tags.MustAlbumArtist)
+		if err := tx.Where("album_id=?", album.ID).Delete(db.ArtistAppearances{}).Error; err != nil {
+			return fmt.Errorf("delete artist appearances: %w", err)
+		}
+
+		albumArtistNames := parseMulti(trags, s.multiValueSettings[AlbumArtist], tagcommon.MustAlbumArtists, tagcommon.MustAlbumArtist)
 		var albumArtistIDs []int
 		for _, albumArtistName := range albumArtistNames {
 			albumArtist, err := populateArtist(tx, albumArtistName)
@@ -365,6 +345,10 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, alb
 		}
 		if err := populateAlbumArtists(tx, album, albumArtistIDs); err != nil {
 			return fmt.Errorf("populate album artists: %w", err)
+		}
+
+		if err := populateArtistAppearances(tx, album, albumArtistIDs); err != nil {
+			return fmt.Errorf("populate track artists: %w", err)
 		}
 
 		if err := populateAlbum(tx, album, trags, stat.ModTime()); err != nil {
@@ -383,16 +367,34 @@ func (s *Scanner) populateTrackAndAlbumArtists(tx *db.DB, c *Context, i int, alb
 		return fmt.Errorf("populate track genres: %w", err)
 	}
 
+	trackArtistNames := parseMulti(trags, s.multiValueSettings[Artist], tagcommon.MustArtists, tagcommon.MustArtist)
+	var trackArtistIDs []int
+	for _, trackArtistName := range trackArtistNames {
+		trackArtist, err := populateArtist(tx, trackArtistName)
+		if err != nil {
+			return fmt.Errorf("populate track artist: %w", err)
+		}
+		trackArtistIDs = append(trackArtistIDs, trackArtist.ID)
+	}
+	if err := populateTrackArtists(tx, &track, trackArtistIDs); err != nil {
+		return fmt.Errorf("populate track artists: %w", err)
+	}
+
+	if err := populateArtistAppearances(tx, album, trackArtistIDs); err != nil {
+		return fmt.Errorf("populate track artists: %w", err)
+	}
+
 	c.seenTracks[track.ID] = struct{}{}
 	c.seenTracksNew++
 
 	return nil
 }
 
-func populateAlbum(tx *db.DB, album *db.Album, trags tags.Parser, modTime time.Time) error {
-	albumName := tags.MustAlbum(trags)
+func populateAlbum(tx *db.DB, album *db.Album, trags tagcommon.Info, modTime time.Time) error {
+	albumName := tagcommon.MustAlbum(trags)
 	album.TagTitle = albumName
 	album.TagTitleUDec = decoded(albumName)
+	album.TagAlbumArtist = tagcommon.MustAlbumArtist(trags)
 	album.TagBrainzID = trags.AlbumBrainzID()
 	album.TagYear = trags.Year()
 
@@ -402,7 +404,6 @@ func populateAlbum(tx *db.DB, album *db.Album, trags tags.Parser, modTime time.T
 	if err := tx.Save(&album).Error; err != nil {
 		return fmt.Errorf("saving album: %w", err)
 	}
-
 	return nil
 }
 
@@ -430,7 +431,7 @@ func populateAlbumBasics(tx *db.DB, musicDir string, parent, album *db.Album, di
 	return nil
 }
 
-func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trags tags.Parser, absPath string, size int) error {
+func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trags tagcommon.Info, absPath string, size int) error {
 	basename := filepath.Base(absPath)
 	track.Filename = basename
 	track.FilenameUDec = decoded(basename)
@@ -510,11 +511,29 @@ func populateAlbumGenres(tx *db.DB, album *db.Album, genreIDs []int) error {
 
 func populateAlbumArtists(tx *db.DB, album *db.Album, albumArtistIDs []int) error {
 	if err := tx.Where("album_id=?", album.ID).Delete(db.AlbumArtist{}).Error; err != nil {
-		return fmt.Errorf("delete old album album artists: %w", err)
+		return fmt.Errorf("delete old album artists: %w", err)
 	}
 
 	if err := tx.InsertBulkLeftMany("album_artists", []string{"album_id", "artist_id"}, album.ID, albumArtistIDs); err != nil {
 		return fmt.Errorf("insert bulk album artists: %w", err)
+	}
+	return nil
+}
+
+func populateTrackArtists(tx *db.DB, track *db.Track, trackArtistIDs []int) error {
+	if err := tx.Where("track_id=?", track.ID).Delete(db.TrackArtist{}).Error; err != nil {
+		return fmt.Errorf("delete old track artists: %w", err)
+	}
+
+	if err := tx.InsertBulkLeftMany("track_artists", []string{"track_id", "artist_id"}, track.ID, trackArtistIDs); err != nil {
+		return fmt.Errorf("insert bulk track artists: %w", err)
+	}
+	return nil
+}
+
+func populateArtistAppearances(tx *db.DB, album *db.Album, artistIDs []int) error {
+	if err := tx.InsertBulkLeftMany("artist_appearances", []string{"album_id", "artist_id"}, album.ID, artistIDs); err != nil {
+		return fmt.Errorf("insert bulk track artists: %w", err)
 	}
 	return nil
 }
@@ -536,7 +555,7 @@ func (s *Scanner) cleanTracks(c *Context) error {
 			c.tracksMissing = append(c.tracksMissing, int64(a))
 		}
 	}
-	return s.db.TransactionChunked(c.tracksMissing, func(tx *gorm.DB, chunk []int64) error {
+	return s.db.TransactionChunked(c.tracksMissing, func(tx *db.DB, chunk []int64) error {
 		return tx.Where(chunk).Delete(&db.Track{}).Error
 	})
 }
@@ -558,7 +577,7 @@ func (s *Scanner) cleanAlbums(c *Context) error {
 			c.albumsMissing = append(c.albumsMissing, int64(a))
 		}
 	}
-	return s.db.TransactionChunked(c.albumsMissing, func(tx *gorm.DB, chunk []int64) error {
+	return s.db.TransactionChunked(c.albumsMissing, func(tx *db.DB, chunk []int64) error {
 		return tx.Where(chunk).Delete(&db.Album{}).Error
 	})
 }
@@ -567,15 +586,17 @@ func (s *Scanner) cleanArtists(c *Context) error {
 	start := time.Now()
 	defer func() { log.Printf("finished clean artists in %s, %d removed", durSince(start), c.ArtistsMissing()) }()
 
-	sub := s.db.
-		Select("artists.id").
-		Model(&db.Artist{}).
-		Joins("LEFT JOIN album_artists ON album_artists.artist_id=artists.id").
-		Where("album_artists.artist_id IS NULL").
-		SubQuery()
-	q := s.db.
-		Where("artists.id IN ?", sub).
-		Delete(&db.Artist{})
+	// gorm doesn't seem to support subqueries without parens for UNION
+	q := s.db.Exec(`
+		DELETE FROM artists
+		WHERE id NOT IN (
+			SELECT artist_id FROM track_artists
+			UNION
+			SELECT artist_id FROM album_artists
+			UNION
+			SELECT artist_id FROM artist_appearances
+		)
+    `)
 	if err := q.Error; err != nil {
 		return err
 	}
@@ -583,7 +604,7 @@ func (s *Scanner) cleanArtists(c *Context) error {
 	return nil
 }
 
-func (s *Scanner) cleanGenres(c *Context) error {
+func (s *Scanner) cleanGenres(c *Context) error { //nolint:unparam
 	start := time.Now()
 	defer func() { log.Printf("finished clean genres in %s, %d removed", durSince(start), c.GenresMissing()) }()
 
@@ -675,6 +696,7 @@ type Tag uint8
 
 const (
 	Genre Tag = iota
+	Artist
 	AlbumArtist
 )
 
@@ -683,7 +705,7 @@ type MultiValueSetting struct {
 	Delim string
 }
 
-func parseMulti(parser tags.Parser, setting MultiValueSetting, getMulti func(tags.Parser) []string, get func(tags.Parser) string) []string {
+func parseMulti(parser tagcommon.Info, setting MultiValueSetting, getMulti func(tagcommon.Info) []string, get func(tagcommon.Info) string) []string {
 	var parts []string
 	switch setting.Mode {
 	case Multi:
@@ -697,4 +719,14 @@ func parseMulti(parser tags.Parser, setting MultiValueSetting, getMulti func(tag
 		parts[i] = strings.TrimSpace(parts[i])
 	}
 	return parts
+}
+
+func musicDirRelative(musicDirs []string, absPath string) (musicDir, relPath string) {
+	for _, musicDir := range musicDirs {
+		if strings.HasPrefix(absPath, musicDir) {
+			relPath, _ = filepath.Rel(musicDir, absPath)
+			return musicDir, relPath
+		}
+	}
+	return
 }

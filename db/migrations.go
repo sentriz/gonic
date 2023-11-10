@@ -2,20 +2,25 @@
 package db
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/jinzhu/gorm"
+	"go.senan.xyz/gonic/fileutil"
 	"go.senan.xyz/gonic/playlist"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"gopkg.in/gormigrate.v1"
 )
 
 type MigrationContext struct {
+	Production        bool
+	DBPath            string
 	OriginalMusicPath string
 	PlaylistsPath     string
 	PodcastsPath      string
@@ -54,11 +59,18 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202206101425", migrateUser),
 		construct(ctx, "202207251148", migrateStarRating),
 		construct(ctx, "202211111057", migratePlaylistsQueuesToFullID),
+		constructNoTx(ctx, "202212272312", backupDBPre016),
 		construct(ctx, "202304221528", migratePlaylistsToM3U),
 		construct(ctx, "202305301718", migratePlayCountToLength),
 		construct(ctx, "202307281628", migrateAlbumArtistsMany2Many),
 		construct(ctx, "202309070009", migrateDeleteArtistCoverField),
 		construct(ctx, "202309131743", migrateArtistInfo),
+		construct(ctx, "202309161411", migratePlaylistsPaths),
+		construct(ctx, "202310252205", migrateAlbumTagArtistString),
+		construct(ctx, "202310281803", migrateTrackArtists),
+		construct(ctx, "202311062259", migrateArtistAppearances),
+		construct(ctx, "202311072309", migrateAlbumInfo),
+		construct(ctx, "202311082304", migrateTemporaryDisplayAlbumArtist),
 	}
 
 	return gormigrate.
@@ -67,12 +79,18 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 }
 
 func construct(ctx MigrationContext, id string, f func(*gorm.DB, MigrationContext) error) *gormigrate.Migration {
+	return constructNoTx(ctx, id, func(db *gorm.DB, ctx MigrationContext) error {
+		return db.Transaction(func(tx *gorm.DB) error {
+			return f(tx, ctx)
+		})
+	})
+}
+
+func constructNoTx(ctx MigrationContext, id string, f func(*gorm.DB, MigrationContext) error) *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: id,
 		Migrate: func(db *gorm.DB) error {
-			tx := db.Begin()
-			defer tx.Commit()
-			if err := f(tx, ctx); err != nil {
+			if err := f(db, ctx); err != nil {
 				return fmt.Errorf("%q: %w", id, err)
 			}
 			log.Printf("migration '%s' finished", id)
@@ -353,7 +371,7 @@ func migratePublicPlaylist(tx *gorm.DB, _ MigrationContext) error {
 	if !tx.HasTable("playlists") {
 		return nil
 	}
-	return tx.AutoMigrate(_OldPlaylist{}).Error
+	return tx.AutoMigrate(__OldPlaylist{}).Error
 }
 
 func migratePodcastDropUserID(tx *gorm.DB, _ MigrationContext) error {
@@ -478,11 +496,11 @@ func migratePlaylistsToM3U(tx *gorm.DB, ctx MigrationContext) error {
 			return track.AbsPath()
 		case specid.PodcastEpisode:
 			var pe PodcastEpisode
-			tx.Where("id=?", id.Value).Find(&pe)
-			if pe.Path == "" {
+			tx.Where("id=?", id.Value).Preload("Podcast").Find(&pe)
+			if pe.Filename == "" {
 				return ""
 			}
-			return filepath.Join(ctx.PodcastsPath, pe.Path)
+			return filepath.Join(ctx.PodcastsPath, fileutil.Safe(pe.Podcast.Title), pe.Filename)
 		}
 		return ""
 	}
@@ -492,7 +510,7 @@ func migratePlaylistsToM3U(tx *gorm.DB, ctx MigrationContext) error {
 		return fmt.Errorf("create playlists store: %w", err)
 	}
 
-	var prevs []*_OldPlaylist
+	var prevs []*__OldPlaylist
 	if err := tx.Find(&prevs).Error; err != nil {
 		return fmt.Errorf("fetch old playlists: %w", err)
 	}
@@ -612,4 +630,175 @@ func migrateArtistInfo(tx *gorm.DB, _ MigrationContext) error {
 		ArtistInfo{},
 	).
 		Error
+}
+
+func migratePlaylistsPaths(tx *gorm.DB, ctx MigrationContext) error {
+	if !tx.Dialect().HasColumn("podcast_episodes", "path") {
+		return nil
+	}
+	if !tx.Dialect().HasColumn("podcasts", "image_path") {
+		return nil
+	}
+
+	step := tx.Exec(`
+			ALTER TABLE podcasts RENAME COLUMN image_path TO image
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step drop podcast_episodes path: %w", err)
+	}
+
+	step = tx.AutoMigrate(
+		Podcast{},
+		PodcastEpisode{},
+	)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step auto migrate: %w", err)
+	}
+
+	var podcasts []*Podcast
+	if err := tx.Find(&podcasts).Error; err != nil {
+		return fmt.Errorf("step load: %w", err)
+	}
+
+	for _, p := range podcasts {
+		p.Image = filepath.Base(p.Image)
+		if err := tx.Save(p).Error; err != nil {
+			return fmt.Errorf("saving podcast for cover %d: %w", p.ID, err)
+		}
+
+		oldPath, err := fileutil.First(
+			filepath.Join(ctx.PodcastsPath, fileutil.Safe(p.Title)),
+			filepath.Join(ctx.PodcastsPath, strings.ReplaceAll(p.Title, string(filepath.Separator), "_")), // old safe func
+			filepath.Join(ctx.PodcastsPath, p.Title),
+		)
+		if err != nil {
+			log.Printf("error finding old podcast path: %v. ignoring", err)
+			continue
+		}
+		newPath := filepath.Join(ctx.PodcastsPath, fileutil.Safe(p.Title))
+		p.RootDir = newPath
+		if err := tx.Save(p).Error; err != nil {
+			return fmt.Errorf("saving podcast %d: %w", p.ID, err)
+		}
+		if oldPath == newPath {
+			continue
+		}
+		if err := os.Rename(oldPath, newPath); err != nil {
+			return fmt.Errorf("rename podcast path: %w", err)
+		}
+	}
+
+	var podcastEpisodes []*PodcastEpisode
+	if err := tx.Preload("Podcast").Find(&podcastEpisodes, "status=? OR status=?", PodcastEpisodeStatusCompleted, PodcastEpisodeStatusDownloading).Error; err != nil {
+		return fmt.Errorf("step load: %w", err)
+	}
+	for _, pe := range podcastEpisodes {
+		if pe.Filename == "" {
+			continue
+		}
+		oldPath, err := fileutil.First(
+			filepath.Join(pe.Podcast.RootDir, fileutil.Safe(pe.Filename)),
+			filepath.Join(pe.Podcast.RootDir, strings.ReplaceAll(pe.Filename, string(filepath.Separator), "_")), // old safe func
+			filepath.Join(pe.Podcast.RootDir, pe.Filename),
+		)
+		if err != nil {
+			log.Printf("error finding old podcast episode path: %v. ignoring", err)
+			continue
+		}
+		newName := fileutil.Safe(filepath.Base(oldPath))
+		pe.Filename = newName
+		if err := tx.Save(pe).Error; err != nil {
+			return fmt.Errorf("saving podcast episode %d: %w", pe.ID, err)
+		}
+		newPath := filepath.Join(pe.Podcast.RootDir, newName)
+		if oldPath == newPath {
+			continue
+		}
+		if err := os.Rename(oldPath, newPath); err != nil {
+			return fmt.Errorf("rename podcast episode path: %w", err)
+		}
+	}
+
+	step = tx.Exec(`
+			ALTER TABLE podcast_episodes DROP COLUMN path
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step drop podcast_episodes path: %w", err)
+	}
+	return nil
+}
+
+func backupDBPre016(tx *gorm.DB, ctx MigrationContext) error {
+	if !ctx.Production {
+		return nil
+	}
+	return Dump(context.Background(), tx, fmt.Sprintf("%s.%d.bak", ctx.DBPath, time.Now().Unix()))
+}
+
+func migrateAlbumTagArtistString(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(Album{}).Error
+}
+
+func migrateTrackArtists(tx *gorm.DB, _ MigrationContext) error {
+	// gorms seems to want to create the table automatically without ON DELETE rules
+	step := tx.DropTableIfExists(TrackArtist{})
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step drop prev: %w", err)
+	}
+	return tx.AutoMigrate(TrackArtist{}).Error
+}
+
+func migrateArtistAppearances(tx *gorm.DB, _ MigrationContext) error {
+	// gorms seems to want to create the table automatically without ON DELETE rules
+	step := tx.DropTableIfExists(ArtistAppearances{})
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step drop prev: %w", err)
+	}
+
+	step = tx.AutoMigrate(ArtistAppearances{})
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step auto migrate: %w", err)
+	}
+
+	step = tx.Exec(`
+		INSERT INTO artist_appearances (artist_id, album_id)
+		SELECT artist_id, album_id
+		FROM album_artists
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step transfer album artists: %w", err)
+	}
+
+	step = tx.Exec(`
+		INSERT OR IGNORE INTO artist_appearances (artist_id, album_id)
+		SELECT track_artists.artist_id, tracks.album_id
+		FROM track_artists
+		JOIN tracks ON tracks.id=track_artists.track_id
+	`)
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step transfer album artists: %w", err)
+	}
+
+	return nil
+}
+
+func migrateAlbumInfo(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(
+		AlbumInfo{},
+	).
+		Error
+}
+
+func migrateTemporaryDisplayAlbumArtist(tx *gorm.DB, _ MigrationContext) error {
+	// keep some things working so that people have an album.tag_artist_id until their next full scan
+	return tx.Exec(`
+		UPDATE albums
+		SET tag_album_artist=(
+			SELECT group_concat(artists.name, ', ')
+			FROM artists
+			JOIN album_artists ON album_artists.artist_id=artists.id AND album_artists.album_id=albums.id
+			GROUP BY album_artists.album_id
+		)
+		WHERE tag_album_artist=''
+	`).Error
 }

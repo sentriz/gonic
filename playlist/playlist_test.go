@@ -8,20 +8,20 @@ import (
 )
 
 func TestPlaylist(t *testing.T) {
-	require := require.New(t)
+	t.Parallel()
 
 	tmp := t.TempDir()
 	store, err := playlist.NewStore(tmp)
-	require.NoError(err)
+	require.NoError(t, err)
 
 	playlistIDs, err := store.List()
-	require.NoError(err)
-	require.Empty(playlistIDs)
+	require.NoError(t, err)
+	require.Empty(t, playlistIDs)
 
 	for _, playlistID := range playlistIDs {
 		playlist, err := store.Read(playlistID)
-		require.NoError(err)
-		require.NotZero(playlist.UpdatedAt)
+		require.NoError(t, err)
+		require.NotZero(t, playlist.UpdatedAt)
 	}
 
 	before := playlist.Playlist{
@@ -40,18 +40,18 @@ It has multiple lines 👍
 	}
 
 	newPath := playlist.NewPath(before.UserID, before.Name)
-	require.NoError(store.Write(newPath, &before))
+	require.NoError(t, store.Write(newPath, &before))
 
 	after, err := store.Read(newPath)
-	require.NoError(err)
+	require.NoError(t, err)
 
-	require.Equal(after.UserID, before.UserID)
-	require.Equal(after.Name, before.Name)
-	require.Equal(after.Comment, before.Comment)
-	require.Equal(after.Items, before.Items)
-	require.Equal(after.IsPublic, before.IsPublic)
+	require.Equal(t, after.UserID, before.UserID)
+	require.Equal(t, after.Name, before.Name)
+	require.Equal(t, after.Comment, before.Comment)
+	require.Equal(t, after.Items, before.Items)
+	require.Equal(t, after.IsPublic, before.IsPublic)
 
 	playlistIDs, err = store.List()
-	require.NoError(err)
-	require.True(len(playlistIDs) == 1)
+	require.NoError(t, err)
+	require.True(t, len(playlistIDs) == 1)
 }

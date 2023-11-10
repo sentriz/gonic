@@ -1,13 +1,13 @@
 package spec
 
 import (
-	"jaytaylor.com/html2text"
 	"go.senan.xyz/gonic/db"
+	"jaytaylor.com/html2text"
 )
 
 func NewPodcastChannel(p *db.Podcast) *PodcastChannel {
 	desc, err := html2text.FromString(p.Description, html2text.Options{TextOnly: true})
-	if (err != nil) {
+	if err != nil {
 		desc = ""
 	}
 	ret := &PodcastChannel{
@@ -26,31 +26,34 @@ func NewPodcastChannel(p *db.Podcast) *PodcastChannel {
 	return ret
 }
 
-func NewPodcastEpisode(e *db.PodcastEpisode) *PodcastEpisode {
-	if e == nil {
+func NewPodcastEpisode(pe *db.PodcastEpisode) *PodcastEpisode {
+	if pe == nil {
 		return nil
 	}
-	desc, err := html2text.FromString(e.Description, html2text.Options{TextOnly: true})
-	if (err != nil) {
+	desc, err := html2text.FromString(pe.Description, html2text.Options{TextOnly: true})
+	if err != nil {
 		desc = ""
 	}
-	return &PodcastEpisode{
-		ID:          e.SID(),
-		StreamID:    e.SID(),
-		ContentType: e.MIME(),
-		ChannelID:   e.PodcastSID(),
-		Title:       e.Title,
+	r := &PodcastEpisode{
+		ID:          pe.SID(),
+		StreamID:    pe.SID(),
+		ContentType: pe.MIME(),
+		ChannelID:   pe.PodcastSID(),
+		Title:       pe.Title,
 		Description: desc,
-		Status:      string(e.Status),
-		CoverArt:    e.PodcastSID(),
-		PublishDate: *e.PublishDate,
+		Status:      string(pe.Status),
+		CoverArt:    pe.PodcastSID(),
+		PublishDate: *pe.PublishDate,
 		Genre:       "Podcast",
-		Duration:    e.Length,
-		Year:        e.PublishDate.Year(),
-		Suffix:      formatExt(e.Ext()),
-		BitRate:     e.Bitrate,
+		Duration:    pe.Length,
+		Year:        pe.PublishDate.Year(),
+		Suffix:      formatExt(pe.Ext()),
+		BitRate:     pe.Bitrate,
 		IsDir:       false,
-		Path:        e.Path,
-		Size:        e.Size,
+		Size:        pe.Size,
 	}
+	if pe.Podcast != nil {
+		r.Path = pe.AbsPath()
+	}
+	return r
 }

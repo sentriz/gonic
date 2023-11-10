@@ -20,12 +20,12 @@
 - on-the-fly audio transcoding and caching (requires [ffmpeg](https://ffmpeg.org/)) (thank you [spijet](https://github.com/spijet/))
 - jukebox mode (thank you [lxea](https://github.com/lxea/))
 - support for podcasts (thank you [lxea](https://github.com/lxea/))
-- pretty fast scanning (with my library of ~27k tracks, initial scan takes about 10m, and about 5s after incrementally)
+- pretty fast scanning (with my library of ~50k tracks, initial scan takes about 10m, and about 6s after incrementally)
 - multiple users, each with their own transcoding preferences, playlists, top tracks, top artists, etc.
 - [last.fm](https://www.last.fm/) scrobbling
 - [listenbrainz](https://listenbrainz.org/) scrobbling (thank you [spezifisch](https://github.com/spezifisch), [lxea](https://github.com/lxea))
 - artist similarities and biographies from the last.fm api
-- support for multi valued tags like albumartists and genres ([see more](#multi-valued-tags)
+- support for multi valued tags like albumartists and genres ([see more](#multi-valued-tags))
 - a web interface for configuration (set up last.fm, manage users, start scans, etc.)
 - support for the [album-artist](https://mkoby.com/2007/02/18/artist-versus-album-artist/) tag, to not clutter your artist list with compilation album appearances
 - written in [go](https://golang.org/), so lightweight and suitable for a raspberry pi, etc. (see ARM images below)
@@ -77,10 +77,11 @@ password can then be changed from the web interface
 | `GONIC_PODCAST_PURGE_AGE`        | `-podcast-purge-age`        | **optional** age (in days) to purge podcast episodes if not accessed                                                                                                                                                                                                              |
 | `GONIC_EXCLUDE_PATTERN`          | `-exclude-pattern`          | **optional** files matching this regex pattern will not be imported                                                                                                                                                                                                               |
 | `GONIC_MULTI_VALUE_GENRE`        | `-multi-value-genre`        | **optional** setting for multi-valued genre tags when scanning ([see more](#multi-valued-tags))                                                                                                                                                                                   |
+| `GONIC_MULTI_VALUE_ARTIST`       | `-multi-value-artist`       | **optional** setting for multi-valued artist tags when scanning ([see more](#multi-valued-tags))                                                                                                                                                                                  |
 | `GONIC_MULTI_VALUE_ALBUM_ARTIST` | `-multi-value-album-artist` | **optional** setting for multi-valued album artist tags when scanning ([see more](#multi-valued-tags))                                                                                                                                                                            |
 | `GONIC_EXPVAR`                   | `-expvar`                   | **optional** enable the /debug/vars endpoint (exposes useful debugging attributes as well as database stats)                                                                                                                                                                      |
 
-## multi valued tags
+## multi valued tags (v0.16+)
 
 gonic can support potentially multi valued tags like `genres` and `albumartists`. in both cases gonic will individual entries in its database for each.
 

@@ -1,20 +1,19 @@
+//nolint:thelper
 package mockfs
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/mattn/go-sqlite3"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/scanner"
-	"go.senan.xyz/gonic/scanner/tags"
+	"go.senan.xyz/gonic/tags/tagcommon"
 )
 
 var ErrPathNotFound = errors.New("path not found")
@@ -27,29 +26,31 @@ type MockFS struct {
 	db        *db.DB
 }
 
-func New(t testing.TB) *MockFS                        { return newMockFS(t, []string{""}, "") }
-func NewWithDirs(t testing.TB, dirs []string) *MockFS { return newMockFS(t, dirs, "") }
-func NewWithExcludePattern(t testing.TB, excludePattern string) *MockFS {
-	return newMockFS(t, []string{""}, excludePattern)
+func New(tb testing.TB) *MockFS                        { return newMockFS(tb, []string{""}, "") }
+func NewWithDirs(tb testing.TB, dirs []string) *MockFS { return newMockFS(tb, dirs, "") }
+func NewWithExcludePattern(tb testing.TB, excludePattern string) *MockFS {
+	return newMockFS(tb, []string{""}, excludePattern)
 }
 
-func newMockFS(t testing.TB, dirs []string, excludePattern string) *MockFS {
+func newMockFS(tb testing.TB, dirs []string, excludePattern string) *MockFS {
+	tb.Helper()
+
 	dbc, err := db.NewMock()
 	if err != nil {
-		t.Fatalf("create db: %v", err)
+		tb.Fatalf("create db: %v", err)
 	}
-	t.Cleanup(func() {
+	tb.Cleanup(func() {
 		if err := dbc.Close(); err != nil {
-			t.Fatalf("close db: %v", err)
+			tb.Fatalf("close db: %v", err)
 		}
 	})
 
 	if err := dbc.Migrate(db.MigrationContext{}); err != nil {
-		t.Fatalf("migrate db db: %v", err)
+		tb.Fatalf("migrate db db: %v", err)
 	}
 	dbc.LogMode(false)
 
-	tmpDir := t.TempDir()
+	tmpDir := tb.TempDir()
 
 	var absDirs []string
 	for _, dir := range dirs {
@@ -57,7 +58,7 @@ func newMockFS(t testing.TB, dirs []string, excludePattern string) *MockFS {
 	}
 	for _, absDir := range absDirs {
 		if err := os.MkdirAll(absDir, os.ModePerm); err != nil {
-			t.Fatalf("mk abs dir: %v", err)
+			tb.Fatalf("mk abs dir: %v", err)
 		}
 	}
 
@@ -66,11 +67,11 @@ func newMockFS(t testing.TB, dirs []string, excludePattern string) *MockFS {
 		scanner.AlbumArtist: {Mode: scanner.Multi},
 	}
 
-	tagReader := &tagReader{paths: map[string]*tagReaderResult{}}
+	tagReader := &tagReader{paths: map[string]*TagInfo{}}
 	scanner := scanner.New(absDirs, dbc, multiValueSettings, tagReader, excludePattern)
 
 	return &MockFS{
-		t:         t,
+		t:         tb,
 		scanner:   scanner,
 		dir:       tmpDir,
 		tagReader: tagReader,
@@ -78,10 +79,13 @@ func newMockFS(t testing.TB, dirs []string, excludePattern string) *MockFS {
 	}
 }
 
-func (m *MockFS) DB() *db.DB     { return m.db }
-func (m *MockFS) TmpDir() string { return m.dir }
+func (m *MockFS) DB() *db.DB                  { return m.db }
+func (m *MockFS) TmpDir() string              { return m.dir }
+func (m *MockFS) TagReader() tagcommon.Reader { return m.tagReader }
 
 func (m *MockFS) ScanAndClean() *scanner.Context {
+	m.t.Helper()
+
 	ctx, err := m.scanner.ScanAndClean(scanner.ScanOptions{})
 	if err != nil {
 		m.t.Fatalf("error scan and cleaning: %v", err)
@@ -90,6 +94,8 @@ func (m *MockFS) ScanAndClean() *scanner.Context {
 }
 
 func (m *MockFS) ScanAndCleanErr() (*scanner.Context, error) {
+	m.t.Helper()
+
 	return m.scanner.ScanAndClean(scanner.ScanOptions{})
 }
 
@@ -122,12 +128,11 @@ func (m *MockFS) addItems(prefix string, onlyGlob string, covers bool) {
 				}
 
 				m.AddTrack(path)
-				m.SetTags(path, func(tags *Tags) error {
+				m.SetTags(path, func(tags *TagInfo) {
 					tags.RawArtist = fmt.Sprintf("artist-%d", ar)
 					tags.RawAlbumArtist = fmt.Sprintf("artist-%d", ar)
 					tags.RawAlbum = fmt.Sprintf("album-%d", al)
 					tags.RawTitle = fmt.Sprintf("title-%d", tr)
-					return nil
 				})
 			}
 			if covers {
@@ -176,10 +181,9 @@ func (m *MockFS) SetRealAudio(path string, length int, audioPath string) {
 	if err := os.Symlink(filepath.Join(wd, audioPath), abspath); err != nil {
 		m.t.Fatalf("symlink: %v", err)
 	}
-	m.SetTags(path, func(tags *Tags) error {
+	m.SetTags(path, func(tags *TagInfo) {
 		tags.RawLength = length
 		tags.RawBitrate = 0
-		return nil
 	})
 }
 
@@ -284,18 +288,15 @@ func (m *MockFS) AddCover(path string) {
 	defer f.Close()
 }
 
-func (m *MockFS) SetTags(path string, cb func(*Tags) error) {
-	abspath := filepath.Join(m.dir, path)
-	if err := os.Chtimes(abspath, time.Time{}, time.Now()); err != nil {
+func (m *MockFS) SetTags(path string, cb func(*TagInfo)) {
+	absPath := filepath.Join(m.dir, path)
+	if err := os.Chtimes(absPath, time.Time{}, time.Now()); err != nil {
 		m.t.Fatalf("touch track: %v", err)
 	}
-	r := m.tagReader
-	if _, ok := r.paths[abspath]; !ok {
-		r.paths[abspath] = &tagReaderResult{tags: &Tags{}}
+	if _, ok := m.tagReader.paths[absPath]; !ok {
+		m.tagReader.paths[absPath] = &TagInfo{}
 	}
-	if err := cb(r.paths[abspath].tags); err != nil {
-		r.paths[abspath].err = err
-	}
+	cb(m.tagReader.paths[absPath])
 }
 
 func (m *MockFS) DumpDB(suffix ...string) {
@@ -308,104 +309,63 @@ func (m *MockFS) DumpDB(suffix ...string) {
 	p = append(p, suffix...)
 
 	destPath := filepath.Join(os.TempDir(), strings.Join(p, "-"))
-	dest, err := db.New(destPath, url.Values{})
-	if err != nil {
-		m.t.Fatalf("create dest db: %v", err)
-	}
-	defer dest.Close()
-
-	connSrc, err := m.db.DB.DB().Conn(context.Background())
-	if err != nil {
-		m.t.Fatalf("getting src raw conn: %v", err)
-	}
-	defer connSrc.Close()
-	connDest, err := dest.DB.DB().Conn(context.Background())
-	if err != nil {
-		m.t.Fatalf("getting dest raw conn: %v", err)
-	}
-	defer connDest.Close()
-
-	err = connDest.Raw(func(connDest interface{}) error {
-		return connSrc.Raw(func(connSrc interface{}) error {
-			connDestq := connDest.(*sqlite3.SQLiteConn)
-			connSrcq := connSrc.(*sqlite3.SQLiteConn)
-			bk, err := connDestq.Backup("main", connSrcq, "main")
-			if err != nil {
-				return fmt.Errorf("create backup db: %w", err)
-			}
-			for done, _ := bk.Step(-1); !done; {
-				m.t.Logf("dumping db...")
-			}
-			if err := bk.Finish(); err != nil {
-				return fmt.Errorf("finishing dump: %w", err)
-			}
-			return nil
-		})
-	})
-	if err != nil {
-		m.t.Fatalf("backing up: %v", err)
+	if err := db.Dump(context.Background(), m.db.DB, destPath); err != nil {
+		m.t.Fatalf("dumping db: %v", err)
 	}
 
 	m.t.Error(destPath)
 }
 
-type tagReaderResult struct {
-	tags *Tags
-	err  error
-}
-
 type tagReader struct {
-	paths map[string]*tagReaderResult
+	paths map[string]*TagInfo
 }
 
-func (m *tagReader) Read(abspath string) (tags.Parser, error) {
-	p, ok := m.paths[abspath]
+func (m *tagReader) CanRead(absPath string) bool {
+	stat, _ := os.Stat(absPath)
+	return stat.Mode().IsRegular()
+}
+
+func (m *tagReader) Read(absPath string) (tagcommon.Info, error) {
+	p, ok := m.paths[absPath]
 	if !ok {
 		return nil, ErrPathNotFound
 	}
-	return p.tags, p.err
+	if p.Error != nil {
+		return nil, p.Error
+	}
+	return p, nil
 }
 
-var _ tags.Reader = (*tagReader)(nil)
-
-type Tags struct {
+type TagInfo struct {
 	RawTitle        string
 	RawArtist       string
+	RawArtists      []string
 	RawAlbum        string
 	RawAlbumArtist  string
 	RawAlbumArtists []string
 	RawGenre        string
-
-	RawBitrate int
-	RawLength  int
+	RawBitrate      int
+	RawLength       int
+	Error           error
 }
 
-func (m *Tags) Title() string          { return m.RawTitle }
-func (m *Tags) BrainzID() string       { return "" }
-func (m *Tags) Artist() string         { return m.RawArtist }
-func (m *Tags) Album() string          { return m.RawAlbum }
-func (m *Tags) AlbumArtist() string    { return m.RawAlbumArtist }
-func (m *Tags) AlbumArtists() []string { return m.RawAlbumArtists }
-func (m *Tags) AlbumBrainzID() string  { return "" }
-func (m *Tags) Genre() string          { return m.RawGenre }
-func (m *Tags) Genres() []string       { return []string{m.RawGenre} }
-func (m *Tags) TrackNumber() int       { return 1 }
-func (m *Tags) DiscNumber() int        { return 1 }
-func (m *Tags) Year() int              { return 2021 }
+func (i *TagInfo) Title() string          { return i.RawTitle }
+func (i *TagInfo) BrainzID() string       { return "" }
+func (i *TagInfo) Artist() string         { return i.RawArtist }
+func (i *TagInfo) Artists() []string      { return i.RawArtists }
+func (i *TagInfo) Album() string          { return i.RawAlbum }
+func (i *TagInfo) AlbumArtist() string    { return i.RawAlbumArtist }
+func (i *TagInfo) AlbumArtists() []string { return i.RawAlbumArtists }
+func (i *TagInfo) AlbumBrainzID() string  { return "" }
+func (i *TagInfo) Genre() string          { return i.RawGenre }
+func (i *TagInfo) Genres() []string       { return []string{i.RawGenre} }
+func (i *TagInfo) TrackNumber() int       { return 1 }
+func (i *TagInfo) DiscNumber() int        { return 1 }
+func (i *TagInfo) Year() int              { return 2021 }
+func (i *TagInfo) Length() int            { return firstInt(100, i.RawLength) }
+func (i *TagInfo) Bitrate() int           { return firstInt(100, i.RawBitrate) }
 
-func (m *Tags) Length() int  { return firstInt(100, m.RawLength) }
-func (m *Tags) Bitrate() int { return firstInt(100, m.RawBitrate) }
-
-var _ tags.Parser = (*Tags)(nil)
-
-func first(or string, strs ...string) string {
-	for _, str := range strs {
-		if str != "" {
-			return str
-		}
-	}
-	return or
-}
+var _ tagcommon.Reader = (*tagReader)(nil)
 
 func firstInt(or int, ints ...int) int {
 	for _, int := range ints {

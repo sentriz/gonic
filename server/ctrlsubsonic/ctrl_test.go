@@ -1,3 +1,4 @@
+//nolint:thelper
 package ctrlsubsonic
 
 import (
@@ -8,7 +9,6 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -19,10 +19,15 @@ import (
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/mockfs"
-	"go.senan.xyz/gonic/server/ctrlbase"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/transcode"
 )
+
+func TestMain(m *testing.M) {
+	gonic.Version = ""
+	log.SetOutput(io.Discard)
+	os.Exit(m.Run())
+}
 
 var testCamelExpr = regexp.MustCompile("([a-z0-9])([A-Z])")
 
@@ -48,7 +53,7 @@ func makeGoldenPath(test string) string {
 	snake := testCamelExpr.ReplaceAllString(test, "${1}_${2}")
 	lower := strings.ToLower(snake)
 	relPath := strings.ReplaceAll(lower, "/", "_")
-	return path.Join("testdata", relPath)
+	return filepath.Join("testdata", relPath)
 }
 
 func makeHTTPMock(query url.Values) (*httptest.ResponseRecorder, *http.Request) {
@@ -78,12 +83,16 @@ func makeHTTPMockWithAdmin(query url.Values) (*httptest.ResponseRecorder, *http.
 	return rr, req
 }
 
-func runQueryCases(t *testing.T, contr *Controller, h handlerSubsonic, cases []*queryCase) {
+func runQueryCases(t *testing.T, h handlerSubsonic, cases []*queryCase) {
 	t.Helper()
 	for _, qc := range cases {
+		qc := qc
 		t.Run(qc.expectPath, func(t *testing.T) {
+			t.Helper()
+			t.Parallel()
+
 			rr, req := makeHTTPMock(qc.params)
-			contr.H(h).ServeHTTP(rr, req)
+			resp(h).ServeHTTP(rr, req)
 			body := rr.Body.String()
 			if status := rr.Code; status != http.StatusOK {
 				t.Fatalf("didn't give a 200\n%s", body)
@@ -92,7 +101,7 @@ func runQueryCases(t *testing.T, contr *Controller, h handlerSubsonic, cases []*
 			goldenPath := makeGoldenPath(t.Name())
 			goldenRegen := os.Getenv("GONIC_REGEN")
 			if goldenRegen == "*" || (goldenRegen != "" && strings.HasPrefix(t.Name(), goldenRegen)) {
-				_ = os.WriteFile(goldenPath, []byte(body), 0600)
+				_ = os.WriteFile(goldenPath, []byte(body), 0o600)
 				t.Logf("golden file %q regenerated for %s", goldenPath, t.Name())
 				t.SkipNow()
 			}
@@ -121,14 +130,13 @@ func runQueryCases(t *testing.T, contr *Controller, h handlerSubsonic, cases []*
 	}
 }
 
-func makeController(t *testing.T) *Controller                  { return makec(t, []string{""}, false) }
-func makeControllerRoots(t *testing.T, r []string) *Controller { return makec(t, r, false) }
-func makeControllerAudio(t *testing.T) *Controller             { return makec(t, []string{""}, true) }
+func makeController(tb testing.TB) *Controller                  { return makec(tb, []string{""}, false) }
+func makeControllerRoots(tb testing.TB, r []string) *Controller { return makec(tb, r, false) }
 
-func makec(t *testing.T, roots []string, audio bool) *Controller {
-	t.Helper()
+func makec(tb testing.TB, roots []string, audio bool) *Controller {
+	tb.Helper()
 
-	m := mockfs.NewWithDirs(t, roots)
+	m := mockfs.NewWithDirs(tb, roots)
 	for _, root := range roots {
 		m.AddItemsPrefixWithCovers(root)
 		if !audio {
@@ -147,18 +155,11 @@ func makec(t *testing.T, roots []string, audio bool) *Controller {
 		absRoots = append(absRoots, MusicPath{Path: filepath.Join(m.TmpDir(), root)})
 	}
 
-	base := &ctrlbase.Controller{DB: m.DB()}
 	contr := &Controller{
-		Controller: base,
-		MusicPaths: absRoots,
-		Transcoder: transcode.NewFFmpegTranscoder(),
+		dbc:        m.DB(),
+		musicPaths: absRoots,
+		transcoder: transcode.NewFFmpegTranscoder(),
 	}
 
 	return contr
-}
-
-func TestMain(m *testing.M) {
-	gonic.Version = ""
-	log.SetOutput(io.Discard)
-	os.Exit(m.Run())
 }

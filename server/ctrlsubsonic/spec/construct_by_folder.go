@@ -1,8 +1,7 @@
 package spec
 
 import (
-	"path"
-	"strings"
+	"path/filepath"
 
 	"go.senan.xyz/gonic/db"
 )
@@ -13,6 +12,8 @@ func NewAlbumByFolder(f *db.Album) *Album {
 		ID:            f.SID(),
 		IsDir:         true,
 		ParentID:      f.ParentSID(),
+		Album:         f.RightPath,
+		Name:          f.RightPath,
 		Title:         f.RightPath,
 		TrackCount:    f.ChildCount,
 		Duration:      f.Duration,
@@ -62,14 +63,13 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 		Title:       t.TagTitle,
 		TrackNumber: t.TagTrackNumber,
 		DiscNumber:  t.TagDiscNumber,
-		Path: path.Join(
+		Path: filepath.Join(
 			parent.LeftPath,
 			parent.RightPath,
 			t.Filename,
 		),
 		ParentID:      parent.SID(),
 		Duration:      t.Length,
-		Genre:         strings.Join(t.GenreStrings(), ", "),
 		Year:          parent.TagYear,
 		Bitrate:       t.Bitrate,
 		IsDir:         false,
@@ -92,23 +92,35 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 	if t.TrackRating != nil {
 		trCh.UserRating = t.TrackRating.Rating
 	}
+	if len(t.Genres) > 0 {
+		trCh.Genre = t.Genres[0].Name
+	}
+	for _, g := range t.Genres {
+		trCh.Genres = append(trCh.Genres, &GenreRef{Name: g.Name})
+	}
+	for _, a := range t.Artists {
+		trCh.Artists = append(trCh.Artists, &ArtistRef{ID: a.SID(), Name: a.Name})
+	}
 	return trCh
 }
 
-func NewTCPodcastEpisode(pe *db.PodcastEpisode, parent *db.Podcast) *TrackChild {
+func NewTCPodcastEpisode(pe *db.PodcastEpisode) *TrackChild {
 	trCh := &TrackChild{
 		ID:          pe.SID(),
 		ContentType: pe.MIME(),
 		Suffix:      pe.Ext(),
 		Size:        pe.Size,
 		Title:       pe.Title,
-		Path:        pe.Path,
-		ParentID:    parent.SID(),
+		ParentID:    pe.SID(),
 		Duration:    pe.Length,
 		Bitrate:     pe.Bitrate,
 		IsDir:       false,
 		Type:        "podcastepisode",
 		CreatedAt:   pe.CreatedAt,
+	}
+	if pe.Podcast != nil {
+		trCh.ParentID = pe.Podcast.SID()
+		trCh.Path = pe.AbsPath()
 	}
 	return trCh
 }

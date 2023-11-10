@@ -1,4 +1,4 @@
-//nolint:goconst
+//nolint:goconst,errorlint
 package scanner_test
 
 import (
@@ -26,72 +26,68 @@ func TestMain(m *testing.M) {
 
 func TestTableCounts(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
 	m := mockfs.New(t)
 
 	m.AddItems()
 	m.ScanAndClean()
 
 	var tracks int
-	assert.NoError(m.DB().Model(&db.Track{}).Count(&tracks).Error) // not all tracks
-	assert.Equal(tracks, m.NumTracks())
+	assert.NoError(t, m.DB().Model(&db.Track{}).Count(&tracks).Error) // not all tracks
+	assert.Equal(t, tracks, m.NumTracks())
 
 	var albums int
-	assert.NoError(m.DB().Model(&db.Album{}).Count(&albums).Error) // not all albums
-	assert.Equal(albums, 13)                                       // not all albums
+	assert.NoError(t, m.DB().Model(&db.Album{}).Count(&albums).Error) // not all albums
+	assert.Equal(t, albums, 13)                                       // not all albums
 
 	var artists int
-	assert.NoError(m.DB().Model(&db.Artist{}).Count(&artists).Error) // not all artists
-	assert.Equal(artists, 3)                                         // not all artists
+	assert.NoError(t, m.DB().Model(&db.Artist{}).Count(&artists).Error) // not all artists
+	assert.Equal(t, artists, 3)                                         // not all artists
 }
 
 func TestWithExcludePattern(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
 	m := mockfs.NewWithExcludePattern(t, "\\/artist-1\\/|track-0.flac$")
 
 	m.AddItems()
 	m.ScanAndClean()
 
 	var tracks int
-	assert.NoError(m.DB().Model(&db.Track{}).Count(&tracks).Error) // not all tracks
-	assert.Equal(tracks, 12)
+	assert.NoError(t, m.DB().Model(&db.Track{}).Count(&tracks).Error) // not all tracks
+	assert.Equal(t, tracks, 12)
 
 	var albums int
-	assert.NoError(m.DB().Model(&db.Album{}).Count(&albums).Error) // not all albums
-	assert.Equal(albums, 10)                                       // not all albums
+	assert.NoError(t, m.DB().Model(&db.Album{}).Count(&albums).Error) // not all albums
+	assert.Equal(t, albums, 10)                                       // not all albums
 
 	var artists int
-	assert.NoError(m.DB().Model(&db.Artist{}).Count(&artists).Error) // not all artists
-	assert.Equal(artists, 2)                                         // not all artists
+	assert.NoError(t, m.DB().Model(&db.Artist{}).Count(&artists).Error) // not all artists
+	assert.Equal(t, artists, 2)                                         // not all artists
 }
 
 func TestParentID(t *testing.T) {
 	t.Parallel()
-	require := require.New(t)
 	m := mockfs.New(t)
 
 	m.AddItems()
 	m.ScanAndClean()
 
 	var nullParentAlbums []*db.Album
-	require.NoError(m.DB().Where("parent_id IS NULL").Find(&nullParentAlbums).Error) // one parent_id=NULL which is root folder
-	require.Equal(1, len(nullParentAlbums))                                          // one parent_id=NULL which is root folder
-	require.Equal("", nullParentAlbums[0].LeftPath)
-	require.Equal(".", nullParentAlbums[0].RightPath)
+	assert.NoError(t, m.DB().Where("parent_id IS NULL").Find(&nullParentAlbums).Error) // one parent_id=NULL which is root folder
+	assert.Equal(t, 1, len(nullParentAlbums))                                          // one parent_id=NULL which is root folder
+	assert.Equal(t, "", nullParentAlbums[0].LeftPath)
+	assert.Equal(t, ".", nullParentAlbums[0].RightPath)
 
-	require.Equal(gorm.ErrRecordNotFound, m.DB().Where("id=parent_id").Find(&db.Album{}).Error) // no self-referencing albums
+	assert.Equal(t, gorm.ErrRecordNotFound, m.DB().Where("id=parent_id").Find(&db.Album{}).Error) // no self-referencing albums
 
 	var album db.Album
 	var parent db.Album
-	require.NoError(m.DB().Find(&album, "left_path=? AND right_path=?", "artist-0/", "album-0").Error) // album has parent ID
-	require.NoError(m.DB().Find(&parent, "right_path=?", "artist-0").Error)                            // album has parent ID
-	require.Equal(parent.ID, album.ParentID)                                                           // album has parent ID
+	assert.NoError(t, m.DB().Find(&album, "left_path=? AND right_path=?", "artist-0/", "album-0").Error) // album has parent ID
+	assert.NoError(t, m.DB().Find(&parent, "right_path=?", "artist-0").Error)                            // album has parent ID
+	assert.Equal(t, parent.ID, album.ParentID)                                                           // album has parent ID
 }
 
 func TestUpdatedCover(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
 	m := mockfs.New(t)
 
 	m.AddItems()
@@ -100,13 +96,12 @@ func TestUpdatedCover(t *testing.T) {
 	m.ScanAndClean()
 
 	var album db.Album
-	assert.NoError(m.DB().Where("left_path=? AND right_path=?", "artist-0/", "album-0").Find(&album).Error) // album has cover
-	assert.Equal(album.Cover, "cover.jpg")                                                                  // album has cover
+	assert.NoError(t, m.DB().Where("left_path=? AND right_path=?", "artist-0/", "album-0").Find(&album).Error) // album has cover
+	assert.Equal(t, album.Cover, "cover.jpg")                                                                  // album has cover
 }
 
 func TestCoverBeforeTracks(t *testing.T) {
 	t.Parallel()
-	require := require.New(t)
 	m := mockfs.New(t)
 
 	m.AddCover("artist-2/album-2/cover.jpg")
@@ -115,132 +110,131 @@ func TestCoverBeforeTracks(t *testing.T) {
 	m.ScanAndClean()
 
 	var album db.Album
-	require.NoError(m.DB().Where("left_path=? AND right_path=?", "artist-2/", "album-2").Find(&album).Error) // album has cover
-	require.Equal("cover.jpg", album.Cover)                                                                  // album has cover
+	assert.NoError(t, m.DB().Where("left_path=? AND right_path=?", "artist-2/", "album-2").Find(&album).Error) // album has cover
+	assert.Equal(t, "cover.jpg", album.Cover)                                                                  // album has cover
 
 	var albumArtist db.Artist
-	require.NoError(m.DB().Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Where("album_artists.album_id=?", album.ID).Find(&albumArtist).Error) // album has cover
-	require.Equal("artist-2", albumArtist.Name)                                                                                                                    // album artist
+	assert.NoError(t, m.DB().Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Where("album_artists.album_id=?", album.ID).Find(&albumArtist).Error) // album has cover
+	assert.Equal(t, "artist-2", albumArtist.Name)                                                                                                                    // album artist
 
 	var tracks []*db.Track
-	require.NoError(m.DB().Where("album_id=?", album.ID).Find(&tracks).Error) // album has tracks
-	require.Equal(3, len(tracks))                                             // album has tracks
+	assert.NoError(t, m.DB().Where("album_id=?", album.ID).Find(&tracks).Error) // album has tracks
+	assert.Equal(t, 3, len(tracks))                                             // album has tracks
 }
 
 func TestUpdatedTags(t *testing.T) {
 	t.Parallel()
-	require := require.New(t)
 	m := mockfs.New(t)
 
 	m.AddTrack("artist-10/album-10/track-10.flac")
-	m.SetTags("artist-10/album-10/track-10.flac", func(tags *mockfs.Tags) error {
+	m.SetTags("artist-10/album-10/track-10.flac", func(tags *mockfs.TagInfo) {
 		tags.RawArtist = "artist"
 		tags.RawAlbumArtist = "album-artist"
 		tags.RawAlbum = "album"
 		tags.RawTitle = "title"
-		return nil
 	})
 
 	m.ScanAndClean()
 
 	var track db.Track
-	require.NoError(m.DB().Preload("Album").Where("filename=?", "track-10.flac").Find(&track).Error) // track has tags
-	require.Equal("artist", track.TagTrackArtist)                                                    // track has tags
-	require.Equal("album", track.Album.TagTitle)                                                     // track has tags
-	require.Equal("title", track.TagTitle)                                                           // track has tags
+	assert.NoError(t, m.DB().Preload("Album").Where("filename=?", "track-10.flac").Find(&track).Error) // track has tags
+	assert.Equal(t, "artist", track.TagTrackArtist)                                                    // track has tags
+	assert.Equal(t, "album", track.Album.TagTitle)                                                     // track has tags
+	assert.Equal(t, "title", track.TagTitle)                                                           // track has tags
 
 	var trackArtistA db.Artist
-	require.NoError(m.DB().Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Where("album_artists.album_id=?", track.AlbumID).Limit(1).Find(&trackArtistA).Error) // updated has tags
-	require.Equal("album-artist", trackArtistA.Name)                                                                                                                              // track has tags
+	assert.NoError(t, m.DB().Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Where("album_artists.album_id=?", track.AlbumID).Limit(1).Find(&trackArtistA).Error) // updated has tags
+	assert.Equal(t, "album-artist", trackArtistA.Name)                                                                                                                              // track has tags
 
-	m.SetTags("artist-10/album-10/track-10.flac", func(tags *mockfs.Tags) error {
+	m.SetTags("artist-10/album-10/track-10.flac", func(tags *mockfs.TagInfo) {
 		tags.RawArtist = "artist-upd"
 		tags.RawAlbumArtist = "album-artist-upd"
 		tags.RawAlbum = "album-upd"
 		tags.RawTitle = "title-upd"
-		return nil
 	})
 
 	m.ScanAndClean()
 
 	var updated db.Track
-	require.NoError(m.DB().Preload("Album").Where("filename=?", "track-10.flac").Find(&updated).Error) // updated has tags
-	require.Equal(track.ID, updated.ID)                                                                // updated has tags
-	require.Equal("artist-upd", updated.TagTrackArtist)                                                // updated has tags
-	require.Equal("album-upd", updated.Album.TagTitle)                                                 // updated has tags
-	require.Equal("title-upd", updated.TagTitle)                                                       // updated has tags
+	assert.NoError(t, m.DB().Preload("Album").Where("filename=?", "track-10.flac").Find(&updated).Error) // updated has tags
+	assert.Equal(t, track.ID, updated.ID)                                                                // updated has tags
+	assert.Equal(t, "artist-upd", updated.TagTrackArtist)                                                // updated has tags
+	assert.Equal(t, "album-upd", updated.Album.TagTitle)                                                 // updated has tags
+	assert.Equal(t, "title-upd", updated.TagTitle)                                                       // updated has tags
 
 	var trackArtistB db.Artist
-	require.NoError(m.DB().Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Where("album_artists.album_id=?", track.AlbumID).Limit(1).Find(&trackArtistB).Error) // updated has tags
-	require.Equal("album-artist-upd", trackArtistB.Name)                                                                                                                          // updated has tags
+	assert.NoError(t, m.DB().Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Where("album_artists.album_id=?", track.AlbumID).Limit(1).Find(&trackArtistB).Error) // updated has tags
+	assert.Equal(t, "album-artist-upd", trackArtistB.Name)                                                                                                                          // updated has tags
 }
 
 // https://github.com/sentriz/gonic/issues/225
 func TestUpdatedAlbumGenre(t *testing.T) {
 	t.Parallel()
-	require := require.New(t)
 	m := mockfs.New(t)
 
 	m.AddItems()
-	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.Tags) error {
+	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.TagInfo) {
 		tags.RawGenre = "gen-a;gen-b"
-		return nil
 	})
 
 	m.ScanAndClean()
 
 	var album db.Album
-	require.NoError(m.DB().Preload("Genres").Where("left_path=? AND right_path=?", "artist-0/", "album-0").Find(&album).Error)
-	require.Equal([]string{"gen-a", "gen-b"}, album.GenreStrings())
+	assert.NoError(t, m.DB().Preload("Genres").Where("left_path=? AND right_path=?", "artist-0/", "album-0").Find(&album).Error)
+	assert.Equal(t, []string{"gen-a", "gen-b"}, genreStrings(album))
 
-	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.Tags) error {
+	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.TagInfo) {
 		tags.RawGenre = "gen-a-upd;gen-b-upd"
-		return nil
 	})
 
 	m.ScanAndClean()
 
 	var updated db.Album
-	require.NoError(m.DB().Preload("Genres").Where("left_path=? AND right_path=?", "artist-0/", "album-0").Find(&updated).Error)
-	require.Equal([]string{"gen-a-upd", "gen-b-upd"}, updated.GenreStrings())
+	assert.NoError(t, m.DB().Preload("Genres").Where("left_path=? AND right_path=?", "artist-0/", "album-0").Find(&updated).Error)
+	assert.Equal(t, []string{"gen-a-upd", "gen-b-upd"}, genreStrings(updated))
+}
+
+func genreStrings(album db.Album) []string {
+	var strs []string
+	for _, genre := range album.Genres {
+		strs = append(strs, genre.Name)
+	}
+	return strs
 }
 
 func TestDeleteAlbum(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
 	m := mockfs.New(t)
 
 	m.AddItems()
 	m.ScanAndClean()
 
-	assert.NoError(m.DB().Where("left_path=? AND right_path=?", "artist-2/", "album-2").Find(&db.Album{}).Error) // album exists
+	assert.NoError(t, m.DB().Where("left_path=? AND right_path=?", "artist-2/", "album-2").Find(&db.Album{}).Error) // album exists
 
 	m.RemoveAll("artist-2/album-2")
 	m.ScanAndClean()
 
-	assert.Equal(m.DB().Where("left_path=? AND right_path=?", "artist-2/", "album-2").Find(&db.Album{}).Error, gorm.ErrRecordNotFound) // album doesn't exist
+	assert.Equal(t, m.DB().Where("left_path=? AND right_path=?", "artist-2/", "album-2").Find(&db.Album{}).Error, gorm.ErrRecordNotFound) // album doesn't exist
 }
 
 func TestDeleteArtist(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
 	m := mockfs.New(t)
 
 	m.AddItems()
 	m.ScanAndClean()
 
-	assert.NoError(m.DB().Where("left_path=? AND right_path=?", "artist-2/", "album-2").Find(&db.Album{}).Error) // album exists
+	assert.NoError(t, m.DB().Where("left_path=? AND right_path=?", "artist-2/", "album-2").Find(&db.Album{}).Error) // album exists
 
 	m.RemoveAll("artist-2")
 	m.ScanAndClean()
 
-	assert.Equal(m.DB().Where("left_path=? AND right_path=?", "artist-2/", "album-2").Find(&db.Album{}).Error, gorm.ErrRecordNotFound) // album doesn't exist
-	assert.Equal(m.DB().Where("name=?", "artist-2").Find(&db.Artist{}).Error, gorm.ErrRecordNotFound)                                  // artist doesn't exist
+	assert.Equal(t, m.DB().Where("left_path=? AND right_path=?", "artist-2/", "album-2").Find(&db.Album{}).Error, gorm.ErrRecordNotFound) // album doesn't exist
+	assert.Equal(t, m.DB().Where("name=?", "artist-2").Find(&db.Artist{}).Error, gorm.ErrRecordNotFound)                                  // artist doesn't exist
 }
 
 func TestGenres(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
 	m := mockfs.New(t)
 
 	albumGenre := func(artist, album, genre string) error {
@@ -252,10 +246,10 @@ func TestGenres(t *testing.T) {
 			Error
 	}
 	isAlbumGenre := func(artist, album, genreName string) {
-		assert.NoError(albumGenre(artist, album, genreName))
+		assert.NoError(t, albumGenre(artist, album, genreName))
 	}
 	isAlbumGenreMissing := func(artist, album, genreName string) {
-		assert.Equal(albumGenre(artist, album, genreName), gorm.ErrRecordNotFound)
+		assert.Equal(t, albumGenre(artist, album, genreName), gorm.ErrRecordNotFound)
 	}
 
 	trackGenre := func(artist, album, filename, genreName string) error {
@@ -268,27 +262,27 @@ func TestGenres(t *testing.T) {
 			Error
 	}
 	isTrackGenre := func(artist, album, filename, genreName string) {
-		assert.NoError(trackGenre(artist, album, filename, genreName))
+		assert.NoError(t, trackGenre(artist, album, filename, genreName))
 	}
 	isTrackGenreMissing := func(artist, album, filename, genreName string) {
-		assert.Equal(trackGenre(artist, album, filename, genreName), gorm.ErrRecordNotFound)
+		assert.Equal(t, trackGenre(artist, album, filename, genreName), gorm.ErrRecordNotFound)
 	}
 
 	genre := func(genre string) error {
 		return m.DB().Where("name=?", genre).Find(&db.Genre{}).Error
 	}
 	isGenre := func(genreName string) {
-		assert.NoError(genre(genreName))
+		assert.NoError(t, genre(genreName))
 	}
 	isGenreMissing := func(genreName string) {
-		assert.Equal(genre(genreName), gorm.ErrRecordNotFound)
+		assert.Equal(t, genre(genreName), gorm.ErrRecordNotFound)
 	}
 
 	m.AddItems()
-	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.Tags) error { tags.RawGenre = "genre-a;genre-b"; return nil })
-	m.SetTags("artist-0/album-0/track-1.flac", func(tags *mockfs.Tags) error { tags.RawGenre = "genre-c;genre-d"; return nil })
-	m.SetTags("artist-1/album-2/track-0.flac", func(tags *mockfs.Tags) error { tags.RawGenre = "genre-e;genre-f"; return nil })
-	m.SetTags("artist-1/album-2/track-1.flac", func(tags *mockfs.Tags) error { tags.RawGenre = "genre-g;genre-h"; return nil })
+	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.TagInfo) { tags.RawGenre = "genre-a;genre-b" })
+	m.SetTags("artist-0/album-0/track-1.flac", func(tags *mockfs.TagInfo) { tags.RawGenre = "genre-c;genre-d" })
+	m.SetTags("artist-1/album-2/track-0.flac", func(tags *mockfs.TagInfo) { tags.RawGenre = "genre-e;genre-f" })
+	m.SetTags("artist-1/album-2/track-1.flac", func(tags *mockfs.TagInfo) { tags.RawGenre = "genre-g;genre-h" })
 	m.ScanAndClean()
 
 	isGenre("genre-a") // genre exists
@@ -308,7 +302,7 @@ func TestGenres(t *testing.T) {
 	isAlbumGenre("artist-0/", "album-0", "genre-a") // album genre exists
 	isAlbumGenre("artist-0/", "album-0", "genre-b") // album genre exists
 
-	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.Tags) error { tags.RawGenre = "genre-aa;genre-bb"; return nil })
+	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.TagInfo) { tags.RawGenre = "genre-aa;genre-bb" })
 	m.ScanAndClean()
 
 	isTrackGenre("artist-0/", "album-0", "track-0.flac", "genre-aa")       // updated track genre exists
@@ -325,7 +319,6 @@ func TestGenres(t *testing.T) {
 
 func TestMultiFolders(t *testing.T) {
 	t.Parallel()
-	require := require.New(t)
 	m := mockfs.NewWithDirs(t, []string{"m-1", "m-2", "m-3"})
 
 	m.AddItemsPrefix("m-1")
@@ -334,13 +327,13 @@ func TestMultiFolders(t *testing.T) {
 	m.ScanAndClean()
 
 	var rootDirs []*db.Album
-	require.NoError(m.DB().Where("parent_id IS NULL").Find(&rootDirs).Error)
-	require.Equal(3, len(rootDirs))
+	assert.NoError(t, m.DB().Where("parent_id IS NULL").Find(&rootDirs).Error)
+	assert.Equal(t, 3, len(rootDirs))
 	for i, r := range rootDirs {
-		require.Equal(filepath.Join(m.TmpDir(), fmt.Sprintf("m-%d", i+1)), r.RootDir)
-		require.Equal(0, r.ParentID)
-		require.Equal("", r.LeftPath)
-		require.Equal(".", r.RightPath)
+		assert.Equal(t, filepath.Join(m.TmpDir(), fmt.Sprintf("m-%d", i+1)), r.RootDir)
+		assert.Equal(t, 0, r.ParentID)
+		assert.Equal(t, "", r.LeftPath)
+		assert.Equal(t, ".", r.RightPath)
 	}
 
 	m.AddCover("m-3/artist-0/album-0/cover.jpg")
@@ -348,7 +341,7 @@ func TestMultiFolders(t *testing.T) {
 	m.LogItems()
 
 	checkCover := func(root string, q string) {
-		require.NoError(m.DB().Where(q, filepath.Join(m.TmpDir(), root)).Find(&db.Album{}).Error)
+		assert.NoError(t, m.DB().Where(q, filepath.Join(m.TmpDir(), root)).Find(&db.Album{}).Error)
 	}
 
 	checkCover("m-1", "root_dir=? AND cover IS NULL")     // mf 1 no cover
@@ -358,7 +351,6 @@ func TestMultiFolders(t *testing.T) {
 
 func TestNewAlbumForExistingArtist(t *testing.T) {
 	t.Parallel()
-	require := require.New(t)
 	m := mockfs.New(t)
 
 	m.AddItems()
@@ -368,80 +360,76 @@ func TestNewAlbumForExistingArtist(t *testing.T) {
 	m.LogArtists()
 
 	var artist db.Artist
-	require.NoError(m.DB().Where("name=?", "artist-2").Find(&artist).Error) // find orig artist
-	require.Greater(artist.ID, 0)
+	assert.NoError(t, m.DB().Where("name=?", "artist-2").Find(&artist).Error) // find orig artist
+	assert.Greater(t, artist.ID, 0)
 
 	for tr := 0; tr < 3; tr++ {
 		m.AddTrack(fmt.Sprintf("artist-2/new-album/track-%d.mp3", tr))
-		m.SetTags(fmt.Sprintf("artist-2/new-album/track-%d.mp3", tr), func(tags *mockfs.Tags) error {
+		m.SetTags(fmt.Sprintf("artist-2/new-album/track-%d.mp3", tr), func(tags *mockfs.TagInfo) {
 			tags.RawArtist = "artist-2"
 			tags.RawAlbumArtist = "artist-2"
 			tags.RawAlbum = "new-album"
 			tags.RawTitle = fmt.Sprintf("title-%d", tr)
-			return nil
 		})
 	}
 
 	var updated db.Artist
-	require.NoError(m.DB().Where("name=?", "artist-2").Find(&updated).Error) // find updated artist
-	require.Equal(updated.ID, artist.ID)                                     // find updated artist
+	assert.NoError(t, m.DB().Where("name=?", "artist-2").Find(&updated).Error) // find updated artist
+	assert.Equal(t, updated.ID, artist.ID)                                     // find updated artist
 
 	var all []*db.Artist
-	require.NoError(m.DB().Find(&all).Error) // still only 3?
-	require.Equal(3, len(all))               // still only 3?
+	assert.NoError(t, m.DB().Find(&all).Error) // still only 3?
+	assert.Equal(t, 3, len(all))               // still only 3?
 }
 
 func TestMultiFolderWithSharedArtist(t *testing.T) {
 	t.Parallel()
-	require := require.New(t)
 	m := mockfs.NewWithDirs(t, []string{"m-0", "m-1"})
 
 	const artistName = "artist-a"
 
 	m.AddTrack(fmt.Sprintf("m-0/%s/album-a/track-1.flac", artistName))
-	m.SetTags(fmt.Sprintf("m-0/%s/album-a/track-1.flac", artistName), func(tags *mockfs.Tags) error {
+	m.SetTags(fmt.Sprintf("m-0/%s/album-a/track-1.flac", artistName), func(tags *mockfs.TagInfo) {
 		tags.RawArtist = artistName
 		tags.RawAlbumArtist = artistName
 		tags.RawAlbum = "album-a"
 		tags.RawTitle = "track-1"
-		return nil
 	})
 	m.ScanAndClean()
 
 	m.AddTrack(fmt.Sprintf("m-1/%s/album-a/track-1.flac", artistName))
-	m.SetTags(fmt.Sprintf("m-1/%s/album-a/track-1.flac", artistName), func(tags *mockfs.Tags) error {
+	m.SetTags(fmt.Sprintf("m-1/%s/album-a/track-1.flac", artistName), func(tags *mockfs.TagInfo) {
 		tags.RawArtist = artistName
 		tags.RawAlbumArtist = artistName
 		tags.RawAlbum = "album-a"
 		tags.RawTitle = "track-1"
-		return nil
 	})
 	m.ScanAndClean()
 
 	var artist db.Artist
-	require.NoError(m.DB().Where("name=?", artistName).First(&artist).Error)
-	require.Equal(artistName, artist.Name)
+	assert.NoError(t, m.DB().Where("name=?", artistName).First(&artist).Error)
+	assert.Equal(t, artistName, artist.Name)
 
 	var artistAlbums []*db.Album
-	require.NoError(m.DB().
+	assert.NoError(t, m.DB().
 		Select("*, count(sub.id) child_count, sum(sub.length) duration").
 		Joins("JOIN album_artists ON album_artists.album_id=albums.id").
 		Joins("LEFT JOIN tracks sub ON albums.id=sub.album_id").
 		Where("album_artists.artist_id=?", artist.ID).
 		Group("albums.id").
 		Find(&artistAlbums).Error)
-	require.Equal(2, len(artistAlbums))
+
+	assert.Equal(t, 2, len(artistAlbums))
 
 	for _, album := range artistAlbums {
-		require.Greater(album.TagYear, 0)
-		require.Greater(album.ChildCount, 0)
-		require.Greater(album.Duration, 0)
+		assert.Greater(t, album.TagYear, 0)
+		assert.Greater(t, album.ChildCount, 0)
+		assert.Greater(t, album.Duration, 0)
 	}
 }
 
 func TestSymlinkedAlbum(t *testing.T) {
 	t.Parallel()
-	require := require.New(t)
 	m := mockfs.NewWithDirs(t, []string{"scan"})
 
 	m.AddItemsPrefixWithCovers("temp")
@@ -455,31 +443,29 @@ func TestSymlinkedAlbum(t *testing.T) {
 	m.LogAlbums()
 
 	var track db.Track
-	require.NoError(m.DB().Preload("Album.Parent").Find(&track).Error) // track exists
-	require.NotNil(track.Album)                                        // track has album
-	require.NotZero(track.Album.Cover)                                 // album has cover
-	require.Equal("artist-sym", track.Album.Parent.RightPath)          // artist is sym
+	require.NoError(t, m.DB().Preload("Album.Parent").Find(&track).Error) // track exists
+	require.NotNil(t, track.Album)                                        // track has album
+	require.NotZero(t, track.Album.Cover)                                 // album has cover
+	require.Equal(t, "artist-sym", track.Album.Parent.RightPath)          // artist is sym
 
 	info, err := os.Stat(track.AbsPath())
-	require.NoError(err)            // track resolves
-	require.False(info.IsDir())     // track resolves
-	require.NotZero(info.ModTime()) // track resolves
+	require.NoError(t, err)            // track resolves
+	require.False(t, info.IsDir())     // track resolves
+	require.NotZero(t, info.ModTime()) // track resolves
 }
 
 func TestSymlinkedSubdiscs(t *testing.T) {
 	t.Parallel()
-	require := require.New(t)
 	m := mockfs.NewWithDirs(t, []string{"scan"})
 
 	addItem := func(prefix, artist, album, disc, track string) {
 		p := fmt.Sprintf("%s/%s/%s/%s/%s", prefix, artist, album, disc, track)
 		m.AddTrack(p)
-		m.SetTags(p, func(tags *mockfs.Tags) error {
+		m.SetTags(p, func(tags *mockfs.TagInfo) {
 			tags.RawArtist = artist
 			tags.RawAlbumArtist = artist
 			tags.RawAlbum = album
 			tags.RawTitle = track
-			return nil
 		})
 	}
 
@@ -499,51 +485,66 @@ func TestSymlinkedSubdiscs(t *testing.T) {
 	m.LogAlbums()
 
 	var track db.Track
-	require.NoError(m.DB().Preload("Album.Parent").Find(&track).Error) // track exists
-	require.NotNil(track.Album)                                        // track has album
-	require.Equal("album-sym", track.Album.Parent.RightPath)           // artist is sym
+	assert.NoError(t, m.DB().Preload("Album.Parent").Find(&track).Error) // track exists
+	assert.NotNil(t, track.Album)                                        // track has album
+	assert.Equal(t, "album-sym", track.Album.Parent.RightPath)           // artist is sym
 
 	info, err := os.Stat(track.AbsPath())
-	require.NoError(err)            // track resolves
-	require.False(info.IsDir())     // track resolves
-	require.NotZero(info.ModTime()) // track resolves
+	assert.NoError(t, err)            // track resolves
+	assert.False(t, info.IsDir())     // track resolves
+	assert.NotZero(t, info.ModTime()) // track resolves
+}
+
+func TestSymlinkEscapesMusicDirs(t *testing.T) {
+	t.Parallel()
+	m := mockfs.NewWithDirs(t, []string{"scandir"})
+
+	require.NoError(t, os.MkdirAll(filepath.Join(m.TmpDir(), "otherdir", "artist", "album-test"), os.ModePerm))
+	require.NoError(t, os.Symlink(
+		filepath.Join(m.TmpDir(), "otherdir", "artist"),
+		filepath.Join(m.TmpDir(), "scandir", "artist"),
+	))
+
+	m.ScanAndClean()
+
+	var albums []*db.Album
+	require.NoError(t, m.DB().Find(&albums).Error)
+	require.Len(t, albums, 3)
 }
 
 func TestTagErrors(t *testing.T) {
 	t.Parallel()
-	require := require.New(t)
 	m := mockfs.New(t)
 
 	m.AddItemsWithCovers()
-	m.SetTags("artist-1/album-0/track-0.flac", func(tags *mockfs.Tags) error {
-		return scanner.ErrReadingTags
+	m.SetTags("artist-1/album-0/track-0.flac", func(tags *mockfs.TagInfo) {
+		tags.Error = scanner.ErrReadingTags
 	})
-	m.SetTags("artist-1/album-1/track-0.flac", func(tags *mockfs.Tags) error {
-		return scanner.ErrReadingTags
+	m.SetTags("artist-1/album-1/track-0.flac", func(tags *mockfs.TagInfo) {
+		tags.Error = scanner.ErrReadingTags
 	})
 
 	ctx, err := m.ScanAndCleanErr()
 	errs, ok := err.(interface{ Unwrap() []error })
-	require.True(ok)
+	assert.True(t, ok)
 
-	require.ErrorAs(err, &errs)
-	require.Equal(2, len(errs.Unwrap()))                    // we have 2 dir errors
-	require.Equal(m.NumTracks()-(3*2), ctx.SeenTracks())    // we saw all tracks bar 2 album contents
-	require.Equal(m.NumTracks()-(3*2), ctx.SeenTracksNew()) // we have all tracks bar 2 album contents
+	assert.ErrorAs(t, err, &errs)
+	assert.Equal(t, 2, len(errs.Unwrap()))                    // we have 2 dir errors
+	assert.Equal(t, m.NumTracks()-(3*2), ctx.SeenTracks())    // we saw all tracks bar 2 album contents
+	assert.Equal(t, m.NumTracks()-(3*2), ctx.SeenTracksNew()) // we have all tracks bar 2 album contents
 
 	ctx, err = m.ScanAndCleanErr()
 	errs, ok = err.(interface{ Unwrap() []error })
-	require.True(ok)
+	assert.True(t, ok)
 
-	require.Equal(2, len(errs.Unwrap()))                 // we have 2 dir errors
-	require.Equal(m.NumTracks()-(3*2), ctx.SeenTracks()) // we saw all tracks bar 2 album contents
-	require.Equal(0, ctx.SeenTracksNew())                // we have no new tracks
+	assert.Equal(t, 2, len(errs.Unwrap()))                 // we have 2 dir errors
+	assert.Equal(t, m.NumTracks()-(3*2), ctx.SeenTracks()) // we saw all tracks bar 2 album contents
+	assert.Equal(t, 0, ctx.SeenTracksNew())                // we have no new tracks
 }
 
 // https://github.com/sentriz/gonic/issues/185#issuecomment-1050092128
 func TestCompilationAlbumWithoutAlbumArtist(t *testing.T) {
 	t.Parallel()
-	require := require.New(t)
 	m := mockfs.New(t)
 
 	const pathArtist = "various-artists"
@@ -554,62 +555,59 @@ func TestCompilationAlbumWithoutAlbumArtist(t *testing.T) {
 	for i := 0; i < toAdd; i++ {
 		p := fmt.Sprintf("%s/%s/track-%d.flac", pathArtist, pathAlbum, i)
 		m.AddTrack(p)
-		m.SetTags(p, func(tags *mockfs.Tags) error {
+		m.SetTags(p, func(tags *mockfs.TagInfo) {
 			// don't set an album artist
 			tags.RawTitle = fmt.Sprintf("track %d", i)
 			tags.RawArtist = fmt.Sprintf("artist %d", i)
 			tags.RawAlbum = pathArtist
-			return nil
 		})
 	}
 
 	m.ScanAndClean()
 
 	var trackCount int
-	require.NoError(m.DB().Model(&db.Track{}).Count(&trackCount).Error)
-	require.Equal(5, trackCount)
+	assert.NoError(t, m.DB().Model(&db.Track{}).Count(&trackCount).Error)
+	assert.Equal(t, 5, trackCount)
 
 	var artists []*db.Artist
-	require.NoError(m.DB().Find(&artists).Error)
-	require.Equal(1, len(artists))             // we only have one album artist
-	require.Equal("artist 0", artists[0].Name) // it came from the first track's fallback to artist tag
+	assert.NoError(t, m.DB().Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Group("artists.id").Find(&artists).Error)
+	assert.Equal(t, 1, len(artists))             // we only have one album artist
+	assert.Equal(t, "artist 0", artists[0].Name) // it came from the first track's fallback to artist tag
 
 	var artistAlbums []*db.Album
-	require.NoError(m.DB().Joins("JOIN album_artists ON album_artists.album_id=albums.id").Where("album_artists.artist_id=?", artists[0].ID).Find(&artistAlbums).Error)
-	require.Equal(1, len(artistAlbums)) // the artist has one album
-	require.Equal(pathAlbum, artistAlbums[0].RightPath)
-	require.Equal(pathArtist+"/", artistAlbums[0].LeftPath)
+	assert.NoError(t, m.DB().Joins("JOIN album_artists ON album_artists.album_id=albums.id").Where("album_artists.artist_id=?", artists[0].ID).Find(&artistAlbums).Error)
+	assert.Equal(t, 1, len(artistAlbums)) // the artist has one album
+	assert.Equal(t, pathAlbum, artistAlbums[0].RightPath)
+	assert.Equal(t, pathArtist+"/", artistAlbums[0].LeftPath)
 }
 
 func TestIncrementalScanNoChangeNoUpdatedAt(t *testing.T) {
 	t.Parallel()
-	require := require.New(t)
 	m := mockfs.New(t)
 
 	m.AddItems()
 
 	m.ScanAndClean()
 	var albumA db.Album
-	require.NoError(m.DB().Joins("JOIN album_artists ON album_artists.album_id=albums.id").Order("updated_at DESC").Find(&albumA).Error)
+	assert.NoError(t, m.DB().Joins("JOIN album_artists ON album_artists.album_id=albums.id").Order("updated_at DESC").Find(&albumA).Error)
 
 	m.ScanAndClean()
 	var albumB db.Album
-	require.NoError(m.DB().Joins("JOIN album_artists ON album_artists.album_id=albums.id").Order("updated_at DESC").Find(&albumB).Error)
+	assert.NoError(t, m.DB().Joins("JOIN album_artists ON album_artists.album_id=albums.id").Order("updated_at DESC").Find(&albumB).Error)
 
-	require.Equal(albumB.UpdatedAt, albumA.UpdatedAt)
+	assert.Equal(t, albumB.UpdatedAt, albumA.UpdatedAt)
 }
 
 // https://github.com/sentriz/gonic/issues/230
 func TestAlbumAndArtistSameNameWeirdness(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
 	m := mockfs.New(t)
 
 	const name = "same"
 
 	add := func(path string, a ...interface{}) {
 		m.AddTrack(fmt.Sprintf(path, a...))
-		m.SetTags(fmt.Sprintf(path, a...), func(tags *mockfs.Tags) error { return nil })
+		m.SetTags(fmt.Sprintf(path, a...), func(tags *mockfs.TagInfo) {})
 	}
 
 	add("an-artist/%s/track-1.flac", name)
@@ -620,20 +618,19 @@ func TestAlbumAndArtistSameNameWeirdness(t *testing.T) {
 	m.ScanAndClean()
 
 	var albums []*db.Album
-	assert.NoError(m.DB().Find(&albums).Error)
-	assert.Equal(len(albums), 5) // root, 2 artists, 2 albums
+	assert.NoError(t, m.DB().Find(&albums).Error)
+	assert.Equal(t, len(albums), 5) // root, 2 artists, 2 albums
 }
 
 func TestNoOrphanedGenres(t *testing.T) {
 	t.Parallel()
-	require := assert.New(t)
 	m := mockfs.New(t)
 
 	m.AddItems()
-	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.Tags) error { tags.RawGenre = "genre-a;genre-b"; return nil })
-	m.SetTags("artist-0/album-0/track-1.flac", func(tags *mockfs.Tags) error { tags.RawGenre = "genre-c;genre-d"; return nil })
-	m.SetTags("artist-1/album-2/track-0.flac", func(tags *mockfs.Tags) error { tags.RawGenre = "genre-e;genre-f"; return nil })
-	m.SetTags("artist-1/album-2/track-1.flac", func(tags *mockfs.Tags) error { tags.RawGenre = "genre-g;genre-h"; return nil })
+	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.TagInfo) { tags.RawGenre = "genre-a;genre-b" })
+	m.SetTags("artist-0/album-0/track-1.flac", func(tags *mockfs.TagInfo) { tags.RawGenre = "genre-c;genre-d" })
+	m.SetTags("artist-1/album-2/track-0.flac", func(tags *mockfs.TagInfo) { tags.RawGenre = "genre-e;genre-f" })
+	m.SetTags("artist-1/album-2/track-1.flac", func(tags *mockfs.TagInfo) { tags.RawGenre = "genre-g;genre-h" })
 	m.ScanAndClean()
 
 	m.RemoveAll("artist-0")
@@ -642,46 +639,42 @@ func TestNoOrphanedGenres(t *testing.T) {
 	m.ScanAndClean()
 
 	var genreCount int
-	require.NoError(m.DB().Model(&db.Genre{}).Count(&genreCount).Error)
-	require.Equal(0, genreCount)
+	assert.NoError(t, m.DB().Model(&db.Genre{}).Count(&genreCount).Error)
+	assert.Equal(t, 0, genreCount)
 }
 
 func TestMultiArtistSupport(t *testing.T) {
 	t.Parallel()
-	require := assert.New(t)
 	m := mockfs.New(t)
 
 	m.AddItemsGlob("artist-0/album-[012]/track-0.*")
-	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.Tags) error {
+	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.TagInfo) {
 		tags.RawAlbum = "Mutator"
 		tags.RawAlbumArtists = []string{"Alan Vega", "Liz Lamere"}
-		return nil
 	})
-	m.SetTags("artist-0/album-1/track-0.flac", func(tags *mockfs.Tags) error {
+	m.SetTags("artist-0/album-1/track-0.flac", func(tags *mockfs.TagInfo) {
 		tags.RawAlbum = "Dead Man"
 		tags.RawAlbumArtists = []string{"Alan Vega", "Mercury Rev"}
-		return nil
 	})
-	m.SetTags("artist-0/album-2/track-0.flac", func(tags *mockfs.Tags) error {
+	m.SetTags("artist-0/album-2/track-0.flac", func(tags *mockfs.TagInfo) {
 		tags.RawAlbum = "Yerself Is Steam"
 		tags.RawAlbumArtist = "Mercury Rev"
-		return nil
 	})
 
 	m.ScanAndClean()
 
 	var artists []*db.Artist
-	require.NoError(m.DB().Find(&artists).Error)
-	require.Len(artists, 3) // alan, liz, mercury
+	assert.NoError(t, m.DB().Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Group("artists.id").Find(&artists).Error)
+	assert.Len(t, artists, 3) // alan, liz, mercury
 
 	var albumArtists []*db.AlbumArtist
-	require.NoError(m.DB().Find(&albumArtists).Error)
-	require.Len(albumArtists, 5)
+	assert.NoError(t, m.DB().Find(&albumArtists).Error)
+	assert.Len(t, albumArtists, 5)
 
 	type row struct{ Artist, Albums string }
 	state := func() []row {
 		var table []row
-		require.NoError(m.DB().
+		assert.NoError(t, m.DB().
 			Select("artists.name artist, group_concat(albums.tag_title, ';') albums").
 			Model(db.Artist{}).
 			Joins("JOIN album_artists ON album_artists.artist_id=artists.id").
@@ -690,94 +683,107 @@ func TestMultiArtistSupport(t *testing.T) {
 			Group("artists.id").
 			Scan(&table).
 			Error)
+
 		return table
 	}
 
-	require.Equal(
+	assert.Equal(t,
 		[]row{
 			{"Alan Vega", "Mutator;Dead Man"},
 			{"Liz Lamere", "Mutator"},
 			{"Mercury Rev", "Dead Man;Yerself Is Steam"},
 		},
-		state(),
-	)
+		state())
 
 	m.RemoveAll("artist-0/album-2")
-	m.SetTags("artist-0/album-1/track-0.flac", func(tags *mockfs.Tags) error {
+	m.SetTags("artist-0/album-1/track-0.flac", func(tags *mockfs.TagInfo) {
 		tags.RawAlbum = "Dead Man"
 		tags.RawAlbumArtists = []string{"Alan Vega"}
-		return nil
 	})
 
 	m.ScanAndClean()
 
-	require.NoError(m.DB().Find(&artists).Error)
-	require.Len(artists, 2) // alan, liz
+	assert.NoError(t, m.DB().Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Group("artists.id").Find(&artists).Error)
+	assert.Len(t, artists, 2) // alan, liz
 
-	require.NoError(m.DB().Find(&albumArtists).Error)
-	require.Len(albumArtists, 3)
+	assert.NoError(t, m.DB().Find(&albumArtists).Error)
+	assert.Len(t, albumArtists, 3)
 
-	require.Equal(
+	assert.Equal(t,
 		[]row{
 			{"Alan Vega", "Mutator;Dead Man"},
 			{"Liz Lamere", "Mutator"},
 		},
-		state(),
-	)
-
+		state())
 }
 
 func TestMultiArtistPreload(t *testing.T) {
 	t.Parallel()
-	require := assert.New(t)
 	m := mockfs.New(t)
 
 	m.AddItemsGlob("artist-0/album-[012]/track-0.*")
-	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.Tags) error {
+	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.TagInfo) {
 		tags.RawAlbum = "Mutator"
 		tags.RawAlbumArtists = []string{"Alan Vega", "Liz Lamere"}
-		return nil
 	})
-	m.SetTags("artist-0/album-1/track-0.flac", func(tags *mockfs.Tags) error {
+	m.SetTags("artist-0/album-1/track-0.flac", func(tags *mockfs.TagInfo) {
 		tags.RawAlbum = "Dead Man"
 		tags.RawAlbumArtists = []string{"Alan Vega", "Mercury Rev"}
-		return nil
 	})
-	m.SetTags("artist-0/album-2/track-0.flac", func(tags *mockfs.Tags) error {
+	m.SetTags("artist-0/album-2/track-0.flac", func(tags *mockfs.TagInfo) {
 		tags.RawAlbum = "Yerself Is Steam"
 		tags.RawAlbumArtist = "Mercury Rev"
-		return nil
 	})
 
 	m.ScanAndClean()
 
 	var albums []*db.Album
-	require.NoError(m.DB().Preload("Artists").Find(&albums).Error)
-	require.GreaterOrEqual(len(albums), 3)
+	assert.NoError(t, m.DB().Preload("Artists").Find(&albums).Error)
+	assert.GreaterOrEqual(t, len(albums), 3)
 
 	for _, album := range albums {
 		switch album.TagTitle {
 		case "Mutator":
-			require.Len(album.Artists, 2)
+			assert.Len(t, album.Artists, 2)
 		case "Dead Man":
-			require.Len(album.Artists, 2)
+			assert.Len(t, album.Artists, 2)
 		case "Yerself Is Steam":
-			require.Len(album.Artists, 1)
+			assert.Len(t, album.Artists, 1)
 		}
 	}
 
 	var artists []*db.Artist
-	require.NoError(m.DB().Preload("Albums").Find(&artists).Error)
-	require.Equal(3, len(artists))
+	assert.NoError(t, m.DB().Preload("Albums").Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Group("artists.id").Find(&artists).Error)
+	assert.Equal(t, 3, len(artists))
 
 	for _, artist := range artists {
 		switch artist.Name {
 		case "Alan Vega":
-			require.Len(artist.Albums, 2)
+			assert.Len(t, artist.Albums, 2)
 		case "Mercury Rev":
-			require.Len(artist.Albums, 2)
+			assert.Len(t, artist.Albums, 2)
 		case "Liz Lamere":
-			require.Len(artist.Albums, 1)
+			assert.Len(t, artist.Albums, 1)
 		}
 	}
+}
+
+// https://github.com/sentriz/gonic/issues/402
+func TestRootNoClobberOnError(t *testing.T) {
+	t.Parallel()
+	m := mockfs.New(t)
+
+	m.AddItems()
+
+	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.TagInfo) { tags.Error = fmt.Errorf("no") }) // give a track an error
+	m.AddCover("artist-0/album-0/Artwork/cover.png")                                                         // and add an extra cover dir
+
+	_, err := m.ScanAndCleanErr()
+	require.Error(t, err)
+
+	var roots []*db.Album
+	require.NoError(t, m.DB().Find(&roots, "parent_id IS NULL").Error)
+	require.Len(t, roots, 1)
+	require.Equal(t, ".", roots[0].RightPath)
+	require.Equal(t, 0, roots[0].ParentID)
 }

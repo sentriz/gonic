@@ -33,9 +33,8 @@ func FuzzScanner(f *testing.F) {
 		for i := 0; i < toAdd; i++ {
 			path := fmt.Sprintf("artist-%d/album-%d/track-%d.flac", i/6, i/3, i)
 			m.AddTrack(path)
-			m.SetTags(path, func(tags *mockfs.Tags) error {
+			m.SetTags(path, func(tags *mockfs.TagInfo) {
 				fuzzStruct(i, data, seed, tags)
-				return nil
 			})
 		}
 

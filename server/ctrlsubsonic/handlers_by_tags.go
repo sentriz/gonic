@@ -3,6 +3,7 @@ package ctrlsubsonic
 import (
 	"errors"
 	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"net/url"
@@ -13,6 +14,7 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/handlerutil"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
@@ -22,17 +24,18 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
 	var artists []*db.Artist
-	q := c.DB.
-		Select("*, count(sub.id) album_count").
+	q := c.dbc.
+		Select("*, count(album_artists.album_id) album_count").
 		Joins("JOIN album_artists ON album_artists.artist_id=artists.id").
-		Joins("JOIN albums sub ON sub.id=album_artists.album_id").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
 		Preload("Info").
 		Group("artists.id").
 		Order("artists.name COLLATE NOCASE")
-	if m := getMusicFolder(c.MusicPaths, params); m != "" {
-		q = q.Where("sub.root_dir=?", m)
+	if m := getMusicFolder(c.musicPaths, params); m != "" {
+		q = q.
+			Joins("JOIN albums ON albums.id=album_artists.album_id").
+			Where("albums.root_dir=?", m)
 	}
 	if err := q.Find(&artists).Error; err != nil {
 		return spec.NewError(10, "error finding artists: %v", err)
@@ -65,28 +68,29 @@ func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	artist := &db.Artist{}
-	c.DB.
-		Preload("Albums", func(db *gorm.DB) *gorm.DB {
+	var artist db.Artist
+	c.dbc.
+		Preload("Appearances", func(db *gorm.DB) *gorm.DB {
 			return db.
 				Select("*, count(sub.id) child_count, sum(sub.length) duration").
 				Joins("LEFT JOIN tracks sub ON albums.id=sub.album_id").
 				Order("albums.right_path").
 				Group("albums.id")
 		}).
-		Preload("Albums.Artists").
-		Preload("Albums.Genres").
+		Preload("Appearances.Artists").
+		Preload("Appearances.Genres").
 		Preload("Info").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
-		First(artist, id.Value)
+		First(&artist, id.Value)
+
 	sub := spec.NewResponse()
-	sub.Artist = spec.NewArtistByTags(artist)
-	sub.Artist.Albums = make([]*spec.Album, len(artist.Albums))
-	for i, album := range artist.Albums {
+	sub.Artist = spec.NewArtistByTags(&artist)
+	sub.Artist.Albums = make([]*spec.Album, len(artist.Appearances))
+	for i, album := range artist.Appearances {
 		sub.Artist.Albums[i] = spec.NewAlbumByTags(album, album.Artists)
 	}
-	sub.Artist.AlbumCount = len(artist.Albums)
+	sub.Artist.AlbumCount = len(artist.Appearances)
 	return sub
 }
 
@@ -98,7 +102,7 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 	album := &db.Album{}
-	err = c.DB.
+	err = c.dbc.
 		Select("albums.*, count(tracks.id) child_count, sum(tracks.length) duration").
 		Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
 		Preload("Artists").
@@ -106,6 +110,7 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 		Preload("Tracks", func(db *gorm.DB) *gorm.DB {
 			return db.
 				Order("tracks.tag_disc_number, tracks.tag_track_number").
+				Preload("Artists").
 				Preload("TrackStar", "user_id=?", user.ID).
 				Preload("TrackRating", "user_id=?", user.ID)
 		}).
@@ -120,18 +125,17 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 	sub.Album = spec.NewAlbumByTags(album, album.Artists)
 	sub.Album.Tracks = make([]*spec.TrackChild, len(album.Tracks))
 
-	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
 
 	for i, track := range album.Tracks {
 		sub.Album.Tracks[i] = spec.NewTrackByTags(track, album)
-		sub.Album.Tracks[i].TranscodedContentType = transcodeMIME
-		sub.Album.Tracks[i].TranscodedSuffix = transcodeSuffix
+		sub.Album.Tracks[i].TranscodeMeta = transcodeMeta
 	}
 	return sub
 }
 
 // ServeGetAlbumListTwo handles the getAlbumList2 view.
-// changes to this function should be reflected in in _by_folder.go's
+// changes to this function should be reflected in _by_folder.go's
 // getAlbumList() function
 func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
@@ -140,7 +144,7 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide a `type` parameter")
 	}
-	q := c.DB.DB
+	q := c.dbc.DB
 	switch listType {
 	case "alphabeticalByArtist":
 		q = q.Joins("JOIN artists ON artists.id=album_artists.artist_id")
@@ -148,8 +152,7 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	case "alphabeticalByName":
 		q = q.Order("tag_title")
 	case "byYear":
-		y1, y2 :=
-			params.GetOrInt("fromYear", 1800),
+		y1, y2 := params.GetOrInt("fromYear", 1800),
 			params.GetOrInt("toYear", 2200)
 		// support some clients sending wrong order like DSub
 		q = q.Where("tag_year BETWEEN ? AND ?", min(y1, y2), max(y1, y2))
@@ -173,10 +176,13 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	case "starred":
 		q = q.Joins("JOIN album_stars ON albums.id=album_stars.album_id AND album_stars.user_id=?", user.ID)
 		q = q.Order("tag_title")
+	case "highest":
+		q = q.Joins("JOIN album_ratings ON album_ratings.album_id=albums.id AND album_ratings.user_id=?", user.ID)
+		q = q.Order("album_ratings.rating DESC")
 	default:
-		return spec.NewError(10, "unknown value `%s` for parameter 'type'", listType)
+		return spec.NewError(10, "unknown value %q for parameter 'type'", listType)
 	}
-	if m := getMusicFolder(c.MusicPaths, params); m != "" {
+	if m := getMusicFolder(c.musicPaths, params); m != "" {
 		q = q.Where("root_dir=?", m)
 	}
 	var albums []*db.Album
@@ -219,7 +225,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 
 	// search artists
 	var artists []*db.Artist
-	q := c.DB.
+	q := c.dbc.
 		Select("*, count(albums.id) album_count").
 		Group("artists.id")
 	for _, s := range queries {
@@ -233,7 +239,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		Preload("Info").
 		Offset(params.GetOrInt("artistOffset", 0)).
 		Limit(params.GetOrInt("artistCount", 20))
-	if m := getMusicFolder(c.MusicPaths, params); m != "" {
+	if m := getMusicFolder(c.musicPaths, params); m != "" {
 		q = q.Where("albums.root_dir=?", m)
 	}
 	if err := q.Find(&artists).Error; err != nil {
@@ -245,7 +251,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 
 	// search albums
 	var albums []*db.Album
-	q = c.DB.
+	q = c.dbc.
 		Preload("Artists").
 		Preload("Genres").
 		Preload("AlbumStar", "user_id=?", user.ID).
@@ -256,7 +262,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	q = q.
 		Offset(params.GetOrInt("albumOffset", 0)).
 		Limit(params.GetOrInt("albumCount", 20))
-	if m := getMusicFolder(c.MusicPaths, params); m != "" {
+	if m := getMusicFolder(c.musicPaths, params); m != "" {
 		q = q.Where("root_dir=?", m)
 	}
 	if err := q.Find(&albums).Error; err != nil {
@@ -268,10 +274,11 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 
 	// search tracks
 	var tracks []*db.Track
-	q = c.DB.
+	q = c.dbc.
 		Preload("Album").
 		Preload("Album.Artists").
 		Preload("Genres").
+		Preload("Artists").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID)
 	for _, s := range queries {
@@ -279,7 +286,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	}
 	q = q.Offset(params.GetOrInt("songOffset", 0)).
 		Limit(params.GetOrInt("songCount", 20))
-	if m := getMusicFolder(c.MusicPaths, params); m != "" {
+	if m := getMusicFolder(c.musicPaths, params); m != "" {
 		q = q.
 			Joins("JOIN albums ON albums.id=tracks.album_id").
 			Where("albums.root_dir=?", m)
@@ -288,12 +295,11 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
 
-	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
 
 	for _, t := range tracks {
 		track := spec.NewTrackByTags(t, t.Album)
-		track.TranscodedContentType = transcodeMIME
-		track.TranscodedSuffix = transcodeSuffix
+		track.TranscodeMeta = transcodeMeta
 		results.Tracks = append(results.Tracks, track)
 	}
 
@@ -310,25 +316,21 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	}
 
 	var artist db.Artist
-	err = c.DB.
+	err = c.dbc.
 		Where("id=?", id.Value).
 		Find(&artist).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return spec.NewError(70, "artist with id `%s` not found", id)
+		return spec.NewError(70, "artist with id %q not found", id)
 	}
 
 	sub := spec.NewResponse()
 	sub.ArtistInfoTwo = &spec.ArtistInfo{}
 
-	apiKey, _ := c.DB.GetSetting(db.LastFMAPIKey)
-	if apiKey == "" {
-		return sub
-	}
-
-	info, err := c.ArtistInfoCache.GetOrLookup(r.Context(), apiKey, artist.ID)
+	info, err := c.artistInfoCache.GetOrLookup(r.Context(), artist.ID)
 	if err != nil {
-		return spec.NewError(0, "fetching artist info: %v", err)
+		log.Printf("error fetching artist info from lastfm: %v", err)
+		return sub
 	}
 
 	sub.ArtistInfoTwo.Biography = info.Biography
@@ -354,13 +356,13 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 			break
 		}
 		var artist db.Artist
-		err = c.DB.
+		err = c.dbc.
+			Preload("Info").
 			Select("artists.*, count(albums.id) album_count").
 			Where("name=?", similarName).
-			Joins("LEFT JOIN album_artists ON album_artists.artist_id=artists.id").
-			Joins("LEFT JOIN albums ON albums.id=album_artists.album_id").
+			Joins("LEFT JOIN artist_appearances ON artist_appearances.artist_id=artists.id").
+			Joins("LEFT JOIN albums ON albums.id=artist_appearances.album_id").
 			Group("artists.id").
-			Preload("Info").
 			Find(&artist).
 			Error
 		if errors.Is(err, gorm.ErrRecordNotFound) && !inclNotPresent {
@@ -382,9 +384,41 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	return sub
 }
 
+func (c *Controller) ServeGetAlbumInfoTwo(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	id, err := params.GetID("id")
+	if err != nil {
+		return spec.NewError(10, "please provide an `id` parameter")
+	}
+
+	var album db.Album
+	err = c.dbc.
+		Where("id=?", id.Value).
+		Find(&album).
+		Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return spec.NewError(70, "album with id %q not found", id)
+	}
+
+	sub := spec.NewResponse()
+	sub.AlbumInfo = &spec.AlbumInfo{}
+
+	info, err := c.albumInfoCache.GetOrLookup(r.Context(), album.ID)
+	if err != nil {
+		log.Printf("error fetching album info from lastfm: %v", err)
+		return sub
+	}
+
+	sub.AlbumInfo.Notes = info.Notes
+	sub.AlbumInfo.MusicBrainzID = info.MusicBrainzID
+	sub.AlbumInfo.LastFMURL = info.LastFMURL
+
+	return sub
+}
+
 func (c *Controller) ServeGetGenres(_ *http.Request) *spec.Response {
 	var genres []*db.Genre
-	c.DB.
+	c.dbc.
 		Select(`*,
 			(SELECT count(1) FROM album_genres WHERE genre_id=genres.id) album_count,
 			(SELECT count(1) FROM track_genres WHERE genre_id=genres.id) track_count`).
@@ -408,17 +442,18 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide an `genre` parameter")
 	}
 	var tracks []*db.Track
-	q := c.DB.
+	q := c.dbc.
 		Joins("JOIN albums ON tracks.album_id=albums.id").
 		Joins("JOIN track_genres ON track_genres.track_id=tracks.id").
 		Joins("JOIN genres ON track_genres.genre_id=genres.id AND genres.name=?", genre).
 		Preload("Album").
 		Preload("Album.Artists").
+		Preload("Artists").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Offset(params.GetOrInt("offset", 0)).
 		Limit(params.GetOrInt("count", 10))
-	if m := getMusicFolder(c.MusicPaths, params); m != "" {
+	if m := getMusicFolder(c.musicPaths, params); m != "" {
 		q = q.Where("albums.root_dir=?", m)
 	}
 	q = q.Group("tracks.id")
@@ -430,12 +465,11 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 		List: make([]*spec.TrackChild, len(tracks)),
 	}
 
-	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
 
 	for i, t := range tracks {
 		sub.TracksByGenre.List[i] = spec.NewTrackByTags(t, t.Album)
-		sub.TracksByGenre.List[i].TranscodedContentType = transcodeMIME
-		sub.TracksByGenre.List[i].TranscodedSuffix = transcodeSuffix
+		sub.TracksByGenre.List[i].TranscodeMeta = transcodeMeta
 	}
 
 	return sub
@@ -449,16 +483,18 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 
 	// artists
 	var artists []*db.Artist
-	q := c.DB.
+	q := c.dbc.
+		Select("artists.*, count(albums.id) album_count").
 		Joins("JOIN artist_stars ON artist_stars.artist_id=artists.id").
 		Where("artist_stars.user_id=?", user.ID).
-		Joins("JOIN album_artists ON album_artists.artist_id=artists.id").
-		Joins("JOIN albums ON albums.id=album_artists.album_id").
+		Joins("JOIN artist_appearances ON artist_appearances.artist_id=artists.id").
+		Joins("JOIN albums ON albums.id=artist_appearances.album_id").
+		Order("artist_stars.star_date DESC").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
 		Preload("Info").
 		Group("artists.id")
-	if m := getMusicFolder(c.MusicPaths, params); m != "" {
+	if m := getMusicFolder(c.musicPaths, params); m != "" {
 		q = q.Where("albums.root_dir=?", m)
 	}
 	if err := q.Find(&artists).Error; err != nil {
@@ -470,13 +506,14 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 
 	// albums
 	var albums []*db.Album
-	q = c.DB.
+	q = c.dbc.
 		Joins("JOIN album_stars ON album_stars.album_id=albums.id").
 		Where("album_stars.user_id=?", user.ID).
+		Order("album_stars.star_date DESC").
 		Preload("Artists").
 		Preload("AlbumStar", "user_id=?", user.ID).
 		Preload("AlbumRating", "user_id=?", user.ID)
-	if m := getMusicFolder(c.MusicPaths, params); m != "" {
+	if m := getMusicFolder(c.musicPaths, params); m != "" {
 		q = q.Where("albums.root_dir=?", m)
 	}
 	if err := q.Find(&albums).Error; err != nil {
@@ -488,13 +525,16 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 
 	// tracks
 	var tracks []*db.Track
-	q = c.DB.
+	q = c.dbc.
 		Joins("JOIN track_stars ON tracks.id=track_stars.track_id").
 		Where("track_stars.user_id=?", user.ID).
+		Order("track_stars.star_date DESC").
 		Preload("Album").
+		Preload("Album.Artists").
+		Preload("Artists").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID)
-	if m := getMusicFolder(c.MusicPaths, params); m != "" {
+	if m := getMusicFolder(c.musicPaths, params); m != "" {
 		q = q.
 			Joins("JOIN albums ON albums.id=tracks.album_id").
 			Where("albums.root_dir=?", m)
@@ -503,12 +543,11 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
 
-	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
 
 	for _, t := range tracks {
 		track := spec.NewTrackByTags(t, t.Album)
-		track.TranscodedContentType = transcodeMIME
-		track.TranscodedSuffix = transcodeSuffix
+		track.TranscodeMeta = transcodeMeta
 		results.Tracks = append(results.Tracks, track)
 	}
 
@@ -518,8 +557,8 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) genArtistCoverURL(r *http.Request, artist *db.Artist, size int) string {
-	coverURL, _ := url.Parse(c.BaseURL(r))
-	coverURL.Path = c.Path("/rest/getCoverArt")
+	coverURL, _ := url.Parse(handlerutil.BaseURL(r))
+	coverURL.Path = c.resolveProxyPath("/rest/getCoverArt")
 
 	query := r.URL.Query()
 	query.Set("id", artist.SID().String())
@@ -538,17 +577,14 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide an `artist` parameter")
 	}
 	var artist db.Artist
-	if err := c.DB.Where("name=?", artistName).Find(&artist).Error; err != nil {
+	if err := c.dbc.Where("name=?", artistName).Find(&artist).Error; err != nil {
 		return spec.NewError(0, "finding artist by name: %v", err)
 	}
 
-	apiKey, _ := c.DB.GetSetting(db.LastFMAPIKey)
-	if apiKey == "" {
-		return spec.NewResponse()
-	}
-	info, err := c.ArtistInfoCache.GetOrLookup(r.Context(), apiKey, artist.ID)
+	info, err := c.artistInfoCache.GetOrLookup(r.Context(), artist.ID)
 	if err != nil {
-		return spec.NewError(0, "fetching artist top tracks: %v", err)
+		log.Printf("error fetching artist info from lastfm: %v", err)
+		return spec.NewResponse()
 	}
 
 	sub := spec.NewResponse()
@@ -562,15 +598,17 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 	}
 
 	var tracks []*db.Track
-	err = c.DB.
+	err = c.dbc.
+		Where("tracks.tag_title IN (?)", topTrackNames).
+		Joins("JOIN track_artists ON track_artists.track_id=tracks.id").
+		Joins("JOIN artists ON artists.id=track_artists.artist_id").
+		Where("artists.id=?", artist.ID).
 		Preload("Album").
-		Joins("JOIN albums ON albums.id=tracks.album_id").
-		Joins("JOIN album_artists ON album_artists.album_id=albums.id").
-		Where("album_artists.artist_id=? AND tracks.tag_title IN (?)", artist.ID, topTrackNames).
-		Limit(count).
+		Preload("Artists").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Group("tracks.id").
+		Limit(count).
 		Find(&tracks).
 		Error
 	if err != nil {
@@ -580,12 +618,11 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 		return sub
 	}
 
-	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
 
 	for _, track := range tracks {
 		tc := spec.NewTrackByTags(track, track.Album)
-		tc.TranscodedContentType = transcodeMIME
-		tc.TranscodedSuffix = transcodeSuffix
+		tc.TranscodeMeta = transcodeMeta
 		sub.TopSongs.Tracks = append(sub.TopSongs.Tracks, tc)
 	}
 	return sub
@@ -599,13 +636,9 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 	if err != nil || id.Type != specid.Track {
 		return spec.NewError(10, "please provide an track `id` parameter")
 	}
-	apiKey, _ := c.DB.GetSetting(db.LastFMAPIKey)
-	if apiKey == "" {
-		return spec.NewResponse()
-	}
 
 	var track db.Track
-	err = c.DB.
+	err = c.dbc.
 		Preload("Album").
 		Where("id=?", id.Value).
 		First(&track).
@@ -614,10 +647,12 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 		return spec.NewError(10, "couldn't find a track with that id")
 	}
 
-	similarTracks, err := c.LastFMClient.TrackGetSimilarTracks(apiKey, track.TagTrackArtist, track.TagTitle)
+	similarTracks, err := c.lastFMClient.TrackGetSimilarTracks(track.TagTrackArtist, track.TagTitle)
 	if err != nil {
-		return spec.NewError(0, "fetching track similar tracks: %v", err)
+		log.Printf("error fetching similar songs from lastfm: %v", err)
+		return spec.NewResponse()
 	}
+
 	if len(similarTracks.Tracks) == 0 {
 		return spec.NewError(70, "no similar songs found for track: %v", track.TagTitle)
 	}
@@ -628,9 +663,10 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 	}
 
 	var tracks []*db.Track
-	err = c.DB.
+	err = c.dbc.
 		Select("tracks.*").
 		Preload("Album").
+		Preload("Artists").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Where("tracks.tag_title IN (?)", similarTrackNames).
@@ -650,12 +686,11 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 		Tracks: make([]*spec.TrackChild, len(tracks)),
 	}
 
-	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
 
 	for i, track := range tracks {
 		sub.SimilarSongs.Tracks[i] = spec.NewTrackByTags(track, track.Album)
-		sub.SimilarSongs.Tracks[i].TranscodedContentType = transcodeMIME
-		sub.SimilarSongs.Tracks[i].TranscodedSuffix = transcodeSuffix
+		sub.SimilarSongs.Tracks[i].TranscodeMeta = transcodeMeta
 	}
 	return sub
 }
@@ -669,23 +704,19 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide an artist `id` parameter")
 	}
 
-	apiKey, _ := c.DB.GetSetting(db.LastFMAPIKey)
-	if apiKey == "" {
-		return spec.NewResponse()
-	}
-
 	var artist db.Artist
-	err = c.DB.
+	err = c.dbc.
 		Where("id=?", id.Value).
 		First(&artist).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return spec.NewError(0, "artist with id `%s` not found", id)
+		return spec.NewError(0, "artist with id %q not found", id)
 	}
 
-	similarArtists, err := c.LastFMClient.ArtistGetSimilar(apiKey, artist.Name)
+	similarArtists, err := c.lastFMClient.ArtistGetSimilar(artist.Name)
 	if err != nil {
-		return spec.NewError(0, "fetching artist similar artists: %v", err)
+		log.Printf("error fetching artist info from lastfm: %v", err)
+		return spec.NewResponse()
 	}
 	if len(similarArtists.Artists) == 0 {
 		return spec.NewError(0, "no similar artist found for: %v", artist.Name)
@@ -697,12 +728,13 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 	}
 
 	var tracks []*db.Track
-	err = c.DB.
+	err = c.dbc.
 		Preload("Album").
+		Preload("Artists").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
-		Joins("JOIN album_artists ON album_artists.album_id=tracks.album_id").
-		Joins("JOIN artists ON artists.id=album_artists.artist_id").
+		Joins("JOIN track_artists ON track_artists.track_id=tracks.id").
+		Joins("JOIN artists ON artists.id=track_artists.artist_id").
 		Where("artists.name IN (?)", artistNames).
 		Order(gorm.Expr("random()")).
 		Group("tracks.id").
@@ -721,12 +753,10 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 		Tracks: make([]*spec.TrackChild, len(tracks)),
 	}
 
-	transcodeMIME, transcodeSuffix := streamGetTransPrefProfile(c.DB, user.ID, params.GetOr("c", ""))
-
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
 	for i, track := range tracks {
 		sub.SimilarSongsTwo.Tracks[i] = spec.NewTrackByTags(track, track.Album)
-		sub.SimilarSongsTwo.Tracks[i].TranscodedContentType = transcodeMIME
-		sub.SimilarSongsTwo.Tracks[i].TranscodedSuffix = transcodeSuffix
+		sub.SimilarSongsTwo.Tracks[i].TranscodeMeta = transcodeMeta
 	}
 	return sub
 }
@@ -754,33 +784,33 @@ func (c *Controller) ServeStar(r *http.Request) *spec.Response {
 	stardate := time.Now()
 	for _, id := range starIDsOfType(params, specid.Album) {
 		var albumstar db.AlbumStar
-		_ = c.DB.Where("user_id=? AND album_id=?", user.ID, id).First(&albumstar).Error
+		_ = c.dbc.Where("user_id=? AND album_id=?", user.ID, id).First(&albumstar).Error
 		albumstar.UserID = user.ID
 		albumstar.AlbumID = id
 		albumstar.StarDate = stardate
-		if err := c.DB.Save(&albumstar).Error; err != nil {
+		if err := c.dbc.Save(&albumstar).Error; err != nil {
 			return spec.NewError(0, "save album star: %v", err)
 		}
 	}
 
 	for _, id := range starIDsOfType(params, specid.Artist) {
 		var artiststar db.ArtistStar
-		_ = c.DB.Where("user_id=? AND artist_id=?", user.ID, id).First(&artiststar).Error
+		_ = c.dbc.Where("user_id=? AND artist_id=?", user.ID, id).First(&artiststar).Error
 		artiststar.UserID = user.ID
 		artiststar.ArtistID = id
 		artiststar.StarDate = stardate
-		if err := c.DB.Save(&artiststar).Error; err != nil {
+		if err := c.dbc.Save(&artiststar).Error; err != nil {
 			return spec.NewError(0, "save artist star: %v", err)
 		}
 	}
 
 	for _, id := range starIDsOfType(params, specid.Track) {
 		var trackstar db.TrackStar
-		_ = c.DB.Where("user_id=? AND track_id=?", user.ID, id).First(&trackstar).Error
+		_ = c.dbc.Where("user_id=? AND track_id=?", user.ID, id).First(&trackstar).Error
 		trackstar.UserID = user.ID
 		trackstar.TrackID = id
 		trackstar.StarDate = stardate
-		if err := c.DB.Save(&trackstar).Error; err != nil {
+		if err := c.dbc.Save(&trackstar).Error; err != nil {
 			return spec.NewError(0, "save track star: %v", err)
 		}
 	}
@@ -793,19 +823,19 @@ func (c *Controller) ServeUnstar(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 
 	for _, id := range starIDsOfType(params, specid.Album) {
-		if err := c.DB.Where("user_id=? AND album_id=?", user.ID, id).Delete(db.AlbumStar{}).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		if err := c.dbc.Where("user_id=? AND album_id=?", user.ID, id).Delete(db.AlbumStar{}).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return spec.NewError(0, "delete album star: %v", err)
 		}
 	}
 
 	for _, id := range starIDsOfType(params, specid.Artist) {
-		if err := c.DB.Where("user_id=? AND artist_id=?", user.ID, id).Delete(db.ArtistStar{}).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		if err := c.dbc.Where("user_id=? AND artist_id=?", user.ID, id).Delete(db.ArtistStar{}).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return spec.NewError(0, "delete artist star: %v", err)
 		}
 	}
 
 	for _, id := range starIDsOfType(params, specid.Track) {
-		if err := c.DB.Where("user_id=? AND track_id=?", user.ID, id).Delete(db.TrackStar{}).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		if err := c.dbc.Where("user_id=? AND track_id=?", user.ID, id).Delete(db.TrackStar{}).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return spec.NewError(0, "delete track star: %v", err)
 		}
 	}
@@ -830,95 +860,95 @@ func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
 	switch id.Type {
 	case specid.Album:
 		var album db.Album
-		err := c.DB.Where("id=?", id.Value).First(&album).Error
+		err := c.dbc.Where("id=?", id.Value).First(&album).Error
 		if err != nil {
 			return spec.NewError(0, "fetch album: %v", err)
 		}
 		var albumRating db.AlbumRating
-		if err := c.DB.Where("user_id=? AND album_id=?", user.ID, id.Value).First(&albumRating).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		if err := c.dbc.Where("user_id=? AND album_id=?", user.ID, id.Value).First(&albumRating).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return spec.NewError(0, "fetch album rating: %v", err)
 		}
 		switch {
 		case rating == 0 && albumRating.AlbumID == album.ID:
-			if err := c.DB.Delete(&albumRating).Error; err != nil {
+			if err := c.dbc.Delete(&albumRating).Error; err != nil {
 				return spec.NewError(0, "delete album rating: %v", err)
 			}
 		case rating > 0:
 			albumRating.UserID = user.ID
 			albumRating.AlbumID = id.Value
 			albumRating.Rating = rating
-			if err := c.DB.Save(&albumRating).Error; err != nil {
+			if err := c.dbc.Save(&albumRating).Error; err != nil {
 				return spec.NewError(0, "save album rating: %v", err)
 			}
 		}
 		var averageRating float64
-		if err := c.DB.Model(db.AlbumRating{}).Select("coalesce(avg(rating), 0)").Where("album_id=?", id.Value).Row().Scan(&averageRating); err != nil {
+		if err := c.dbc.Model(db.AlbumRating{}).Select("coalesce(avg(rating), 0)").Where("album_id=?", id.Value).Row().Scan(&averageRating); err != nil {
 			return spec.NewError(0, "find average album rating: %v", err)
 		}
 		album.AverageRating = math.Trunc(averageRating*100) / 100
-		if err := c.DB.Save(&album).Error; err != nil {
+		if err := c.dbc.Save(&album).Error; err != nil {
 			return spec.NewError(0, "save album: %v", err)
 		}
 	case specid.Artist:
 		var artist db.Artist
-		err := c.DB.Where("id=?", id.Value).First(&artist).Error
+		err := c.dbc.Where("id=?", id.Value).First(&artist).Error
 		if err != nil {
 			return spec.NewError(0, "fetch artist: %v", err)
 		}
 		var artistRating db.ArtistRating
-		if err := c.DB.Where("user_id=? AND artist_id=?", user.ID, id.Value).First(&artistRating).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		if err := c.dbc.Where("user_id=? AND artist_id=?", user.ID, id.Value).First(&artistRating).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return spec.NewError(0, "fetch artist rating: %v", err)
 		}
 		switch {
 		case rating == 0 && artistRating.ArtistID == artist.ID:
-			if err := c.DB.Delete(&artistRating).Error; err != nil {
+			if err := c.dbc.Delete(&artistRating).Error; err != nil {
 				return spec.NewError(0, "delete artist rating: %v", err)
 			}
 		case rating > 0:
 			artistRating.UserID = user.ID
 			artistRating.ArtistID = id.Value
 			artistRating.Rating = rating
-			if err := c.DB.Save(&artistRating).Error; err != nil {
+			if err := c.dbc.Save(&artistRating).Error; err != nil {
 				return spec.NewError(0, "save artist rating: %v", err)
 			}
 		}
 		var averageRating float64
-		if err := c.DB.Model(db.ArtistRating{}).Select("coalesce(avg(rating), 0)").Where("artist_id=?", id.Value).Row().Scan(&averageRating); err != nil {
+		if err := c.dbc.Model(db.ArtistRating{}).Select("coalesce(avg(rating), 0)").Where("artist_id=?", id.Value).Row().Scan(&averageRating); err != nil {
 			return spec.NewError(0, "find average artist rating: %v", err)
 		}
 		artist.AverageRating = math.Trunc(averageRating*100) / 100
-		if err := c.DB.Save(&artist).Error; err != nil {
+		if err := c.dbc.Save(&artist).Error; err != nil {
 			return spec.NewError(0, "save artist: %v", err)
 		}
 	case specid.Track:
 		var track db.Track
-		err := c.DB.Where("id=?", id.Value).First(&track).Error
+		err := c.dbc.Where("id=?", id.Value).First(&track).Error
 		if err != nil {
 			return spec.NewError(0, "fetch track: %v", err)
 		}
 		var trackRating db.TrackRating
-		if err := c.DB.Where("user_id=? AND track_id=?", user.ID, id.Value).First(&trackRating).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		if err := c.dbc.Where("user_id=? AND track_id=?", user.ID, id.Value).First(&trackRating).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return spec.NewError(0, "fetch track rating: %v", err)
 		}
 		switch {
 		case rating == 0 && trackRating.TrackID == track.ID:
-			if err := c.DB.Delete(&trackRating).Error; err != nil {
+			if err := c.dbc.Delete(&trackRating).Error; err != nil {
 				return spec.NewError(0, "delete track rating: %v", err)
 			}
 		case rating > 0:
 			trackRating.UserID = user.ID
 			trackRating.TrackID = id.Value
 			trackRating.Rating = rating
-			if err := c.DB.Save(&trackRating).Error; err != nil {
+			if err := c.dbc.Save(&trackRating).Error; err != nil {
 				return spec.NewError(0, "save track rating: %v", err)
 			}
 		}
 		var averageRating float64
-		if err := c.DB.Model(db.TrackRating{}).Select("coalesce(avg(rating), 0)").Where("track_id=?", id.Value).Row().Scan(&averageRating); err != nil {
+		if err := c.dbc.Model(db.TrackRating{}).Select("coalesce(avg(rating), 0)").Where("track_id=?", id.Value).Row().Scan(&averageRating); err != nil {
 			return spec.NewError(0, "find average track rating: %v", err)
 		}
 		track.AverageRating = math.Trunc(averageRating*100) / 100
-		if err := c.DB.Save(&track).Error; err != nil {
+		if err := c.dbc.Save(&track).Error; err != nil {
 			return spec.NewError(0, "save track: %v", err)
 		}
 	default:

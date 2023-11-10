@@ -5,9 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"image"
-	_ "image/gif" // to decode uploaded GIF avatars
 	"image/jpeg"
-	_ "image/png" // to decode uploaded PNG avatars
 	"log"
 	"net/http"
 	"net/url"
@@ -19,18 +17,11 @@ import (
 	"github.com/nfnt/resize"
 
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/handlerutil"
+	"go.senan.xyz/gonic/listenbrainz"
 	"go.senan.xyz/gonic/scanner"
-	"go.senan.xyz/gonic/scrobble/listenbrainz"
 	"go.senan.xyz/gonic/transcode"
 )
-
-func doScan(scanner *scanner.Scanner, opts scanner.ScanOptions) {
-	go func() {
-		if _, err := scanner.ScanAndClean(opts); err != nil {
-			log.Printf("error while scanning: %v\n", err)
-		}
-	}()
-}
 
 func (c *Controller) ServeNotFound(_ *http.Request) *Response {
 	return &Response{template: "not_found.tmpl", code: 404}
@@ -45,35 +36,33 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 
 	data := &templateData{}
 	// stats box
-	c.DB.Model(&db.Artist{}).Count(&data.ArtistCount)
-	c.DB.Model(&db.Album{}).Count(&data.AlbumCount)
-	c.DB.Table("tracks").Count(&data.TrackCount)
+	data.Stats, _ = c.dbc.Stats()
 	// lastfm box
-	data.RequestRoot = c.BaseURL(r)
-	data.CurrentLastFMAPIKey, _ = c.DB.GetSetting(db.LastFMAPIKey)
+	data.RequestRoot = handlerutil.BaseURL(r)
+	data.CurrentLastFMAPIKey, _ = c.dbc.GetSetting(db.LastFMAPIKey)
 	data.DefaultListenBrainzURL = listenbrainz.BaseURL
 
 	// users box
-	allUsersQ := c.DB.DB
+	allUsersQ := c.dbc.DB
 	if !user.IsAdmin {
 		allUsersQ = allUsersQ.Where("name=?", user.Name)
 	}
 	allUsersQ.Find(&data.AllUsers)
 
 	// recent folders box
-	c.DB.
+	c.dbc.
 		Order("created_at DESC").
-		Limit(20).
+		Limit(10).
 		Find(&data.RecentFolders)
 
-	data.IsScanning = c.Scanner.IsScanning()
-	if tStr, _ := c.DB.GetSetting(db.LastScanTime); tStr != "" {
+	data.IsScanning = c.scanner.IsScanning()
+	if tStr, _ := c.dbc.GetSetting(db.LastScanTime); tStr != "" {
 		i, _ := strconv.ParseInt(tStr, 10, 64)
 		data.LastScanTime = time.Unix(i, 0)
 	}
 
 	// transcoding box
-	c.DB.
+	c.dbc.
 		Where("user_id=?", user.ID).
 		Find(&data.TranscodePreferences)
 	for profile := range transcode.UserProfiles {
@@ -81,10 +70,10 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	}
 	sort.Strings(data.TranscodeProfiles)
 	// podcasts box
-	c.DB.Find(&data.Podcasts)
+	c.dbc.Find(&data.Podcasts)
 
 	// internet radio box
-	c.DB.Find(&data.InternetRadioStations)
+	c.dbc.Find(&data.InternetRadioStations)
 
 	return &Response{
 		template: "home.tmpl",
@@ -97,15 +86,7 @@ func (c *Controller) ServeLinkLastFMDo(r *http.Request) *Response {
 	if token == "" {
 		return &Response{code: 400, err: "please provide a token"}
 	}
-	apiKey, err := c.DB.GetSetting(db.LastFMAPIKey)
-	if err != nil {
-		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't get api key: %v", err)}}
-	}
-	secret, err := c.DB.GetSetting(db.LastFMSecret)
-	if err != nil {
-		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't get secret: %v", err)}}
-	}
-	sessionKey, err := c.lastfmClient.GetSession(apiKey, secret, token)
+	sessionKey, err := c.lastfmClient.GetSession(token)
 	if err != nil {
 		return &Response{
 			redirect: "/admin/home",
@@ -114,7 +95,7 @@ func (c *Controller) ServeLinkLastFMDo(r *http.Request) *Response {
 	}
 	user := r.Context().Value(CtxUser).(*db.User)
 	user.LastFMSession = sessionKey
-	if err := c.DB.Save(user).Error; err != nil {
+	if err := c.dbc.Save(user).Error; err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("save user: %v", err)}}
 	}
 	return &Response{redirect: "/admin/home"}
@@ -123,7 +104,7 @@ func (c *Controller) ServeLinkLastFMDo(r *http.Request) *Response {
 func (c *Controller) ServeUnlinkLastFMDo(r *http.Request) *Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	user.LastFMSession = ""
-	if err := c.DB.Save(user).Error; err != nil {
+	if err := c.dbc.Save(user).Error; err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("save user: %v", err)}}
 	}
 	return &Response{redirect: "/admin/home"}
@@ -141,7 +122,7 @@ func (c *Controller) ServeLinkListenBrainzDo(r *http.Request) *Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	user.ListenBrainzURL = url
 	user.ListenBrainzToken = token
-	if err := c.DB.Save(user).Error; err != nil {
+	if err := c.dbc.Save(user).Error; err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("save user: %v", err)}}
 	}
 	return &Response{redirect: "/admin/home"}
@@ -151,7 +132,7 @@ func (c *Controller) ServeUnlinkListenBrainzDo(r *http.Request) *Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	user.ListenBrainzURL = ""
 	user.ListenBrainzToken = ""
-	if err := c.DB.Save(user).Error; err != nil {
+	if err := c.dbc.Save(user).Error; err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("save user: %v", err)}}
 	}
 	return &Response{redirect: "/admin/home"}
@@ -302,7 +283,7 @@ func (c *Controller) ServeChangeUsernameDo(r *http.Request) *Response {
 		}
 	}
 	user.Name = usernameNew
-	if err := c.DB.Save(user).Error; err != nil {
+	if err := c.dbc.Save(user).Error; err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("save username: %v", err)}}
 	}
 	return &Response{redirect: "/admin/home"}
@@ -335,7 +316,7 @@ func (c *Controller) ServeChangePasswordDo(r *http.Request) *Response {
 		}
 	}
 	user.Password = passwordOne
-	if err := c.DB.Save(user).Error; err != nil {
+	if err := c.dbc.Save(user).Error; err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("save user: %v", err)}}
 	}
 	return &Response{redirect: "/admin/home"}
@@ -367,7 +348,7 @@ func (c *Controller) ServeChangeAvatarDo(r *http.Request) *Response {
 		}
 	}
 	user.Avatar = avatar
-	if err := c.DB.Save(user).Error; err != nil {
+	if err := c.dbc.Save(user).Error; err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("save user: %v", err)}}
 	}
 	return &Response{
@@ -382,7 +363,7 @@ func (c *Controller) ServeDeleteAvatarDo(r *http.Request) *Response {
 		return &Response{code: 400, err: err.Error()}
 	}
 	user.Avatar = nil
-	if err := c.DB.Save(user).Error; err != nil {
+	if err := c.dbc.Save(user).Error; err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("save user: %v", err)}}
 	}
 	return &Response{
@@ -415,7 +396,7 @@ func (c *Controller) ServeDeleteUserDo(r *http.Request) *Response {
 			flashW:   []string{"can't delete the admin user"},
 		}
 	}
-	if err := c.DB.Delete(user).Error; err != nil {
+	if err := c.dbc.Delete(user).Error; err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("delete user: %v", err)}}
 	}
 	return &Response{redirect: "/admin/home"}
@@ -445,10 +426,10 @@ func (c *Controller) ServeCreateUserDo(r *http.Request) *Response {
 		Name:     username,
 		Password: passwordOne,
 	}
-	if err := c.DB.Create(&user).Error; err != nil {
+	if err := c.dbc.Create(&user).Error; err != nil {
 		return &Response{
 			redirect: r.Referer(),
-			flashW:   []string{fmt.Sprintf("could not create user `%s`: %v", username, err)},
+			flashW:   []string{fmt.Sprintf("could not create user %q: %v", username, err)},
 		}
 	}
 	return &Response{redirect: "/admin/home"}
@@ -457,10 +438,10 @@ func (c *Controller) ServeCreateUserDo(r *http.Request) *Response {
 func (c *Controller) ServeUpdateLastFMAPIKey(r *http.Request) *Response {
 	data := &templateData{}
 	var err error
-	if data.CurrentLastFMAPIKey, err = c.DB.GetSetting(db.LastFMAPIKey); err != nil {
+	if data.CurrentLastFMAPIKey, err = c.dbc.GetSetting(db.LastFMAPIKey); err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't get api key: %v", err)}}
 	}
-	if data.CurrentLastFMAPISecret, err = c.DB.GetSetting(db.LastFMSecret); err != nil {
+	if data.CurrentLastFMAPISecret, err = c.dbc.GetSetting(db.LastFMSecret); err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't get secret: %v", err)}}
 	}
 	return &Response{
@@ -478,17 +459,17 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(r *http.Request) *Response {
 			flashW:   []string{err.Error()},
 		}
 	}
-	if err := c.DB.SetSetting(db.LastFMAPIKey, apiKey); err != nil {
+	if err := c.dbc.SetSetting(db.LastFMAPIKey, apiKey); err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't set api key: %v", err)}}
 	}
-	if err := c.DB.SetSetting(db.LastFMSecret, secret); err != nil {
+	if err := c.dbc.SetSetting(db.LastFMSecret, secret); err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't set secret: %v", err)}}
 	}
 	return &Response{redirect: "/admin/home"}
 }
 
 func (c *Controller) ServeStartScanIncDo(_ *http.Request) *Response {
-	defer doScan(c.Scanner, scanner.ScanOptions{})
+	defer doScan(c.scanner, scanner.ScanOptions{})
 	return &Response{
 		redirect: "/admin/home",
 		flashN:   []string{"incremental scan started. refresh for results"},
@@ -496,7 +477,7 @@ func (c *Controller) ServeStartScanIncDo(_ *http.Request) *Response {
 }
 
 func (c *Controller) ServeStartScanFullDo(_ *http.Request) *Response {
-	defer doScan(c.Scanner, scanner.ScanOptions{IsFull: true})
+	defer doScan(c.scanner, scanner.ScanOptions{IsFull: true})
 	return &Response{
 		redirect: "/admin/home",
 		flashN:   []string{"full scan started. refresh for results"},
@@ -518,7 +499,7 @@ func (c *Controller) ServeCreateTranscodePrefDo(r *http.Request) *Response {
 		Client:  client,
 		Profile: profile,
 	}
-	if err := c.DB.Create(&pref).Error; err != nil {
+	if err := c.dbc.Create(&pref).Error; err != nil {
 		return &Response{
 			redirect: "/admin/home",
 			flashW:   []string{fmt.Sprintf("could not create preference: %v", err)},
@@ -533,7 +514,7 @@ func (c *Controller) ServeDeleteTranscodePrefDo(r *http.Request) *Response {
 	if client == "" {
 		return &Response{code: 400, err: "please provide a client"}
 	}
-	c.DB.
+	c.dbc.
 		Where("user_id=? AND client=?", user.ID, client).
 		Delete(db.TranscodePreference{})
 	return &Response{
@@ -551,7 +532,7 @@ func (c *Controller) ServePodcastAddDo(r *http.Request) *Response {
 			flashW:   []string{fmt.Sprintf("could not create feed: %v", err)},
 		}
 	}
-	if _, err := c.Podcasts.AddNewPodcast(rssURL, feed); err != nil {
+	if _, err := c.podcasts.AddNewPodcast(rssURL, feed); err != nil {
 		return &Response{
 			redirect: "/admin/home",
 			flashW:   []string{fmt.Sprintf("could not create feed: %v", err)},
@@ -567,7 +548,7 @@ func (c *Controller) ServePodcastDownloadDo(r *http.Request) *Response {
 	if err != nil {
 		return &Response{code: 400, err: "please provide a valid podcast id"}
 	}
-	if err := c.Podcasts.DownloadPodcastAll(id); err != nil {
+	if err := c.podcasts.DownloadPodcastAll(id); err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("error downloading: %v", err)}}
 	}
 	return &Response{
@@ -591,7 +572,7 @@ func (c *Controller) ServePodcastUpdateDo(r *http.Request) *Response {
 	default:
 		return &Response{code: 400, err: "please provide a valid podcast download type"}
 	}
-	if err := c.Podcasts.SetAutoDownload(id, setting); err != nil {
+	if err := c.podcasts.SetAutoDownload(id, setting); err != nil {
 		return &Response{
 			flashW: []string{fmt.Sprintf("could not update auto download setting: %v", err)},
 			code:   400,
@@ -608,7 +589,7 @@ func (c *Controller) ServePodcastDeleteDo(r *http.Request) *Response {
 	if err != nil {
 		return &Response{code: 400, err: "please provide a valid podcast id"}
 	}
-	if err := c.Podcasts.DeletePodcast(id); err != nil {
+	if err := c.podcasts.DeletePodcast(id); err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("error deleting: %v", err)}}
 	}
 	return &Response{
@@ -639,7 +620,7 @@ func (c *Controller) ServeInternetRadioStationAddDo(r *http.Request) *Response {
 	station.StreamURL = streamURL
 	station.Name = name
 	station.HomepageURL = homepageURL
-	if err := c.DB.Save(&station).Error; err != nil {
+	if err := c.dbc.Save(&station).Error; err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("error saving station: %v", err)}}
 	}
 
@@ -682,14 +663,14 @@ func (c *Controller) ServeInternetRadioStationUpdateDo(r *http.Request) *Respons
 	}
 
 	var station db.InternetRadioStation
-	if err := c.DB.Where("id=?", stationID).First(&station).Error; err != nil {
+	if err := c.dbc.Where("id=?", stationID).First(&station).Error; err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("find station by id: %v", err)}}
 	}
 
 	station.StreamURL = streamURL
 	station.Name = name
 	station.HomepageURL = homepageURL
-	if err := c.DB.Save(&station).Error; err != nil {
+	if err := c.dbc.Save(&station).Error; err != nil {
 		return &Response{code: 500, err: "please provide a valid internet radio station id"}
 	}
 
@@ -705,11 +686,11 @@ func (c *Controller) ServeInternetRadioStationDeleteDo(r *http.Request) *Respons
 	}
 
 	var station db.InternetRadioStation
-	if err := c.DB.Where("id=?", stationID).First(&station).Error; err != nil {
+	if err := c.dbc.Where("id=?", stationID).First(&station).Error; err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("find station by id: %v", err)}}
 	}
 
-	if err := c.DB.Where("id=?", stationID).Delete(&db.InternetRadioStation{}).Error; err != nil {
+	if err := c.dbc.Where("id=?", stationID).Delete(&db.InternetRadioStation{}).Error; err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("deleting radio station: %v", err)}}
 	}
 
@@ -748,6 +729,14 @@ func selectedUserIfAdmin(c *Controller, r *http.Request) (*db.User, error) {
 	if !user.IsAdmin && user.Name != selectedUsername {
 		return nil, fmt.Errorf("must be admin to perform actions for other users")
 	}
-	selectedUser := c.DB.GetUserByName(selectedUsername)
+	selectedUser := c.dbc.GetUserByName(selectedUsername)
 	return selectedUser, nil
+}
+
+func doScan(scanner *scanner.Scanner, opts scanner.ScanOptions) {
+	go func() {
+		if _, err := scanner.ScanAndClean(opts); err != nil {
+			log.Printf("error while scanning: %v\n", err)
+		}
+	}()
 }

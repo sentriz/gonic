@@ -6,28 +6,72 @@ run:
 linters:
   disable-all: true
   enable:
+    - asasalint
+    - asciicheck
+    - bidichk
     - bodyclose
+    - containedctx
+    - decorder
     - dogsled
+    - dupword
+    - durationcheck
     - errcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - execinquery
     - exportloopref
+    - forbidigo
+    - ginkgolinter
+    - gocheckcompilerdirectives
     - gochecknoglobals
     - gochecknoinits
     - goconst
     - gocritic
     - gocyclo
+    - gofmt
+    - gofumpt
+    - goheader
+    - goimports
+    - gomoddirectives
+    - gomodguard
     - goprintffuncname
     - gosec
     - gosimple
+    - gosmopolitan
     - govet
+    - grouper
+    - importas
     - ineffassign
+    - loggercheck
+    - makezero
+    - mirror
     - misspell
+    - musttag
     - nakedret
+    - nestif
+    - nilerr
+    - nosprintfhostport
+    - paralleltest
+    - predeclared
+    - promlinter
+    - reassign
     - revive
     - rowserrcheck
+    - sqlclosecheck
     - staticcheck
     - stylecheck
+    - tenv
+    - testableexamples
+    - thelper
+    - tparallel
     - typecheck
     - unconvert
+    - unparam
+    - unused
+    - wastedassign
+    - whitespace
+    - zerologlint
 
 issues:
   exclude-rules:

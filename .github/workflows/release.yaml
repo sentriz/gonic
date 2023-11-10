@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
@@ -80,3 +80,15 @@ jobs:
             ghcr.io/${{ github.repository }}:latest
             ${{ github.repository }}:${{ needs.release-please.outputs.tag_name }}
             ${{ github.repository }}:latest
+  notify-irc:
+    needs: [release-please]
+    name: Notify IRC
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Notify
+        run: |
+          set +x e
+          git log -1 --pretty="push to master (@%an) %s" | curl "${{ secrets.IRC_NOTIFY_URL }}" -F target=#gonic -F message=@- >/dev/null 2>&1
+          exit 0

@@ -26,8 +26,10 @@ type Response struct {
 	XMLNS   string `xml:"xmlns,attr"            json:"-"`
 
 	// https://opensubsonic.netlify.app/docs/responses/subsonic-response/
-	Type          string `xml:"type,attr"          json:"type"`
-	ServerVersion string `xml:"serverVersion,attr" json:"serverVersion"`
+	Type                   string                  `xml:"type,attr"              json:"type"`
+	ServerVersion          string                  `xml:"serverVersion,attr"     json:"serverVersion"`
+	OpenSubsonic           bool                    `xml:"openSubsonic,attr"      json:"openSubsonic"`
+	OpenSubsonicExtensions *OpenSubsonicExtensions `xml:"openSubsonicExtensions" json:"openSubsonicExtensions,omitempty"`
 
 	Error                 *Error                 `xml:"error"                 json:"error,omitempty"`
 	Albums                *Albums                `xml:"albumList"             json:"albumList,omitempty"`
@@ -50,6 +52,7 @@ type Response struct {
 	Playlist              *Playlist              `xml:"playlist"              json:"playlist,omitempty"`
 	ArtistInfo            *ArtistInfo            `xml:"artistInfo"            json:"artistInfo,omitempty"`
 	ArtistInfoTwo         *ArtistInfo            `xml:"artistInfo2"           json:"artistInfo2,omitempty"`
+	AlbumInfo             *AlbumInfo             `xml:"albumInfo"             json:"albumInfo,omitempty"`
 	Genres                *Genres                `xml:"genres"                json:"genres,omitempty"`
 	PlayQueue             *PlayQueue             `xml:"playQueue"             json:"playQueue,omitempty"`
 	JukeboxStatus         *JukeboxStatus         `xml:"jukeboxStatus"         json:"jukeboxStatus,omitempty"`
@@ -73,6 +76,7 @@ func NewResponse() *Response {
 		Version:       apiVersion,
 		Type:          gonic.Name,
 		ServerVersion: gonic.Version,
+		OpenSubsonic:  true,
 	}
 }
 
@@ -94,17 +98,13 @@ type Error struct {
 }
 
 func NewError(code int, message string, a ...interface{}) *Response {
-	return &Response{
-		Status:  "failed",
-		XMLNS:   xmlns,
-		Version: apiVersion,
-		Error: &Error{
-			Code:    code,
-			Message: fmt.Sprintf(message, a...),
-		},
-		Type:          gonic.Name,
-		ServerVersion: gonic.Version,
+	r := NewResponse()
+	r.Status = "failed"
+	r.Error = &Error{
+		Code:    code,
+		Message: fmt.Sprintf(message, a...),
 	}
+	return r
 }
 
 type Albums struct {
@@ -116,27 +116,37 @@ type ArtistRef struct {
 	Name string     `xml:"name,attr" json:"name"`
 }
 
+type GenreRef struct {
+	Name string `xml:"name,attr" json:"name"`
+}
+
+// https://opensubsonic.netlify.app/docs/responses/albumid3/
 type Album struct {
-	// common
-	ID       *specid.ID   `xml:"id,attr,omitempty"       json:"id"`
-	CoverID  *specid.ID   `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty"`
-	ArtistID *specid.ID   `xml:"artistId,attr,omitempty" json:"artistId,omitempty"`
-	Artist   string       `xml:"artist,attr,omitempty"   json:"artist,omitempty"`
-	Artists  []*ArtistRef `xml:"artists,omitempty"       json:"artists,omitempty"`
-	Created  time.Time    `xml:"created,attr,omitempty"  json:"created,omitempty"`
-	// browsing by folder (eg. getAlbumList)
+	ID      *specid.ID `xml:"id,attr,omitempty"       json:"id"`
+	Created time.Time  `xml:"created,attr,omitempty"  json:"created,omitempty"`
+
+	// legacy or single tag mode
+	ArtistID *specid.ID `xml:"artistId,attr,omitempty" json:"artistId,omitempty"`
+	Artist   string     `xml:"artist,attr,omitempty"   json:"artist,omitempty"`
+
+	Artists       []*ArtistRef `xml:"artists,omitempty"           json:"artists,omitempty"`
+	DisplayArtist string       `xml:"diplayArtist,attr,omitempty" json:"displayArtist,omitempty"`
+
+	// folder stuff
 	Title    string     `xml:"title,attr,omitempty"  json:"title"`
 	Album    string     `xml:"album,attr,omitempty"  json:"album"`
 	ParentID *specid.ID `xml:"parent,attr,omitempty" json:"parent,omitempty"`
 	IsDir    bool       `xml:"isDir,attr,omitempty"  json:"isDir,omitempty"`
-	// browsing by tags (eg. getAlbumList2)
+	CoverID  *specid.ID `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty"`
+
 	Name       string        `xml:"name,attr"              json:"name"`
 	TrackCount int           `xml:"songCount,attr"         json:"songCount"`
 	Duration   int           `xml:"duration,attr"          json:"duration"`
 	Genre      string        `xml:"genre,attr,omitempty"   json:"genre,omitempty"`
-	Genres     []string      `xml:"genres,omitempty"       json:"genres,omitempty"`
+	Genres     []*GenreRef   `xml:"genres,omitempty"       json:"genres,omitempty"`
 	Year       int           `xml:"year,attr,omitempty"    json:"year,omitempty"`
 	Tracks     []*TrackChild `xml:"song,omitempty"         json:"song,omitempty"`
+
 	// star / rating
 	Starred       *time.Time `xml:"starred,attr,omitempty"         json:"starred,omitempty"`
 	UserRating    int        `xml:"userRating,attr,omitempty"      json:"userRating,omitempty"`
@@ -151,35 +161,51 @@ type TracksByGenre struct {
 	List []*TrackChild `xml:"song" json:"song"`
 }
 
+type TranscodeMeta struct {
+	TranscodedContentType string `xml:"transcodedContentType,attr,omitempty" json:"transcodedContentType,omitempty"`
+	TranscodedSuffix      string `xml:"transcodedSuffix,attr,omitempty"      json:"transcodedSuffix,omitempty"`
+}
+
+// https://opensubsonic.netlify.app/docs/responses/child/
 type TrackChild struct {
-	ID                    *specid.ID `xml:"id,attr,omitempty"                    json:"id,omitempty"`
-	Album                 string     `xml:"album,attr,omitempty"                 json:"album,omitempty"`
-	AlbumID               *specid.ID `xml:"albumId,attr,omitempty"               json:"albumId,omitempty"`
-	Artist                string     `xml:"artist,attr,omitempty"                json:"artist,omitempty"`
-	ArtistID              *specid.ID `xml:"artistId,attr,omitempty"              json:"artistId,omitempty"`
-	Bitrate               int        `xml:"bitRate,attr,omitempty"               json:"bitRate,omitempty"`
-	ContentType           string     `xml:"contentType,attr,omitempty"           json:"contentType,omitempty"`
-	TranscodedContentType string     `xml:"transcodedContentType,attr,omitempty" json:"transcodedContentType,omitempty"`
-	CoverID               *specid.ID `xml:"coverArt,attr,omitempty"              json:"coverArt,omitempty"`
-	CreatedAt             time.Time  `xml:"created,attr,omitempty"               json:"created,omitempty"`
-	Duration              int        `xml:"duration,attr,omitempty"              json:"duration,omitempty"`
-	Genre                 string     `xml:"genre,attr,omitempty"                 json:"genre,omitempty"`
-	IsDir                 bool       `xml:"isDir,attr"                           json:"isDir"`
-	IsVideo               bool       `xml:"isVideo,attr"                         json:"isVideo"`
-	ParentID              *specid.ID `xml:"parent,attr,omitempty"                json:"parent,omitempty"`
-	Path                  string     `xml:"path,attr,omitempty"                  json:"path,omitempty"`
-	Size                  int        `xml:"size,attr,omitempty"                  json:"size,omitempty"`
-	Suffix                string     `xml:"suffix,attr,omitempty"                json:"suffix,omitempty"`
-	TranscodedSuffix      string     `xml:"transcodedSuffix,attr,omitempty"      json:"transcodedSuffix,omitempty"`
-	Title                 string     `xml:"title,attr"                           json:"title"`
-	TrackNumber           int        `xml:"track,attr,omitempty"                 json:"track,omitempty"`
-	DiscNumber            int        `xml:"discNumber,attr,omitempty"            json:"discNumber,omitempty"`
-	Type                  string     `xml:"type,attr,omitempty"                  json:"type,omitempty"`
-	Year                  int        `xml:"year,attr,omitempty"                  json:"year,omitempty"`
+	ID      *specid.ID `xml:"id,attr,omitempty"          json:"id,omitempty"`
+	Album   string     `xml:"album,attr,omitempty"       json:"album,omitempty"`
+	AlbumID *specid.ID `xml:"albumId,attr,omitempty"     json:"albumId,omitempty"`
+
+	// legacy or single tag mode
+	Artist   string     `xml:"artist,attr,omitempty"    json:"artist,omitempty"`
+	ArtistID *specid.ID `xml:"artistId,attr,omitempty"  json:"artistId,omitempty"`
+
+	Artists       []*ArtistRef `xml:"artists,omitempty"                json:"artists,omitempty"`
+	DisplayArtist string       `xml:"diplayArtist,attr,omitempty"      json:"displayArtist,omitempty"`
+
+	AlbumArtists       []*ArtistRef `xml:"albumArtists,omitempty"           json:"albumArtists,omitempty"`
+	AlbumDisplayArtist string       `xml:"diplayAlbumArtist,attr,omitempty" json:"displayAlbumArtist,omitempty"`
+
+	Bitrate     int         `xml:"bitRate,attr,omitempty"     json:"bitRate,omitempty"`
+	ContentType string      `xml:"contentType,attr,omitempty" json:"contentType,omitempty"`
+	CoverID     *specid.ID  `xml:"coverArt,attr,omitempty"    json:"coverArt,omitempty"`
+	CreatedAt   time.Time   `xml:"created,attr,omitempty"     json:"created,omitempty"`
+	Duration    int         `xml:"duration,attr,omitempty"    json:"duration,omitempty"`
+	Genre       string      `xml:"genre,attr,omitempty"       json:"genre,omitempty"`
+	Genres      []*GenreRef `xml:"genres,omitempty"           json:"genres,omitempty"`
+	IsDir       bool        `xml:"isDir,attr"                 json:"isDir"`
+	IsVideo     bool        `xml:"isVideo,attr"               json:"isVideo"`
+	ParentID    *specid.ID  `xml:"parent,attr,omitempty"      json:"parent,omitempty"`
+	Path        string      `xml:"path,attr,omitempty"        json:"path,omitempty"`
+	Size        int         `xml:"size,attr,omitempty"        json:"size,omitempty"`
+	Suffix      string      `xml:"suffix,attr,omitempty"      json:"suffix,omitempty"`
+	Title       string      `xml:"title,attr"                 json:"title"`
+	TrackNumber int         `xml:"track,attr,omitempty"       json:"track,omitempty"`
+	DiscNumber  int         `xml:"discNumber,attr,omitempty"  json:"discNumber,omitempty"`
+	Type        string      `xml:"type,attr,omitempty"        json:"type,omitempty"`
+	Year        int         `xml:"year,attr,omitempty"        json:"year,omitempty"`
 	// star / rating
 	Starred       *time.Time `xml:"starred,attr,omitempty"         json:"starred,omitempty"`
 	UserRating    int        `xml:"userRating,attr,omitempty"      json:"userRating,omitempty"`
 	AverageRating string     `xml:"averageRating,attr,omitempty"   json:"averageRating,omitempty"`
+
+	TranscodeMeta
 }
 
 type Artists struct {
@@ -292,7 +318,13 @@ type ArtistInfo struct {
 	MediumImageURL string    `xml:"mediumImageUrl"          json:"mediumImageUrl"`
 	LargeImageURL  string    `xml:"largeImageUrl"           json:"largeImageUrl"`
 	ArtistImageURL string    `xml:"artistImageUrl"          json:"artistImageUrl"` // not sure where this comes from but other clients seem to expect it
-	Similar []*Artist `xml:"similarArtist,omitempty" json:"similarArtist,omitempty"`
+	Similar        []*Artist `xml:"similarArtist,omitempty" json:"similarArtist,omitempty"`
+}
+
+type AlbumInfo struct {
+	Notes         string `xml:"notes"         json:"notes"`
+	MusicBrainzID string `xml:"musicBrainzId" json:"musicBrainzId"`
+	LastFMURL     string `xml:"lastFmUrl"     json:"lastFmUrl"`
 }
 
 type Genres struct {
@@ -300,9 +332,9 @@ type Genres struct {
 }
 
 type Genre struct {
-	Name       string `xml:",chardata"                 json:"value"`
-	SongCount  int    `xml:"songCount,attr,omitempty"  json:"songCount,omitempty"`
-	AlbumCount int    `xml:"albumCount,attr,omitempty" json:"albumCount,omitempty"`
+	Name       string `xml:",chardata"       json:"value"`
+	SongCount  int    `xml:"songCount,attr"  json:"songCount"`
+	AlbumCount int    `xml:"albumCount,attr" json:"albumCount"`
 }
 
 type PlayQueue struct {
@@ -419,6 +451,13 @@ type Lyrics struct {
 	Artist string `xml:"artist,attr,omitempty" json:"artist,omitempty"`
 	Title  string `xml:"title,attr,omitempty"  json:"title,omitempty"`
 }
+
+type OpenSubsonicExtension struct {
+	Name     string `xml:"name,attr" json:"name"`
+	Versions []int  `xml:"versions"  json:"versions"`
+}
+
+type OpenSubsonicExtensions []OpenSubsonicExtension
 
 func formatRating(rating float64) string {
 	if rating == 0 {

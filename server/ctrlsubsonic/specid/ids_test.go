@@ -6,6 +6,8 @@ import (
 )
 
 func TestParseID(t *testing.T) {
+	t.Parallel()
+
 	tcases := []struct {
 		param    string
 		expType  IDT
@@ -20,9 +22,12 @@ func TestParseID(t *testing.T) {
 		{param: "1", expErr: ErrBadSeparator},
 		{param: "al-howdy", expErr: ErrNotAnInt},
 	}
+
 	for _, tcase := range tcases {
 		tcase := tcase // pin
 		t.Run(tcase.param, func(t *testing.T) {
+			t.Parallel()
+
 			act, err := New(tcase.param)
 			if !errors.Is(err, tcase.expErr) {
 				t.Fatalf("expected err %q, got %q", tcase.expErr, err)

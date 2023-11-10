@@ -16,8 +16,10 @@ func NewFFmpegTranscoder() *FFmpegTranscoder {
 	return &FFmpegTranscoder{}
 }
 
-var ErrFFmpegKilled = fmt.Errorf("ffmpeg was killed early")
-var ErrFFmpegExit = fmt.Errorf("ffmpeg exited with non 0 status code")
+var (
+	ErrFFmpegKilled = fmt.Errorf("ffmpeg was killed early")
+	ErrFFmpegExit   = fmt.Errorf("ffmpeg exited with non 0 status code")
+)
 
 func (*FFmpegTranscoder) Transcode(ctx context.Context, profile Profile, in string, out io.Writer) error {
 	name, args, err := parseProfile(profile, in)
@@ -36,7 +38,7 @@ func (*FFmpegTranscoder) Transcode(ctx context.Context, profile Profile, in stri
 
 	switch err := cmd.Wait(); {
 	case errors.As(err, &exitErr):
-		return fmt.Errorf("waiting cmd: %v: %w", err, ErrFFmpegKilled)
+		return fmt.Errorf("waiting cmd: %w: %w", err, ErrFFmpegKilled)
 	case err != nil:
 		return fmt.Errorf("waiting cmd: %w", err)
 	}
