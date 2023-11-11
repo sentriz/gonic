@@ -12,6 +12,11 @@
       "child": [
         {
           "id": "al-3",
+          "artist": "",
+          "artists": null,
+          "displayArtist": "",
+          "albumArtists": null,
+          "displayAlbumArtist": "",
           "coverArt": "al-3",
           "created": "2019-11-30T00:00:00Z",
           "isDir": true,
@@ -21,6 +26,11 @@
         },
         {
           "id": "al-4",
+          "artist": "",
+          "artists": null,
+          "displayArtist": "",
+          "albumArtists": null,
+          "displayAlbumArtist": "",
           "coverArt": "al-4",
           "created": "2019-11-30T00:00:00Z",
           "isDir": true,
@@ -30,6 +40,11 @@
         },
         {
           "id": "al-5",
+          "artist": "",
+          "artists": null,
+          "displayArtist": "",
+          "albumArtists": null,
+          "displayAlbumArtist": "",
           "coverArt": "al-5",
           "created": "2019-11-30T00:00:00Z",
           "isDir": true,

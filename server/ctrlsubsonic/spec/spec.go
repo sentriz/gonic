@@ -127,10 +127,10 @@ type Album struct {
 
 	// legacy or single tag mode
 	ArtistID *specid.ID `xml:"artistId,attr,omitempty" json:"artistId,omitempty"`
-	Artist   string     `xml:"artist,attr,omitempty"   json:"artist,omitempty"`
+	Artist   string     `xml:"artist,attr"             json:"artist"`
 
-	Artists       []*ArtistRef `xml:"artists,omitempty"           json:"artists,omitempty"`
-	DisplayArtist string       `xml:"diplayArtist,attr,omitempty" json:"displayArtist,omitempty"`
+	Artists       []*ArtistRef `xml:"artists"           json:"artists"`
+	DisplayArtist string       `xml:"diplayArtist,attr" json:"displayArtist"`
 
 	// folder stuff
 	Title    string     `xml:"title,attr,omitempty"  json:"title"`
@@ -173,14 +173,14 @@ type TrackChild struct {
 	AlbumID *specid.ID `xml:"albumId,attr,omitempty"     json:"albumId,omitempty"`
 
 	// legacy or single tag mode
-	Artist   string     `xml:"artist,attr,omitempty"    json:"artist,omitempty"`
-	ArtistID *specid.ID `xml:"artistId,attr,omitempty"  json:"artistId,omitempty"`
+	Artist   string     `xml:"artist,attr"             json:"artist"`
+	ArtistID *specid.ID `xml:"artistId,attr,omitempty" json:"artistId,omitempty"`
 
-	Artists       []*ArtistRef `xml:"artists,omitempty"                json:"artists,omitempty"`
-	DisplayArtist string       `xml:"diplayArtist,attr,omitempty"      json:"displayArtist,omitempty"`
+	Artists       []*ArtistRef `xml:"artists"           json:"artists"`
+	DisplayArtist string       `xml:"diplayArtist,attr" json:"displayArtist"`
 
-	AlbumArtists       []*ArtistRef `xml:"albumArtists,omitempty"           json:"albumArtists,omitempty"`
-	AlbumDisplayArtist string       `xml:"diplayAlbumArtist,attr,omitempty" json:"displayAlbumArtist,omitempty"`
+	AlbumArtists       []*ArtistRef `xml:"albumArtists"           json:"albumArtists"`
+	AlbumDisplayArtist string       `xml:"diplayAlbumArtist,attr" json:"displayAlbumArtist"`
 
 	Bitrate     int         `xml:"bitRate,attr,omitempty"     json:"bitRate,omitempty"`
 	ContentType string      `xml:"contentType,attr,omitempty" json:"contentType,omitempty"`
