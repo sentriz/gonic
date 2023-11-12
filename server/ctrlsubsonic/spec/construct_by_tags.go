@@ -9,15 +9,18 @@ import (
 
 func NewAlbumByTags(a *db.Album, artists []*db.Artist) *Album {
 	ret := &Album{
-		Created:       a.CreatedAt,
 		ID:            a.SID(),
+		Created:       a.CreatedAt,
+		Artists:       []*ArtistRef{},
+		DisplayArtist: a.TagAlbumArtist,
+		Title:         a.TagTitle,
 		Album:         a.TagTitle,
 		Name:          a.TagTitle,
-		Title:         a.TagTitle,
-		Year:          a.TagYear,
 		TrackCount:    a.ChildCount,
 		Duration:      a.Duration,
-		DisplayArtist: a.TagAlbumArtist,
+		Genres:        []*GenreRef{},
+		Year:          a.TagYear,
+		Tracks:        []*TrackChild{},
 		AverageRating: formatRating(a.AverageRating),
 	}
 	if a.Cover != "" {
@@ -54,29 +57,29 @@ func NewAlbumByTags(a *db.Album, artists []*db.Artist) *Album {
 func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 	ret := &TrackChild{
 		ID:                 t.SID(),
-		ContentType:        t.MIME(),
-		Suffix:             formatExt(t.Ext()),
-		ParentID:           t.AlbumSID(),
-		CreatedAt:          t.CreatedAt,
-		Size:               t.Size,
-		Title:              t.TagTitle,
+		Album:              album.TagTitle,
+		AlbumID:            album.SID(),
 		Artist:             t.TagTrackArtist,
+		Artists:            []*ArtistRef{},
 		DisplayArtist:      t.TagTrackArtist,
+		AlbumArtists:       []*ArtistRef{},
 		AlbumDisplayArtist: album.TagAlbumArtist,
+		Bitrate:            t.Bitrate,
+		ContentType:        t.MIME(),
+		CreatedAt:          t.CreatedAt,
+		Duration:           t.Length,
+		Genres:             []*GenreRef{},
+		ParentID:           t.AlbumSID(),
+		Path:               filepath.Join(album.LeftPath, album.RightPath, t.Filename),
+		Size:               t.Size,
+		Suffix:             formatExt(t.Ext()),
+		Title:              t.TagTitle,
 		TrackNumber:        t.TagTrackNumber,
 		DiscNumber:         t.TagDiscNumber,
-		Path: filepath.Join(
-			album.LeftPath,
-			album.RightPath,
-			t.Filename,
-		),
-		Album:         album.TagTitle,
-		AlbumID:       album.SID(),
-		Duration:      t.Length,
-		Bitrate:       t.Bitrate,
-		Type:          "music",
-		Year:          album.TagYear,
-		AverageRating: formatRating(t.AverageRating),
+		Type:               "music",
+		Year:               album.TagYear,
+		AverageRating:      formatRating(t.AverageRating),
+		TranscodeMeta:      TranscodeMeta{},
 	}
 	if album.Cover != "" {
 		ret.CoverID = album.SID()
@@ -113,6 +116,7 @@ func NewArtistByTags(a *db.Artist) *Artist {
 		ID:            a.SID(),
 		Name:          a.Name,
 		AlbumCount:    a.AlbumCount,
+		Albums:        []*Album{},
 		AverageRating: formatRating(a.AverageRating),
 	}
 	if a.Info != nil && a.Info.ImageURL != "" {

@@ -15,7 +15,7 @@ require (
 	github.com/gorilla/securecookie v1.1.2
 	github.com/gorilla/sessions v1.2.2
 	github.com/jinzhu/gorm v1.9.17-0.20211120011537-5c235b72a414
-	github.com/josephburnett/jd v1.5.2
+	github.com/josephburnett/jd v1.7.1
 	github.com/mattn/go-sqlite3 v1.14.18
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mmcdole/gofeed v1.2.1
@@ -25,9 +25,9 @@ require (
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
 	github.com/sentriz/audiotags v0.0.0-20230419125925-8886243b2137
 	github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981
-	github.com/stretchr/testify v1.8.1
-	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
-	golang.org/x/net v0.17.0
+	github.com/stretchr/testify v1.8.4
+	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
+	golang.org/x/net v0.18.0
 	golang.org/x/sync v0.5.0
 	gopkg.in/gormigrate.v1 v1.6.0
 	jaytaylor.com/html2text v0.0.0-20230321000545-74c2419ad056
@@ -40,8 +40,8 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/go-ldap/ldap v3.0.3+incompatible // indirect
-	github.com/go-openapi/jsonpointer v0.19.5 // indirect
-	github.com/go-openapi/swag v0.21.1 // indirect
+	github.com/go-openapi/jsonpointer v0.20.0 // indirect
+	github.com/go-openapi/swag v0.22.4 // indirect
 	github.com/gorilla/context v1.1.2 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
@@ -60,10 +60,11 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
+	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
-	golang.org/x/crypto v0.14.0 // indirect
-	golang.org/x/image v0.13.0 // indirect
+	golang.org/x/crypto v0.15.0 // indirect
+	golang.org/x/image v0.14.0 // indirect
 	golang.org/x/sys v0.14.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
