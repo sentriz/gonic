@@ -40,7 +40,7 @@ type Jukebox struct {
 	conn   *mpvipc.Connection
 	events <-chan *mpvipc.Event
 
-	mu sync.Mutex
+	mu sync.RWMutex
 }
 
 func New() *Jukebox {
@@ -101,7 +101,7 @@ func (j *Jukebox) Wait() error {
 }
 
 func (j *Jukebox) GetPlaylist() ([]string, error) {
-	defer lock(&j.mu)()
+	defer lockr(&j.mu)()
 
 	var playlist mpvPlaylist
 	if err := j.getDecode(&playlist, "playlist"); err != nil {
@@ -257,7 +257,7 @@ func (j *Jukebox) SetVolumePct(v int) error {
 }
 
 func (j *Jukebox) GetVolumePct() (float64, error) {
-	defer lock(&j.mu)()
+	defer lockr(&j.mu)()
 
 	var volume float64
 	if err := j.getDecode(&volume, "volume"); err != nil {
@@ -276,7 +276,7 @@ type Status struct {
 }
 
 func (j *Jukebox) GetStatus() (*Status, error) {
-	defer lock(&j.mu)()
+	defer lockr(&j.mu)()
 
 	var status Status
 	_ = j.getDecode(&status.Position, "time-pos") // property may not always be there
@@ -416,9 +416,14 @@ func filter[T comparable](items []T, f func(T) bool) ([]T, bool) {
 	return ret, found
 }
 
-func lock(mu *sync.Mutex) func() {
+func lock(mu *sync.RWMutex) func() {
 	mu.Lock()
 	return mu.Unlock
+}
+
+func lockr(mu *sync.RWMutex) func() {
+	mu.RLock()
+	return mu.RUnlock
 }
 
 var mpvVersionExpr = regexp.MustCompile(`mpv\s(\d+)\.(\d+)\.(\d+)`)
