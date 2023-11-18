@@ -288,7 +288,11 @@ func main() {
 	errgrp.Go(func() error {
 		defer logJob("http")()
 
-		server := &http.Server{Addr: *confListenAddr, Handler: mux, ReadHeaderTimeout: 5 * time.Second}
+		server := &http.Server{
+			Addr:        *confListenAddr,
+			ReadTimeout: 5 * time.Second, WriteTimeout: 5 * time.Second, IdleTimeout: 5 * time.Second,
+			Handler: mux,
+		}
 		errgrp.Go(func() error {
 			<-ctx.Done()
 			return server.Shutdown(context.Background())
