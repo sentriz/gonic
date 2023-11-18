@@ -232,7 +232,8 @@ func main() {
 		log.Panicf("error getting session key: %v\n", err)
 	}
 	if sessKey == "" {
-		if err := dbc.SetSetting("session_key", string(securecookie.GenerateRandomKey(32))); err != nil {
+		sessKey = string(securecookie.GenerateRandomKey(32))
+		if err := dbc.SetSetting("session_key", sessKey); err != nil {
 			log.Panicf("error setting session key: %v\n", err)
 		}
 	}
