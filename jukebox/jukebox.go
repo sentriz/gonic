@@ -121,12 +121,8 @@ func (j *Jukebox) SetPlaylist(items []string) error {
 	if err := getDecode(j.conn, &playlist, "playlist"); err != nil {
 		return fmt.Errorf("get playlist: %w", err)
 	}
-	current, currentIndex := find(playlist, func(item mpvPlaylistItem) bool {
-		return item.Current
-	})
-
-	filteredItems, foundExistingTrack := filter(items, func(filename string) bool {
-		return filename != current.Filename
+	currentPlayingIndex := slices.IndexFunc(playlist, func(pl mpvPlaylistItem) bool {
+		return pl.Current
 	})
 
 	tmp, cleanup, err := tmp()
@@ -134,30 +130,35 @@ func (j *Jukebox) SetPlaylist(items []string) error {
 		return fmt.Errorf("create temp file: %w", err)
 	}
 	defer cleanup()
-	for _, item := range filteredItems {
+
+	var newPlayingIndex = -1
+	for i, item := range items {
 		item, _ = filepath.Abs(item)
+		if currentPlayingIndex >= 0 && playlist[currentPlayingIndex].Filename == item {
+			newPlayingIndex = i
+			continue // don't add current track to loadlist
+		}
+
 		fmt.Fprintln(tmp, item)
 	}
 
-	if !foundExistingTrack {
-		// easy case - a brand new set of tracks that we can overwrite
+	if newPlayingIndex < 0 {
 		if _, err := j.conn.Call("loadlist", tmp.Name(), "replace"); err != nil {
 			return fmt.Errorf("load list: %w", err)
 		}
 		return nil
 	}
 
-	// not so easy, we need to clear the playlist except what's playing, load everything
-	// except for what we're playing, then move what's playing back to its original index
-	// clear all items except what's playing (will be at index 0)
-	if _, err := j.conn.Call("playlist-clear"); err != nil {
+	if _, err := j.conn.Call("playlist-clear"); err != nil { // leaves current at index 0
 		return fmt.Errorf("clear playlist: %w", err)
 	}
 	if _, err := j.conn.Call("loadlist", tmp.Name(), "append-play"); err != nil {
 		return fmt.Errorf("load list: %w", err)
 	}
-	if _, err := j.conn.Call("playlist-move", 0, currentIndex+1); err != nil {
-		return fmt.Errorf("playlist move: %w", err)
+	if newPlayingIndex > 0 {
+		if _, err := j.conn.Call("playlist-move", 0, newPlayingIndex+1); err != nil {
+			return fmt.Errorf("playlist move: %w", err)
+		}
 	}
 	return nil
 }
@@ -203,9 +204,11 @@ func (j *Jukebox) SkipToPlaylistIndex(i int, offsetSecs int) error {
 			return fmt.Errorf("pause: %w", err)
 		}
 	}
+
 	if _, err := j.conn.Call("playlist-play-index", i); err != nil {
 		return fmt.Errorf("playlist play index: %w", err)
 	}
+
 	if offsetSecs > 0 {
 		if err := waitFor(j.events, matchEventSeekable); err != nil {
 			return fmt.Errorf("waiting for file load: %w", err)
@@ -393,32 +396,13 @@ func tmp() (*os.File, func(), error) {
 	return tmp, cleanup, nil
 }
 
-func find[T any](items []T, f func(T) bool) (T, int) {
-	for i, item := range items {
-		if f(item) {
-			return item, i
-		}
-	}
-	var t T
-	return t, -1
-}
-
-func filter[T comparable](items []T, f func(T) bool) ([]T, bool) {
-	var found bool
-	var ret []T
-	for _, item := range items {
-		if !f(item) {
-			found = true
-			continue
-		}
-		ret = append(ret, item)
-	}
-	return ret, found
-}
-
 func lock(mu *sync.RWMutex) func() {
 	mu.Lock()
-	return mu.Unlock
+	return func() {
+		// let mpv "settle" since it seems to return from ipc calls before everything is sorted out
+		time.Sleep(200 * time.Millisecond)
+		mu.Unlock()
+	}
 }
 
 func lockr(mu *sync.RWMutex) func() {
