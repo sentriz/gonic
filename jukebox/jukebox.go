@@ -36,9 +36,8 @@ func MPVArg(k string, v any) string {
 }
 
 type Jukebox struct {
-	cmd    *exec.Cmd
-	conn   *mpvipc.Connection
-	events <-chan *mpvipc.Event
+	cmd  *exec.Cmd
+	conn *mpvipc.Connection
 
 	mu sync.RWMutex
 }
@@ -87,7 +86,6 @@ func (j *Jukebox) Start(sockPath string, mpvExtraArgs []string) error {
 	if _, err := j.conn.Call("observe_property", 0, "seekable"); err != nil {
 		return fmt.Errorf("observe property: %w", err)
 	}
-	j.events, _ = j.conn.NewEventListener()
 
 	return nil
 }
@@ -205,20 +203,24 @@ func (j *Jukebox) SkipToPlaylistIndex(i int, offsetSecs int) error {
 		}
 	}
 
+	ch, stop := j.conn.NewEventListener()
+	defer close(stop)
+
 	if _, err := j.conn.Call("playlist-play-index", i); err != nil {
 		return fmt.Errorf("playlist play index: %w", err)
 	}
 
 	if offsetSecs > 0 {
-		if err := waitFor(j.events, matchEventSeekable); err != nil {
+		if err := waitFor(ch, matchEventSeekable); err != nil {
 			return fmt.Errorf("waiting for file load: %w", err)
 		}
 		if _, err := j.conn.Call("seek", offsetSecs, "absolute"); err != nil {
 			return fmt.Errorf("seek: %w", err)
 		}
-		if err := j.conn.Set("pause", false); err != nil {
-			return fmt.Errorf("play: %w", err)
-		}
+	}
+
+	if err := j.conn.Set("pause", false); err != nil {
+		return fmt.Errorf("play: %w", err)
 	}
 	return nil
 }
@@ -369,8 +371,6 @@ func waitUntil(timeout time.Duration, f func() bool) bool {
 func waitFor[T any](ch <-chan T, match func(e T) bool) error {
 	quit := time.NewTicker(1 * time.Second)
 	defer quit.Stop()
-
-	defer time.Sleep(350 * time.Millisecond)
 
 	for {
 		select {
