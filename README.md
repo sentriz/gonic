@@ -2,15 +2,8 @@
 <h4 align="center">FLOSS alternative to <a href="http://www.subsonic.org/">subsonic</a>, supporting its many clients</h4>
 <p align="center">
   <a href="http://hub.docker.com/r/sentriz/gonic"><img src="https://img.shields.io/docker/pulls/sentriz/gonic.svg"></a>
-  <a href="https://github.com/sentriz/gonic/issues"><img src="https://img.shields.io/github/issues/sentriz/gonic.svg"></a>
-  <a href="https://github.com/sentriz/gonic/pulls"><img src="https://img.shields.io/github/issues-pr/sentriz/gonic.svg"></a>
-  <a href="https://github.com/sentriz/gonic/actions"><img src="https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fsentriz%2Fgonic%2Fbadge&label=build&logo=none"></a>
-</p>
-
-<p align="center">
-  <b>irc</b> <a href="https://web.libera.chat/#gonic">#gonic</a> on libera.chat
-  &nbsp;|&nbsp;
-  <b>matrix</b> <a href="https://matrix.to/#/#gonic:libera.chat">#gonic:libera.chat</a>
+  <a href="https://github.com/sentriz/gonic/releases"><img src="https://img.shields.io/github/v/release/sentriz/gonic.svg"></a>
+  <a href="https://web.libera.chat/#gonic"><img src="https://img.shields.io/badge/libera.chat-%23gonic-blue.svg"></a>
 </p>
 
 ## features
