@@ -1,5 +1,5 @@
 <p align="center"><img width="500" src="https://github.com/sentriz/gonic/blob/master/.github/logo.png?raw=true"></p>
-<h4 align="center">FLOSS alternative to <a href="http://www.subsonic.org/">subsonic</a>, supporting its many clients</h4>
+<h4 align="center">free-software <a href="http://www.subsonic.org/">subsonic</a> server API implementation to, supporting its <a href="https://github.com/sentriz/gonic?tab=readme-ov-file#features">many clients</a></h4>
 <p align="center">
   <a href="http://hub.docker.com/r/sentriz/gonic"><img src="https://img.shields.io/docker/pulls/sentriz/gonic.svg"></a>
   <a href="https://github.com/sentriz/gonic/releases"><img src="https://img.shields.io/github/v/release/sentriz/gonic.svg"></a>
@@ -122,8 +122,8 @@ queries like show me "recently played compilations" or "recently added albums" a
 
 when browsing by folder, any arbitrary and nested folder layout is supported, with the following caveats:
 
-- Files from the same album must all be in the same folder
-- All files in a folder must be from the same album
+- files from the same album must all be in the same folder
+- all files in a folder must be from the same album
 
 please see [here](https://github.com/sentriz/gonic/issues/89) for more context
 
