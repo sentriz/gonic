@@ -94,7 +94,7 @@ func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPa
 	chain := handlerutil.Chain(
 		withParams,
 		withRequiredParams,
-		c.WithUser,
+		c.withUser,
 	)
 
 	c.Handle("/getLicense", chain(resp(c.ServeGetLicence)))
@@ -220,7 +220,7 @@ func withRequiredParams(next http.Handler) http.Handler {
 	})
 }
 
-func (c *Controller) WithUser(next http.Handler) http.Handler {
+func (c *Controller) withUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		params := r.Context().Value(CtxParams).(params.Params)
 		// ignoring errors here, a middleware has already ensured they exist
@@ -238,16 +238,16 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 		}
 		user := c.dbc.GetUserByName(username)
 
-    newLDAPUser := false 
+		newLDAPUser := false
 		if user == nil {
 			newLDAPUser = true
-			
-      // Because the user wasn't found we can now try 
-			// to use LDAP. ldapFQDN, err := c.dbc.GetSetting("ldap_fqdn")
+
+			// Because the user wasn't found we can now try
+			// to use LDAP.
 			ldapFQDN, err := c.dbc.GetSetting("ldap_fqdn")
-			
+
 			if ldapFQDN != "" && err == nil {
-				// The configuration page wouldn't allow these setting to not be set 
+				// The configuration page wouldn't allow these setting to not be set
 				// while LDAP is enabled (a FQDN/IP is set).
 				bindUID, _ := c.dbc.GetSetting("ldap_bind_user")
 				bindPWD, _ := c.dbc.GetSetting("ldap_bind_user_password")
@@ -264,7 +264,7 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 					return
 				}
 				defer l.Close()
-				
+
 				// After we have a connection, let's try binding
 				_, err = l.SimpleBind(&ldap.SimpleBindRequest{
 					Username: fmt.Sprintf("uid=%s,%s", bindUID, baseDN),
@@ -286,24 +286,24 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 
 				result, err := l.Search(searchReq)
 				if err != nil {
-        	log.Println("failed to query LDAP:", err)
+					log.Println("failed to query LDAP:", err)
 				}
-				
+
 				if len(result.Entries) > 1 {
 					_ = writeResp(w, r, spec.NewError(40, "Ambiguous user: `%s`", username))
 				} else if len(result.Entries) == 1 {
 					user := db.User{
-						Name: username,
+						Name:     username,
 						Password: "", // no password because we want auth to fail.
 					}
 
 					if err := c.dbc.Create(&user).Error; err != nil {
 						fmt.Println("User created via LDAP:", username)
 					}
-		    } else {
-    	    _ = writeResp(w, r, spec.NewError(40, "invalid username `%s`", username))
+				} else {
+					_ = writeResp(w, r, spec.NewError(40, "invalid username `%s`", username))
 					return
-		    }
+				}
 			} else {
 				_ = writeResp(w, r, spec.NewError(40,
 					"invalid username `%s`", username))
@@ -317,17 +317,17 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 			credsOk = checkCredsBasic(user.Password, password)
 		}
 		if !credsOk {
-			// Because internal authentication failed, we can now try to use LDAP, if 
+			// Because internal authentication failed, we can now try to use LDAP, if
 			// it was enabled by the user.
 			ldapFQDN, err := c.dbc.GetSetting("ldap_fqdn")
-			
+
 			if ldapFQDN != "" && err == nil {
-				// The configuration page wouldn't allow these setting to not be set 
+				// The configuration page wouldn't allow these setting to not be set
 				// while LDAP is enabled (a FQDN/IP is set).
 				ldapPort, _ := c.dbc.GetSetting("ldap_port")
 				baseDN, _ := c.dbc.GetSetting("ldap_base_dn")
 				tls, _ := c.dbc.GetSetting("ldap_tls")
-				
+
 				// Now, we can try to connect to the LDAP server.
 				l, err := createLDAPconnection(tls, ldapFQDN, ldapPort)
 				if err != nil {
@@ -336,7 +336,7 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 					return
 				}
 				defer l.Close()
-				
+
 				// After we have a connection, let's try binding
 				_, err = l.SimpleBind(&ldap.SimpleBindRequest{
 					Username: fmt.Sprintf("uid=%s,%s", username, baseDN),
@@ -346,10 +346,10 @@ func (c *Controller) WithUser(next http.Handler) http.Handler {
 				if err == nil {
 					withUser := context.WithValue(r.Context(), CtxUser, user)
 					next.ServeHTTP(w, r.WithContext(withUser))
-          return
+					return
 				}
 			}
-			
+
 			_ = writeResp(w, r, spec.NewError(40, "invalid password"))
 			return
 		}
