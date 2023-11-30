@@ -1,5 +1,20 @@
 # Changelog
 
+### [0.16.2](https://www.github.com/sentriz/gonic/compare/v0.16.1...v0.16.2) (2023-11-30)
+
+
+### Features
+
+* set global http timeouts except for streaming endpoints ([2edb1b8](https://www.github.com/sentriz/gonic/commit/2edb1b8eda649671aa4b0534ec8065bde65803e3)), closes [#411](https://www.github.com/sentriz/gonic/issues/411)
+
+
+### Bug Fixes
+
+* **admin:** don't start with empty session key ([dd0f6b3](https://www.github.com/sentriz/gonic/commit/dd0f6b3650426a06218bff875301471b92c6f03e)), closes [#414](https://www.github.com/sentriz/gonic/issues/414)
+* **jukebox:** make sure we clean up "seekable" event listener ([b199bc1](https://www.github.com/sentriz/gonic/commit/b199bc104e90eaf760563b6efca409ccd9618788)), closes [#411](https://www.github.com/sentriz/gonic/issues/411)
+* **jukebox:** restore play index only when incoming new track has index >0 ([82c3c5b](https://www.github.com/sentriz/gonic/commit/82c3c5baef5a5145902cd96e1a14d6d3fd50320f)), closes [#411](https://www.github.com/sentriz/gonic/issues/411)
+* **subsonic:** return empty opensubsonic fields ([5022500](https://www.github.com/sentriz/gonic/commit/5022500b307e746f2ff0426b07c4e776873c880a))
+
 ### [0.16.1](https://www.github.com/sentriz/gonic/compare/v0.16.0...v0.16.1) (2023-11-08)
 
 
