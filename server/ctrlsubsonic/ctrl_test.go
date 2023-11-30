@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	jd "github.com/josephburnett/jd/lib"
+	"github.com/stretchr/testify/require"
 
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/db"
@@ -162,4 +163,24 @@ func makec(tb testing.TB, roots []string, audio bool) *Controller {
 	}
 
 	return contr
+}
+
+func TestParams(t *testing.T) {
+	t.Parallel()
+
+	handler := withParams(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		params := r.Context().Value(CtxParams).(params.Params)
+		require.Equal(t, "Client", params.GetOr("c", ""))
+	}))
+	params := url.Values{}
+	params.Set("c", "Client")
+
+	r, err := http.NewRequest(http.MethodGet, "/?"+params.Encode(), nil)
+	require.NoError(t, err)
+	handler.ServeHTTP(nil, r)
+
+	r, err = http.NewRequest(http.MethodPost, "/", strings.NewReader(params.Encode()))
+	require.NoError(t, err)
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	handler.ServeHTTP(nil, r)
 }
