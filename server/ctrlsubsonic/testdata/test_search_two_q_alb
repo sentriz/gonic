@@ -19,7 +19,8 @@
           "isDir": true,
           "isVideo": false,
           "parent": "al-2",
-          "title": "album-0"
+          "title": "album-0",
+          "musicBrainzId": ""
         },
         {
           "id": "al-4",
@@ -33,7 +34,8 @@
           "isDir": true,
           "isVideo": false,
           "parent": "al-2",
-          "title": "album-1"
+          "title": "album-1",
+          "musicBrainzId": ""
         },
         {
           "id": "al-5",
@@ -47,7 +49,8 @@
           "isDir": true,
           "isVideo": false,
           "parent": "al-2",
-          "title": "album-2"
+          "title": "album-2",
+          "musicBrainzId": ""
         },
         {
           "id": "al-7",
@@ -61,7 +64,8 @@
           "isDir": true,
           "isVideo": false,
           "parent": "al-6",
-          "title": "album-0"
+          "title": "album-0",
+          "musicBrainzId": ""
         },
         {
           "id": "al-8",
@@ -75,7 +79,8 @@
           "isDir": true,
           "isVideo": false,
           "parent": "al-6",
-          "title": "album-1"
+          "title": "album-1",
+          "musicBrainzId": ""
         },
         {
           "id": "al-9",
@@ -89,7 +94,8 @@
           "isDir": true,
           "isVideo": false,
           "parent": "al-6",
-          "title": "album-2"
+          "title": "album-2",
+          "musicBrainzId": ""
         },
         {
           "id": "al-11",
@@ -103,7 +109,8 @@
           "isDir": true,
           "isVideo": false,
           "parent": "al-10",
-          "title": "album-0"
+          "title": "album-0",
+          "musicBrainzId": ""
         },
         {
           "id": "al-12",
@@ -117,7 +124,8 @@
           "isDir": true,
           "isVideo": false,
           "parent": "al-10",
-          "title": "album-1"
+          "title": "album-1",
+          "musicBrainzId": ""
         },
         {
           "id": "al-13",
@@ -131,7 +139,8 @@
           "isDir": true,
           "isVideo": false,
           "parent": "al-10",
-          "title": "album-2"
+          "title": "album-2",
+          "musicBrainzId": ""
         }
       ]
     }

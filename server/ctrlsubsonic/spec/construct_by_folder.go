@@ -74,6 +74,7 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 		Bitrate:       t.Bitrate,
 		IsDir:         false,
 		Type:          "music",
+		MusicBrainzID: t.TagBrainzID,
 		CreatedAt:     t.CreatedAt,
 		AverageRating: formatRating(t.AverageRating),
 	}
