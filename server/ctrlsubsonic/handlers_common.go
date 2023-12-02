@@ -40,6 +40,7 @@ func (c *Controller) ServeGetOpenSubsonicExtensions(_ *http.Request) *spec.Respo
 	sub := spec.NewResponse()
 	sub.OpenSubsonicExtensions = &spec.OpenSubsonicExtensions{
 		{Name: "transcodeOffset", Versions: []int{1}},
+		{Name: "formPost", Versions: []int{1}},
 	}
 	return sub
 }
