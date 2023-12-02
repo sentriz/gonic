@@ -285,7 +285,17 @@ func main() {
 		}))
 	}
 
+	var (
+		readTimeout  = 5 * time.Second
+		writeTimeout = 5 * time.Second
+		idleTimeout  = 5 * time.Second
+	)
+
 	if *confPprof {
+		// overwrite global WriteTimeout. in future we should set this only for these handlers
+		// https://github.com/golang/go/issues/62358
+		writeTimeout = 0
+
 		mux.HandleFunc("/debug/pprof/", pprof.Index)
 		mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
 		mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
@@ -300,7 +310,7 @@ func main() {
 
 		server := &http.Server{
 			Addr:        *confListenAddr,
-			ReadTimeout: 5 * time.Second, WriteTimeout: 5 * time.Second, IdleTimeout: 5 * time.Second,
+			ReadTimeout: readTimeout, WriteTimeout: writeTimeout, IdleTimeout: idleTimeout,
 			Handler: mux,
 		}
 		errgrp.Go(func() error {
