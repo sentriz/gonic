@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"os/signal"
 	"path"
@@ -87,6 +88,7 @@ func main() {
 	set.Var(&confMultiValueArtist, "multi-value-artist", "setting for mutli-valued track artist scanning (optional)")
 	set.Var(&confMultiValueAlbumArtist, "multi-value-album-artist", "setting for mutli-valued album artist scanning (optional)")
 
+	confPprof := set.Bool("pprof", false, "enable the /debug/pprof endpoint (optional)")
 	confExpvar := set.Bool("expvar", false, "enable the /debug/vars endpoint (optional)")
 
 	deprecatedConfGenreSplit := set.String("genre-split", "", "(deprecated, see multi-value settings)")
@@ -281,6 +283,14 @@ func main() {
 			stats, _ := dbc.Stats()
 			return stats
 		}))
+	}
+
+	if *confPprof {
+		mux.HandleFunc("/debug/pprof/", pprof.Index)
+		mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+		mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+		mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+		mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 	}
 
 	errgrp, ctx := errgroup.WithContext(context.Background())
