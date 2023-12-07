@@ -399,7 +399,9 @@ func populateAlbum(tx *db.DB, album *db.Album, trags tagcommon.Info, modTime tim
 	album.TagYear = trags.Year()
 
 	album.ModifiedAt = modTime
-	album.CreatedAt = modTime
+	if album.CreatedAt.After(modTime) {
+		album.CreatedAt = modTime // reset created at to match filesytem for new albums
+	}
 
 	if err := tx.Save(&album).Error; err != nil {
 		return fmt.Errorf("saving album: %w", err)
