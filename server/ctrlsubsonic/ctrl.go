@@ -286,7 +286,7 @@ func (c *Controller) withUser(next http.Handler) http.Handler {
 
 				result, err := l.Search(searchReq)
 				if err != nil {
-					log.Println("failed to query LDAP:", err)
+					log.Println("failed to query LDAP server:", err)
 				}
 
 				if len(result.Entries) > 1 {
