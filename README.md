@@ -1,16 +1,9 @@
 <p align="center"><img width="500" src="https://github.com/sentriz/gonic/blob/master/.github/logo.png?raw=true"></p>
-<h4 align="center">FLOSS alternative to <a href="http://www.subsonic.org/">subsonic</a>, supporting its many clients</h4>
+<h4 align="center">free-software <a href="http://www.subsonic.org/">subsonic</a> server API implementation, supporting its <a href="https://github.com/sentriz/gonic?tab=readme-ov-file#features">many clients</a></h4>
 <p align="center">
   <a href="http://hub.docker.com/r/sentriz/gonic"><img src="https://img.shields.io/docker/pulls/sentriz/gonic.svg"></a>
-  <a href="https://github.com/sentriz/gonic/issues"><img src="https://img.shields.io/github/issues/sentriz/gonic.svg"></a>
-  <a href="https://github.com/sentriz/gonic/pulls"><img src="https://img.shields.io/github/issues-pr/sentriz/gonic.svg"></a>
-  <a href="https://github.com/sentriz/gonic/actions"><img src="https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fsentriz%2Fgonic%2Fbadge&label=build&logo=none"></a>
-</p>
-
-<p align="center">
-  <b>irc</b> <a href="https://web.libera.chat/#gonic">#gonic</a> on libera.chat
-  &nbsp;|&nbsp;
-  <b>matrix</b> <a href="https://matrix.to/#/#gonic:libera.chat">#gonic:libera.chat</a>
+  <a href="https://github.com/sentriz/gonic/releases"><img src="https://img.shields.io/github/v/release/sentriz/gonic.svg"></a>
+  <a href="https://web.libera.chat/#gonic"><img src="https://img.shields.io/badge/libera.chat-%23gonic-blue.svg"></a>
 </p>
 
 ## features
@@ -18,7 +11,7 @@
 - browsing by folder (keeping your full tree intact) [see here](#directory-structure)
 - browsing by tags (using [taglib](https://taglib.org/) - supports mp3, opus, flac, ape, m4a, wav, etc.)
 - on-the-fly audio transcoding and caching (requires [ffmpeg](https://ffmpeg.org/)) (thank you [spijet](https://github.com/spijet/))
-- jukebox mode (thank you [lxea](https://github.com/lxea/))
+- subsonic jukebox mode, for gapless server-side audio playback instead of streaming (thank you [lxea](https://github.com/lxea/))
 - support for podcasts (thank you [lxea](https://github.com/lxea/))
 - pretty fast scanning (with my library of ~50k tracks, initial scan takes about 10m, and about 6s after incrementally)
 - multiple users, each with their own transcoding preferences, playlists, top tracks, top artists, etc.
@@ -30,9 +23,7 @@
 - support for the [album-artist](https://mkoby.com/2007/02/18/artist-versus-album-artist/) tag, to not clutter your artist list with compilation album appearances
 - written in [go](https://golang.org/), so lightweight and suitable for a raspberry pi, etc. (see ARM images below)
 - newer salt and token auth
-- tested on [airsonic-refix](https://github.com/tamland/airsonic-refix), [symfonium](https://symfonium.app), [dsub](https://f-droid.org/en/packages/github.daneren2005.dsub/), [jamstash](http://jamstash.com/),
-  [sublime music](https://github.com/sublime-music/sublime-music), [soundwaves](https://apps.apple.com/us/app/soundwaves/id736139596),
-  [stmp](https://github.com/wildeyedskies/stmp), [strawberry](https://www.strawberrymusicplayer.org/), and [ultrasonic](https://gitlab.com/ultrasonic/ultrasonic)
+- tested on [airsonic-refix](https://github.com/tamland/airsonic-refix), [symfonium](https://symfonium.app), [dsub](https://f-droid.org/en/packages/github.daneren2005.dsub/), [jamstash](http://jamstash.com/), [subsonic.el](https://git.sr.ht/~amk/subsonic.el), [sublime music](https://github.com/sublime-music/sublime-music), [soundwaves](https://apps.apple.com/us/app/soundwaves/id736139596), [stmp](https://github.com/wildeyedskies/stmp), [strawberry](https://www.strawberrymusicplayer.org/), and [ultrasonic](https://gitlab.com/ultrasonic/ultrasonic)
 
 ## installation
 
@@ -131,8 +122,8 @@ queries like show me "recently played compilations" or "recently added albums" a
 
 when browsing by folder, any arbitrary and nested folder layout is supported, with the following caveats:
 
-- Files from the same album must all be in the same folder
-- All files in a folder must be from the same album
+- files from the same album must all be in the same folder
+- all files in a folder must be from the same album
 
 please see [here](https://github.com/sentriz/gonic/issues/89) for more context
 

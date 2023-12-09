@@ -200,6 +200,9 @@ type TrackChild struct {
 	DiscNumber  int         `xml:"discNumber,attr,omitempty"  json:"discNumber,omitempty"`
 	Type        string      `xml:"type,attr,omitempty"        json:"type,omitempty"`
 	Year        int         `xml:"year,attr,omitempty"        json:"year,omitempty"`
+
+	MusicBrainzID string `xml:"musicBrainzId,attr"        json:"musicBrainzId"`
+
 	// star / rating
 	Starred       *time.Time `xml:"starred,attr,omitempty"         json:"starred,omitempty"`
 	UserRating    int        `xml:"userRating,attr,omitempty"      json:"userRating,omitempty"`

@@ -7,11 +7,12 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"go.senan.xyz/gonic/fileutil"
 )
 
 var (
@@ -69,7 +70,7 @@ type Playlist struct {
 }
 
 func NewPath(userID int, playlistName string) string {
-	playlistName = safeFilename(playlistName)
+	playlistName = fileutil.Safe(playlistName)
 	if playlistName == "" {
 		playlistName = "pl"
 	}
@@ -217,13 +218,6 @@ func (s *Store) Write(relPath string, playlist *Playlist) error {
 
 func (s *Store) Delete(relPath string) error {
 	return os.Remove(filepath.Join(s.basePath, relPath))
-}
-
-var nonAlphaNum = regexp.MustCompile("[^a-zA-Z0-9_.]+")
-
-func safeFilename(filename string) string {
-	filename = nonAlphaNum.ReplaceAllString(filename, "")
-	return filename
 }
 
 func firstPathEl(path string) string {

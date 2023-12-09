@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"os/signal"
 	"path"
@@ -87,6 +88,7 @@ func main() {
 	set.Var(&confMultiValueArtist, "multi-value-artist", "setting for mutli-valued track artist scanning (optional)")
 	set.Var(&confMultiValueAlbumArtist, "multi-value-album-artist", "setting for mutli-valued album artist scanning (optional)")
 
+	confPprof := set.Bool("pprof", false, "enable the /debug/pprof endpoint (optional)")
 	confExpvar := set.Bool("expvar", false, "enable the /debug/vars endpoint (optional)")
 
 	deprecatedConfGenreSplit := set.String("genre-split", "", "(deprecated, see multi-value settings)")
@@ -232,7 +234,8 @@ func main() {
 		log.Panicf("error getting session key: %v\n", err)
 	}
 	if sessKey == "" {
-		if err := dbc.SetSetting("session_key", string(securecookie.GenerateRandomKey(32))); err != nil {
+		sessKey = string(securecookie.GenerateRandomKey(32))
+		if err := dbc.SetSetting("session_key", sessKey); err != nil {
 			log.Panicf("error setting session key: %v\n", err)
 		}
 	}
@@ -282,12 +285,34 @@ func main() {
 		}))
 	}
 
+	var (
+		readTimeout  = 5 * time.Second
+		writeTimeout = 5 * time.Second
+		idleTimeout  = 5 * time.Second
+	)
+
+	if *confPprof {
+		// overwrite global WriteTimeout. in future we should set this only for these handlers
+		// https://github.com/golang/go/issues/62358
+		writeTimeout = 0
+
+		mux.HandleFunc("/debug/pprof/", pprof.Index)
+		mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+		mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+		mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+		mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	}
+
 	errgrp, ctx := errgroup.WithContext(context.Background())
 
 	errgrp.Go(func() error {
 		defer logJob("http")()
 
-		server := &http.Server{Addr: *confListenAddr, Handler: mux, ReadHeaderTimeout: 5 * time.Second}
+		server := &http.Server{
+			Addr:        *confListenAddr,
+			ReadTimeout: readTimeout, WriteTimeout: writeTimeout, IdleTimeout: idleTimeout,
+			Handler: mux,
+		}
 		errgrp.Go(func() error {
 			<-ctx.Done()
 			return server.Shutdown(context.Background())

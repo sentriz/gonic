@@ -36,11 +36,10 @@ func MPVArg(k string, v any) string {
 }
 
 type Jukebox struct {
-	cmd    *exec.Cmd
-	conn   *mpvipc.Connection
-	events <-chan *mpvipc.Event
+	cmd  *exec.Cmd
+	conn *mpvipc.Connection
 
-	mu sync.Mutex
+	mu sync.RWMutex
 }
 
 func New() *Jukebox {
@@ -77,7 +76,7 @@ func (j *Jukebox) Start(sockPath string, mpvExtraArgs []string) error {
 	}
 
 	var mpvVersionStr string
-	if err := j.getDecode(&mpvVersionStr, "mpv-version"); err != nil {
+	if err := getDecode(j.conn, &mpvVersionStr, "mpv-version"); err != nil {
 		return fmt.Errorf("get mpv version: %w", err)
 	}
 	if major, minor, patch := parseMPVVersion(mpvVersionStr); major == 0 && minor < 34 {
@@ -87,7 +86,6 @@ func (j *Jukebox) Start(sockPath string, mpvExtraArgs []string) error {
 	if _, err := j.conn.Call("observe_property", 0, "seekable"); err != nil {
 		return fmt.Errorf("observe property: %w", err)
 	}
-	j.events, _ = j.conn.NewEventListener()
 
 	return nil
 }
@@ -101,10 +99,10 @@ func (j *Jukebox) Wait() error {
 }
 
 func (j *Jukebox) GetPlaylist() ([]string, error) {
-	defer lock(&j.mu)()
+	defer lockr(&j.mu)()
 
 	var playlist mpvPlaylist
-	if err := j.getDecode(&playlist, "playlist"); err != nil {
+	if err := getDecode(j.conn, &playlist, "playlist"); err != nil {
 		return nil, fmt.Errorf("get playlist: %w", err)
 	}
 	var items []string
@@ -118,15 +116,11 @@ func (j *Jukebox) SetPlaylist(items []string) error {
 	defer lock(&j.mu)()
 
 	var playlist mpvPlaylist
-	if err := j.getDecode(&playlist, "playlist"); err != nil {
+	if err := getDecode(j.conn, &playlist, "playlist"); err != nil {
 		return fmt.Errorf("get playlist: %w", err)
 	}
-	current, currentIndex := find(playlist, func(item mpvPlaylistItem) bool {
-		return item.Current
-	})
-
-	filteredItems, foundExistingTrack := filter(items, func(filename string) bool {
-		return filename != current.Filename
+	currentPlayingIndex := slices.IndexFunc(playlist, func(pl mpvPlaylistItem) bool {
+		return pl.Current
 	})
 
 	tmp, cleanup, err := tmp()
@@ -134,30 +128,35 @@ func (j *Jukebox) SetPlaylist(items []string) error {
 		return fmt.Errorf("create temp file: %w", err)
 	}
 	defer cleanup()
-	for _, item := range filteredItems {
+
+	var newPlayingIndex = -1
+	for i, item := range items {
 		item, _ = filepath.Abs(item)
+		if currentPlayingIndex >= 0 && playlist[currentPlayingIndex].Filename == item {
+			newPlayingIndex = i
+			continue // don't add current track to loadlist
+		}
+
 		fmt.Fprintln(tmp, item)
 	}
 
-	if !foundExistingTrack {
-		// easy case - a brand new set of tracks that we can overwrite
+	if newPlayingIndex < 0 {
 		if _, err := j.conn.Call("loadlist", tmp.Name(), "replace"); err != nil {
 			return fmt.Errorf("load list: %w", err)
 		}
 		return nil
 	}
 
-	// not so easy, we need to clear the playlist except what's playing, load everything
-	// except for what we're playing, then move what's playing back to its original index
-	// clear all items except what's playing (will be at index 0)
-	if _, err := j.conn.Call("playlist-clear"); err != nil {
+	if _, err := j.conn.Call("playlist-clear"); err != nil { // leaves current at index 0
 		return fmt.Errorf("clear playlist: %w", err)
 	}
 	if _, err := j.conn.Call("loadlist", tmp.Name(), "append-play"); err != nil {
 		return fmt.Errorf("load list: %w", err)
 	}
-	if _, err := j.conn.Call("playlist-move", 0, currentIndex+1); err != nil {
-		return fmt.Errorf("playlist move: %w", err)
+	if newPlayingIndex > 0 {
+		if _, err := j.conn.Call("playlist-move", 0, newPlayingIndex+1); err != nil {
+			return fmt.Errorf("playlist move: %w", err)
+		}
 	}
 	return nil
 }
@@ -203,19 +202,25 @@ func (j *Jukebox) SkipToPlaylistIndex(i int, offsetSecs int) error {
 			return fmt.Errorf("pause: %w", err)
 		}
 	}
+
+	ch, stop := j.conn.NewEventListener()
+	defer close(stop)
+
 	if _, err := j.conn.Call("playlist-play-index", i); err != nil {
 		return fmt.Errorf("playlist play index: %w", err)
 	}
+
 	if offsetSecs > 0 {
-		if err := waitFor(j.events, matchEventSeekable); err != nil {
+		if err := waitFor(ch, matchEventSeekable); err != nil {
 			return fmt.Errorf("waiting for file load: %w", err)
 		}
 		if _, err := j.conn.Call("seek", offsetSecs, "absolute"); err != nil {
 			return fmt.Errorf("seek: %w", err)
 		}
-		if err := j.conn.Set("pause", false); err != nil {
-			return fmt.Errorf("play: %w", err)
-		}
+	}
+
+	if err := j.conn.Set("pause", false); err != nil {
+		return fmt.Errorf("play: %w", err)
 	}
 	return nil
 }
@@ -257,10 +262,10 @@ func (j *Jukebox) SetVolumePct(v int) error {
 }
 
 func (j *Jukebox) GetVolumePct() (float64, error) {
-	defer lock(&j.mu)()
+	defer lockr(&j.mu)()
 
 	var volume float64
-	if err := j.getDecode(&volume, "volume"); err != nil {
+	if err := getDecode(j.conn, &volume, "volume"); err != nil {
 		return 0, fmt.Errorf("get volume: %w", err)
 	}
 	return volume, nil
@@ -276,14 +281,14 @@ type Status struct {
 }
 
 func (j *Jukebox) GetStatus() (*Status, error) {
-	defer lock(&j.mu)()
+	defer lockr(&j.mu)()
 
 	var status Status
-	_ = j.getDecode(&status.Position, "time-pos") // property may not always be there
-	_ = j.getDecode(&status.GainPct, "volume")    // property may not always be there
+	_ = getDecode(j.conn, &status.Position, "time-pos") // property may not always be there
+	_ = getDecode(j.conn, &status.GainPct, "volume")    // property may not always be there
 
 	var playlist mpvPlaylist
-	_ = j.getDecode(&playlist, "playlist")
+	_ = getDecode(j.conn, &playlist, "playlist")
 
 	status.CurrentIndex = slices.IndexFunc(playlist, func(pl mpvPlaylistItem) bool {
 		return pl.Current
@@ -298,7 +303,7 @@ func (j *Jukebox) GetStatus() (*Status, error) {
 	status.CurrentFilename = playlist[status.CurrentIndex].Filename
 
 	var paused bool
-	_ = j.getDecode(&paused, "pause") // property may not always be there
+	_ = getDecode(j.conn, &paused, "pause") // property may not always be there
 	status.Playing = !paused
 
 	return &status, nil
@@ -324,8 +329,8 @@ func (j *Jukebox) Quit() error {
 	return nil
 }
 
-func (j *Jukebox) getDecode(dest any, property string) error {
-	raw, err := j.conn.Get(property)
+func getDecode(conn *mpvipc.Connection, dest any, property string) error {
+	raw, err := conn.Get(property)
 	if err != nil {
 		return fmt.Errorf("get property: %w", err)
 	}
@@ -367,8 +372,6 @@ func waitFor[T any](ch <-chan T, match func(e T) bool) error {
 	quit := time.NewTicker(1 * time.Second)
 	defer quit.Stop()
 
-	defer time.Sleep(350 * time.Millisecond)
-
 	for {
 		select {
 		case <-quit.C:
@@ -393,32 +396,18 @@ func tmp() (*os.File, func(), error) {
 	return tmp, cleanup, nil
 }
 
-func find[T any](items []T, f func(T) bool) (T, int) {
-	for i, item := range items {
-		if f(item) {
-			return item, i
-		}
-	}
-	var t T
-	return t, -1
-}
-
-func filter[T comparable](items []T, f func(T) bool) ([]T, bool) {
-	var found bool
-	var ret []T
-	for _, item := range items {
-		if !f(item) {
-			found = true
-			continue
-		}
-		ret = append(ret, item)
-	}
-	return ret, found
-}
-
-func lock(mu *sync.Mutex) func() {
+func lock(mu *sync.RWMutex) func() {
 	mu.Lock()
-	return mu.Unlock
+	return func() {
+		// let mpv "settle" since it seems to return from ipc calls before everything is sorted out
+		time.Sleep(200 * time.Millisecond)
+		mu.Unlock()
+	}
+}
+
+func lockr(mu *sync.RWMutex) func() {
+	mu.RLock()
+	return mu.RUnlock
 }
 
 var mpvVersionExpr = regexp.MustCompile(`mpv\s(\d+)\.(\d+)\.(\d+)`)

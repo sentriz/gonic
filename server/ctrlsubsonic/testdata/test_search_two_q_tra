@@ -29,7 +29,8 @@
           "track": 1,
           "discNumber": 1,
           "type": "music",
-          "year": 2021
+          "year": 2021,
+          "musicBrainzId": ""
         },
         {
           "id": "tr-2",
@@ -53,7 +54,8 @@
           "track": 1,
           "discNumber": 1,
           "type": "music",
-          "year": 2021
+          "year": 2021,
+          "musicBrainzId": ""
         },
         {
           "id": "tr-3",
@@ -77,7 +79,8 @@
           "track": 1,
           "discNumber": 1,
           "type": "music",
-          "year": 2021
+          "year": 2021,
+          "musicBrainzId": ""
         },
         {
           "id": "tr-4",
@@ -101,7 +104,8 @@
           "track": 1,
           "discNumber": 1,
           "type": "music",
-          "year": 2021
+          "year": 2021,
+          "musicBrainzId": ""
         },
         {
           "id": "tr-5",
@@ -125,7 +129,8 @@
           "track": 1,
           "discNumber": 1,
           "type": "music",
-          "year": 2021
+          "year": 2021,
+          "musicBrainzId": ""
         },
         {
           "id": "tr-6",
@@ -149,7 +154,8 @@
           "track": 1,
           "discNumber": 1,
           "type": "music",
-          "year": 2021
+          "year": 2021,
+          "musicBrainzId": ""
         },
         {
           "id": "tr-7",
@@ -173,7 +179,8 @@
           "track": 1,
           "discNumber": 1,
           "type": "music",
-          "year": 2021
+          "year": 2021,
+          "musicBrainzId": ""
         },
         {
           "id": "tr-8",
@@ -197,7 +204,8 @@
           "track": 1,
           "discNumber": 1,
           "type": "music",
-          "year": 2021
+          "year": 2021,
+          "musicBrainzId": ""
         },
         {
           "id": "tr-9",
@@ -221,7 +229,8 @@
           "track": 1,
           "discNumber": 1,
           "type": "music",
-          "year": 2021
+          "year": 2021,
+          "musicBrainzId": ""
         },
         {
           "id": "tr-10",
@@ -245,7 +254,8 @@
           "track": 1,
           "discNumber": 1,
           "type": "music",
-          "year": 2021
+          "year": 2021,
+          "musicBrainzId": ""
         },
         {
           "id": "tr-11",
@@ -269,7 +279,8 @@
           "track": 1,
           "discNumber": 1,
           "type": "music",
-          "year": 2021
+          "year": 2021,
+          "musicBrainzId": ""
         },
         {
           "id": "tr-12",
@@ -293,7 +304,8 @@
           "track": 1,
           "discNumber": 1,
           "type": "music",
-          "year": 2021
+          "year": 2021,
+          "musicBrainzId": ""
         },
         {
           "id": "tr-13",
@@ -317,7 +329,8 @@
           "track": 1,
           "discNumber": 1,
           "type": "music",
-          "year": 2021
+          "year": 2021,
+          "musicBrainzId": ""
         },
         {
           "id": "tr-14",
@@ -341,7 +354,8 @@
           "track": 1,
           "discNumber": 1,
           "type": "music",
-          "year": 2021
+          "year": 2021,
+          "musicBrainzId": ""
         },
         {
           "id": "tr-15",
@@ -365,7 +379,8 @@
           "track": 1,
           "discNumber": 1,
           "type": "music",
-          "year": 2021
+          "year": 2021,
+          "musicBrainzId": ""
         },
         {
           "id": "tr-16",
@@ -389,7 +404,8 @@
           "track": 1,
           "discNumber": 1,
           "type": "music",
-          "year": 2021
+          "year": 2021,
+          "musicBrainzId": ""
         },
         {
           "id": "tr-17",
@@ -413,7 +429,8 @@
           "track": 1,
           "discNumber": 1,
           "type": "music",
-          "year": 2021
+          "year": 2021,
+          "musicBrainzId": ""
         },
         {
           "id": "tr-18",
@@ -437,7 +454,8 @@
           "track": 1,
           "discNumber": 1,
           "type": "music",
-          "year": 2021
+          "year": 2021,
+          "musicBrainzId": ""
         },
         {
           "id": "tr-19",
@@ -461,7 +479,8 @@
           "track": 1,
           "discNumber": 1,
           "type": "music",
-          "year": 2021
+          "year": 2021,
+          "musicBrainzId": ""
         },
         {
           "id": "tr-20",
@@ -485,7 +504,8 @@
           "track": 1,
           "discNumber": 1,
           "type": "music",
-          "year": 2021
+          "year": 2021,
+          "musicBrainzId": ""
         }
       ]
     }

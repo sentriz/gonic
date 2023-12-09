@@ -13,7 +13,7 @@ type Reader interface {
 
 type Info interface {
 	Title() string
-	BrainzID() string
+	BrainzID() string // musicbrainz recording ID
 	Artist() string
 	Artists() []string
 	Album() string

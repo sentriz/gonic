@@ -30,7 +30,6 @@ linters:
     - gocritic
     - gocyclo
     - gofmt
-    - gofumpt
     - goheader
     - goimports
     - gomoddirectives

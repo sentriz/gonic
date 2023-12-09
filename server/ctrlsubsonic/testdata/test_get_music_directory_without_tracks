@@ -22,7 +22,8 @@
           "isDir": true,
           "isVideo": false,
           "parent": "al-2",
-          "title": "album-0"
+          "title": "album-0",
+          "musicBrainzId": ""
         },
         {
           "id": "al-4",
@@ -36,7 +37,8 @@
           "isDir": true,
           "isVideo": false,
           "parent": "al-2",
-          "title": "album-1"
+          "title": "album-1",
+          "musicBrainzId": ""
         },
         {
           "id": "al-5",
@@ -50,7 +52,8 @@
           "isDir": true,
           "isVideo": false,
           "parent": "al-2",
-          "title": "album-2"
+          "title": "album-2",
+          "musicBrainzId": ""
         }
       ]
     }

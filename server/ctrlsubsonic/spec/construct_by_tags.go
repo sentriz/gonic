@@ -77,6 +77,7 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 		TrackNumber:        t.TagTrackNumber,
 		DiscNumber:         t.TagDiscNumber,
 		Type:               "music",
+		MusicBrainzID:      t.TagBrainzID,
 		Year:               album.TagYear,
 		AverageRating:      formatRating(t.AverageRating),
 		TranscodeMeta:      TranscodeMeta{},

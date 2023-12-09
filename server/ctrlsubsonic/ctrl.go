@@ -10,6 +10,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/handlerutil"
@@ -96,6 +97,10 @@ func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPa
 		withRequiredParams,
 		c.withUser,
 	)
+	chainRaw := handlerutil.Chain(
+		chain,
+		slow,
+	)
 
 	c.Handle("/getLicense", chain(resp(c.ServeGetLicence)))
 	c.Handle("/ping", chain(resp(c.ServePing)))
@@ -126,10 +131,10 @@ func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPa
 	c.Handle("/getLyrics", chain(resp(c.ServeGetLyrics)))
 
 	// raw
-	c.Handle("/getCoverArt", chain(respRaw(c.ServeGetCoverArt)))
-	c.Handle("/stream", chain(respRaw(c.ServeStream)))
-	c.Handle("/download", chain(respRaw(c.ServeStream)))
-	c.Handle("/getAvatar", chain(respRaw(c.ServeGetAvatar)))
+	c.Handle("/getCoverArt", chainRaw(respRaw(c.ServeGetCoverArt)))
+	c.Handle("/stream", chainRaw(respRaw(c.ServeStream)))
+	c.Handle("/download", chainRaw(respRaw(c.ServeStream)))
+	c.Handle("/getAvatar", chainRaw(respRaw(c.ServeGetAvatar)))
 
 	// browse by tag
 	c.Handle("/getAlbum", chain(resp(c.ServeGetAlbum)))
@@ -373,6 +378,15 @@ func createLDAPconnection(tls string, fqdn string, port string) (*ldap.Conn, err
 	}
 
 	return l, nil
+}
+
+func slow(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rc := http.NewResponseController(w)  //nolint:bodyclose
+		_ = rc.SetWriteDeadline(time.Time{}) // set no deadline, since we're probably streaming
+		_ = rc.SetReadDeadline(time.Time{})  // set no deadline, since we're probably streaming
+		next.ServeHTTP(w, r)
+	})
 }
 
 func checkCredsToken(password, token, salt string) bool {

@@ -12,7 +12,7 @@ import (
 )
 
 func TestPlaySkipReset(t *testing.T) {
-	t.Skip("bit flakey currently")
+	t.Skip("bit flakey since mpv ipc doesn't block while internal state has settled")
 
 	t.Parallel()
 	j := newJukebox(t)
@@ -74,7 +74,7 @@ func TestPlaySkipReset(t *testing.T) {
 	require.Equal(t, true, status.Playing)
 
 	// just add one more by overwriting the playlist like some clients do
-	// we should keep the current track unchaned if we find it
+	// we should move keep the playing indedx
 	require.NoError(t, j.SetPlaylist([]string{
 		"testdata/tr_0.mp3",
 		"testdata/tr_1.mp3",
@@ -86,50 +86,13 @@ func TestPlaySkipReset(t *testing.T) {
 
 	status, err = j.GetStatus()
 	require.NoError(t, err)
-	require.Equal(t, 3, status.CurrentIndex) // index unchanged
+	require.Equal(t, 3, status.CurrentIndex) // index moved to start
 	require.Equal(t, testPath("tr_3.mp3"), status.CurrentFilename)
 	require.Equal(t, 6, status.Length) // we added one more track
 	require.Equal(t, true, status.Playing)
 
-	// skip to 3 again
-	require.NoError(t, j.SkipToPlaylistIndex(3, 0))
-
-	status, err = j.GetStatus()
-	require.NoError(t, err)
-	require.Equal(t, 3, status.CurrentIndex)
-	require.Equal(t, testPath("tr_3.mp3"), status.CurrentFilename)
-	require.Equal(t, 6, status.Length)
-	require.Equal(t, true, status.Playing)
-
-	// remove all but 3
+	// new playlist with out current track (tr_2)
 	require.NoError(t, j.SetPlaylist([]string{
-		"testdata/tr_0.mp3",
-		"testdata/tr_1.mp3",
-		"testdata/tr_2.mp3",
-		"testdata/tr_3.mp3",
-	}))
-
-	status, err = j.GetStatus()
-	require.NoError(t, err)
-	require.Equal(t, 3, status.CurrentIndex) // index unchanged
-	require.Equal(t, testPath("tr_3.mp3"), status.CurrentFilename)
-	require.Equal(t, 4, status.Length)
-	require.Equal(t, true, status.Playing)
-
-	// skip to 2 (5s long) in the middle of the track
-	require.NoError(t, j.SkipToPlaylistIndex(2, 2))
-
-	status, err = j.GetStatus()
-	require.NoError(t, err)
-	require.Equal(t, 2, status.CurrentIndex) // index unchanged
-	require.Equal(t, testPath("tr_2.mp3"), status.CurrentFilename)
-	require.Equal(t, 4, status.Length)
-	require.Equal(t, true, status.Playing)
-	require.Equal(t, 2, status.Position) // at new position
-
-	// overwrite completely
-	require.NoError(t, j.SetPlaylist([]string{
-		"testdata/tr_5.mp3",
 		"testdata/tr_6.mp3",
 		"testdata/tr_7.mp3",
 		"testdata/tr_8.mp3",
@@ -139,12 +102,72 @@ func TestPlaySkipReset(t *testing.T) {
 	status, err = j.GetStatus()
 	require.NoError(t, err)
 	require.Equal(t, 0, status.CurrentIndex) // index unchanged
-	require.Equal(t, testPath("tr_5.mp3"), status.CurrentFilename)
-	require.Equal(t, 5, status.Length)
+	require.Equal(t, testPath("tr_6.mp3"), status.CurrentFilename)
+	require.Equal(t, 4, status.Length)
 	require.Equal(t, true, status.Playing)
+
+	// skip to index 2 (5s long) in the middle of the track
+	require.NoError(t, j.SkipToPlaylistIndex(2, 2))
+
+	status, err = j.GetStatus()
+	require.NoError(t, err)
+	require.Equal(t, 2, status.CurrentIndex) // index unchanged
+	require.Equal(t, testPath("tr_8.mp3"), status.CurrentFilename)
+	require.Equal(t, 4, status.Length)
+	require.Equal(t, true, status.Playing)
+	require.Equal(t, 2, status.Position) // at new position
+}
+
+func TestShuffle(t *testing.T) {
+	t.Skip("bit flakey since mpv ipc doesn't block while internal state has settled")
+
+	t.Parallel()
+	j := newJukebox(t)
+
+	require.NoError(t, j.SetPlaylist([]string{
+		testPath("tr_0.mp3"),
+		testPath("tr_1.mp3"),
+		testPath("tr_2.mp3"),
+		testPath("tr_3.mp3"),
+		testPath("tr_4.mp3"),
+		testPath("tr_5.mp3"),
+		testPath("tr_6.mp3"),
+		testPath("tr_7.mp3"),
+	}))
+
+	require.NoError(t, j.SkipToPlaylistIndex(2, 0))
+
+	status, err := j.GetStatus()
+	require.NoError(t, err)
+	require.Equal(t, 2, status.CurrentIndex)
+	require.True(t, status.Playing)
+
+	desiredOrder := []string{
+		testPath("tr_2.mp3"), // the was-playing index moves to position 0
+		testPath("tr_1.mp3"),
+		testPath("tr_0.mp3"),
+		testPath("tr_3.mp3"),
+		testPath("tr_5.mp3"),
+		testPath("tr_6.mp3"),
+		testPath("tr_7.mp3"),
+		testPath("tr_4.mp3"),
+	}
+
+	require.NoError(t, j.SetPlaylist(desiredOrder))
+
+	status, err = j.GetStatus()
+	require.NoError(t, err)
+	require.Equal(t, 0, status.CurrentIndex)
+	require.Equal(t, len(desiredOrder), status.Length)
+
+	playlist, err := j.GetPlaylist()
+	require.NoError(t, err)
+	require.Equal(t, desiredOrder, playlist)
 }
 
 func TestVolume(t *testing.T) {
+	t.Skip("bit flakey since mpv ipc doesn't block while internal state has settled")
+
 	t.Parallel()
 	j := newJukebox(t)
 

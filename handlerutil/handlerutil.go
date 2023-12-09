@@ -69,21 +69,20 @@ func Message(message string) http.Handler {
 }
 
 func BaseURL(r *http.Request) string {
-	fallbackProtocoll := "http"
+	var fallbackScheme = "http"
 	if r.TLS != nil {
-		fallbackProtocoll = "https"
+		fallbackScheme = "https"
 	}
-	fallbackHost := "localhost:4747"
 	scheme := first(
 		r.Header.Get("X-Forwarded-Proto"),
 		r.Header.Get("X-Forwarded-Scheme"),
 		r.URL.Scheme,
-		fallbackProtocoll,
+		fallbackScheme,
 	)
 	host := first(
 		r.Header.Get("X-Forwarded-Host"),
+		r.URL.Host,
 		r.Host,
-		fallbackHost,
 	)
 	return fmt.Sprintf("%s://%s", scheme, host)
 }
@@ -103,6 +102,10 @@ func (w *statusWriter) Write(b []byte) (int, error) {
 		w.status = 200
 	}
 	return w.ResponseWriter.Write(b)
+}
+
+func (w *statusWriter) Unwrap() http.ResponseWriter {
+	return w.ResponseWriter
 }
 
 func statusToBlock(code int) string {

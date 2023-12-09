@@ -40,6 +40,7 @@ func (c *Controller) ServeGetOpenSubsonicExtensions(_ *http.Request) *spec.Respo
 	sub := spec.NewResponse()
 	sub.OpenSubsonicExtensions = &spec.OpenSubsonicExtensions{
 		{Name: "transcodeOffset", Versions: []int{1}},
+		{Name: "formPost", Versions: []int{1}},
 	}
 	return sub
 }
@@ -332,6 +333,10 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 var errNotATrack = errors.New("not a track")
 
 func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:gocyclo
+	if c.jukebox == nil {
+		return spec.NewError(0, "jukebox not enabled")
+	}
+
 	params := r.Context().Value(CtxParams).(params.Params)
 	trackPaths := func(ids []specid.ID) ([]string, error) {
 		var paths []string
