@@ -303,7 +303,7 @@ func (c *Controller) withUser(next http.Handler) http.Handler {
 					}
 
 					if err := c.dbc.Create(&user).Error; err != nil {
-						fmt.Println("User created via LDAP:", username)
+						log.Println("User created via LDAP:", username)
 					}
 				} else {
 					_ = writeResp(w, r, spec.NewError(40, "invalid username `%s`", username))
