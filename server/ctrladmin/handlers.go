@@ -146,7 +146,7 @@ func (c *Controller) ServeLDAPConfig(_ *http.Request) *Response {
 	data.CurrentPort, _ = c.dbc.GetSetting("ldap_port")
 	data.CurrentBaseDN, _ = c.dbc.GetSetting("ldap_base_dn")
 	data.CurrentFilter, _ = c.dbc.GetSetting("ldap_filter")
-	
+
 	// This is to fix the fact that select boxes are strange.
 	currentTLS, _ := c.dbc.GetSetting("ldap_tls")
 	data.CurrentNoTLS = "selected"
@@ -157,7 +157,7 @@ func (c *Controller) ServeLDAPConfig(_ *http.Request) *Response {
 
 	return &Response{
 		template: "ldap.tmpl",
-		data: data,
+		data:     data,
 	}
 }
 
@@ -170,13 +170,13 @@ func (c *Controller) ServeLDAPConfigDo(r *http.Request) *Response {
 	baseDN := r.FormValue("base_dn")
 	filter := r.FormValue("filter")
 
-	if bindUID == "" || bindPSWD == ""|| port == "" || baseDN == "" || filter == "" {
+	if bindUID == "" || bindPSWD == "" || port == "" || baseDN == "" || filter == "" {
 		return &Response{
 			redirect: r.Referer(),
 			flashW:   []string{"please provide a bind username and password, port, base CN, and filter"},
 		}
 	}
-	
+
 	err := c.dbc.SetSetting("ldap_bind_user", bindUID)
 	if err != nil {
 		log.Println("Failed to set bind user:", err)
@@ -186,8 +186,8 @@ func (c *Controller) ServeLDAPConfigDo(r *http.Request) *Response {
 			flashW:   []string{"Failed to set bind user."},
 		}
 	}
-	
-  err = c.dbc.SetSetting("ldap_bind_user_password", bindPSWD)
+
+	err = c.dbc.SetSetting("ldap_bind_user_password", bindPSWD)
 	if err != nil {
 		log.Println("Failed to set bind user password:", err)
 
@@ -195,9 +195,9 @@ func (c *Controller) ServeLDAPConfigDo(r *http.Request) *Response {
 			redirect: r.Referer(),
 			flashW:   []string{"Failed to set bind user password."},
 		}
-	}	
+	}
 
-  err = c.dbc.SetSetting("ldap_fqdn", fqdn)
+	err = c.dbc.SetSetting("ldap_fqdn", fqdn)
 	if err != nil {
 		log.Println("Failed to set server:", err)
 
@@ -207,7 +207,7 @@ func (c *Controller) ServeLDAPConfigDo(r *http.Request) *Response {
 		}
 	}
 
-  err = c.dbc.SetSetting("ldap_port", port)
+	err = c.dbc.SetSetting("ldap_port", port)
 	if err != nil {
 		log.Println("Failed to set port:", err)
 
@@ -217,7 +217,7 @@ func (c *Controller) ServeLDAPConfigDo(r *http.Request) *Response {
 		}
 	}
 
-  err = c.dbc.SetSetting("ldap_tls", tls)
+	err = c.dbc.SetSetting("ldap_tls", tls)
 	if err != nil {
 		log.Println("Failed to set TLS:", err)
 
@@ -227,7 +227,7 @@ func (c *Controller) ServeLDAPConfigDo(r *http.Request) *Response {
 		}
 	}
 
-  err = c.dbc.SetSetting("ldap_base_dn", baseDN)
+	err = c.dbc.SetSetting("ldap_base_dn", baseDN)
 	if err != nil {
 		log.Println("Failed to set base DN:", err)
 
@@ -237,7 +237,7 @@ func (c *Controller) ServeLDAPConfigDo(r *http.Request) *Response {
 		}
 	}
 
-  err = c.dbc.SetSetting("ldap_filter", filter)
+	err = c.dbc.SetSetting("ldap_filter", filter)
 	if err != nil {
 		log.Println("Failed to set filter:", err)
 
