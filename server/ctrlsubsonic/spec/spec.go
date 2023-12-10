@@ -2,11 +2,13 @@ package spec
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
+	"jaytaylor.com/html2text"
 )
 
 // https://web.archive.org/web/20220707025402/https://www.subsonic.org/pages/api.jsp
@@ -471,4 +473,19 @@ func formatRating(rating float64) string {
 
 func formatExt(ext string) string {
 	return strings.TrimPrefix(ext, ".")
+}
+
+var doublePuncExpr = regexp.MustCompile(`\.\s+\.\s+`)
+var licenceExpr = regexp.MustCompile(`(?i)\buser-contributed text.*`)
+var readMoreExpr = regexp.MustCompile(`(?i)\bread more on.*`)
+
+func CleanExternalText(text string) string {
+	text, _ = html2text.FromString(text, html2text.Options{TextOnly: true})
+	text = licenceExpr.ReplaceAllString(text, "")
+	text = readMoreExpr.ReplaceAllString(text, "")
+	text = doublePuncExpr.ReplaceAllString(text, ". ")
+	text = strings.ReplaceAll(text, " .", ".")
+	text = strings.Join(strings.Fields(text), " ")
+	text = strings.TrimSpace(text)
+	return text
 }
