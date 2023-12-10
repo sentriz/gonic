@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/andybalholm/cascadia"
@@ -57,6 +59,10 @@ func (c *Client) ArtistGetInfo(artistName string) (Artist, error) {
 	if err != nil {
 		return Artist{}, fmt.Errorf("make request: %w", err)
 	}
+
+	resp.Artist.Bio.Summary = cleanLicenceText(resp.Artist.Bio.Summary)
+	resp.Artist.Bio.Content = cleanLicenceText(resp.Artist.Bio.Content)
+
 	return resp.Artist, nil
 }
 
@@ -76,6 +82,9 @@ func (c *Client) AlbumGetInfo(artistName, albumName string) (Album, error) {
 	if err != nil {
 		return Album{}, fmt.Errorf("make request: %w", err)
 	}
+
+	resp.Album.Wiki.Summary = cleanLicenceText(resp.Album.Wiki.Summary)
+	resp.Album.Wiki.Content = cleanLicenceText(resp.Album.Wiki.Content)
 
 	return resp.Album, nil
 }
@@ -323,4 +332,16 @@ func GetParamSignature(params url.Values, secret string) string {
 	toHash += secret
 	hash := md5.Sum([]byte(toHash))
 	return hex.EncodeToString(hash[:])
+}
+
+var doublePuncExpr = regexp.MustCompile(`\.\s+\.\s+`)
+var licenceExpr = regexp.MustCompile(`(?i)user-contributed text.*`)
+
+func cleanLicenceText(text string) string {
+	text = licenceExpr.ReplaceAllString(text, "")
+	text = doublePuncExpr.ReplaceAllString(text, ". ")
+	text = strings.ReplaceAll(text, " .", ".")
+	text = strings.Join(strings.Fields(text), " ")
+	text = strings.TrimSpace(text)
+	return text
 }
