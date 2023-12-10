@@ -5,7 +5,8 @@
             "listened_at": 1683804525,
             "track_metadata": {
                 "additional_info": {
-                    "tracknumber": 1
+                    "tracknumber": 1,
+                    "submission_client": "gonic"
                 },
                 "artist_name": "artist",
                 "track_name": "title",

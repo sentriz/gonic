@@ -10,6 +10,7 @@ import (
 	"net/http/httputil"
 	"time"
 
+	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/scrobble"
 )
@@ -44,9 +45,10 @@ func (c *Client) Scrobble(user db.User, track scrobble.Track, stamp time.Time, s
 	payload := &Payload{
 		TrackMetadata: &TrackMetadata{
 			AdditionalInfo: &AdditionalInfo{
-				TrackNumber:   int(track.TrackNumber),
-				RecordingMBID: track.MusicBrainzID,
-				Duration:      int(track.Duration.Seconds()),
+				TrackNumber:      int(track.TrackNumber),
+				RecordingMBID:    track.MusicBrainzID,
+				Duration:         int(track.Duration.Seconds()),
+				SubmissionClient: gonic.Name,
 			},
 			ArtistName:  track.Artist,
 			TrackName:   track.Track,
