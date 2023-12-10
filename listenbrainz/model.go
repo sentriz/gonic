@@ -12,6 +12,7 @@ type (
 		TrackNumber      int    `json:"tracknumber,omitempty"`
 		TrackMBID        string `json:"track_mbid,omitempty"`
 		RecordingMBID    string `json:"recording_mbid,omitempty"`
+		ReleaseMBID      string `json:"release_mbid,omitempty"`
 		Duration         int    `json:"duration,omitempty"`
 		SubmissionClient string `json:"submission_client,omitempty"`
 	}

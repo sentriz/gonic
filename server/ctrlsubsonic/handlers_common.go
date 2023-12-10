@@ -78,6 +78,9 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 		if _, err := uuid.Parse(track.TagBrainzID); err == nil {
 			scrobbleTrack.MusicBrainzID = track.TagBrainzID
 		}
+		if _, err := uuid.Parse(track.Album.TagBrainzID); err == nil {
+			scrobbleTrack.MusicBrainzReleaseID = track.Album.TagBrainzID
+		}
 
 		if err := scrobbleStatsUpdateTrack(c.dbc, &track, user.ID, optStamp); err != nil {
 			return spec.NewError(0, "error updating stats: %v", err)
