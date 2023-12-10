@@ -12,7 +12,7 @@ type (
 		TrackNumber   int    `json:"tracknumber,omitempty"`
 		TrackMBID     string `json:"track_mbid,omitempty"`
 		RecordingMBID string `json:"recording_mbid,omitempty"`
-		TrackLength   int    `json:"track_length,omitempty"`
+		Duration      int    `json:"duration,omitempty"`
 	}
 
 	TrackMetadata struct {

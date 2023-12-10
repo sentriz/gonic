@@ -46,7 +46,7 @@ func (c *Client) Scrobble(user db.User, track scrobble.Track, stamp time.Time, s
 			AdditionalInfo: &AdditionalInfo{
 				TrackNumber:   int(track.TrackNumber),
 				RecordingMBID: track.MusicBrainzID,
-				TrackLength:   int(track.Duration.Seconds()),
+				Duration:      int(track.Duration.Seconds()),
 			},
 			ArtistName:  track.Artist,
 			TrackName:   track.Track,
