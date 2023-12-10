@@ -6,6 +6,8 @@
             "track_metadata": {
                 "additional_info": {
                     "tracknumber": 1,
+                    "duration": 242,
+                    "recording_mbid": "00000000-0000-0000-0000-000000000000",
                     "submission_client": "gonic"
                 },
                 "artist_name": "artist",

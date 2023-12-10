@@ -37,7 +37,14 @@ func TestScrobble(t *testing.T) {
 
 	err := client.Scrobble(
 		db.User{ListenBrainzURL: "https://listenbrainz.org", ListenBrainzToken: "token1"},
-		scrobble.Track{Track: "title", Artist: "artist", Album: "album", TrackNumber: 1},
+		scrobble.Track{
+			Track:         "title",
+			Artist:        "artist",
+			Album:         "album",
+			TrackNumber:   1,
+			Duration:      242 * time.Second,
+			MusicBrainzID: "00000000-0000-0000-0000-000000000000",
+		},
 		time.Unix(1683804525, 0),
 		true,
 	)
