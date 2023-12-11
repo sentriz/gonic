@@ -71,6 +71,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202311062259", migrateArtistAppearances),
 		construct(ctx, "202311072309", migrateAlbumInfo),
 		construct(ctx, "202311082304", migrateTemporaryDisplayAlbumArtist),
+		construct(ctx, "202312110003", migrateAddExtraIndexes),
 	}
 
 	return gormigrate.
@@ -800,5 +801,15 @@ func migrateTemporaryDisplayAlbumArtist(tx *gorm.DB, _ MigrationContext) error {
 			GROUP BY album_artists.album_id
 		)
 		WHERE tag_album_artist=''
+	`).Error
+}
+
+func migrateAddExtraIndexes(tx *gorm.DB, _ MigrationContext) error {
+	return tx.Exec(`
+		CREATE INDEX idx_track_genres_genre_id ON "track_genres" (genre_id);
+		CREATE INDEX idx_album_genres_genre_id ON "album_genres" (genre_id);
+		CREATE INDEX idx_album_artists_artist_id ON "album_artists" (artist_id);
+		CREATE INDEX idx_track_artists_artist_id ON "track_artists" (artist_id);
+		CREATE INDEX idx_artist_appearances_album_id ON "artist_appearances" (album_id);
 	`).Error
 }
