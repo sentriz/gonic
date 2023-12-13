@@ -524,22 +524,22 @@ func TestTagErrors(t *testing.T) {
 		tags.Error = scanner.ErrReadingTags
 	})
 
-	ctx, err := m.ScanAndCleanErr()
+	st, err := m.ScanAndCleanErr()
 	errs, ok := err.(interface{ Unwrap() []error })
 	assert.True(t, ok)
 
 	assert.ErrorAs(t, err, &errs)
-	assert.Equal(t, 2, len(errs.Unwrap()))                    // we have 2 dir errors
-	assert.Equal(t, m.NumTracks()-(3*2), ctx.SeenTracks())    // we saw all tracks bar 2 album contents
-	assert.Equal(t, m.NumTracks()-(3*2), ctx.SeenTracksNew()) // we have all tracks bar 2 album contents
+	assert.Equal(t, 2, len(errs.Unwrap()))                   // we have 2 dir errors
+	assert.Equal(t, m.NumTracks()-(3*2), st.SeenTracks())    // we saw all tracks bar 2 album contents
+	assert.Equal(t, m.NumTracks()-(3*2), st.SeenTracksNew()) // we have all tracks bar 2 album contents
 
-	ctx, err = m.ScanAndCleanErr()
+	st, err = m.ScanAndCleanErr()
 	errs, ok = err.(interface{ Unwrap() []error })
 	assert.True(t, ok)
 
-	assert.Equal(t, 2, len(errs.Unwrap()))                 // we have 2 dir errors
-	assert.Equal(t, m.NumTracks()-(3*2), ctx.SeenTracks()) // we saw all tracks bar 2 album contents
-	assert.Equal(t, 0, ctx.SeenTracksNew())                // we have no new tracks
+	assert.Equal(t, 2, len(errs.Unwrap()))                // we have 2 dir errors
+	assert.Equal(t, m.NumTracks()-(3*2), st.SeenTracks()) // we saw all tracks bar 2 album contents
+	assert.Equal(t, 0, st.SeenTracksNew())                // we have no new tracks
 }
 
 // https://github.com/sentriz/gonic/issues/185#issuecomment-1050092128

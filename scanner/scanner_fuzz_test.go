@@ -16,13 +16,13 @@ import (
 
 func FuzzScanner(f *testing.F) {
 	checkDelta := func(assert *assert.Assertions, m *mockfs.MockFS, expSeen, expNew int) {
-		ctx := m.ScanAndClean()
-		assert.Equal(ctx.SeenTracks(), expSeen)
-		assert.Equal(ctx.SeenTracksNew(), expNew)
-		assert.Equal(ctx.TracksMissing(), 0)
-		assert.Equal(ctx.AlbumsMissing(), 0)
-		assert.Equal(ctx.ArtistsMissing(), 0)
-		assert.Equal(ctx.GenresMissing(), 0)
+		st := m.ScanAndClean()
+		assert.Equal(st.SeenTracks(), expSeen)
+		assert.Equal(st.SeenTracksNew(), expNew)
+		assert.Equal(st.TracksMissing(), 0)
+		assert.Equal(st.AlbumsMissing(), 0)
+		assert.Equal(st.ArtistsMissing(), 0)
+		assert.Equal(st.GenresMissing(), 0)
 	}
 
 	f.Fuzz(func(t *testing.T, data []byte, seed int64) {

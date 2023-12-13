@@ -83,17 +83,17 @@ func (m *MockFS) DB() *db.DB                  { return m.db }
 func (m *MockFS) TmpDir() string              { return m.dir }
 func (m *MockFS) TagReader() tagcommon.Reader { return m.tagReader }
 
-func (m *MockFS) ScanAndClean() *scanner.Context {
+func (m *MockFS) ScanAndClean() *scanner.State {
 	m.t.Helper()
 
-	ctx, err := m.scanner.ScanAndClean(scanner.ScanOptions{})
+	st, err := m.scanner.ScanAndClean(scanner.ScanOptions{})
 	if err != nil {
 		m.t.Fatalf("error scan and cleaning: %v", err)
 	}
-	return ctx
+	return st
 }
 
-func (m *MockFS) ScanAndCleanErr() (*scanner.Context, error) {
+func (m *MockFS) ScanAndCleanErr() (*scanner.State, error) {
 	m.t.Helper()
 
 	return m.scanner.ScanAndClean(scanner.ScanOptions{})
