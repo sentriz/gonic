@@ -142,7 +142,7 @@ func (s *Scanner) ExecuteWatch(done <-chan struct{}) error {
 					seenTracks: map[int]struct{}{},
 					seenAlbums: map[int]struct{}{},
 				}
-				err = filepath.WalkDir(absPath, func(absPath string, d fs.DirEntry, err error) error {
+				err := filepath.WalkDir(absPath, func(absPath string, d fs.DirEntry, err error) error {
 					return watchCallback(watcher, absPath, d, err)
 				})
 				if err != nil {
@@ -175,7 +175,7 @@ func (s *Scanner) ExecuteWatch(done <-chan struct{}) error {
 			}
 			batchT.Reset(batchInterval)
 
-		case err = <-watcher.Errors:
+		case err := <-watcher.Errors:
 			log.Printf("error from watcher: %v\n", err)
 
 		case <-done:
@@ -192,9 +192,7 @@ func watchCallback(watcher *fsnotify.Watcher, absPath string, d fs.DirEntry, err
 	switch d.Type() {
 	case os.ModeDir:
 	case os.ModeSymlink:
-		eval, _ := filepath.EvalSymlinks(absPath)
-		return filepath.WalkDir(eval, func(subAbs string, d fs.DirEntry, err error) error {
-			subAbs = strings.Replace(subAbs, eval, absPath, 1)
+		return symWalk(absPath, func(subAbs string, d fs.DirEntry, err error) error {
 			return watchCallback(watcher, subAbs, d, err)
 		})
 	default:
@@ -216,9 +214,7 @@ func (s *Scanner) scanCallback(st *State, absPath string, d fs.DirEntry, err err
 	switch d.Type() {
 	case os.ModeDir:
 	case os.ModeSymlink:
-		eval, _ := filepath.EvalSymlinks(absPath)
-		return filepath.WalkDir(eval, func(subAbs string, d fs.DirEntry, err error) error {
-			subAbs = strings.Replace(subAbs, eval, absPath, 1)
+		return symWalk(absPath, func(subAbs string, d fs.DirEntry, err error) error {
 			return s.scanCallback(st, subAbs, d, err)
 		})
 	default:
@@ -731,4 +727,12 @@ func musicDirRelative(musicDirs []string, absPath string) (musicDir, relPath str
 		}
 	}
 	return
+}
+
+func symWalk(absPath string, fn fs.WalkDirFunc) error {
+	eval, _ := filepath.EvalSymlinks(absPath)
+	return filepath.WalkDir(eval, func(subAbs string, d fs.DirEntry, err error) error {
+		subAbs = strings.Replace(subAbs, eval, absPath, 1)
+		return fn(subAbs, d, err)
+	})
 }
