@@ -11,12 +11,12 @@ require (
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
-	github.com/google/uuid v1.4.0
+	github.com/google/uuid v1.5.0
 	github.com/gorilla/securecookie v1.1.2
 	github.com/gorilla/sessions v1.2.2
 	github.com/jinzhu/gorm v1.9.17-0.20211120011537-5c235b72a414
 	github.com/josephburnett/jd v1.7.1
-	github.com/mattn/go-sqlite3 v1.14.18
+	github.com/mattn/go-sqlite3 v1.14.19
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mmcdole/gofeed v1.2.1
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
@@ -26,7 +26,7 @@ require (
 	github.com/sentriz/audiotags v0.0.0-20230419125925-8886243b2137
 	github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/exp v0.0.0-20231127185646-65229373498e
+	golang.org/x/exp v0.0.0-20231214170342-aacd6d4b4611
 	golang.org/x/net v0.19.0
 	golang.org/x/sync v0.5.0
 	gopkg.in/gormigrate.v1 v1.6.0
@@ -68,5 +68,3 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/mattn/go-sqlite3 => github.com/leso-kn/go-sqlite3 v0.0.0-20231208152205-55b17a824af9
