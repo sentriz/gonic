@@ -44,6 +44,7 @@ import (
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/server/ctrladmin"
 	"go.senan.xyz/gonic/server/ctrlsubsonic"
+	"go.senan.xyz/gonic/server/webui"
 	"go.senan.xyz/gonic/tags/tagcommon"
 	"go.senan.xyz/gonic/tags/taglib"
 	"go.senan.xyz/gonic/transcode"
@@ -82,6 +83,8 @@ func main() {
 	_ = set.String("config-path", "", "path to config (optional)")
 
 	confExcludePattern := set.String("exclude-pattern", "", "regex pattern to exclude files from scan (optional)")
+
+	webuipath_arg := set.String("webui-path", "", "path to webui directory (optional)")
 
 	var confMultiValueGenre, confMultiValueArtist, confMultiValueAlbumArtist multiValueSetting
 	set.Var(&confMultiValueGenre, "multi-value-genre", "setting for mutli-valued genre scanning (optional)")
@@ -252,7 +255,20 @@ func main() {
 		return path.Join(*confProxyPrefix, in)
 	}
 
+	webuipath := func(path string) string {
+		_, err := os.Stat(path)
+		if os.IsNotExist(err) {
+			log.Printf("WebUI path %s does not exists", *webuipath_arg)
+			return ""
+		}
+		return path
+	}(*webuipath_arg)
+
 	ctrlAdmin, err := ctrladmin.New(dbc, sessDB, scannr, podcast, lastfmClient, resolveProxyPath)
+	if err != nil {
+		log.Panicf("error creating admin controller: %v\n", err)
+	}
+	ctrlWebui, err := webui.New(webuipath, resolveProxyPath)
 	if err != nil {
 		log.Panicf("error creating admin controller: %v\n", err)
 	}
@@ -272,6 +288,9 @@ func main() {
 	trim := handlerutil.TrimPathSuffix(".view") // /x.view and /x should match the same
 
 	mux := http.NewServeMux()
+	if webuipath != "" {
+		mux.Handle("/webui/", http.StripPrefix("/webui", chain(ctrlWebui)))
+	}
 	mux.Handle("/admin/", http.StripPrefix("/admin", chain(ctrlAdmin)))
 	mux.Handle("/rest/", http.StripPrefix("/rest", chain(trim(ctrlSubsonic))))
 	mux.Handle("/ping", chain(handlerutil.Message("ok")))
