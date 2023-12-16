@@ -84,7 +84,7 @@ func main() {
 
 	confExcludePattern := set.String("exclude-pattern", "", "regex pattern to exclude files from scan (optional)")
 
-	webuipath_arg := set.String("webui-path", "", "path to webui directory (optional)")
+	webuipathArg := set.String("webui-path", "", "path to webui directory (optional)")
 
 	var confMultiValueGenre, confMultiValueArtist, confMultiValueAlbumArtist multiValueSetting
 	set.Var(&confMultiValueGenre, "multi-value-genre", "setting for mutli-valued genre scanning (optional)")
@@ -258,11 +258,11 @@ func main() {
 	webuipath := func(path string) string {
 		_, err := os.Stat(path)
 		if os.IsNotExist(err) {
-			log.Printf("WebUI path %s does not exists", *webuipath_arg)
+			log.Printf("WebUI path %s does not exists", *webuipathArg)
 			return ""
 		}
 		return path
-	}(*webuipath_arg)
+	}(*webuipathArg)
 
 	ctrlAdmin, err := ctrladmin.New(dbc, sessDB, scannr, podcast, lastfmClient, resolveProxyPath)
 	if err != nil {
