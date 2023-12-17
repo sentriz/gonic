@@ -156,7 +156,7 @@ func (p *Podcasts) AddNewEpisodes(podcast *db.Podcast, items []*gofeed.Item) err
 		Where("podcast_id=?", podcast.ID).
 		Order("publish_date DESC").
 		First(&podcastEpisode).Error
-	itemFound := true
+	var itemFound = true
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		itemFound = false
 	} else if err != nil {
