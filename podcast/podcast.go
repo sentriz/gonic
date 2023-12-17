@@ -163,12 +163,14 @@ func (p *Podcasts) AddNewEpisodes(podcast *db.Podcast, items []*gofeed.Item) err
 		return err
 	}
 	if !itemFound {
+		var episodeErrs []error
 		for _, item := range items {
 			if _, err := p.AddEpisode(podcast.ID, item); err != nil {
-				return err
+				episodeErrs = append(episodeErrs, err)
+				continue
 			}
 		}
-		return nil
+		return errors.Join(episodeErrs...)
 	}
 	for _, item := range getEntriesAfterDate(items, *podcastEpisode.PublishDate) {
 		episode, err := p.AddEpisode(podcast.ID, item)
