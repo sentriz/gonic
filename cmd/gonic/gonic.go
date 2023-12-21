@@ -389,6 +389,17 @@ func main() {
 	})
 
 	errgrp.Go(func() error {
+		defer logJob("podcast download")()
+
+		ctxTick(ctx, 5*time.Second, func() {
+			if err := podcast.DownloadTick(); err != nil {
+				log.Printf("failed to download podcast: %s", err)
+			}
+		})
+		return nil
+	})
+
+	errgrp.Go(func() error {
 		if *confPodcastPurgeAgeDays == 0 {
 			return nil
 		}

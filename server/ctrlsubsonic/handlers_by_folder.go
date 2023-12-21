@@ -222,7 +222,8 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	for _, s := range queries {
 		q = q.Where(`right_path LIKE ? OR right_path_u_dec LIKE ?`, s, s)
 	}
-	q = q.Preload("AlbumStar", "user_id=?", user.ID).
+	q = q.
+		Preload("AlbumStar", "user_id=?", user.ID).
 		Preload("AlbumRating", "user_id=?", user.ID).
 		Offset(params.GetOrInt("artistOffset", 0)).
 		Limit(params.GetOrInt("artistCount", 20))
