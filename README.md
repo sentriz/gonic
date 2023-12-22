@@ -19,7 +19,7 @@
 - [last.fm](https://www.last.fm/) scrobbling
 - [listenbrainz](https://listenbrainz.org/) scrobbling (thank you [spezifisch](https://github.com/spezifisch), [lxea](https://github.com/lxea))
 - artist similarities and biographies from the last.fm api
-- support for multi valued tags like albumartists and genres ([see more](#multi-valued-tags))
+- support for multi valued tags like albumartists and genres ([see more](#multi-valued-tags-v016))
 - a web interface for configuration (set up last.fm, manage users, start scans, etc.)
 - support for the [album-artist](https://mkoby.com/2007/02/18/artist-versus-album-artist/) tag, to not clutter your artist list with compilation album appearances
 - written in [go](https://golang.org/), so lightweight and suitable for a raspberry pi, etc. (see ARM images below)
@@ -68,9 +68,9 @@ password can then be changed from the web interface
 | `GONIC_JUKEBOX_MPV_EXTRA_ARGS`   | `-jukebox-mpv-extra-args`   | **optional** extra command line arguments to pass to the jukebox mpv daemon                                                                                                                                                                                                       |
 | `GONIC_PODCAST_PURGE_AGE`        | `-podcast-purge-age`        | **optional** age (in days) to purge podcast episodes if not accessed                                                                                                                                                                                                              |
 | `GONIC_EXCLUDE_PATTERN`          | `-exclude-pattern`          | **optional** files matching this regex pattern will not be imported                                                                                                                                                                                                               |
-| `GONIC_MULTI_VALUE_GENRE`        | `-multi-value-genre`        | **optional** setting for multi-valued genre tags when scanning ([see more](#multi-valued-tags))                                                                                                                                                                                   |
-| `GONIC_MULTI_VALUE_ARTIST`       | `-multi-value-artist`       | **optional** setting for multi-valued artist tags when scanning ([see more](#multi-valued-tags))                                                                                                                                                                                  |
-| `GONIC_MULTI_VALUE_ALBUM_ARTIST` | `-multi-value-album-artist` | **optional** setting for multi-valued album artist tags when scanning ([see more](#multi-valued-tags))                                                                                                                                                                            |
+| `GONIC_MULTI_VALUE_GENRE`        | `-multi-value-genre`        | **optional** setting for multi-valued genre tags when scanning ([see more](#multi-valued-tags-v016))                                                                                                                                                                                   |
+| `GONIC_MULTI_VALUE_ARTIST`       | `-multi-value-artist`       | **optional** setting for multi-valued artist tags when scanning ([see more](#multi-valued-tags-v016))                                                                                                                                                                                  |
+| `GONIC_MULTI_VALUE_ALBUM_ARTIST` | `-multi-value-album-artist` | **optional** setting for multi-valued album artist tags when scanning ([see more](#multi-valued-tags-v016))                                                                                                                                                                            |
 | `GONIC_EXPVAR`                   | `-expvar`                   | **optional** enable the /debug/vars endpoint (exposes useful debugging attributes as well as database stats)                                                                                                                                                                      |
 
 ## multi valued tags (v0.16+)
