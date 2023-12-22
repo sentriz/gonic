@@ -54,8 +54,9 @@ func Lookup(dbc *db.DB, musicPaths []string, podcastsPath string, path string) (
 
 	var musicPath string
 	for _, mp := range musicPaths {
-		if strings.HasPrefix(path, mp+"/") {
+		if strings.HasPrefix(path, filepath.Clean(mp)+string(filepath.Separator) /* ensure trailing */) {
 			musicPath = mp
+			break
 		}
 	}
 	if musicPath == "" {
