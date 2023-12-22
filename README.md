@@ -83,7 +83,7 @@ the available modes are:
 
 | value            | desc                                                                                                                                                                                                                |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `multi`          | gonic will explictly look for multi value fields in your audio metadata. software like musicbrainz picard or beets can set set these ([soon](https://github.com/beetbox/beets/pull/4743))                           |
+| `multi`          | gonic will explictly look for multi value fields in your audio metadata. software like musicbrainz picard or beets can set set these ([link](https://github.com/beetbox/beets/pull/4743))                           |
 | `delim <delim>`  | gonic will look at your normal audio metadata fields like "genre" or "album_artist", but split them on a delimiter. for example you could set `-multi-value-genre "delim ;"` to split the single genre field on ";" |
 | `none` (default) | gonic will not attempt to do any multi value processing                                                                                                                                                             |
 
