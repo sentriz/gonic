@@ -54,9 +54,8 @@ func Lookup(dbc *db.DB, musicPaths []string, podcastsPath string, path string) (
 	}
 
 	var musicPath string
-	sort.Sort(sort.Reverse(sort.StringSlice(musicPaths)))
 	for _, mp := range musicPaths {
-		if strings.HasPrefix(path, mp) {
+		if strings.HasPrefix(path, mp + '/') {
 			musicPath = mp
 		}
 	}
