@@ -3,7 +3,6 @@ package specidpaths
 import (
 	"errors"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"go.senan.xyz/gonic/db"
