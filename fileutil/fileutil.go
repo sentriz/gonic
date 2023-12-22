@@ -54,3 +54,8 @@ func First(path ...string) (string, error) {
 	}
 	return "", err
 }
+
+// HasPrefix checks a path has a prefix, making sure to respect path boundaries. So that /aa & /a does not match, but /a/a & /a does.
+func HasPrefix(p, prefix string) bool {
+	return p == prefix || strings.HasPrefix(p, filepath.Clean(prefix)+string(filepath.Separator))
+}

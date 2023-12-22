@@ -20,6 +20,7 @@ import (
 	"github.com/rainycape/unidecode"
 
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/fileutil"
 	"go.senan.xyz/gonic/tags/tagcommon"
 )
 
@@ -721,7 +722,7 @@ func parseMulti(parser tagcommon.Info, setting MultiValueSetting, getMulti func(
 
 func musicDirRelative(musicDirs []string, absPath string) (musicDir, relPath string) {
 	for _, musicDir := range musicDirs {
-		if absPath == musicDir || strings.HasPrefix(absPath, filepath.Clean(musicDir)+string(filepath.Separator)) { // ensure trailing slash for substring check
+		if fileutil.HasPrefix(absPath, musicDir) {
 			relPath, _ = filepath.Rel(musicDir, absPath)
 			return musicDir, relPath
 		}
