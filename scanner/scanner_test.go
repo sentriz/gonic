@@ -787,3 +787,26 @@ func TestRootNoClobberOnError(t *testing.T) {
 	require.Equal(t, ".", roots[0].RightPath)
 	require.Equal(t, 0, roots[0].ParentID)
 }
+
+// https://github.com/sentriz/gonic/issues/437
+func TestPrefixOverlap(t *testing.T) {
+	t.Parallel()
+
+	m := mockfs.NewWithDirs(t, []string{
+		"/music/tagged",
+		"/music/taggedmanual",
+	})
+
+	m.AddItemsPrefix("/music/tagged")
+	m.AddItemsPrefix("/music/taggedmanual")
+
+	m.ScanAndClean()
+
+	var taggedManual int
+	require.NoError(t, m.DB().Model(db.Album{}).Where("root_dir LIKE ?", `%/taggedmanual`).Count(&taggedManual).Error)
+	require.Greater(t, taggedManual, 1)
+
+	var tagged int
+	require.NoError(t, m.DB().Model(db.Album{}).Where("root_dir LIKE ?", `%/tagged`).Count(&tagged).Error)
+	require.Greater(t, tagged, 1)
+}

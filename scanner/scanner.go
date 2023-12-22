@@ -721,7 +721,7 @@ func parseMulti(parser tagcommon.Info, setting MultiValueSetting, getMulti func(
 
 func musicDirRelative(musicDirs []string, absPath string) (musicDir, relPath string) {
 	for _, musicDir := range musicDirs {
-		if strings.HasPrefix(absPath, musicDir) {
+		if absPath == musicDir || strings.HasPrefix(absPath, filepath.Clean(musicDir)+string(filepath.Separator)) { // ensure trailing slash for substring check
 			relPath, _ = filepath.Rel(musicDir, absPath)
 			return musicDir, relPath
 		}
