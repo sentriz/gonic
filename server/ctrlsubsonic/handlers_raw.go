@@ -188,16 +188,24 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	format, _ := params.Get("format")
 	timeOffset, _ := params.GetInt("timeOffset")
 
-	if format == "raw" || maxBitRate >= audioFile.AudioBitrate() {
+	if format == "raw" {
 		http.ServeFile(w, r, file.AbsPath())
 		return nil
 	}
 
-	pref, err := streamGetTransodePreference(c.dbc, user.ID, params.GetOr("c", ""))
+	client, _ := params.Get("c")
+	pref, err := streamGetTransodePreference(c.dbc, user.ID, client)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewError(0, "couldn't find transcode preference: %v", err)
 	}
 	if pref == nil {
+		log.Printf("serving raw file, no transcode preferences found for client %q", client)
+		http.ServeFile(w, r, file.AbsPath())
+		return nil
+	}
+
+	if maxBitRate >= audioFile.AudioBitrate() {
+		log.Printf("serving raw file, requested max bitrate %dk is greater or equal to %dk", maxBitRate, audioFile.AudioBitrate())
 		http.ServeFile(w, r, file.AbsPath())
 		return nil
 	}
@@ -213,7 +221,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		profile = transcode.WithSeek(profile, time.Second*time.Duration(timeOffset))
 	}
 
-	log.Printf("trancoding to %q with max bitrate %dk", profile.MIME(), profile.BitRate())
+	log.Printf("trancoding to %q with at bitrate %dk", profile.MIME(), profile.BitRate())
 
 	w.Header().Set("Content-Type", profile.MIME())
 	if err := c.transcoder.Transcode(r.Context(), profile, file.AbsPath(), w); err != nil && !errors.Is(err, transcode.ErrFFmpegKilled) {
