@@ -7,13 +7,14 @@ import (
 )
 
 type Track struct {
-	Track         string
-	Artist        string
-	Album         string
-	AlbumArtist   string
-	TrackNumber   uint
-	Duration      time.Duration
-	MusicBrainzID string
+	Track                string
+	Artist               string
+	Album                string
+	AlbumArtist          string
+	TrackNumber          uint
+	Duration             time.Duration
+	MusicBrainzID        string
+	MusicBrainzReleaseID string
 }
 
 type Scrobbler interface {
