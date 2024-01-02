@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -714,6 +715,10 @@ func parseMulti(parser tagcommon.Info, setting MultiValueSetting, getMulti func(
 	default:
 		parts = []string{get(parser)}
 	}
+	// trim potential empty strings from delimited results
+	parts = slices.DeleteFunc(parts, func(s string) bool {
+		return s == ""
+	})
 	for i := range parts {
 		parts[i] = strings.TrimSpace(parts[i])
 	}
