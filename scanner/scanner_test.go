@@ -810,3 +810,19 @@ func TestPrefixOverlap(t *testing.T) {
 	require.NoError(t, m.DB().Model(db.Album{}).Where("root_dir LIKE ?", `%/tagged`).Count(&tagged).Error)
 	require.Greater(t, tagged, 1)
 }
+
+// https://github.com/sentriz/gonic/pull/448
+func TestParseMultiDoubleDelim(t *testing.T) {
+	t.Parallel()
+
+	setting := scanner.MultiValueSetting{
+		Mode:  scanner.Delim,
+		Delim: `/`,
+	}
+
+	values := scanner.ParseMulti(setting, nil, `DON'T//BE//⚜⚜⚜`)
+	require.Len(t, values, 3)
+	require.Equal(t, `DON'T`, values[0])
+	require.Equal(t, `BE`, values[1])
+	require.Equal(t, `⚜⚜⚜`, values[2])
+}

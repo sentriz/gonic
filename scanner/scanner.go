@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -319,7 +320,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		return fmt.Errorf("%w: %w", err, ErrReadingTags)
 	}
 
-	genreNames := parseMulti(trags, s.multiValueSettings[Genre], tagcommon.MustGenres, tagcommon.MustGenre)
+	genreNames := ParseMulti(s.multiValueSettings[Genre], tagcommon.MustGenres(trags), tagcommon.MustGenre(trags))
 	genreIDs, err := populateGenres(tx, genreNames)
 	if err != nil {
 		return fmt.Errorf("populate genres: %w", err)
@@ -331,7 +332,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 			return fmt.Errorf("delete artist appearances: %w", err)
 		}
 
-		albumArtistNames := parseMulti(trags, s.multiValueSettings[AlbumArtist], tagcommon.MustAlbumArtists, tagcommon.MustAlbumArtist)
+		albumArtistNames := ParseMulti(s.multiValueSettings[AlbumArtist], tagcommon.MustAlbumArtists(trags), tagcommon.MustAlbumArtist(trags))
 		var albumArtistIDs []int
 		for _, albumArtistName := range albumArtistNames {
 			albumArtist, err := populateArtist(tx, albumArtistName)
@@ -364,7 +365,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		return fmt.Errorf("populate track genres: %w", err)
 	}
 
-	trackArtistNames := parseMulti(trags, s.multiValueSettings[Artist], tagcommon.MustArtists, tagcommon.MustArtist)
+	trackArtistNames := ParseMulti(s.multiValueSettings[Artist], tagcommon.MustArtists(trags), tagcommon.MustArtist(trags))
 	var trackArtistIDs []int
 	for _, trackArtistName := range trackArtistNames {
 		trackArtist, err := populateArtist(tx, trackArtistName)
@@ -704,19 +705,22 @@ type MultiValueSetting struct {
 	Delim string
 }
 
-func parseMulti(parser tagcommon.Info, setting MultiValueSetting, getMulti func(tagcommon.Info) []string, get func(tagcommon.Info) string) []string {
+func ParseMulti(setting MultiValueSetting, values []string, value string) []string {
 	var parts []string
 	switch setting.Mode {
 	case Multi:
-		parts = getMulti(parser)
+		parts = values
 	case Delim:
-		parts = strings.Split(get(parser), setting.Delim)
+		parts = strings.Split(value, setting.Delim)
 	default:
-		parts = []string{get(parser)}
+		parts = []string{value}
 	}
 	for i := range parts {
 		parts[i] = strings.TrimSpace(parts[i])
 	}
+	parts = slices.DeleteFunc(parts, func(s string) bool {
+		return s == ""
+	})
 	return parts
 }
 
