@@ -518,6 +518,11 @@ func getMusicFolder(musicPaths []MusicPath, p params.Params) string {
 }
 
 func lowerUDecOrHash(in string) string {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Println("unable to index parsed object:", err)
+		}
+	}()
 	lower := unicode.ToLower(rune(in[0]))
 	if !unicode.IsLetter(lower) {
 		return "#"
