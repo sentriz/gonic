@@ -526,7 +526,7 @@ func (mvs multiValueSetting) String() string {
 	case scanner.Delim:
 		return fmt.Sprintf("delim(%s)", mvs.Delim)
 	case scanner.Multi:
-		return fmt.Sprint("multi", mvs.Delim)
+		return "multi"
 	default:
 		return "none"
 	}
