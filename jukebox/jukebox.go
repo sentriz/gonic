@@ -410,7 +410,7 @@ func lockr(mu *sync.RWMutex) func() {
 	return mu.RUnlock
 }
 
-var mpvVersionExpr = regexp.MustCompile(`mpv\s(\d+)\.(\d+)\.(\d+)`)
+var mpvVersionExpr = regexp.MustCompile(`mpv\sv?(\d+)\.(\d+)\.(\d+)`)
 
 func parseMPVVersion(version string) (major, minor, patch int) {
 	m := mpvVersionExpr.FindStringSubmatch(version)
