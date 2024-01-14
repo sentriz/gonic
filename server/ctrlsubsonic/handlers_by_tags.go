@@ -120,7 +120,7 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 		First(album, id.Value).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return spec.NewError(10, "couldn't find an album with that id")
+		return spec.NewError(70, "couldn't find an album with that id")
 	}
 	sub := spec.NewResponse()
 	sub.Album = spec.NewAlbumByTags(album, album.Artists)
@@ -649,7 +649,7 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 		First(&track).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return spec.NewError(10, "couldn't find a track with that id")
+		return spec.NewError(70, "couldn't find a track with that id")
 	}
 
 	similarTracks, err := c.lastFMClient.TrackGetSimilarTracks(track.TagTrackArtist, track.TagTitle)
@@ -715,7 +715,7 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 		First(&artist).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return spec.NewError(0, "artist with id %q not found", id)
+		return spec.NewError(70, "artist with id %q not found", id)
 	}
 
 	similarArtists, err := c.lastFMClient.ArtistGetSimilar(artist.Name)

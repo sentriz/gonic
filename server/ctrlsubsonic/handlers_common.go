@@ -278,7 +278,7 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 		First(&track).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return spec.NewError(10, "couldn't find a track with that id")
+		return spec.NewError(70, "couldn't find a track with that id")
 	}
 
 	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
