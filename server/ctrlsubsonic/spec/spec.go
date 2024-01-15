@@ -310,6 +310,7 @@ type Playlist struct {
 	Owner     string        `xml:"owner,attr"      json:"owner"`
 	SongCount int           `xml:"songCount,attr"  json:"songCount"`
 	Created   time.Time     `xml:"created,attr"    json:"created"`
+	Changed   time.Time     `xml:"changed,attr"    json:"changed"`
 	Duration  int           `xml:"duration,attr"   json:"duration,omitempty"`
 	Public    bool          `xml:"public,attr"     json:"public,omitempty"`
 	List      []*TrackChild `xml:"entry,omitempty" json:"entry,omitempty"`
