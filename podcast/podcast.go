@@ -30,16 +30,18 @@ const (
 )
 
 type Podcasts struct {
-	db        *db.DB
-	baseDir   string
-	tagReader tagcommon.Reader
+	httpClient *http.Client
+	db         *db.DB
+	baseDir    string
+	tagReader  tagcommon.Reader
 }
 
 func New(db *db.DB, base string, tagReader tagcommon.Reader) *Podcasts {
 	return &Podcasts{
-		db:        db,
-		baseDir:   base,
-		tagReader: tagReader,
+		db:         db,
+		baseDir:    base,
+		tagReader:  tagReader,
+		httpClient: &http.Client{},
 	}
 }
 
@@ -324,8 +326,7 @@ func (p *Podcasts) downloadPodcastCover(podcast *db.Podcast) error {
 	}
 	req.Header.Add("User-Agent", fetchUserAgent)
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := p.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("fetch image url: %w", err)
 	}
@@ -461,14 +462,13 @@ func (p *Podcasts) DownloadTick() error {
 }
 
 func (p *Podcasts) doPodcastDownload(podcast *db.Podcast, podcastEpisode *db.PodcastEpisode) (err error) {
-	client := &http.Client{}
 	req, err := http.NewRequest(http.MethodGet, podcastEpisode.AudioURL, nil)
 	if err != nil {
 		return fmt.Errorf("create http request: %w", err)
 	}
 	req.Header.Add("User-Agent", fetchUserAgent)
 
-	resp, err := client.Do(req)
+	resp, err := p.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("fetch podcast audio: %w", err)
 	}
