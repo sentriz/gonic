@@ -94,7 +94,7 @@ func (p *Podcasts) AddNewPodcast(rssURL string, feed *gofeed.Feed) (*db.Podcast,
 		return &podcast, err
 	}
 	if err := p.RefreshPodcast(&podcast, feed.Items); err != nil {
-		log.Printf("error addign new episodes : %v", err)
+		log.Printf("error adding new episodes : %v", err)
 	}
 	if err := p.downloadPodcastCover(&podcast); err != nil {
 		log.Printf("error downloading podcast cover: %v", err)
@@ -458,6 +458,8 @@ func (p *Podcasts) DownloadTick() error {
 	if err := p.doPodcastDownload(podcastEpisode.Podcast, &podcastEpisode); err != nil {
 		return fmt.Errorf("do download: %w", err)
 	}
+
+	log.Printf("downloaded podcast episode %q - %q", podcastEpisode.Podcast.Title, podcastEpisode.Title)
 	return nil
 }
 
