@@ -18,6 +18,7 @@
       "name": "album-0",
       "songCount": 3,
       "duration": 300,
+      "playCount": 0,
       "genre": "Unknown Genre",
       "genres": [{ "name": "Unknown Genre" }],
       "year": 2021,

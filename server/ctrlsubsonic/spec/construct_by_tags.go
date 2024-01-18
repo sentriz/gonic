@@ -51,6 +51,9 @@ func NewAlbumByTags(a *db.Album, artists []*db.Artist) *Album {
 	for _, g := range a.Genres {
 		ret.Genres = append(ret.Genres, &GenreRef{Name: g.Name})
 	}
+	if a.Play != nil {
+		ret.PlayCount = a.Play.Count
+	}
 	return ret
 }
 

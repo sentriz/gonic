@@ -117,6 +117,8 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 		}).
 		Preload("AlbumStar", "user_id=?", user.ID).
 		Preload("AlbumRating", "user_id=?", user.ID).
+		Preload("AlbumRating", "user_id=?", user.ID).
+		Preload("Play", "user_id=?", user.ID).
 		First(album, id.Value).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -199,6 +201,7 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 		Preload("Artists").
 		Preload("AlbumStar", "user_id=?", user.ID).
 		Preload("AlbumRating", "user_id=?", user.ID).
+		Preload("Play", "user_id=?", user.ID).
 		Find(&albums)
 	sub := spec.NewResponse()
 	sub.AlbumsTwo = &spec.Albums{
@@ -256,7 +259,8 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		Preload("Artists").
 		Preload("Genres").
 		Preload("AlbumStar", "user_id=?", user.ID).
-		Preload("AlbumRating", "user_id=?", user.ID)
+		Preload("AlbumRating", "user_id=?", user.ID).
+		Preload("Play", "user_id=?", user.ID)
 	for _, s := range queries {
 		q = q.Where(`tag_title LIKE ? OR tag_title_u_dec LIKE ?`, s, s)
 	}
@@ -517,7 +521,8 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 		Order("album_stars.star_date DESC").
 		Preload("Artists").
 		Preload("AlbumStar", "user_id=?", user.ID).
-		Preload("AlbumRating", "user_id=?", user.ID)
+		Preload("AlbumRating", "user_id=?", user.ID).
+		Preload("Play", "user_id=?", user.ID)
 	if m := getMusicFolder(c.musicPaths, params); m != "" {
 		q = q.Where("albums.root_dir=?", m)
 	}
