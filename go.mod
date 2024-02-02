@@ -23,7 +23,7 @@ require (
 	github.com/peterbourgon/ff v1.7.1
 	github.com/philippta/go-template v0.0.0-20220911145045-4556aca435e4
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
-	github.com/sentriz/audiotags v0.0.0-20230419125925-8886243b2137
+	github.com/sentriz/audiotags v0.0.0-20240202193907-618ae39d7743
 	github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/exp v0.0.0-20240112132812-db7319d0e0e3

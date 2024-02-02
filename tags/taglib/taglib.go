@@ -1,6 +1,7 @@
 package taglib
 
 import (
+	"fmt"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -20,8 +21,13 @@ func (TagLib) CanRead(absPath string) bool {
 }
 
 func (TagLib) Read(absPath string) (tagcommon.Info, error) {
-	raw, props, err := audiotags.Read(absPath)
-	return &info{raw, props}, err
+	f, err := audiotags.Open(absPath)
+	if err != nil {
+		return nil, fmt.Errorf("open: %w", err)
+	}
+	props := f.ReadAudioProperties()
+	raw := f.ReadTags()
+	return &info{raw, props}, nil
 }
 
 type info struct {
