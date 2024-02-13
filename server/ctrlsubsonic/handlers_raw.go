@@ -242,7 +242,7 @@ func (c *Controller) ServeGetAvatar(w http.ResponseWriter, r *http.Request) *spe
 		return spec.NewError(10, "please provide an `username` parameter")
 	}
 	reqUser := c.dbc.GetUserByName(username)
-	if (user != reqUser) && !user.IsAdmin {
+	if (user.ID != reqUser.ID) && !user.IsAdmin {
 		return spec.NewError(50, "user not admin")
 	}
 	http.ServeContent(w, r, "", time.Now(), bytes.NewReader(reqUser.Avatar))
