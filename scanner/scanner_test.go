@@ -643,6 +643,41 @@ func TestNoOrphanedGenres(t *testing.T) {
 	assert.Equal(t, 0, genreCount)
 }
 
+// https://github.com/sentriz/gonic/issues/466
+func TestNoOrphanedGenresButOnlyDeleteTracks(t *testing.T) {
+	t.Parallel()
+	m := mockfs.New(t)
+
+	m.AddItems()
+	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.TagInfo) { tags.RawGenre = "genre-a" })
+	m.ScanAndClean()
+
+	trackPaths, err := filepath.Glob(filepath.Join(m.TmpDir(), "*", "*", "*.flac"))
+	assert.NoError(t, err)
+
+	for _, path := range trackPaths {
+		assert.NoError(t, os.Remove(path))
+	}
+
+	m.ScanAndClean()
+
+	var tracks []*db.Track
+	assert.NoError(t, m.DB().Find(&tracks).Error)
+	assert.Len(t, tracks, 0)
+
+	var genres []*db.Genre
+	assert.NoError(t, m.DB().Find(&genres).Error)
+	assert.Len(t, genres, 0)
+
+	var trackGenres []*db.TrackGenre
+	assert.NoError(t, m.DB().Find(&trackGenres).Error)
+	assert.Len(t, trackGenres, 0)
+
+	var albumGenres []*db.AlbumGenre
+	assert.NoError(t, m.DB().Find(&albumGenres).Error)
+	assert.Len(t, albumGenres, 0)
+}
+
 func TestMultiArtistSupport(t *testing.T) {
 	t.Parallel()
 	m := mockfs.New(t)

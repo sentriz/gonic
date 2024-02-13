@@ -610,20 +610,34 @@ func (s *Scanner) cleanGenres(st *State) error { //nolint:unparam
 
 	subTrack := s.db.
 		Select("genres.id").
-		Model(&db.Genre{}).
+		Model(db.Genre{}).
 		Joins("LEFT JOIN track_genres ON track_genres.genre_id=genres.id").
 		Where("track_genres.genre_id IS NULL").
 		SubQuery()
 	subAlbum := s.db.
 		Select("genres.id").
-		Model(&db.Genre{}).
+		Model(db.Genre{}).
 		Joins("LEFT JOIN album_genres ON album_genres.genre_id=genres.id").
 		Where("album_genres.genre_id IS NULL").
 		SubQuery()
 	q := s.db.
 		Where("genres.id IN ? AND genres.id IN ?", subTrack, subAlbum).
-		Delete(&db.Genre{})
-	st.genresMissing = int(q.RowsAffected)
+		Delete(db.Genre{})
+	st.genresMissing += int(q.RowsAffected)
+
+	subAlbumGenresNoTracks := s.db.
+		Select("album_genres.genre_id").
+		Model(db.AlbumGenre{}).
+		Joins("JOIN albums ON albums.id=album_genres.album_id").
+		Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
+		Group("album_genres.genre_id").
+		Having("count(tracks.id)=0").
+		SubQuery()
+	q = s.db.
+		Where("genres.id IN ?", subAlbumGenresNoTracks).
+		Delete(db.Genre{})
+	st.genresMissing += int(q.RowsAffected)
+
 	return nil
 }
 
