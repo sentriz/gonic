@@ -199,7 +199,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		return spec.NewError(0, "couldn't find transcode preference: %v", err)
 	}
 	if pref == nil {
-		log.Printf("serving raw file, no user transcode preferences found for client %q", client)
+		log.Printf("serving raw file, no user transcode preferences found for user %q and client %q", user.Name, client)
 		http.ServeFile(w, r, file.AbsPath())
 		return nil
 	}
