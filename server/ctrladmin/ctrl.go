@@ -85,6 +85,8 @@ func New(dbc *db.DB, sessDB *gormstore.Store, scanner *scanner.Scanner, podcasts
 	// user routes (if session is valid)
 	c.Handle("/logout", userChain(respRaw(c.ServeLogout)))
 	c.Handle("/home", userChain(resp(c.ServeHome)))
+	c.Handle("/ldap", userChain(resp(c.ServeLDAPConfig)))
+	c.Handle("/ldap_do", userChain(resp(c.ServeLDAPConfigDo)))
 	c.Handle("/change_username", userChain(resp(c.ServeChangeUsername)))
 	c.Handle("/change_username_do", userChain(resp(c.ServeChangeUsernameDo)))
 	c.Handle("/change_password", userChain(resp(c.ServeChangePassword)))
@@ -289,6 +291,13 @@ type templateData struct {
 	CurrentLastFMAPISecret string
 	DefaultListenBrainzURL string
 	SelectedUser           *db.User
+
+	CurrentBindUID string
+	CurrentFQDN    string
+	CurrentPort    string
+	CurrentNoTLS   string
+	CurrentBaseDN  string
+	CurrentFilter  string
 
 	Podcasts              []*db.Podcast
 	InternetRadioStations []*db.InternetRadioStation

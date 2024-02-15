@@ -25,6 +25,8 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/transcode"
+
+	"github.com/go-ldap/ldap/v3"
 )
 
 type CtxKey int
@@ -93,7 +95,7 @@ func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPa
 	chain := handlerutil.Chain(
 		withParams,
 		withRequiredParams,
-		withUser(dbc),
+		c.withUser,
 	)
 	chainRaw := handlerutil.Chain(
 		chain,
@@ -223,43 +225,159 @@ func withRequiredParams(next http.Handler) http.Handler {
 	})
 }
 
-func withUser(dbc *db.DB) handlerutil.Middleware {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			params := r.Context().Value(CtxParams).(params.Params)
-			// ignoring errors here, a middleware has already ensured they exist
-			username, _ := params.Get("u")
-			password, _ := params.Get("p")
-			token, _ := params.Get("t")
-			salt, _ := params.Get("s")
+func (c *Controller) withUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		params := r.Context().Value(CtxParams).(params.Params)
+		// ignoring errors here, a middleware has already ensured they exist
+		username, _ := params.Get("u")
+		password, _ := params.Get("p")
+		token, _ := params.Get("t")
+		salt, _ := params.Get("s")
 
-			passwordAuth := token == "" && salt == ""
-			tokenAuth := password == ""
-			if tokenAuth == passwordAuth {
-				_ = writeResp(w, r, spec.NewError(10,
-					"please provide `t` and `s`, or just `p`"))
-				return
-			}
-			user := dbc.GetUserByName(username)
-			if user == nil {
-				_ = writeResp(w, r, spec.NewError(40,
-					"invalid username %q", username))
-				return
-			}
-			var credsOk bool
-			if tokenAuth {
-				credsOk = checkCredsToken(user.Password, token, salt)
+		passwordAuth := token == "" && salt == ""
+		tokenAuth := password == ""
+		if tokenAuth == passwordAuth {
+			_ = writeResp(w, r, spec.NewError(10,
+				"please provide `t` and `s`, or just `p`"))
+			return
+		}
+		user := c.dbc.GetUserByName(username)
+
+		newLDAPUser := false
+		if user == nil {
+			newLDAPUser = true
+
+			// Because the user wasn't found we can now try
+			// to use LDAP.
+			ldapFQDN, err := c.dbc.GetSetting("ldap_fqdn")
+
+			if ldapFQDN != "" && err == nil {
+				// The configuration page wouldn't allow these setting to not be set
+				// while LDAP is enabled (a FQDN/IP is set).
+				bindUID, _ := c.dbc.GetSetting("ldap_bind_user")
+				bindPWD, _ := c.dbc.GetSetting("ldap_bind_user_password")
+				ldapPort, _ := c.dbc.GetSetting("ldap_port")
+				baseDN, _ := c.dbc.GetSetting("ldap_base_dn")
+				filter, _ := c.dbc.GetSetting("ldap_filter")
+				tls, _ := c.dbc.GetSetting("ldap_tls")
+
+				// Now, we can try to connect to the LDAP server.
+				l, err := createLDAPconnection(tls, ldapFQDN, ldapPort)
+				if err != nil {
+					// Return a generic error.
+					_ = writeResp(w, r, spec.NewError(0, "Failed to connect to LDAP server."))
+					return
+				}
+				defer l.Close()
+
+				// After we have a connection, let's try binding
+				_, err = l.SimpleBind(&ldap.SimpleBindRequest{
+					Username: fmt.Sprintf("uid=%s,%s", bindUID, baseDN),
+					Password: bindPWD,
+				})
+				if err != nil {
+					log.Println("Failed to bind to LDAP:", err)
+					_ = writeResp(w, r, spec.NewError(40, "Wrong username or password."))
+					return
+				}
+
+				searchReq := ldap.NewSearchRequest(
+					baseDN,
+					ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+					fmt.Sprintf("(&%s(uid=%s))", filter, ldap.EscapeFilter(username)),
+					[]string{"dn"},
+					nil,
+				)
+
+				result, err := l.Search(searchReq)
+				if err != nil {
+					log.Println("failed to query LDAP server:", err)
+				}
+
+				if len(result.Entries) > 1 {
+					_ = writeResp(w, r, spec.NewError(40, "Ambiguous user: `%s`", username))
+				} else if len(result.Entries) == 1 {
+					user := db.User{
+						Name:     username,
+						Password: "", // no password because we want auth to fail.
+					}
+
+					if err := c.dbc.Create(&user).Error; err != nil {
+						log.Println("User created via LDAP:", username)
+					}
+				} else {
+					_ = writeResp(w, r, spec.NewError(40, "invalid username `%s`", username))
+					return
+				}
 			} else {
-				credsOk = checkCredsBasic(user.Password, password)
-			}
-			if !credsOk {
-				_ = writeResp(w, r, spec.NewError(40, "invalid password"))
+				_ = writeResp(w, r, spec.NewError(40,
+					"invalid username `%s`", username))
 				return
 			}
-			withUser := context.WithValue(r.Context(), CtxUser, user)
-			next.ServeHTTP(w, r.WithContext(withUser))
-		})
+		}
+		var credsOk bool
+		if tokenAuth && !newLDAPUser && user != nil {
+			credsOk = checkCredsToken(user.Password, token, salt)
+		} else if !newLDAPUser && user != nil {
+			credsOk = checkCredsBasic(user.Password, password)
+		}
+		if !credsOk {
+			// Because internal authentication failed, we can now try to use LDAP, if
+			// it was enabled by the user.
+			ldapFQDN, err := c.dbc.GetSetting("ldap_fqdn")
+
+			if ldapFQDN != "" && err == nil {
+				// The configuration page wouldn't allow these setting to not be set
+				// while LDAP is enabled (a FQDN/IP is set).
+				ldapPort, _ := c.dbc.GetSetting("ldap_port")
+				baseDN, _ := c.dbc.GetSetting("ldap_base_dn")
+				tls, _ := c.dbc.GetSetting("ldap_tls")
+
+				// Now, we can try to connect to the LDAP server.
+				l, err := createLDAPconnection(tls, ldapFQDN, ldapPort)
+				if err != nil {
+					// Return a generic error.
+					_ = writeResp(w, r, spec.NewError(0, "Failed to connect to LDAP server."))
+					return
+				}
+				defer l.Close()
+
+				// After we have a connection, let's try binding
+				_, err = l.SimpleBind(&ldap.SimpleBindRequest{
+					Username: fmt.Sprintf("uid=%s,%s", username, baseDN),
+					Password: password,
+				})
+
+				if err == nil {
+					withUser := context.WithValue(r.Context(), CtxUser, user)
+					next.ServeHTTP(w, r.WithContext(withUser))
+					return
+				}
+			}
+
+			_ = writeResp(w, r, spec.NewError(40, "invalid password"))
+			return
+		}
+		withUser := context.WithValue(r.Context(), CtxUser, user)
+		next.ServeHTTP(w, r.WithContext(withUser))
+	})
+}
+
+func createLDAPconnection(tls string, fqdn string, port string) (*ldap.Conn, error) {
+	protocol := "ldap"
+	if tls == "true" {
+		protocol = "ldaps"
 	}
+
+	// Now, we can try to connect to the LDAP server.
+	l, err := ldap.DialURL(fmt.Sprintf("%s://%s:%s", protocol, fqdn, port))
+	if err != nil {
+		// Warn the server and return a generic error.
+		log.Println("Failed to connect to LDAP server", err)
+		return nil, err
+	}
+
+	return l, nil
 }
 
 func slow(next http.Handler) http.Handler {
