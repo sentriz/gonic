@@ -524,22 +524,22 @@ func TestTagErrors(t *testing.T) {
 		tags.Error = scanner.ErrReadingTags
 	})
 
-	ctx, err := m.ScanAndCleanErr()
+	st, err := m.ScanAndCleanErr()
 	errs, ok := err.(interface{ Unwrap() []error })
 	assert.True(t, ok)
 
 	assert.ErrorAs(t, err, &errs)
-	assert.Equal(t, 2, len(errs.Unwrap()))                    // we have 2 dir errors
-	assert.Equal(t, m.NumTracks()-(3*2), ctx.SeenTracks())    // we saw all tracks bar 2 album contents
-	assert.Equal(t, m.NumTracks()-(3*2), ctx.SeenTracksNew()) // we have all tracks bar 2 album contents
+	assert.Equal(t, 2, len(errs.Unwrap()))                   // we have 2 dir errors
+	assert.Equal(t, m.NumTracks()-(3*2), st.SeenTracks())    // we saw all tracks bar 2 album contents
+	assert.Equal(t, m.NumTracks()-(3*2), st.SeenTracksNew()) // we have all tracks bar 2 album contents
 
-	ctx, err = m.ScanAndCleanErr()
+	st, err = m.ScanAndCleanErr()
 	errs, ok = err.(interface{ Unwrap() []error })
 	assert.True(t, ok)
 
-	assert.Equal(t, 2, len(errs.Unwrap()))                 // we have 2 dir errors
-	assert.Equal(t, m.NumTracks()-(3*2), ctx.SeenTracks()) // we saw all tracks bar 2 album contents
-	assert.Equal(t, 0, ctx.SeenTracksNew())                // we have no new tracks
+	assert.Equal(t, 2, len(errs.Unwrap()))                // we have 2 dir errors
+	assert.Equal(t, m.NumTracks()-(3*2), st.SeenTracks()) // we saw all tracks bar 2 album contents
+	assert.Equal(t, 0, st.SeenTracksNew())                // we have no new tracks
 }
 
 // https://github.com/sentriz/gonic/issues/185#issuecomment-1050092128
@@ -641,6 +641,41 @@ func TestNoOrphanedGenres(t *testing.T) {
 	var genreCount int
 	assert.NoError(t, m.DB().Model(&db.Genre{}).Count(&genreCount).Error)
 	assert.Equal(t, 0, genreCount)
+}
+
+// https://github.com/sentriz/gonic/issues/466
+func TestNoOrphanedGenresButOnlyDeleteTracks(t *testing.T) {
+	t.Parallel()
+	m := mockfs.New(t)
+
+	m.AddItems()
+	m.SetTags("artist-0/album-0/track-0.flac", func(tags *mockfs.TagInfo) { tags.RawGenre = "genre-a" })
+	m.ScanAndClean()
+
+	trackPaths, err := filepath.Glob(filepath.Join(m.TmpDir(), "*", "*", "*.flac"))
+	assert.NoError(t, err)
+
+	for _, path := range trackPaths {
+		assert.NoError(t, os.Remove(path))
+	}
+
+	m.ScanAndClean()
+
+	var tracks []*db.Track
+	assert.NoError(t, m.DB().Find(&tracks).Error)
+	assert.Len(t, tracks, 0)
+
+	var genres []*db.Genre
+	assert.NoError(t, m.DB().Find(&genres).Error)
+	assert.Len(t, genres, 0)
+
+	var trackGenres []*db.TrackGenre
+	assert.NoError(t, m.DB().Find(&trackGenres).Error)
+	assert.Len(t, trackGenres, 0)
+
+	var albumGenres []*db.AlbumGenre
+	assert.NoError(t, m.DB().Find(&albumGenres).Error)
+	assert.Len(t, albumGenres, 0)
 }
 
 func TestMultiArtistSupport(t *testing.T) {
@@ -786,4 +821,43 @@ func TestRootNoClobberOnError(t *testing.T) {
 	require.Len(t, roots, 1)
 	require.Equal(t, ".", roots[0].RightPath)
 	require.Equal(t, 0, roots[0].ParentID)
+}
+
+// https://github.com/sentriz/gonic/issues/437
+func TestPrefixOverlap(t *testing.T) {
+	t.Parallel()
+
+	m := mockfs.NewWithDirs(t, []string{
+		"/music/tagged",
+		"/music/taggedmanual",
+	})
+
+	m.AddItemsPrefix("/music/tagged")
+	m.AddItemsPrefix("/music/taggedmanual")
+
+	m.ScanAndClean()
+
+	var taggedManual int
+	require.NoError(t, m.DB().Model(db.Album{}).Where("root_dir LIKE ?", `%/taggedmanual`).Count(&taggedManual).Error)
+	require.Greater(t, taggedManual, 1)
+
+	var tagged int
+	require.NoError(t, m.DB().Model(db.Album{}).Where("root_dir LIKE ?", `%/tagged`).Count(&tagged).Error)
+	require.Greater(t, tagged, 1)
+}
+
+// https://github.com/sentriz/gonic/pull/448
+func TestParseMultiDoubleDelim(t *testing.T) {
+	t.Parallel()
+
+	setting := scanner.MultiValueSetting{
+		Mode:  scanner.Delim,
+		Delim: `/`,
+	}
+
+	values := scanner.ParseMulti(setting, nil, `DON'T//BE//⚜⚜⚜`)
+	require.Len(t, values, 3)
+	require.Equal(t, `DON'T`, values[0])
+	require.Equal(t, `BE`, values[1])
+	require.Equal(t, `⚜⚜⚜`, values[2])
 }

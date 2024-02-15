@@ -339,6 +339,7 @@ type Album struct {
 	AlbumStar      *AlbumStar
 	AlbumRating    *AlbumRating
 	AverageRating  float64 `sql:"default: null"`
+	Play           *Play
 }
 
 func (a *Album) SID() *specid.ID {
@@ -527,7 +528,7 @@ func (pe *PodcastEpisode) MIME() string {
 }
 
 func (pe *PodcastEpisode) AbsPath() string {
-	if pe.Podcast == nil {
+	if pe.Podcast == nil || pe.Podcast.RootDir == "" {
 		return ""
 	}
 	return filepath.Join(pe.Podcast.RootDir, pe.Filename)

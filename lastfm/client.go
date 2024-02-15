@@ -57,6 +57,7 @@ func (c *Client) ArtistGetInfo(artistName string) (Artist, error) {
 	if err != nil {
 		return Artist{}, fmt.Errorf("make request: %w", err)
 	}
+
 	return resp.Artist, nil
 }
 

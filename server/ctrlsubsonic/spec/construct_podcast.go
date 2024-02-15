@@ -2,19 +2,14 @@ package spec
 
 import (
 	"go.senan.xyz/gonic/db"
-	"jaytaylor.com/html2text"
 )
 
 func NewPodcastChannel(p *db.Podcast) *PodcastChannel {
-	desc, err := html2text.FromString(p.Description, html2text.Options{TextOnly: true})
-	if err != nil {
-		desc = ""
-	}
 	ret := &PodcastChannel{
 		ID:               p.SID(),
 		OriginalImageURL: p.ImageURL,
 		Title:            p.Title,
-		Description:      desc,
+		Description:      CleanExternalText(p.Description),
 		URL:              p.URL,
 		CoverArt:         p.SID(),
 		Status:           "skipped",
@@ -30,17 +25,13 @@ func NewPodcastEpisode(pe *db.PodcastEpisode) *PodcastEpisode {
 	if pe == nil {
 		return nil
 	}
-	desc, err := html2text.FromString(pe.Description, html2text.Options{TextOnly: true})
-	if err != nil {
-		desc = ""
-	}
 	r := &PodcastEpisode{
 		ID:          pe.SID(),
 		StreamID:    pe.SID(),
 		ContentType: pe.MIME(),
 		ChannelID:   pe.PodcastSID(),
 		Title:       pe.Title,
-		Description: desc,
+		Description: CleanExternalText(pe.Description),
 		Status:      string(pe.Status),
 		CoverArt:    pe.PodcastSID(),
 		PublishDate: *pe.PublishDate,

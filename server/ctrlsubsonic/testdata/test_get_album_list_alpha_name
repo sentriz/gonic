@@ -20,7 +20,8 @@
           "coverArt": "al-3",
           "name": "album-0",
           "songCount": 3,
-          "duration": 300
+          "duration": 300,
+          "playCount": 0
         },
         {
           "id": "al-7",
@@ -35,7 +36,8 @@
           "coverArt": "al-7",
           "name": "album-0",
           "songCount": 3,
-          "duration": 300
+          "duration": 300,
+          "playCount": 0
         },
         {
           "id": "al-11",
@@ -50,7 +52,8 @@
           "coverArt": "al-11",
           "name": "album-0",
           "songCount": 3,
-          "duration": 300
+          "duration": 300,
+          "playCount": 0
         },
         {
           "id": "al-4",
@@ -65,7 +68,8 @@
           "coverArt": "al-4",
           "name": "album-1",
           "songCount": 3,
-          "duration": 300
+          "duration": 300,
+          "playCount": 0
         },
         {
           "id": "al-8",
@@ -80,7 +84,8 @@
           "coverArt": "al-8",
           "name": "album-1",
           "songCount": 3,
-          "duration": 300
+          "duration": 300,
+          "playCount": 0
         },
         {
           "id": "al-12",
@@ -95,7 +100,8 @@
           "coverArt": "al-12",
           "name": "album-1",
           "songCount": 3,
-          "duration": 300
+          "duration": 300,
+          "playCount": 0
         },
         {
           "id": "al-5",
@@ -110,7 +116,8 @@
           "coverArt": "al-5",
           "name": "album-2",
           "songCount": 3,
-          "duration": 300
+          "duration": 300,
+          "playCount": 0
         },
         {
           "id": "al-9",
@@ -125,7 +132,8 @@
           "coverArt": "al-9",
           "name": "album-2",
           "songCount": 3,
-          "duration": 300
+          "duration": 300,
+          "playCount": 0
         },
         {
           "id": "al-13",
@@ -140,7 +148,8 @@
           "coverArt": "al-13",
           "name": "album-2",
           "songCount": 3,
-          "duration": 300
+          "duration": 300,
+          "playCount": 0
         }
       ]
     }

@@ -67,7 +67,7 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 	return sub
 }
 
-func (c *Controller) ServeCreatePlaylist(r *http.Request) *spec.Response {
+func (c *Controller) ServeCreateOrUpdatePlaylist(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	params := r.Context().Value(CtxParams).(params.Params)
 
@@ -79,9 +79,8 @@ func (c *Controller) ServeCreatePlaylist(r *http.Request) *spec.Response {
 		playlist = *pl
 	}
 
-	// update meta info
 	if playlist.UserID != 0 && playlist.UserID != user.ID {
-		return spec.NewResponse()
+		return spec.NewError(50, "you aren't allowed update that user's playlist")
 	}
 
 	playlist.UserID = user.ID
@@ -103,7 +102,9 @@ func (c *Controller) ServeCreatePlaylist(r *http.Request) *spec.Response {
 
 	if playlistPath == "" {
 		playlistPath = playlistp.NewPath(user.ID, fmt.Sprint(time.Now().UnixMilli()))
+		playlistID = playlistIDEncode(playlistPath)
 	}
+
 	if err := c.playlistStore.Write(playlistPath, &playlist); err != nil {
 		return spec.NewError(0, "save playlist: %v", err)
 	}
@@ -197,6 +198,7 @@ func playlistRender(c *Controller, params params.Params, playlistID string, play
 		Name:      playlist.Name,
 		Comment:   playlist.Comment,
 		Created:   playlist.UpdatedAt,
+		Changed:   playlist.UpdatedAt,
 		SongCount: len(playlist.Items),
 		Public:    playlist.IsPublic,
 		Owner:     user.Name,

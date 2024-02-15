@@ -26,40 +26,6 @@ const (
 	extM3U8 = ".m3u8"
 )
 
-type Store struct {
-	basePath string
-	mu       sync.Mutex
-}
-
-func NewStore(basePath string) (*Store, error) {
-	if basePath == "" {
-		return nil, ErrInvalidBasePath
-	}
-
-	// sanity check layout, just in case someone tries to use an existing folder
-	entries, err := os.ReadDir(basePath)
-	if err != nil {
-		return nil, fmt.Errorf("sanity checking: reading dir: %w", err)
-	}
-	var found string
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-		if _, err := userIDFromPath(entry.Name()); err != nil {
-			found = entry.Name()
-			break
-		}
-	}
-	if found != "" {
-		return nil, fmt.Errorf("sanity checking: %w: item %q in playlists directory is not a user id. see wiki for details on layout of the playlists dir", ErrNoUserPrefix, found)
-	}
-
-	return &Store{
-		basePath: basePath,
-	}, nil
-}
-
 type Playlist struct {
 	UpdatedAt time.Time
 	UserID    int
@@ -69,18 +35,33 @@ type Playlist struct {
 	IsPublic  bool
 }
 
-func NewPath(userID int, playlistName string) string {
-	playlistName = fileutil.Safe(playlistName)
-	if playlistName == "" {
-		playlistName = "pl"
+type Store struct {
+	basePath string
+	mu       sync.Mutex
+}
+
+func NewStore(basePath string) (*Store, error) {
+	if basePath == "" {
+		return nil, ErrInvalidBasePath
 	}
-	playlistName = fmt.Sprintf("%s-%d%s", playlistName, time.Now().UnixMilli(), extM3U)
-	return filepath.Join(fmt.Sprint(userID), playlistName)
+	if err := sanityCheck(basePath); err != nil {
+		return nil, err
+	}
+
+	return &Store{
+		basePath: basePath,
+	}, nil
 }
 
 // List finds playlist items in s.basePath.
 // the expected format is <base path>/<user id>/**/<playlist name>.m3u
 func (s *Store) List() ([]string, error) {
+	defer lock(&s.mu)()
+
+	if err := sanityCheck(s.basePath); err != nil {
+		return nil, err
+	}
+
 	var relPaths []string
 	return relPaths, filepath.WalkDir(s.basePath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -100,29 +81,12 @@ func (s *Store) List() ([]string, error) {
 	})
 }
 
-const (
-	attrPrefix   = "#GONIC-"
-	attrName     = "NAME"
-	attrCommment = "COMMENT"
-	attrIsPublic = "IS-PUBLIC"
-)
-
-func encodeAttr(name, value string) string {
-	return fmt.Sprintf("%s%s:%s", attrPrefix, name, strconv.Quote(value))
-}
-
-func decodeAttr(line string) (name, value string) {
-	if !strings.HasPrefix(line, attrPrefix) {
-		return "", ""
-	}
-	prefixAndName, rawValue, _ := strings.Cut(line, ":")
-	name = strings.TrimPrefix(prefixAndName, attrPrefix)
-	value, _ = strconv.Unquote(rawValue)
-	return name, value
-}
-
 func (s *Store) Read(relPath string) (*Playlist, error) {
 	defer lock(&s.mu)()
+
+	if err := sanityCheck(s.basePath); err != nil {
+		return nil, err
+	}
 
 	absPath := filepath.Join(s.basePath, relPath)
 	stat, err := os.Stat(absPath)
@@ -171,6 +135,10 @@ func (s *Store) Read(relPath string) (*Playlist, error) {
 func (s *Store) Write(relPath string, playlist *Playlist) error {
 	defer lock(&s.mu)()
 
+	if err := sanityCheck(s.basePath); err != nil {
+		return err
+	}
+
 	absPath := filepath.Join(s.basePath, relPath)
 	if err := os.MkdirAll(filepath.Dir(absPath), 0o777); err != nil {
 		return fmt.Errorf("make m3u base dir: %w", err)
@@ -217,6 +185,10 @@ func (s *Store) Write(relPath string, playlist *Playlist) error {
 }
 
 func (s *Store) Delete(relPath string) error {
+	if err := sanityCheck(s.basePath); err != nil {
+		return err
+	}
+
 	return os.Remove(filepath.Join(s.basePath, relPath))
 }
 
@@ -236,4 +208,56 @@ func userIDFromPath(relPath string) (int, error) {
 func lock(mu *sync.Mutex) func() {
 	mu.Lock()
 	return mu.Unlock
+}
+
+func sanityCheck(basePath string) error {
+	// sanity check layout, just in case someone tries to use an existing folder
+	entries, err := os.ReadDir(basePath)
+	if err != nil {
+		return fmt.Errorf("sanity checking: reading dir: %w", err)
+	}
+	var found string
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		if _, err := userIDFromPath(entry.Name()); err != nil {
+			found = entry.Name()
+			break
+		}
+	}
+	if found != "" {
+		return fmt.Errorf("sanity checking: %w: item %q in playlists directory is not a user id. see wiki for details on layout of the playlists dir", ErrNoUserPrefix, found)
+	}
+	return nil
+}
+
+const (
+	attrPrefix   = "#GONIC-"
+	attrName     = "NAME"
+	attrCommment = "COMMENT"
+	attrIsPublic = "IS-PUBLIC"
+)
+
+func encodeAttr(name, value string) string {
+	return fmt.Sprintf("%s%s:%s", attrPrefix, name, strconv.Quote(value))
+}
+
+func decodeAttr(line string) (name, value string) {
+	if !strings.HasPrefix(line, attrPrefix) {
+		return "", ""
+	}
+	prefixAndName, rawValue, _ := strings.Cut(line, ":")
+	name = strings.TrimPrefix(prefixAndName, attrPrefix)
+	value, _ = strconv.Unquote(rawValue)
+	return name, value
+}
+
+func NewPath(userID int, playlistName string) string {
+	playlistName = fileutil.Safe(playlistName)
+	if playlistName == "" {
+		playlistName = "pl"
+	}
+	playlistName = fmt.Sprintf("%s-%d%s", playlistName, time.Now().UnixMilli(), extM3U)
+	return filepath.Join(fmt.Sprint(userID), playlistName)
 }

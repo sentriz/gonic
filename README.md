@@ -2,6 +2,7 @@
 <h4 align="center">free-software <a href="http://www.subsonic.org/">subsonic</a> server API implementation, supporting its <a href="https://github.com/sentriz/gonic?tab=readme-ov-file#features">many clients</a></h4>
 <p align="center">
   <a href="http://hub.docker.com/r/sentriz/gonic"><img src="https://img.shields.io/docker/pulls/sentriz/gonic.svg"></a>
+  <a href="https://repology.org/project/gonic/"><img src="https://repology.org/badge/tiny-repos/gonic.svg"></a>
   <a href="https://github.com/sentriz/gonic/releases"><img src="https://img.shields.io/github/v/release/sentriz/gonic.svg"></a>
   <a href="https://web.libera.chat/#gonic"><img src="https://img.shields.io/badge/libera.chat-%23gonic-blue.svg"></a>
 </p>
@@ -18,7 +19,7 @@
 - [last.fm](https://www.last.fm/) scrobbling
 - [listenbrainz](https://listenbrainz.org/) scrobbling (thank you [spezifisch](https://github.com/spezifisch), [lxea](https://github.com/lxea))
 - artist similarities and biographies from the last.fm api
-- support for multi valued tags like albumartists and genres ([see more](#multi-valued-tags))
+- support for multi valued tags like albumartists and genres ([see more](#multi-valued-tags-v016))
 - a web interface for configuration (set up last.fm, manage users, start scans, etc.)
 - support for the [album-artist](https://mkoby.com/2007/02/18/artist-versus-album-artist/) tag, to not clutter your artist list with compilation album appearances
 - written in [go](https://golang.org/), so lightweight and suitable for a raspberry pi, etc. (see ARM images below)
@@ -67,24 +68,24 @@ password can then be changed from the web interface
 | `GONIC_JUKEBOX_MPV_EXTRA_ARGS`   | `-jukebox-mpv-extra-args`   | **optional** extra command line arguments to pass to the jukebox mpv daemon                                                                                                                                                                                                       |
 | `GONIC_PODCAST_PURGE_AGE`        | `-podcast-purge-age`        | **optional** age (in days) to purge podcast episodes if not accessed                                                                                                                                                                                                              |
 | `GONIC_EXCLUDE_PATTERN`          | `-exclude-pattern`          | **optional** files matching this regex pattern will not be imported                                                                                                                                                                                                               |
-| `GONIC_MULTI_VALUE_GENRE`        | `-multi-value-genre`        | **optional** setting for multi-valued genre tags when scanning ([see more](#multi-valued-tags))                                                                                                                                                                                   |
-| `GONIC_MULTI_VALUE_ARTIST`       | `-multi-value-artist`       | **optional** setting for multi-valued artist tags when scanning ([see more](#multi-valued-tags))                                                                                                                                                                                  |
-| `GONIC_MULTI_VALUE_ALBUM_ARTIST` | `-multi-value-album-artist` | **optional** setting for multi-valued album artist tags when scanning ([see more](#multi-valued-tags))                                                                                                                                                                            |
+| `GONIC_MULTI_VALUE_GENRE`        | `-multi-value-genre`        | **optional** setting for multi-valued genre tags when scanning ([see more](#multi-valued-tags-v016))                                                                                                                                                                              |
+| `GONIC_MULTI_VALUE_ARTIST`       | `-multi-value-artist`       | **optional** setting for multi-valued artist tags when scanning ([see more](#multi-valued-tags-v016))                                                                                                                                                                             |
+| `GONIC_MULTI_VALUE_ALBUM_ARTIST` | `-multi-value-album-artist` | **optional** setting for multi-valued album artist tags when scanning ([see more](#multi-valued-tags-v016))                                                                                                                                                                       |
 | `GONIC_EXPVAR`                   | `-expvar`                   | **optional** enable the /debug/vars endpoint (exposes useful debugging attributes as well as database stats)                                                                                                                                                                      |
 
 ## multi valued tags (v0.16+)
 
-gonic can support potentially multi valued tags like `genres` and `albumartists`. in both cases gonic will individual entries in its database for each.
+gonic can support potentially multi valued tags like `genres`, `artists`, and `albumartists`. in both cases gonic will individual entries in its database for each.
 
 this means being able to click find album "X" under both "techno" and "house" for example. or finding the album "My Life in the Bush of Ghosts" under either "David Byrne" or "Brian Eno". it also means not cluttering up your artists list with "A & X", "A and Y", "A ft. Z", etc. you will only have A, X, Y, and Z.
 
 the available modes are:
 
-| value            | desc                                                                                                                                                                                                                |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `multi`          | gonic will explictly look for multi value fields in your audio metadata. software like musicbrainz picard or beets can set set these ([soon](https://github.com/beetbox/beets/pull/4743))                           |
-| `delim <delim>`  | gonic will look at your normal audio metadata fields like "genre" or "album_artist", but split them on a delimiter. for example you could set `-multi-value-genre "delim ;"` to split the single genre field on ";" |
-| `none` (default) | gonic will not attempt to do any multi value processing                                                                                                                                                             |
+| value            | desc                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `multi`          | gonic will explictly look for multi value fields in your audio metadata such as "genres" or "album_artists". software like [musicbrainz picard](https://picard.musicbrainz.org/), [beets](https://beets.io/) (v1.6.1+ / master), or [betanin](https://github.com/sentriz/betanin/) can set set these                                                                                                                                                        |
+| `delim <delim>`  | gonic will look at your normal audio metadata fields like "genre" or "album_artist", but split them on a delimiter. for example you could set `-multi-value-genre "delim ;"` to split the single genre field on ";". note this mode is not recommended unless you use an uncommon delimiter such as ";" or "\|". using a delimiter like "&" will likely lead to many [false positives](https://musicbrainz.org/artist/ccd4879c-5e88-4385-b131-bf65296bf245) |
+| `none` (default) | gonic will not attempt to do any multi value processing                                                                                                                                                                                                                                                                                                                                                                                                     |
 
 ## screenshots
 

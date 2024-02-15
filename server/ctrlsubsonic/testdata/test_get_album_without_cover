@@ -15,7 +15,8 @@
       "album": "",
       "name": "",
       "songCount": 0,
-      "duration": 0
+      "duration": 0,
+      "playCount": 0
     }
   }
 }

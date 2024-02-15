@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/db"
@@ -116,10 +117,12 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 		}).
 		Preload("AlbumStar", "user_id=?", user.ID).
 		Preload("AlbumRating", "user_id=?", user.ID).
+		Preload("AlbumRating", "user_id=?", user.ID).
+		Preload("Play", "user_id=?", user.ID).
 		First(album, id.Value).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return spec.NewError(10, "couldn't find an album with that id")
+		return spec.NewError(70, "couldn't find an album with that id")
 	}
 	sub := spec.NewResponse()
 	sub.Album = spec.NewAlbumByTags(album, album.Artists)
@@ -198,6 +201,7 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 		Preload("Artists").
 		Preload("AlbumStar", "user_id=?", user.ID).
 		Preload("AlbumRating", "user_id=?", user.ID).
+		Preload("Play", "user_id=?", user.ID).
 		Find(&albums)
 	sub := spec.NewResponse()
 	sub.AlbumsTwo = &spec.Albums{
@@ -255,7 +259,8 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		Preload("Artists").
 		Preload("Genres").
 		Preload("AlbumStar", "user_id=?", user.ID).
-		Preload("AlbumRating", "user_id=?", user.ID)
+		Preload("AlbumRating", "user_id=?", user.ID).
+		Preload("Play", "user_id=?", user.ID)
 	for _, s := range queries {
 		q = q.Where(`tag_title LIKE ? OR tag_title_u_dec LIKE ?`, s, s)
 	}
@@ -333,7 +338,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		return sub
 	}
 
-	sub.ArtistInfoTwo.Biography = info.Biography
+	sub.ArtistInfoTwo.Biography = spec.CleanExternalText(info.Biography)
 	sub.ArtistInfoTwo.MusicBrainzID = info.MusicBrainzID
 	sub.ArtistInfoTwo.LastFMURL = info.LastFMURL
 
@@ -409,9 +414,13 @@ func (c *Controller) ServeGetAlbumInfoTwo(r *http.Request) *spec.Response {
 		return sub
 	}
 
-	sub.AlbumInfo.Notes = info.Notes
+	sub.AlbumInfo.Notes = spec.CleanExternalText(info.Notes)
 	sub.AlbumInfo.MusicBrainzID = info.MusicBrainzID
 	sub.AlbumInfo.LastFMURL = info.LastFMURL
+
+	if _, err := uuid.Parse(album.TagBrainzID); err == nil {
+		sub.AlbumInfo.MusicBrainzID = album.TagBrainzID // prefer db musicbrainz ID over lastfm's
+	}
 
 	return sub
 }
@@ -512,7 +521,8 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 		Order("album_stars.star_date DESC").
 		Preload("Artists").
 		Preload("AlbumStar", "user_id=?", user.ID).
-		Preload("AlbumRating", "user_id=?", user.ID)
+		Preload("AlbumRating", "user_id=?", user.ID).
+		Preload("Play", "user_id=?", user.ID)
 	if m := getMusicFolder(c.musicPaths, params); m != "" {
 		q = q.Where("albums.root_dir=?", m)
 	}
@@ -644,7 +654,7 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 		First(&track).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return spec.NewError(10, "couldn't find a track with that id")
+		return spec.NewError(70, "couldn't find a track with that id")
 	}
 
 	similarTracks, err := c.lastFMClient.TrackGetSimilarTracks(track.TagTrackArtist, track.TagTitle)
@@ -710,7 +720,7 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 		First(&artist).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return spec.NewError(0, "artist with id %q not found", id)
+		return spec.NewError(70, "artist with id %q not found", id)
 	}
 
 	similarArtists, err := c.lastFMClient.ArtistGetSimilar(artist.Name)

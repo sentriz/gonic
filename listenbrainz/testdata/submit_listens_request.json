@@ -5,7 +5,11 @@
             "listened_at": 1683804525,
             "track_metadata": {
                 "additional_info": {
-                    "tracknumber": 1
+                    "tracknumber": 1,
+                    "duration": 242,
+                    "recording_mbid": "00000000-0000-0000-0000-000000000000",
+                    "release_mbid": "00000000-0000-0000-0000-000000000001",
+                    "submission_client": "gonic"
                 },
                 "artist_name": "artist",
                 "track_name": "title",

@@ -2,11 +2,13 @@ package spec
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
+	"jaytaylor.com/html2text"
 )
 
 // https://web.archive.org/web/20220707025402/https://www.subsonic.org/pages/api.jsp
@@ -142,6 +144,7 @@ type Album struct {
 	Name       string        `xml:"name,attr"              json:"name"`
 	TrackCount int           `xml:"songCount,attr"         json:"songCount"`
 	Duration   int           `xml:"duration,attr"          json:"duration"`
+	PlayCount  int           `xml:"playCount,attr"          json:"playCount"`
 	Genre      string        `xml:"genre,attr,omitempty"   json:"genre,omitempty"`
 	Genres     []*GenreRef   `xml:"genres,omitempty"       json:"genres,omitempty"`
 	Year       int           `xml:"year,attr,omitempty"    json:"year,omitempty"`
@@ -308,7 +311,8 @@ type Playlist struct {
 	Owner     string        `xml:"owner,attr"      json:"owner"`
 	SongCount int           `xml:"songCount,attr"  json:"songCount"`
 	Created   time.Time     `xml:"created,attr"    json:"created"`
-	Duration  int           `xml:"duration,attr"   json:"duration,omitempty"`
+	Changed   time.Time     `xml:"changed,attr"    json:"changed"`
+	Duration  int           `xml:"duration,attr"   json:"duration"`
 	Public    bool          `xml:"public,attr"     json:"public,omitempty"`
 	List      []*TrackChild `xml:"entry,omitempty" json:"entry,omitempty"`
 }
@@ -471,4 +475,19 @@ func formatRating(rating float64) string {
 
 func formatExt(ext string) string {
 	return strings.TrimPrefix(ext, ".")
+}
+
+var doublePuncExpr = regexp.MustCompile(`\.\s+\.\s+`)
+var licenceExpr = regexp.MustCompile(`(?i)\buser-contributed text.*`)
+var readMoreExpr = regexp.MustCompile(`(?i)\bread more on.*`)
+
+func CleanExternalText(text string) string {
+	text, _ = html2text.FromString(text, html2text.Options{TextOnly: true})
+	text = licenceExpr.ReplaceAllString(text, "")
+	text = readMoreExpr.ReplaceAllString(text, "")
+	text = doublePuncExpr.ReplaceAllString(text, ". ")
+	text = strings.ReplaceAll(text, " .", ".")
+	text = strings.Join(strings.Fields(text), " ")
+	text = strings.TrimSpace(text)
+	return text
 }

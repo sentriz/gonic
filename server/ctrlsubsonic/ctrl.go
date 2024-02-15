@@ -113,7 +113,7 @@ func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPa
 	c.Handle("/getUser", chain(resp(c.ServeGetUser)))
 	c.Handle("/getPlaylists", chain(resp(c.ServeGetPlaylists)))
 	c.Handle("/getPlaylist", chain(resp(c.ServeGetPlaylist)))
-	c.Handle("/createPlaylist", chain(resp(c.ServeCreatePlaylist)))
+	c.Handle("/createPlaylist", chain(resp(c.ServeCreateOrUpdatePlaylist)))
 	c.Handle("/updatePlaylist", chain(resp(c.ServeUpdatePlaylist)))
 	c.Handle("/deletePlaylist", chain(resp(c.ServeDeletePlaylist)))
 	c.Handle("/savePlayQueue", chain(resp(c.ServeSavePlayQueue)))

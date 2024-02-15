@@ -20,6 +20,7 @@
           "name": "album-0",
           "songCount": 3,
           "duration": 300,
+          "playCount": 0,
           "year": 2021
         },
         {
@@ -35,6 +36,7 @@
           "name": "album-1",
           "songCount": 3,
           "duration": 300,
+          "playCount": 0,
           "year": 2021
         },
         {
@@ -50,6 +52,7 @@
           "name": "album-2",
           "songCount": 3,
           "duration": 300,
+          "playCount": 0,
           "year": 2021
         },
         {
@@ -65,6 +68,7 @@
           "name": "album-0",
           "songCount": 3,
           "duration": 300,
+          "playCount": 0,
           "year": 2021
         },
         {
@@ -80,6 +84,7 @@
           "name": "album-1",
           "songCount": 3,
           "duration": 300,
+          "playCount": 0,
           "year": 2021
         },
         {
@@ -95,6 +100,7 @@
           "name": "album-2",
           "songCount": 3,
           "duration": 300,
+          "playCount": 0,
           "year": 2021
         },
         {
@@ -110,6 +116,7 @@
           "name": "album-0",
           "songCount": 3,
           "duration": 300,
+          "playCount": 0,
           "year": 2021
         },
         {
@@ -125,6 +132,7 @@
           "name": "album-1",
           "songCount": 3,
           "duration": 300,
+          "playCount": 0,
           "year": 2021
         },
         {
@@ -140,6 +148,7 @@
           "name": "album-2",
           "songCount": 3,
           "duration": 300,
+          "playCount": 0,
           "year": 2021
         }
       ]

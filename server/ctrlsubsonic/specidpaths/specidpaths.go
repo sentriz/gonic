@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/fileutil"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
@@ -54,8 +55,9 @@ func Lookup(dbc *db.DB, musicPaths []string, podcastsPath string, path string) (
 
 	var musicPath string
 	for _, mp := range musicPaths {
-		if strings.HasPrefix(path, mp) {
+		if fileutil.HasPrefix(path, mp) {
 			musicPath = mp
+			break
 		}
 	}
 	if musicPath == "" {

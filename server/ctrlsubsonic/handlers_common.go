@@ -78,6 +78,9 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 		if _, err := uuid.Parse(track.TagBrainzID); err == nil {
 			scrobbleTrack.MusicBrainzID = track.TagBrainzID
 		}
+		if _, err := uuid.Parse(track.Album.TagBrainzID); err == nil {
+			scrobbleTrack.MusicBrainzReleaseID = track.Album.TagBrainzID
+		}
 
 		if err := scrobbleStatsUpdateTrack(c.dbc, &track, user.ID, optStamp); err != nil {
 			return spec.NewError(0, "error updating stats: %v", err)
@@ -275,7 +278,7 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 		First(&track).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return spec.NewError(10, "couldn't find a track with that id")
+		return spec.NewError(70, "couldn't find a track with that id")
 	}
 
 	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
@@ -515,7 +518,11 @@ func getMusicFolder(musicPaths []MusicPath, p params.Params) string {
 }
 
 func lowerUDecOrHash(in string) string {
-	lower := unicode.ToLower(rune(in[0]))
+	inRunes := []rune(in)
+	if len(inRunes) == 0 {
+		return ""
+	}
+	lower := unicode.ToLower(inRunes[0])
 	if !unicode.IsLetter(lower) {
 		return "#"
 	}

@@ -389,6 +389,17 @@ func main() {
 	})
 
 	errgrp.Go(func() error {
+		defer logJob("podcast download")()
+
+		ctxTick(ctx, 5*time.Second, func() {
+			if err := podcast.DownloadTick(); err != nil {
+				log.Printf("failed to download podcast: %s", err)
+			}
+		})
+		return nil
+	})
+
+	errgrp.Go(func() error {
 		if *confPodcastPurgeAgeDays == 0 {
 			return nil
 		}
@@ -515,7 +526,7 @@ func (mvs multiValueSetting) String() string {
 	case scanner.Delim:
 		return fmt.Sprintf("delim(%s)", mvs.Delim)
 	case scanner.Multi:
-		return fmt.Sprint("multi", mvs.Delim)
+		return "multi"
 	default:
 		return "none"
 	}
