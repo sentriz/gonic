@@ -97,23 +97,37 @@ the available modes are:
 
 gonic supports multiple music folders. this can be handy if you have your music separated by albums, compilations, singles. or maybe 70s, 80s, 90s. whatever.
 
+on top of that - if you don't decide your folder names, or simply do not want the same name in your subsonic client, 
+gonic can parse aliases for the folder names with the optional `ALIAS->PATH` syntax
+
 if you're running gonic with the command line, stack the `-music-path` arg
 
 ```shell
-$ gonic -music-path /path/to/albums -music-path /path/to/compilations
+$ gonic -music-path "/path/to/albums" -music-path "/path/to/compilations" # without aliases
+# or
+$ gonic -music-path "my albums->/path/to/albums" -music-path "my compilations->/path/to/compilations" # with aliases
 ```
 
 if you're running gonic with ENV_VARS, or docker, try separate with a comma
 
 ```shell
-GONIC_MUSIC_PATH=/path/to/albums,/path/to/compilations
+export GONIC_MUSIC_PATH="/path/to/albums,/path/to/compilations" # without aliases
+# or
+export GONIC_MUSIC_PATH="my albums->/path/to/albums,my compilations->/path/to/compilations" # with aliases
 ```
 
 if you're running gonic with the config file, you can repeat the `music-path` option
 
-```shell
+```
+# without aliases
 music-path /path/to/albums
 music-path /path/to/compilations
+
+# or
+
+# with aliases
+music-path my albums->/path/to/albums
+music-path my compilations->/path/to/compilations
 ```
 
 after that, most subsonic clients should allow you to select which music folder to use.
