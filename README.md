@@ -95,30 +95,58 @@ the available modes are:
 
 ## multiple folders support (v0.15+)
 
-gonic supports multiple music folders. this can be handy if you have your music separated by albums, compilations, singles. or maybe 70s, 80s, 90s. whatever.
+Gonic supports multiple music folders. this can be handy if you have your music separated by albums, compilations, singles. or maybe 70s, 80s, 90s. whatever.
 
-if you're running gonic with the command line, stack the `-music-path` arg
+### Usage from command-line
+If you're running gonic with the command line, stack the `-music-path` arg
 
 ```shell
 $ gonic -music-path /path/to/albums -music-path /path/to/compilations
 ```
 
-if you're running gonic with ENV_VARS, or docker, try separate with a comma
+### Usage from environment variables
+If you're running gonic with ENV_VARS, or docker, try separate with a comma
 
 ```shell
 GONIC_MUSIC_PATH=/path/to/albums,/path/to/compilations
 ```
 
-if you're running gonic with the config file, you can repeat the `music-path` option
+### Usage from config file
+If you're running gonic with the config file, you can repeat the `music-path` option
 
 ```shell
 music-path /path/to/albums
 music-path /path/to/compilations
 ```
-
-after that, most subsonic clients should allow you to select which music folder to use.
+### Expected behavior
+After that, most subsonic clients should allow you to select which music folder to use.
 queries like show me "recently played compilations" or "recently added albums" are possible for example.
 
+### Aliases
+Sometimes, you don't decide your folder names, or simply do not want the same name in your subsonic client.
+Gonic supports aliases for these folders, using a "->" syntax.
+
+Examples :
+```shell
+gonic -music-path "music->/my/music" -music-path "friend one->/friend/one" -music-path "friend two->/friend/two
+```
+
+Or, using environment variables
+```shell
+GONIC_MUSIC_PATH=music->/my/music,friend one->/friend/one,friend two->/friend/two 
+```
+
+Finally, using config file
+```shell
+music-path music->/my/music
+music-path friend one->/friend/one
+music-path friend two->/friend/two
+```
+
+NB : spaces are also fine
+```shell
+my nice music -> /path/to/music
+```
 ## directory structure
 
 when browsing by folder, any arbitrary and nested folder layout is supported, with the following caveats:
