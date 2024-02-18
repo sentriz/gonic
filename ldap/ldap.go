@@ -18,9 +18,6 @@ func CheckLDAPcreds(username string, password string, dbc *db.DB) (bool, error) 
 
 	ldapFQDN, err := dbc.GetSetting("ldap_fqdn")
 
-	log.Println(err)
-	log.Println(ldapFQDN)
-
 	// This checks if LDAP is setup or not.
 	if ldapFQDN == "" || err != nil {
 		return false, err
