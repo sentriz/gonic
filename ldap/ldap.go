@@ -11,7 +11,7 @@ import (
 )
 
 func CheckLDAPcreds(username string, password string, dbc *db.DB) (bool, error) {
-	err := createUserFromLDAP(username, password, dbc)
+	err := createUserFromLDAP(username, dbc)
 	if err != nil {
 		return false, err
 	}
@@ -53,7 +53,7 @@ func CheckLDAPcreds(username string, password string, dbc *db.DB) (bool, error) 
 }
 
 // Creates a user from creds
-func createUserFromLDAP(username string, password string, dbc *db.DB) error {
+func createUserFromLDAP(username string, dbc *db.DB) error {
 	user := dbc.GetUserByName(username)
 	if user != nil {
 		return nil
