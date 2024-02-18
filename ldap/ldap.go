@@ -11,11 +11,6 @@ import (
 )
 
 func CheckLDAPcreds(username string, password string, dbc *db.DB) (bool, error) {
-	err := createUserFromLDAP(username, dbc)
-	if err != nil {
-		return false, err
-	}
-
 	ldapFQDN, err := dbc.GetSetting("ldap_fqdn")
 
 	// This checks if LDAP is setup or not.
@@ -38,6 +33,12 @@ func CheckLDAPcreds(username string, password string, dbc *db.DB) (bool, error) 
 	}
 	defer l.Close()
 
+	// Create the user if it doesn't exist on the database already.
+	err = createUserFromLDAP(username, dbc, l)
+	if err != nil {
+		return false, err
+	}
+
 	// After we have a connection, let's try binding
 	_, err = l.SimpleBind(&ldap.SimpleBindRequest{
 		Username: fmt.Sprintf("uid=%s,%s", username, baseDN),
@@ -53,7 +54,7 @@ func CheckLDAPcreds(username string, password string, dbc *db.DB) (bool, error) 
 }
 
 // Creates a user from creds
-func createUserFromLDAP(username string, dbc *db.DB) error {
+func createUserFromLDAP(username string, dbc *db.DB, l *ldap.Conn) error {
 	user := dbc.GetUserByName(username)
 	if user != nil {
 		return nil
@@ -73,18 +74,8 @@ func createUserFromLDAP(username string, dbc *db.DB) error {
 	// while LDAP is enabled (a FQDN/IP is set).
 	bindUID, _ := dbc.GetSetting("ldap_bind_user")
 	bindPWD, _ := dbc.GetSetting("ldap_bind_user_password")
-	ldapPort, _ := dbc.GetSetting("ldap_port")
 	baseDN, _ := dbc.GetSetting("ldap_base_dn")
 	filter, _ := dbc.GetSetting("ldap_filter")
-	tls, _ := dbc.GetSetting("ldap_tls")
-
-	// Now, we can try to connect to the LDAP server.
-	l, err := createLDAPconnection(tls, ldapFQDN, ldapPort)
-	if err != nil {
-		// Return a generic error.
-		return errors.New("failed to connect to LDAP server")
-	}
-	defer l.Close()
 
 	// After we have a connection, let's try binding
 	_, err = l.SimpleBind(&ldap.SimpleBindRequest{
