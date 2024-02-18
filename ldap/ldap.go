@@ -125,7 +125,6 @@ func createUserFromLDAP(username string, dbc *db.DB) error {
 	} else {
 		return errors.New("invalid username")
 	}
-
 }
 
 // Creates a connection to an LDAP server.
