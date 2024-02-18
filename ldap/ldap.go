@@ -109,9 +109,8 @@ func createUserFromLDAP(username string, dbc *db.DB) error {
 		log.Println("failed to query LDAP server:", err)
 	}
 
-	if len(result.Entries) > 1 {
-		return errors.New("ambiguous user")
-	} else if len(result.Entries) == 1 {
+	switch len(result.Entries) {
+	case 1:
 		user := db.User{
 			Name:     username,
 			Password: "", // no password because we want auth to fail.
@@ -122,8 +121,10 @@ func createUserFromLDAP(username string, dbc *db.DB) error {
 		}
 
 		return nil
-	} else {
+	case 0:
 		return errors.New("invalid username")
+	default:
+		return errors.New("ambiguous user")
 	}
 }
 
