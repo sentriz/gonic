@@ -34,7 +34,7 @@ func CheckLDAPcreds(username string, password string, dbc *db.DB) (bool, error) 
 	if err != nil {
 		// Return a generic error.
 		log.Println("Failed to connect to LDAP server:", err)
-		return false, errors.New("Failed to connect to LDAP server.")
+		return false, errors.New("failed to connect to LDAP server")
 	}
 	defer l.Close()
 
@@ -82,7 +82,7 @@ func createUserFromLDAP(username string, password string, dbc *db.DB) error {
 	l, err := createLDAPconnection(tls, ldapFQDN, ldapPort)
 	if err != nil {
 		// Return a generic error.
-		return errors.New("Failed to connect to LDAP server.")
+		return errors.New("failed to connect to LDAP server")
 	}
 	defer l.Close()
 
@@ -93,7 +93,7 @@ func createUserFromLDAP(username string, password string, dbc *db.DB) error {
 	})
 	if err != nil {
 		log.Println("Failed to bind to LDAP:", err)
-		return errors.New("Wrong username or password.")
+		return errors.New("wrong username or password")
 	}
 
 	searchReq := ldap.NewSearchRequest(
@@ -110,7 +110,7 @@ func createUserFromLDAP(username string, password string, dbc *db.DB) error {
 	}
 
 	if len(result.Entries) > 1 {
-		return errors.New("Ambiguous user")
+		return errors.New("ambiguous user")
 	} else if len(result.Entries) == 1 {
 		user := db.User{
 			Name:     username,
@@ -123,7 +123,7 @@ func createUserFromLDAP(username string, password string, dbc *db.DB) error {
 
 		return nil
 	} else {
-		return errors.New("Invalid username")
+		return errors.New("invalid username")
 	}
 
 }
