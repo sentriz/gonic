@@ -299,7 +299,7 @@ func (c *Client) makeRequest(method string, params url.Values) (LastFM, error) {
 	defer resp.Body.Close()
 
 	var lastfm LastFM
-	if err = xml.NewDecoder(resp.Body).Decode(&lastfm); err != nil {
+	if err := xml.NewDecoder(resp.Body).Decode(&lastfm); err != nil {
 		return LastFM{}, fmt.Errorf("decoding: %w", err)
 	}
 

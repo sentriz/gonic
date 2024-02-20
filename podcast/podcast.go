@@ -253,7 +253,7 @@ func (p *Podcasts) RefreshPodcasts() error {
 			errs = append(errs, fmt.Errorf("refreshing podcast with url %q: %w", podcast.URL, err))
 			continue
 		}
-		if err = p.RefreshPodcast(podcast, feed.Items); err != nil {
+		if err := p.RefreshPodcast(podcast, feed.Items); err != nil {
 			errs = append(errs, fmt.Errorf("adding episodes: %w", err))
 			continue
 		}
