@@ -52,6 +52,7 @@ func (c *Client) ArtistGetInfo(artistName string) (Artist, error) {
 	params.Add("method", "artist.getInfo")
 	params.Add("api_key", apiKey)
 	params.Add("artist", artistName)
+	params.Add("autocorrect", "1")
 
 	resp, err := c.makeRequest(http.MethodGet, params)
 	if err != nil {
@@ -72,6 +73,7 @@ func (c *Client) AlbumGetInfo(artistName, albumName string) (Album, error) {
 	params.Add("api_key", apiKey)
 	params.Add("artist", artistName)
 	params.Add("album", albumName)
+	params.Add("autocorrect", "1")
 
 	resp, err := c.makeRequest(http.MethodGet, params)
 	if err != nil {
