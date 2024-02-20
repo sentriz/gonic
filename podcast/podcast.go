@@ -484,6 +484,9 @@ func (p *Podcasts) doPodcastDownload(podcast *db.Podcast, podcastEpisode *db.Pod
 	if err := p.db.Save(&podcastEpisode).Error; err != nil {
 		return fmt.Errorf("save podcast episode: %w", err)
 	}
+	if err := os.MkdirAll(filepath.Dir(podcastEpisode.Filename), os.ModePerm); err != nil {
+		return fmt.Errorf("make podcast root dir: %w", err)
+	}
 	file, err := os.Create(filepath.Join(podcast.RootDir, podcastEpisode.Filename))
 	if err != nil {
 		return fmt.Errorf("create audio file: %w", err)
