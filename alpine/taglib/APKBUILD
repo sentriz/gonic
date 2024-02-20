@@ -1,0 +1,55 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=taglib2
+pkgver=2.0
+pkgrel=0
+pkgdesc="Library for reading and editing metadata of several popular audio formats"
+url="https://taglib.github.io/"
+arch="all"
+license="LGPL-2.1-only OR MPL-1.1"
+makedepends="zlib-dev utfcpp cmake samurai"
+checkdepends="cppunit-dev"
+subpackages="
+	$pkgname-dev
+	libtag:_lib
+	libtag_c:_lib
+	"
+source="https://taglib.github.io/releases/taglib-$pkgver.tar.gz"
+builddir="$srcdir/taglib-$pkgver"
+
+# secfixes:
+#   1.11.1-r2:
+#     - CVE-2017-12678
+#     - CVE-2018-11439
+
+build() {
+    CFLAGS="$CFLAGS -flto=auto" \
+        CXXFLAGS="$CXXFLAGS -flto=auto" \
+        cmake -B build -G Ninja \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_BUILD_TYPE=MinSizeRel \
+        -DWITH_ZLIB=ON \
+        -DBUILD_SHARED_LIBS=ON \
+        -DBUILD_EXAMPLES=ON \
+        -DBUILD_TESTING="$(want_check && echo ON || echo OFF)" \
+        -DVISIBILITY_HIDDEN=ON
+    cmake --build build
+}
+
+check() {
+    ctest --test-dir build --output-on-failure
+}
+
+package() {
+    DESTDIR="$pkgdir" cmake --install build
+}
+
+_lib() {
+    pkgdesc="$pkgdesc ($subpkgname lib)"
+
+    amove usr/lib/$subpkgname.so.*
+}
+
+sha512sums="
+099d02b2eab033f5702a8cb03e70752d7523c6f8c2f3eebdd0bcd939eafbdca3f2a6c82452983904b5822cfa45f2707ed866c3419508df9d43bf5c0b3a476f6c  taglib-2.0.tar.gz
+"

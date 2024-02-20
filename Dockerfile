@@ -1,12 +1,24 @@
+FROM alpine:3.18 AS builder-taglib
+WORKDIR /tmp
+COPY alpine/taglib/APKBUILD .
+RUN apk update && \
+    apk add --no-cache abuild && \
+    abuild-keygen -a -n && \
+    REPODEST=/pkgs abuild -F -r
+
 FROM golang:1.21-alpine AS builder
 RUN apk add -U --no-cache \
     build-base \
     ca-certificates \
     git \
     sqlite \
-    taglib-dev \
     zlib-dev \
     go
+
+# TODO: delete this block when taglib v2 is on alpine packages
+COPY --from=builder-taglib /pkgs/*/*.apk /pkgs/
+RUN apk add --no-cache --allow-untrusted /pkgs/*
+
 WORKDIR /src
 COPY go.mod .
 COPY go.sum .
@@ -27,7 +39,7 @@ RUN apk add -U --no-cache \
 COPY --from=builder \
     /usr/lib/libgcc_s.so.1 \
     /usr/lib/libstdc++.so.6 \
-    /usr/lib/libtag.so.1 \
+    /usr/lib/libtag.so.2 \
     /usr/lib/
 COPY --from=builder \
     /src/gonic \
