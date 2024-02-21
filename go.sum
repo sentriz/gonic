@@ -138,8 +138,8 @@ github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UV
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
-go.senan.xyz/flagconf v0.0.0-20240221142506-c693ad2c2dc1 h1:O3uSiZbK2TmPUCsw5Kz0pGeTKlJltoSxgxX+0M7I/9I=
-go.senan.xyz/flagconf v0.0.0-20240221142506-c693ad2c2dc1/go.mod h1:B285qDMTH54V1G1OApPj0JhnQGpJXuFsN7XEFHGMQ1U=
+go.senan.xyz/flagconf v0.0.0-20240221161927-6640ce2e42fd h1:kS0FsCtqcVeTcUE8qSzM11qheuZYGX1kImHLuBIa0IE=
+go.senan.xyz/flagconf v0.0.0-20240221161927-6640ce2e42fd/go.mod h1:B285qDMTH54V1G1OApPj0JhnQGpJXuFsN7XEFHGMQ1U=
 golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20190325154230-a5d413f7728c/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=

@@ -25,7 +25,7 @@ require (
 	github.com/sentriz/audiotags v0.0.0-20240202193907-618ae39d7743
 	github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981
 	github.com/stretchr/testify v1.8.4
-	go.senan.xyz/flagconf v0.0.0-20240221142506-c693ad2c2dc1
+	go.senan.xyz/flagconf v0.0.0-20240221161927-6640ce2e42fd
 	golang.org/x/exp v0.0.0-20240213143201-ec583247a57a
 	golang.org/x/net v0.21.0
 	golang.org/x/sync v0.6.0
