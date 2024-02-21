@@ -1,4 +1,4 @@
-//nolint:lll,gocyclo,forbidigo,nilerr
+//nolint:lll,gocyclo,forbidigo,nilerr,errcheck
 package main
 
 import (
@@ -26,10 +26,10 @@ import (
 	"github.com/google/shlex"
 	"github.com/gorilla/securecookie"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"github.com/peterbourgon/ff/v4"
 	"github.com/sentriz/gormstore"
 	"golang.org/x/sync/errgroup"
 
+	"go.senan.xyz/flagconf"
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/handlerutil"
@@ -78,7 +78,7 @@ func main() {
 	confHTTPLog := flag.Bool("http-log", true, "http request logging (optional)")
 
 	confShowVersion := flag.Bool("version", false, "show gonic version")
-	_ = flag.String("config-path", "", "path to config (optional)")
+	confConfigPath := flag.String("config-path", "", "path to config (optional)")
 
 	confExcludePattern := flag.String("exclude-pattern", "", "regex pattern to exclude files from scan (optional)")
 
@@ -92,26 +92,17 @@ func main() {
 
 	deprecatedConfGenreSplit := flag.String("genre-split", "", "(deprecated, see multi-value settings)")
 
-	if _, err := regexp.Compile(*confExcludePattern); err != nil {
-		log.Fatalf("invalid exclude pattern: %v\n", err)
-	}
-
-	switch err := ff.Parse(flag.CommandLine, os.Args[1:],
-		ff.WithConfigFileFlag("config-path"),
-		ff.WithConfigFileParser(ff.PlainParser),
-		ff.WithEnvVarPrefix(gonic.NameUpper),
-		ff.WithEnvVarSplit(","),
-	); {
-	case errors.Is(err, ff.ErrHelp):
-		flag.Usage()
-		os.Exit(0)
-	case err != nil:
-		log.Fatalf("error parsing flags: %v", err)
-	}
+	flag.Parse()
+	flagconf.ParseEnv()
+	flagconf.ParseConfig(*confConfigPath)
 
 	if *confShowVersion {
 		fmt.Printf("v%s\n", gonic.Version)
 		os.Exit(0)
+	}
+
+	if _, err := regexp.Compile(*confExcludePattern); err != nil {
+		log.Fatalf("invalid exclude pattern: %v\n", err)
 	}
 
 	if len(confMusicPaths) == 0 {
