@@ -160,7 +160,7 @@ func coverScaleAndSave(reader io.Reader, cachePath string, size int) error {
 		// don't upscale images
 		width = src.Bounds().Dx()
 	}
-	if err = imaging.Save(imaging.Resize(src, width, 0, imaging.Lanczos), cachePath); err != nil {
+	if err := imaging.Save(imaging.Resize(src, width, 0, imaging.Lanczos), cachePath); err != nil {
 		return fmt.Errorf("caching %q: %w", cachePath, err)
 	}
 	return nil

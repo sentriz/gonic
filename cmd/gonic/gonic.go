@@ -1,4 +1,4 @@
-//nolint:lll,gocyclo,forbidigo,nilerr
+//nolint:lll,gocyclo,forbidigo,nilerr,errcheck
 package main
 
 import (
@@ -26,10 +26,10 @@ import (
 	"github.com/google/shlex"
 	"github.com/gorilla/securecookie"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"github.com/peterbourgon/ff"
 	"github.com/sentriz/gormstore"
 	"golang.org/x/sync/errgroup"
 
+	"go.senan.xyz/flagconf"
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/handlerutil"
@@ -50,64 +50,59 @@ import (
 )
 
 func main() {
-	set := flag.NewFlagSet(gonic.Name, flag.ExitOnError)
-	confListenAddr := set.String("listen-addr", "0.0.0.0:4747", "listen address (optional)")
+	confListenAddr := flag.String("listen-addr", "0.0.0.0:4747", "listen address (optional)")
 
-	confTLSCert := set.String("tls-cert", "", "path to TLS certificate (optional)")
-	confTLSKey := set.String("tls-key", "", "path to TLS private key (optional)")
+	confTLSCert := flag.String("tls-cert", "", "path to TLS certificate (optional)")
+	confTLSKey := flag.String("tls-key", "", "path to TLS private key (optional)")
 
-	confPodcastPurgeAgeDays := set.Uint("podcast-purge-age", 0, "age (in days) to purge podcast episodes if not accessed (optional)")
-	confPodcastPath := set.String("podcast-path", "", "path to podcasts")
+	confPodcastPurgeAgeDays := flag.Uint("podcast-purge-age", 0, "age (in days) to purge podcast episodes if not accessed (optional)")
+	confPodcastPath := flag.String("podcast-path", "", "path to podcasts")
 
-	confCachePath := set.String("cache-path", "", "path to cache")
+	confCachePath := flag.String("cache-path", "", "path to cache")
 
 	var confMusicPaths pathAliases
-	set.Var(&confMusicPaths, "music-path", "path to music")
+	flag.Var(&confMusicPaths, "music-path", "path to music")
 
-	confPlaylistsPath := set.String("playlists-path", "", "path to your list of new or existing m3u playlists that gonic can manage")
+	confPlaylistsPath := flag.String("playlists-path", "", "path to your list of new or existing m3u playlists that gonic can manage")
 
-	confDBPath := set.String("db-path", "gonic.db", "path to database (optional)")
+	confDBPath := flag.String("db-path", "gonic.db", "path to database (optional)")
 
-	confScanIntervalMins := set.Uint("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
-	confScanAtStart := set.Bool("scan-at-start-enabled", false, "whether to perform an initial scan at startup (optional)")
-	confScanWatcher := set.Bool("scan-watcher-enabled", false, "whether to watch file system for new music and rescan (optional)")
+	confScanIntervalMins := flag.Uint("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
+	confScanAtStart := flag.Bool("scan-at-start-enabled", false, "whether to perform an initial scan at startup (optional)")
+	confScanWatcher := flag.Bool("scan-watcher-enabled", false, "whether to watch file system for new music and rescan (optional)")
 
-	confJukeboxEnabled := set.Bool("jukebox-enabled", false, "whether the subsonic jukebox api should be enabled (optional)")
-	confJukeboxMPVExtraArgs := set.String("jukebox-mpv-extra-args", "", "extra command line arguments to pass to the jukebox mpv daemon (optional)")
+	confJukeboxEnabled := flag.Bool("jukebox-enabled", false, "whether the subsonic jukebox api should be enabled (optional)")
+	confJukeboxMPVExtraArgs := flag.String("jukebox-mpv-extra-args", "", "extra command line arguments to pass to the jukebox mpv daemon (optional)")
 
-	confProxyPrefix := set.String("proxy-prefix", "", "url path prefix to use if behind proxy. eg '/gonic' (optional)")
-	confHTTPLog := set.Bool("http-log", true, "http request logging (optional)")
+	confProxyPrefix := flag.String("proxy-prefix", "", "url path prefix to use if behind proxy. eg '/gonic' (optional)")
+	confHTTPLog := flag.Bool("http-log", true, "http request logging (optional)")
 
-	confShowVersion := set.Bool("version", false, "show gonic version")
-	_ = set.String("config-path", "", "path to config (optional)")
+	confShowVersion := flag.Bool("version", false, "show gonic version")
+	confConfigPath := flag.String("config-path", "", "path to config (optional)")
 
-	confExcludePattern := set.String("exclude-pattern", "", "regex pattern to exclude files from scan (optional)")
+	confExcludePattern := flag.String("exclude-pattern", "", "regex pattern to exclude files from scan (optional)")
 
 	var confMultiValueGenre, confMultiValueArtist, confMultiValueAlbumArtist multiValueSetting
-	set.Var(&confMultiValueGenre, "multi-value-genre", "setting for mutli-valued genre scanning (optional)")
-	set.Var(&confMultiValueArtist, "multi-value-artist", "setting for mutli-valued track artist scanning (optional)")
-	set.Var(&confMultiValueAlbumArtist, "multi-value-album-artist", "setting for mutli-valued album artist scanning (optional)")
+	flag.Var(&confMultiValueGenre, "multi-value-genre", "setting for mutli-valued genre scanning (optional)")
+	flag.Var(&confMultiValueArtist, "multi-value-artist", "setting for mutli-valued track artist scanning (optional)")
+	flag.Var(&confMultiValueAlbumArtist, "multi-value-album-artist", "setting for mutli-valued album artist scanning (optional)")
 
-	confPprof := set.Bool("pprof", false, "enable the /debug/pprof endpoint (optional)")
-	confExpvar := set.Bool("expvar", false, "enable the /debug/vars endpoint (optional)")
+	confPprof := flag.Bool("pprof", false, "enable the /debug/pprof endpoint (optional)")
+	confExpvar := flag.Bool("expvar", false, "enable the /debug/vars endpoint (optional)")
 
-	deprecatedConfGenreSplit := set.String("genre-split", "", "(deprecated, see multi-value settings)")
+	deprecatedConfGenreSplit := flag.String("genre-split", "", "(deprecated, see multi-value settings)")
 
-	if _, err := regexp.Compile(*confExcludePattern); err != nil {
-		log.Fatalf("invalid exclude pattern: %v\n", err)
-	}
-
-	if err := ff.Parse(set, os.Args[1:],
-		ff.WithConfigFileFlag("config-path"),
-		ff.WithConfigFileParser(ff.PlainParser),
-		ff.WithEnvVarPrefix(gonic.NameUpper),
-	); err != nil {
-		log.Fatalf("error parsing args: %v\n", err)
-	}
+	flag.Parse()
+	flagconf.ParseEnv()
+	flagconf.ParseConfig(*confConfigPath)
 
 	if *confShowVersion {
 		fmt.Printf("v%s\n", gonic.Version)
 		os.Exit(0)
+	}
+
+	if _, err := regexp.Compile(*confExcludePattern); err != nil {
+		log.Fatalf("invalid exclude pattern: %v\n", err)
 	}
 
 	if len(confMusicPaths) == 0 {
@@ -179,7 +174,7 @@ func main() {
 
 	log.Printf("starting gonic v%s\n", gonic.Version)
 	log.Printf("provided config\n")
-	set.VisitAll(func(f *flag.Flag) {
+	flag.VisitAll(func(f *flag.Flag) {
 		value := strings.ReplaceAll(f.Value.String(), "\n", "")
 		log.Printf("    %-25s %s\n", f.Name, value)
 	})

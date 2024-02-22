@@ -21,13 +21,13 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mmcdole/gofeed v1.2.1
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
-	github.com/peterbourgon/ff v1.7.1
 	github.com/philippta/go-template v0.0.0-20220911145045-4556aca435e4
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
 	github.com/sentriz/audiotags v0.0.0-20240202193907-618ae39d7743
 	github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/exp v0.0.0-20240205201215-2c58cdc269a3
+	go.senan.xyz/flagconf v0.0.0-20240221161927-6640ce2e42fd
+	golang.org/x/exp v0.0.0-20240213143201-ec583247a57a
 	golang.org/x/net v0.21.0
 	golang.org/x/sync v0.6.0
 	gopkg.in/gormigrate.v1 v1.6.0
@@ -61,7 +61,6 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	golang.org/x/crypto v0.19.0 // indirect
 	golang.org/x/image v0.15.0 // indirect

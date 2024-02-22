@@ -253,7 +253,7 @@ func (p *Podcasts) RefreshPodcasts() error {
 			errs = append(errs, fmt.Errorf("refreshing podcast with url %q: %w", podcast.URL, err))
 			continue
 		}
-		if err = p.RefreshPodcast(podcast, feed.Items); err != nil {
+		if err := p.RefreshPodcast(podcast, feed.Items); err != nil {
 			errs = append(errs, fmt.Errorf("adding episodes: %w", err))
 			continue
 		}
@@ -483,6 +483,9 @@ func (p *Podcasts) doPodcastDownload(podcast *db.Podcast, podcastEpisode *db.Pod
 	podcastEpisode.Filename = filename
 	if err := p.db.Save(&podcastEpisode).Error; err != nil {
 		return fmt.Errorf("save podcast episode: %w", err)
+	}
+	if err := os.MkdirAll(filepath.Dir(podcastEpisode.Filename), os.ModePerm); err != nil {
+		return fmt.Errorf("make podcast root dir: %w", err)
 	}
 	file, err := os.Create(filepath.Join(podcast.RootDir, podcastEpisode.Filename))
 	if err != nil {

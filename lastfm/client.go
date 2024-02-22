@@ -52,6 +52,7 @@ func (c *Client) ArtistGetInfo(artistName string) (Artist, error) {
 	params.Add("method", "artist.getInfo")
 	params.Add("api_key", apiKey)
 	params.Add("artist", artistName)
+	params.Add("autocorrect", "1")
 
 	resp, err := c.makeRequest(http.MethodGet, params)
 	if err != nil {
@@ -72,6 +73,7 @@ func (c *Client) AlbumGetInfo(artistName, albumName string) (Album, error) {
 	params.Add("api_key", apiKey)
 	params.Add("artist", artistName)
 	params.Add("album", albumName)
+	params.Add("autocorrect", "1")
 
 	resp, err := c.makeRequest(http.MethodGet, params)
 	if err != nil {
@@ -299,7 +301,7 @@ func (c *Client) makeRequest(method string, params url.Values) (LastFM, error) {
 	defer resp.Body.Close()
 
 	var lastfm LastFM
-	if err = xml.NewDecoder(resp.Body).Decode(&lastfm); err != nil {
+	if err := xml.NewDecoder(resp.Body).Decode(&lastfm); err != nil {
 		return LastFM{}, fmt.Errorf("decoding: %w", err)
 	}
 

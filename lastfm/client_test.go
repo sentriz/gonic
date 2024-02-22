@@ -23,7 +23,7 @@ func TestArtistGetInfo(t *testing.T) {
 	client := lastfm.NewClientCustom(
 		mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, http.MethodGet, r.Method)
-			require.Equal(t, url.Values{"method": []string{"artist.getInfo"}, "api_key": []string{"apiKey1"}, "artist": []string{"Artist 1"}}, r.URL.Query())
+			require.Equal(t, url.Values{"method": []string{"artist.getInfo"}, "api_key": []string{"apiKey1"}, "artist": []string{"Artist 1"}, "autocorrect": []string{"1"}}, r.URL.Query())
 
 			require.Equal(t, "/2.0/", r.URL.Path)
 			require.Equal(t, lastfm.BaseURL, "https://"+r.Host+r.URL.Path)
@@ -103,9 +103,10 @@ func TestArtistGetInfoClientRequestFails(t *testing.T) {
 		mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, http.MethodGet, r.Method)
 			require.Equal(t, url.Values{
-				"method":  []string{"artist.getInfo"},
-				"api_key": []string{"apiKey1"},
-				"artist":  []string{"Artist 1"},
+				"method":      []string{"artist.getInfo"},
+				"api_key":     []string{"apiKey1"},
+				"artist":      []string{"Artist 1"},
+				"autocorrect": []string{"1"},
 			}, r.URL.Query())
 
 			require.Equal(t, "/2.0/", r.URL.Path)
