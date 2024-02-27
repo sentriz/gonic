@@ -4,6 +4,7 @@
 package jukebox
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -46,7 +47,7 @@ func New() *Jukebox {
 	return &Jukebox{}
 }
 
-func (j *Jukebox) Start(sockPath string, mpvExtraArgs []string) error {
+func (j *Jukebox) Start(ctx context.Context, sockPath string, mpvExtraArgs []string) error {
 	const mpvName = "mpv"
 	if _, err := exec.LookPath(mpvName); err != nil {
 		return fmt.Errorf("look path: %w. did you forget to install it?", err)
@@ -56,7 +57,7 @@ func (j *Jukebox) Start(sockPath string, mpvExtraArgs []string) error {
 	mpvArgs = append(mpvArgs, "--idle", "--no-config", "--no-video", MPVArg("--audio-display", "no"), MPVArg("--input-ipc-server", sockPath))
 	mpvArgs = append(mpvArgs, mpvExtraArgs...)
 
-	j.cmd = exec.Command(mpvName, mpvArgs...)
+	j.cmd = exec.CommandContext(ctx, mpvName, mpvArgs...)
 	if err := j.cmd.Start(); err != nil {
 		return fmt.Errorf("start mpv process: %w", err)
 	}
@@ -87,14 +88,15 @@ func (j *Jukebox) Start(sockPath string, mpvExtraArgs []string) error {
 		return fmt.Errorf("observe property: %w", err)
 	}
 
-	return nil
-}
-
-func (j *Jukebox) Wait() error {
 	var exitError *exec.ExitError
 	if err := j.cmd.Wait(); err != nil && !errors.As(err, &exitError) {
 		return fmt.Errorf("wait jukebox: %w", err)
 	}
+
+	if err := j.conn.Close(); err != nil {
+		return fmt.Errorf("close: %w", err)
+	}
+	j.conn.WaitUntilClosed()
 	return nil
 }
 
@@ -307,26 +309,6 @@ func (j *Jukebox) GetStatus() (*Status, error) {
 	status.Playing = !paused
 
 	return &status, nil
-}
-
-func (j *Jukebox) Quit() error {
-	defer lock(&j.mu)()
-
-	if j.conn == nil || j.conn.IsClosed() {
-		return nil
-	}
-	go func() {
-		_, _ = j.conn.Call("quit")
-	}()
-
-	time.Sleep(250 * time.Millisecond)
-	_ = j.cmd.Process.Kill()
-
-	if err := j.conn.Close(); err != nil {
-		return fmt.Errorf("close: %w", err)
-	}
-	j.conn.WaitUntilClosed()
-	return nil
 }
 
 func getDecode(conn *mpvipc.Connection, dest any, property string) error {

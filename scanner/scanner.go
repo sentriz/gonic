@@ -2,6 +2,7 @@
 package scanner
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -111,7 +112,7 @@ func (s *Scanner) ScanAndClean(opts ScanOptions) (*State, error) {
 	return st, errors.Join(st.errs...)
 }
 
-func (s *Scanner) ExecuteWatch(done <-chan struct{}) error {
+func (s *Scanner) ExecuteWatch(ctx context.Context) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return fmt.Errorf("creating watcher: %w", err)
@@ -180,7 +181,7 @@ func (s *Scanner) ExecuteWatch(done <-chan struct{}) error {
 		case err := <-watcher.Errors:
 			log.Printf("error from watcher: %v\n", err)
 
-		case <-done:
+		case <-ctx.Done():
 			return nil
 		}
 	}

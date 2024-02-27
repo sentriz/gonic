@@ -25,7 +25,7 @@ require (
 	github.com/sentriz/audiotags v0.0.0-20240202193907-618ae39d7743
 	github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981
 	github.com/stretchr/testify v1.8.4
-	go.senan.xyz/flagconf v0.1.4
+	go.senan.xyz/flagconf v0.1.5
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
 	golang.org/x/net v0.21.0
 	golang.org/x/sync v0.6.0
@@ -59,7 +59,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
-	golang.org/x/crypto v0.19.0 // indirect
+	golang.org/x/crypto v0.20.0 // indirect
 	golang.org/x/image v0.15.0 // indirect
 	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect

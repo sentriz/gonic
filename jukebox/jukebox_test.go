@@ -1,6 +1,7 @@
 package jukebox_test
 
 import (
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
@@ -193,8 +194,11 @@ func newJukebox(tb testing.TB) *jukebox.Jukebox {
 
 	sockPath := filepath.Join(tb.TempDir(), "mpv.sock")
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	j := jukebox.New()
 	err := j.Start(
+		ctx,
 		sockPath,
 		[]string{jukebox.MPVArg("--ao", "null")},
 	)
@@ -205,7 +209,7 @@ func newJukebox(tb testing.TB) *jukebox.Jukebox {
 		tb.Fatalf("start jukebox: %v", err)
 	}
 	tb.Cleanup(func() {
-		j.Quit()
+		cancel()
 	})
 	return j
 }
