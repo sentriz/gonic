@@ -325,13 +325,7 @@ func main() {
 
 		defer logJob("scan watcher")()
 
-		done := make(chan struct{})
-		errgrp.Go(func() error {
-			<-ctx.Done()
-			done <- struct{}{}
-			return nil
-		})
-		return scannr.ExecuteWatch(done)
+		return scannr.ExecuteWatch(ctx)
 	})
 
 	errgrp.Go(func() error {
@@ -350,14 +344,7 @@ func main() {
 			return fmt.Errorf("create tmp sock file: %w", err)
 		}
 		sockPath := filepath.Join(jukeboxTempDir, "sock")
-		if err := jukebx.Start(sockPath, extraArgs); err != nil {
-			return fmt.Errorf("start jukebox: %w", err)
-		}
-		errgrp.Go(func() error {
-			<-ctx.Done()
-			return jukebx.Quit()
-		})
-		if err := jukebx.Wait(); err != nil {
+		if err := jukebx.Start(ctx, sockPath, extraArgs); err != nil {
 			return fmt.Errorf("start jukebox: %w", err)
 		}
 		return nil
