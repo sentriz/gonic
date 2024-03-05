@@ -205,6 +205,11 @@ func main() {
 	log.Printf("starting gonic v%s\n", gonic.Version)
 	log.Printf("provided config\n")
 	flag.VisitAll(func(f *flag.Flag) {
+		switch f.Name {
+		case "version": // always "false"
+			return
+		}
+
 		value := strings.ReplaceAll(f.Value.String(), "\n", "")
 		log.Printf("    %-25s %s\n", f.Name, value)
 	})
