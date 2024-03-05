@@ -524,10 +524,10 @@ func (pa *pathAliases) Set(value string) error {
 
 func validatePath(p string) (string, error) {
 	if p == "" {
-		return "", errors.New("path can't be empty")
+		return "", errors.New("path configuration can't be empty")
 	}
 	if _, err := os.Stat(p); os.IsNotExist(err) {
-		return "", errors.New("path does not exist, please provide one")
+		return "", errors.New("path does not exist, please create it")
 	}
 	p, err := filepath.Abs(p)
 	if err != nil {
