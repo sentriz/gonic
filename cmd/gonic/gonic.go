@@ -52,7 +52,7 @@ var errNotConfigured = errors.New("not configured")
 
 //nolint:gochecknoglobals
 var (
-	confListenAddr = flag.String("listen-addr", "0.0.0.0:4747", "listen address (optional)")
+	confListenAddr = flag.String("listen-addr", "127.0.0.1:4747", "listen address (optional)")
 
 	confTLSCert = flag.String("tls-cert", "", "path to TLS certificate (optional)")
 	confTLSKey  = flag.String("tls-key", "", "path to TLS private key (optional)")
