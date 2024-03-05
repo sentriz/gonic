@@ -1,4 +1,3 @@
-//nolint:lll,gocyclo,forbidigo,nilerr,errcheck
 package main
 
 import (
@@ -48,6 +47,8 @@ import (
 	"go.senan.xyz/gonic/tags/taglib"
 	"go.senan.xyz/gonic/transcode"
 )
+
+var errNotConfigured = errors.New("not configured")
 
 //nolint:gochecknoglobals
 var (
@@ -106,11 +107,19 @@ func flagVar[T any, TPtr flagValue[T]](name, usage string) *T {
 
 func loadConfig() error {
 	flag.Parse()
-	flagconf.ParseEnv()
-	flagconf.ParseConfig(*confConfigPath)
+
+	err := flagconf.ParseEnv()
+	if err != nil {
+		return err
+	}
+
+	err = flagconf.ParseConfig(*confConfigPath)
+	if err != nil {
+		return err
+	}
 
 	if *confShowVersion {
-		fmt.Printf("v%s\n", gonic.Version)
+		fmt.Printf("v%s\n", gonic.Version) //nolint:forbidigo
 		os.Exit(0)
 	}
 
@@ -122,7 +131,6 @@ func loadConfig() error {
 		return errors.New("please provide a music directory")
 	}
 
-	var err error
 	for i, confMusicPath := range *confMusicPaths {
 		if (*confMusicPaths)[i].path, err = validatePath(confMusicPath.path); err != nil {
 			return fmt.Errorf("checking music dir %q: %w", confMusicPath.path, err)
@@ -162,6 +170,7 @@ func newDBConn() (*db.DB, error) {
 	return dbc, nil
 }
 
+//nolint:gocyclo
 func main() {
 	if err := loadConfig(); err != nil {
 		log.Fatal(err.Error())
@@ -238,11 +247,20 @@ func main() {
 	)
 
 	lastfmClientKeySecretFunc := func() (string, string, error) {
-		apiKey, _ := dbc.GetSetting(db.LastFMAPIKey)
-		secret, _ := dbc.GetSetting(db.LastFMSecret)
-		if apiKey == "" || secret == "" {
-			return "", "", fmt.Errorf("not configured")
+		apiKey, err := dbc.GetSetting(db.LastFMAPIKey)
+		if err != nil {
+			return "", "", err
 		}
+
+		secret, err := dbc.GetSetting(db.LastFMSecret)
+		if err != nil {
+			return "", "", err
+		}
+
+		if apiKey == "" || secret == "" {
+			return "", "", errNotConfigured
+		}
+
 		return apiKey, secret, nil
 	}
 
@@ -448,7 +466,11 @@ func main() {
 
 	errgrp.Go(func() error {
 		if _, _, err := lastfmClientKeySecretFunc(); err != nil {
-			return nil
+			if errors.Is(err, errNotConfigured) {
+				return nil //nolint:nilerr
+			}
+
+			return err
 		}
 
 		defer logJob("refresh artist info")()
@@ -491,7 +513,7 @@ func main() {
 		log.Panic(err)
 	}
 
-	fmt.Println("shutdown complete")
+	log.Println("shutdown complete")
 }
 
 const pathAliasSep = "->"
