@@ -1,4 +1,3 @@
-//nolint:gochecknoglobals,golint,stylecheck
 package gonic
 
 import (
@@ -6,9 +5,13 @@ import (
 	"strings"
 )
 
-//go:embed version.txt
-var version string
-var Version = strings.TrimSpace(version)
+//nolint:gochecknoglobals
+var (
+	//go:embed version.txt
+	version string
+
+	Version = strings.TrimSpace(version)
+)
 
 const (
 	Name      = "gonic"

@@ -1,4 +1,3 @@
-//nolint:nestif
 package scanner
 
 import (
@@ -328,7 +327,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 	}
 
 	// metadata for the album table comes only from the first track's tags
-	if i == 0 {
+	if i == 0 { //nolint:nestif
 		if err := tx.Where("album_id=?", album.ID).Delete(db.ArtistAppearances{}).Error; err != nil {
 			return fmt.Errorf("delete artist appearances: %w", err)
 		}

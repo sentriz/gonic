@@ -1,4 +1,3 @@
-//nolint:revive
 package artistinfocache
 
 import (

@@ -1,7 +1,6 @@
 // author: spijet (https://github.com/spijet/)
 // author: sentriz (https://github.com/sentriz/)
 
-//nolint:gochecknoglobals
 package transcode
 
 import (
@@ -18,6 +17,7 @@ type Transcoder interface {
 	Transcode(ctx context.Context, profile Profile, in string, out io.Writer) error
 }
 
+//nolint:gochecknoglobals
 var UserProfiles = map[string]Profile{
 	"mp3":          MP3,
 	"mp3_320":      MP3320,
@@ -32,6 +32,8 @@ var UserProfiles = map[string]Profile{
 }
 
 // Store as simple strings, since we may let the user provide their own profiles soon
+//
+//nolint:gochecknoglobals
 var (
 	MP3    = NewProfile("audio/mpeg", "mp3", 128, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -b:a <bitrate> -c:a libmp3lame -f mp3 -`)
 	MP3320 = NewProfile("audio/mpeg", "mp3", 320, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -b:a <bitrate> -c:a libmp3lame -f mp3 -`)
