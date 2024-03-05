@@ -49,49 +49,62 @@ import (
 	"go.senan.xyz/gonic/transcode"
 )
 
-func main() {
-	confListenAddr := flag.String("listen-addr", "0.0.0.0:4747", "listen address (optional)")
+//nolint:gochecknoglobals
+var (
+	confListenAddr = flag.String("listen-addr", "0.0.0.0:4747", "listen address (optional)")
 
-	confTLSCert := flag.String("tls-cert", "", "path to TLS certificate (optional)")
-	confTLSKey := flag.String("tls-key", "", "path to TLS private key (optional)")
+	confTLSCert = flag.String("tls-cert", "", "path to TLS certificate (optional)")
+	confTLSKey  = flag.String("tls-key", "", "path to TLS private key (optional)")
 
-	confPodcastPurgeAgeDays := flag.Uint("podcast-purge-age", 0, "age (in days) to purge podcast episodes if not accessed (optional)")
-	confPodcastPath := flag.String("podcast-path", "", "path to podcasts")
+	confPodcastPurgeAgeDays = flag.Uint("podcast-purge-age", 0, "age (in days) to purge podcast episodes if not accessed (optional)")
+	confPodcastPath         = flag.String("podcast-path", "", "path to podcasts")
 
-	confCachePath := flag.String("cache-path", "", "path to cache")
+	confCachePath = flag.String("cache-path", "", "path to cache")
 
-	var confMusicPaths pathAliases
-	flag.Var(&confMusicPaths, "music-path", "path to music")
+	confMusicPaths = flagVar[pathAliases]("music-path", "path to music")
 
-	confPlaylistsPath := flag.String("playlists-path", "", "path to your list of new or existing m3u playlists that gonic can manage")
+	confPlaylistsPath = flag.String("playlists-path", "", "path to your list of new or existing m3u playlists that gonic can manage")
 
-	confDBPath := flag.String("db-path", "gonic.db", "path to database (optional)")
+	confDBPath = flag.String("db-path", "gonic.db", "path to database (optional)")
 
-	confScanIntervalMins := flag.Uint("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
-	confScanAtStart := flag.Bool("scan-at-start-enabled", false, "whether to perform an initial scan at startup (optional)")
-	confScanWatcher := flag.Bool("scan-watcher-enabled", false, "whether to watch file system for new music and rescan (optional)")
+	confScanIntervalMins = flag.Uint("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
+	confScanAtStart      = flag.Bool("scan-at-start-enabled", false, "whether to perform an initial scan at startup (optional)")
+	confScanWatcher      = flag.Bool("scan-watcher-enabled", false, "whether to watch file system for new music and rescan (optional)")
 
-	confJukeboxEnabled := flag.Bool("jukebox-enabled", false, "whether the subsonic jukebox api should be enabled (optional)")
-	confJukeboxMPVExtraArgs := flag.String("jukebox-mpv-extra-args", "", "extra command line arguments to pass to the jukebox mpv daemon (optional)")
+	confJukeboxEnabled      = flag.Bool("jukebox-enabled", false, "whether the subsonic jukebox api should be enabled (optional)")
+	confJukeboxMPVExtraArgs = flag.String("jukebox-mpv-extra-args", "", "extra command line arguments to pass to the jukebox mpv daemon (optional)")
 
-	confProxyPrefix := flag.String("proxy-prefix", "", "url path prefix to use if behind proxy. eg '/gonic' (optional)")
-	confHTTPLog := flag.Bool("http-log", true, "http request logging (optional)")
+	confProxyPrefix = flag.String("proxy-prefix", "", "url path prefix to use if behind proxy. eg '/gonic' (optional)")
+	confHTTPLog     = flag.Bool("http-log", true, "http request logging (optional)")
 
-	confShowVersion := flag.Bool("version", false, "show gonic version")
-	confConfigPath := flag.String("config-path", "", "path to config (optional)")
+	confShowVersion = flag.Bool("version", false, "show gonic version")
+	confConfigPath  = flag.String("config-path", "", "path to config (optional)")
 
-	confExcludePattern := flag.String("exclude-pattern", "", "regex pattern to exclude files from scan (optional)")
+	confExcludePattern = flag.String("exclude-pattern", "", "regex pattern to exclude files from scan (optional)")
 
-	var confMultiValueGenre, confMultiValueArtist, confMultiValueAlbumArtist multiValueSetting
-	flag.Var(&confMultiValueGenre, "multi-value-genre", "setting for mutli-valued genre scanning (optional)")
-	flag.Var(&confMultiValueArtist, "multi-value-artist", "setting for mutli-valued track artist scanning (optional)")
-	flag.Var(&confMultiValueAlbumArtist, "multi-value-album-artist", "setting for mutli-valued album artist scanning (optional)")
+	confMultiValueGenre       = flagVar[multiValueSetting]("multi-value-genre", "setting for mutli-valued genre scanning (optional)")
+	confMultiValueArtist      = flagVar[multiValueSetting]("multi-value-artist", "setting for mutli-valued track artist scanning (optional)")
+	confMultiValueAlbumArtist = flagVar[multiValueSetting]("multi-value-album-artist", "setting for mutli-valued album artist scanning (optional)")
 
-	confPprof := flag.Bool("pprof", false, "enable the /debug/pprof endpoint (optional)")
-	confExpvar := flag.Bool("expvar", false, "enable the /debug/vars endpoint (optional)")
+	confPprof  = flag.Bool("pprof", false, "enable the /debug/pprof endpoint (optional)")
+	confExpvar = flag.Bool("expvar", false, "enable the /debug/vars endpoint (optional)")
 
-	deprecatedConfGenreSplit := flag.String("genre-split", "", "(deprecated, see multi-value settings)")
+	deprecatedConfGenreSplit = flag.String("genre-split", "", "(deprecated, see multi-value settings)")
+)
 
+type flagValue[T any] interface {
+	flag.Value
+	*T
+}
+
+func flagVar[T any, TPtr flagValue[T]](name, usage string) *T {
+	storage := new(T)
+	flag.Var((TPtr)(storage), name, usage)
+
+	return storage
+}
+
+func loadConfig() error {
 	flag.Parse()
 	flagconf.ParseEnv()
 	flagconf.ParseConfig(*confConfigPath)
@@ -102,28 +115,56 @@ func main() {
 	}
 
 	if _, err := regexp.Compile(*confExcludePattern); err != nil {
-		log.Fatalf("invalid exclude pattern: %v\n", err)
+		return fmt.Errorf("invalid exclude pattern: %w", err)
 	}
 
-	if len(confMusicPaths) == 0 {
-		log.Fatalf("please provide a music directory")
+	if len(*confMusicPaths) == 0 {
+		return errors.New("please provide a music directory")
 	}
 
 	var err error
-	for i, confMusicPath := range confMusicPaths {
-		if confMusicPaths[i].path, err = validatePath(confMusicPath.path); err != nil {
-			log.Fatalf("checking music dir %q: %v", confMusicPath.path, err)
+	for i, confMusicPath := range *confMusicPaths {
+		if (*confMusicPaths)[i].path, err = validatePath(confMusicPath.path); err != nil {
+			return fmt.Errorf("checking music dir %q: %w", confMusicPath.path, err)
 		}
 	}
 
-	if *confPodcastPath, err = validatePath(*confPodcastPath); err != nil {
-		log.Fatalf("checking podcast directory: %v", err)
+	if *confPodcastPath, err = validatePath(*confPodcastPath); err != nil && *confPodcastPath != "" {
+		return fmt.Errorf("checking podcast directory: %w", err)
 	}
 	if *confCachePath, err = validatePath(*confCachePath); err != nil {
-		log.Fatalf("checking cache directory: %v", err)
+		return fmt.Errorf("checking cache directory: %w", err)
 	}
 	if *confPlaylistsPath, err = validatePath(*confPlaylistsPath); err != nil {
-		log.Fatalf("checking playlist directory: %v", err)
+		return fmt.Errorf("checking playlist directory: %w", err)
+	}
+
+	return nil
+}
+
+func newDBConn() (*db.DB, error) {
+	dbc, err := db.New(*confDBPath, db.DefaultOptions())
+	if err != nil {
+		return nil, fmt.Errorf("error opening database: %w", err)
+	}
+
+	err = dbc.Migrate(db.MigrationContext{
+		Production:        true,
+		DBPath:            *confDBPath,
+		OriginalMusicPath: (*confMusicPaths)[0].path,
+		PlaylistsPath:     *confPlaylistsPath,
+		PodcastsPath:      *confPodcastPath,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error migrating database (PLEASE REPORT A BUG): %w", err)
+	}
+
+	return dbc, nil
+}
+
+func main() {
+	if err := loadConfig(); err != nil {
+		log.Fatal(err.Error())
 	}
 
 	cacheDirAudio := path.Join(*confCachePath, "audio")
@@ -135,25 +176,14 @@ func main() {
 		log.Fatalf("couldn't create covers cache path: %v\n", err)
 	}
 
-	dbc, err := db.New(*confDBPath, db.DefaultOptions())
+	dbc, err := newDBConn()
 	if err != nil {
-		log.Fatalf("error opening database: %v\n", err)
+		log.Fatal(err.Error())
 	}
 	defer dbc.Close()
 
-	err = dbc.Migrate(db.MigrationContext{
-		Production:        true,
-		DBPath:            *confDBPath,
-		OriginalMusicPath: confMusicPaths[0].path,
-		PlaylistsPath:     *confPlaylistsPath,
-		PodcastsPath:      *confPodcastPath,
-	})
-	if err != nil {
-		log.Panicf("error migrating database: %v\n", err)
-	}
-
 	var musicPaths []ctrlsubsonic.MusicPath
-	for _, pa := range confMusicPaths {
+	for _, pa := range *confMusicPaths {
 		musicPaths = append(musicPaths, ctrlsubsonic.MusicPath{Alias: pa.alias, Path: pa.path})
 	}
 
@@ -161,7 +191,7 @@ func main() {
 	*confProxyPrefix = proxyPrefixExpr.ReplaceAllString(*confProxyPrefix, `/$1`)
 
 	if *deprecatedConfGenreSplit != "" && *deprecatedConfGenreSplit != "\n" {
-		confMultiValueGenre = multiValueSetting{Mode: scanner.Delim, Delim: *deprecatedConfGenreSplit}
+		*confMultiValueGenre = multiValueSetting{Mode: scanner.Delim, Delim: *deprecatedConfGenreSplit}
 		*deprecatedConfGenreSplit = "<deprecated>"
 	}
 	if confMultiValueArtist.Mode == scanner.None && confMultiValueAlbumArtist.Mode > scanner.None {
@@ -189,9 +219,9 @@ func main() {
 		ctrlsubsonic.MusicPaths(musicPaths),
 		dbc,
 		map[scanner.Tag]scanner.MultiValueSetting{
-			scanner.Genre:       scanner.MultiValueSetting(confMultiValueGenre),
-			scanner.Artist:      scanner.MultiValueSetting(confMultiValueArtist),
-			scanner.AlbumArtist: scanner.MultiValueSetting(confMultiValueAlbumArtist),
+			scanner.Genre:       scanner.MultiValueSetting(*confMultiValueGenre),
+			scanner.Artist:      scanner.MultiValueSetting(*confMultiValueArtist),
+			scanner.AlbumArtist: scanner.MultiValueSetting(*confMultiValueAlbumArtist),
 		},
 		tagReader,
 		*confExcludePattern,
