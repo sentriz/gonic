@@ -42,7 +42,7 @@ func (p *argParser) pos() int {
 	return len(p.line) - len(p.buff)
 }
 
-func (p *argParser) Next() (uint, string, bool) {
+func (p *argParser) Next() (string, bool) {
 	const (
 		linearSpace = " \t"
 
@@ -52,7 +52,7 @@ func (p *argParser) Next() (uint, string, bool) {
 	)
 
 	if len(p.buff) == 0 {
-		return p.idx, "", false
+		return "", false
 	}
 
 	res := make([]rune, 0, len(p.buff))
@@ -93,5 +93,5 @@ loop:
 	p.idx += 1
 	p.buff = p.buff[i:]
 
-	return p.idx, string(res), true
+	return string(res), true
 }

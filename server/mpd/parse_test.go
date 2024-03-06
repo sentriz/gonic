@@ -20,13 +20,13 @@ func TestArgParser(t *testing.T) {
 		p := newArgParser(line)
 
 		for i, expected := range args {
-			j, parsed, ok := p.Next()
+			parsed, ok := p.Next()
 			assert.True(t, ok)
-			assert.Equal(t, uint(i+1), j)
+			assert.Equal(t, uint(i+1), p.idx)
 			assert.Equal(t, expected, parsed)
 		}
 
-		_, arg, ok := p.Next()
+		arg, ok := p.Next()
 		assert.False(t, ok, "parser return extra arg: %q", arg)
 	}
 }

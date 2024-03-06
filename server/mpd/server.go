@@ -69,109 +69,160 @@ func (s *Server) Serve(ctx context.Context, l *net.TCPListener) error {
 	}
 }
 
-type connection struct { // TODO?: remove this type
-	*Server
-	*net.TCPConn
+type client struct {
+	srv *Server
+
+	lines *lineReader
+	out   io.Writer
+
+	cmdIdx  uint
+	cmdName string
 }
 
-func (c *connection) writeLine(line string) error {
-	n, err := io.WriteString(c.TCPConn, line+"\n")
-	_ = n
+func newClient(srv *Server, conn *net.TCPConn) *client {
+	lines := newLineReader(bufio.NewReader(conn))
+
+	return &client{
+		srv: srv,
+
+		lines: lines,
+		out:   conn,
+	}
+}
+
+func (c *client) writeLine(line string) error {
+	_, err := io.WriteString(c.out, line+"\n")
 	return err
 }
 
-func (c *connection) writePair(name, value string) error {
+func (c *client) writePair(name, value string) error {
 	return c.writeLine(fmt.Sprintf("%s: %s", name, value))
 }
 
-func (c *connection) handle(ctx context.Context) error {
-	defer c.Close()
-
-	c.writeLine(protocolHello)
-
-	lines := newLineReader(bufio.NewReader(c.TCPConn))
-
-	err := c.handleCmd(lines)
-	if err != nil {
-		var errRsp *errorResponse
-		if errors.As(err, &errRsp) {
-			c.writeLine(errRsp.String())
-			return nil
-		}
-
-		return err
-	}
-
-	return c.writeLine("OK")
+func (c *client) newErr(code ackError, err error) error {
+	return newError(code, c.cmdIdx, c.cmdName, err)
 }
 
-func (c *connection) handleCmd(lines *lineReader) error {
-	cmdIdx, line, err := lines.Next()
+func (c *client) nextCmd() (string, *argParser, error) {
+	cmdIdx, line, err := c.lines.Next()
 	if err != nil {
-		return fmt.Errorf("could not read command %d: %w", cmdIdx, err)
+		return "", nil, fmt.Errorf("could not read command %d: %w", cmdIdx, err)
 	}
 
 	args := newArgParser(line)
 
-	_, cmd, ok := args.Next()
+	cmd, ok := args.Next()
 	if !ok {
-		return errors.New("empty command")
+		return "", nil, errors.New("empty command")
 	}
 
-	return c.doCmd(0, cmd, args, lines)
+	return cmd, args, nil
 }
 
-func (c *connection) doCmd(idx uint, name string, args *argParser, lines *lineReader) error {
-	fmt.Println("->", name)
+func (s *Server) handle(c *client) error {
+	c.writeLine(protocolHello)
 
-	switch name {
-	case "command_list_ok_begin":
-		return c.doCmdListOkBegin(args, lines)
-	case "command_list_end":
-		return c.doCmdListEnd(args)
-	case "currentsong":
-		return c.doCurrentSong(args)
-	case "status":
-		return c.doStatus(args)
+	for {
+		cmd, args, err := c.nextCmd()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil
+			}
+
+			return err
+		}
+
+		err = doCmd(c, cmd, args)
+		if err != nil {
+			if errors.Is(err, errCmdListEnd) {
+				err = c.newErr(ackErrorNotList, errors.New("no command list in progress"))
+			}
+
+			var errRsp *errorResponse
+			if errors.As(err, &errRsp) {
+				c.writeLine(errRsp.String())
+				return nil
+			}
+
+			return err
+		}
+
+		err = c.writeLine("OK")
+		if err != nil {
+			return err
+		}
+	}
+}
+
+type cmdHandler func(c *client, args *argParser) error
+
+var cmdHandlers map[string]cmdHandler
+
+//nolint:noinit // initializing `cmdHandlers` inline causes a ref-loop build error
+func init() {
+	cmdHandlers = map[string]cmdHandler{
+		"command_list_begin":    doCmdListBegin,
+		"command_list_end":      doCmdListEnd,
+		"command_list_ok_begin": doCmdListOkBegin,
+		"currentsong":           doCurrentSong,
+		"pause":                 doPause,
+		"play":                  doPlay,
+		"status":                doStatus,
+	}
+}
+
+func doCmd(c *client, name string, args *argParser) error {
+	fmt.Println("->", args.line)
+
+	handler, ok := cmdHandlers[name]
+	if !ok {
+		return c.newErr(ackErrorNotList, fmt.Errorf("unknown command: %s", name))
 	}
 
-	return newError(ackErrorNotList, idx, name, fmt.Errorf("unknown command: %s", name))
+	return handler(c, args)
 }
 
 // parseArgs returns an array of values matching names, or an error.
-func (c *connection) parseArgs(args *argParser, names ...string) ([]string, error) {
+func parseArgs(c *client, args *argParser, names ...string) ([]string, error) {
 	values := make([]string, 0, len(names))
 
 	for i := range names {
-		_, val, ok := args.Next()
+		val, ok := args.Next()
 		if !ok {
-			idx := uint(0) // FIXME
-			name := ""     // FIXME
-			return nil, newError(ackErrorArg, idx, name,
-				fmt.Errorf("got only %d args, missing: %s", i+1, names[i:]))
+			return nil, c.newErr(ackErrorArg, fmt.Errorf("got only %d args, missing: %s", i+1, names[i:]))
 		}
 
 		values = append(values, val)
 	}
 
-	_, extra, ok := args.Next()
+	extra, ok := args.Next()
 	if ok {
-		idx := uint(0) // FIXME
-		name := ""     // FIXME
-		return nil, newError(ackErrorArg, idx, name,
-			fmt.Errorf("too many args, first extra value: %s", extra))
+		return nil, c.newErr(ackErrorArg, fmt.Errorf("too many args, first extra value: %s", extra))
 	}
 
 	return values, nil
 }
 
-func (c *connection) doCmdListOkBegin(args *argParser, lines *lineReader) error {
-	if _, err := c.parseArgs(args); err != nil {
+func doCmdListOkBegin(c *client, args *argParser) error {
+	return handleCmdList(c, args, true)
+}
+
+func doCmdListBegin(c *client, args *argParser) error {
+	return handleCmdList(c, args, false)
+}
+
+func handleCmdList(c *client, args *argParser, sendOk bool) error {
+	if _, err := parseArgs(c, args); err != nil {
 		return err
 	}
 
 	for {
-		err := c.handleCmd(lines)
+		cmd, args, err := c.nextCmd()
+		if err != nil {
+			return err
+		}
+
+		err = doCmd(c, cmd, args)
 		if err != nil {
 			if errors.Is(err, errCmdListEnd) {
 				return nil
@@ -180,28 +231,30 @@ func (c *connection) doCmdListOkBegin(args *argParser, lines *lineReader) error 
 			return err
 		}
 
-		c.writeLine("list_OK")
+		if sendOk {
+			c.writeLine("list_OK")
+		}
 	}
 }
 
-func (c *connection) doCmdListEnd(args *argParser) error {
-	if _, err := c.parseArgs(args); err != nil {
+func doCmdListEnd(c *client, args *argParser) error {
+	if _, err := parseArgs(c, args); err != nil {
 		return err
 	}
 
 	return errCmdListEnd
 }
 
-func (c *connection) doCurrentSong(args *argParser) error {
-	if _, err := c.parseArgs(args); err != nil {
+func doCurrentSong(c *client, args *argParser) error {
+	if _, err := parseArgs(c, args); err != nil {
 		return err
 	}
 
-	if c.jukebox == nil {
+	if c.srv.jukebox == nil {
 		return nil
 	}
 
-	status, err := c.jukebox.GetStatus()
+	status, err := c.srv.jukebox.GetStatus()
 	if err != nil {
 		return err
 	}
@@ -215,17 +268,45 @@ func (c *connection) doCurrentSong(args *argParser) error {
 	return nil
 }
 
-func (c *connection) doStatus(args *argParser) error {
-	if _, err := c.parseArgs(args); err != nil {
+func doPlay(c *client, args *argParser) error {
+	songpos, ok := args.Next()
+	if !ok {
+		return c.srv.jukebox.Play()
+	}
+
+	i, err := strconv.Atoi(songpos)
+	if err != nil {
+		return c.newErr(ackErrorArg, fmt.Errorf("invalid SONGPOS: %w", err))
+	}
+
+	return c.srv.jukebox.SkipToPlaylistIndex(i, 0)
+}
+
+func doPause(c *client, args *argParser) error {
+	state, ok := args.Next()
+	switch {
+	case !ok: // no arg, toggle
+		return c.srv.jukebox.TogglePlay()
+
+	case state == "1" || state == "0":
+		return c.srv.jukebox.SetPlay(state == "0")
+
+	default:
+		return c.newErr(ackErrorArg, fmt.Errorf("play state must be 0 or 1, got: %s", state))
+	}
+}
+
+func doStatus(c *client, args *argParser) error {
+	if _, err := parseArgs(c, args); err != nil {
 		return err
 	}
 
-	if c.jukebox == nil {
+	if c.srv.jukebox == nil {
 		c.writePair("state", "stop")
 		return nil
 	}
 
-	status, err := c.jukebox.GetStatus()
+	status, err := c.srv.jukebox.GetStatus()
 	if err != nil {
 		return err
 	}
