@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -133,7 +134,9 @@ func (j *Jukebox) SetPlaylist(items []string) error {
 
 	var newPlayingIndex = -1
 	for i, item := range items {
-		item, _ = filepath.Abs(item)
+		if !strings.HasPrefix(item, "http") {
+			item, _ = filepath.Abs(item)
+		}
 		if currentPlayingIndex >= 0 && playlist[currentPlayingIndex].Filename == item {
 			newPlayingIndex = i
 			continue // don't add current track to loadlist

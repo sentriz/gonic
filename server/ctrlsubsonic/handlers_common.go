@@ -437,7 +437,7 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 	case "get":
 		specPlaylist, err := getSpecPlaylist()
 		if err != nil {
-			return spec.NewError(10, "error getting status tracks: %v", err)
+			return spec.NewError(10, "error getting spec playlist: %v", err)
 		}
 		status, err := getSpecStatus()
 		if err != nil {
