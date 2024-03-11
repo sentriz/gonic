@@ -557,6 +557,10 @@ func (ir *InternetRadioStation) SID() *specid.ID {
 	return &specid.ID{Type: specid.InternetRadioStation, Value: ir.ID}
 }
 
+func (ir *InternetRadioStation) AbsPath() string {
+	return ir.StreamURL
+}
+
 type ArtistInfo struct {
 	ID             int `gorm:"primary_key" sql:"type:int REFERENCES artists(id) ON DELETE CASCADE"`
 	CreatedAt      time.Time

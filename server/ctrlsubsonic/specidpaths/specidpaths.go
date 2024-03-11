@@ -29,6 +29,9 @@ func Locate(dbc *db.DB, id specid.ID) (Result, error) {
 	case specid.PodcastEpisode:
 		var pe db.PodcastEpisode
 		return &pe, dbc.Preload("Podcast").Where("id=? AND status=?", id.Value, db.PodcastEpisodeStatusCompleted).Find(&pe).Error
+	case specid.InternetRadioStation:
+		var irs db.InternetRadioStation
+		return &irs, dbc.Where("id=?", id.Value).Find(&irs).Error
 	default:
 		return nil, ErrNotFound
 	}
