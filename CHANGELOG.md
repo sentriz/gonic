@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.17.0](https://www.github.com/sentriz/gonic/compare/v0.16.3...v0.17.0) (2024-03-20)
+
+
+### Features
+
+* support internet radio stations for jukebox ([62d49a3](https://www.github.com/sentriz/gonic/commit/62d49a33d1c7cb93ed7bd44478b44b4bc5145889)), closes [#481](https://www.github.com/sentriz/gonic/issues/481)
+
+
+### Bug Fixes
+
+* **subsonic:** allow unlimited bitrate with no transcode setting configured ([0c3a498](https://www.github.com/sentriz/gonic/commit/0c3a498a83a22833da631fbbb6a03fbc27121734)), closes [#485](https://www.github.com/sentriz/gonic/issues/485)
+
 ### [0.16.3](https://www.github.com/sentriz/gonic/compare/v0.16.2...v0.16.3) (2024-03-09)
 
 
