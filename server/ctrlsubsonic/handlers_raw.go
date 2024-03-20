@@ -199,8 +199,8 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		return spec.NewError(0, "couldn't find transcode preference: %v", err)
 	}
 	if pref == nil {
-		if maxBitRate > 0 {
-			return spec.NewError(0, "maxBitRate requested and no user transcode preferences found for user %q and client %q", user.Name, client)
+		if maxBitRate > 0 && maxBitRate < audioFile.AudioBitrate() {
+			return spec.NewError(0, "param maxBitRate requested and no user transcode preferences found for user %q and client %q. please configure transcode settings if you want to transcode", user.Name, client)
 		}
 		log.Printf("serving raw file, no user transcode preferences found for user %q and client %q", user.Name, client)
 		http.ServeFile(w, r, file.AbsPath())
