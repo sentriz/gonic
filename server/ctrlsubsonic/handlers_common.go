@@ -13,9 +13,9 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/env25/mpdlrc/lrc"
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
-	"github.com/env25/mpdlrc/lrc"
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/scanner"
@@ -472,7 +472,7 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 
 func (c *Controller) ServeGetLyrics(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	//artist, _ := params.Get("artist")
+	// artist, _ := params.Get("artist")
 	// idk how to query for artist
 	title, _ := params.Get("title")
 
@@ -497,9 +497,9 @@ func (c *Controller) ServeGetLyrics(r *http.Request) *spec.Response {
 
 	sub := spec.NewResponse()
 	sub.Lyrics = &spec.Lyrics{
-		Value: contents,
+		Value:  contents,
 		Artist: track.TagTrackArtist,
-		Title: track.TagTitle,
+		Title:  track.TagTitle,
 	}
 	return sub
 }
@@ -537,12 +537,12 @@ func (c *Controller) ServeGetLyricsBySongID(r *http.Request) *spec.Response {
 	}
 
 	structured := spec.StructuredLyrics{
-		Lang: "und",
-		Synced: true,
-		Line: lines,
+		Lang:          "und",
+		Synced:        true,
+		Line:          lines,
 		DisplayArtist: track.TagTrackArtist,
-		DisplayTitle: track.TagTitle,
-		Offset: 0,
+		DisplayTitle:  track.TagTitle,
+		Offset:        0,
 	}
 
 	sub := spec.NewResponse()
@@ -556,7 +556,7 @@ func lyricsFile(file *db.Track) ([]lrc.Duration, []lrc.Text, error) {
 	dir := filepath.Dir(file.AbsPath())
 	filename := strings.TrimSuffix(filepath.Base(file.AbsPath()), filepath.Ext(file.AbsPath()))
 
-	lrcContent, err := os.ReadFile(filepath.Join(dir, filename + ".lrc"))
+	lrcContent, err := os.ReadFile(filepath.Join(dir, filename+".lrc"))
 	if err != nil {
 		return []lrc.Duration{}, []lrc.Text{}, err
 	}
