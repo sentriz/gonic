@@ -465,16 +465,16 @@ type LyricsList struct {
 }
 
 type StructuredLyrics struct {
-	Lang string `xml:"lang,attr" json:"lang"` // ISO 639 (or und, xxx if unknown)
-	Synced bool `xml:"synced,attr" json:"synced"`
-	Line []Lyric `xml:"line" json:"line"`
-	DisplayArtist string `xml:"displayArtist,attr,omitempty" json:"displayArtist,omitempty"`
-	DisplayTitle string `xml:"displayTitle,attr,omitempty" json:"displayTitle,omitempty"`
-	Offset int `xml:"offset,attr,omitempty" json:"offset,omitempty"`
+	Lang          string  `xml:"lang,attr" json:"lang"` // ISO 639 (or und, xxx if unknown)
+	Synced        bool    `xml:"synced,attr" json:"synced"`
+	Line          []Lyric `xml:"line" json:"line"`
+	DisplayArtist string  `xml:"displayArtist,attr,omitempty" json:"displayArtist,omitempty"`
+	DisplayTitle  string  `xml:"displayTitle,attr,omitempty" json:"displayTitle,omitempty"`
+	Offset        int     `xml:"offset,attr,omitempty" json:"offset,omitempty"`
 }
 
 type Lyric struct {
-	Start int64 `xml:"start,attr" json:"start"`
+	Start int64  `xml:"start,attr" json:"start"`
 	Value string `xml:",chardata" json:"value"`
 }
 
