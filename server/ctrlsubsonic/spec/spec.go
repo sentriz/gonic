@@ -69,6 +69,7 @@ type Response struct {
 	SimilarSongsTwo       *SimilarSongsTwo       `xml:"similarSongs2"         json:"similarSongs2,omitempty"`
 	InternetRadioStations *InternetRadioStations `xml:"internetRadioStations" json:"internetRadioStations,omitempty"`
 	Lyrics                *Lyrics                `xml:"lyrics"                json:"lyrics,omitempty"`
+	LyricsList            *LyricsList            `xml:"lyricsList"            json:"lyricsList,omitempty"`
 }
 
 func NewResponse() *Response {
@@ -457,6 +458,24 @@ type Lyrics struct {
 	Value  string `xml:",chardata"             json:"value,omitempty"`
 	Artist string `xml:"artist,attr,omitempty" json:"artist,omitempty"`
 	Title  string `xml:"title,attr,omitempty"  json:"title,omitempty"`
+}
+
+type LyricsList struct {
+	StructuredLyrics []StructuredLyrics `xml:"structuredLyrics" json:"structuredLyrics"`
+}
+
+type StructuredLyrics struct {
+	Lang string `xml:"lang,attr" json:"lang"` // ISO 639 (or und, xxx if unknown)
+	Synced bool `xml:"synced,attr" json:"synced"`
+	Line []Lyric `xml:"line" json:"line"`
+	DisplayArtist string `xml:"displayArtist,attr,omitempty" json:"displayArtist,omitempty"`
+	DisplayTitle string `xml:"displayTitle,attr,omitempty" json:"displayTitle,omitempty"`
+	Offset int `xml:"offset,attr,omitempty" json:"offset,omitempty"`
+}
+
+type Lyric struct {
+	Start int `xml:"start,attr" json:"start"`
+	Value string `xml:",chardata" json:"value"`
 }
 
 type OpenSubsonicExtension struct {

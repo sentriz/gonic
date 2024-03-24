@@ -8,12 +8,14 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 	"unicode"
 
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
+	"github.com/env25/mpdlrc/lrc"
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/scanner"
@@ -468,10 +470,96 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 	return sub
 }
 
-func (c *Controller) ServeGetLyrics(_ *http.Request) *spec.Response {
+func (c *Controller) ServeGetLyrics(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	//artist, _ := params.Get("artist")
+	// idk how to query for artist
+	title, _ := params.Get("title")
+
+	var track db.Track
+	q := c.dbc.
+		Preload("Album").
+		Preload("Album.Artists").
+		Preload("Genres").
+		Preload("Artists").
+		Where(`tracks.tag_title LIKE ? OR tracks.tag_title_u_dec LIKE ?`, title, title).
+		First(&track)
+	if err := q.Error; err != nil {
+		return spec.NewError(0, "lyrics: %v", err)
+	}
+
+	_, text, err := lyricsFile(&track)
+	if err != nil {
+		return spec.NewResponse()
+	}
+
+	contents := strings.Join(text, "\n")
+
 	sub := spec.NewResponse()
-	sub.Lyrics = &spec.Lyrics{}
+	sub.Lyrics = &spec.Lyrics{
+		Value: contents,
+		Artist: track.TagTrackArtist,
+		Title: track.TagTitle,
+	}
 	return sub
+}
+
+func (c *Controller) ServeGetLyricsBySongId(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	id, err := params.GetID("id")
+	if err != nil {
+		return spec.NewError(10, "provide an `id` parameter")
+	}
+
+	var track db.Track
+	err = c.dbc.
+		Where("id=?", id.Value).
+		Preload("Album").
+		Preload("Album.Artists").
+		Preload("Artists").
+		First(&track).
+		Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return spec.NewError(70, "couldn't find a track with that id")
+	}
+
+	_, lrc, err := lyricsFile(&track)
+	if err != nil {
+		return spec.NewResponse() // ???
+	}
+
+	fmt.Println(err, strings.Join(lrc, "\n"))
+
+	sub := spec.NewResponse()
+	sub.LyricsList = &spec.LyricsList{
+		StructuredLyrics: []spec.StructuredLyrics{
+			{
+				Lang: "und",
+				Synced: true,
+				Line: []spec.Lyric{
+					{Start: 0, Value: "this is a lyric"},
+				},
+				DisplayArtist: "Artist",
+				DisplayTitle: "Title",
+				Offset: 0,
+			},
+		},
+	}
+	return sub
+}
+
+func lyricsFile(file *db.Track) ([]lrc.Duration, []lrc.Text, error) {
+	dir := filepath.Dir(file.AbsPath())
+	filename := strings.TrimSuffix(filepath.Base(file.AbsPath()), filepath.Ext(file.AbsPath()))
+	fmt.Println(dir)
+	fmt.Println(filename)
+
+	lrcContent, err := os.ReadFile(filepath.Join(dir, filename + ".lrc"))
+	if err != nil {
+		return []lrc.Duration{}, []lrc.Text{}, err
+	}
+
+	return lrc.Parse(lrcContent)
 }
 
 func scrobbleStatsUpdateTrack(dbc *db.DB, track *db.Track, userID int, playTime time.Time) error {
