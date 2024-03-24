@@ -474,7 +474,7 @@ type StructuredLyrics struct {
 }
 
 type Lyric struct {
-	Start int `xml:"start,attr" json:"start"`
+	Start int64 `xml:"start,attr" json:"start"`
 	Value string `xml:",chardata" json:"value"`
 }
 

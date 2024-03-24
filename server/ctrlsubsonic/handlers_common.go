@@ -504,7 +504,7 @@ func (c *Controller) ServeGetLyrics(r *http.Request) *spec.Response {
 	return sub
 }
 
-func (c *Controller) ServeGetLyricsBySongId(r *http.Request) *spec.Response {
+func (c *Controller) ServeGetLyricsBySongID(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	id, err := params.GetID("id")
 	if err != nil {
@@ -523,27 +523,31 @@ func (c *Controller) ServeGetLyricsBySongId(r *http.Request) *spec.Response {
 		return spec.NewError(70, "couldn't find a track with that id")
 	}
 
-	_, lrc, err := lyricsFile(&track)
+	times, lrc, err := lyricsFile(&track)
 	if err != nil {
 		return spec.NewResponse() // ???
 	}
 
-	fmt.Println(err, strings.Join(lrc, "\n"))
+	lines := make([]spec.Lyric, len(times))
+	for i, time := range times {
+		lines[i] = spec.Lyric{
+			Start: time.Milliseconds(),
+			Value: lrc[i],
+		}
+	}
+
+	structured := spec.StructuredLyrics{
+		Lang: "und",
+		Synced: true,
+		Line: lines,
+		DisplayArtist: track.TagTrackArtist,
+		DisplayTitle: track.TagTitle,
+		Offset: 0,
+	}
 
 	sub := spec.NewResponse()
 	sub.LyricsList = &spec.LyricsList{
-		StructuredLyrics: []spec.StructuredLyrics{
-			{
-				Lang: "und",
-				Synced: true,
-				Line: []spec.Lyric{
-					{Start: 0, Value: "this is a lyric"},
-				},
-				DisplayArtist: "Artist",
-				DisplayTitle: "Title",
-				Offset: 0,
-			},
-		},
+		StructuredLyrics: []spec.StructuredLyrics{structured},
 	}
 	return sub
 }
@@ -551,8 +555,6 @@ func (c *Controller) ServeGetLyricsBySongId(r *http.Request) *spec.Response {
 func lyricsFile(file *db.Track) ([]lrc.Duration, []lrc.Text, error) {
 	dir := filepath.Dir(file.AbsPath())
 	filename := strings.TrimSuffix(filepath.Base(file.AbsPath()), filepath.Ext(file.AbsPath()))
-	fmt.Println(dir)
-	fmt.Println(filename)
 
 	lrcContent, err := os.ReadFile(filepath.Join(dir, filename + ".lrc"))
 	if err != nil {
