@@ -44,6 +44,7 @@ import (
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/server/ctrladmin"
 	"go.senan.xyz/gonic/server/ctrlsubsonic"
+	"go.senan.xyz/gonic/server/mpd"
 	"go.senan.xyz/gonic/tags/tagcommon"
 	"go.senan.xyz/gonic/tags/taglib"
 	"go.senan.xyz/gonic/transcode"
@@ -51,6 +52,7 @@ import (
 
 func main() {
 	confListenAddr := flag.String("listen-addr", "0.0.0.0:4747", "listen address (optional)")
+	confMPDListenAddr := flag.String("mpd-listen-addr", "0.0.0.0:6600", "listen address for MPD protocol (optional)")
 
 	confTLSCert := flag.String("tls-cert", "", "path to TLS certificate (optional)")
 	confTLSKey := flag.String("tls-key", "", "path to TLS private key (optional)")
@@ -316,6 +318,17 @@ func main() {
 			return server.ListenAndServeTLS(*confTLSCert, *confTLSKey)
 		}
 		return server.ListenAndServe()
+	})
+
+	errgrp.Go(func() error {
+		defer logJob("mpd")()
+
+		server, err := mpd.New(jukebx)
+		if err != nil {
+			return fmt.Errorf("mpd init: %w", err)
+		}
+
+		return server.ListenAndServe(ctx, *confMPDListenAddr)
 	})
 
 	errgrp.Go(func() error {
