@@ -44,8 +44,7 @@
     {{ end }}
     {{ if .User.IsAdmin }}
 				<div class="col-span-full">{{ component "link" (props . "To" (path 
-				"/admin/create_user")) }}create new{{ end }} {{component "link" 
-				(props . "To" (path "/admin/ldap")) }}LDAP{{ end }}</div>
+				"/admin/create_user")) }}create new{{ end }}</div>
     {{ end }}
 </div>
 {{ end }}
