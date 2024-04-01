@@ -290,13 +290,6 @@ type templateData struct {
 	DefaultListenBrainzURL string
 	SelectedUser           *db.User
 
-	CurrentBindUID string
-	CurrentFQDN    string
-	CurrentPort    string
-	CurrentNoTLS   string
-	CurrentBaseDN  string
-	CurrentFilter  string
-
 	Podcasts              []*db.Podcast
 	InternetRadioStations []*db.InternetRadioStation
 
