@@ -43,8 +43,7 @@
         {{ end }}
     {{ end }}
     {{ if .User.IsAdmin }}
-				<div class="col-span-full">{{ component "link" (props . "To" (path 
-				"/admin/create_user")) }}create new{{ end }}</div>
+        <div class="col-span-full">{{ component "link" (props . "To" (path "/admin/create_user")) }}create new{{ end }}</div>
     {{ end }}
 </div>
 {{ end }}
