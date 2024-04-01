@@ -1,5 +1,52 @@
 # Changelog
 
+### [0.16.4](https://www.github.com/sentriz/gonic/compare/v0.16.3...v0.16.4) (2024-03-20)
+
+
+### Features
+
+* support internet radio stations for jukebox ([62d49a3](https://www.github.com/sentriz/gonic/commit/62d49a33d1c7cb93ed7bd44478b44b4bc5145889)), closes [#481](https://www.github.com/sentriz/gonic/issues/481)
+
+
+### Bug Fixes
+
+* **subsonic:** allow unlimited bitrate with no transcode setting configured ([81f8a7e](https://www.github.com/sentriz/gonic/commit/81f8a7ec49cc1fe66fdad2b1b80ff646ca2a1040)), closes [#485](https://www.github.com/sentriz/gonic/issues/485)
+
+### [0.16.3](https://www.github.com/sentriz/gonic/compare/v0.16.2...v0.16.3) (2024-03-09)
+
+
+### Features
+
+* bump audiotags fork to support taglib v2 ([29c5397](https://www.github.com/sentriz/gonic/commit/29c5397dae82017e24347afe65e9bbf9be10a494))
+* **lastfm:** autocorrect artist and album name misspellings when fetching info ([2878b88](https://www.github.com/sentriz/gonic/commit/2878b88aeee8bdf7a2e45520298422b883d8ab24)), closes [#472](https://www.github.com/sentriz/gonic/issues/472)
+* **lastfm:** strip copyright text from albumInfo/artistInfo responses ([aa82b94](https://www.github.com/sentriz/gonic/commit/aa82b944b794ac07b41a34aeb2b4cc365a2666ef))
+* **listenbrainz:** submit release MBID ([#443](https://www.github.com/sentriz/gonic/issues/443)) ([552aa3a](https://www.github.com/sentriz/gonic/commit/552aa3afb138a125f15ab161a1a06cbe6c68a762))
+* replace ff with with flagconf ([3ada74c](https://www.github.com/sentriz/gonic/commit/3ada74c4db61c90ba428a071282fdacfd038cfc0))
+* **subsonic:** expose track musicbrainz id ([f98b232](https://www.github.com/sentriz/gonic/commit/f98b2326da31c15192f1c3b4bb17dcbfa59a058a))
+* **subsonic:** prefer tagged musicbrainz ID over lastfm in getAlbumInfo ([422c684](https://www.github.com/sentriz/gonic/commit/422c684f44369a0c85cb1a825e3d480ee157ca0b)), closes [#444](https://www.github.com/sentriz/gonic/issues/444)
+* **subsonic:** return `changed` field in playlist response ([8b4fc04](https://www.github.com/sentriz/gonic/commit/8b4fc04d3e7a22ba5beb3d682ea13b541c99d2bb)), closes [#455](https://www.github.com/sentriz/gonic/issues/455)
+* **subsonic:** return `playCount` in album responses ([ec55f3b](https://www.github.com/sentriz/gonic/commit/ec55f3b22a8c689cbd2305965b3c538f5c2bf25f)), closes [#458](https://www.github.com/sentriz/gonic/issues/458)
+* **subsonic:** return an error if maxBitRate requested with no user transcode preferences set ([88e58c0](https://www.github.com/sentriz/gonic/commit/88e58c055a2b1259d0c68618b943b4a319855b15))
+* **subsonic:** return http form post opensubsonic extension key ([e8ae1c1](https://www.github.com/sentriz/gonic/commit/e8ae1c1d406c7013b2a739dd13bac3076bde641f))
+* upgrade to ff v4 ([4600ee1](https://www.github.com/sentriz/gonic/commit/4600ee1cbb380bb7a9d255cbd51bd746e021eb63)), closes [#473](https://www.github.com/sentriz/gonic/issues/473)
+
+
+### Bug Fixes
+
+* **ci:** manually add taglib v2 APKBUILD ([51fa0ba](https://www.github.com/sentriz/gonic/commit/51fa0baac39577b335a3f5c064be81cf9293e9f0))
+* **db:** add double index for right side of unique compound indexes ([d640a9f](https://www.github.com/sentriz/gonic/commit/d640a9fc065bd3908968abacbd5ac080331c3e25)), closes [#426](https://www.github.com/sentriz/gonic/issues/426)
+* **docker:** fix sqlite3 musl build ([433829d](https://www.github.com/sentriz/gonic/commit/433829dc4f43f3be83a99cb54099be4f781dcf7d))
+* **listenbrainz:** set track length submission and include submission client details ([#424](https://www.github.com/sentriz/gonic/issues/424)) ([b27c02f](https://www.github.com/sentriz/gonic/commit/b27c02fc894510b714c129e898fd0e6792d017b4))
+* **playlist:** return new playlist id for createPlaylist ([314e963](https://www.github.com/sentriz/gonic/commit/314e9632d72dd7cd68044f9d69295123fff78f80)), closes [#464](https://www.github.com/sentriz/gonic/issues/464)
+* **podcast:** collect all episode errors when adding new podcast ([2f109f1](https://www.github.com/sentriz/gonic/commit/2f109f1982dea78dbdfe786cafa3c6718138b66e)), closes [#430](https://www.github.com/sentriz/gonic/issues/430)
+* **podcast:** slightly more robust downloading and concurrency ([#433](https://www.github.com/sentriz/gonic/issues/433)) ([f34cd2e](https://www.github.com/sentriz/gonic/commit/f34cd2e213f9be93ae3db4ad32e7e927fd15c618))
+* **scanner:** clean up orphaned album genres when dir still exists without tracks ([19ebd45](https://www.github.com/sentriz/gonic/commit/19ebd4540f9e47c521cc70587457a770110495a5)), closes [#466](https://www.github.com/sentriz/gonic/issues/466)
+* **scanner:** gracefully handle multi value tag delim splits with adjacent delimiters ([eb79cec](https://www.github.com/sentriz/gonic/commit/eb79cecc44628d3e24b2196e1d680f2b1ba15f97)), closes [#448](https://www.github.com/sentriz/gonic/issues/448)
+* **specid:** match music dirs with trailing slash ([#439](https://www.github.com/sentriz/gonic/issues/439)) ([e63ee96](https://www.github.com/sentriz/gonic/commit/e63ee9687e1cb4b76faa9ffe10bf99b4640ddd43))
+* **subsonic:** always return playlist duration  ([87943ea](https://www.github.com/sentriz/gonic/commit/87943ea863f5e882ff4acfe329d6dde674ac630b)), closes [#457](https://www.github.com/sentriz/gonic/issues/457)
+* **subsonic:** fix getAvatar user request comparison ([#469](https://www.github.com/sentriz/gonic/issues/469)) ([2949b4c](https://www.github.com/sentriz/gonic/commit/2949b4c86715d9eebfe5bf116c8df7f0a5875eb3))
+* **subsonic:** return error code 70 for not found errors in more places ([42dbfa7](https://www.github.com/sentriz/gonic/commit/42dbfa7a85a25fcb80f2936ac7949d50ed1bfbf8)), closes [#454](https://www.github.com/sentriz/gonic/issues/454)
+
 ### [0.16.2](https://www.github.com/sentriz/gonic/compare/v0.16.1...v0.16.2) (2023-11-30)
 
 

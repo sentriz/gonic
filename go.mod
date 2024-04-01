@@ -19,16 +19,16 @@ require (
 	github.com/josephburnett/jd v1.7.1
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/mmcdole/gofeed v1.2.1
+	github.com/mmcdole/gofeed v1.3.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/philippta/go-template v0.0.0-20220911145045-4556aca435e4
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
-	github.com/sentriz/audiotags v0.0.0-20240202193907-618ae39d7743
+	github.com/sentriz/audiotags v0.0.0-20240305214804-7a32981c18f8
 	github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981
 	github.com/stretchr/testify v1.8.4
-	go.senan.xyz/flagconf v0.1.5
-	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
-	golang.org/x/net v0.21.0
+	go.senan.xyz/flagconf v0.1.7
+	golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8
+	golang.org/x/net v0.22.0
 	golang.org/x/sync v0.6.0
 	gopkg.in/gormigrate.v1 v1.6.0
 	jaytaylor.com/html2text v0.0.0-20230321000545-74c2419ad056
@@ -38,7 +38,7 @@ require (
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
-	github.com/PuerkitoBio/goquery v1.9.0 // indirect
+	github.com/PuerkitoBio/goquery v1.9.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.5 // indirect
 	github.com/go-openapi/jsonpointer v0.20.0 // indirect
@@ -55,16 +55,16 @@ require (
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
-	github.com/mmcdole/goxpp v1.1.0 // indirect
+	github.com/mmcdole/goxpp v1.1.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
-	golang.org/x/crypto v0.20.0 // indirect
+	golang.org/x/crypto v0.21.0 // indirect
 	golang.org/x/image v0.15.0 // indirect
-	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

@@ -25,6 +25,7 @@ func (TagLib) Read(absPath string) (tagcommon.Info, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open: %w", err)
 	}
+	defer f.Close()
 	props := f.ReadAudioProperties()
 	raw := f.ReadTags()
 	return &info{raw, props}, nil

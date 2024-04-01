@@ -109,6 +109,7 @@ func (a *ArtistInfoCache) Refresh() error {
 	if err := q.Find(&artist).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return fmt.Errorf("finding non cached artist: %w", err)
 	}
+
 	if artist.ID == 0 {
 		return nil
 	}

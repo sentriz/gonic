@@ -95,6 +95,8 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 		if err := scrobbleStatsUpdatePodcastEpisode(c.dbc, id.Value); err != nil {
 			return spec.NewError(0, "error updating stats: %v", err)
 		}
+	default:
+		return spec.NewError(10, "can't scrobble type %s", id.Type)
 	}
 
 	if scrobbleTrack.Track == "" {
@@ -435,7 +437,7 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 	case "get":
 		specPlaylist, err := getSpecPlaylist()
 		if err != nil {
-			return spec.NewError(10, "error getting status tracks: %v", err)
+			return spec.NewError(10, "error getting spec playlist: %v", err)
 		}
 		status, err := getSpecStatus()
 		if err != nil {

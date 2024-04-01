@@ -29,6 +29,9 @@ func Locate(dbc *db.DB, id specid.ID) (Result, error) {
 	case specid.PodcastEpisode:
 		var pe db.PodcastEpisode
 		return &pe, dbc.Preload("Podcast").Where("id=? AND status=?", id.Value, db.PodcastEpisodeStatusCompleted).Find(&pe).Error
+	case specid.InternetRadioStation:
+		var irs db.InternetRadioStation
+		return &irs, dbc.Where("id=?", id.Value).Find(&irs).Error
 	default:
 		return nil, ErrNotFound
 	}
@@ -36,7 +39,7 @@ func Locate(dbc *db.DB, id specid.ID) (Result, error) {
 
 // Locate maps a location on the filesystem to a specid
 func Lookup(dbc *db.DB, musicPaths []string, podcastsPath string, path string) (Result, error) {
-	if !filepath.IsAbs(path) {
+	if !strings.HasPrefix(path, "http") && !filepath.IsAbs(path) {
 		return nil, ErrNotAbs
 	}
 
@@ -49,6 +52,15 @@ func Lookup(dbc *db.DB, musicPaths []string, podcastsPath string, path string) (
 		var pe db.PodcastEpisode
 		if err := q.First(&pe).Error; err == nil {
 			return &pe, nil
+		}
+		return nil, ErrNotFound
+	}
+
+	// probably internet radio
+	if strings.HasPrefix(path, "http") {
+		var irs db.InternetRadioStation
+		if err := dbc.First(&irs, "stream_url=?", path).Error; err == nil {
+			return &irs, nil
 		}
 		return nil, ErrNotFound
 	}
