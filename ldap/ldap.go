@@ -10,6 +10,17 @@ import (
 	"github.com/go-ldap/ldap/v3"
 )
 
+type Config struct {
+  BindUser string
+  BindPass string
+  BaseDN   string
+  Filter   string
+
+  FQDN string
+  Port uint
+  TLS  bool
+}
+
 func CheckLDAPcreds(username string, password string, dbc *db.DB) (bool, error) {
 	ldapFQDN, err := dbc.GetSetting("ldap_fqdn")
 

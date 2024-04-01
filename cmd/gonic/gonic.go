@@ -47,6 +47,7 @@ import (
 	"go.senan.xyz/gonic/tags/tagcommon"
 	"go.senan.xyz/gonic/tags/taglib"
 	"go.senan.xyz/gonic/transcode"
+  "go.senan.xyz/gonic/ldap"
 )
 
 func main() {
@@ -81,6 +82,22 @@ func main() {
 	confConfigPath := flag.String("config-path", "", "path to config (optional)")
 
 	confExcludePattern := flag.String("exclude-pattern", "", "regex pattern to exclude files from scan (optional)")
+
+  var ldapConfig ldap.Config
+  flag.StringVar(&ldapConfig.BindUser, "ldap-bind-user", "", "the bind user to bind to LDAP with (required for LDAP)")
+	flag.StringVar(&ldapConfig.BindPass, "ldap-bind-pass", "", "the password of the LDAP bind user (required for LDAP)")
+	flag.StringVar(&ldapConfig.BaseDN, "ldap-base-dn", "", "the base DN for LDAP objects (required for LDAP)")
+  flag.StringVar(&ldapConfig.Filter, "ldap-filter", "(uid=*)", "the filter to select LDAP objects with (optional)")
+
+	flag.StringVar(&ldapConfig.FQDN, "ldap-fqdn", "", "the name of the server to connect to (required for LDAP)")
+	flag.UintVar(&ldapConfig.Port, "ldap-port", 389, "what port the LDAP server is hosted on (optional)")
+  flag.BoolVar(&ldapConfig.TLS, "ldap-tls", false, "whether gonic will connect to the LDAP server using TLS (optional)")
+
+  if ldapConfig.FQDN != "" {
+    if ldapConfig.BindUser == "" || ldapConfig.BindPass == "" || ldapConfig.BaseDN == "" {
+      log.Fatal("a server was provided for an LDAP connection, but configuration is incomplete")
+    }
+  }
 
 	var confMultiValueGenre, confMultiValueArtist, confMultiValueAlbumArtist multiValueSetting
 	flag.Var(&confMultiValueGenre, "multi-value-genre", "setting for mutli-valued genre scanning (optional)")
