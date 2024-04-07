@@ -94,7 +94,7 @@ func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPa
 	chain := handlerutil.Chain(
 		withParams,
 		withRequiredParams,
-		c.withUser,
+		withUser(dbc),
 	)
 	chainRaw := handlerutil.Chain(
 		chain,
@@ -224,47 +224,49 @@ func withRequiredParams(next http.Handler) http.Handler {
 	})
 }
 
-func (c *Controller) withUser(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		params := r.Context().Value(CtxParams).(params.Params)
-		// ignoring errors here, a middleware has already ensured they exist
-		username, _ := params.Get("u")
-		password, _ := params.Get("p")
-		token, _ := params.Get("t")
-		salt, _ := params.Get("s")
+func withUser(dbc *db.DB) handlerutil.Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			params := r.Context().Value(CtxParams).(params.Params)
+			// ignoring errors here, a middleware has already ensured they exist
+			username, _ := params.Get("u")
+			password, _ := params.Get("p")
+			token, _ := params.Get("t")
+			salt, _ := params.Get("s")
 
-		passwordAuth := token == "" && salt == ""
-		tokenAuth := password == ""
-		if tokenAuth == passwordAuth {
-			_ = writeResp(w, r, spec.NewError(10,
-				"please provide `t` and `s`, or just `p`"))
-			return
-		}
-		user := c.dbc.GetUserByName(username)
-
-		var credsOk bool
-		if tokenAuth && user != nil {
-			credsOk = checkCredsToken(user.Password, token, salt)
-		} else if user != nil {
-			credsOk = checkCredsBasic(user.Password, password)
-		}
-		if !credsOk {
-			// Because internal authentication failed, we can now try to use LDAP, if
-			// it was enabled by the user.
-			ok, err := ldap.CheckLDAPcreds(username, password, c.dbc)
-			if err != nil {
-				_ = writeResp(w, r, spec.NewError(40, err.Error()))
+			passwordAuth := token == "" && salt == ""
+			tokenAuth := password == ""
+			if tokenAuth == passwordAuth {
+				_ = writeResp(w, r, spec.NewError(10,
+					"please provide `t` and `s`, or just `p`"))
 				return
 			}
+			user := dbc.GetUserByName(username)
 
-			if !ok {
-				_ = writeResp(w, r, spec.NewError(40, "invalid password"))
-				return
+			var credsOk bool
+			if tokenAuth && user != nil {
+				credsOk = checkCredsToken(user.Password, token, salt)
+			} else if user != nil {
+				credsOk = checkCredsBasic(user.Password, password)
 			}
-		}
-		withUser := context.WithValue(r.Context(), CtxUser, user)
-		next.ServeHTTP(w, r.WithContext(withUser))
-	})
+			if !credsOk {
+				// Because internal authentication failed, we can now try to use LDAP,
+				// if it was enabled by the user.
+				ok, err := ldap.CheckLDAPcreds(username, password, dbc)
+				if err != nil {
+					_ = writeResp(w, r, spec.NewError(40, err.Error()))
+					return
+				}
+
+				if !ok {
+					_ = writeResp(w, r, spec.NewError(40, "invalid password"))
+					return
+				}
+			}
+			withUser := context.WithValue(r.Context(), CtxUser, user)
+			next.ServeHTTP(w, r.WithContext(withUser))
+		})
+	}
 }
 
 func slow(next http.Handler) http.Handler {
