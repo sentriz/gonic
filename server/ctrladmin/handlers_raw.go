@@ -21,7 +21,7 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 	if user == nil || password != user.Password {
 		// Because internal authentication failed, we can now try to use LDAP, if
 		// it was enabled by the user.
-		ok, err := ldap.CheckLDAPcreds(username, password, c.dbc)
+		ok, err := ldap.CheckLDAPcreds(username, password, c.dbc, c.ldapConfig)
 		if err != nil {
 			sessAddFlashW(session, []string{err.Error()})
 		} else if !ok {

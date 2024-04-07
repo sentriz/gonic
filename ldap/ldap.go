@@ -11,32 +11,29 @@ import (
 )
 
 type Config struct {
-  BindUser string
-  BindPass string
-  BaseDN   string
-  Filter   string
+	BindUser string
+	BindPass string
+	BaseDN   string
+	Filter   string
 
-  FQDN string
-  Port uint
-  TLS  bool
+	FQDN string
+	Port uint
+	TLS  bool
 }
 
-func CheckLDAPcreds(username string, password string, dbc *db.DB) (bool, error) {
-	ldapFQDN, err := dbc.GetSetting("ldap_fqdn")
+func (c Config) IsSetup() bool {
+	// This is basically checking if LDAP is setup, if ldapFQDN isn't set we can
+	// assume that the user hasn't configured LDAP.
+	return c.FQDN != ""
+}
 
-	// This checks if LDAP is setup or not.
-	if ldapFQDN == "" || err != nil {
-		return false, err
+func CheckLDAPcreds(username string, password string, dbc *db.DB, config Config) (bool, error) {
+	if !config.IsSetup() {
+		return false, nil
 	}
 
-	// The configuration page wouldn't allow these setting to not be set
-	// while LDAP is enabled (a FQDN/IP is set).
-	ldapPort, _ := dbc.GetSetting("ldap_port")
-	baseDN, _ := dbc.GetSetting("ldap_base_dn")
-	tls, _ := dbc.GetSetting("ldap_tls")
-
 	// Now, we can try to connect to the LDAP server.
-	l, err := createLDAPconnection(tls, ldapFQDN, ldapPort)
+	l, err := createLDAPconnection(config)
 	if err != nil {
 		// Return a generic error.
 		log.Println("Failed to connect to LDAP server:", err)
@@ -45,14 +42,14 @@ func CheckLDAPcreds(username string, password string, dbc *db.DB) (bool, error) 
 	defer l.Close()
 
 	// Create the user if it doesn't exist on the database already.
-	err = createUserFromLDAP(username, dbc, l)
+	err = createUserFromLDAP(username, dbc, config, l)
 	if err != nil {
 		return false, err
 	}
 
 	// After we have a connection, let's try binding
 	_, err = l.SimpleBind(&ldap.SimpleBindRequest{
-		Username: fmt.Sprintf("uid=%s,%s", username, baseDN),
+		Username: fmt.Sprintf("uid=%s,%s", username, config.BaseDN),
 		Password: password,
 	})
 
@@ -65,33 +62,20 @@ func CheckLDAPcreds(username string, password string, dbc *db.DB) (bool, error) 
 }
 
 // Creates a user from creds
-func createUserFromLDAP(username string, dbc *db.DB, l *ldap.Conn) error {
+func createUserFromLDAP(username string, dbc *db.DB, config Config, l *ldap.Conn) error {
 	user := dbc.GetUserByName(username)
 	if user != nil {
 		return nil
 	}
 
-	ldapFQDN, err := dbc.GetSetting("ldap_fqdn")
-
-	// This is basically checking if LDAP is setup, if ldapFQDN isn't set we can
-	// assume that the user hasn't configured LDAP.
-	if ldapFQDN == "" {
+	if !config.IsSetup() {
 		return nil
-	} else if err != nil {
-		return err
 	}
 
-	// The configuration page wouldn't allow these setting to not be set
-	// while LDAP is enabled (a FQDN/IP is set).
-	bindUID, _ := dbc.GetSetting("ldap_bind_user")
-	bindPWD, _ := dbc.GetSetting("ldap_bind_user_password")
-	baseDN, _ := dbc.GetSetting("ldap_base_dn")
-	filter, _ := dbc.GetSetting("ldap_filter")
-
 	// After we have a connection, let's try binding
-	_, err = l.SimpleBind(&ldap.SimpleBindRequest{
-		Username: fmt.Sprintf("uid=%s,%s", bindUID, baseDN),
-		Password: bindPWD,
+	_, err := l.SimpleBind(&ldap.SimpleBindRequest{
+		Username: fmt.Sprintf("uid=%s,%s", config.BindUser, config.BaseDN),
+		Password: config.BindPass,
 	})
 	if err != nil {
 		log.Println("Failed to bind to LDAP:", err)
@@ -99,9 +83,9 @@ func createUserFromLDAP(username string, dbc *db.DB, l *ldap.Conn) error {
 	}
 
 	searchReq := ldap.NewSearchRequest(
-		baseDN,
+		config.BaseDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(&%s(uid=%s))", filter, ldap.EscapeFilter(username)),
+		fmt.Sprintf("(&%s(uid=%s))", config.Filter, ldap.EscapeFilter(username)),
 		[]string{"dn"},
 		nil,
 	)
@@ -131,16 +115,16 @@ func createUserFromLDAP(username string, dbc *db.DB, l *ldap.Conn) error {
 }
 
 // Creates a connection to an LDAP server.
-func createLDAPconnection(tls string, fqdn string, port string) (*ldap.Conn, error) {
+func createLDAPconnection(config Config) (*ldap.Conn, error) {
 	protocol := "ldap"
-	if tls == "true" {
+	if config.TLS {
 		protocol = "ldaps"
 	}
 
 	// Now, we can try to connect to the LDAP server.
-	l, err := ldap.DialURL(fmt.Sprintf("%s://%s:%s", protocol, fqdn, port))
+	l, err := ldap.DialURL(fmt.Sprintf("%s://%s:%d", protocol, config.FQDN, config.Port))
 	if err != nil {
-		// Warn the server and return a generic error.
+		// Warn the server and return the error.
 		log.Println("Failed to connect to LDAP server", err)
 		return nil, err
 	}

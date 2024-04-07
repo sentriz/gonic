@@ -70,7 +70,7 @@ type Controller struct {
 	resolveProxyPath ProxyPathResolver
 }
 
-func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPath string, cacheAudioPath string, cacheCoverPath string, jukebox *jukebox.Jukebox, playlistStore *playlist.Store, scrobblers []scrobble.Scrobbler, podcasts *podcast.Podcasts, transcoder transcode.Transcoder, lastFMClient *lastfm.Client, artistInfoCache *artistinfocache.ArtistInfoCache, albumInfoCache *albuminfocache.AlbumInfoCache, resolveProxyPath ProxyPathResolver) (*Controller, error) {
+func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPath string, cacheAudioPath string, cacheCoverPath string, jukebox *jukebox.Jukebox, playlistStore *playlist.Store, scrobblers []scrobble.Scrobbler, podcasts *podcast.Podcasts, transcoder transcode.Transcoder, lastFMClient *lastfm.Client, artistInfoCache *artistinfocache.ArtistInfoCache, albumInfoCache *albuminfocache.AlbumInfoCache, resolveProxyPath ProxyPathResolver, ldapConfig ldap.Config) (*Controller, error) {
 	c := Controller{
 		ServeMux: http.NewServeMux(),
 
@@ -94,7 +94,7 @@ func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPa
 	chain := handlerutil.Chain(
 		withParams,
 		withRequiredParams,
-		withUser(dbc),
+		withUser(dbc, ldapConfig),
 	)
 	chainRaw := handlerutil.Chain(
 		chain,
@@ -224,7 +224,7 @@ func withRequiredParams(next http.Handler) http.Handler {
 	})
 }
 
-func withUser(dbc *db.DB) handlerutil.Middleware {
+func withUser(dbc *db.DB, ldapConfig ldap.Config) handlerutil.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			params := r.Context().Value(CtxParams).(params.Params)
@@ -252,7 +252,7 @@ func withUser(dbc *db.DB) handlerutil.Middleware {
 			if !credsOk {
 				// Because internal authentication failed, we can now try to use LDAP,
 				// if it was enabled by the user.
-				ok, err := ldap.CheckLDAPcreds(username, password, dbc)
+				ok, err := ldap.CheckLDAPcreds(username, password, dbc, ldapConfig)
 				if err != nil {
 					_ = writeResp(w, r, spec.NewError(40, err.Error()))
 					return
