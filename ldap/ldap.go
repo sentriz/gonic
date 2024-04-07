@@ -4,12 +4,56 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	"go.senan.xyz/gonic/db"
 
 	"github.com/go-ldap/ldap/v3"
 )
 
+var ldapStore = make(LDAPStore)
+
+// LDAPStore maps users to a cached password
+type LDAPStore map[string]CachedLDAPpassword
+
+// Add caches a password username set.
+func (store *LDAPStore) Add(username, password string) {
+	newStore := *store
+	newStore[username] = CachedLDAPpassword{
+		Password:  password,
+		ExpiresAt: time.Now().Add(time.Hour * 8), // Keep the password valid for 8 hours.
+	}
+
+	store = &newStore
+}
+
+// IsValid checks if a user's password is stored in the cache and checks if a
+// given password is valid.
+func (store LDAPStore) IsValid(username, password string) bool {
+	cached, ok := store[username]
+	if !ok {
+		return false
+	}
+
+	if cached.Password != password {
+		return false
+	}
+
+	return cached.IsValid()
+}
+
+// CachedLDAPpassword stores an LDAP user's password and a time at which the
+// server should no longer accept it.
+type CachedLDAPpassword struct {
+	Password  string
+	ExpiresAt time.Time
+}
+
+func (password CachedLDAPpassword) IsValid() bool {
+	return password.ExpiresAt.After(time.Now())
+}
+
+// Cofig stores the user's LDAP server options.
 type Config struct {
 	BindUser string
 	BindPass string
@@ -34,6 +78,13 @@ func CheckLDAPcreds(username string, password string, dbc *db.DB, config Config)
 		return false, nil
 	}
 
+	if ldapStore.IsValid(username, password) {
+		log.Println("Password authenticated via cache!")
+		return true, nil
+	}
+
+	log.Println("Checking password against LDAP server ...")
+
 	// Now, we can try to connect to the LDAP server.
 	l, err := createLDAPconnection(config)
 	if err != nil {
@@ -57,6 +108,8 @@ func CheckLDAPcreds(username string, password string, dbc *db.DB, config Config)
 	})
 
 	if err == nil {
+		// Authentication was OK
+		ldapStore.Add(username, password)
 		return true, nil
 	}
 
@@ -86,8 +139,6 @@ func createUserFromLDAP(username string, dbc *db.DB, config Config, l *ldap.Conn
 		Password: "", // no password because we want auth to fail.
 		IsAdmin:  isAdmin,
 	}
-
-	log.Println(username, isAdmin)
 
 	err := dbc.Create(&newUser).Error
 	if err != nil {
