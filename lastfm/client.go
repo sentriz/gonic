@@ -291,7 +291,11 @@ func (c *Client) GetCurrentUser(user *db.User) (User, error) {
 }
 
 func (c *Client) makeRequest(method string, params url.Values) (LastFM, error) {
-	req, _ := http.NewRequest(method, BaseURL, nil)
+	req, err := http.NewRequest(method, BaseURL, nil)
+	if err != nil {
+		return LastFM{}, fmt.Errorf("create request: %w", err)
+	}
+
 	req.URL.RawQuery = params.Encode()
 
 	resp, err := c.httpClient.Do(req)

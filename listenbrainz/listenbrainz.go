@@ -75,7 +75,11 @@ func (c *Client) Scrobble(user db.User, track scrobble.Track, stamp time.Time, s
 	submitURL := fmt.Sprintf("%s%s", user.ListenBrainzURL, submitPath)
 	authHeader := fmt.Sprintf("Token %s", user.ListenBrainzToken)
 
-	req, _ := http.NewRequest(http.MethodPost, submitURL, &payloadBuf)
+	req, err := http.NewRequest(http.MethodPost, submitURL, &payloadBuf)
+	if err != nil {
+		return fmt.Errorf("create submit request: %w", err)
+	}
+
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", authHeader)
 
