@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/pprof"
+	"net/url"
 	"os"
 	"os/signal"
 	"path"
@@ -244,7 +245,9 @@ func main() {
 	scrobblers := []scrobble.Scrobbler{lastfmClient, listenbrainzClient}
 
 	resolveProxyPath := func(in string) string {
-		return path.Join(*confProxyPrefix, in)
+		url, _ := url.Parse(in)
+		url.Path = path.Join(*confProxyPrefix, url.Path)
+		return url.String()
 	}
 
 	ctrlAdmin, err := ctrladmin.New(dbc, sessDB, scannr, podcast, lastfmClient, resolveProxyPath)
