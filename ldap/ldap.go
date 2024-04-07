@@ -129,6 +129,7 @@ func createUserFromLDAP(username string, dbc *db.DB, config Config, l *ldap.Conn
 	}
 
 	isAdmin := doesLDAPAdminExist(username, config, l)
+	log.Println(username, isAdmin)
 
 	if doesLDAPUserExist(username, config, l) && !isAdmin {
 		return errors.New("no such user")
