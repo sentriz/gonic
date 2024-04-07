@@ -14,7 +14,9 @@ type Config struct {
 	BindUser string
 	BindPass string
 	BaseDN   string
-	Filter   string
+
+	Filter      string
+	AdminFilter string
 
 	FQDN string
 	Port uint
@@ -44,6 +46,7 @@ func CheckLDAPcreds(username string, password string, dbc *db.DB, config Config)
 	// Create the user if it doesn't exist on the database already.
 	err = createUserFromLDAP(username, dbc, config, l)
 	if err != nil {
+		log.Println("Failed to create user from LDAP:", err)
 		return false, err
 	}
 
@@ -72,20 +75,37 @@ func createUserFromLDAP(username string, dbc *db.DB, config Config, l *ldap.Conn
 		return nil
 	}
 
-	// After we have a connection, let's try binding
-	_, err := l.SimpleBind(&ldap.SimpleBindRequest{
-		Username: fmt.Sprintf("uid=%s,%s", config.BindUser, config.BaseDN),
-		Password: config.BindPass,
-	})
-	if err != nil {
-		log.Println("Failed to bind to LDAP:", err)
-		return errors.New("wrong username or password")
+	isAdmin := doesLDAPAdminExist(username, config, l)
+
+	if doesLDAPUserExist(username, config, l) && !isAdmin {
+		return errors.New("no such user")
 	}
+
+	newUser := db.User{
+		Name:     username,
+		Password: "", // no password because we want auth to fail.
+		IsAdmin:  isAdmin,
+	}
+
+	log.Println(username, isAdmin)
+
+	err := dbc.Create(&newUser).Error
+	if err != nil {
+		return err
+	}
+
+	log.Println("User created via LDAP:", username)
+	return nil
+}
+
+// doesLDAPAdminExist checks if an admin exists on the server.
+func doesLDAPAdminExist(username string, config Config, l *ldap.Conn) bool {
+	filter := fmt.Sprintf("(&(uid=%s)%s)", ldap.EscapeFilter(username), config.AdminFilter)
 
 	searchReq := ldap.NewSearchRequest(
 		config.BaseDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(&%s(uid=%s))", config.Filter, ldap.EscapeFilter(username)),
+		filter,
 		[]string{"dn"},
 		nil,
 	)
@@ -93,25 +113,39 @@ func createUserFromLDAP(username string, dbc *db.DB, config Config, l *ldap.Conn
 	result, err := l.Search(searchReq)
 	if err != nil {
 		log.Println("failed to query LDAP server:", err)
+		return false
 	}
 
-	switch len(result.Entries) {
-	case 1:
-		user := db.User{
-			Name:     username,
-			Password: "", // no password because we want auth to fail.
-		}
-
-		if err := dbc.Create(&user).Error; err != nil {
-			log.Println("User created via LDAP:", username)
-		}
-
-		return nil
-	case 0:
-		return errors.New("invalid username")
-	default:
-		return errors.New("ambiguous user")
+	if len(result.Entries) == 1 {
+		return true
 	}
+
+	return false
+}
+
+// doesLDAPUserExist checks if a user exists on the server.
+func doesLDAPUserExist(username string, config Config, l *ldap.Conn) bool {
+	filter := fmt.Sprintf("(&(uid=%s)%s)", ldap.EscapeFilter(username), config.Filter)
+
+	searchReq := ldap.NewSearchRequest(
+		config.BaseDN,
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		filter,
+		[]string{"dn"},
+		nil,
+	)
+
+	result, err := l.Search(searchReq)
+	if err != nil {
+		log.Println("failed to query LDAP server:", err)
+		return false
+	}
+
+	if len(result.Entries) == 1 {
+		return true
+	}
+
+	return false
 }
 
 // Creates a connection to an LDAP server.
@@ -127,6 +161,16 @@ func createLDAPconnection(config Config) (*ldap.Conn, error) {
 		// Warn the server and return the error.
 		log.Println("Failed to connect to LDAP server", err)
 		return nil, err
+	}
+
+	// After we have a connection, let's try binding
+	_, err = l.SimpleBind(&ldap.SimpleBindRequest{
+		Username: fmt.Sprintf("uid=%s,%s", config.BindUser, config.BaseDN),
+		Password: config.BindPass,
+	})
+	if err != nil {
+		log.Println("Failed to bind to LDAP:", err)
+		return nil, errors.New("wrong username or password")
 	}
 
 	return l, nil

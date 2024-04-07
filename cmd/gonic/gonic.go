@@ -87,7 +87,9 @@ func main() {
 	flag.StringVar(&ldapConfig.BindUser, "ldap-bind-user", "", "the bind user to bind to LDAP with (required for LDAP)")
 	flag.StringVar(&ldapConfig.BindPass, "ldap-bind-pass", "", "the password of the LDAP bind user (required for LDAP)")
 	flag.StringVar(&ldapConfig.BaseDN, "ldap-base-dn", "", "the base DN for LDAP objects (required for LDAP)")
+
 	flag.StringVar(&ldapConfig.Filter, "ldap-filter", "(uid=*)", "the filter to select LDAP objects with (optional)")
+	flag.StringVar(&ldapConfig.Filter, "ldap-admin-filter", "(memberof=cn=admin)", "the filter to select LDAP objects with (optional)")
 
 	flag.StringVar(&ldapConfig.FQDN, "ldap-fqdn", "", "the name of the server to connect to (required for LDAP)")
 	flag.UintVar(&ldapConfig.Port, "ldap-port", 389, "what port the LDAP server is hosted on (optional)")
