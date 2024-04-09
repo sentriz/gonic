@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/pprof"
+	"net/url"
 	"os"
 	"os/signal"
 	"path"
@@ -263,7 +264,9 @@ func main() {
 	scrobblers := []scrobble.Scrobbler{lastfmClient, listenbrainzClient}
 
 	resolveProxyPath := func(in string) string {
-		return path.Join(*confProxyPrefix, in)
+		url, _ := url.Parse(in)
+		url.Path = path.Join(*confProxyPrefix, url.Path)
+		return url.String()
 	}
 
 	ctrlAdmin, err := ctrladmin.New(dbc, sessDB, scannr, podcast, lastfmClient, resolveProxyPath, ldapConfig)
@@ -317,7 +320,9 @@ func main() {
 		mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 	}
 
-	errgrp, ctx := errgroup.WithContext(context.Background())
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+	errgrp, ctx := errgroup.WithContext(ctx)
 
 	errgrp.Go(func() error {
 		defer logJob("http")()
@@ -334,7 +339,10 @@ func main() {
 		if *confTLSCert != "" && *confTLSKey != "" {
 			return server.ListenAndServeTLS(*confTLSCert, *confTLSKey)
 		}
-		return server.ListenAndServe()
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			return err
+		}
+		return nil
 	})
 
 	errgrp.Go(func() error {
@@ -458,20 +466,7 @@ func main() {
 		return nil
 	})
 
-	errShutdown := errors.New("shutdown")
-
-	errgrp.Go(func() error {
-		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-sigChan:
-			return errShutdown
-		}
-	})
-
-	if err := errgrp.Wait(); err != nil && !errors.Is(err, errShutdown) {
+	if err := errgrp.Wait(); err != nil {
 		log.Panic(err)
 	}
 

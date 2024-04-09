@@ -13,7 +13,7 @@ import (
 type TagLib struct{}
 
 func (TagLib) CanRead(absPath string) bool {
-	switch ext := filepath.Ext(absPath); ext {
+	switch ext := strings.ToLower(filepath.Ext(absPath)); ext {
 	case ".mp3", ".flac", ".aac", ".m4a", ".m4b", ".ogg", ".opus", ".wma", ".wav", ".wv":
 		return true
 	}
