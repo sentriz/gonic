@@ -1,5 +1,13 @@
 # Changelog
 
+### [0.16.5](https://www.github.com/sentriz/gonic/compare/v0.16.4...v0.16.5) (2024-04-20)
+
+
+### Bug Fixes
+
+* **admin:** better handing of resolve proxy path escaping ([7b21e82](https://www.github.com/sentriz/gonic/commit/7b21e82aaf511d36300fd9cf2dae32a1196a4f77)), closes [#493](https://www.github.com/sentriz/gonic/issues/493)
+* **taglib:** support lower case filenames again ([8a0fa05](https://www.github.com/sentriz/gonic/commit/8a0fa05c7cdcb98066c263fea72af0715864bea5)), closes [#491](https://www.github.com/sentriz/gonic/issues/491)
+
 ### [0.16.4](https://www.github.com/sentriz/gonic/compare/v0.16.3...v0.16.4) (2024-03-20)
 
 
