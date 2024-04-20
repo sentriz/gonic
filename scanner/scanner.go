@@ -139,9 +139,7 @@ func (s *Scanner) ExecuteWatch(ctx context.Context) error {
 		select {
 		case <-batchT.C:
 			if batchClean {
-				var so ScanOptions
-				so.IsFull = false
-				if _, err := s.ScanAndClean(so); err != nil {
+				if _, err := s.ScanAndClean(ScanOptions{}); err != nil {
 					log.Printf("error scanning: %v", err)
 				}
 				clear(batchSeen)
