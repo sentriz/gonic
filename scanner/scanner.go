@@ -173,7 +173,7 @@ func (s *Scanner) ExecuteWatch(ctx context.Context) error {
 			clear(batchSeen)
 
 		case event := <-watcher.Events:
-			if (event.Op&(fsnotify.Remove) == fsnotify.Remove) {
+			if event.Op&(fsnotify.Remove) == fsnotify.Remove {
 				batchClean = true
 				break
 			}
