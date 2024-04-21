@@ -134,9 +134,18 @@ func (s *Scanner) ExecuteWatch(ctx context.Context) error {
 	}
 
 	batchSeen := map[string]struct{}{}
+	batchClean := false
 	for {
 		select {
 		case <-batchT.C:
+			if batchClean {
+				if _, err := s.ScanAndClean(ScanOptions{}); err != nil {
+					log.Printf("error scanning: %v", err)
+				}
+				clear(batchSeen)
+				batchClean = false
+				break
+			}
 			if !s.StartScanning() {
 				break
 			}
@@ -164,6 +173,10 @@ func (s *Scanner) ExecuteWatch(ctx context.Context) error {
 			clear(batchSeen)
 
 		case event := <-watcher.Events:
+			if event.Op&(fsnotify.Remove) == fsnotify.Remove {
+				batchClean = true
+				break
+			}
 			if event.Op&(fsnotify.Create|fsnotify.Write) == 0 {
 				break
 			}
