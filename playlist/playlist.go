@@ -99,7 +99,7 @@ func (s *Store) Read(relPath string) (*Playlist, error) {
 
 	playlist.UserID, err = userIDFromPath(relPath)
 	if err != nil {
-		return nil, fmt.Errorf("convert id to str: %w", err)
+		playlist.UserID = 1
 	}
 
 	playlist.Name = strings.TrimSuffix(filepath.Base(relPath), filepath.Ext(relPath))
