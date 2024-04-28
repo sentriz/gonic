@@ -273,7 +273,7 @@ func main() {
 	mux.Handle("/admin/", http.StripPrefix("/admin", chain(ctrlAdmin)))
 	mux.Handle("/rest/", http.StripPrefix("/rest", chain(trim(ctrlSubsonic))))
 	mux.Handle("/ping", chain(handlerutil.Message("ok")))
-	mux.Handle("/", chain(handlerutil.Redirect(resolveProxyPath("/admin/home"))))
+	mux.Handle("/", chain(http.RedirectHandler(resolveProxyPath("/admin/home"), http.StatusSeeOther)))
 
 	if *confExpvar {
 		mux.Handle("/debug/vars", expvar.Handler())
