@@ -7,7 +7,7 @@ pkgdesc="Library for reading and editing metadata of several popular audio forma
 url="https://taglib.github.io/"
 arch="all"
 license="LGPL-2.1-only OR MPL-1.1"
-makedepends="zlib-dev git cmake samurai"
+makedepends="zlib-dev utfcpp cmake samurai"
 checkdepends="cppunit-dev"
 subpackages="
 	$pkgname-dev
@@ -23,8 +23,6 @@ builddir="$srcdir/taglib-$pkgver"
 #     - CVE-2018-11439
 
 build() {
-    git clone --depth=1 --branch v3.2.5 https://github.com/nemtrif/utfcpp.git 3rdparty/utfcpp
-
     CFLAGS="$CFLAGS -flto=auto" \
         CXXFLAGS="$CXXFLAGS -flto=auto" \
         cmake -B build -G Ninja \
@@ -35,7 +33,8 @@ build() {
         -DBUILD_EXAMPLES=OFF \
         -DBUILD_TESTING="$(want_check && echo ON || echo OFF)" \
         -DVISIBILITY_HIDDEN=ON
-    cmake --build build
+    CPLUS_INCLUDE_PATH="/usr/include/utf8cpp" \
+        cmake --build build
 }
 
 check() {
