@@ -1,4 +1,4 @@
-FROM alpine:3.18 AS builder-taglib
+FROM alpine:3.19 AS builder-taglib
 WORKDIR /tmp
 COPY alpine/taglib/APKBUILD .
 RUN apk update && \
@@ -26,7 +26,7 @@ RUN go mod download
 COPY . .
 RUN GOOS=linux go build -o gonic cmd/gonic/gonic.go
 
-FROM alpine:3.18
+FROM alpine:3.19
 LABEL org.opencontainers.image.source https://github.com/sentriz/gonic
 RUN apk add -U --no-cache \
     ffmpeg \
