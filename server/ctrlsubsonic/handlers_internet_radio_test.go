@@ -86,7 +86,7 @@ func runTestCase(t *testing.T, h handlerSubsonic, q url.Values, admin bool) *spe
 		}
 
 		var jsonUnmarshalTypeError *json.UnmarshalTypeError
-		if errors.As(err, &jsonSyntaxError) {
+		if errors.As(err, &jsonUnmarshalTypeError) {
 			t.Fatalf("invalid type at offset %v\n %s <--", jsonUnmarshalTypeError.Offset, body[0:jsonUnmarshalTypeError.Offset])
 		}
 
