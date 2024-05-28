@@ -21,11 +21,16 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
+type artist struct {
+	db.Artist
+	ImageURL string
+}
+
 func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
-	var artists []*db.Artist
-	q := c.dbc.
+	var artists []*artist
+	q := c.dbc.Model(&artist{}).
 		Select("artists.*, artist_infos.image_url, count(album_artists.album_id) album_count").
 		Joins("LEFT JOIN artist_infos ON artist_infos.id=artists.id").
 		Joins("JOIN album_artists ON album_artists.artist_id=artists.id").
@@ -38,7 +43,7 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 			Joins("JOIN albums ON albums.id=album_artists.album_id").
 			Where("albums.root_dir=?", m)
 	}
-	if err := q.Find(&artists).Error; err != nil {
+	if err := q.Scan(&artists).Error; err != nil {
 		return spec.NewError(10, "error finding artists: %v", err)
 	}
 	// [a-z#] -> 27
@@ -53,7 +58,10 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 			}
 			resp = append(resp, indexMap[key])
 		}
-		indexMap[key].Artists = append(indexMap[key].Artists, spec.NewArtistByTags(artist))
+		if artist.ImageURL != "" {
+			artist.Info = &db.ArtistInfo{ImageURL: artist.ImageURL}
+		}
+		indexMap[key].Artists = append(indexMap[key].Artists, spec.NewArtistByTags(&artist.Artist))
 	}
 	sub := spec.NewResponse()
 	sub.Artists = &spec.Artists{
