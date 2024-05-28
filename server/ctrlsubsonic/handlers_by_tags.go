@@ -26,11 +26,11 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	var artists []*db.Artist
 	q := c.dbc.
-		Select("*, count(album_artists.album_id) album_count").
+		Select("artists.*, artist_infos.image_url, count(album_artists.album_id) album_count").
+		Joins("LEFT JOIN artist_infos ON artist_infos.id=artists.id").
 		Joins("JOIN album_artists ON album_artists.artist_id=artists.id").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
-		Preload("Info").
 		Group("artists.id").
 		Order("artists.name COLLATE NOCASE")
 	if m := getMusicFolder(c.musicPaths, params); m != "" {
