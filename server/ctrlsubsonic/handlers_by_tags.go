@@ -49,7 +49,7 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 	// [a-z#] -> 27
 	indexMap := make(map[string]*spec.Index, 27)
 	resp := make([]*spec.Index, 0, 27)
-	for _, artist := range artists {
+	for i, artist := range artists {
 		key := lowerUDecOrHash(artist.IndexName())
 		if _, ok := indexMap[key]; !ok {
 			indexMap[key] = &spec.Index{
@@ -59,9 +59,9 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 			resp = append(resp, indexMap[key])
 		}
 		if artist.ImageURL != "" {
-			artist.Info = &db.ArtistInfo{ImageURL: artist.ImageURL}
+			artists[i].Info = &db.ArtistInfo{ImageURL: artist.ImageURL}
 		}
-		indexMap[key].Artists = append(indexMap[key].Artists, spec.NewArtistByTags(&artist.Artist))
+		indexMap[key].Artists = append(indexMap[key].Artists, spec.NewArtistByTags(&artists[i].Artist))
 	}
 	sub := spec.NewResponse()
 	sub.Artists = &spec.Artists{
