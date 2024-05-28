@@ -21,16 +21,21 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
+type artist struct {
+	db.Artist
+	ImageURL string
+}
+
 func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
-	var artists []*db.Artist
-	q := c.dbc.
-		Select("*, count(album_artists.album_id) album_count").
+	var artists []*artist
+	q := c.dbc.Model(&artist{}).
+		Select("artists.*, artist_infos.image_url, count(album_artists.album_id) album_count").
+		Joins("LEFT JOIN artist_infos ON artist_infos.id=artists.id").
 		Joins("JOIN album_artists ON album_artists.artist_id=artists.id").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
-		Preload("Info").
 		Group("artists.id").
 		Order("artists.name COLLATE NOCASE")
 	if m := getMusicFolder(c.musicPaths, params); m != "" {
@@ -38,13 +43,13 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 			Joins("JOIN albums ON albums.id=album_artists.album_id").
 			Where("albums.root_dir=?", m)
 	}
-	if err := q.Find(&artists).Error; err != nil {
+	if err := q.Scan(&artists).Error; err != nil {
 		return spec.NewError(10, "error finding artists: %v", err)
 	}
 	// [a-z#] -> 27
 	indexMap := make(map[string]*spec.Index, 27)
 	resp := make([]*spec.Index, 0, 27)
-	for _, artist := range artists {
+	for i, artist := range artists {
 		key := lowerUDecOrHash(artist.IndexName())
 		if _, ok := indexMap[key]; !ok {
 			indexMap[key] = &spec.Index{
@@ -53,7 +58,10 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 			}
 			resp = append(resp, indexMap[key])
 		}
-		indexMap[key].Artists = append(indexMap[key].Artists, spec.NewArtistByTags(artist))
+		if artist.ImageURL != "" {
+			artists[i].Info = &db.ArtistInfo{ImageURL: artist.ImageURL}
+		}
+		indexMap[key].Artists = append(indexMap[key].Artists, spec.NewArtistByTags(&artists[i].Artist))
 	}
 	sub := spec.NewResponse()
 	sub.Artists = &spec.Artists{
@@ -192,8 +200,9 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	// TODO: think about removing this extra join to count number
 	// of children. it might make sense to store that in the db
 	q.
-		Select("albums.*, count(tracks.id) child_count, sum(tracks.length) duration").
-		Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
+		Select(`albums.*,
+			(SELECT count(*) FROM tracks WHERE album_id = albums.id) child_count,
+			(SELECT sum(length) FROM tracks WHERE album_id = albums.id) duration`).
 		Group("albums.id").
 		Joins("JOIN album_artists ON album_artists.album_id=albums.id").
 		Offset(params.GetOrInt("offset", 0)).
