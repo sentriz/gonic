@@ -20,7 +20,8 @@
           "isVideo": false,
           "parent": "al-2",
           "title": "album-0",
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "replayGain": null
         },
         {
           "id": "al-4",
@@ -35,7 +36,8 @@
           "isVideo": false,
           "parent": "al-2",
           "title": "album-1",
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "replayGain": null
         },
         {
           "id": "al-5",
@@ -50,7 +52,8 @@
           "isVideo": false,
           "parent": "al-2",
           "title": "album-2",
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "replayGain": null
         },
         {
           "id": "al-7",
@@ -65,7 +68,8 @@
           "isVideo": false,
           "parent": "al-6",
           "title": "album-0",
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "replayGain": null
         },
         {
           "id": "al-8",
@@ -80,7 +84,8 @@
           "isVideo": false,
           "parent": "al-6",
           "title": "album-1",
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "replayGain": null
         },
         {
           "id": "al-9",
@@ -95,7 +100,8 @@
           "isVideo": false,
           "parent": "al-6",
           "title": "album-2",
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "replayGain": null
         },
         {
           "id": "al-11",
@@ -110,7 +116,8 @@
           "isVideo": false,
           "parent": "al-10",
           "title": "album-0",
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "replayGain": null
         },
         {
           "id": "al-12",
@@ -125,7 +132,8 @@
           "isVideo": false,
           "parent": "al-10",
           "title": "album-1",
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "replayGain": null
         },
         {
           "id": "al-13",
@@ -140,7 +148,8 @@
           "isVideo": false,
           "parent": "al-10",
           "title": "album-2",
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "replayGain": null
         }
       ]
     }

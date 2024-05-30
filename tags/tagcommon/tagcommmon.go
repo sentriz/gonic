@@ -24,9 +24,15 @@ type Info interface {
 	Genres() []string
 	TrackNumber() int
 	DiscNumber() int
+	Year() int
+
+	ReplayGainTrackGain() float32
+	ReplayGainTrackPeak() float32
+	ReplayGainAlbumGain() float32
+	ReplayGainAlbumPeak() float32
+
 	Length() int
 	Bitrate() int
-	Year() int
 }
 
 const (

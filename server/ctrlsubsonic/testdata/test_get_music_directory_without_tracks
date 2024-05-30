@@ -23,7 +23,8 @@
           "isVideo": false,
           "parent": "al-2",
           "title": "album-0",
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "replayGain": null
         },
         {
           "id": "al-4",
@@ -38,7 +39,8 @@
           "isVideo": false,
           "parent": "al-2",
           "title": "album-1",
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "replayGain": null
         },
         {
           "id": "al-5",
@@ -53,7 +55,8 @@
           "isVideo": false,
           "parent": "al-2",
           "title": "album-2",
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "replayGain": null
         }
       ]
     }

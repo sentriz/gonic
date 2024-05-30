@@ -169,6 +169,13 @@ type TranscodeMeta struct {
 	TranscodedSuffix      string `xml:"transcodedSuffix,attr,omitempty"      json:"transcodedSuffix,omitempty"`
 }
 
+type ReplayGain struct {
+	TrackGain float32 `xml:"trackGain,attr" json:"trackGain"`
+	TrackPeak float32 `xml:"trackPeak,attr" json:"trackPeak"`
+	AlbumGain float32 `xml:"albumGain,attr" json:"albumGain"`
+	AlbumPeak float32 `xml:"albumPeak,attr" json:"albumPeak"`
+}
+
 // https://opensubsonic.netlify.app/docs/responses/child/
 type TrackChild struct {
 	ID      *specid.ID `xml:"id,attr,omitempty"          json:"id,omitempty"`
@@ -210,6 +217,8 @@ type TrackChild struct {
 	Starred       *time.Time `xml:"starred,attr,omitempty"         json:"starred,omitempty"`
 	UserRating    int        `xml:"userRating,attr,omitempty"      json:"userRating,omitempty"`
 	AverageRating string     `xml:"averageRating,attr,omitempty"   json:"averageRating,omitempty"`
+
+	ReplayGain *ReplayGain `xml:"replayGain" json:"replayGain"`
 
 	TranscodeMeta
 }

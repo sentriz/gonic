@@ -51,8 +51,14 @@ func (i *info) Genres() []string       { return find(i.raw, "genres") }
 func (i *info) TrackNumber() int       { return intSep("/", first(find(i.raw, "tracknumber"))) }                  // eg. 5/12
 func (i *info) DiscNumber() int        { return intSep("/", first(find(i.raw, "discnumber"))) }                   // eg. 1/2
 func (i *info) Year() int              { return intSep("-", first(find(i.raw, "originaldate", "date", "year"))) } // eg. 2023-12-01
-func (i *info) Length() int            { return i.props.Length }
-func (i *info) Bitrate() int           { return i.props.Bitrate }
+
+func (i *info) ReplayGainTrackGain() float32 { return dB(first(find(i.raw, "replaygain_track_gain"))) }
+func (i *info) ReplayGainTrackPeak() float32 { return flt(first(find(i.raw, "replaygain_track_peak"))) }
+func (i *info) ReplayGainAlbumGain() float32 { return dB(first(find(i.raw, "replaygain_album_gain"))) }
+func (i *info) ReplayGainAlbumPeak() float32 { return flt(first(find(i.raw, "replaygain_album_peak"))) }
+
+func (i *info) Length() int  { return i.props.Length }
+func (i *info) Bitrate() int { return i.props.Bitrate }
 
 func first[T comparable](is []T) T {
 	var z T
@@ -81,6 +87,17 @@ func filterStr(ss []string) []string {
 		}
 	}
 	return r
+}
+
+func flt(in string) float32 {
+	f, _ := strconv.ParseFloat(in, 32)
+	return float32(f)
+}
+func dB(in string) float32 {
+	in = strings.ToLower(in)
+	in = strings.TrimSuffix(in, " db")
+	in = strings.TrimSuffix(in, "db")
+	return flt(in)
 }
 
 func intSep(sep, in string) int {

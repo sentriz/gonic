@@ -72,6 +72,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202311072309", migrateAlbumInfo),
 		construct(ctx, "202311082304", migrateTemporaryDisplayAlbumArtist),
 		construct(ctx, "202312110003", migrateAddExtraIndexes),
+		construct(ctx, "202405301140", migrateAddReplayGainFields),
 	}
 
 	return gormigrate.
@@ -812,4 +813,8 @@ func migrateAddExtraIndexes(tx *gorm.DB, _ MigrationContext) error {
 		CREATE INDEX idx_track_artists_artist_id ON "track_artists" (artist_id);
 		CREATE INDEX idx_artist_appearances_album_id ON "artist_appearances" (album_id);
 	`).Error
+}
+
+func migrateAddReplayGainFields(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(Track{}).Error
 }

@@ -469,8 +469,14 @@ func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trags tagcommon.
 	track.TagDiscNumber = trags.DiscNumber()
 	track.TagBrainzID = trags.BrainzID()
 
-	track.Length = trags.Length()   // these two should be calculated
-	track.Bitrate = trags.Bitrate() // ...from the file instead of tags
+	track.ReplayGainTrackGain = trags.ReplayGainTrackGain()
+	track.ReplayGainTrackPeak = trags.ReplayGainTrackPeak()
+	track.ReplayGainAlbumGain = trags.ReplayGainAlbumGain()
+	track.ReplayGainAlbumPeak = trags.ReplayGainAlbumPeak()
+
+	// these two are calculated from the file instead of tags
+	track.Length = trags.Length()
+	track.Bitrate = trags.Bitrate()
 
 	if err := tx.Save(&track).Error; err != nil {
 		return fmt.Errorf("saving track: %w", err)

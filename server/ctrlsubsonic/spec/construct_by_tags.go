@@ -112,6 +112,14 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 	for _, a := range album.Artists {
 		ret.AlbumArtists = append(ret.AlbumArtists, &ArtistRef{ID: a.SID(), Name: a.Name})
 	}
+	if t.ReplayGainTrackGain != 0 || t.ReplayGainAlbumGain != 0 {
+		ret.ReplayGain = &ReplayGain{
+			TrackGain: t.ReplayGainTrackGain,
+			TrackPeak: t.ReplayGainTrackPeak,
+			AlbumGain: t.ReplayGainAlbumGain,
+			AlbumPeak: t.ReplayGainAlbumPeak,
+		}
+	}
 	return ret
 }
 

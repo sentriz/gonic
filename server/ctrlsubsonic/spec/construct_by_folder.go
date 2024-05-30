@@ -102,6 +102,14 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 	for _, a := range t.Artists {
 		trCh.Artists = append(trCh.Artists, &ArtistRef{ID: a.SID(), Name: a.Name})
 	}
+	if t.ReplayGainTrackGain != 0 || t.ReplayGainAlbumGain != 0 {
+		trCh.ReplayGain = &ReplayGain{
+			TrackGain: t.ReplayGainTrackGain,
+			TrackPeak: t.ReplayGainTrackPeak,
+			AlbumGain: t.ReplayGainAlbumGain,
+			AlbumPeak: t.ReplayGainAlbumPeak,
+		}
+	}
 	return trCh
 }
 

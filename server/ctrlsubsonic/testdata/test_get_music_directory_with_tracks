@@ -33,7 +33,8 @@
           "discNumber": 1,
           "type": "music",
           "year": 2021,
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "replayGain": null
         },
         {
           "id": "tr-2",
@@ -58,7 +59,8 @@
           "discNumber": 1,
           "type": "music",
           "year": 2021,
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "replayGain": null
         },
         {
           "id": "tr-3",
@@ -83,7 +85,8 @@
           "discNumber": 1,
           "type": "music",
           "year": 2021,
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "replayGain": null
         }
       ]
     }
