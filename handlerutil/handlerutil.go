@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type Middleware func(http.Handler) http.Handler
@@ -30,8 +31,10 @@ func TrimPathSuffix(suffix string) Middleware {
 func Log(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sw := &statusWriter{ResponseWriter: w}
+		t := time.Now()
 		next.ServeHTTP(sw, r)
-		log.Printf("response %s %s %v", statusToBlock(sw.status), r.Method, r.URL)
+		duration := time.Since(t).Seconds()
+		log.Printf("response [%.3fs] %s %s %v", duration, statusToBlock(sw.status), r.Method, r.URL)
 	})
 }
 
