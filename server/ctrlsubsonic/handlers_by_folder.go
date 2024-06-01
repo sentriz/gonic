@@ -1,9 +1,11 @@
 package ctrlsubsonic
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/jinzhu/gorm"
 
@@ -18,6 +20,24 @@ import (
 // an track to be the it's respective folder that comes directly
 // under the root directory
 
+// optimization: use left join instead of Preload
+type album struct {
+	*db.Album
+	StarDate *time.Time
+	Rating   sql.NullInt64
+}
+
+func (a album) getAlbum() *db.Album {
+	album := a.Album
+	if a.Rating.Valid {
+		album.AlbumRating = &db.AlbumRating{Rating: int(a.Rating.Int64)}
+	}
+	if a.StarDate != nil {
+		album.AlbumStar = &db.AlbumStar{StarDate: *a.StarDate}
+	}
+	return album
+}
+
 func (c *Controller) ServeGetIndexes(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
@@ -29,15 +49,16 @@ func (c *Controller) ServeGetIndexes(r *http.Request) *spec.Response {
 		rootQ = rootQ.
 			Where("root_dir=?", m)
 	}
-	var folders []*db.Album
+	var folders []album
 	c.dbc.
-		Select("*, (SELECT count(*) FROM albums sub WHERE sub.parent_id=albums.id) child_count").
-		Preload("AlbumStar", "user_id=?", user.ID).
-		Preload("AlbumRating", "user_id=?", user.ID).
+		Select("albums.*, star_date, rating, (SELECT count(*) FROM albums sub WHERE sub.parent_id=albums.id) child_count").
 		Where("albums.parent_id IN ?", rootQ.SubQuery()).
+		Joins("LEFT JOIN album_stars s ON s.album_id = albums.id AND s.user_id = ?", user.ID).
+		Joins("LEFT JOIN album_ratings r ON r.album_id = albums.id AND r.user_id = ?", user.ID).
 		Group("albums.id").
 		Order("albums.right_path COLLATE NOCASE").
 		Find(&folders)
+
 	// [a-z#] -> 27
 	indexMap := make(map[string]*spec.Index, 27)
 	resp := make([]*spec.Index, 0, 27)
@@ -50,7 +71,7 @@ func (c *Controller) ServeGetIndexes(r *http.Request) *spec.Response {
 			}
 			resp = append(resp, indexMap[key])
 		}
-		indexMap[key].Artists = append(indexMap[key].Artists, spec.NewArtistByFolder(folder))
+		indexMap[key].Artists = append(indexMap[key].Artists, spec.NewArtistByFolder(folder.getAlbum()))
 	}
 	sub := spec.NewResponse()
 	sub.Indexes = &spec.Indexes{
