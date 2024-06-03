@@ -22,7 +22,7 @@ func TestGetSetting(t *testing.T) {
 	key := SettingKey(randKey())
 	value := "howdy"
 
-	testDB, err := NewMock()
+	testDB, err := New("sqlite3://:memory:")
 	if err != nil {
 		t.Fatalf("error creating db: %v", err)
 	}
