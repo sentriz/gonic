@@ -39,6 +39,7 @@ import (
 	"go.senan.xyz/gonic/jukebox"
 	"go.senan.xyz/gonic/lastfm"
 	"go.senan.xyz/gonic/listenbrainz"
+	"go.senan.xyz/gonic/listenwith"
 	"go.senan.xyz/gonic/playlist"
 	"go.senan.xyz/gonic/podcast"
 	"go.senan.xyz/gonic/scanner"
@@ -172,6 +173,10 @@ func main() {
 	if confMultiValueArtist.Mode != confMultiValueAlbumArtist.Mode {
 		log.Panic("differing multi artist and album artist modes have been tested yet. please set them to be the same")
 	}
+	// Setup Listenwith functionality
+	buddies := &listenwith.Buddies
+	ctrladmin.Buddies = buddies
+	ctrlsubsonic.Buddies = buddies
 
 	log.Printf("starting gonic v%s\n", gonic.Version)
 	log.Printf("provided config\n")

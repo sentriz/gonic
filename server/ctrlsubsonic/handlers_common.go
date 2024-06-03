@@ -16,12 +16,17 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/listenwith"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specidpaths"
+)
+
+var (
+	Buddies *listenwith.ListenWith
 )
 
 func (c *Controller) ServeGetLicence(_ *http.Request) *spec.Response {
@@ -57,7 +62,8 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 	optStamp := params.GetOrTime("time", time.Now())
 	optSubmission := params.GetOrBool("submission", true)
 
-	var scrobbleTrack scrobble.Track
+	var scrobbleTrack
+ scrobble.Track
 
 	switch id.Type {
 	case specid.Track:
@@ -117,6 +123,27 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 				scrobbleErrs[i] = err
 			}
 		}(i)
+		// If current user has any buddies, try and scrobble them too
+		if (*Buddies)[user.Name] == nil {
+			Buddies.AddUser(user)
+		}
+		if !(*Buddies)[user.Name].IsEmpty() {
+			log.Println((*Buddies)[user.Name])
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
+				for b := range (*Buddies)[user.Name].Iter() {
+					bu := c.dbc.GetUserByName(b)
+					if bu == nil { //Attempt to get user by name failed
+						continue
+					}
+					err = c.scrobblers[i].Scrobble(*bu, scrobbleTrack, optStamp, optSubmission)
+					if err != nil {
+						log.Printf("error submitting for buddy \"%s\": %v", b, err)
+					}
+				}
+			}(i)
+		}
 	}
 
 	wg.Wait()

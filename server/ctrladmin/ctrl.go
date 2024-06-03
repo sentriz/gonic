@@ -100,6 +100,8 @@ func New(dbc *db.DB, sessDB *gormstore.Store, scanner *scanner.Scanner, podcasts
 	c.Handle("/unlink_listenbrainz_do", userChain(resp(c.ServeUnlinkListenBrainzDo)))
 	c.Handle("/create_transcode_pref_do", userChain(resp(c.ServeCreateTranscodePrefDo)))
 	c.Handle("/delete_transcode_pref_do", userChain(resp(c.ServeDeleteTranscodePrefDo)))
+	c.Handle("/start_listen_with_do", userChain(resp(c.ServeStartListenWithDo)))
+	c.Handle("/stop_listen_with_do", userChain(resp(c.ServeStopListenWithDo)))
 
 	// admin routes (if session is valid, and is admin)
 	c.Handle("/create_user", adminChain(resp(c.ServeCreateUser)))
@@ -284,6 +286,8 @@ type templateData struct {
 	IsScanning           bool
 	TranscodePreferences []*db.TranscodePreference
 	TranscodeProfiles    []string
+	ListeningCandidates  []string
+	ListeningWith        []string
 
 	CurrentLastFMAPIKey    string
 	CurrentLastFMAPISecret string
