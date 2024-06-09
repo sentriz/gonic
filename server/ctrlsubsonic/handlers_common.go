@@ -25,10 +25,6 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specidpaths"
 )
 
-var (
-	Buddies *listenwith.ListenWith
-)
-
 func (c *Controller) ServeGetLicence(_ *http.Request) *spec.Response {
 	sub := spec.NewResponse()
 	sub.Licence = &spec.Licence{
@@ -62,8 +58,7 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 	optStamp := params.GetOrTime("time", time.Now())
 	optSubmission := params.GetOrBool("submission", true)
 
-	var scrobbleTrack
- scrobble.Track
+	var scrobbleTrack scrobble.Track
 
 	switch id.Type {
 	case specid.Track:
@@ -124,17 +119,16 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 			}
 		}(i)
 		// If current user has any buddies, try and scrobble them too
-		if (*Buddies)[user.Name] == nil {
-			Buddies.AddUser(user)
+		if listenwith.GetListeners(user) == nil {
+			listenwith.AddUser(user)
 		}
-		if !(*Buddies)[user.Name].IsEmpty() {
-			log.Println((*Buddies)[user.Name])
+		if !listenwith.GetListeners(user).IsEmpty() {
 			wg.Add(1)
 			go func(i int) {
 				defer wg.Done()
-				for b := range (*Buddies)[user.Name].Iter() {
+				for b := range listenwith.GetListeners(user).Iter() {
 					bu := c.dbc.GetUserByName(b)
-					if bu == nil { //Attempt to get user by name failed
+					if bu == nil { // Attempt to get user by name failed
 						continue
 					}
 					err = c.scrobblers[i].Scrobble(*bu, scrobbleTrack, optStamp, optSubmission)

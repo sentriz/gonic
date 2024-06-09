@@ -24,10 +24,6 @@ import (
 	"go.senan.xyz/gonic/transcode"
 )
 
-var (
-	Buddies *listenwith.ListenWith
-)
-
 func (c *Controller) ServeNotFound(_ *http.Request) *Response {
 	return &Response{template: "not_found.tmpl", code: 404}
 }
@@ -79,10 +75,10 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	a := c.dbc.DB
 	a.Find(&allUsers)
 	data.ListeningCandidates = listenwith.ListeningCandidates(allUsers, user.Name)
-	if listenwith.Inverted[user.Name] == nil {
+	if listenwith.GetInverted(user) == nil {
 		data.ListeningWith = []string{}
 	} else {
-		data.ListeningWith = listenwith.Inverted[user.Name].ToSlice()
+		data.ListeningWith = listenwith.GetInverted(user).ToSlice()
 	}
 	sort.Strings(data.ListeningCandidates)
 	sort.Strings(data.ListeningWith)
@@ -602,8 +598,8 @@ func (c *Controller) ServeStartListenWithDo(r *http.Request) *Response {
 
 	buddyUser := c.dbc.GetUserByName(r.FormValue("buddy"))
 	log.Println("adding listener", user.Name, "to user", buddyUser.Name)
-	Buddies.AddListener(buddyUser, user)
-	log.Println("buddies list for", buddyUser.Name, "-", (*Buddies)[buddyUser.Name])
+	listenwith.AddListener(buddyUser, user)
+	log.Println("buddies list for", buddyUser.Name, "-", listenwith.GetListeners(buddyUser))
 
 	return &Response{
 		redirect: "/admin/home",
@@ -615,8 +611,8 @@ func (c *Controller) ServeStopListenWithDo(r *http.Request) *Response {
 
 	buddyUser := c.dbc.GetUserByName(r.FormValue("buddy"))
 	log.Println("removing listener", user.Name, "to user", buddyUser.Name)
-	Buddies.RemoveListener(buddyUser, user)
-	log.Println("buddies list for", buddyUser.Name, "-", (*Buddies)[buddyUser.Name])
+	listenwith.RemoveListener(buddyUser, user)
+	log.Println("buddies list for", buddyUser.Name, "-", listenwith.GetListeners(buddyUser))
 
 	return &Response{
 		redirect: "/admin/home",
