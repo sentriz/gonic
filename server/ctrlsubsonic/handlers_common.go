@@ -118,14 +118,14 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 			}
 		}(i)
 		// If current user has any buddies, try and scrobble them too
-		if c.listenerGraph.GetListeners(user) == nil {
-			c.listenerGraph.AddUser(user)
+		if c.listenerGroup.GetListeners(user) == nil {
+			c.listenerGroup.AddUser(user)
 		}
-		if !c.listenerGraph.GetListeners(user).IsEmpty() {
+		if len(c.listenerGroup.GetListeners(user)) != 0 {
 			wg.Add(1)
 			go func(i int) {
 				defer wg.Done()
-				for b := range c.listenerGraph.GetListeners(user).Iter() {
+				for _, b := range c.listenerGroup.GetListeners(user) {
 					bu := c.dbc.GetUserByName(b)
 					if bu == nil { // Attempt to get user by name failed
 						continue

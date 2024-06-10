@@ -48,13 +48,13 @@ type Controller struct {
 	scanner          *scanner.Scanner
 	podcasts         *podcast.Podcasts
 	lastfmClient     *lastfm.Client
-	listenerGraph    *listenwith.ListenerGraph
+	listenerGroup    *listenwith.ListenerGroup
 	resolveProxyPath ProxyPathResolver
 }
 
 type ProxyPathResolver func(in string) string
 
-func New(dbc *db.DB, sessDB *gormstore.Store, scanner *scanner.Scanner, podcasts *podcast.Podcasts, lastfmClient *lastfm.Client, listenerGraph *listenwith.ListenerGraph, resolveProxyPath ProxyPathResolver) (*Controller, error) {
+func New(dbc *db.DB, sessDB *gormstore.Store, scanner *scanner.Scanner, podcasts *podcast.Podcasts, lastfmClient *lastfm.Client, listenerGroup *listenwith.ListenerGroup, resolveProxyPath ProxyPathResolver) (*Controller, error) {
 	c := Controller{
 		ServeMux: http.NewServeMux(),
 
@@ -63,7 +63,7 @@ func New(dbc *db.DB, sessDB *gormstore.Store, scanner *scanner.Scanner, podcasts
 		scanner:          scanner,
 		podcasts:         podcasts,
 		lastfmClient:     lastfmClient,
-		listenerGraph:    listenerGraph,
+		listenerGroup:    listenerGroup,
 		resolveProxyPath: resolveProxyPath,
 	}
 

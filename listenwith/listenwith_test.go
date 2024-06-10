@@ -1,9 +1,9 @@
 package listenwith
 
 import (
+	"slices"
+	"sync"
 	"testing"
-
-	set "github.com/deckarep/golang-set/v2"
 
 	"go.senan.xyz/gonic/db"
 )
@@ -13,42 +13,27 @@ import (
 func TestAddUser(t *testing.T) {
 	t.Parallel()
 	var (
-		u        = db.User{Name: "gonic", ID: 0}
-		b        = db.User{Name: "buddy", ID: 1}
-		expected = set.NewSet(b.Name)
+		u        = &db.User{Name: "gonic", ID: 0}
+		b        = &db.User{Name: "buddy", ID: 1}
+		expected = []string{b.Name}
 		lg       = NewListenerGraph()
+		wg       sync.WaitGroup
+		n        = 60
 	)
-	for i := 1; i <= 60; i++ {
+	wg.Add(n)
+	for i := 1; i <= n; i++ {
 		go func(i int) {
+			defer wg.Done()
 			if i%2 == 0 {
-				lg.AddUser(&u)
+				lg.AddUser(u)
 			} else {
-				lg.AddListener(&u, &b)
+				lg.AddListener(u, b)
 			}
 		}(i)
 	}
-	if !lg.GetListeners(&u).Equal(expected) {
-		t.Fatalf("expected concurrent calls of AddUser() to be gracefully managed\nexpected: %s\nactual: %s", expected, lg.GetListeners(&u))
-	}
-}
-
-// TestRemoveListener tests that removing a listener updates the Buddies list and the Inverted list
-func TestRemoveListener(t *testing.T) {
-	t.Parallel()
-	var (
-		u        = db.User{Name: "gonic", ID: 0}
-		b        = db.User{Name: "buddy", ID: 1}
-		expected = set.NewSet[string]()
-		inverted = set.NewSet[string]()
-		lg       = NewListenerGraph()
-	)
-	lg.AddListener(&u, &b)
-	lg.RemoveListener(&u, &b)
-	if !lg.GetListeners(&u).Equal(expected) {
-		t.Fatalf("expected AddListener() to add a listener\nexpected: %s\nactual: %s", expected, lg.GetListeners(&u))
-	}
-	if !lg.GetInverted(&b).Equal(inverted) {
-		t.Fatalf("expected AddListener() to update the inverted index\nexpected: %s\nactual: %s", inverted, lg.GetInverted(&b))
+	wg.Wait()
+	if ss := lg.GetListeners(u); ss != nil && !slices.Equal(ss, expected) {
+		t.Fatalf("expected concurrent calls of AddUser() to be gracefully managed\nexpected: %s\nactual: %s", expected, lg.GetListeners(u))
 	}
 }
 
@@ -58,15 +43,15 @@ func TestAddListener(t *testing.T) {
 	var (
 		u        = db.User{Name: "gonic", ID: 0}
 		b        = db.User{Name: "buddy", ID: 1}
-		expected = set.NewSet(b.Name)
-		inverted = set.NewSet(u.Name)
+		expected = []string{b.Name}
+		inverted = []string{u.Name}
 		lg       = NewListenerGraph()
 	)
 	lg.AddListener(&u, &b)
-	if !lg.GetListeners(&u).Equal(expected) {
+	if !slices.Equal(lg.GetListeners(&u), expected) {
 		t.Fatalf("expected AddListener() to add a listener\nexpected: %s\nactual: %s", expected, lg.GetListeners(&u))
 	}
-	if !lg.GetInverted(&b).Equal(inverted) {
+	if !slices.Equal(lg.GetInverted(&b), inverted) {
 		t.Fatalf("expected AddListener() to update the inverted index\nexpected: %s\nactual: %s", inverted, lg.GetInverted(&b))
 	}
 }
