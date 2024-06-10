@@ -104,6 +104,37 @@
 {{ end }}
 
 {{ component "block" (props .
+   "Icon" "users"
+   "Name" "listen with a friend"
+   "Desc" "if you're listening along while someone else on the server plays music, you can have those tracks scrobble to your account by turning on this feature, then turning it back off after you're done"
+) }}
+    <div class="grid grid-cols-[1fr_1fr_auto] gap-2 items-center justify-items-end">
+        <form class="contents" method="post" action="/admin/start_listen_with_do">
+        <select name="buddy">
+        {{ range $candidate := .ListeningCandidates }}<option value="{{ $candidate }}">{{ $candidate }}</option>{{ end }}
+        </select>
+        <input type="hidden" name="user" value="{{ .User.Name }}" />
+        <input type="submit" value="start">
+        </form>
+    </div>
+    <div class="grid grid-cols-[1fr_1fr_auto] gap-2 items-center justify-items-end">
+    {{ if .ListeningWith }}
+
+        <form class="contents" method="post" action="/admin/stop_listen_with_do">
+
+        <select name="buddy">
+        {{ range $buddy := .ListeningWith }} <option value="{{ $buddy }}">{{ $buddy }}</option>{{ end }}
+        </select>
+        <input type="submit" value="stop">
+        </form>
+
+    {{ else }}
+        <p class="font-bold text-red-400">not currently listening with anyone</p>
+    {{ end }}
+    </div>
+{{ end }}
+
+{{ component "block" (props .
     "Icon" "lastfm"
     "Name" "last.fm"
     "Desc" "scrobble to last.fm on a per user basis. adding an api key will also help gonic get rich artist info and images for subsonic clients"

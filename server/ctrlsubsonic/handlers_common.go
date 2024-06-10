@@ -117,6 +117,26 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 				scrobbleErrs[i] = err
 			}
 		}(i)
+		// If current user has any buddies, try and scrobble them too
+		if c.listenerGroup.GetListeners(user) == nil {
+			c.listenerGroup.AddUser(user)
+		}
+		if len(c.listenerGroup.GetListeners(user)) != 0 {
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
+				for _, b := range c.listenerGroup.GetListeners(user) {
+					bu := c.dbc.GetUserByName(b)
+					if bu == nil { // Attempt to get user by name failed
+						continue
+					}
+					err = c.scrobblers[i].Scrobble(*bu, scrobbleTrack, optStamp, optSubmission)
+					if err != nil {
+						log.Printf("error submitting for buddy \"%s\": %v", b, err)
+					}
+				}
+			}(i)
+		}
 	}
 
 	wg.Wait()

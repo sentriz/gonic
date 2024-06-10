@@ -19,6 +19,7 @@ import (
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/handlerutil"
 	"go.senan.xyz/gonic/listenbrainz"
+	"go.senan.xyz/gonic/listenwith"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/transcode"
 )
@@ -69,6 +70,18 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 		data.TranscodeProfiles = append(data.TranscodeProfiles, profile)
 	}
 	sort.Strings(data.TranscodeProfiles)
+	// listening with box
+	var allUsers []*db.User
+	a := c.dbc.DB
+	a.Find(&allUsers)
+	data.ListeningCandidates = listenwith.ListeningCandidates(allUsers, user.Name)
+	if c.listenerGroup.GetInverted(user) == nil {
+		data.ListeningWith = []string{}
+	} else {
+		data.ListeningWith = c.listenerGroup.GetInverted(user)
+	}
+	sort.Strings(data.ListeningCandidates)
+	sort.Strings(data.ListeningWith)
 	// podcasts box
 	c.dbc.Find(&data.Podcasts)
 
@@ -574,6 +587,32 @@ func (c *Controller) ServeInternetRadioStationDeleteDo(r *http.Request) *Respons
 	if err := c.dbc.Where("id=?", stationID).Delete(&db.InternetRadioStation{}).Error; err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("deleting radio station: %v", err)}}
 	}
+
+	return &Response{
+		redirect: "/admin/home",
+	}
+}
+
+func (c *Controller) ServeStartListenWithDo(r *http.Request) *Response {
+	user := r.Context().Value(CtxUser).(*db.User)
+
+	buddyUser := c.dbc.GetUserByName(r.FormValue("buddy"))
+	log.Println("adding listener", user.Name, "to user", buddyUser.Name)
+	c.listenerGroup.AddListener(buddyUser, user)
+	log.Println("buddies list for", buddyUser.Name, "-", c.listenerGroup.GetListeners(buddyUser))
+
+	return &Response{
+		redirect: "/admin/home",
+	}
+}
+
+func (c *Controller) ServeStopListenWithDo(r *http.Request) *Response {
+	user := r.Context().Value(CtxUser).(*db.User)
+
+	buddyUser := c.dbc.GetUserByName(r.FormValue("buddy"))
+	log.Println("removing listener", user.Name, "to user", buddyUser.Name)
+	c.listenerGroup.RemoveListener(buddyUser, user)
+	log.Println("buddies list for", buddyUser.Name, "-", c.listenerGroup.GetListeners(buddyUser))
 
 	return &Response{
 		redirect: "/admin/home",

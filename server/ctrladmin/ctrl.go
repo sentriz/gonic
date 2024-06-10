@@ -27,6 +27,7 @@ import (
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/handlerutil"
 	"go.senan.xyz/gonic/lastfm"
+	"go.senan.xyz/gonic/listenwith"
 	"go.senan.xyz/gonic/podcast"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/server/ctrladmin/adminui"
@@ -47,12 +48,13 @@ type Controller struct {
 	scanner          *scanner.Scanner
 	podcasts         *podcast.Podcasts
 	lastfmClient     *lastfm.Client
+	listenerGroup    *listenwith.ListenerGroup
 	resolveProxyPath ProxyPathResolver
 }
 
 type ProxyPathResolver func(in string) string
 
-func New(dbc *db.DB, sessDB *gormstore.Store, scanner *scanner.Scanner, podcasts *podcast.Podcasts, lastfmClient *lastfm.Client, resolveProxyPath ProxyPathResolver) (*Controller, error) {
+func New(dbc *db.DB, sessDB *gormstore.Store, scanner *scanner.Scanner, podcasts *podcast.Podcasts, lastfmClient *lastfm.Client, listenerGroup *listenwith.ListenerGroup, resolveProxyPath ProxyPathResolver) (*Controller, error) {
 	c := Controller{
 		ServeMux: http.NewServeMux(),
 
@@ -61,6 +63,7 @@ func New(dbc *db.DB, sessDB *gormstore.Store, scanner *scanner.Scanner, podcasts
 		scanner:          scanner,
 		podcasts:         podcasts,
 		lastfmClient:     lastfmClient,
+		listenerGroup:    listenerGroup,
 		resolveProxyPath: resolveProxyPath,
 	}
 
@@ -100,6 +103,8 @@ func New(dbc *db.DB, sessDB *gormstore.Store, scanner *scanner.Scanner, podcasts
 	c.Handle("/unlink_listenbrainz_do", userChain(resp(c.ServeUnlinkListenBrainzDo)))
 	c.Handle("/create_transcode_pref_do", userChain(resp(c.ServeCreateTranscodePrefDo)))
 	c.Handle("/delete_transcode_pref_do", userChain(resp(c.ServeDeleteTranscodePrefDo)))
+	c.Handle("/start_listen_with_do", userChain(resp(c.ServeStartListenWithDo)))
+	c.Handle("/stop_listen_with_do", userChain(resp(c.ServeStopListenWithDo)))
 
 	// admin routes (if session is valid, and is admin)
 	c.Handle("/create_user", adminChain(resp(c.ServeCreateUser)))
@@ -284,6 +289,8 @@ type templateData struct {
 	IsScanning           bool
 	TranscodePreferences []*db.TranscodePreference
 	TranscodeProfiles    []string
+	ListeningCandidates  []string
+	ListeningWith        []string
 
 	CurrentLastFMAPIKey    string
 	CurrentLastFMAPISecret string
