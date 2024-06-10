@@ -56,5 +56,17 @@ func (lg *ListenerGroup) RemoveListener(u, l *db.User) {
 	lg.inverted[l.Name].Remove(u.Name)
 }
 
-func (lg *ListenerGroup) GetListeners(u *db.User) []string { return lg.buddies[u.Name].ToSlice() }
-func (lg *ListenerGroup) GetInverted(u *db.User) []string  { return lg.inverted[u.Name].ToSlice() }
+func (lg *ListenerGroup) GetListeners(u *db.User) []string {
+	if lg.buddies[u.Name] == nil {
+		return []string{}
+	}
+	return lg.buddies[u.Name].ToSlice()
+}
+
+func (lg *ListenerGroup) GetInverted(u *db.User) []string {
+	if lg.inverted[u.Name] == nil {
+		return []string{}
+	}
+	return lg.inverted[u.Name].ToSlice()
+
+}
