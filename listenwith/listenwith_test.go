@@ -20,6 +20,17 @@ func TestAddUser(t *testing.T) {
 		wg       sync.WaitGroup
 		n        = 60
 	)
+	// We use a WaitGroup here to ensure that some combination of AddUser() and
+	// AddListener() run before GetListeners() runs. This may seem contrary to
+	// testing concurrency, but what we are really interested in is whether,
+	// given a concurrent initialization of a user and a request to add a
+	// listener to that user, the end result is the same regardless of the order
+	// these events execute in. We make no guarantees that a read of a user's
+	// listeners which is concurrent with the write of a user to that list will
+	// reflect that user being added. In practice the only thing this should
+	// affect is whether a scrobble which happens concurrently with a user
+	// registering themselves as a listener will be propagated to that user,
+	// which is a relatively minor risk.
 	wg.Add(n)
 	for i := 1; i <= n; i++ {
 		go func(i int) {

@@ -8,65 +8,66 @@ import (
 )
 
 type (
-	listenSet     map[string]set.Set[string]
 	ListenerGroup struct {
-		mu       sync.Mutex
-		buddies  listenSet
-		inverted listenSet
+		buddies  sync.Map
+		inverted sync.Map
 	}
 )
 
 func NewListenerGraph() *ListenerGroup {
 	return &ListenerGroup{
-		buddies:  make(listenSet),
-		inverted: make(listenSet),
+		buddies:  sync.Map{},
+		inverted: sync.Map{},
 	}
 }
 
 func (lg *ListenerGroup) AddUser(u *db.User) {
-	if lg.buddies[u.Name] == nil {
-		lg.buddies[u.Name] = set.NewSet[string]()
+	if _, ok := lg.buddies.Load(u.Name); !ok {
+		lg.buddies.LoadOrStore(u.Name, set.NewSet[string]())
 	}
 }
 
 func (lg *ListenerGroup) AddListener(u, l *db.User) {
-	lg.mu.Lock()
-	defer lg.mu.Unlock()
-	if lg.buddies[u.Name] == nil {
+	if _, ok := lg.buddies.Load(u.Name); !ok {
 		lg.AddUser(u)
 	}
-	lg.buddies[u.Name].Add(l.Name)
+	s, _ := lg.buddies.Load(u.Name)
+	s.(set.Set[string]).Add(l.Name)
 	// add to inverted index
-	if lg.inverted[l.Name] == nil {
-		lg.inverted[l.Name] = set.NewSet[string]()
+	if _, ok := lg.inverted.Load(l.Name); !ok {
+		lg.inverted.LoadOrStore(l.Name, set.NewSet[string]())
 	}
-	lg.inverted[l.Name].Add(u.Name)
+	s, _ = lg.inverted.Load(l.Name)
+	s.(set.Set[string]).Add(u.Name)
 }
 
 func (lg *ListenerGroup) RemoveListener(u, l *db.User) {
-	if lg.buddies[u.Name] == nil {
+	if _, ok := lg.buddies.Load(u.Name); !ok {
 		lg.AddUser(u)
 	}
 
-	lg.buddies[u.Name].Remove(l.Name)
+	s, _ := lg.buddies.Load(u.Name)
+	s.(set.Set[string]).Remove(l.Name)
 	// remove from inverted index
-	if lg.inverted[l.Name] == nil {
-		lg.inverted[l.Name] = set.NewSet[string]()
+	if _, ok := lg.inverted.Load(l.Name); !ok {
+		lg.inverted.LoadOrStore(l.Name, set.NewSet[string]())
 	}
-	lg.inverted[l.Name].Remove(u.Name)
+	s, _ = lg.inverted.Load(l.Name)
+	s.(set.Set[string]).Remove(u.Name)
 }
 
 func (lg *ListenerGroup) GetListeners(u *db.User) []string {
-	if lg.buddies[u.Name] == nil {
-		return []string{}
+	if _, ok := lg.buddies.Load(u.Name); !ok {
+		lg.AddUser(u)
 	}
-	return lg.buddies[u.Name].ToSlice()
+	s, _ := lg.buddies.Load(u.Name)
+	return s.(set.Set[string]).ToSlice()
 }
 
 func (lg *ListenerGroup) GetInverted(u *db.User) []string {
-	if lg.inverted[u.Name] == nil {
-		return []string{}
+	if _, ok := lg.inverted.Load(u.Name); !ok {
+		lg.inverted.LoadOrStore(u.Name, set.NewSet[string]())
 	}
-	return lg.inverted[u.Name].ToSlice()
-
+	s, _ := lg.inverted.Load(u.Name)
+	return s.(set.Set[string]).ToSlice()
 }
