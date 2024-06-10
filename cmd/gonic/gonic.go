@@ -39,6 +39,7 @@ import (
 	"go.senan.xyz/gonic/jukebox"
 	"go.senan.xyz/gonic/lastfm"
 	"go.senan.xyz/gonic/listenbrainz"
+	"go.senan.xyz/gonic/listenwith"
 	"go.senan.xyz/gonic/playlist"
 	"go.senan.xyz/gonic/podcast"
 	"go.senan.xyz/gonic/scanner"
@@ -215,6 +216,8 @@ func main() {
 	listenbrainzClient := listenbrainz.NewClient()
 	lastfmClient := lastfm.NewClient(lastfmClientKeySecretFunc)
 
+	listenerGraph := listenwith.NewListenerGraph()
+
 	playlistStore, err := playlist.NewStore(*confPlaylistsPath)
 	if err != nil {
 		log.Panicf("error creating playlists store: %v", err)
@@ -250,11 +253,11 @@ func main() {
 		return url.String()
 	}
 
-	ctrlAdmin, err := ctrladmin.New(dbc, sessDB, scannr, podcast, lastfmClient, resolveProxyPath)
+	ctrlAdmin, err := ctrladmin.New(dbc, sessDB, scannr, podcast, lastfmClient, listenerGraph, resolveProxyPath)
 	if err != nil {
 		log.Panicf("error creating admin controller: %v\n", err)
 	}
-	ctrlSubsonic, err := ctrlsubsonic.New(dbc, scannr, musicPaths, *confPodcastPath, cacheDirAudio, cacheDirCovers, jukebx, playlistStore, scrobblers, podcast, transcoder, lastfmClient, artistInfoCache, albumInfoCache, resolveProxyPath)
+	ctrlSubsonic, err := ctrlsubsonic.New(dbc, scannr, musicPaths, *confPodcastPath, cacheDirAudio, cacheDirCovers, jukebx, playlistStore, scrobblers, podcast, transcoder, lastfmClient, listenerGraph, artistInfoCache, albumInfoCache, resolveProxyPath)
 	if err != nil {
 		log.Panicf("error creating subsonic controller: %v\n", err)
 	}

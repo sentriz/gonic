@@ -75,10 +75,10 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	a := c.dbc.DB
 	a.Find(&allUsers)
 	data.ListeningCandidates = listenwith.ListeningCandidates(allUsers, user.Name)
-	if listenwith.GetInverted(user) == nil {
+	if c.listenerGraph.GetInverted(user) == nil {
 		data.ListeningWith = []string{}
 	} else {
-		data.ListeningWith = listenwith.GetInverted(user).ToSlice()
+		data.ListeningWith = c.listenerGraph.GetInverted(user).ToSlice()
 	}
 	sort.Strings(data.ListeningCandidates)
 	sort.Strings(data.ListeningWith)
@@ -598,8 +598,8 @@ func (c *Controller) ServeStartListenWithDo(r *http.Request) *Response {
 
 	buddyUser := c.dbc.GetUserByName(r.FormValue("buddy"))
 	log.Println("adding listener", user.Name, "to user", buddyUser.Name)
-	listenwith.AddListener(buddyUser, user)
-	log.Println("buddies list for", buddyUser.Name, "-", listenwith.GetListeners(buddyUser))
+	c.listenerGraph.AddListener(buddyUser, user)
+	log.Println("buddies list for", buddyUser.Name, "-", c.listenerGraph.GetListeners(buddyUser))
 
 	return &Response{
 		redirect: "/admin/home",
@@ -611,8 +611,8 @@ func (c *Controller) ServeStopListenWithDo(r *http.Request) *Response {
 
 	buddyUser := c.dbc.GetUserByName(r.FormValue("buddy"))
 	log.Println("removing listener", user.Name, "to user", buddyUser.Name)
-	listenwith.RemoveListener(buddyUser, user)
-	log.Println("buddies list for", buddyUser.Name, "-", listenwith.GetListeners(buddyUser))
+	c.listenerGraph.RemoveListener(buddyUser, user)
+	log.Println("buddies list for", buddyUser.Name, "-", c.listenerGraph.GetListeners(buddyUser))
 
 	return &Response{
 		redirect: "/admin/home",

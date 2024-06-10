@@ -12,88 +12,61 @@ import (
 // result in unexpected behavior
 func TestAddUser(t *testing.T) {
 	t.Parallel()
-	t.Cleanup(resetBuddies)
-	u := db.User{
-		Name: "gonic",
-		ID:   0,
-	}
-
-	b := db.User{
-		Name: "buddy",
-		ID:   1,
-	}
-
-	expected := set.NewSet(b.Name)
-
+	var (
+		u        = db.User{Name: "gonic", ID: 0}
+		b        = db.User{Name: "buddy", ID: 1}
+		expected = set.NewSet(b.Name)
+		lg       = NewListenerGraph()
+	)
 	for i := 1; i <= 60; i++ {
 		go func(i int) {
 			if i%2 == 0 {
-				AddUser(&u)
+				lg.AddUser(&u)
 			} else {
-				AddListener(&u, &b)
+				lg.AddListener(&u, &b)
 			}
 		}(i)
 	}
-
-	if !GetListeners(&u).Equal(expected) {
-		t.Fatalf("expected concurrent calls of AddUser() to be gracefully managed\nexpected: %s\nactual: %s", expected, GetListeners(&u))
+	if !lg.GetListeners(&u).Equal(expected) {
+		t.Fatalf("expected concurrent calls of AddUser() to be gracefully managed\nexpected: %s\nactual: %s", expected, lg.GetListeners(&u))
 	}
 }
 
 // TestRemoveListener tests that removing a listener updates the Buddies list and the Inverted list
 func TestRemoveListener(t *testing.T) {
 	t.Parallel()
-	t.Cleanup(resetBuddies)
-	u := db.User{
-		Name: "gonic",
-		ID:   0,
+	var (
+		u        = db.User{Name: "gonic", ID: 0}
+		b        = db.User{Name: "buddy", ID: 1}
+		expected = set.NewSet[string]()
+		inverted = set.NewSet[string]()
+		lg       = NewListenerGraph()
+	)
+	lg.AddListener(&u, &b)
+	lg.RemoveListener(&u, &b)
+	if !lg.GetListeners(&u).Equal(expected) {
+		t.Fatalf("expected AddListener() to add a listener\nexpected: %s\nactual: %s", expected, lg.GetListeners(&u))
 	}
-
-	b := db.User{
-		Name: "buddy",
-		ID:   1,
-	}
-
-	expected := set.NewSet[string]()
-	expectedInverted := set.NewSet[string]()
-
-	AddListener(&u, &b)
-	RemoveListener(&u, &b)
-	if !GetListeners(&u).Equal(expected) {
-		t.Fatalf("expected AddListener() to add a listener\nexpected: %s\nactual: %s", expected, GetListeners(&u))
-	}
-	if !GetInverted(&b).Equal(expectedInverted) {
-		t.Fatalf("expected AddListener() to update the inverted index\nexpected: %s\nactual: %s", expectedInverted, GetInverted(&b))
+	if !lg.GetInverted(&b).Equal(inverted) {
+		t.Fatalf("expected AddListener() to update the inverted index\nexpected: %s\nactual: %s", inverted, lg.GetInverted(&b))
 	}
 }
 
 // TestAddListener tests that adding a listener updates the Buddies list and the Inverted list
 func TestAddListener(t *testing.T) {
 	t.Parallel()
-	t.Cleanup(resetBuddies)
-	u := db.User{
-		Name: "gonic",
-		ID:   0,
+	var (
+		u        = db.User{Name: "gonic", ID: 0}
+		b        = db.User{Name: "buddy", ID: 1}
+		expected = set.NewSet(b.Name)
+		inverted = set.NewSet(u.Name)
+		lg       = NewListenerGraph()
+	)
+	lg.AddListener(&u, &b)
+	if !lg.GetListeners(&u).Equal(expected) {
+		t.Fatalf("expected AddListener() to add a listener\nexpected: %s\nactual: %s", expected, lg.GetListeners(&u))
 	}
-
-	b := db.User{
-		Name: "buddy",
-		ID:   1,
+	if !lg.GetInverted(&b).Equal(inverted) {
+		t.Fatalf("expected AddListener() to update the inverted index\nexpected: %s\nactual: %s", inverted, lg.GetInverted(&b))
 	}
-
-	expected := set.NewSet(b.Name)
-	inverted := set.NewSet(u.Name)
-
-	AddListener(&u, &b)
-	if !GetListeners(&u).Equal(expected) {
-		t.Fatalf("expected AddListener() to add a listener\nexpected: %s\nactual: %s", expected, GetListeners(&u))
-	}
-	if !GetInverted(&b).Equal(inverted) {
-		t.Fatalf("expected AddListener() to update the inverted index\nexpected: %s\nactual: %s", inverted, GetInverted(&b))
-	}
-}
-
-func resetBuddies() {
-	buddies = make(ListenWith)
-	inverted = make(ListenWith)
 }

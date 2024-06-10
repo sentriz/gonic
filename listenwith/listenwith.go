@@ -8,61 +8,68 @@ import (
 
 type ListenWith map[string]set.Set[string]
 
-var (
-	buddies  ListenWith = make(ListenWith)
-	inverted ListenWith = make(ListenWith) // An inverted index of listeners to the users they are listening along with
-)
+type ListenerGraph struct {
+	buddies  ListenWith
+	inverted ListenWith // An inverted index of listeners to the users they are listening along with
+}
 
-func AddUser(u *db.User) {
-	if buddies[u.Name] == nil {
-		buddies[u.Name] = set.NewSet[string]()
+func NewListenerGraph() *ListenerGraph {
+	return &ListenerGraph{
+		buddies:  make(ListenWith),
+		inverted: make(ListenWith),
 	}
 }
 
-func AddListener(u, l *db.User) {
-	if buddies[u.Name] == nil {
-		AddUser(u)
+func (g *ListenerGraph) AddUser(u *db.User) {
+	if g.buddies[u.Name] == nil {
+		g.buddies[u.Name] = set.NewSet[string]()
+	}
+}
+
+func (g *ListenerGraph) AddListener(u, l *db.User) {
+	if g.buddies[u.Name] == nil {
+		g.AddUser(u)
 	}
 
-	buddies[u.Name].Add(l.Name)
-	updateInverted(l, u, "add")
+	g.buddies[u.Name].Add(l.Name)
+	g.updateInverted(l, u, "add")
 }
 
-func RemoveListener(u, l *db.User) {
-	if buddies[u.Name] == nil {
-		AddUser(u)
+func (g *ListenerGraph) RemoveListener(u, l *db.User) {
+	if g.buddies[u.Name] == nil {
+		g.AddUser(u)
 	}
 
-	buddies[u.Name].Remove(l.Name)
-	updateInverted(l, u, "rem")
+	g.buddies[u.Name].Remove(l.Name)
+	g.updateInverted(l, u, "rem")
 }
 
-func GetListeners(u *db.User) set.Set[string] {
-	return buddies[u.Name]
+func (g *ListenerGraph) GetListeners(u *db.User) set.Set[string] {
+	return g.buddies[u.Name]
 }
 
-func GetListenersSlice(u *db.User) []string {
-	return buddies[u.Name].ToSlice()
+func (g *ListenerGraph) GetListenersSlice(u *db.User) []string {
+	return g.buddies[u.Name].ToSlice()
 }
 
-func updateInverted(l, u *db.User, op string) {
-	if inverted[l.Name] == nil {
-		inverted[l.Name] = set.NewSet[string]()
+func (g *ListenerGraph) updateInverted(l, u *db.User, op string) {
+	if g.inverted[l.Name] == nil {
+		g.inverted[l.Name] = set.NewSet[string]()
 	}
 	switch op {
 	case "add":
-		inverted[l.Name].Add(u.Name)
+		g.inverted[l.Name].Add(u.Name)
 	case "rem":
-		inverted[l.Name].Remove(u.Name)
+		g.inverted[l.Name].Remove(u.Name)
 	default:
 		break
 	}
 }
 
-func GetInverted(u *db.User) set.Set[string] {
-	return inverted[u.Name]
+func (g *ListenerGraph) GetInverted(u *db.User) set.Set[string] {
+	return g.inverted[u.Name]
 }
 
-func GetInvertedSlice(u *db.User) []string {
-	return inverted[u.Name].ToSlice()
+func (g *ListenerGraph) GetInvertedSlice(u *db.User) []string {
+	return g.inverted[u.Name].ToSlice()
 }

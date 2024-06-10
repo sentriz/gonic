@@ -16,7 +16,6 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/db"
-	"go.senan.xyz/gonic/listenwith"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
@@ -119,14 +118,14 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 			}
 		}(i)
 		// If current user has any buddies, try and scrobble them too
-		if listenwith.GetListeners(user) == nil {
-			listenwith.AddUser(user)
+		if c.listenerGraph.GetListeners(user) == nil {
+			c.listenerGraph.AddUser(user)
 		}
-		if !listenwith.GetListeners(user).IsEmpty() {
+		if !c.listenerGraph.GetListeners(user).IsEmpty() {
 			wg.Add(1)
 			go func(i int) {
 				defer wg.Done()
-				for b := range listenwith.GetListeners(user).Iter() {
+				for b := range c.listenerGraph.GetListeners(user).Iter() {
 					bu := c.dbc.GetUserByName(b)
 					if bu == nil { // Attempt to get user by name failed
 						continue
