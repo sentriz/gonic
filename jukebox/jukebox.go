@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -18,7 +19,6 @@ import (
 
 	"github.com/dexterlb/mpvipc"
 	"github.com/mitchellh/mapstructure"
-	"golang.org/x/exp/slices"
 )
 
 var (

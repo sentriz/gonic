@@ -235,9 +235,15 @@ type Track struct {
 	TagTrackNumber int       `sql:"default: null"`
 	TagDiscNumber  int       `sql:"default: null"`
 	TagBrainzID    string    `sql:"default: null"`
-	TrackStar      *TrackStar
-	TrackRating    *TrackRating
-	AverageRating  float64 `sql:"default: null"`
+
+	ReplayGainTrackGain float32
+	ReplayGainTrackPeak float32
+	ReplayGainAlbumGain float32
+	ReplayGainAlbumPeak float32
+
+	TrackStar     *TrackStar
+	TrackRating   *TrackRating
+	AverageRating float64 `sql:"default: null"`
 }
 
 func (t *Track) AudioLength() int  { return t.Length }

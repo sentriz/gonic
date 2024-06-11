@@ -67,7 +67,7 @@ password can then be changed from the web interface
 | `GONIC_JUKEBOX_ENABLED`          | `-jukebox-enabled`          | **optional** whether the subsonic [jukebox api](https://airsonic.github.io/docs/jukebox/) should be enabled                                                                                                                                                                       |
 | `GONIC_JUKEBOX_MPV_EXTRA_ARGS`   | `-jukebox-mpv-extra-args`   | **optional** extra command line arguments to pass to the jukebox mpv daemon                                                                                                                                                                                                       |
 | `GONIC_PODCAST_PURGE_AGE`        | `-podcast-purge-age`        | **optional** age (in days) to purge podcast episodes if not accessed                                                                                                                                                                                                              |
-| `GONIC_EXCLUDE_PATTERN`          | `-exclude-pattern`          | **optional** files matching this regex pattern will not be imported                                                                                                                                                                                                               |
+| `GONIC_EXCLUDE_PATTERN`          | `-exclude-pattern`          | **optional** files matching this regex pattern will not be imported. eg <code>@eaDir\|[aA]rtwork\|[cC]overs\|[sS]cans\|[sS]pectrals</code>                                                                                                                                        |
 | `GONIC_MULTI_VALUE_GENRE`        | `-multi-value-genre`        | **optional** setting for multi-valued genre tags when scanning ([see more](#multi-valued-tags-v016))                                                                                                                                                                              |
 | `GONIC_MULTI_VALUE_ARTIST`       | `-multi-value-artist`       | **optional** setting for multi-valued artist tags when scanning ([see more](#multi-valued-tags-v016))                                                                                                                                                                             |
 | `GONIC_MULTI_VALUE_ALBUM_ARTIST` | `-multi-value-album-artist` | **optional** setting for multi-valued album artist tags when scanning ([see more](#multi-valued-tags-v016))                                                                                                                                                                       |
@@ -97,7 +97,7 @@ the available modes are:
 
 gonic supports multiple music folders. this can be handy if you have your music separated by albums, compilations, singles. or maybe 70s, 80s, 90s. whatever.
 
-on top of that - if you don't decide your folder names, or simply do not want the same name in your subsonic client, 
+on top of that - if you don't decide your folder names, or simply do not want the same name in your subsonic client,
 gonic can parse aliases for the folder names with the optional `ALIAS->PATH` syntax
 
 if you're running gonic with the command line, stack the `-music-path` arg

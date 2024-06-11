@@ -56,12 +56,6 @@ func BasicCORS(next http.Handler) http.Handler {
 	})
 }
 
-func Redirect(to string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, to, http.StatusSeeOther)
-	})
-}
-
 func Message(message string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, message)

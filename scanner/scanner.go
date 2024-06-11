@@ -17,6 +17,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/djherbis/times"
 	"github.com/fsnotify/fsnotify"
 	"github.com/jinzhu/gorm"
 	"github.com/rainycape/unidecode"
@@ -134,9 +135,18 @@ func (s *Scanner) ExecuteWatch(ctx context.Context) error {
 	}
 
 	batchSeen := map[string]struct{}{}
+	batchClean := false
 	for {
 		select {
 		case <-batchT.C:
+			if batchClean {
+				if _, err := s.ScanAndClean(ScanOptions{}); err != nil {
+					log.Printf("error scanning: %v", err)
+				}
+				clear(batchSeen)
+				batchClean = false
+				break
+			}
 			if !s.StartScanning() {
 				break
 			}
@@ -164,6 +174,10 @@ func (s *Scanner) ExecuteWatch(ctx context.Context) error {
 			clear(batchSeen)
 
 		case event := <-watcher.Events:
+			if event.Op&(fsnotify.Remove) == fsnotify.Remove {
+				batchClean = true
+				break
+			}
 			if event.Op&(fsnotify.Create|fsnotify.Write) == 0 {
 				break
 			}
@@ -301,9 +315,10 @@ func (s *Scanner) scanDir(tx *db.DB, st *State, absPath string) error {
 }
 
 func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db.Album, basename string, absPath string) error {
-	stat, err := os.Stat(absPath)
+	// useful to get the real create/birth time for filesystems and kernels which support it
+	timeSpec, err := times.Stat(absPath)
 	if err != nil {
-		return fmt.Errorf("stating %q: %w", basename, err)
+		return fmt.Errorf("get times %q: %w", basename, err)
 	}
 
 	var track db.Track
@@ -311,7 +326,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		return fmt.Errorf("query track: %w", err)
 	}
 
-	if !st.isFull && track.ID != 0 && stat.ModTime().Before(track.UpdatedAt) {
+	if !st.isFull && track.ID != 0 && timeSpec.ModTime().Before(track.UpdatedAt) {
 		st.seenTracks[track.ID] = struct{}{}
 		return nil
 	}
@@ -350,7 +365,11 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 			return fmt.Errorf("populate track artists: %w", err)
 		}
 
-		if err := populateAlbum(tx, album, trags, stat.ModTime()); err != nil {
+		modTime, createTime := timeSpec.ModTime(), timeSpec.ModTime()
+		if timeSpec.HasBirthTime() {
+			createTime = timeSpec.BirthTime()
+		}
+		if err := populateAlbum(tx, album, trags, modTime, createTime); err != nil {
 			return fmt.Errorf("populate album: %w", err)
 		}
 
@@ -359,6 +378,10 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		}
 	}
 
+	stat, err := os.Stat(absPath)
+	if err != nil {
+		return fmt.Errorf("stating %q: %w", basename, err)
+	}
 	if err := populateTrack(tx, album, &track, trags, basename, int(stat.Size())); err != nil {
 		return fmt.Errorf("process %q: %w", basename, err)
 	}
@@ -389,7 +412,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 	return nil
 }
 
-func populateAlbum(tx *db.DB, album *db.Album, trags tagcommon.Info, modTime time.Time) error {
+func populateAlbum(tx *db.DB, album *db.Album, trags tagcommon.Info, modTime, createTime time.Time) error {
 	albumName := tagcommon.MustAlbum(trags)
 	album.TagTitle = albumName
 	album.TagTitleUDec = decoded(albumName)
@@ -398,8 +421,8 @@ func populateAlbum(tx *db.DB, album *db.Album, trags tagcommon.Info, modTime tim
 	album.TagYear = trags.Year()
 
 	album.ModifiedAt = modTime
-	if album.CreatedAt.After(modTime) {
-		album.CreatedAt = modTime // reset created at to match filesytem for new albums
+	if album.CreatedAt.After(createTime) {
+		album.CreatedAt = createTime // reset created at to match filesytem for new albums
 	}
 
 	if err := tx.Save(&album).Error; err != nil {
@@ -446,8 +469,14 @@ func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trags tagcommon.
 	track.TagDiscNumber = trags.DiscNumber()
 	track.TagBrainzID = trags.BrainzID()
 
-	track.Length = trags.Length()   // these two should be calculated
-	track.Bitrate = trags.Bitrate() // ...from the file instead of tags
+	track.ReplayGainTrackGain = trags.ReplayGainTrackGain()
+	track.ReplayGainTrackPeak = trags.ReplayGainTrackPeak()
+	track.ReplayGainAlbumGain = trags.ReplayGainAlbumGain()
+	track.ReplayGainAlbumPeak = trags.ReplayGainAlbumPeak()
+
+	// these two are calculated from the file instead of tags
+	track.Length = trags.Length()
+	track.Bitrate = trags.Bitrate()
 
 	if err := tx.Save(&track).Error; err != nil {
 		return fmt.Errorf("saving track: %w", err)
