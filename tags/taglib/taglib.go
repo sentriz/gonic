@@ -2,7 +2,6 @@ package taglib
 
 import (
 	"fmt"
-	"log"
 	"path/filepath"
 	"strconv"
 	"strings"
