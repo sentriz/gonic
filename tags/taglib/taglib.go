@@ -2,6 +2,7 @@ package taglib
 
 import (
 	"fmt"
+	"log"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -51,6 +52,9 @@ func (i *info) Genres() []string       { return find(i.raw, "genres") }
 func (i *info) TrackNumber() int       { return intSep("/", first(find(i.raw, "tracknumber"))) }                  // eg. 5/12
 func (i *info) DiscNumber() int        { return intSep("/", first(find(i.raw, "discnumber"))) }                   // eg. 1/2
 func (i *info) Year() int              { return intSep("-", first(find(i.raw, "originaldate", "date", "year"))) } // eg. 2023-12-01
+func (i *info) Lyrics() string {
+	return first(find(i.raw, "lyrics", "lyrics:description", "USLT:description", "LYRICS", "Lyrics", "©lyr"))
+}
 
 func (i *info) Compilation() bool   { return bl(first(find(i.raw, "compilation"))) }
 func (i *info) ReleaseType() string { return first(find(i.raw, "releasetype")) }
