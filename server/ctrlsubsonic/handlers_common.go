@@ -504,6 +504,9 @@ func (c *Controller) ServeGetLyrics(r *http.Request) *spec.Response {
 
 	_, text, err := lyricsFile(&track)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return sub
+		}
 		return spec.NewError(0, fmt.Sprintf("lyricsFile: %v", err.Error()))
 	}
 
@@ -577,7 +580,6 @@ func (c *Controller) ServeGetLyricsBySongID(r *http.Request) *spec.Response {
 				StructuredLyrics: []spec.StructuredLyrics{},
 			}
 			return sub
-
 		}
 		return spec.NewError(0, fmt.Sprintf("lyricsFile: %v", err.Error()))
 	}
