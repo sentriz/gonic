@@ -225,6 +225,7 @@ type Track struct {
 	Album          *Album
 	AlbumID        int       `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Artists        []*Artist `gorm:"many2many:track_artists"`
+	Lyrics         string    `sql:"default:null"`
 	Genres         []*Genre  `gorm:"many2many:track_genres"`
 	Size           int       `sql:"default: null"`
 	Length         int       `sql:"default: null"`
