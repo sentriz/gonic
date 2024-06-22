@@ -71,6 +71,8 @@ password can then be changed from the web interface
 | `GONIC_MULTI_VALUE_GENRE`        | `-multi-value-genre`        | **optional** setting for multi-valued genre tags when scanning ([see more](#multi-valued-tags-v016))                                                                                                                                                                              |
 | `GONIC_MULTI_VALUE_ARTIST`       | `-multi-value-artist`       | **optional** setting for multi-valued artist tags when scanning ([see more](#multi-valued-tags-v016))                                                                                                                                                                             |
 | `GONIC_MULTI_VALUE_ALBUM_ARTIST` | `-multi-value-album-artist` | **optional** setting for multi-valued album artist tags when scanning ([see more](#multi-valued-tags-v016))                                                                                                                                                                       |
+| `GONIC_TRANSCODE_CACHE_SIZE` | `-transcode-cache-size` | **optional** size of the transcode cache in MB (0 = no limit) |
+| `GONIC_TRANSCODE_EJECT_INTERVAL` | `-transcode-eject-interval` | **optional** interval (in minutes) to eject transcode cache (0 = never) |
 | `GONIC_EXPVAR`                   | `-expvar`                   | **optional** enable the /debug/vars endpoint (exposes useful debugging attributes as well as database stats)                                                                                                                                                                      |
 
 ## multi valued tags (v0.16+)

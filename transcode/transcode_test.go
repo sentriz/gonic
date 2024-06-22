@@ -113,7 +113,7 @@ func TestCachingParallelism(t *testing.T) {
 		callback:   func() { realTranscodeCount.Add(1) },
 	}
 
-	cacheTranscoder := transcode.NewCachingTranscoder(transcoder, t.TempDir())
+	cacheTranscoder := transcode.NewCachingTranscoder(transcoder, t.TempDir(), 1024)
 
 	var wg sync.WaitGroup
 	for i := 0; i < 5; i++ {
