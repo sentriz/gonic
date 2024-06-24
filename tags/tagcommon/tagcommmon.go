@@ -2,6 +2,7 @@ package tagcommon
 
 import (
 	"errors"
+	"path"
 )
 
 var ErrUnsupported = errors.New("filetype unsupported")
@@ -33,19 +34,31 @@ type Info interface {
 
 	Length() int
 	Bitrate() int
+
+	AbsPath() string
 }
 
 const (
-	FallbackAlbum  = "Unknown Album"
 	FallbackArtist = "Unknown Artist"
 	FallbackGenre  = "Unknown Genre"
 )
+
+func MustTitle(p Info) string {
+	if r := p.Title(); r != "" {
+		return r
+	}
+
+	// return the file name for title name
+	return path.Base(p.AbsPath())
+}
 
 func MustAlbum(p Info) string {
 	if r := p.Album(); r != "" {
 		return r
 	}
-	return FallbackAlbum
+
+	// return the dir name for album name
+	return path.Base(path.Dir(p.AbsPath()))
 }
 
 func MustArtist(p Info) string {

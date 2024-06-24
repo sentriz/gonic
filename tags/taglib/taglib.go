@@ -28,12 +28,13 @@ func (TagLib) Read(absPath string) (tagcommon.Info, error) {
 	defer f.Close()
 	props := f.ReadAudioProperties()
 	raw := f.ReadTags()
-	return &info{raw, props}, nil
+	return &info{raw, props, absPath}, nil
 }
 
 type info struct {
-	raw   map[string][]string
-	props *audiotags.AudioProperties
+	raw     map[string][]string
+	props   *audiotags.AudioProperties
+	abspath string
 }
 
 // https://picard-docs.musicbrainz.org/downloads/MusicBrainz_Picard_Tag_Map.html
@@ -59,6 +60,8 @@ func (i *info) ReplayGainAlbumPeak() float32 { return flt(first(find(i.raw, "rep
 
 func (i *info) Length() int  { return i.props.Length }
 func (i *info) Bitrate() int { return i.props.Bitrate }
+
+func (i *info) AbsPath() string { return i.abspath }
 
 func first[T comparable](is []T) T {
 	var z T
