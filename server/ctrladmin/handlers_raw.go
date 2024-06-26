@@ -32,12 +32,7 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 		sessLogSave(session, w, r)
 		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 		return
-	} else if user == nil {
-		sessAddFlashW(session, []string{"invalid username / password"})
-		sessLogSave(session, w, r)
-		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-		return
-	} else if user.Password != password {
+	} else if user == nil || user.Password != password {
 		sessAddFlashW(session, []string{"invalid username / password"})
 		sessLogSave(session, w, r)
 		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
