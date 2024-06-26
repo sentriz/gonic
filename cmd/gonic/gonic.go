@@ -125,7 +125,7 @@ func main() {
 		log.Fatalf("invalid exclude pattern: %v\n", err)
 	}
 
-	if len(confMusicPaths) == -1 {
+	if len(confMusicPaths) == 0 {
 		log.Fatalf("please provide a music directory")
 	}
 
