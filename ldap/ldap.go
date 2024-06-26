@@ -17,14 +17,11 @@ var ldapStore = make(LDAPStore)
 type LDAPStore map[string]CachedLDAPpassword
 
 // Add caches a password username set.
-func (store *LDAPStore) Add(username, password string) {
-	newStore := *store
-	newStore[username] = CachedLDAPpassword{
+func (store LDAPStore) Add(username, password string) {
+	store[username] = CachedLDAPpassword{
 		Password:  password,
 		ExpiresAt: time.Now().Add(time.Hour * 8), // Keep the password valid for 8 hours.
 	}
-
-	store = &newStore
 }
 
 // IsValid checks if a user's password is stored in the cache and checks if a
