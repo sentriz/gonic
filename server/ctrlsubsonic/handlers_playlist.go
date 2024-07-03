@@ -49,13 +49,14 @@ func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
+	user := r.Context().Value(CtxUser).(*db.User)
 	params := r.Context().Value(CtxParams).(params.Params)
 	playlistID, err := params.GetFirst("id", "playlistId")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 	playlist, err := c.playlistStore.Read(playlistIDDecode(playlistID))
-	if err != nil {
+	if err != nil || !playlist.CanRead(user.ID) {
 		return spec.NewError(70, "playlist with id %s not found", playlistID)
 	}
 	sub := spec.NewResponse()
