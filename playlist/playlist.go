@@ -36,6 +36,17 @@ type Playlist struct {
 	IsPublic   bool
 	SharedWith []int
 }
+
+func (p Playlist) CanRead(uid int) bool {
+	return p.IsPublic || p.CanWrite(uid)
+}
+
+func (p Playlist) CanWrite(uid int) bool {
+	return p.UserID == uid || slices.Contains(p.SharedWith, uid)
+}
+
+func (p Playlist) CanDelete(uid int) bool {
+	return p.UserID == uid
 }
 
 type Store struct {
