@@ -36,7 +36,8 @@ It has multiple lines 👍
 			"item 2.flac",
 			"item 3.flac",
 		},
-		IsPublic: true,
+		IsPublic:   true,
+		SharedWith: []int{2, 3},
 	}
 
 	newPath := playlist.NewPath(before.UserID, before.Name)
@@ -50,6 +51,7 @@ It has multiple lines 👍
 	require.Equal(t, after.Comment, before.Comment)
 	require.Equal(t, after.Items, before.Items)
 	require.Equal(t, after.IsPublic, before.IsPublic)
+	require.Equal(t, after.SharedWith, before.SharedWith)
 
 	playlistIDs, err = store.List()
 	require.NoError(t, err)

@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -27,12 +28,14 @@ const (
 )
 
 type Playlist struct {
-	UpdatedAt time.Time
-	UserID    int
-	Name      string
-	Comment   string
-	Items     []string
-	IsPublic  bool
+	UpdatedAt  time.Time
+	UserID     int
+	Name       string
+	Comment    string
+	Items      []string
+	IsPublic   bool
+	SharedWith []int
+}
 }
 
 type Store struct {
@@ -126,6 +129,20 @@ func (s *Store) Read(relPath string) (*Playlist, error) {
 			playlist.Comment = value
 		case attrIsPublic:
 			playlist.IsPublic, _ = strconv.ParseBool(value)
+		case attrSharedWith:
+			sharedWith := strings.Split(value, ",")
+			if len(sharedWith) == 0 {
+				continue
+			}
+
+			for _, idStr := range sharedWith {
+				id, err := strconv.ParseInt(idStr, 10, 64)
+				if err != nil {
+					continue
+				}
+
+				playlist.SharedWith = append(playlist.SharedWith, int(id))
+			}
 		}
 		if strings.HasPrefix(line, "#") {
 			continue
@@ -181,6 +198,14 @@ func (s *Store) Write(relPath string, playlist *Playlist) error {
 	fmt.Fprintln(file, encodeAttr(attrName, playlist.Name))
 	fmt.Fprintln(file, encodeAttr(attrCommment, playlist.Comment))
 	fmt.Fprintln(file, encodeAttr(attrIsPublic, fmt.Sprint(playlist.IsPublic)))
+	if len(playlist.SharedWith) != 0 {
+		sharedWithStr := make([]string, 0, len(playlist.SharedWith))
+		for _, id := range playlist.SharedWith {
+			sharedWithStr = append(sharedWithStr, strconv.Itoa(id))
+		}
+		fmt.Fprintln(file, encodeAttr(attrSharedWith, strings.Join(sharedWithStr, ",")))
+	}
+
 	for _, line := range playlist.Items {
 		fmt.Fprintln(file, line)
 	}
@@ -237,10 +262,11 @@ func sanityCheck(basePath string) error {
 }
 
 const (
-	attrPrefix   = "#GONIC-"
-	attrName     = "NAME"
-	attrCommment = "COMMENT"
-	attrIsPublic = "IS-PUBLIC"
+	attrPrefix     = "#GONIC-"
+	attrName       = "NAME"
+	attrCommment   = "COMMENT"
+	attrIsPublic   = "IS-PUBLIC"
+	attrSharedWith = "SHARED-WITH"
 )
 
 func encodeAttr(name, value string) string {
