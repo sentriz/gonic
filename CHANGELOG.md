@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.17.0](https://www.github.com/sentriz/gonic/compare/v0.16.4...v0.17.0) (2024-07-13)
+
+
+### Features
+
+* **playlist:** assume playlists in the root dir without a user dir belong to admin ([#499](https://www.github.com/sentriz/gonic/issues/499)) ([f5893ea](https://www.github.com/sentriz/gonic/commit/f5893ea5ea4d47a82212b47e85a15d9defdc5eff))
+* **scanner:** support full scan cleanups in watcher ([#496](https://www.github.com/sentriz/gonic/issues/496)) ([93ce039](https://www.github.com/sentriz/gonic/commit/93ce039963821dbfa0acec6ee9c92134ff479fcc))
+* **subsonic:** expose replaygain tags ([0e45f5e](https://www.github.com/sentriz/gonic/commit/0e45f5e84cd650211351179edf3eed89a54c6c75))
+
+
+### Bug Fixes
+
+* **admin:** better handing of resolve proxy path escaping ([7b21e82](https://www.github.com/sentriz/gonic/commit/7b21e82aaf511d36300fd9cf2dae32a1196a4f77)), closes [#493](https://www.github.com/sentriz/gonic/issues/493)
+* **taglib:** support lower case filenames again ([8a0fa05](https://www.github.com/sentriz/gonic/commit/8a0fa05c7cdcb98066c263fea72af0715864bea5)), closes [#491](https://www.github.com/sentriz/gonic/issues/491)
+
 ### [0.16.4](https://www.github.com/sentriz/gonic/compare/v0.16.3...v0.16.4) (2024-03-20)
 
 
