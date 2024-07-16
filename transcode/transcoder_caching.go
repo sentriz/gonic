@@ -7,7 +7,9 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
+	"time"
 )
 
 const perm = 0o644
@@ -15,13 +17,14 @@ const perm = 0o644
 type CachingTranscoder struct {
 	cachePath  string
 	transcoder Transcoder
+	limitMb    int
 	locks      keyedMutex
 }
 
 var _ Transcoder = (*CachingTranscoder)(nil)
 
-func NewCachingTranscoder(t Transcoder, cachePath string) *CachingTranscoder {
-	return &CachingTranscoder{transcoder: t, cachePath: cachePath}
+func NewCachingTranscoder(t Transcoder, cachePath string, limitMb int) *CachingTranscoder {
+	return &CachingTranscoder{transcoder: t, cachePath: cachePath, limitMb: limitMb}
 }
 
 func (t *CachingTranscoder) Transcode(ctx context.Context, profile Profile, in string, out io.Writer) error {
@@ -52,6 +55,7 @@ func (t *CachingTranscoder) Transcode(ctx context.Context, profile Profile, in s
 
 	if i, err := cf.Stat(); err == nil && i.Size() > 0 {
 		_, _ = io.Copy(out, cf)
+		_ = os.Chtimes(path, time.Now(), time.Now()) // Touch for LRU cache purposes
 		return nil
 	}
 
@@ -62,6 +66,41 @@ func (t *CachingTranscoder) Transcode(ctx context.Context, profile Profile, in s
 	}
 
 	return nil
+}
+
+func (t *CachingTranscoder) CacheEject() {
+	// Delete LRU cache files that exceed size limit. Use last modified time.
+	type file struct {
+		path string
+		info os.FileInfo
+	}
+
+	var files []file
+	var total int64 = 0
+
+	_ = filepath.Walk(t.cachePath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			files = append(files, file{path, info})
+			total += info.Size()
+		}
+		return nil
+	})
+
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].info.ModTime().Before(files[j].info.ModTime())
+	})
+
+	for total > int64(t.limitMb)*1024*1024 {
+		curFile := files[0]
+		files = files[1:]
+		total -= curFile.info.Size()
+		unlock := t.locks.Lock(curFile.path)
+		_ = os.Remove(curFile.path)
+		unlock()
+	}
 }
 
 func cacheKey(cmd string, args []string) string {
