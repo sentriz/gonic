@@ -24,6 +24,7 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/fileutil"
+	"go.senan.xyz/gonic/scanner/coverresolve"
 	"go.senan.xyz/gonic/tags/tagcommon"
 )
 
@@ -266,7 +267,7 @@ func (s *Scanner) scanDir(tx *db.DB, st *State, absPath string) error {
 	}
 
 	var tracks []string
-	var cover string
+	var covers []string
 	for _, item := range items {
 		absPath := filepath.Join(absPath, item.Name())
 		if s.excludePattern != nil && s.excludePattern.MatchString(absPath) {
@@ -277,8 +278,8 @@ func (s *Scanner) scanDir(tx *db.DB, st *State, absPath string) error {
 			continue
 		}
 
-		if isCover(item.Name()) {
-			cover = item.Name()
+		if coverresolve.IsCover(item.Name()) {
+			covers = append(covers, item.Name())
 			continue
 		}
 		if s.tagReader.CanRead(absPath) {
@@ -286,6 +287,8 @@ func (s *Scanner) scanDir(tx *db.DB, st *State, absPath string) error {
 			continue
 		}
 	}
+
+	cover := coverresolve.SelectCover(covers)
 
 	pdir, pbasename := filepath.Split(filepath.Dir(relPath))
 	var parent db.Album
@@ -669,26 +672,6 @@ func (s *Scanner) cleanGenres(st *State) error { //nolint:unparam
 	st.genresMissing += int(q.RowsAffected)
 
 	return nil
-}
-
-//nolint:gochecknoglobals
-var coverNames = map[string]struct{}{}
-
-//nolint:gochecknoinits
-func init() {
-	for _, name := range []string{"cover", "folder", "front", "albumart", "album", "artist"} {
-		for _, ext := range []string{"jpg", "jpeg", "png", "bmp", "gif"} {
-			coverNames[fmt.Sprintf("%s.%s", name, ext)] = struct{}{}
-			for i := 0; i < 3; i++ {
-				coverNames[fmt.Sprintf("%s.%d.%s", name, i, ext)] = struct{}{} // support beets extras
-			}
-		}
-	}
-}
-
-func isCover(name string) bool {
-	_, ok := coverNames[strings.ToLower(name)]
-	return ok
 }
 
 // decoded converts a string to it's latin equivalent.
