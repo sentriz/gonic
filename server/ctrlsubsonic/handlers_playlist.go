@@ -75,8 +75,10 @@ func (c *Controller) ServeCreateOrUpdatePlaylist(r *http.Request) *spec.Response
 	playlistPath := playlistIDDecode(playlistID)
 
 	var playlist playlistp.Playlist
-	if pl, _ := c.playlistStore.Read(playlistPath); pl != nil {
-		playlist = *pl
+	if playlistPath != "" {
+		if pl, err := c.playlistStore.Read(playlistPath); err != nil && pl != nil {
+			playlist = *pl
+		}
 	}
 
 	if playlist.UserID != 0 && playlist.UserID != user.ID {

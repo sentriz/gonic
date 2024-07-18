@@ -94,6 +94,10 @@ func (s *Store) Read(relPath string) (*Playlist, error) {
 		return nil, fmt.Errorf("stat m3u: %w", err)
 	}
 
+	if stat.IsDir() {
+		return nil, errors.New("path is a directory")
+	}
+
 	var playlist Playlist
 	playlist.UpdatedAt = stat.ModTime()
 
