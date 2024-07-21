@@ -26,13 +26,13 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	var artists []*db.Artist
 	q := c.dbc.
-		Select("*, count(album_artists.album_id) album_count").
+		Select("artists.*, count(album_artists.album_id) album_count").
 		Joins("JOIN album_artists ON album_artists.artist_id=artists.id").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
 		Preload("Info").
 		Group("artists.id").
-		Order("artists.name COLLATE NOCASE")
+		Order("artists.name")
 	if m := getMusicFolder(c.musicPaths, params); m != "" {
 		q = q.
 			Joins("JOIN albums ON albums.id=album_artists.album_id").
@@ -230,7 +230,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	// search artists
 	var artists []*db.Artist
 	q := c.dbc.
-		Select("*, count(albums.id) album_count").
+		Select("artists.*, count(albums.id) album_count").
 		Group("artists.id")
 	for _, s := range queries {
 		q = q.Where(`name LIKE ? OR name_u_dec LIKE ?`, s, s)
