@@ -1,4 +1,3 @@
-//nolint:goerr113
 package db
 
 import (
