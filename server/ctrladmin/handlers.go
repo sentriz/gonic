@@ -625,7 +625,12 @@ func doScan(scanner *scanner.Scanner, opts scanner.ScanOptions) {
 }
 
 func (c *Controller) ServeImportOpmlPodcastDo(r *http.Request) *Response {
-	r.ParseMultipartForm(10 << 20) //keep up to 10MB in memory
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		return &Response{
+			redirect: "/admin/home",
+			flashW:   []string{"error parseMultipartform opml file"},
+		}
+	}
 
 	file, _, err := r.FormFile("opml-file")
 	if err != nil {
@@ -657,7 +662,6 @@ func (c *Controller) ServeImportOpmlPodcastDo(r *http.Request) *Response {
 	go func() {
 		fp := gofeed.NewParser()
 		for _, opmlOutline := range doc.Body.Outlines {
-
 			feed, err := fp.ParseURL(opmlOutline.XMLURL)
 			if err != nil {
 				log.Printf("could not parse url: %v\n", err)
