@@ -116,6 +116,8 @@ func New(dbc *db.DB, sessDB *gormstore.Store, scanner *scanner.Scanner, podcasts
 	c.Handle("/delete_internet_radio_station_do", adminChain(resp(c.ServeInternetRadioStationDeleteDo)))
 	c.Handle("/update_internet_radio_station_do", adminChain(resp(c.ServeInternetRadioStationUpdateDo)))
 
+	c.Handle("/import_opml_podcast_do", adminChain(resp(c.ServeImportOpmlPodcastDo)))
+
 	c.Handle("/", baseChain(resp(c.ServeNotFound)))
 
 	return &c, nil

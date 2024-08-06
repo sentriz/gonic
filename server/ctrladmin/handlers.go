@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image"
 	"image/jpeg"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -13,6 +14,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gilliek/go-opml/opml"
 	"github.com/mmcdole/gofeed"
 	"github.com/nfnt/resize"
 
@@ -620,4 +622,56 @@ func doScan(scanner *scanner.Scanner, opts scanner.ScanOptions) {
 			log.Printf("error while scanning: %v\n", err)
 		}
 	}()
+}
+
+func (c *Controller) ServeImportOpmlPodcastDo(r *http.Request) *Response {
+	r.ParseMultipartForm(10 << 20) //keep up to 10MB in memory
+
+	file, _, err := r.FormFile("opml-file")
+	if err != nil {
+		log.Printf("error retrieving opml file: %s", err)
+		return &Response{
+			redirect: "/admin/home",
+			flashW:   []string{"error retrieving opml file"},
+		}
+	}
+	defer file.Close()
+
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		log.Printf("error reading OPML file: %s", err)
+		return &Response{
+			redirect: "/admin/home",
+			flashW:   []string{"error reading OPML file"},
+		}
+	}
+
+	doc, err := opml.NewOPML(fileBytes)
+	if err != nil {
+		return &Response{
+			redirect: "/admin/home",
+			flashW:   []string{"error OPML file bad format"},
+		}
+	}
+
+	go func() {
+		fp := gofeed.NewParser()
+		for _, opmlOutline := range doc.Body.Outlines {
+
+			feed, err := fp.ParseURL(opmlOutline.XMLURL)
+			if err != nil {
+				log.Printf("could not parse url: %v\n", err)
+				continue
+			}
+
+			if _, err := c.podcasts.AddNewPodcast(opmlOutline.XMLURL, feed); err != nil {
+				log.Printf("could not add new podcast: %v\n", err)
+			}
+		}
+	}()
+
+	return &Response{
+		redirect: "/admin/home",
+		flashN:   []string{"opml import started. refresh for results"},
+	}
 }
