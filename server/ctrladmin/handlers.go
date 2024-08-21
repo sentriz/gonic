@@ -715,5 +715,10 @@ func (c *Controller) ServerExportOpmlPodcastDo(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	w.Write([]byte(outp))
+	if _, err := w.Write([]byte(outp)); err != nil {
+		sessAddFlashW(session, []string{"error writing opml file"})
+		sessLogSave(session, w, r)
+		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+		return
+	}
 }
