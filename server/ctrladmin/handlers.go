@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/gilliek/go-opml/opml"
+	"github.com/gorilla/sessions"
 	"github.com/mmcdole/gofeed"
 	"github.com/nfnt/resize"
 
@@ -678,4 +679,41 @@ func (c *Controller) ServeImportOpmlPodcastDo(r *http.Request) *Response {
 		redirect: "/admin/home",
 		flashN:   []string{"opml import started. refresh for results"},
 	}
+}
+
+func (c *Controller) ServerExportOpmlPodcastDo(w http.ResponseWriter, r *http.Request) {
+	session := r.Context().Value(CtxSession).(*sessions.Session)
+	var podcastOMPL = &opml.OPML{
+		Version: "1.0",
+		Head: opml.Head{
+			Title:       "Gonic Podcasts",
+			DateCreated: time.Now().Format(time.RFC3339),
+			OwnerName:   "gonic",
+		},
+	}
+
+	data := &templateData{}
+	c.dbc.Find(&data.Podcasts)
+
+	for _, pod := range data.Podcasts {
+		podcastOMPL.Body.Outlines = append(podcastOMPL.Body.Outlines, opml.Outline{
+			Type:    "rss",
+			Text:    pod.Title,
+			Title:   pod.Title,
+			XMLURL:  pod.URL,
+			HTMLURL: pod.URL,
+		})
+	}
+
+	w.Header().Add("content-type", "application/opml")
+	w.Header().Add("content-disposition", "attachment; filename="+time.Now().Format(time.DateOnly)+"-gonic-podcasts.opml")
+	outp, err := podcastOMPL.XML()
+	if err != nil {
+		sessAddFlashW(session, []string{"error exporting opml file"})
+		sessLogSave(session, w, r)
+		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+		return
+	}
+
+	w.Write([]byte(outp))
 }
