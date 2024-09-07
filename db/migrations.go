@@ -23,7 +23,7 @@ type MigrationContext struct {
 	DBPath            string
 	OriginalMusicPath string
 	PlaylistsPath     string
-	PlaylistsPrefix   string
+	PlaylistsRelative bool
 	PodcastsPath      string
 }
 
@@ -508,7 +508,7 @@ func migratePlaylistsToM3U(tx *gorm.DB, ctx MigrationContext) error {
 		return ""
 	}
 
-	store, err := playlist.NewStore(ctx.PlaylistsPath, ctx.PlaylistsPrefix)
+	store, err := playlist.NewStore(ctx.PlaylistsPath, ctx.PlaylistsRelative)
 	if err != nil {
 		return fmt.Errorf("create playlists store: %w", err)
 	}

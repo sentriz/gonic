@@ -148,7 +148,7 @@ func main() {
 		DBPath:            *confDBPath,
 		OriginalMusicPath: confMusicPaths[0].path,
 		PlaylistsPath:     *confPlaylistsPath,
-		PlaylistsRelative: confPlaylistsRelative,
+		PlaylistsRelative: *confPlaylistsRelative,
 		PodcastsPath:      *confPodcastPath,
 	})
 	if err != nil {

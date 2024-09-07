@@ -128,8 +128,11 @@ func (s *Store) Read(relPath string) (*Playlist, error) {
 		if strings.HasPrefix(line, "#") {
 			continue
 		}
-		//transform to absolute path
-		//TODO maybe don't need?
+
+		//file path might be relative if using playlists-relative
+		if !filepath.IsAbs(line) {
+			line = filepath.Join(filepath.Dir(absPath), line)
+		}
 		playlist.Items = append(playlist.Items, line)
 	}
 
@@ -183,10 +186,13 @@ func (s *Store) Write(relPath string, playlist *Playlist) error {
 	fmt.Fprintln(file, encodeAttr(attrIsPublic, fmt.Sprint(playlist.IsPublic)))
 	for _, line := range playlist.Items {
 		//transform to path relative to basePath
-		//TODO
-		fmt.Fprintln(file, line)
+		relativePath, err := filepath.Rel(filepath.Dir(absPath), line)
+		if s.relative && err != nil {
+			fmt.Fprintln(file, relativePath)
+		} else {
+			fmt.Fprintln(file, line)
+		}
 	}
-
 	return nil
 }
 
