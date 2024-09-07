@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -129,10 +130,11 @@ func (s *Store) Read(relPath string) (*Playlist, error) {
 			continue
 		}
 
-		//file path might be relative if using playlists-relative
+		//file path might be relative if using -playlists-relative
 		if !filepath.IsAbs(line) {
 			line = filepath.Join(filepath.Dir(absPath), line)
 		}
+
 		playlist.Items = append(playlist.Items, line)
 	}
 
@@ -185,13 +187,16 @@ func (s *Store) Write(relPath string, playlist *Playlist) error {
 	fmt.Fprintln(file, encodeAttr(attrCommment, playlist.Comment))
 	fmt.Fprintln(file, encodeAttr(attrIsPublic, fmt.Sprint(playlist.IsPublic)))
 	for _, line := range playlist.Items {
-		//transform to path relative to basePath
-		relativePath, err := filepath.Rel(filepath.Dir(absPath), line)
-		if s.relative && err != nil {
-			fmt.Fprintln(file, relativePath)
-		} else {
-			fmt.Fprintln(file, line)
+		if s.relative {
+			//transform to path relative to playlist's dir
+			relativePath, err := filepath.Rel(filepath.Dir(absPath), line)
+			if err == nil {
+				line = relativePath
+			} else {
+				log.Printf("Warning: could not make playlist entry path's relative - %v\n", err)
+			}
 		}
+		fmt.Fprintln(file, line)
 	}
 	return nil
 }
