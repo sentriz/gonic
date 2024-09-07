@@ -32,9 +32,9 @@ Example comment
 It has multiple lines 👍
 `,
 		Items: []string{
-			"item 1.flac",
-			"item 2.flac",
-			"item 3.flac",
+			"/item 1.flac",
+			"/item 2.flac",
+			"/item 3.flac",
 		},
 		IsPublic: true,
 	}
