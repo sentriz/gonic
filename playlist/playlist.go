@@ -40,7 +40,7 @@ type Store struct {
 	mu       sync.Mutex
 }
 
-func NewStore(basePath string) (*Store, error) {
+func NewStore(basePath string, prefix string) (*Store, error) {
 	if basePath == "" {
 		return nil, ErrInvalidBasePath
 	}

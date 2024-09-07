@@ -65,6 +65,7 @@ func main() {
 	flag.Var(&confMusicPaths, "music-path", "path to music")
 
 	confPlaylistsPath := flag.String("playlists-path", "", "path to your list of new or existing m3u playlists that gonic can manage")
+	confPlaylistsPrefix := flag.String("playlists-prefix", "", "path prefix used inside of m3u playlists gonic generates")
 
 	confDBPath := flag.String("db-path", "gonic.db", "path to database (optional)")
 
@@ -127,6 +128,10 @@ func main() {
 		log.Fatalf("checking playlist directory: %v", err)
 	}
 
+	if *confPlaylistsPrefix == "" {
+		confPlaylistsPrefix = confPlaylistsPath
+	}
+
 	cacheDirAudio := path.Join(*confCachePath, "audio")
 	cacheDirCovers := path.Join(*confCachePath, "covers")
 	if err := os.MkdirAll(cacheDirAudio, os.ModePerm); err != nil {
@@ -147,6 +152,7 @@ func main() {
 		DBPath:            *confDBPath,
 		OriginalMusicPath: confMusicPaths[0].path,
 		PlaylistsPath:     *confPlaylistsPath,
+		PlaylistsPrefix:   *confPlaylistsPrefix,
 		PodcastsPath:      *confPodcastPath,
 	})
 	if err != nil {
@@ -215,7 +221,7 @@ func main() {
 	listenbrainzClient := listenbrainz.NewClient()
 	lastfmClient := lastfm.NewClient(lastfmClientKeySecretFunc)
 
-	playlistStore, err := playlist.NewStore(*confPlaylistsPath)
+	playlistStore, err := playlist.NewStore(*confPlaylistsPath, *confPlaylistsPrefix)
 	if err != nil {
 		log.Panicf("error creating playlists store: %v", err)
 	}
