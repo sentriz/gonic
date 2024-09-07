@@ -130,7 +130,7 @@ func (s *Store) Read(relPath string) (*Playlist, error) {
 			continue
 		}
 
-		//file path might be relative if using -playlists-relative
+		// file path might be relative if using -playlists-relative
 		if !filepath.IsAbs(line) {
 			line = filepath.Join(filepath.Dir(absPath), line)
 		}
@@ -188,7 +188,7 @@ func (s *Store) Write(relPath string, playlist *Playlist) error {
 	fmt.Fprintln(file, encodeAttr(attrIsPublic, fmt.Sprint(playlist.IsPublic)))
 	for _, line := range playlist.Items {
 		if s.relative {
-			//transform to path relative to playlist's dir
+			// transform to path relative to playlist's dir
 			relativePath, err := filepath.Rel(filepath.Dir(absPath), line)
 			if err == nil {
 				line = relativePath

@@ -11,7 +11,7 @@ func TestPlaylist(t *testing.T) {
 	t.Parallel()
 
 	tmp := t.TempDir()
-	store, err := playlist.NewStore(tmp)
+	store, err := playlist.NewStore(tmp, false)
 	require.NoError(t, err)
 
 	playlistIDs, err := store.List()
