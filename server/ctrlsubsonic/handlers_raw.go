@@ -64,7 +64,7 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 		return nil
 	}
 
-	w.Header().Set("Cache-Control", "public, max-age=3600")
+	w.Header().Set("Cache-Control", "public, max-age=1209600")
 	http.ServeFile(w, r, cachePath)
 
 	return nil
