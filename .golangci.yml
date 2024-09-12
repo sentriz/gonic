@@ -81,6 +81,9 @@ issues:
     - text: "weak random number generator"
       linters:
         - gosec
+    - text: "integer overflow conversion"
+      linters:
+        - gosec
     - text: "at least one file in a package should have a package comment"
       linters:
         - stylecheck
