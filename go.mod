@@ -27,7 +27,7 @@ require (
 	github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981
 	github.com/stretchr/testify v1.9.0
 	go.senan.xyz/flagconf v0.1.9
-	go.senan.xyz/wrtag v0.0.0-20240912173011-55fc2821f3f9
+	go.senan.xyz/wrtag v0.0.0-20240913105114-298b03ad8230
 	golang.org/x/net v0.29.0
 	golang.org/x/sync v0.8.0
 	gopkg.in/gormigrate.v1 v1.6.0
