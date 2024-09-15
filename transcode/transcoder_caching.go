@@ -5,8 +5,8 @@ import (
 	"crypto/md5"
 	"fmt"
 	"io"
-	"os"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"sort"
 	"sync"
@@ -109,7 +109,7 @@ func (t *CachingTranscoder) CacheEject() error {
 		unlock := t.locks.Lock(curFile.path)
 		err = os.Remove(curFile.path)
 		unlock()
-		if (err != nil) {
+		if err != nil {
 			return fmt.Errorf("remove cache file: %w", err)
 		}
 	}
