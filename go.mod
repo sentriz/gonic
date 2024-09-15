@@ -11,6 +11,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.7.0
+	github.com/gilliek/go-opml v1.0.0
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/securecookie v1.1.2
