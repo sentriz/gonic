@@ -93,6 +93,9 @@ func main() {
 
 	deprecatedConfGenreSplit := flag.String("genre-split", "", "(deprecated, see multi-value settings)")
 
+	confTranscodeCacheSize := flag.Int("transcode-cache-size", 0, "size of the transcode cache in MB (0 = no limit) (optional)")
+	confTranscodeEjectInterval := flag.Int("transcode-eject-interval", 0, "interval (in minutes) to eject transcode cache (0 = never) (optional)")
+
 	flag.Parse()
 	flagconf.ParseEnv()
 	flagconf.ParseConfig(*confConfigPath)
@@ -201,6 +204,7 @@ func main() {
 	transcoder := transcode.NewCachingTranscoder(
 		transcode.NewFFmpegTranscoder(),
 		cacheDirAudio,
+		*confTranscodeCacheSize,
 	)
 
 	lastfmClientKeySecretFunc := func() (string, string, error) {
@@ -399,6 +403,21 @@ func main() {
 		ctxTick(ctx, 24*time.Hour, func() {
 			if err := podcast.PurgeOldPodcasts(time.Duration(*confPodcastPurgeAgeDays) * 24 * time.Hour); err != nil {
 				log.Printf("error purging old podcasts: %v", err)
+			}
+		})
+		return nil
+	})
+
+	errgrp.Go(func() error {
+		if *confTranscodeEjectInterval == 0 || *confTranscodeCacheSize == 0 {
+			return nil
+		}
+
+		defer logJob("transcode cache eject")()
+
+		ctxTick(ctx, time.Duration(*confTranscodeEjectInterval)*time.Minute, func() {
+			if err := transcoder.CacheEject(); err != nil {
+				log.Printf("error ejecting transcode cache: %v", err)
 			}
 		})
 		return nil
