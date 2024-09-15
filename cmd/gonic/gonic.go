@@ -416,7 +416,9 @@ func main() {
 		defer logJob("transcode cache eject")()
 
 		ctxTick(ctx, time.Duration(*confTranscodeEjectInterval)*time.Minute, func() {
-			transcoder.CacheEject()
+			if err := transcoder.CacheEject(); err != nil {
+				log.Printf("error ejecting transcode cache: %v", err)
+			}
 		})
 		return nil
 	})

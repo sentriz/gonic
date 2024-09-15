@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"io/fs"
 	"path/filepath"
 	"sort"
 	"sync"
@@ -17,14 +18,14 @@ const perm = 0o644
 type CachingTranscoder struct {
 	cachePath  string
 	transcoder Transcoder
-	limitMb    int
+	limitMB    int
 	locks      keyedMutex
 }
 
 var _ Transcoder = (*CachingTranscoder)(nil)
 
-func NewCachingTranscoder(t Transcoder, cachePath string, limitMb int) *CachingTranscoder {
-	return &CachingTranscoder{transcoder: t, cachePath: cachePath, limitMb: limitMb}
+func NewCachingTranscoder(t Transcoder, cachePath string, limitMB int) *CachingTranscoder {
+	return &CachingTranscoder{transcoder: t, cachePath: cachePath, limitMB: limitMB}
 }
 
 func (t *CachingTranscoder) Transcode(ctx context.Context, profile Profile, in string, out io.Writer) error {
@@ -68,7 +69,7 @@ func (t *CachingTranscoder) Transcode(ctx context.Context, profile Profile, in s
 	return nil
 }
 
-func (t *CachingTranscoder) CacheEject() {
+func (t *CachingTranscoder) CacheEject() error {
 	// Delete LRU cache files that exceed size limit. Use last modified time.
 	type file struct {
 		path string
@@ -78,29 +79,42 @@ func (t *CachingTranscoder) CacheEject() {
 	var files []file
 	var total int64 = 0
 
-	_ = filepath.Walk(t.cachePath, func(path string, info os.FileInfo, err error) error {
+	err := filepath.WalkDir(t.cachePath, func(path string, de fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if !info.IsDir() {
+		if !de.IsDir() {
+			info, err := de.Info()
+			if err != nil {
+				return fmt.Errorf("walk cache path for eject: %w", err)
+			}
 			files = append(files, file{path, info})
 			total += info.Size()
 		}
 		return nil
 	})
 
+	if err != nil {
+		return fmt.Errorf("walk cache path for eject: %w", err)
+	}
+
 	sort.Slice(files, func(i, j int) bool {
 		return files[i].info.ModTime().Before(files[j].info.ModTime())
 	})
 
-	for total > int64(t.limitMb)*1024*1024 {
+	for total > int64(t.limitMB)*1024*1024 {
 		curFile := files[0]
 		files = files[1:]
 		total -= curFile.info.Size()
 		unlock := t.locks.Lock(curFile.path)
-		_ = os.Remove(curFile.path)
+		err = os.Remove(curFile.path)
 		unlock()
+		if (err != nil) {
+			return fmt.Errorf("remove cache file: %w", err)
+		}
 	}
+
+	return nil
 }
 
 func cacheKey(cmd string, args []string) string {
