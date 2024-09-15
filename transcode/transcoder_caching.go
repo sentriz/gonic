@@ -20,6 +20,7 @@ type CachingTranscoder struct {
 	transcoder Transcoder
 	limitMB    int
 	locks      keyedMutex
+	cleanLock  sync.RWMutex
 }
 
 var _ Transcoder = (*CachingTranscoder)(nil)
@@ -29,6 +30,9 @@ func NewCachingTranscoder(t Transcoder, cachePath string, limitMB int) *CachingT
 }
 
 func (t *CachingTranscoder) Transcode(ctx context.Context, profile Profile, in string, out io.Writer) error {
+	t.cleanLock.RLock()
+	defer t.cleanLock.RUnlock()
+
 	// don't try cache partial transcodes
 	if profile.Seek() > 0 {
 		return t.transcoder.Transcode(ctx, profile, in, out)
@@ -70,6 +74,9 @@ func (t *CachingTranscoder) Transcode(ctx context.Context, profile Profile, in s
 }
 
 func (t *CachingTranscoder) CacheEject() error {
+	t.cleanLock.Lock()
+	defer t.cleanLock.Unlock()
+
 	// Delete LRU cache files that exceed size limit. Use last modified time.
 	type file struct {
 		path string
@@ -106,9 +113,7 @@ func (t *CachingTranscoder) CacheEject() error {
 		curFile := files[0]
 		files = files[1:]
 		total -= curFile.info.Size()
-		unlock := t.locks.Lock(curFile.path)
 		err = os.Remove(curFile.path)
-		unlock()
 		if err != nil {
 			return fmt.Errorf("remove cache file: %w", err)
 		}
