@@ -371,6 +371,8 @@ func (i *TagInfo) ReplayGainAlbumPeak() float32 { return 0 }
 func (i *TagInfo) Length() int  { return firstInt(100, i.RawLength) }
 func (i *TagInfo) Bitrate() int { return firstInt(100, i.RawBitrate) }
 
+func (i *TagInfo) AbsPath() string { return "" }
+
 var _ tagcommon.Reader = (*tagReader)(nil)
 
 func firstInt(or int, ints ...int) int {
