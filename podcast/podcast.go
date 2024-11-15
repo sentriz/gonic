@@ -82,10 +82,13 @@ func (p *Podcasts) AddNewPodcast(rssURL string, feed *gofeed.Feed) (*db.Podcast,
 	}
 	podcast := db.Podcast{
 		Description: feed.Description,
-		ImageURL:    feed.Image.URL,
+		ImageURL:    "",
 		Title:       feed.Title,
 		URL:         rssURL,
 		RootDir:     rootDir,
+	}
+	if feed.Image != nil {
+		podcast.ImageURL = feed.Image.URL
 	}
 	if err := os.Mkdir(podcast.RootDir, 0o755); err != nil && !os.IsExist(err) {
 		return nil, err
