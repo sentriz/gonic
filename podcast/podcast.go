@@ -82,7 +82,6 @@ func (p *Podcasts) AddNewPodcast(rssURL string, feed *gofeed.Feed) (*db.Podcast,
 	}
 	podcast := db.Podcast{
 		Description: feed.Description,
-		ImageURL:    "",
 		Title:       feed.Title,
 		URL:         rssURL,
 		RootDir:     rootDir,
@@ -319,6 +318,10 @@ func getPodcastEpisodeFilename(podcast *db.Podcast, podcastEpisode *db.PodcastEp
 }
 
 func (p *Podcasts) downloadPodcastCover(podcast *db.Podcast) error {
+	if podcast.ImageURL == "" {
+		return nil
+	}
+
 	imageURL, err := url.Parse(podcast.ImageURL)
 	if err != nil {
 		return fmt.Errorf("parse image url: %w", err)
