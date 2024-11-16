@@ -319,6 +319,10 @@ func getPodcastEpisodeFilename(podcast *db.Podcast, podcastEpisode *db.PodcastEp
 }
 
 func (p *Podcasts) downloadPodcastCover(podcast *db.Podcast) error {
+	if podcast.ImageURL == "" {
+		return nil
+	}
+
 	imageURL, err := url.Parse(podcast.ImageURL)
 	if err != nil {
 		return fmt.Errorf("parse image url: %w", err)
