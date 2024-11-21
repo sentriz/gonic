@@ -40,6 +40,7 @@ func NewTCAlbumByFolder(f *db.Album) *TrackChild {
 		ParentID:      f.ParentSID(),
 		CreatedAt:     f.CreatedAt,
 		AverageRating: formatRating(f.AverageRating),
+		Year:          f.TagYear,
 	}
 	if f.AlbumStar != nil {
 		trCh.Starred = &f.AlbumStar.StarDate
