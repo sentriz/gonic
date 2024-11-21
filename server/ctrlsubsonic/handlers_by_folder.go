@@ -31,13 +31,13 @@ func (c *Controller) ServeGetIndexes(r *http.Request) *spec.Response {
 	}
 	var folders []*db.Album
 	c.dbc.
-		Select("*, count(sub.id) child_count").
+		Select("albums.*, count(sub.id) child_count").
 		Preload("AlbumStar", "user_id=?", user.ID).
 		Preload("AlbumRating", "user_id=?", user.ID).
 		Joins("LEFT JOIN albums sub ON albums.id=sub.parent_id").
 		Where("albums.parent_id IN ?", rootQ.SubQuery()).
 		Group("albums.id").
-		Order("albums.right_path COLLATE NOCASE").
+		Order("albums.right_path").
 		Find(&folders)
 	// [a-z#] -> 27
 	indexMap := make(map[string]*spec.Index, 27)
@@ -80,7 +80,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 		Where("parent_id=?", id.Value).
 		Preload("AlbumStar", "user_id=?", user.ID).
 		Preload("AlbumRating", "user_id=?", user.ID).
-		Order("albums.right_path COLLATE NOCASE").
+		Order("albums.right_path").
 		Find(&childFolders)
 	for _, ch := range childFolders {
 		childrenObj = append(childrenObj, spec.NewTCAlbumByFolder(ch))

@@ -256,7 +256,7 @@ func streamGetTransodePreference(dbc *db.DB, userID int, client string) (*db.Tra
 	var pref db.TranscodePreference
 	err := dbc.
 		Where("user_id=?", userID).
-		Where("client COLLATE NOCASE IN (?)", []string{"*", client}).
+		Where("client IN (?)", []string{"*", client}).
 		Order("client DESC"). // ensure "*" is last if it's there
 		First(&pref).
 		Error
