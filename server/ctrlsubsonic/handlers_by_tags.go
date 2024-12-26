@@ -214,11 +214,11 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
-	params := r.Context().Value(CtxParams).(params.Params)
+	parameters := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
-	query, err := params.Get("query")
+	query, err := parameters.Get("query")
 	var queries []string
-	if err != nil {
+	if err != nil && !errors.Is(err, params.ErrNoValues) {
 		return spec.NewError(10, "please provide a `query` parameter")
 	}
 	for _, s := range strings.Fields(query) {
@@ -241,9 +241,9 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
 		Preload("Info").
-		Offset(params.GetOrInt("artistOffset", 0)).
-		Limit(params.GetOrInt("artistCount", 20))
-	if m := getMusicFolder(c.musicPaths, params); m != "" {
+		Offset(parameters.GetOrInt("artistOffset", 0)).
+		Limit(parameters.GetOrInt("artistCount", 20))
+	if m := getMusicFolder(c.musicPaths, parameters); m != "" {
 		q = q.Where("albums.root_dir=?", m)
 	}
 	if err := q.Find(&artists).Error; err != nil {
@@ -265,9 +265,9 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		q = q.Where(`tag_title LIKE ? OR tag_title_u_dec LIKE ?`, s, s)
 	}
 	q = q.
-		Offset(params.GetOrInt("albumOffset", 0)).
-		Limit(params.GetOrInt("albumCount", 20))
-	if m := getMusicFolder(c.musicPaths, params); m != "" {
+		Offset(parameters.GetOrInt("albumOffset", 0)).
+		Limit(parameters.GetOrInt("albumCount", 20))
+	if m := getMusicFolder(c.musicPaths, parameters); m != "" {
 		q = q.Where("root_dir=?", m)
 	}
 	if err := q.Find(&albums).Error; err != nil {
@@ -289,9 +289,9 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	for _, s := range queries {
 		q = q.Where(`tracks.tag_title LIKE ? OR tracks.tag_title_u_dec LIKE ?`, s, s)
 	}
-	q = q.Offset(params.GetOrInt("songOffset", 0)).
-		Limit(params.GetOrInt("songCount", 20))
-	if m := getMusicFolder(c.musicPaths, params); m != "" {
+	q = q.Offset(parameters.GetOrInt("songOffset", 0)).
+		Limit(parameters.GetOrInt("songCount", 20))
+	if m := getMusicFolder(c.musicPaths, parameters); m != "" {
 		q = q.
 			Joins("JOIN albums ON albums.id=tracks.album_id").
 			Where("albums.root_dir=?", m)
@@ -300,7 +300,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
 
-	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, parameters.GetOr("c", ""))
 
 	for _, t := range tracks {
 		track := spec.NewTrackByTags(t, t.Album)
