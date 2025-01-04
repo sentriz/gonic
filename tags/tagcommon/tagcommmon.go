@@ -2,6 +2,12 @@ package tagcommon
 
 import (
 	"errors"
+	"fmt"
+	"io"
+	"path/filepath"
+
+	"github.com/disintegration/imaging"
+	"github.com/sentriz/audiotags"
 )
 
 var ErrUnsupported = errors.New("filetype unsupported")
@@ -39,7 +45,39 @@ const (
 	FallbackAlbum  = "Unknown Album"
 	FallbackArtist = "Unknown Artist"
 	FallbackGenre  = "Unknown Genre"
+
+	CoverDefaultSize = 600
 )
+
+func CachePath(cacheDir, id string, size int) string {
+	return filepath.Join(cacheDir, fmt.Sprintf("%s-%d.png", id, size))
+}
+
+func CoverScaleAndSave(reader io.Reader, cachePath string, size int) error {
+	src, err := imaging.Decode(reader)
+	if err != nil {
+		return fmt.Errorf("resizing: %w", err)
+	}
+	width := size
+	if width > src.Bounds().Dx() {
+		// don't upscale images
+		width = src.Bounds().Dx()
+	}
+	if err := imaging.Save(imaging.Resize(src, width, 0, imaging.Lanczos), cachePath); err != nil {
+		return fmt.Errorf("caching %q: %w", cachePath, err)
+	}
+	return nil
+}
+
+// TODO: Find a better place to put this
+func EmbeddedCover(absPath string) io.Reader {
+	f, err := audiotags.Open(absPath)
+	if err != nil {
+		return nil
+	}
+	defer f.Close()
+	return f.ReadImageRaw()
+}
 
 func MustAlbum(p Info) string {
 	if r := p.Album(); r != "" {

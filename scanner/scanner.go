@@ -40,9 +40,10 @@ type Scanner struct {
 	tagReader          tagcommon.Reader
 	excludePattern     *regexp.Regexp
 	scanning           *int32
+	cacheCoverPath     string
 }
 
-func New(musicDirs []string, db *db.DB, multiValueSettings map[Tag]MultiValueSetting, tagReader tagcommon.Reader, excludePattern string) *Scanner {
+func New(musicDirs []string, db *db.DB, multiValueSettings map[Tag]MultiValueSetting, tagReader tagcommon.Reader, excludePattern, cacheCoverPath string) *Scanner {
 	var excludePatternRegExp *regexp.Regexp
 	if excludePattern != "" {
 		excludePatternRegExp = regexp.MustCompile(excludePattern)
@@ -55,6 +56,7 @@ func New(musicDirs []string, db *db.DB, multiValueSettings map[Tag]MultiValueSet
 		tagReader:          tagReader,
 		excludePattern:     excludePatternRegExp,
 		scanning:           new(int32),
+		cacheCoverPath:     cacheCoverPath,
 	}
 }
 
@@ -309,6 +311,20 @@ func (s *Scanner) scanDir(tx *db.DB, st *State, absPath string) error {
 		absPath := filepath.Join(musicDir, relPath, basename)
 		if err := s.populateTrackAndArtists(tx, st, i, &album, basename, absPath); err != nil {
 			return fmt.Errorf("populate track %q: %w", basename, err)
+		}
+
+		// This is done after track populating in case of any unexpected errors
+		if cover == "" {
+			img := tagcommon.EmbeddedCover(absPath)
+			if img != nil {
+				cachePath := tagcommon.CachePath(s.cacheCoverPath, album.SID().String(), tagcommon.CoverDefaultSize)
+				if err = tagcommon.CoverScaleAndSave(img, cachePath, tagcommon.CoverDefaultSize); err != nil {
+					return fmt.Errorf("caching embedded art: %w", err)
+				}
+
+				// This is a lazy way to do this, but is the easiest without moving too much around
+				cover = "embedded"
+			}
 		}
 	}
 

@@ -19,15 +19,13 @@ func NewAlbumByFolder(f *db.Album) *Album {
 		Duration:      f.Duration,
 		Created:       f.CreatedAt,
 		AverageRating: formatRating(f.AverageRating),
+		CoverID:       f.SID(),
 	}
 	if f.AlbumStar != nil {
 		a.Starred = &f.AlbumStar.StarDate
 	}
 	if f.AlbumRating != nil {
 		a.UserRating = f.AlbumRating.Rating
-	}
-	if f.Cover != "" {
-		a.CoverID = f.SID()
 	}
 	return a
 }
@@ -40,15 +38,13 @@ func NewTCAlbumByFolder(f *db.Album) *TrackChild {
 		ParentID:      f.ParentSID(),
 		CreatedAt:     f.CreatedAt,
 		AverageRating: formatRating(f.AverageRating),
+		CoverID:       f.SID(),
 	}
 	if f.AlbumStar != nil {
 		trCh.Starred = &f.AlbumStar.StarDate
 	}
 	if f.AlbumRating != nil {
 		trCh.UserRating = f.AlbumRating.Rating
-	}
-	if f.Cover != "" {
-		trCh.CoverID = f.SID()
 	}
 	return trCh
 }
@@ -77,12 +73,10 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 		MusicBrainzID: t.TagBrainzID,
 		CreatedAt:     t.CreatedAt,
 		AverageRating: formatRating(t.AverageRating),
+		CoverID:       parent.SID(),
 	}
 	if trCh.Title == "" {
 		trCh.Title = t.Filename
-	}
-	if parent.Cover != "" {
-		trCh.CoverID = parent.SID()
 	}
 	if t.Album != nil {
 		trCh.Album = t.Album.RightPath

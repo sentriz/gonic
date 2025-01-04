@@ -128,8 +128,6 @@ github.com/rivo/uniseg v0.4.7 h1:WUdvkW8uEhrYfLC4ZzdpI2ztxP1I582+49Oc5Mq64VQ=
 github.com/rivo/uniseg v0.4.7/go.mod h1:FN3SvrM+Zdj16jyLfmOkMNblXMcoc8DfTHruCPUcx88=
 github.com/rogpeppe/go-internal v1.12.0 h1:exVL4IDcn6na9z1rAb56Vxr+CgyK3nn3O+epU5NdKM8=
 github.com/rogpeppe/go-internal v1.12.0/go.mod h1:E+RYuTGaKKdloAfM02xzb0FW3Paa99yedzYV+kq4uf4=
-github.com/sentriz/audiotags v0.0.0-20240918190302-048d6470aae6 h1:WCZxu77OR9yzKGZugQC1dHhslXROOJT+UL5JCtJbBq8=
-github.com/sentriz/audiotags v0.0.0-20240918190302-048d6470aae6/go.mod h1:+pmkMFDEXJuu/u4h2OYJVfYF2qIhXJD7kqvWq6q5Zo0=
 github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981 h1:sLILANWN76ja66/K4k/mBqJuCjDZaM67w+Ru6rEB0s0=
 github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981/go.mod h1:Rx8XB1ck+so+41uu9VY1gMKs1CPQ2NTq0pzf+OCCQHo=
 github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf h1:pvbZ0lM0XWPBqUKqFU8cmavspvIl9nulOYwdy6IFRRo=
@@ -138,6 +136,8 @@ github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
+github.com/turtletowerz/audiotags v1.0.0 h1:jgycmmi3c4FmkfrkX6zoU+8eyat/3Qw8GFanWDf9pZQ=
+github.com/turtletowerz/audiotags v1.0.0/go.mod h1:+pmkMFDEXJuu/u4h2OYJVfYF2qIhXJD7kqvWq6q5Zo0=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 go.senan.xyz/flagconf v0.1.9 h1:LBDmqiVFgijfqFXDzH97gPn0qDbg1Dq6/vxsxS/TzC4=
 go.senan.xyz/flagconf v0.1.9/go.mod h1:NqOFfSwJvNWXOTUabcRZ8mPK9+sJmhStJhqtEt74wNQ=

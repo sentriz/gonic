@@ -2,6 +2,8 @@ module go.senan.xyz/gonic
 
 go 1.23.0
 
+replace github.com/sentriz/audiotags => github.com/turtletowerz/audiotags v1.0.0
+
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/andybalholm/cascadia v1.3.2
