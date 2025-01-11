@@ -24,7 +24,7 @@ func TestPodcastsAndEpisodesWithSameName(t *testing.T) {
 	m := mockfs.New(t)
 
 	base := t.TempDir()
-	podcasts := New(m.DB(), base, m.TagReader())
+	podcasts := New(m.DB(), base, m.TagReader(), "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
 
 	fp := gofeed.NewParser()
 	newFeed, err := fp.Parse(bytes.NewReader(testRSS))

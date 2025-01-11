@@ -25,22 +25,20 @@ import (
 
 var ErrNoAudioInFeedItem = errors.New("no audio in feed item")
 
-const (
-	fetchUserAgent = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11`
-)
-
 type Podcasts struct {
 	httpClient *http.Client
 	db         *db.DB
 	baseDir    string
 	tagReader  tagcommon.Reader
+	userAgent  string
 }
 
-func New(db *db.DB, base string, tagReader tagcommon.Reader) *Podcasts {
+func New(db *db.DB, base string, tagReader tagcommon.Reader, userAgent string) *Podcasts {
 	return &Podcasts{
 		db:         db,
 		baseDir:    base,
 		tagReader:  tagReader,
+		userAgent:  userAgent,
 		httpClient: &http.Client{},
 	}
 }
@@ -331,7 +329,7 @@ func (p *Podcasts) downloadPodcastCover(podcast *db.Podcast) error {
 	if err != nil {
 		return fmt.Errorf("create http request: %w", err)
 	}
-	req.Header.Add("User-Agent", fetchUserAgent)
+	req.Header.Add("User-Agent", p.userAgent)
 
 	resp, err := p.httpClient.Do(req)
 	if err != nil {
@@ -475,7 +473,7 @@ func (p *Podcasts) doPodcastDownload(podcast *db.Podcast, podcastEpisode *db.Pod
 	if err != nil {
 		return fmt.Errorf("create http request: %w", err)
 	}
-	req.Header.Add("User-Agent", fetchUserAgent)
+	req.Header.Add("User-Agent", p.userAgent)
 
 	resp, err := p.httpClient.Do(req)
 	if err != nil {

@@ -59,6 +59,8 @@ func main() {
 	confPodcastPurgeAgeDays := flag.Uint("podcast-purge-age", 0, "age (in days) to purge podcast episodes if not accessed (optional)")
 	confPodcastPath := flag.String("podcast-path", "", "path to podcasts")
 
+	confHTTPUserAgent := flag.String("http-user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36", "user agent to fetch podcasts (optional)")
+
 	confCachePath := flag.String("cache-path", "", "path to cache")
 
 	var confMusicPaths pathAliases
@@ -200,7 +202,7 @@ func main() {
 		tagReader,
 		*confExcludePattern,
 	)
-	podcast := podcast.New(dbc, *confPodcastPath, tagReader)
+	podcast := podcast.New(dbc, *confPodcastPath, tagReader, *confHTTPUserAgent)
 	transcoder := transcode.NewCachingTranscoder(
 		transcode.NewFFmpegTranscoder(),
 		cacheDirAudio,
