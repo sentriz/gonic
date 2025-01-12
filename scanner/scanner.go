@@ -314,6 +314,7 @@ func (s *Scanner) scanDir(tx *db.DB, st *State, absPath string) error {
 		}
 
 		// This is done after track populating in case of any unexpected errors
+		// Grabbing the first cover available is not ideal but it's the best solution at the moment
 		if cover == "" {
 			img := tagcommon.EmbeddedCover(absPath)
 			if img != nil {

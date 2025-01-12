@@ -76,7 +76,12 @@ func EmbeddedCover(absPath string) io.Reader {
 		return nil
 	}
 	defer f.Close()
-	return f.ReadImageRaw()
+
+	raw := f.ReadImageRaw()
+	if raw == nil || raw.Len() == 0 {
+		return nil
+	}
+	return raw
 }
 
 func MustAlbum(p Info) string {

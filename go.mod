@@ -2,7 +2,7 @@ module go.senan.xyz/gonic
 
 go 1.23.0
 
-replace github.com/sentriz/audiotags => github.com/turtletowerz/audiotags v1.0.0
+replace github.com/sentriz/audiotags => github.com/turtletowerz/audiotags v1.0.1-0.20250112090906-d044f29536ef
 
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
