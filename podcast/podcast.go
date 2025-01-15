@@ -118,6 +118,26 @@ func (p *Podcasts) SetAutoDownload(podcastID int, setting db.PodcastAutoDownload
 	if err := p.db.Save(&podcast).Error; err != nil {
 		return fmt.Errorf("save setting: %w", err)
 	}
+
+	// download most recent
+	if setting == db.PodcastAutoDownloadLatest {
+		err := p.db.
+			Model(db.PodcastEpisode{}).
+			Where("status=?", db.PodcastEpisodeStatusSkipped).
+			Where("id=?", p.db.
+				Select("id").
+				Model(db.PodcastEpisode{}).
+				Where("podcast_id=?", podcast.ID).
+				Order("publish_date DESC").
+				Limit(1).
+				SubQuery(),
+			).
+			Update("status", db.PodcastEpisodeStatusDownloading).
+			Error
+		if err != nil {
+			return fmt.Errorf("update podcast most recent episode: %w", err)
+		}
+	}
 	return nil
 }
 
@@ -462,11 +482,13 @@ func (p *Podcasts) DownloadTick() error {
 		return nil
 	}
 
+	log.Printf("starting podcast episode download %q - %q", podcastEpisode.Podcast.Title, podcastEpisode.Title)
+
 	if err := p.doPodcastDownload(podcastEpisode.Podcast, &podcastEpisode); err != nil {
 		return fmt.Errorf("do download: %w", err)
 	}
 
-	log.Printf("downloaded podcast episode %q - %q", podcastEpisode.Podcast.Title, podcastEpisode.Title)
+	log.Printf("downloaded podcast episode")
 	return nil
 }
 
