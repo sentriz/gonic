@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/disintegration/imaging"
 	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/db"
@@ -21,6 +20,7 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specidpaths"
+	"go.senan.xyz/gonic/tags/tagcommon"
 	"go.senan.xyz/gonic/transcode"
 )
 
@@ -30,32 +30,37 @@ import (
 //   b) return a non-nil spec.Response
 //  _but not both_
 
-const (
-	coverDefaultSize = 600
-	coverCacheFormat = "png"
-)
-
 func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	id, err := params.GetID("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	size := params.GetOrInt("size", coverDefaultSize)
-	cachePath := filepath.Join(
-		c.cacheCoverPath,
-		fmt.Sprintf("%s-%d.%s", id.String(), size, coverCacheFormat),
-	)
+	size := params.GetOrInt("size", tagcommon.CoverDefaultSize)
+	cachePath := tagcommon.CachePath(c.cacheCoverPath, id.String(), size)
 	_, err = os.Stat(cachePath)
 	switch {
 	case os.IsNotExist(err):
 		reader, err := coverFor(c.dbc, c.artistInfoCache, id)
+		if err != nil && errors.Is(err, errCoverEmpty) {
+			// If the DB cover is empty, there could be a situation where an embedded cover needs to be downscaled.
+			// e.g. embedded-600.png exists, but we need embedded-300.png and it doesn't exist in the cache folder.
+			cachePathDefault := tagcommon.CachePath(c.cacheCoverPath, id.String(), tagcommon.CoverDefaultSize)
+			if _, err = os.Stat(cachePathDefault); err != nil {
+				// We want to silently fail here because it means an embedded cover doesn't exist, which is okay.
+				return nil
+			}
+
+			reader, err = os.Open(cachePathDefault)
+		}
+
 		if err != nil {
-			return spec.NewError(10, "couldn't find cover %q: %v", id, err)
+			log.Printf("couldn't find cover %q: %v", id, err)
+			return nil
 		}
 		defer reader.Close()
 
-		if err := coverScaleAndSave(reader, cachePath, size); err != nil {
+		if err := tagcommon.CoverScaleAndSave(reader, cachePath, size); err != nil {
 			log.Printf("error scaling cover: %v", err)
 			return nil
 		}
@@ -148,22 +153,6 @@ func coverGetPathPodcastEpisode(dbc *db.DB, id int) (*os.File, error) {
 		return nil, errCoverEmpty
 	}
 	return os.Open(filepath.Join(pe.Podcast.RootDir, pe.Podcast.Image))
-}
-
-func coverScaleAndSave(reader io.Reader, cachePath string, size int) error {
-	src, err := imaging.Decode(reader)
-	if err != nil {
-		return fmt.Errorf("resizing: %w", err)
-	}
-	width := size
-	if width > src.Bounds().Dx() {
-		// don't upscale images
-		width = src.Bounds().Dx()
-	}
-	if err := imaging.Save(imaging.Resize(src, width, 0, imaging.Lanczos), cachePath); err != nil {
-		return fmt.Errorf("caching %q: %w", cachePath, err)
-	}
-	return nil
 }
 
 func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.Response {

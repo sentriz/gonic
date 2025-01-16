@@ -199,6 +199,7 @@ func main() {
 		},
 		tagReader,
 		*confExcludePattern,
+		cacheDirCovers,
 	)
 	podcast := podcast.New(dbc, *confPodcastPath, tagReader)
 	transcoder := transcode.NewCachingTranscoder(
