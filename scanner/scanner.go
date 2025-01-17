@@ -463,8 +463,9 @@ func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trags tagcommon.
 	track.Size = size
 	track.AlbumID = album.ID
 
-	track.TagTitle = trags.Title()
-	track.TagTitleUDec = decoded(trags.Title())
+	tagTitle := tagcommon.MustTitle(trags)
+	track.TagTitle = tagTitle
+	track.TagTitleUDec = decoded(tagTitle)
 	track.TagTrackArtist = tagcommon.MustArtist(trags)
 	track.TagTrackNumber = trags.TrackNumber()
 	track.TagDiscNumber = trags.DiscNumber()
