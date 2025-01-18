@@ -9,7 +9,6 @@ import (
 	"reflect"
 	"testing"
 
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/stretchr/testify/assert"
 	"go.senan.xyz/gonic/mockfs"
 )
