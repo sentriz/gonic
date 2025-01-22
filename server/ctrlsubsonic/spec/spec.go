@@ -141,14 +141,14 @@ type Album struct {
 	IsDir    bool       `xml:"isDir,attr,omitempty"  json:"isDir,omitempty"`
 	CoverID  *specid.ID `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty"`
 
-	Name       string        `xml:"name,attr"              json:"name"`
-	TrackCount int           `xml:"songCount,attr"         json:"songCount"`
-	Duration   int           `xml:"duration,attr"          json:"duration"`
-	PlayCount  int           `xml:"playCount,attr"          json:"playCount"`
-	Genre      string        `xml:"genre,attr,omitempty"   json:"genre,omitempty"`
-	Genres     []*GenreRef   `xml:"genres,omitempty"       json:"genres,omitempty"`
-	Year       int           `xml:"year,attr,omitempty"    json:"year,omitempty"`
-	Tracks     []*TrackChild `xml:"song,omitempty"         json:"song,omitempty"`
+	Name       string        `xml:"name,attr"                json:"name"`
+	TrackCount int           `xml:"songCount,attr,omitempty" json:"songCount,omitempty"`
+	Duration   int           `xml:"duration,attr"            json:"duration"`
+	PlayCount  int           `xml:"playCount,attr"           json:"playCount"`
+	Genre      string        `xml:"genre,attr,omitempty"     json:"genre,omitempty"`
+	Genres     []*GenreRef   `xml:"genres,omitempty"         json:"genres,omitempty"`
+	Year       int           `xml:"year,attr,omitempty"      json:"year,omitempty"`
+	Tracks     []*TrackChild `xml:"song,omitempty"           json:"song,omitempty"`
 
 	// star / rating
 	Starred       *time.Time `xml:"starred,attr,omitempty"         json:"starred,omitempty"`

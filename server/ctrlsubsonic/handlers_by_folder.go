@@ -174,7 +174,7 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 	// TODO: think about removing this extra join to count number
 	// of children. it might make sense to store that in the db
 	q.
-		Select("albums.*, count(tracks.id) child_count, sum(tracks.length) duration").
+		Select("albums.*, sum(tracks.length) duration").
 		Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
 		Group("albums.id").
 		Joins("JOIN album_artists ON album_artists.album_id=albums.id").
