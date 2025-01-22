@@ -35,7 +35,7 @@ func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
 		if err != nil {
 			return spec.NewError(0, "error reading playlist %q: %v", path, err)
 		}
-		if playlist.UserID != user.ID && !playlist.IsPublic {
+		if !playlist.CanRead(user.ID) {
 			continue
 		}
 		playlistID := playlistIDEncode(path)
@@ -49,13 +49,14 @@ func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
+	user := r.Context().Value(CtxUser).(*db.User)
 	params := r.Context().Value(CtxParams).(params.Params)
 	playlistID, err := params.GetFirst("id", "playlistId")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 	playlist, err := c.playlistStore.Read(playlistIDDecode(playlistID))
-	if err != nil {
+	if err != nil || !playlist.CanRead(user.ID) {
 		return spec.NewError(70, "playlist with id %s not found", playlistID)
 	}
 	sub := spec.NewResponse()
@@ -81,7 +82,7 @@ func (c *Controller) ServeCreateOrUpdatePlaylist(r *http.Request) *spec.Response
 		}
 	}
 
-	if playlist.UserID != 0 && playlist.UserID != user.ID {
+	if playlist.UserID != 0 && !playlist.CanWrite(user.ID) {
 		return spec.NewError(50, "you aren't allowed update that user's playlist")
 	}
 
@@ -132,7 +133,7 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 	}
 
 	// update meta info
-	if playlist.UserID != 0 && playlist.UserID != user.ID {
+	if !playlist.CanWrite(user.ID) {
 		return spec.NewResponse()
 	}
 
@@ -172,9 +173,21 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeDeletePlaylist(r *http.Request) *spec.Response {
+	user := r.Context().Value(CtxUser).(*db.User)
 	params := r.Context().Value(CtxParams).(params.Params)
+
 	playlistID := params.GetFirstOr( /* default */ "", "id", "playlistId")
-	if err := c.playlistStore.Delete(playlistIDDecode(playlistID)); err != nil {
+	playlistPath := playlistIDDecode(playlistID)
+	playlist, err := c.playlistStore.Read(playlistPath)
+	if err != nil {
+		return spec.NewError(0, "find playlist: %v", err)
+	}
+
+	if !playlist.CanDelete(user.ID) {
+		return spec.NewError(0, "you cannot delete playlists you do not own")
+	}
+
+	if err := c.playlistStore.Delete(playlistPath); err != nil {
 		return spec.NewError(0, "delete playlist: %v", err)
 	}
 	return spec.NewResponse()
