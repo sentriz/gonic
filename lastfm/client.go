@@ -148,13 +148,31 @@ func (c *Client) UserGetLovedTracks(userName string) (LovedTracks, error) {
 	params.Add("method", "user.getLovedTracks")
 	params.Add("api_key", apiKey)
 	params.Add("user", userName)
-	params.Add("limit", "1000") // TODO: paginate
 
-	resp, err := c.makeRequest(http.MethodGet, params)
-	if err != nil {
-		return LovedTracks{}, fmt.Errorf("making user get loved tracks GET:  %w", err)
+	var (
+		page  = 1
+		limit = 1000
+	)
+
+	var loved LovedTracks
+	for {
+		params.Set("page", fmt.Sprint(page))
+		params.Set("limit", fmt.Sprint(limit))
+
+		resp, err := c.makeRequest(http.MethodGet, params)
+		if err != nil {
+			return LovedTracks{}, fmt.Errorf("making user get loved tracks GET:  %w", err)
+		}
+
+		loved.Tracks = append(loved.Tracks, resp.LovedTracks.Tracks...)
+		if len(resp.LovedTracks.Tracks) < limit {
+			break
+		}
+
+		page++
 	}
-	return resp.LovedTracks, nil
+
+	return loved, nil
 }
 
 func (c *Client) GetSession(token string) (string, error) {
