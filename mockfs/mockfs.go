@@ -2,7 +2,6 @@
 package mockfs
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -35,7 +34,7 @@ func NewWithExcludePattern(tb testing.TB, excludePattern string) *MockFS {
 func newMockFS(tb testing.TB, dirs []string, excludePattern string) *MockFS {
 	tb.Helper()
 
-	dbc, err := db.NewMock()
+	dbc, err := db.New("sqlite3://:memory:")
 	if err != nil {
 		tb.Fatalf("create db: %v", err)
 	}
@@ -297,23 +296,6 @@ func (m *MockFS) SetTags(path string, cb func(*TagInfo)) {
 		m.tagReader.paths[absPath] = &TagInfo{}
 	}
 	cb(m.tagReader.paths[absPath])
-}
-
-func (m *MockFS) DumpDB(suffix ...string) {
-	var p []string
-	p = append(p,
-		"gonic", "dump",
-		strings.ReplaceAll(m.t.Name(), string(filepath.Separator), "-"),
-		fmt.Sprint(time.Now().UnixNano()),
-	)
-	p = append(p, suffix...)
-
-	destPath := filepath.Join(os.TempDir(), strings.Join(p, "-"))
-	if err := db.Dump(context.Background(), m.db.DB, destPath); err != nil {
-		m.t.Fatalf("dumping db: %v", err)
-	}
-
-	m.t.Error(destPath)
 }
 
 type tagReader struct {

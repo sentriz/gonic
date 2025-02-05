@@ -3,8 +3,6 @@ package ctrlsubsonic
 import (
 	"net/url"
 	"testing"
-
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
 func TestGetIndexes(t *testing.T) {

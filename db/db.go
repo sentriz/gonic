@@ -1,7 +1,6 @@
 package db
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -13,53 +12,53 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
-	"github.com/mattn/go-sqlite3"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
+	_ "github.com/jinzhu/gorm/dialects/sqlite"
 
 	// TODO: remove this dep
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
-func DefaultOptions() url.Values {
-	return url.Values{
-		// with this, multiple connections share a single data and schema cache.
-		// see https://www.sqlite.org/sharedcache.html
-		"cache": {"shared"},
-		// with this, the db sleeps for a little while when locked. can prevent
-		// a SQLITE_BUSY. see https://www.sqlite.org/c3ref/busy_timeout.html
-		"_busy_timeout": {"30000"},
-		"_journal_mode": {"WAL"},
-		"_foreign_keys": {"true"},
-	}
-}
-
-func mockOptions() url.Values {
-	return url.Values{
-		"_foreign_keys": {"true"},
-	}
-}
-
 type DB struct {
 	*gorm.DB
 }
 
-func New(path string, options url.Values) (*DB, error) {
-	// https://github.com/mattn/go-sqlite3#connection-string
-	url := url.URL{
-		Scheme: "file",
-		Opaque: path,
+func New(uri string) (*DB, error) {
+	if uri == "" {
+		return nil, fmt.Errorf("empty db uri")
 	}
-	url.RawQuery = options.Encode()
-	db, err := gorm.Open("sqlite3", url.String())
+
+	url, err := url.Parse(uri)
+	if err != nil {
+		return nil, fmt.Errorf("parse uri: %w", err)
+	}
+
+	gormURL := strings.TrimPrefix(url.String(), url.Scheme+"://")
+
+	//nolint:goconst
+	switch url.Scheme {
+	case "sqlite3":
+		q := url.Query()
+		q.Set("cache", "shared")
+		q.Set("_busy_timeout", "30000")
+		q.Set("_journal_mode", "WAL")
+		q.Set("_foreign_keys", "true")
+		url.RawQuery = q.Encode()
+	case "postgres":
+		// the postgres driver expects the schema prefix to be on the URL
+		gormURL = url.String()
+	default:
+		return nil, fmt.Errorf("unknown db scheme")
+	}
+
+	db, err := gorm.Open(url.Scheme, gormURL)
 	if err != nil {
 		return nil, fmt.Errorf("with gorm: %w", err)
 	}
+
 	db.SetLogger(log.New(os.Stdout, "gorm ", 0))
 	db.DB().SetMaxOpenConns(1)
 	return &DB{DB: db}, nil
-}
-
-func NewMock() (*DB, error) {
-	return New(":memory:", mockOptions())
 }
 
 func (db *DB) InsertBulkLeftMany(table string, head []string, left int, col []int) error {
@@ -72,10 +71,11 @@ func (db *DB) InsertBulkLeftMany(table string, head []string, left int, col []in
 		rows = append(rows, "(?, ?)")
 		values = append(values, left, c)
 	}
-	q := fmt.Sprintf("INSERT OR IGNORE INTO %q (%s) VALUES %s",
+	q := fmt.Sprintf("INSERT INTO %q (%s) VALUES %s ON CONFLICT (%s) DO NOTHING",
 		table,
 		strings.Join(head, ", "),
 		strings.Join(rows, ", "),
+		strings.Join(head, ", "),
 	)
 	return db.Exec(q, values...).Error
 }
@@ -616,46 +616,4 @@ func join[T fmt.Stringer](in []T, sep string) string {
 		strs = append(strs, id.String())
 	}
 	return strings.Join(strs, sep)
-}
-
-func Dump(ctx context.Context, db *gorm.DB, to string) error {
-	dest, err := New(to, url.Values{})
-	if err != nil {
-		return fmt.Errorf("create dest db: %w", err)
-	}
-	defer dest.Close()
-
-	connSrc, err := db.DB().Conn(ctx)
-	if err != nil {
-		return fmt.Errorf("getting src raw conn: %w", err)
-	}
-	defer connSrc.Close()
-
-	connDest, err := dest.DB.DB().Conn(ctx)
-	if err != nil {
-		return fmt.Errorf("getting dest raw conn: %w", err)
-	}
-	defer connDest.Close()
-
-	err = connDest.Raw(func(connDest interface{}) error {
-		return connSrc.Raw(func(connSrc interface{}) error {
-			connDestq := connDest.(*sqlite3.SQLiteConn)
-			connSrcq := connSrc.(*sqlite3.SQLiteConn)
-			bk, err := connDestq.Backup("main", connSrcq, "main")
-			if err != nil {
-				return fmt.Errorf("create backup db: %w", err)
-			}
-			for done, _ := bk.Step(-1); !done; { //nolint: revive
-			}
-			if err := bk.Finish(); err != nil {
-				return fmt.Errorf("finishing dump: %w", err)
-			}
-			return nil
-		})
-	})
-	if err != nil {
-		return fmt.Errorf("backing up: %w", err)
-	}
-
-	return nil
 }
