@@ -22,9 +22,7 @@ func NewAlbumByTags(a *db.Album, artists []*db.Artist) *Album {
 		Year:          a.TagYear,
 		Tracks:        []*TrackChild{},
 		AverageRating: formatRating(a.AverageRating),
-	}
-	if a.Cover != "" {
-		ret.CoverID = a.SID()
+		CoverID:       a.SID(),
 	}
 	if a.AlbumStar != nil {
 		ret.Starred = &a.AlbumStar.StarDate
@@ -84,9 +82,7 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 		Year:               album.TagYear,
 		AverageRating:      formatRating(t.AverageRating),
 		TranscodeMeta:      TranscodeMeta{},
-	}
-	if album.Cover != "" {
-		ret.CoverID = album.SID()
+		CoverID:            album.SID(),
 	}
 	if t.TrackStar != nil {
 		ret.Starred = &t.TrackStar.StarDate
