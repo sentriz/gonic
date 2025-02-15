@@ -23,6 +23,7 @@
           "isVideo": false,
           "parent": "al-2",
           "title": "album-0",
+          "year": 2021,
           "musicBrainzId": "",
           "replayGain": null
         },
@@ -39,6 +40,7 @@
           "isVideo": false,
           "parent": "al-2",
           "title": "album-1",
+          "year": 2021,
           "musicBrainzId": "",
           "replayGain": null
         },
@@ -55,6 +57,7 @@
           "isVideo": false,
           "parent": "al-2",
           "title": "album-2",
+          "year": 2021,
           "musicBrainzId": "",
           "replayGain": null
         }
