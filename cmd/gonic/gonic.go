@@ -38,6 +38,7 @@ import (
 	"go.senan.xyz/gonic/infocache/artistinfocache"
 	"go.senan.xyz/gonic/jukebox"
 	"go.senan.xyz/gonic/lastfm"
+	"go.senan.xyz/gonic/ldap"
 	"go.senan.xyz/gonic/listenbrainz"
 	"go.senan.xyz/gonic/playlist"
 	"go.senan.xyz/gonic/podcast"
@@ -82,6 +83,24 @@ func main() {
 	confConfigPath := flag.String("config-path", "", "path to config (optional)")
 
 	confExcludePattern := flag.String("exclude-pattern", "", "regex pattern to exclude files from scan (optional)")
+
+	var ldapConfig ldap.Config
+	flag.StringVar(&ldapConfig.BindUser, "ldap-bind-user", "", "the bind user to bind to LDAP with (required for LDAP)")
+	flag.StringVar(&ldapConfig.BindPass, "ldap-bind-pass", "", "the password of the LDAP bind user (required for LDAP)")
+	flag.StringVar(&ldapConfig.BaseDN, "ldap-base-dn", "", "the base DN for LDAP objects (required for LDAP)")
+
+	flag.StringVar(&ldapConfig.Filter, "ldap-filter", "", "the filter to select LDAP objects with (optional)")
+	flag.StringVar(&ldapConfig.AdminFilter, "ldap-admin-filter", "(memberof=cn=admin)", "the filter to select LDAP objects with (optional)")
+
+	flag.StringVar(&ldapConfig.FQDN, "ldap-fqdn", "", "the name of the server to connect to (required for LDAP)")
+	flag.UintVar(&ldapConfig.Port, "ldap-port", 389, "what port the LDAP server is hosted on (optional)")
+	flag.BoolVar(&ldapConfig.TLS, "ldap-tls", false, "whether gonic will connect to the LDAP server using TLS (optional)")
+
+	if ldapConfig.FQDN != "" {
+		if ldapConfig.BindUser == "" || ldapConfig.BindPass == "" || ldapConfig.BaseDN == "" {
+			log.Fatal("a server was provided for an LDAP connection, but configuration is incomplete")
+		}
+	}
 
 	var confMultiValueGenre, confMultiValueArtist, confMultiValueAlbumArtist multiValueSetting
 	flag.Var(&confMultiValueGenre, "multi-value-genre", "setting for mutli-valued genre scanning (optional)")
@@ -254,11 +273,11 @@ func main() {
 		return url.String()
 	}
 
-	ctrlAdmin, err := ctrladmin.New(dbc, sessDB, scannr, podcast, lastfmClient, resolveProxyPath)
+	ctrlAdmin, err := ctrladmin.New(dbc, sessDB, scannr, podcast, lastfmClient, resolveProxyPath, ldapConfig)
 	if err != nil {
 		log.Panicf("error creating admin controller: %v\n", err)
 	}
-	ctrlSubsonic, err := ctrlsubsonic.New(dbc, scannr, musicPaths, *confPodcastPath, cacheDirAudio, cacheDirCovers, jukebx, playlistStore, scrobblers, podcast, transcoder, lastfmClient, artistInfoCache, albumInfoCache, resolveProxyPath)
+	ctrlSubsonic, err := ctrlsubsonic.New(dbc, scannr, musicPaths, *confPodcastPath, cacheDirAudio, cacheDirCovers, jukebx, playlistStore, scrobblers, podcast, transcoder, lastfmClient, artistInfoCache, albumInfoCache, resolveProxyPath, ldapConfig)
 	if err != nil {
 		log.Panicf("error creating subsonic controller: %v\n", err)
 	}
