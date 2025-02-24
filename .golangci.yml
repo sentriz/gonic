@@ -1,8 +1,3 @@
-run:
-  skip-dirs:
-    - server/assets
-  skip-dirs-use-default: true
-
 linters:
   disable-all: true
   enable:
@@ -70,6 +65,9 @@ linters:
     - zerologlint
 
 issues:
+  exclude-dirs:
+    - server/assets
+  exclude-dirs-use-default: true
   exclude-rules:
     - path: _test\.go
       linters:
