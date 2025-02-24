@@ -13,8 +13,15 @@
         {
           "id": "tr-1",
           "album": "album-0",
+          "albumId": "al-3",
           "artist": "artist-0",
-          "artists": [{ "id": "ar-1", "name": "artist-0" }],
+          "artistId": "ar-1",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayArtist": "",
           "albumArtists": null,
           "displayAlbumArtist": "",
@@ -39,8 +46,15 @@
         {
           "id": "tr-2",
           "album": "album-0",
+          "albumId": "al-3",
           "artist": "artist-0",
-          "artists": [{ "id": "ar-1", "name": "artist-0" }],
+          "artistId": "ar-1",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayArtist": "",
           "albumArtists": null,
           "displayAlbumArtist": "",
@@ -65,8 +79,15 @@
         {
           "id": "tr-3",
           "album": "album-0",
+          "albumId": "al-3",
           "artist": "artist-0",
-          "artists": [{ "id": "ar-1", "name": "artist-0" }],
+          "artistId": "ar-1",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayArtist": "",
           "albumArtists": null,
           "displayAlbumArtist": "",

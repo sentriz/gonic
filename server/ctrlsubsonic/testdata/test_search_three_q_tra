@@ -13,9 +13,19 @@
           "albumId": "al-3",
           "artist": "artist-0",
           "artistId": "ar-1",
-          "artists": [{ "id": "ar-1", "name": "artist-0" }],
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayArtist": "artist-0",
-          "albumArtists": [{ "id": "ar-1", "name": "artist-0" }],
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayAlbumArtist": "artist-0",
           "bitRate": 100,
           "contentType": "audio/flac",
@@ -23,7 +33,11 @@
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
           "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
+          "genres": [
+            {
+              "name": "Unknown Genre"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-3",
@@ -43,9 +57,19 @@
           "albumId": "al-3",
           "artist": "artist-0",
           "artistId": "ar-1",
-          "artists": [{ "id": "ar-1", "name": "artist-0" }],
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayArtist": "artist-0",
-          "albumArtists": [{ "id": "ar-1", "name": "artist-0" }],
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayAlbumArtist": "artist-0",
           "bitRate": 100,
           "contentType": "audio/flac",
@@ -53,7 +77,11 @@
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
           "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
+          "genres": [
+            {
+              "name": "Unknown Genre"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-3",
@@ -73,9 +101,19 @@
           "albumId": "al-3",
           "artist": "artist-0",
           "artistId": "ar-1",
-          "artists": [{ "id": "ar-1", "name": "artist-0" }],
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayArtist": "artist-0",
-          "albumArtists": [{ "id": "ar-1", "name": "artist-0" }],
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayAlbumArtist": "artist-0",
           "bitRate": 100,
           "contentType": "audio/flac",
@@ -83,7 +121,11 @@
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
           "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
+          "genres": [
+            {
+              "name": "Unknown Genre"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-3",
@@ -103,9 +145,19 @@
           "albumId": "al-4",
           "artist": "artist-0",
           "artistId": "ar-1",
-          "artists": [{ "id": "ar-1", "name": "artist-0" }],
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayArtist": "artist-0",
-          "albumArtists": [{ "id": "ar-1", "name": "artist-0" }],
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayAlbumArtist": "artist-0",
           "bitRate": 100,
           "contentType": "audio/flac",
@@ -113,7 +165,11 @@
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
           "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
+          "genres": [
+            {
+              "name": "Unknown Genre"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-4",
@@ -133,9 +189,19 @@
           "albumId": "al-4",
           "artist": "artist-0",
           "artistId": "ar-1",
-          "artists": [{ "id": "ar-1", "name": "artist-0" }],
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayArtist": "artist-0",
-          "albumArtists": [{ "id": "ar-1", "name": "artist-0" }],
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayAlbumArtist": "artist-0",
           "bitRate": 100,
           "contentType": "audio/flac",
@@ -143,7 +209,11 @@
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
           "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
+          "genres": [
+            {
+              "name": "Unknown Genre"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-4",
@@ -163,9 +233,19 @@
           "albumId": "al-4",
           "artist": "artist-0",
           "artistId": "ar-1",
-          "artists": [{ "id": "ar-1", "name": "artist-0" }],
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayArtist": "artist-0",
-          "albumArtists": [{ "id": "ar-1", "name": "artist-0" }],
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayAlbumArtist": "artist-0",
           "bitRate": 100,
           "contentType": "audio/flac",
@@ -173,7 +253,11 @@
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
           "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
+          "genres": [
+            {
+              "name": "Unknown Genre"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-4",
@@ -193,9 +277,19 @@
           "albumId": "al-5",
           "artist": "artist-0",
           "artistId": "ar-1",
-          "artists": [{ "id": "ar-1", "name": "artist-0" }],
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayArtist": "artist-0",
-          "albumArtists": [{ "id": "ar-1", "name": "artist-0" }],
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayAlbumArtist": "artist-0",
           "bitRate": 100,
           "contentType": "audio/flac",
@@ -203,7 +297,11 @@
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
           "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
+          "genres": [
+            {
+              "name": "Unknown Genre"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-5",
@@ -223,9 +321,19 @@
           "albumId": "al-5",
           "artist": "artist-0",
           "artistId": "ar-1",
-          "artists": [{ "id": "ar-1", "name": "artist-0" }],
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayArtist": "artist-0",
-          "albumArtists": [{ "id": "ar-1", "name": "artist-0" }],
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayAlbumArtist": "artist-0",
           "bitRate": 100,
           "contentType": "audio/flac",
@@ -233,7 +341,11 @@
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
           "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
+          "genres": [
+            {
+              "name": "Unknown Genre"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-5",
@@ -253,9 +365,19 @@
           "albumId": "al-5",
           "artist": "artist-0",
           "artistId": "ar-1",
-          "artists": [{ "id": "ar-1", "name": "artist-0" }],
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayArtist": "artist-0",
-          "albumArtists": [{ "id": "ar-1", "name": "artist-0" }],
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayAlbumArtist": "artist-0",
           "bitRate": 100,
           "contentType": "audio/flac",
@@ -263,7 +385,11 @@
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
           "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
+          "genres": [
+            {
+              "name": "Unknown Genre"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-5",
@@ -283,9 +409,19 @@
           "albumId": "al-7",
           "artist": "artist-1",
           "artistId": "ar-2",
-          "artists": [{ "id": "ar-2", "name": "artist-1" }],
+          "artists": [
+            {
+              "id": "ar-2",
+              "name": "artist-1"
+            }
+          ],
           "displayArtist": "artist-1",
-          "albumArtists": [{ "id": "ar-2", "name": "artist-1" }],
+          "albumArtists": [
+            {
+              "id": "ar-2",
+              "name": "artist-1"
+            }
+          ],
           "displayAlbumArtist": "artist-1",
           "bitRate": 100,
           "contentType": "audio/flac",
@@ -293,7 +429,11 @@
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
           "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
+          "genres": [
+            {
+              "name": "Unknown Genre"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-7",
@@ -313,9 +453,19 @@
           "albumId": "al-7",
           "artist": "artist-1",
           "artistId": "ar-2",
-          "artists": [{ "id": "ar-2", "name": "artist-1" }],
+          "artists": [
+            {
+              "id": "ar-2",
+              "name": "artist-1"
+            }
+          ],
           "displayArtist": "artist-1",
-          "albumArtists": [{ "id": "ar-2", "name": "artist-1" }],
+          "albumArtists": [
+            {
+              "id": "ar-2",
+              "name": "artist-1"
+            }
+          ],
           "displayAlbumArtist": "artist-1",
           "bitRate": 100,
           "contentType": "audio/flac",
@@ -323,7 +473,11 @@
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
           "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
+          "genres": [
+            {
+              "name": "Unknown Genre"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-7",
@@ -343,9 +497,19 @@
           "albumId": "al-7",
           "artist": "artist-1",
           "artistId": "ar-2",
-          "artists": [{ "id": "ar-2", "name": "artist-1" }],
+          "artists": [
+            {
+              "id": "ar-2",
+              "name": "artist-1"
+            }
+          ],
           "displayArtist": "artist-1",
-          "albumArtists": [{ "id": "ar-2", "name": "artist-1" }],
+          "albumArtists": [
+            {
+              "id": "ar-2",
+              "name": "artist-1"
+            }
+          ],
           "displayAlbumArtist": "artist-1",
           "bitRate": 100,
           "contentType": "audio/flac",
@@ -353,7 +517,11 @@
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
           "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
+          "genres": [
+            {
+              "name": "Unknown Genre"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-7",
@@ -373,9 +541,19 @@
           "albumId": "al-8",
           "artist": "artist-1",
           "artistId": "ar-2",
-          "artists": [{ "id": "ar-2", "name": "artist-1" }],
+          "artists": [
+            {
+              "id": "ar-2",
+              "name": "artist-1"
+            }
+          ],
           "displayArtist": "artist-1",
-          "albumArtists": [{ "id": "ar-2", "name": "artist-1" }],
+          "albumArtists": [
+            {
+              "id": "ar-2",
+              "name": "artist-1"
+            }
+          ],
           "displayAlbumArtist": "artist-1",
           "bitRate": 100,
           "contentType": "audio/flac",
@@ -383,7 +561,11 @@
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
           "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
+          "genres": [
+            {
+              "name": "Unknown Genre"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-8",
@@ -403,9 +585,19 @@
           "albumId": "al-8",
           "artist": "artist-1",
           "artistId": "ar-2",
-          "artists": [{ "id": "ar-2", "name": "artist-1" }],
+          "artists": [
+            {
+              "id": "ar-2",
+              "name": "artist-1"
+            }
+          ],
           "displayArtist": "artist-1",
-          "albumArtists": [{ "id": "ar-2", "name": "artist-1" }],
+          "albumArtists": [
+            {
+              "id": "ar-2",
+              "name": "artist-1"
+            }
+          ],
           "displayAlbumArtist": "artist-1",
           "bitRate": 100,
           "contentType": "audio/flac",
@@ -413,7 +605,11 @@
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
           "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
+          "genres": [
+            {
+              "name": "Unknown Genre"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-8",
@@ -433,9 +629,19 @@
           "albumId": "al-8",
           "artist": "artist-1",
           "artistId": "ar-2",
-          "artists": [{ "id": "ar-2", "name": "artist-1" }],
+          "artists": [
+            {
+              "id": "ar-2",
+              "name": "artist-1"
+            }
+          ],
           "displayArtist": "artist-1",
-          "albumArtists": [{ "id": "ar-2", "name": "artist-1" }],
+          "albumArtists": [
+            {
+              "id": "ar-2",
+              "name": "artist-1"
+            }
+          ],
           "displayAlbumArtist": "artist-1",
           "bitRate": 100,
           "contentType": "audio/flac",
@@ -443,7 +649,11 @@
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
           "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
+          "genres": [
+            {
+              "name": "Unknown Genre"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-8",
@@ -463,9 +673,19 @@
           "albumId": "al-9",
           "artist": "artist-1",
           "artistId": "ar-2",
-          "artists": [{ "id": "ar-2", "name": "artist-1" }],
+          "artists": [
+            {
+              "id": "ar-2",
+              "name": "artist-1"
+            }
+          ],
           "displayArtist": "artist-1",
-          "albumArtists": [{ "id": "ar-2", "name": "artist-1" }],
+          "albumArtists": [
+            {
+              "id": "ar-2",
+              "name": "artist-1"
+            }
+          ],
           "displayAlbumArtist": "artist-1",
           "bitRate": 100,
           "contentType": "audio/flac",
@@ -473,7 +693,11 @@
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
           "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
+          "genres": [
+            {
+              "name": "Unknown Genre"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-9",
@@ -493,9 +717,19 @@
           "albumId": "al-9",
           "artist": "artist-1",
           "artistId": "ar-2",
-          "artists": [{ "id": "ar-2", "name": "artist-1" }],
+          "artists": [
+            {
+              "id": "ar-2",
+              "name": "artist-1"
+            }
+          ],
           "displayArtist": "artist-1",
-          "albumArtists": [{ "id": "ar-2", "name": "artist-1" }],
+          "albumArtists": [
+            {
+              "id": "ar-2",
+              "name": "artist-1"
+            }
+          ],
           "displayAlbumArtist": "artist-1",
           "bitRate": 100,
           "contentType": "audio/flac",
@@ -503,7 +737,11 @@
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
           "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
+          "genres": [
+            {
+              "name": "Unknown Genre"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-9",
@@ -523,9 +761,19 @@
           "albumId": "al-9",
           "artist": "artist-1",
           "artistId": "ar-2",
-          "artists": [{ "id": "ar-2", "name": "artist-1" }],
+          "artists": [
+            {
+              "id": "ar-2",
+              "name": "artist-1"
+            }
+          ],
           "displayArtist": "artist-1",
-          "albumArtists": [{ "id": "ar-2", "name": "artist-1" }],
+          "albumArtists": [
+            {
+              "id": "ar-2",
+              "name": "artist-1"
+            }
+          ],
           "displayAlbumArtist": "artist-1",
           "bitRate": 100,
           "contentType": "audio/flac",
@@ -533,7 +781,11 @@
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
           "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
+          "genres": [
+            {
+              "name": "Unknown Genre"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-9",
@@ -553,9 +805,19 @@
           "albumId": "al-11",
           "artist": "artist-2",
           "artistId": "ar-3",
-          "artists": [{ "id": "ar-3", "name": "artist-2" }],
+          "artists": [
+            {
+              "id": "ar-3",
+              "name": "artist-2"
+            }
+          ],
           "displayArtist": "artist-2",
-          "albumArtists": [{ "id": "ar-3", "name": "artist-2" }],
+          "albumArtists": [
+            {
+              "id": "ar-3",
+              "name": "artist-2"
+            }
+          ],
           "displayAlbumArtist": "artist-2",
           "bitRate": 100,
           "contentType": "audio/flac",
@@ -563,7 +825,11 @@
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
           "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
+          "genres": [
+            {
+              "name": "Unknown Genre"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-11",
@@ -583,9 +849,19 @@
           "albumId": "al-11",
           "artist": "artist-2",
           "artistId": "ar-3",
-          "artists": [{ "id": "ar-3", "name": "artist-2" }],
+          "artists": [
+            {
+              "id": "ar-3",
+              "name": "artist-2"
+            }
+          ],
           "displayArtist": "artist-2",
-          "albumArtists": [{ "id": "ar-3", "name": "artist-2" }],
+          "albumArtists": [
+            {
+              "id": "ar-3",
+              "name": "artist-2"
+            }
+          ],
           "displayAlbumArtist": "artist-2",
           "bitRate": 100,
           "contentType": "audio/flac",
@@ -593,7 +869,11 @@
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
           "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
+          "genres": [
+            {
+              "name": "Unknown Genre"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-11",

@@ -10,7 +10,12 @@
       "created": "2019-11-30T00:00:00Z",
       "artistId": "ar-1",
       "artist": "artist-0",
-      "artists": [{ "id": "ar-1", "name": "artist-0" }],
+      "artists": [
+        {
+          "id": "ar-1",
+          "name": "artist-0"
+        }
+      ],
       "displayArtist": "artist-0",
       "title": "album-0",
       "album": "album-0",
@@ -20,7 +25,11 @@
       "duration": 300,
       "playCount": 0,
       "genre": "Unknown Genre",
-      "genres": [{ "name": "Unknown Genre" }],
+      "genres": [
+        {
+          "name": "Unknown Genre"
+        }
+      ],
       "year": 2021,
       "song": [
         {
@@ -29,9 +38,19 @@
           "albumId": "al-3",
           "artist": "artist-0",
           "artistId": "ar-1",
-          "artists": [{ "id": "ar-1", "name": "artist-0" }],
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayArtist": "artist-0",
-          "albumArtists": [{ "id": "ar-1", "name": "artist-0" }],
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayAlbumArtist": "artist-0",
           "bitRate": 100,
           "contentType": "audio/flac",
@@ -57,9 +76,19 @@
           "albumId": "al-3",
           "artist": "artist-0",
           "artistId": "ar-1",
-          "artists": [{ "id": "ar-1", "name": "artist-0" }],
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayArtist": "artist-0",
-          "albumArtists": [{ "id": "ar-1", "name": "artist-0" }],
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayAlbumArtist": "artist-0",
           "bitRate": 100,
           "contentType": "audio/flac",
@@ -85,9 +114,19 @@
           "albumId": "al-3",
           "artist": "artist-0",
           "artistId": "ar-1",
-          "artists": [{ "id": "ar-1", "name": "artist-0" }],
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayArtist": "artist-0",
-          "albumArtists": [{ "id": "ar-1", "name": "artist-0" }],
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "artist-0"
+            }
+          ],
           "displayAlbumArtist": "artist-0",
           "bitRate": 100,
           "contentType": "audio/flac",
