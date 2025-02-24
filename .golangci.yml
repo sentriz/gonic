@@ -1,7 +1,7 @@
 run:
-  skip-dirs:
+  exclude-dirs:
     - server/assets
-  skip-dirs-use-default: true
+  exclude-dirs-use-default: true
 
 linters:
   disable-all: true
