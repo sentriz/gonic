@@ -2,6 +2,7 @@ package taglib
 
 import (
 	"fmt"
+	"io"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -59,6 +60,20 @@ func (i *info) ReplayGainAlbumPeak() float32 { return flt(first(find(i.raw, "rep
 
 func (i *info) Length() int  { return i.props.Length }
 func (i *info) Bitrate() int { return i.props.Bitrate }
+
+func (i *info) EmbeddedCover(path string) io.Reader {
+	f, err := audiotags.Open(path)
+	if err != nil {
+		return nil
+	}
+	defer f.Close()
+
+	raw := f.ReadImageRaw()
+	if raw == nil || raw.Len() == 0 {
+		return nil
+	}
+	return raw
+}
 
 func first[T comparable](is []T) T {
 	var z T

@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	"github.com/disintegration/imaging"
-	"github.com/sentriz/audiotags"
 )
 
 var ErrUnsupported = errors.New("filetype unsupported")
@@ -31,6 +30,7 @@ type Info interface {
 	TrackNumber() int
 	DiscNumber() int
 	Year() int
+	EmbeddedCover(string) io.Reader
 
 	ReplayGainTrackGain() float32
 	ReplayGainTrackPeak() float32
@@ -67,21 +67,6 @@ func CoverScaleAndSave(reader io.Reader, cachePath string, size int) error {
 		return fmt.Errorf("caching %q: %w", cachePath, err)
 	}
 	return nil
-}
-
-// TODO: Find a better place to put this
-func EmbeddedCover(absPath string) io.Reader {
-	f, err := audiotags.Open(absPath)
-	if err != nil {
-		return nil
-	}
-	defer f.Close()
-
-	raw := f.ReadImageRaw()
-	if raw == nil || raw.Len() == 0 {
-		return nil
-	}
-	return raw
 }
 
 func MustAlbum(p Info) string {

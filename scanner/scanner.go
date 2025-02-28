@@ -309,30 +309,15 @@ func (s *Scanner) scanDir(tx *db.DB, st *State, absPath string) error {
 	sort.Strings(tracks)
 	for i, basename := range tracks {
 		absPath := filepath.Join(musicDir, relPath, basename)
-		if err := s.populateTrackAndArtists(tx, st, i, &album, basename, absPath); err != nil {
+		if err := s.populateTrackAndArtists(tx, st, i, &album, basename, absPath, &cover); err != nil {
 			return fmt.Errorf("populate track %q: %w", basename, err)
-		}
-
-		// This is done after track populating in case of any unexpected errors
-		// Grabbing the first cover available is not ideal but it's the best solution at the moment
-		if cover == "" {
-			img := tagcommon.EmbeddedCover(absPath)
-			if img != nil {
-				cachePath := tagcommon.CachePath(s.cacheCoverPath, album.SID().String(), tagcommon.CoverDefaultSize)
-				if err = tagcommon.CoverScaleAndSave(img, cachePath, tagcommon.CoverDefaultSize); err != nil {
-					return fmt.Errorf("caching embedded art: %w", err)
-				}
-
-				// This is a lazy way to do this, but is the easiest without moving too much around
-				cover = "embedded"
-			}
 		}
 	}
 
 	return nil
 }
 
-func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db.Album, basename string, absPath string) error {
+func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db.Album, basename string, absPath string, cover *string) error {
 	// useful to get the real create/birth time for filesystems and kernels which support it
 	timeSpec, err := times.Stat(absPath)
 	if err != nil {
@@ -426,6 +411,21 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 
 	st.seenTracks[track.ID] = struct{}{}
 	st.seenTracksNew++
+
+	// This is done after track populating in case of any unexpected errors
+	// Grabbing the first cover available is not ideal but it's the best solution at the moment
+	if *cover == "" {
+		img := trags.EmbeddedCover(absPath)
+		if img != nil {
+			cachePath := tagcommon.CachePath(s.cacheCoverPath, album.SID().String(), tagcommon.CoverDefaultSize)
+			if err = tagcommon.CoverScaleAndSave(img, cachePath, tagcommon.CoverDefaultSize); err != nil {
+				return fmt.Errorf("caching embedded art: %w", err)
+			}
+
+			// This is a lazy way to do this, but is the easiest without moving too much around
+			*cover = "embedded"
+		}
+	}
 
 	return nil
 }

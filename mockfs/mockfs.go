@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -368,8 +369,9 @@ func (i *TagInfo) ReplayGainTrackPeak() float32 { return 0 }
 func (i *TagInfo) ReplayGainAlbumGain() float32 { return 0 }
 func (i *TagInfo) ReplayGainAlbumPeak() float32 { return 0 }
 
-func (i *TagInfo) Length() int  { return firstInt(100, i.RawLength) }
-func (i *TagInfo) Bitrate() int { return firstInt(100, i.RawBitrate) }
+func (i *TagInfo) Length() int                         { return firstInt(100, i.RawLength) }
+func (i *TagInfo) Bitrate() int                        { return firstInt(100, i.RawBitrate) }
+func (i *TagInfo) EmbeddedCover(path string) io.Reader { return nil }
 
 var _ tagcommon.Reader = (*tagReader)(nil)
 
