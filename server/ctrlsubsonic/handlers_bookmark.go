@@ -48,7 +48,6 @@ func (c *Controller) ServeGetBookmarks(r *http.Request) *spec.Response {
 				return spec.NewError(10, "finding entry: %v", err)
 			}
 			respBookmark.Entry = spec.NewTrackByTags(&track, track.Album)
-			break
 		case specid.PodcastEpisode:
 			var podcastEpisode db.PodcastEpisode
 			err := c.dbc.
@@ -59,7 +58,6 @@ func (c *Controller) ServeGetBookmarks(r *http.Request) *spec.Response {
 				return spec.NewError(10, "finding entry: %v", err)
 			}
 			respBookmark.Entry = spec.NewTCPodcastEpisode(&podcastEpisode)
-			break
 		default:
 			continue
 		}
