@@ -48,6 +48,18 @@ func (c *Controller) ServeGetBookmarks(r *http.Request) *spec.Response {
 				return spec.NewError(10, "finding entry: %v", err)
 			}
 			respBookmark.Entry = spec.NewTrackByTags(&track, track.Album)
+		case specid.PodcastEpisode:
+			var podcastEpisode db.PodcastEpisode
+			err := c.dbc.
+				Preload("Podcast").
+				Find(&podcastEpisode, "id=?", bookmark.EntryID).
+				Error
+			if err != nil {
+				return spec.NewError(10, "finding entry: %v", err)
+			}
+			respBookmark.Entry = spec.NewTCPodcastEpisode(&podcastEpisode)
+		default:
+			continue
 		}
 
 		sub.Bookmarks.List = append(sub.Bookmarks.List, respBookmark)
