@@ -205,9 +205,6 @@ func playlistRender(c *Controller, params params.Params, playlistID string, play
 		Public:    playlist.IsPublic,
 		Owner:     user.Name,
 	}
-	if !withItems {
-		return resp, nil
-	}
 
 	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
 
@@ -238,10 +235,14 @@ func playlistRender(c *Controller, params params.Params, playlistID string, play
 			continue
 		}
 		trch.TranscodeMeta = transcodeMeta
-		resp.List = append(resp.List, trch)
+		if withItems {
+			resp.List = append(resp.List, trch)
+		}
 	}
 
-	resp.SongCount = len(resp.List)
+	if withItems {
+		resp.SongCount = len(resp.List)
+	}
 
 	return resp, nil
 }
