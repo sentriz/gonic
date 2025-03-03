@@ -127,6 +127,9 @@ func NewTCPodcastEpisode(pe *db.PodcastEpisode) *TrackChild {
 		IsDir:       false,
 		Type:        "podcastepisode",
 		CreatedAt:   pe.CreatedAt,
+		Album:       pe.Album,
+		Artist:      pe.Artist,
+		CoverID:     pe.SID(),
 	}
 	if pe.Podcast != nil {
 		trCh.ParentID = pe.Podcast.SID()
@@ -136,7 +139,7 @@ func NewTCPodcastEpisode(pe *db.PodcastEpisode) *TrackChild {
 }
 
 func NewArtistByFolder(f *db.Album) *Artist {
-	// the db is structued around "browse by tags", and where
+	// the db is structured around "browse by tags", and where
 	// an album is also a folder. so we're constructing an artist
 	// from an "album" where
 	// maybe TODO: rename the Album model to Folder
