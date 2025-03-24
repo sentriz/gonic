@@ -42,6 +42,8 @@ func NewPodcastEpisode(pe *db.PodcastEpisode) *PodcastEpisode {
 		BitRate:     pe.Bitrate,
 		IsDir:       false,
 		Size:        pe.Size,
+		Album:       pe.Album,
+		Artist:      pe.Artist,
 	}
 	if pe.Podcast != nil {
 		r.Path = pe.AbsPath()

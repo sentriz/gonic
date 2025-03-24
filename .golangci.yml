@@ -88,3 +88,6 @@ issues:
     - text: "should rewrite switch"
       linters:
         - gocritic
+  exclude-dirs:
+    - server/assets
+  exclude-dirs-use-default: true

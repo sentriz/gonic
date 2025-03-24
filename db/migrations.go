@@ -75,6 +75,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202405301140", migrateAddReplayGainFields),
 		construct(ctx, "202501152035", migrateTrackAddIndexOnAlbumID),
 		construct(ctx, "202501152036", migrateAlbumAddIndexOnParentID),
+		construct(ctx, "202502012036", migratePodcastEpisode),
 	}
 
 	return gormigrate.
@@ -831,4 +832,10 @@ func migrateAlbumAddIndexOnParentID(tx *gorm.DB, _ MigrationContext) error {
 	return tx.Exec(`
 		CREATE INDEX idx_albums_parent_id ON "albums" (parent_id);
 	`).Error
+}
+
+func migratePodcastEpisode(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(
+		PodcastEpisode{},
+	).Error
 }

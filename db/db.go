@@ -508,6 +508,8 @@ type PodcastEpisode struct {
 	Status      PodcastEpisodeStatus
 	Error       string
 	Podcast     *Podcast
+	Artist      string
+	Album       string
 }
 
 func (pe *PodcastEpisode) AudioLength() int  { return pe.Length }
