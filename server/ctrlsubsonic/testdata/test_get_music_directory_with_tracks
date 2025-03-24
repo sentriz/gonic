@@ -16,12 +16,7 @@
           "albumId": "al-3",
           "artist": "artist-0",
           "artistId": "ar-1",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-0"
-            }
-          ],
+          "artists": [{ "id": "ar-1", "name": "artist-0" }],
           "displayArtist": "",
           "albumArtists": null,
           "displayAlbumArtist": "",
@@ -49,12 +44,7 @@
           "albumId": "al-3",
           "artist": "artist-0",
           "artistId": "ar-1",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-0"
-            }
-          ],
+          "artists": [{ "id": "ar-1", "name": "artist-0" }],
           "displayArtist": "",
           "albumArtists": null,
           "displayAlbumArtist": "",
@@ -82,12 +72,7 @@
           "albumId": "al-3",
           "artist": "artist-0",
           "artistId": "ar-1",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-0"
-            }
-          ],
+          "artists": [{ "id": "ar-1", "name": "artist-0" }],
           "displayArtist": "",
           "albumArtists": null,
           "displayAlbumArtist": "",
