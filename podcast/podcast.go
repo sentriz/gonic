@@ -235,7 +235,6 @@ func itemToEpisode(podcastID, size, duration int, audio string, item *gofeed.Ite
 		Status:      db.PodcastEpisodeStatusSkipped,
 		Artist:      item.ITunesExt.Author,
 		Album:       podcastTitle,
-		Image:       item.ITunesExt.Image,
 	}
 }
 

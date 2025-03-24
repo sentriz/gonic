@@ -510,7 +510,6 @@ type PodcastEpisode struct {
 	Podcast     *Podcast
 	Artist      string
 	Album       string
-	Image       string
 }
 
 func (pe *PodcastEpisode) AudioLength() int  { return pe.Length }
