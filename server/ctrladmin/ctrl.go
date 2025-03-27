@@ -27,6 +27,7 @@ import (
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/handlerutil"
 	"go.senan.xyz/gonic/lastfm"
+	"go.senan.xyz/gonic/ldap"
 	"go.senan.xyz/gonic/podcast"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/server/ctrladmin/adminui"
@@ -48,11 +49,12 @@ type Controller struct {
 	podcasts         *podcast.Podcasts
 	lastfmClient     *lastfm.Client
 	resolveProxyPath ProxyPathResolver
+	ldapConfig       ldap.Config
 }
 
 type ProxyPathResolver func(in string) string
 
-func New(dbc *db.DB, sessDB *gormstore.Store, scanner *scanner.Scanner, podcasts *podcast.Podcasts, lastfmClient *lastfm.Client, resolveProxyPath ProxyPathResolver) (*Controller, error) {
+func New(dbc *db.DB, sessDB *gormstore.Store, scanner *scanner.Scanner, podcasts *podcast.Podcasts, lastfmClient *lastfm.Client, resolveProxyPath ProxyPathResolver, ldapConfig ldap.Config) (*Controller, error) {
 	c := Controller{
 		ServeMux: http.NewServeMux(),
 
@@ -62,6 +64,7 @@ func New(dbc *db.DB, sessDB *gormstore.Store, scanner *scanner.Scanner, podcasts
 		podcasts:         podcasts,
 		lastfmClient:     lastfmClient,
 		resolveProxyPath: resolveProxyPath,
+		ldapConfig:       ldapConfig,
 	}
 
 	resp := respHandler(adminui.TemplatesFS, resolveProxyPath)
