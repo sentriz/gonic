@@ -1,6 +1,7 @@
 package podcast
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"io"
@@ -224,14 +225,6 @@ func (p *Podcasts) isAudio(rawItemURL string) (bool, error) {
 	return p.tagReader.CanRead(itemURL.Path), nil
 }
 
-func getPodcastEpisodeAuthor(episodeAuthor string, podcastAuthor string) string {
-	if len(episodeAuthor) > 0 {
-		return episodeAuthor
-	}
-
-	return podcastAuthor
-}
-
 func itemToEpisode(podcast *db.Podcast, size, duration int, audio string, item *gofeed.Item) *db.PodcastEpisode {
 	return &db.PodcastEpisode{
 		PodcastID:   podcast.ID,
@@ -242,7 +235,7 @@ func itemToEpisode(podcast *db.Podcast, size, duration int, audio string, item *
 		PublishDate: item.PublishedParsed,
 		AudioURL:    audio,
 		Status:      db.PodcastEpisodeStatusSkipped,
-		Artist:      getPodcastEpisodeAuthor(item.ITunesExt.Author, podcast.Author),
+		Artist:      cmp.Or(item.ITunesExt.Author, podcast.Author),
 		Album:       podcast.Title,
 	}
 }
