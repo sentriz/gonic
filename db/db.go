@@ -475,6 +475,7 @@ type Podcast struct {
 	Episodes     []*PodcastEpisode
 	AutoDownload PodcastAutoDownload
 	RootDir      string
+	Author       string
 }
 
 func (p *Podcast) SID() *specid.ID {
