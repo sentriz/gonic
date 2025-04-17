@@ -74,6 +74,7 @@ password can then be changed from the web interface
 | `GONIC_TRANSCODE_CACHE_SIZE` | `-transcode-cache-size` | **optional** size of the transcode cache in MB (0 = no limit) |
 | `GONIC_TRANSCODE_EJECT_INTERVAL` | `-transcode-eject-interval` | **optional** interval (in minutes) to eject transcode cache (0 = never) |
 | `GONIC_EXPVAR`                   | `-expvar`                   | **optional** enable the /debug/vars endpoint (exposes useful debugging attributes as well as database stats)                                                                                                                                                                      |
+| `GONIC_HTTP_USER_AGENT`          | `-http-user-agent`          | **optional** sets the HTTP user agent used to fetch podcasts     |
 
 ## multi valued tags (v0.16+)
 
