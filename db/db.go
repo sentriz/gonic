@@ -15,6 +15,8 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/mattn/go-sqlite3"
 
+	"go.senan.xyz/gonic/sandbox"
+
 	// TODO: remove this dep
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
@@ -48,6 +50,10 @@ func New(path string, options url.Values) (*DB, error) {
 		Scheme: "file",
 		Opaque: path,
 	}
+	sandbox.ReadWriteCreatePath(path)
+	sandbox.ReadWriteCreatePath(path + "-wal")
+	sandbox.ReadWriteCreatePath(path + "-shm")
+	sandbox.ReadWriteCreatePath(path + "-journal")
 	url.RawQuery = options.Encode()
 	db, err := gorm.Open("sqlite3", url.String())
 	if err != nil {
