@@ -287,7 +287,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID)
 	for _, s := range queries {
-		q = q.Where(`tracks.tag_title LIKE ? OR tracks.tag_title_u_dec LIKE ?`, s, s)
+		q = q.Where(`tracks.tag_title LIKE ? OR tracks.tag_title_u_dec LIKE ? OR tracks.tag_brainz_id LIKE ?`, s, s, s)
 	}
 	q = q.Offset(params.GetOrInt("songOffset", 0)).
 		Limit(params.GetOrInt("songCount", 20))
