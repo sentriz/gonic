@@ -263,7 +263,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	var tracks []*db.Track
 	q = c.dbc.Preload("Album")
 	for _, s := range queries {
-		q = q.Where(`filename LIKE ? OR filename LIKE ? OR tag_brainz_id = ?`, s, s, strings.Trim(query, `*"'`))
+		q = q.Where(`filename LIKE ? OR filename LIKE ? OR tag_brainz_id = ?`, s, s, query)
 	}
 	q = q.
 		Preload("Artists").
