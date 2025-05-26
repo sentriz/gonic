@@ -1,10 +1,10 @@
 package ctrlsubsonic
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/db"
@@ -201,13 +201,17 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
 	query, err := params.Get("query")
-	var queries []string
 	if err != nil {
 		return spec.NewError(10, "please provide a `query` parameter")
 	}
-	for _, s := range strings.Fields(query) {
-		queries = append(queries, fmt.Sprintf("%%%s%%", strings.Trim(s, `*"'`)))
-	}
+
+	var isUUID = uuid.Validate(query) == nil
+	var isAll = query == `""`
+
+	var fuzzy = query
+	fuzzy = strings.Join(strings.Fields(fuzzy), "%")
+	fuzzy = strings.ToLower(fuzzy)
+	fuzzy = "%" + fuzzy + "%"
 
 	results := &spec.SearchResultTwo{}
 
@@ -222,8 +226,12 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 
 	var artists []*db.Album
 	q := c.dbc.Where(`parent_id IN ?`, rootQ.SubQuery())
-	for _, s := range queries {
-		q = q.Where(`right_path LIKE ? OR right_path_u_dec LIKE ?`, s, s)
+	switch {
+	case isUUID:
+		q = q.Where(0)
+	case isAll:
+	default:
+		q = q.Where(`right_path LIKE ? OR right_path_u_dec LIKE ?`, fuzzy, fuzzy)
 	}
 	q = q.
 		Preload("AlbumStar", "user_id=?", user.ID).
@@ -241,8 +249,12 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	var albums []*db.Album
 	q = c.dbc.
 		Joins("JOIN album_artists ON album_artists.album_id=albums.id")
-	for _, s := range queries {
-		q = q.Where(`right_path LIKE ? OR right_path_u_dec LIKE ?`, s, s)
+	switch {
+	case isUUID:
+		q = q.Where(`tag_brainz_id = ?`, query)
+	case isAll:
+	default:
+		q = q.Where(`right_path LIKE ? OR right_path_u_dec LIKE ?`, fuzzy, fuzzy)
 	}
 	q = q.
 		Preload("AlbumStar", "user_id=?", user.ID).
@@ -262,8 +274,12 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	// search tracks
 	var tracks []*db.Track
 	q = c.dbc.Preload("Album")
-	for _, s := range queries {
-		q = q.Where(`filename LIKE ? OR filename LIKE ? OR tag_brainz_id = ?`, s, s, query)
+	switch {
+	case isUUID:
+		q = q.Where(`tag_brainz_id = ?`, query)
+	case isAll:
+	default:
+		q = q.Where(`filename LIKE ?`, fuzzy)
 	}
 	q = q.
 		Preload("Artists").

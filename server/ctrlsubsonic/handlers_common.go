@@ -75,10 +75,10 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 		scrobbleTrack.AlbumArtist = track.Album.TagAlbumArtist
 		scrobbleTrack.TrackNumber = uint(track.TagTrackNumber)
 		scrobbleTrack.Duration = time.Second * time.Duration(track.Length)
-		if _, err := uuid.Parse(track.TagBrainzID); err == nil {
+		if err := uuid.Validate(track.TagBrainzID); err == nil {
 			scrobbleTrack.MusicBrainzID = track.TagBrainzID
 		}
-		if _, err := uuid.Parse(track.Album.TagBrainzID); err == nil {
+		if err := uuid.Validate(track.Album.TagBrainzID); err == nil {
 			scrobbleTrack.MusicBrainzReleaseID = track.Album.TagBrainzID
 		}
 
