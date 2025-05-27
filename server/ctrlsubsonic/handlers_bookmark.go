@@ -45,7 +45,12 @@ func (c *Controller) ServeGetBookmarks(r *http.Request) *spec.Response {
 				Find(&track, "id=?", bookmark.EntryID).
 				Error
 			if err != nil {
-				return spec.NewError(10, "finding entry: %v", err)
+				/*
+				 * We get here if we have a bookmark for a Track that no longer exists, this should be an
+				 * error because tracks can disappear if the files are moved etc. Just skip the not found
+				 * entry and move on.
+				 */
+				continue
 			}
 			respBookmark.Entry = spec.NewTrackByTags(&track, track.Album)
 		case specid.PodcastEpisode:
@@ -55,7 +60,8 @@ func (c *Controller) ServeGetBookmarks(r *http.Request) *spec.Response {
 				Find(&podcastEpisode, "id=?", bookmark.EntryID).
 				Error
 			if err != nil {
-				return spec.NewError(10, "finding entry: %v", err)
+				/* Same as with the missing track above. */
+				continue
 			}
 			respBookmark.Entry = spec.NewTCPodcastEpisode(&podcastEpisode)
 		default:
