@@ -24,6 +24,7 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/fileutil"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"go.senan.xyz/gonic/tags/tagcommon"
 	"go.senan.xyz/wrtag/coverparse"
 )
@@ -105,6 +106,9 @@ func (s *Scanner) ScanAndClean(opts ScanOptions) (*State, error) {
 	}
 	if err := s.cleanGenres(st); err != nil {
 		return nil, fmt.Errorf("clean genres: %w", err)
+	}
+	if err := s.cleanBookmarks(st); err != nil {
+		return nil, fmt.Errorf("clean bookmarks: %w", err)
 	}
 
 	if err := s.db.SetSetting(db.LastScanTime, strconv.FormatInt(time.Now().Unix(), 10)); err != nil {
@@ -672,6 +676,37 @@ func (s *Scanner) cleanGenres(st *State) error { //nolint:unparam
 	return nil
 }
 
+func (s *Scanner) cleanBookmarks(st *State) error {
+	start := time.Now()
+	defer func() {
+		log.Printf("finished clean bookmarks in %s, %d removed", durSince(start), st.BookmarksRemoved())
+	}()
+
+	trackMarks := s.db.
+		Select("bookmarks.id").
+		Model(db.Bookmark{}).
+		Joins("LEFT JOIN tracks ON tracks.id=bookmarks.entry_id").
+		Where("tracks.id IS NULL AND bookmarks.entry_id_type=?", specid.Track).
+		SubQuery()
+	q := s.db.
+		Where("bookmards.id IN ?", trackMarks).
+		Delete(db.Bookmark{})
+	st.bookmarksRemoved += int(q.RowsAffected)
+
+	podcastMarks := s.db.
+		Select("bookmarks.id").
+		Model(db.Bookmark{}).
+		Joins("LEFT JOIN podcast_episodes ON podcast_episodes.id=bookmarks.entry_id").
+		Where("podcast_episode.id IS NULL AND bookmarks.entry_id_type=?", specid.PodcastEpisode).
+		SubQuery()
+	q = s.db.
+		Where("bookmarks.id IN ?", podcastMarks).
+		Delete(db.Bookmark{})
+	st.bookmarksRemoved += int(q.RowsAffected)
+
+	return nil
+}
+
 // decoded converts a string to it's latin equivalent.
 // it will be used by the model's *UDec fields, and is only set if it
 // differs from the original. the fields are used for searching.
@@ -694,20 +729,22 @@ type State struct {
 	seenAlbums    map[int]struct{}
 	seenTracksNew int
 
-	tracksMissing  []int64
-	albumsMissing  []int64
-	artistsMissing int
-	genresMissing  int
+	tracksMissing    []int64
+	albumsMissing    []int64
+	artistsMissing   int
+	genresMissing    int
+	bookmarksRemoved int
 }
 
 func (s *State) SeenTracks() int    { return len(s.seenTracks) }
 func (s *State) SeenAlbums() int    { return len(s.seenAlbums) }
 func (s *State) SeenTracksNew() int { return s.seenTracksNew }
 
-func (s *State) TracksMissing() int  { return len(s.tracksMissing) }
-func (s *State) AlbumsMissing() int  { return len(s.albumsMissing) }
-func (s *State) ArtistsMissing() int { return s.artistsMissing }
-func (s *State) GenresMissing() int  { return s.genresMissing }
+func (s *State) TracksMissing() int    { return len(s.tracksMissing) }
+func (s *State) AlbumsMissing() int    { return len(s.albumsMissing) }
+func (s *State) ArtistsMissing() int   { return s.artistsMissing }
+func (s *State) GenresMissing() int    { return s.genresMissing }
+func (s *State) BookmarksRemoved() int { return s.bookmarksRemoved }
 
 type MultiValueMode uint8
 
