@@ -23,9 +23,10 @@ type SubsonicResponse struct {
 }
 
 type Response struct {
-	Status  string `xml:"status,attr"           json:"status"`
-	Version string `xml:"version,attr"          json:"version"`
-	XMLNS   string `xml:"xmlns,attr"            json:"-"`
+	Status       string `xml:"status,attr"           json:"status"`
+	Version      string `xml:"version,attr"          json:"version"`
+	XMLNS        string `xml:"xmlns,attr"            json:"-"`
+	GuestSession string `xml:"guestSession,omitempty"   json:"guestSession,omitempty"`
 
 	// https://opensubsonic.netlify.app/docs/responses/subsonic-response/
 	Type                   string                  `xml:"type,attr"              json:"type"`

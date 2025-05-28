@@ -79,6 +79,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202504132036", migratePodcast),
 		construct(ctx, "202505211202", migrateTrackAddIndexOnBrainzID),
 		construct(ctx, "202505262025", migrateAlbumAddIndexOnBrainzID),
+		construct(ctx, "202505271535", migrateAddGuestConfig),
 	}
 
 	return gormigrate.
@@ -853,4 +854,27 @@ func migrateAlbumAddIndexOnBrainzID(tx *gorm.DB, _ MigrationContext) error {
 	return tx.Exec(`
 		CREATE INDEX idx_albums_brainz_id ON "albums" (tag_brainz_id);
 		`).Error
+}
+
+func migrateAddGuestConfig(tx *gorm.DB, _ MigrationContext) error {
+	// Add default settings for guest mode (disabled by default)
+	if err := tx.Where("key=?", GuestEnabled).First(&Setting{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+		if err := tx.Create(&Setting{Key: GuestEnabled, Value: "false"}).Error; err != nil {
+			return fmt.Errorf("create guest enabled setting: %w", err)
+		}
+	}
+	
+	if err := tx.Where("key=?", GuestUsername).First(&Setting{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+		if err := tx.Create(&Setting{Key: GuestUsername, Value: "guest"}).Error; err != nil {
+			return fmt.Errorf("create guest username setting: %w", err)
+		}
+	}
+	
+	if err := tx.Where("key=?", GuestPassword).First(&Setting{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+		if err := tx.Create(&Setting{Key: GuestPassword, Value: "guest"}).Error; err != nil {
+			return fmt.Errorf("create guest password setting: %w", err)
+		}
+	}
+	
+	return nil
 }

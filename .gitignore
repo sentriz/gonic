@@ -12,3 +12,6 @@ dist
 *.swp
 .tags*
 *.test
+tmp
+.tool-versions
+.air.toml

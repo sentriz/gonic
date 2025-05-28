@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/xyproto/randomstring"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/handlerutil"
 	"go.senan.xyz/gonic/infocache/albuminfocache"
@@ -229,6 +230,7 @@ func withUser(dbc *db.DB) handlerutil.Middleware {
 			params := r.Context().Value(CtxParams).(params.Params)
 			// ignoring errors here, a middleware has already ensured they exist
 			username, _ := params.Get("u")
+			guest_session, _ := params.Get("g")
 			password, _ := params.Get("p")
 			token, _ := params.Get("t")
 			salt, _ := params.Get("s")
@@ -240,22 +242,73 @@ func withUser(dbc *db.DB) handlerutil.Middleware {
 					"please provide `t` and `s`, or just `p`"))
 				return
 			}
-			user := dbc.GetUserByName(username)
-			if user == nil {
-				_ = writeResp(w, r, spec.NewError(40,
-					"invalid username %q", username))
-				return
+
+			// Check if guest credentials are being used
+			guestEnabled, _ := dbc.GetSetting(db.GuestEnabled)
+			guestUsername, _ := dbc.GetSetting(db.GuestUsername)
+			guestPassword, _ := dbc.GetSetting(db.GuestPassword)
+
+			isGuest := false
+			if guestEnabled == "true" && username == guestUsername {
+				if passwordAuth && password == guestPassword {
+					isGuest = true
+				} else if tokenAuth {
+					isGuest = checkCredsToken(guestPassword, token, salt)
+				}
 			}
-			var credsOk bool
-			if tokenAuth {
-				credsOk = checkCredsToken(user.Password, token, salt)
+
+			var user *db.User
+
+			if isGuest {
+				log.Printf("guest user %q authenticated", username)
+				var guestUser db.User
+				// no session, create
+				if guest_session == "" {
+					guest_session = randomstring.CookieFriendlyString(10)
+					tempName := username + "_" + guest_session
+					log.Printf("guest user %q creating", tempName)
+					guestUser = db.User{
+						Name:     tempName,
+						Password: guestPassword,
+						IsAdmin:  false,
+					}
+					if err := dbc.Create(&guestUser).Error; err != nil {
+						_ = writeResp(w, r, spec.NewError(40, fmt.Sprintf("failed to create guest user %q", tempName)))
+						return
+					}
+				} else {
+					tempName := username + "_" + guest_session
+					log.Printf("guest user %q found", tempName)
+					err := dbc.Where("name == ?", tempName).First(&guestUser).Error
+					if err != nil {
+						_ = writeResp(w, r, spec.NewError(40, fmt.Sprintf("failed to find guest session for user %q", tempName)))
+						return
+					}
+				}
+				// Find or create a temporary guest user
+				user = &guestUser
+				user.GuestSession = guest_session
 			} else {
-				credsOk = checkCredsBasic(user.Password, password)
+				// Regular authentication flow
+				user = dbc.GetUserByName(username)
+				if user == nil {
+					_ = writeResp(w, r, spec.NewError(40, "invalid username %q", username))
+					return
+				}
+
+				var credsOk bool
+				if tokenAuth {
+					credsOk = checkCredsToken(user.Password, token, salt)
+				} else {
+					credsOk = checkCredsBasic(user.Password, password)
+				}
+
+				if !credsOk {
+					_ = writeResp(w, r, spec.NewError(40, "invalid password"))
+					return
+				}
 			}
-			if !credsOk {
-				_ = writeResp(w, r, spec.NewError(40, "invalid password"))
-				return
-			}
+
 			withUser := context.WithValue(r.Context(), CtxUser, user)
 			next.ServeHTTP(w, r.WithContext(withUser))
 		})
@@ -304,6 +357,11 @@ func writeResp(w http.ResponseWriter, r *http.Request, resp *spec.Response) erro
 	}
 	if resp.Error != nil {
 		log.Printf("subsonic error code %d: %s", resp.Error.Code, resp.Error.Message)
+	}
+
+	user := r.Context().Value(CtxUser).(*db.User)
+	if user.GuestSession != "" {
+		resp.GuestSession = user.GuestSession
 	}
 
 	var res struct {

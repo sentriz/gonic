@@ -293,6 +293,11 @@ type templateData struct {
 	Podcasts              []*db.Podcast
 	InternetRadioStations []*db.InternetRadioStation
 
+	// guest settings
+	GuestEnabled  string
+	GuestUsername string
+	GuestPassword string
+
 	// avatar
 	Avatar []byte
 }

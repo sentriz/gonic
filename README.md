@@ -166,3 +166,13 @@ music
             ├── 03.13 Jab Gee.flac
             └── folder.jpg
 ```
+## guest account
+
+The guest account may be configured via the gonic web admin ui. Users who log in with the specified
+username/password will have a temporary guest account created for them, allowing you to share the
+guest account with multiple people, who will all be able to stream simultaneously.
+
+Gonic does not currently clean up these accounts automatically, so this list may get quite large!
+
+Due to limitations of the subsonic protocol, this functionality is only supported with the `airsonic-refix`
+client.

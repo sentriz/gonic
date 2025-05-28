@@ -1,7 +1,7 @@
 @tailwind base;
 
 form,
-input,
+input:not([type="checkbox"]),
 select {
   all: unset;
   appearance: none;
@@ -19,7 +19,7 @@ a {
   @apply text-blue-500;
 }
 
-input[type],
+input[type]:not([type="checkbox"]),
 select {
   @apply h-6 px-2 leading-[1.5] w-full min-w-[3rem] md:min-w-[8rem] box-border bg-white text-gray-600 shadow-none border-0 outline outline-1 outline-gray-400/50 cursor-pointer overflow-hidden whitespace-nowrap text-ellipsis;
 }

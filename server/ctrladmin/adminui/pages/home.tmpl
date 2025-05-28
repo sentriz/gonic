@@ -44,6 +44,53 @@
     {{ end }}
     {{ if .User.IsAdmin }}
         <div class="col-span-full">{{ component "link" (props . "To" (path "/admin/create_user")) }}create new{{ end }}</div>
+
+        <div class="col-span-full mt-6 border-t pt-4">
+            <h3 class="text-lg font-semibold mb-2 text-left">Guest Access</h3>
+            <p class="text-sm text-left text-gray-600 mb-3">
+                Configure a guest account that allows temporary access to your music library.
+                When someone logs in with these credentials, a temporary user is created on the fly.
+            </p>
+            <form action="{{ path "/admin/update_guest_settings_do" }}" method="post" class="grid grid-cols-[1fr_1fr_auto] gap-2 items-center">
+                <div class="col-span-3 text-left mb-3">
+                    <div class="inline-flex items-center">
+                        <fieldset>
+
+                        <input 
+                            id="guest-enabled-checkbox"
+                            type="checkbox" 
+                            name="guest_enabled" 
+                            {{ if eq .GuestEnabled "true" }}checked{{ end }}
+                            class="cursor-pointer h-4 w-4"
+                        >
+                        <label for="guest-enabled-checkbox" class="cursor-pointer ml-2 text-base">
+                            Enable guest access
+                        </label>
+                        </fieldset>
+                    </div>
+                </div>
+                <label class="text-sm text-gray-600 text-left">Username:</label>
+                <input
+                    type="text"
+                    name="guest_username"
+                    value="{{ .GuestUsername }}"
+                    placeholder="Guest username"
+                    class="text-right"
+                    required
+                >
+                <div></div>
+                <label class="text-sm text-gray-600 text-left">Password:</label>
+                <input
+                    type="password"
+                    name="guest_password"
+                    value="{{ .GuestPassword }}"
+                    placeholder="Guest password"
+                    class="text-right"
+                    required
+                >
+                <input type="submit" value="save" class="cursor-pointer">
+            </form>
+        </div>
     {{ end }}
 </div>
 {{ end }}

@@ -41,6 +41,9 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	data.RequestRoot = handlerutil.BaseURL(r)
 	data.CurrentLastFMAPIKey, _ = c.dbc.GetSetting(db.LastFMAPIKey)
 	data.DefaultListenBrainzURL = listenbrainz.BaseURL
+	data.GuestEnabled, _ = c.dbc.GetSetting(db.GuestEnabled)
+	data.GuestUsername, _ = c.dbc.GetSetting(db.GuestUsername)
+	data.GuestPassword, _ = c.dbc.GetSetting(db.GuestPassword)
 
 	// users box
 	allUsersQ := c.dbc.DB

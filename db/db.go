@@ -153,9 +153,12 @@ func (db *DB) TransactionChunked(data []int64, cb func(*DB, []int64) error) erro
 type SettingKey string
 
 const (
-	LastFMAPIKey SettingKey = "lastfm_api_key" //nolint:gosec
-	LastFMSecret SettingKey = "lastfm_secret"
-	LastScanTime SettingKey = "last_scan_time"
+	LastFMAPIKey  SettingKey = "lastfm_api_key" //nolint:gosec
+	LastFMSecret  SettingKey = "lastfm_secret"
+	LastScanTime  SettingKey = "last_scan_time"
+	GuestUsername SettingKey = "guest_username"
+	GuestPassword SettingKey = "guest_password"
+	GuestEnabled  SettingKey = "guest_enabled"
 )
 
 func (db *DB) GetSetting(key SettingKey) (string, error) {
@@ -302,6 +305,7 @@ type User struct {
 	ListenBrainzToken string `sql:"default: null"`
 	IsAdmin           bool   `sql:"default: null"`
 	Avatar            []byte `sql:"default: null"`
+	GuestSession      string `sql:"default: null"`
 }
 
 type Setting struct {

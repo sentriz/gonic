@@ -1,9 +1,8 @@
 package ctrladmin
 
 import (
-	"net/http"
-
 	"github.com/gorilla/sessions"
+	"net/http"
 )
 
 func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
