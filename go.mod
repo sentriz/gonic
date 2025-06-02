@@ -11,6 +11,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.7.0
+	github.com/go-ldap/ldap/v3 v3.4.6
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/securecookie v1.1.2
@@ -35,10 +36,12 @@ require (
 )
 
 require (
+	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/PuerkitoBio/goquery v1.10.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/go-asn1-ber/asn1-ber v1.5.5 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/gorilla/context v1.1.2 // indirect
