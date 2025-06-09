@@ -25,6 +25,7 @@ type MigrationContext struct {
 	OriginalMusicPath string
 	PlaylistsPath     string
 	PodcastsPath      string
+	Sandbox           sandbox.Sandbox
 }
 
 func (db *DB) Migrate(ctx MigrationContext) error {
@@ -742,7 +743,7 @@ func backupDBPre016(tx *gorm.DB, ctx MigrationContext) error {
 		return nil
 	}
 	backupPath := fmt.Sprintf("%s.%d.bak", ctx.DBPath, time.Now().Unix())
-	sandbox.ReadWriteCreatePath(backupPath)
+	ctx.Sandbox.ReadWriteCreateFile(backupPath)
 	return Dump(context.Background(), tx, backupPath)
 }
 

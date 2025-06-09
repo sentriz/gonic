@@ -1,19 +1,24 @@
-//go:build !openbsd
-// +build !openbsd
+//go:build !(openbsd || linux)
 
 package sandbox
 
-func Init() {
+type Sandbox struct{}
+
+func Init() Sandbox {
+	return Sandbox{}
 }
 
-func ReadOnlyPath(path string) {
+func (box *Sandbox) ReadOnlyDir(path string) {
 }
 
-func ReadWritePath(path string) {
+func (box *Sandbox) ReadOnlyFile(path string) {
 }
 
-func ReadWriteCreatePath(path string) {
+func (box *Sandbox) ReadWriteCreateDir(path string) {
 }
 
-func AllPathsAdded() {
+func (box *Sandbox) ReadWriteCreateFile(path string) {
+}
+
+func (box *Sandbox) AllPathsAdded() {
 }

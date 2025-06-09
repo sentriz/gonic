@@ -52,7 +52,7 @@ import (
 )
 
 func main() {
-	sandbox.Init()
+	sandbox := sandbox.Init()
 	confListenAddr := flag.String("listen-addr", "0.0.0.0:4747", "listen address (optional)")
 
 	confTLSCert := flag.String("tls-cert", "", "path to TLS certificate (optional)")
@@ -102,7 +102,7 @@ func main() {
 	flagconf.ParseEnv()
 
 	if *confConfigPath != "" {
-		sandbox.ReadOnlyPath(*confConfigPath)
+		sandbox.ReadOnlyFile(*confConfigPath)
 		flagconf.ParseConfig(*confConfigPath)
 	}
 
@@ -121,21 +121,21 @@ func main() {
 
 	var err error
 	for i, confMusicPath := range confMusicPaths {
-		sandbox.ReadOnlyPath(confMusicPath.path)
+		sandbox.ReadOnlyDir(confMusicPath.path)
 		if confMusicPaths[i].path, err = validatePath(confMusicPath.path); err != nil {
 			log.Fatalf("checking music dir %q: %v", confMusicPath.path, err)
 		}
 	}
 
-	sandbox.ReadWriteCreatePath(*confPodcastPath)
+	sandbox.ReadWriteCreateDir(*confPodcastPath)
 	if *confPodcastPath, err = validatePath(*confPodcastPath); err != nil {
 		log.Fatalf("checking podcast directory: %v", err)
 	}
-	sandbox.ReadWriteCreatePath(*confCachePath)
+	sandbox.ReadWriteCreateDir(*confCachePath)
 	if *confCachePath, err = validatePath(*confCachePath); err != nil {
 		log.Fatalf("checking cache directory: %v", err)
 	}
-	sandbox.ReadWriteCreatePath(*confPlaylistsPath)
+	sandbox.ReadWriteCreateDir(*confPlaylistsPath)
 	if *confPlaylistsPath, err = validatePath(*confPlaylistsPath); err != nil {
 		log.Fatalf("checking playlist directory: %v", err)
 	}
@@ -149,7 +149,7 @@ func main() {
 		log.Fatalf("couldn't create covers cache path: %v\n", err)
 	}
 
-	dbc, err := db.New(*confDBPath, db.DefaultOptions())
+	dbc, err := db.New(*confDBPath, sandbox, db.DefaultOptions())
 	if err != nil {
 		log.Fatalf("error opening database: %v\n", err)
 	}
@@ -161,14 +161,15 @@ func main() {
 		OriginalMusicPath: confMusicPaths[0].path,
 		PlaylistsPath:     *confPlaylistsPath,
 		PodcastsPath:      *confPodcastPath,
+		Sandbox:           sandbox,
 	})
 	if err != nil {
 		log.Panicf("error migrating database: %v\n", err)
 	}
 
 	if *confTLSCert != "" && *confTLSKey != "" {
-		sandbox.ReadOnlyPath(*confTLSCert)
-		sandbox.ReadOnlyPath(*confTLSKey)
+		sandbox.ReadOnlyFile(*confTLSCert)
+		sandbox.ReadOnlyFile(*confTLSKey)
 	}
 
 	sandbox.AllPathsAdded()
