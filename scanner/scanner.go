@@ -682,25 +682,25 @@ func (s *Scanner) cleanBookmarks(st *State) error {
 		log.Printf("finished clean bookmarks in %s, %d removed", durSince(start), st.BookmarksRemoved())
 	}()
 
-	trackMarks := s.db.
+	trackBookmarks := s.db.
 		Select("bookmarks.id").
 		Model(db.Bookmark{}).
 		Joins("LEFT JOIN tracks ON tracks.id=bookmarks.entry_id").
 		Where("tracks.id IS NULL AND bookmarks.entry_id_type=?", specid.Track).
 		SubQuery()
 	q := s.db.
-		Where("bookmards.id IN ?", trackMarks).
+		Where("bookmarks.id IN ?", trackBookmarks).
 		Delete(db.Bookmark{})
 	st.bookmarksRemoved += int(q.RowsAffected)
 
-	podcastMarks := s.db.
+	podcastBookmarks := s.db.
 		Select("bookmarks.id").
 		Model(db.Bookmark{}).
 		Joins("LEFT JOIN podcast_episodes ON podcast_episodes.id=bookmarks.entry_id").
-		Where("podcast_episode.id IS NULL AND bookmarks.entry_id_type=?", specid.PodcastEpisode).
+		Where("podcast_episodes.id IS NULL AND bookmarks.entry_id_type=?", specid.PodcastEpisode).
 		SubQuery()
 	q = s.db.
-		Where("bookmarks.id IN ?", podcastMarks).
+		Where("bookmarks.id IN ?", podcastBookmarks).
 		Delete(db.Bookmark{})
 	st.bookmarksRemoved += int(q.RowsAffected)
 
