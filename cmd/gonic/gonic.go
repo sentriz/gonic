@@ -41,6 +41,7 @@ import (
 	"go.senan.xyz/gonic/listenbrainz"
 	"go.senan.xyz/gonic/playlist"
 	"go.senan.xyz/gonic/podcast"
+	"go.senan.xyz/gonic/sandbox"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/server/ctrladmin"
@@ -51,6 +52,7 @@ import (
 )
 
 func main() {
+	sandbox := sandbox.Init()
 	confListenAddr := flag.String("listen-addr", "0.0.0.0:4747", "listen address (optional)")
 
 	confTLSCert := flag.String("tls-cert", "", "path to TLS certificate (optional)")
@@ -98,7 +100,11 @@ func main() {
 
 	flag.Parse()
 	flagconf.ParseEnv()
-	flagconf.ParseConfig(*confConfigPath)
+
+	if *confConfigPath != "" {
+		sandbox.ReadOnlyFile(*confConfigPath)
+		flagconf.ParseConfig(*confConfigPath)
+	}
 
 	if *confShowVersion {
 		fmt.Printf("v%s\n", gonic.Version)
@@ -115,17 +121,21 @@ func main() {
 
 	var err error
 	for i, confMusicPath := range confMusicPaths {
+		sandbox.ReadOnlyDir(confMusicPath.path)
 		if confMusicPaths[i].path, err = validatePath(confMusicPath.path); err != nil {
 			log.Fatalf("checking music dir %q: %v", confMusicPath.path, err)
 		}
 	}
 
+	sandbox.ReadWriteCreateDir(*confPodcastPath)
 	if *confPodcastPath, err = validatePath(*confPodcastPath); err != nil {
 		log.Fatalf("checking podcast directory: %v", err)
 	}
+	sandbox.ReadWriteCreateDir(*confCachePath)
 	if *confCachePath, err = validatePath(*confCachePath); err != nil {
 		log.Fatalf("checking cache directory: %v", err)
 	}
+	sandbox.ReadWriteCreateDir(*confPlaylistsPath)
 	if *confPlaylistsPath, err = validatePath(*confPlaylistsPath); err != nil {
 		log.Fatalf("checking playlist directory: %v", err)
 	}
@@ -139,7 +149,7 @@ func main() {
 		log.Fatalf("couldn't create covers cache path: %v\n", err)
 	}
 
-	dbc, err := db.New(*confDBPath, db.DefaultOptions())
+	dbc, err := db.New(*confDBPath, sandbox, db.DefaultOptions())
 	if err != nil {
 		log.Fatalf("error opening database: %v\n", err)
 	}
@@ -151,10 +161,18 @@ func main() {
 		OriginalMusicPath: confMusicPaths[0].path,
 		PlaylistsPath:     *confPlaylistsPath,
 		PodcastsPath:      *confPodcastPath,
+		Sandbox:           sandbox,
 	})
 	if err != nil {
 		log.Panicf("error migrating database: %v\n", err)
 	}
+
+	if *confTLSCert != "" && *confTLSKey != "" {
+		sandbox.ReadOnlyFile(*confTLSCert)
+		sandbox.ReadOnlyFile(*confTLSKey)
+	}
+
+	sandbox.AllPathsAdded()
 
 	var musicPaths []ctrlsubsonic.MusicPath
 	for _, pa := range confMusicPaths {
