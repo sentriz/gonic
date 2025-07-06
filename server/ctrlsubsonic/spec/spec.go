@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode"
 
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
@@ -149,6 +150,9 @@ type Album struct {
 	Genres     []*GenreRef   `xml:"genres,omitempty"       json:"genres,omitempty"`
 	Year       int           `xml:"year,attr,omitempty"    json:"year,omitempty"`
 	Tracks     []*TrackChild `xml:"song,omitempty"         json:"song,omitempty"`
+
+	IsCompilation bool     `xml:"isCompilation" json:"isCompilation"`
+	ReleaseTypes  []string `xml:"releaseTypes" json:"releaseTypes"`
 
 	// star / rating
 	Starred       *time.Time `xml:"starred,attr,omitempty"         json:"starred,omitempty"`
@@ -486,6 +490,25 @@ func formatRating(rating float64) string {
 
 func formatExt(ext string) string {
 	return strings.TrimPrefix(ext, ".")
+}
+
+func formatReleaseTypes(types string) []string {
+	parts := strings.Split(types, ",")
+	if len(parts) == 0 {
+		return []string{}
+	}
+	for i, part := range parts {
+		part = strings.TrimSpace(part)
+		if len(part) == 0 {
+			continue
+		}
+		part = string(unicode.ToUpper([]rune(part)[0])) + string([]rune(part)[1:])
+		if part == "Ep" {
+			part = "EP"
+		}
+		parts[i] = part
+	}
+	return parts
 }
 
 var doublePuncExpr = regexp.MustCompile(`\.\s+\.\s+`)

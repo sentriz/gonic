@@ -16,7 +16,9 @@
       "name": "",
       "songCount": 0,
       "duration": 0,
-      "playCount": 0
+      "playCount": 0,
+      "isCompilation": false,
+      "releaseTypes": [""]
     }
   }
 }

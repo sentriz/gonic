@@ -19,6 +19,7 @@ func NewAlbumByFolder(f *db.Album) *Album {
 		Duration:      f.Duration,
 		Created:       f.CreatedAt,
 		AverageRating: formatRating(f.AverageRating),
+		ReleaseTypes:  []string{},
 	}
 	if f.AlbumStar != nil {
 		a.Starred = &f.AlbumStar.StarDate

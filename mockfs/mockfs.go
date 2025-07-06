@@ -363,6 +363,9 @@ func (i *TagInfo) TrackNumber() int       { return 1 }
 func (i *TagInfo) DiscNumber() int        { return 1 }
 func (i *TagInfo) Year() int              { return 2021 }
 
+func (i *TagInfo) Compilation() bool   { return false }
+func (i *TagInfo) ReleaseType() string { return "album" }
+
 func (i *TagInfo) ReplayGainTrackGain() float32 { return 0 }
 func (i *TagInfo) ReplayGainTrackPeak() float32 { return 0 }
 func (i *TagInfo) ReplayGainAlbumGain() float32 { return 0 }

@@ -424,6 +424,8 @@ func populateAlbum(tx *db.DB, album *db.Album, trags tagcommon.Info, modTime, cr
 	album.TagAlbumArtist = tagcommon.MustAlbumArtist(trags)
 	album.TagBrainzID = trags.AlbumBrainzID()
 	album.TagYear = trags.Year()
+	album.TagCompilation = trags.Compilation()
+	album.TagReleaseType = trags.ReleaseType()
 
 	album.ModifiedAt = modTime
 	if album.CreatedAt.After(createTime) {

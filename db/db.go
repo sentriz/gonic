@@ -339,6 +339,8 @@ type Album struct {
 	TagTitleUDec   string    `sql:"default: null"`
 	TagBrainzID    string    `sql:"default: null"`
 	TagYear        int       `sql:"default: null"`
+	TagCompilation bool      `sql:"default: null"`
+	TagReleaseType string    `sql:"default: null"`
 	Tracks         []*Track
 	ChildCount     int `sql:"-"`
 	Duration       int `sql:"-"`

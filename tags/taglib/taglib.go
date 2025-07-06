@@ -52,6 +52,9 @@ func (i *info) TrackNumber() int       { return intSep("/", first(find(i.raw, "t
 func (i *info) DiscNumber() int        { return intSep("/", first(find(i.raw, "discnumber"))) }                   // eg. 1/2
 func (i *info) Year() int              { return intSep("-", first(find(i.raw, "originaldate", "date", "year"))) } // eg. 2023-12-01
 
+func (i *info) Compilation() bool   { return bl(first(find(i.raw, "compilation"))) }
+func (i *info) ReleaseType() string { return first(find(i.raw, "releasetype")) }
+
 func (i *info) ReplayGainTrackGain() float32 { return dB(first(find(i.raw, "replaygain_track_gain"))) }
 func (i *info) ReplayGainTrackPeak() float32 { return flt(first(find(i.raw, "replaygain_track_peak"))) }
 func (i *info) ReplayGainAlbumGain() float32 { return dB(first(find(i.raw, "replaygain_album_gain"))) }
@@ -93,6 +96,12 @@ func flt(in string) float32 {
 	f, _ := strconv.ParseFloat(in, 32)
 	return float32(f)
 }
+
+func bl(in string) bool {
+	b, _ := strconv.ParseBool(in)
+	return b
+}
+
 func dB(in string) float32 {
 	in = strings.ToLower(in)
 	in = strings.TrimSuffix(in, " db")
