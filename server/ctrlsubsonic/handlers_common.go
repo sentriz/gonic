@@ -206,30 +206,44 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 	sub.PlayQueue.ChangedBy = queue.ChangedBy
 
 	trackIDs := queue.GetItems()
-	sub.PlayQueue.List = make([]*spec.TrackChild, len(trackIDs))
+	sub.PlayQueue.List = make([]*spec.TrackChild, 0, len(trackIDs))
 
 	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
 
-	for i, id := range trackIDs {
+	for _, id := range trackIDs {
 		switch id.Type {
 		case specid.Track:
-			track := db.Track{}
-			c.dbc.
+			var track db.Track
+			err := c.dbc.
 				Where("id=?", id.Value).
 				Preload("Album").
 				Preload("Artists").
 				Preload("TrackStar", "user_id=?", user.ID).
 				Preload("TrackRating", "user_id=?", user.ID).
-				Find(&track)
-			sub.PlayQueue.List[i] = spec.NewTCTrackByFolder(&track, track.Album)
-			sub.PlayQueue.List[i].TranscodeMeta = transcodeMeta
+				Find(&track).
+				Error
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+				return spec.NewError(0, "error finding track")
+			}
+			if track.ID != 0 {
+				tc := spec.NewTCTrackByFolder(&track, track.Album)
+				tc.TranscodeMeta = transcodeMeta
+				sub.PlayQueue.List = append(sub.PlayQueue.List, tc)
+			}
 		case specid.PodcastEpisode:
-			pe := db.PodcastEpisode{}
-			c.dbc.
+			var pe db.PodcastEpisode
+			err := c.dbc.
 				Where("id=?", id.Value).
-				Find(&pe)
-			sub.PlayQueue.List[i] = spec.NewTCPodcastEpisode(&pe)
-			sub.PlayQueue.List[i].TranscodeMeta = transcodeMeta
+				Find(&pe).
+				Error
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+				return spec.NewError(0, "error finding podcast episode")
+			}
+			if pe.ID != 0 {
+				tc := spec.NewTCPodcastEpisode(&pe)
+				tc.TranscodeMeta = transcodeMeta
+				sub.PlayQueue.List = append(sub.PlayQueue.List, tc)
+			}
 		}
 	}
 	return sub
