@@ -28,7 +28,16 @@ func (c *Controller) ServeNotFound(_ *http.Request) *Response {
 }
 
 func (c *Controller) ServeLogin(_ *http.Request) *Response {
-	return &Response{template: "login.tmpl"}
+	data := &templateData{}
+	data.Props = map[string]interface{}{
+		"PasswordAuthEnabled": GetAuthMethod() == "password",
+		"AuthMethod":          GetAuthMethod(),
+	}
+	return &Response{template: "login.tmpl", data: data}
+}
+
+func (c *Controller) ServeAuthError(_ *http.Request) *Response {
+	return &Response{template: "auth_error.tmpl"}
 }
 
 func (c *Controller) ServeHome(r *http.Request) *Response {
@@ -201,6 +210,46 @@ func (c *Controller) ServeChangePasswordDo(r *http.Request) *Response {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("save user: %v", err)}}
 	}
 	return &Response{redirect: "/admin/home"}
+}
+
+func (c *Controller) ServeRevealPassword(r *http.Request) *Response {
+	// Get the requested user
+	selectedUsername := r.URL.Query().Get("user")
+	if selectedUsername == "" {
+		return &Response{code: 400, err: "no user specified"}
+	}
+
+	selectedUser := c.dbc.GetUserByName(selectedUsername)
+	if selectedUser == nil {
+		return &Response{code: 400, err: "user not found"}
+	}
+
+	// Get the current user
+	currentUser := r.Context().Value(CtxUser).(*db.User)
+
+	// Only allow OIDC users to reveal their own password
+	if currentUser.ID != selectedUser.ID {
+		return &Response{code: 403, err: "you can only reveal your own password"}
+	}
+
+	// Only allow if the user is an OIDC user (has OIDCSubject)
+	if selectedUser.OIDCSubject == "" {
+		return &Response{code: 403, err: "password reveal only available for OIDC users"}
+	}
+
+	// Check if user wants to show password in plain text (no-js fallback)
+	showPlainText := r.URL.Query().Get("show") == "true"
+
+	data := &templateData{}
+	data.SelectedUser = selectedUser
+	// Add a custom field to indicate whether to show plain text
+	data.Props = map[string]interface{}{
+		"ShowPlainText": showPlainText,
+	}
+	return &Response{
+		template: "reveal_password.tmpl",
+		data:     data,
+	}
 }
 
 func (c *Controller) ServeChangeAvatar(r *http.Request) *Response {

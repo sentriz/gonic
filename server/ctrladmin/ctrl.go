@@ -24,6 +24,7 @@ import (
 	"github.com/sentriz/gormstore"
 
 	"go.senan.xyz/gonic"
+	"go.senan.xyz/gonic/auth"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/handlerutil"
 	"go.senan.xyz/gonic/lastfm"
@@ -38,6 +39,15 @@ const (
 	CtxUser CtxKey = iota
 	CtxSession
 )
+
+const (
+	AuthMethodPassword    = "password"
+	AuthMethodOIDC        = "oidc"
+	AuthMethodOIDCForward = "oidc-forward"
+)
+
+// Global auth method configuration
+var authMethod string
 
 type Controller struct {
 	*http.ServeMux
@@ -81,6 +91,10 @@ func New(dbc *db.DB, sessDB *gormstore.Store, scanner *scanner.Scanner, podcasts
 	// public routes (creates session)
 	c.Handle("/login", baseChain(resp(c.ServeLogin)))
 	c.Handle("/login_do", baseChain(respRaw(c.ServeLoginDo)))
+	c.Handle("/oidc/callback", baseChain(respRaw(func(w http.ResponseWriter, r *http.Request) {
+		serveOIDCCallback(dbc, w, r, resolveProxyPath)
+	})))
+	c.Handle("/auth-error", baseChain(resp(c.ServeAuthError)))
 
 	// user routes (if session is valid)
 	c.Handle("/logout", userChain(respRaw(c.ServeLogout)))
@@ -89,6 +103,7 @@ func New(dbc *db.DB, sessDB *gormstore.Store, scanner *scanner.Scanner, podcasts
 	c.Handle("/change_username_do", userChain(resp(c.ServeChangeUsernameDo)))
 	c.Handle("/change_password", userChain(resp(c.ServeChangePassword)))
 	c.Handle("/change_password_do", userChain(resp(c.ServeChangePasswordDo)))
+	c.Handle("/reveal_password", userChain(resp(c.ServeRevealPassword)))
 	c.Handle("/change_avatar", userChain(resp(c.ServeChangeAvatar)))
 	c.Handle("/change_avatar_do", userChain(resp(c.ServeChangeAvatarDo)))
 	c.Handle("/delete_avatar_do", userChain(resp(c.ServeDeleteAvatarDo)))
@@ -135,30 +150,102 @@ func withSession(sessDB *gormstore.Store) handlerutil.Middleware {
 	}
 }
 
+func SetAuthMethod(method string) {
+	authMethod = method
+}
+
+func GetAuthMethod() string {
+	return authMethod
+}
+
 func withUserSession(dbc *db.DB, resolvePath func(string) string) handlerutil.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// session exists at this point
-			session := r.Context().Value(CtxSession).(*sessions.Session)
-			userID, ok := session.Values["user"].(int)
-			if !ok {
-				sessAddFlashW(session, []string{"you are not authenticated"})
+			// Handle different auth methods
+			switch GetAuthMethod() {
+			case AuthMethodPassword:
+				// Password authentication - check session only
+				session := r.Context().Value(CtxSession).(*sessions.Session)
+				userID, ok := session.Values["user"].(int)
+				if !ok {
+					sessAddFlashW(session, []string{"you are not authenticated"})
+					sessLogSave(session, w, r)
+					http.Redirect(w, r, resolvePath("/admin/login"), http.StatusSeeOther)
+					return
+				}
+				user := dbc.GetUserByID(userID)
+				if user == nil {
+					session.Options.MaxAge = -1
+					sessLogSave(session, w, r)
+					http.Redirect(w, r, "/", http.StatusSeeOther)
+					return
+				}
+				withUser := context.WithValue(r.Context(), CtxUser, user)
+				next.ServeHTTP(w, r.WithContext(withUser))
+				return
+
+			case AuthMethodOIDC:
+				// OIDC authentication - check session first, then redirect to authorization
+				session := r.Context().Value(CtxSession).(*sessions.Session)
+				userID, ok := session.Values["user"].(int)
+				if !ok {
+					oidcURL := auth.BuildOIDCAuthURL(auth.GetOIDCAuthEndpoint(), r)
+					log.Printf("No session found, redirecting to OIDC authorization: %s", oidcURL)
+					http.Redirect(w, r, oidcURL, http.StatusSeeOther)
+					return
+				}
+				user := dbc.GetUserByID(userID)
+				if user == nil {
+					session.Options.MaxAge = -1
+					sessLogSave(session, w, r)
+					oidcURL := auth.BuildOIDCAuthURL(auth.GetOIDCAuthEndpoint(), r)
+					http.Redirect(w, r, oidcURL, http.StatusSeeOther)
+					return
+				}
+				withUser := context.WithValue(r.Context(), CtxUser, user)
+				next.ServeHTTP(w, r.WithContext(withUser))
+				return
+
+			case AuthMethodOIDCForward:
+				// OIDC-forward authentication - JWT required in configured header
+				authHeader := r.Header.Get(auth.GetOIDCHeader())
+				if authHeader == "" {
+					log.Printf("No %s header found for oidc-forward authentication", auth.GetOIDCHeader())
+					http.Redirect(w, r, resolvePath("/admin/auth-error"), http.StatusSeeOther)
+					return
+				}
+
+				jwtToken := authHeader
+				if strings.HasPrefix(authHeader, "Bearer ") {
+					jwtToken = authHeader[7:]
+				}
+
+				claims, err := auth.ValidateIncomingJWT(jwtToken)
+				if err != nil {
+					log.Printf("JWT validation failed: %v", err)
+					http.Redirect(w, r, resolvePath("/admin/auth-error"), http.StatusSeeOther)
+					return
+				}
+
+				log.Printf("JWT validation successful for user: %s", claims.Subject)
+
+				session := r.Context().Value(CtxSession).(*sessions.Session)
+				user, err := auth.HandleOIDCLogin(dbc, session, claims)
+				if err != nil {
+					log.Printf("Error handling OIDC login from JWT: %v", err)
+					http.Error(w, "Failed to handle OIDC login", 500)
+					return
+				}
 				sessLogSave(session, w, r)
-				http.Redirect(w, r, resolvePath("/admin/login"), http.StatusSeeOther)
+
+				withUser := context.WithValue(r.Context(), CtxUser, user)
+				next.ServeHTTP(w, r.WithContext(withUser))
+				return
+
+			default:
+				http.Error(w, "Unknown authentication method", 500)
 				return
 			}
-			// take username from sesion and add the user row to the context
-			user := dbc.GetUserByID(userID)
-			if user == nil {
-				// the username in the client's session no longer relates to a
-				// user in the database (maybe the user was deleted)
-				session.Options.MaxAge = -1
-				sessLogSave(session, w, r)
-				http.Redirect(w, r, "/", http.StatusSeeOther)
-				return
-			}
-			withUser := context.WithValue(r.Context(), CtxUser, user)
-			next.ServeHTTP(w, r.WithContext(withUser))
 		})
 	}
 }
@@ -295,6 +382,9 @@ type templateData struct {
 
 	// avatar
 	Avatar []byte
+
+	// custom properties
+	Props map[string]interface{}
 }
 
 func funcMap() template.FuncMap {
@@ -415,4 +505,46 @@ func validateAPIKey(apiKey, secret string) error {
 		return errValiKeysAllFields
 	}
 	return nil
+}
+
+func serveOIDCCallback(dbc *db.DB, w http.ResponseWriter, r *http.Request, resolveProxyPath ProxyPathResolver) {
+	if auth.GetOIDCAuthEndpoint() == "" {
+		http.Error(w, "OIDC not configured", http.StatusInternalServerError)
+		return
+	}
+
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		http.Error(w, "Missing authorization code", http.StatusBadRequest)
+		return
+	}
+
+	// Get state parameter (FIXME: should validate this for CSRF protection)
+	state := r.URL.Query().Get("state")
+	log.Printf("OIDC callback received: code=%s..., state=%s", code[:min(10, len(code))], state)
+
+	tokenResp, err := auth.ExchangeCodeForTokens(r, code)
+	if err != nil {
+		log.Printf("Error exchanging code for tokens: %v", err)
+		http.Error(w, "Failed to exchange code for tokens", http.StatusInternalServerError)
+		return
+	}
+
+	claims, err := auth.ValidateIncomingJWT(tokenResp.IDToken)
+	if err != nil {
+		log.Printf("Error validating ID token: %v", err)
+		http.Error(w, "Invalid ID token", http.StatusUnauthorized)
+		return
+	}
+
+	session := r.Context().Value(CtxSession).(*sessions.Session)
+	_, err = auth.HandleOIDCLogin(dbc, session, claims)
+	if err != nil {
+		log.Printf("Error handling OIDC login: %v", err)
+		http.Error(w, fmt.Sprintf("Failed to handle OIDC login: %v", err), http.StatusInternalServerError)
+		return
+	}
+	sessLogSave(session, w, r)
+
+	http.Redirect(w, r, resolveProxyPath("/admin/home"), http.StatusSeeOther)
 }

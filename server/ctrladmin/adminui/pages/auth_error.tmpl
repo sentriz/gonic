@@ -1,0 +1,20 @@
+{{ component "layout" . }}
+{{ component "block" (props .
+    "Icon" "alert-triangle"
+    "Name" "authentication error"
+    "Desc" "authentication failed - missing or invalid authorization header"
+) }}
+    <div class="flex flex-col gap-4 items-center text-center">
+        <p class="text-lg">
+            Authentication is required to access this page.
+        </p>
+        <p class="text-sm text-gray-600">
+            This server is configured to use OIDC forward authentication, 
+            which requires a valid JWT token in the Authorization header.
+        </p>
+        <p class="text-sm text-gray-600">
+            If you believe this is an error, please contact your administrator.
+        </p>
+    </div>
+{{ end }}
+{{ end }}

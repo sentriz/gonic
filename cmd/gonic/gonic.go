@@ -32,6 +32,7 @@ import (
 
 	"go.senan.xyz/flagconf"
 	"go.senan.xyz/gonic"
+	"go.senan.xyz/gonic/auth"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/handlerutil"
 	"go.senan.xyz/gonic/infocache/albuminfocache"
@@ -49,6 +50,27 @@ import (
 	"go.senan.xyz/gonic/tags/taglib"
 	"go.senan.xyz/gonic/transcode"
 )
+
+type AuthMethod string
+
+const (
+	AuthMethodPassword    AuthMethod = "password"
+	AuthMethodOIDC        AuthMethod = "oidc"
+	AuthMethodOIDCForward AuthMethod = "oidc-forward"
+)
+
+func validateAuthMethod(method string) (AuthMethod, error) {
+	switch method {
+	case "password":
+		return AuthMethodPassword, nil
+	case "oidc":
+		return AuthMethodOIDC, nil
+	case "oidc-forward":
+		return AuthMethodOIDCForward, nil
+	default:
+		return "", fmt.Errorf("invalid auth method %q, must be one of: password, oidc, oidc-forward", method)
+	}
+}
 
 func main() {
 	confListenAddr := flag.String("listen-addr", "0.0.0.0:4747", "listen address (optional)")
@@ -96,6 +118,14 @@ func main() {
 	confTranscodeCacheSize := flag.Int("transcode-cache-size", 0, "size of the transcode cache in MB (0 = no limit) (optional)")
 	confTranscodeEjectInterval := flag.Int("transcode-eject-interval", 0, "interval (in minutes) to eject transcode cache (0 = never) (optional)")
 
+	confAuthMethod := flag.String("auth-method", "password", "Authentication method: 'password', 'oidc', or 'oidc-forward'")
+	confOIDCIssuerURL := flag.String("oidc-issuer-url", "", "OIDC issuer URL for token authentication (optional)")
+	confOIDCClientID := flag.String("oidc-client-id", "", "OIDC client ID for token validation (optional)")
+	confOIDCClientSecret := flag.String("oidc-client-secret", "", "OIDC client secret for token exchange (optional, for dev purposes)")
+	confOIDCClientSecretFile := flag.String("oidc-client-secret-file", "", "Path to file containing OIDC client secret (optional)")
+	confOIDCHeader := flag.String("oidc-forward-header", "Authorization", "Header name containing OIDC token for oidc-forward method")
+	confOIDCAdminRole := flag.String("oidc-admin-role", "gonic-admin", "Role name for admin users in OIDC token roles claim")
+
 	flag.Parse()
 	flagconf.ParseEnv()
 	flagconf.ParseConfig(*confConfigPath)
@@ -129,6 +159,28 @@ func main() {
 	if *confPlaylistsPath, err = validatePath(*confPlaylistsPath); err != nil {
 		log.Fatalf("checking playlist directory: %v", err)
 	}
+	authMethod, err := validateAuthMethod(*confAuthMethod)
+	if err != nil {
+		log.Fatalf("validating auth method: %v", err)
+	}
+
+	fullOIDCConfig, err := auth.ValidateOIDCConfig(*confOIDCIssuerURL, *confOIDCClientID, *confOIDCClientSecret, *confOIDCClientSecretFile, *confOIDCHeader, auth.AuthMethod(authMethod))
+	if err != nil {
+		log.Fatalf("validating OIDC configuration: %v", err)
+	}
+	ctrladmin.SetAuthMethod(string(authMethod))
+
+	oidcConfigOptions := auth.OIDCConfigOptions{
+		Issuer:        fullOIDCConfig.Issuer,
+		ClientID:      fullOIDCConfig.ClientID,
+		ClientSecret:  fullOIDCConfig.ClientSecret,
+		Keys:          fullOIDCConfig.Keys,
+		AuthEndpoint:  fullOIDCConfig.AuthorizationEndpoint,
+		TokenEndpoint: fullOIDCConfig.TokenEndpoint,
+		HeaderName:    *confOIDCHeader,
+		AdminRole:     *confOIDCAdminRole,
+	}
+	auth.SetOIDCConfig(oidcConfigOptions)
 
 	cacheDirAudio := path.Join(*confCachePath, "audio")
 	cacheDirCovers := path.Join(*confCachePath, "covers")
