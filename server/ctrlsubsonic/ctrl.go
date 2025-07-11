@@ -18,6 +18,7 @@ import (
 	"go.senan.xyz/gonic/infocache/artistinfocache"
 	"go.senan.xyz/gonic/jukebox"
 	"go.senan.xyz/gonic/lastfm"
+	"go.senan.xyz/gonic/ldap"
 	"go.senan.xyz/gonic/playlist"
 	"go.senan.xyz/gonic/podcast"
 	"go.senan.xyz/gonic/scanner"
@@ -69,7 +70,7 @@ type Controller struct {
 	resolveProxyPath ProxyPathResolver
 }
 
-func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPath string, cacheAudioPath string, cacheCoverPath string, jukebox *jukebox.Jukebox, playlistStore *playlist.Store, scrobblers []scrobble.Scrobbler, podcasts *podcast.Podcasts, transcoder transcode.Transcoder, lastFMClient *lastfm.Client, artistInfoCache *artistinfocache.ArtistInfoCache, albumInfoCache *albuminfocache.AlbumInfoCache, resolveProxyPath ProxyPathResolver) (*Controller, error) {
+func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPath string, cacheAudioPath string, cacheCoverPath string, jukebox *jukebox.Jukebox, playlistStore *playlist.Store, scrobblers []scrobble.Scrobbler, podcasts *podcast.Podcasts, transcoder transcode.Transcoder, lastFMClient *lastfm.Client, artistInfoCache *artistinfocache.ArtistInfoCache, albumInfoCache *albuminfocache.AlbumInfoCache, resolveProxyPath ProxyPathResolver, ldapConfig ldap.Config) (*Controller, error) {
 	c := Controller{
 		ServeMux: http.NewServeMux(),
 
@@ -93,7 +94,7 @@ func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPa
 	chain := handlerutil.Chain(
 		withParams,
 		withRequiredParams,
-		withUser(dbc),
+		withUser(dbc, ldapConfig),
 	)
 	chainRaw := handlerutil.Chain(
 		chain,
@@ -223,7 +224,7 @@ func withRequiredParams(next http.Handler) http.Handler {
 	})
 }
 
-func withUser(dbc *db.DB) handlerutil.Middleware {
+func withUser(dbc *db.DB, ldapConfig ldap.Config) handlerutil.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			params := r.Context().Value(CtxParams).(params.Params)
@@ -240,22 +241,48 @@ func withUser(dbc *db.DB) handlerutil.Middleware {
 					"please provide `t` and `s`, or just `p`"))
 				return
 			}
+
 			user := dbc.GetUserByName(username)
-			if user == nil {
-				_ = writeResp(w, r, spec.NewError(40,
-					"invalid username %q", username))
+
+			if ldapConfig.IsSetup() {
+				// Complete auth using LDAP
+				log.Println("Authenticating using LDAP ...")
+
+				ok, err := ldap.CheckLDAPcreds(username, password, dbc, ldapConfig)
+				if err != nil {
+					log.Println("Failed to check LDAP creds:", err)
+					_ = writeResp(w, r, spec.NewError(40, "invalid password"))
+					return
+				}
+
+				if !ok {
+					_ = writeResp(w, r, spec.NewError(40, "invalid password"))
+					return
+				}
+
+				withUser := context.WithValue(r.Context(), CtxUser, user)
+				next.ServeHTTP(w, r.WithContext(withUser))
 				return
 			}
+
+			log.Println("Authenticating using built-in ...")
+			if user == nil {
+				_ = writeResp(w, r, spec.NewError(40, "invalid password"))
+				return
+			}
+
 			var credsOk bool
 			if tokenAuth {
 				credsOk = checkCredsToken(user.Password, token, salt)
 			} else {
 				credsOk = checkCredsBasic(user.Password, password)
 			}
+
 			if !credsOk {
 				_ = writeResp(w, r, spec.NewError(40, "invalid password"))
 				return
 			}
+
 			withUser := context.WithValue(r.Context(), CtxUser, user)
 			next.ServeHTTP(w, r.WithContext(withUser))
 		})
