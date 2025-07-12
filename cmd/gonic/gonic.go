@@ -98,6 +98,7 @@ func main() {
 	confJukeboxMPVExtraArgs := flag.String("jukebox-mpv-extra-args", "", "extra command line arguments to pass to the jukebox mpv daemon (optional)")
 
 	confProxyPrefix := flag.String("proxy-prefix", "", "url path prefix to use if behind proxy. eg '/gonic' (optional)")
+	confDomain := flag.String("domain", "", "base domain to use for URL generation. overrides host header detection. eg 'https://music.example.com' (optional)")
 	confHTTPLog := flag.Bool("http-log", true, "http request logging (optional)")
 
 	confShowVersion := flag.Bool("version", false, "show gonic version")
@@ -181,6 +182,21 @@ func main() {
 		AdminRole:     *confOIDCAdminRole,
 	}
 	auth.SetOIDCConfig(oidcConfigOptions)
+
+	if *confDomain != "" {
+		domain := *confDomain
+
+		if !strings.Contains(domain, "://") {
+			log.Fatalf("domain must include a scheme (http:// or https://): %q", domain)
+		}
+
+		if strings.HasSuffix(domain, "/") {
+			log.Fatalf("domain must not have a trailing slash: %q", domain)
+		}
+
+		handlerutil.SetDomainOverride(domain)
+		log.Printf("Domain override set to: %s", domain)
+	}
 
 	cacheDirAudio := path.Join(*confCachePath, "audio")
 	cacheDirCovers := path.Join(*confCachePath, "covers")
