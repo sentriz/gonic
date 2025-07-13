@@ -15,6 +15,8 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/mattn/go-sqlite3"
 
+	"go.senan.xyz/gonic/sandbox"
+
 	// TODO: remove this dep
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
@@ -42,12 +44,16 @@ type DB struct {
 	*gorm.DB
 }
 
-func New(path string, options url.Values) (*DB, error) {
+func New(path string, sandbox sandbox.Sandbox, options url.Values) (*DB, error) {
 	// https://github.com/mattn/go-sqlite3#connection-string
 	url := url.URL{
 		Scheme: "file",
 		Opaque: path,
 	}
+	sandbox.ReadWriteCreateFile(path)
+	sandbox.ReadWriteCreateFile(path + "-wal")
+	sandbox.ReadWriteCreateFile(path + "-shm")
+	sandbox.ReadWriteCreateFile(path + "-journal")
 	url.RawQuery = options.Encode()
 	db, err := gorm.Open("sqlite3", url.String())
 	if err != nil {
@@ -59,7 +65,7 @@ func New(path string, options url.Values) (*DB, error) {
 }
 
 func NewMock() (*DB, error) {
-	return New(":memory:", mockOptions())
+	return New(":memory:", sandbox.Init(), mockOptions())
 }
 
 func (db *DB) InsertBulkLeftMany(table string, head []string, left int, col []int) error {
@@ -624,7 +630,7 @@ func join[T fmt.Stringer](in []T, sep string) string {
 }
 
 func Dump(ctx context.Context, db *gorm.DB, to string) error {
-	dest, err := New(to, url.Values{})
+	dest, err := New(to, sandbox.Init(), url.Values{})
 	if err != nil {
 		return fmt.Errorf("create dest db: %w", err)
 	}

@@ -14,6 +14,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"go.senan.xyz/gonic/fileutil"
 	"go.senan.xyz/gonic/playlist"
+	"go.senan.xyz/gonic/sandbox"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"gopkg.in/gormigrate.v1"
 )
@@ -24,6 +25,7 @@ type MigrationContext struct {
 	OriginalMusicPath string
 	PlaylistsPath     string
 	PodcastsPath      string
+	Sandbox           sandbox.Sandbox
 }
 
 func (db *DB) Migrate(ctx MigrationContext) error {
@@ -741,7 +743,9 @@ func backupDBPre016(tx *gorm.DB, ctx MigrationContext) error {
 	if !ctx.Production {
 		return nil
 	}
-	return Dump(context.Background(), tx, fmt.Sprintf("%s.%d.bak", ctx.DBPath, time.Now().Unix()))
+	backupPath := fmt.Sprintf("%s.%d.bak", ctx.DBPath, time.Now().Unix())
+	ctx.Sandbox.ReadWriteCreateFile(backupPath)
+	return Dump(context.Background(), tx, backupPath)
 }
 
 func migrateAlbumTagArtistString(tx *gorm.DB, _ MigrationContext) error {
