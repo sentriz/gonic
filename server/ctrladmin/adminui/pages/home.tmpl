@@ -181,6 +181,14 @@
             <input class="md:col-start-2 col-span-2" type="text" name="feed" placeholder="rss feed url">
             <input type="submit" value="add new">
         </form>
+        <form id="opml-import-form" class="contents" action="{{ path "/admin/import_opml_podcast_do" }}" method="post" enctype="multipart/form-data">
+            <input class="md:col-start-2 col-span-1" type="text" name="feed" id="opml-text" placeholder="opml file" disabled>
+            <input type="button" value="import..." onclick="document.getElementById('opml-file').click()">
+            <input type="file" id="opml-file" name="opml-file" style="display:none;" onchange="document.getElementById('opml-text').value=document.getElementById('opml-file').value.match(/[^\\]*\.(\w+)$/im)[0]; document.getElementById('opml-import-form').submit()">
+        </form>
+        <form class="contents" action="{{ path "/admin/export_opml_podcast_do" }}" method="post">
+            <input type="submit" value="export...">
+        </form>
     </div>
 {{ end }}
 {{ end }}

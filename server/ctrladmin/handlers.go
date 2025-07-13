@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image"
 	"image/jpeg"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -13,6 +14,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gilliek/go-opml/opml"
+	"github.com/gorilla/sessions"
 	"github.com/mmcdole/gofeed"
 	"github.com/nfnt/resize"
 
@@ -620,4 +623,102 @@ func doScan(scanner *scanner.Scanner, opts scanner.ScanOptions) {
 			log.Printf("error while scanning: %v\n", err)
 		}
 	}()
+}
+
+func (c *Controller) ServeImportOpmlPodcastDo(r *http.Request) *Response {
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		return &Response{
+			redirect: "/admin/home",
+			flashW:   []string{"error parseMultipartform opml file"},
+		}
+	}
+
+	file, _, err := r.FormFile("opml-file")
+	if err != nil {
+		log.Printf("error retrieving opml file: %s", err)
+		return &Response{
+			redirect: "/admin/home",
+			flashW:   []string{"error retrieving opml file"},
+		}
+	}
+	defer file.Close()
+
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		log.Printf("error reading OPML file: %s", err)
+		return &Response{
+			redirect: "/admin/home",
+			flashW:   []string{"error reading OPML file"},
+		}
+	}
+
+	doc, err := opml.NewOPML(fileBytes)
+	if err != nil {
+		return &Response{
+			redirect: "/admin/home",
+			flashW:   []string{"error OPML file bad format"},
+		}
+	}
+
+	go func() {
+		fp := gofeed.NewParser()
+		for _, opmlOutline := range doc.Body.Outlines {
+			feed, err := fp.ParseURL(opmlOutline.XMLURL)
+			if err != nil {
+				log.Printf("could not parse url: %v\n", err)
+				continue
+			}
+
+			if _, err := c.podcasts.AddNewPodcast(opmlOutline.XMLURL, feed); err != nil {
+				log.Printf("could not add new podcast: %v\n", err)
+			}
+		}
+	}()
+
+	return &Response{
+		redirect: "/admin/home",
+		flashN:   []string{"opml import started. refresh for results"},
+	}
+}
+
+func (c *Controller) ServerExportOpmlPodcastDo(w http.ResponseWriter, r *http.Request) {
+	session := r.Context().Value(CtxSession).(*sessions.Session)
+	var podcastOMPL = &opml.OPML{
+		Version: "1.0",
+		Head: opml.Head{
+			Title:       "Gonic Podcasts",
+			DateCreated: time.Now().Format(time.RFC3339),
+			OwnerName:   "gonic",
+		},
+	}
+
+	data := &templateData{}
+	c.dbc.Find(&data.Podcasts)
+
+	for _, pod := range data.Podcasts {
+		podcastOMPL.Body.Outlines = append(podcastOMPL.Body.Outlines, opml.Outline{
+			Type:    "rss",
+			Text:    pod.Title,
+			Title:   pod.Title,
+			XMLURL:  pod.URL,
+			HTMLURL: pod.URL,
+		})
+	}
+
+	w.Header().Add("content-type", "application/opml")
+	w.Header().Add("content-disposition", "attachment; filename="+time.Now().Format(time.DateOnly)+"-gonic-podcasts.opml")
+	outp, err := podcastOMPL.XML()
+	if err != nil {
+		sessAddFlashW(session, []string{"error exporting opml file"})
+		sessLogSave(session, w, r)
+		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+		return
+	}
+
+	if _, err := w.Write([]byte(outp)); err != nil {
+		sessAddFlashW(session, []string{"error writing opml file"})
+		sessLogSave(session, w, r)
+		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+		return
+	}
 }
