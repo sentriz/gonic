@@ -73,7 +73,49 @@ password can then be changed from the web interface
 | `GONIC_MULTI_VALUE_ALBUM_ARTIST` | `-multi-value-album-artist` | **optional** setting for multi-valued album artist tags when scanning ([see more](#multi-valued-tags-v016))                                                                                                                                                                       |
 | `GONIC_TRANSCODE_CACHE_SIZE` | `-transcode-cache-size` | **optional** size of the transcode cache in MB (0 = no limit) |
 | `GONIC_TRANSCODE_EJECT_INTERVAL` | `-transcode-eject-interval` | **optional** interval (in minutes) to eject transcode cache (0 = never) |
+| `GONIC_AUTH_METHOD`              | `-auth-method`              | **optional** authentication method: `password` (default), `oidc`, or `oidc-forward` ([see more](#oidc-authentication))                                                                                                                                                           |
+| `GONIC_OIDC_ISSUER_URL`          | `-oidc-issuer-url`          | **optional** OIDC issuer URL for token authentication ([see more](#oidc-authentication))                                                                                                                                                                                          |
+| `GONIC_OIDC_CLIENT_ID`           | `-oidc-client-id`           | **optional** OIDC client ID for token validation ([see more](#oidc-authentication))                                                                                                                                                                                               |
+| `GONIC_OIDC_CLIENT_SECRET`       | `-oidc-client-secret`       | **optional** OIDC client secret for token exchange ([see more](#oidc-authentication))                                                                                                                                                                                             |
+| `GONIC_OIDC_CLIENT_SECRET_FILE`  | `-oidc-client-secret-file`  | **optional** path to file containing OIDC client secret ([see more](#oidc-authentication))                                                                                                                                                                                        |
+| `GONIC_OIDC_FORWARD_HEADER`      | `-oidc-forward-header`      | **optional** header name containing OIDC token for oidc-forward method (default: `Authorization`) ([see more](#oidc-authentication))                                                                                                                                              |
+| `GONIC_OIDC_ADMIN_ROLE`          | `-oidc-admin-role`          | **optional** role name for admin users in OIDC token roles claim (default: `gonic-admin`) ([see more](#oidc-authentication))                                                                                                                                                     |
 | `GONIC_EXPVAR`                   | `-expvar`                   | **optional** enable the /debug/vars endpoint (exposes useful debugging attributes as well as database stats)                                                                                                                                                                      |
+
+## oidc authentication
+
+gonic supports OpenID Connect (OIDC) authentication as an alternative to password-based authentication. This allows integration with identity providers like Keycloak, Auth0, Okta, or any OIDC-compliant provider.
+
+### authentication methods
+
+| method         | description                                                                                                                                                      |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `password`     | **default** - traditional username/password authentication                                                                                                       |
+| `oidc`         | full OIDC flow with authorization code exchange - users are redirected to identity provider for login, then redirected back to gonic with an authorization code |
+| `oidc-forward` | for use behind an authenticating proxy - expects a valid JWT token in the specified header (useful with [oauth2-proxy](https://oauth2-proxy.github.io/oauth2-proxy/) or similar) |
+
+### configuration example
+
+```bash
+# basic oidc setup
+export GONIC_AUTH_METHOD="oidc"
+export GONIC_OIDC_ISSUER_URL="https://your-oidc-provider.com"
+export GONIC_OIDC_CLIENT_ID="gonic-client"
+export GONIC_OIDC_CLIENT_SECRET="your-client-secret"
+
+# or for proxy-based authentication
+export GONIC_AUTH_METHOD="oidc-forward"
+export GONIC_OIDC_ISSUER_URL="https://your-oidc-provider.com"
+export GONIC_OIDC_FORWARD_HEADER="X-Auth-Credentials"  # header containing JWT token
+```
+
+### user management
+
+when using OIDC authentication:
+
+- users are automatically created on first login using information from the OIDC token
+- admin privileges are determined by the presence of the configured admin role in the token's roles claim
+- user information is updated from the token on each login
 
 ## multi valued tags (v0.16+)
 

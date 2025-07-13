@@ -8,6 +8,15 @@ import (
 
 func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value(CtxSession).(*sessions.Session)
+
+	// Check if password authentication is allowed
+	if GetAuthMethod() != "password" {
+		sessAddFlashW(session, []string{"password authentication is not available"})
+		sessLogSave(session, w, r)
+		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+		return
+	}
+
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 	if username == "" || password == "" {

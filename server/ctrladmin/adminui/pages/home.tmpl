@@ -34,7 +34,11 @@
         <div class="col-span-3 md:col-auto ellipsis">{{ $user.Name }}</div>
         <div class="text-gray-500 whitespace-nowrap">{{ $user.CreatedAt | date }}</div>
         {{ component "link" (props . "To" (printf "/admin/change_username?user=%s" $user.Name | path)) }}username{{ end }}
-        {{ component "link" (props . "To" (printf "/admin/change_password?user=%s" $user.Name | path)) }}password{{ end }}
+        {{ if $user.OIDCSubject }}
+            {{ component "link" (props . "To" (printf "/admin/reveal_password?user=%s" $user.Name | path)) }}api token{{ end }}
+        {{ else }}
+            {{ component "link" (props . "To" (printf "/admin/change_password?user=%s" $user.Name | path)) }}password{{ end }}
+        {{ end }}
         {{ component "link" (props . "To" (printf "/admin/change_avatar?user=%s" $user.Name | path)) }}avatar{{ end }}
         {{ if $user.IsAdmin }}
             <div class="text-gray-500">delete<span class="hidden md:inline">&#8230;</span></div>

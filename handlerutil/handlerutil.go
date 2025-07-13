@@ -7,6 +7,12 @@ import (
 	"strings"
 )
 
+var domainOverride string
+
+func SetDomainOverride(domain string) {
+	domainOverride = domain
+}
+
 type Middleware func(http.Handler) http.Handler
 
 func Chain(middlewares ...Middleware) Middleware {
@@ -63,6 +69,10 @@ func Message(message string) http.Handler {
 }
 
 func BaseURL(r *http.Request) string {
+	if domainOverride != "" {
+		return domainOverride
+	}
+
 	var fallbackScheme = "http"
 	if r.TLS != nil {
 		fallbackScheme = "https"

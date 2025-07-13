@@ -120,6 +120,18 @@ func (db *DB) GetUserByName(name string) *User {
 	return &user
 }
 
+func (db *DB) GetUserByOIDCSubject(oidcSubject string) *User {
+	var user User
+	err := db.
+		Where("oidc_subject=?", oidcSubject).
+		First(&user).
+		Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil
+	}
+	return &user
+}
+
 func (db *DB) Begin() *DB {
 	return &DB{DB: db.DB.Begin()}
 }
@@ -302,6 +314,7 @@ type User struct {
 	ListenBrainzToken string `sql:"default: null"`
 	IsAdmin           bool   `sql:"default: null"`
 	Avatar            []byte `sql:"default: null"`
+	OIDCSubject       string `gorm:"unique_index;column:oidc_subject" sql:"default: null"`
 }
 
 type Setting struct {
