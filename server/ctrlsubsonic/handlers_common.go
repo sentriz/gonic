@@ -521,7 +521,7 @@ func (c *Controller) ServeGetLyrics(r *http.Request) *spec.Response {
 		if os.IsNotExist(err) {
 			return sub
 		}
-		return spec.NewError(0, fmt.Sprintf("lyricsFile: %v", err.Error()))
+		return spec.NewError(0, "lyricsFile: %v", err)
 	}
 
 	contents := strings.Join(text, "\n")
@@ -561,7 +561,7 @@ func (c *Controller) ServeGetLyricsBySongID(r *http.Request) *spec.Response {
 	if track.Lyrics != "" {
 		times, lrc, err := lrc.ParseString(track.Lyrics)
 		if err != nil {
-			return spec.NewError(0, fmt.Sprintf("lyricsFile: %v", err.Error()))
+			return spec.NewError(0, "lyricsFile: %v", err)
 		}
 
 		lines := make([]spec.Lyric, len(times))
@@ -595,7 +595,7 @@ func (c *Controller) ServeGetLyricsBySongID(r *http.Request) *spec.Response {
 			}
 			return sub
 		}
-		return spec.NewError(0, fmt.Sprintf("lyricsFile: %v", err.Error()))
+		return spec.NewError(0, "lyricsFile: %v", err)
 	}
 
 	lines := make([]spec.Lyric, len(times))
