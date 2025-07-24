@@ -568,7 +568,7 @@ func (c *Controller) ServeGetLyricsBySongID(r *http.Request) *spec.Response {
 		for i, time := range times {
 			lines[i] = spec.Lyric{
 				Start: time.Milliseconds(),
-				Value: lrc[i],
+				Value: strings.TrimSpace(lrc[i]),
 			}
 		}
 
@@ -602,7 +602,7 @@ func (c *Controller) ServeGetLyricsBySongID(r *http.Request) *spec.Response {
 	for i, time := range times {
 		lines[i] = spec.Lyric{
 			Start: time.Milliseconds(),
-			Value: lrc[i],
+			Value: strings.TrimSpace(lrc[i]),
 		}
 	}
 
