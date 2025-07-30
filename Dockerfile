@@ -1,4 +1,4 @@
-FROM alpine:3.20 AS builder-taglib
+FROM alpine:3.22 AS builder-taglib
 WORKDIR /tmp
 COPY alpine/taglib/APKBUILD .
 RUN apk update && \
@@ -7,7 +7,7 @@ RUN apk update && \
     abuild-keygen -a -n -i && \
     REPODEST=/pkgs abuild -F -r
 
-FROM golang:1.23-alpine AS builder
+FROM golang:1.24-alpine3.22 AS builder
 RUN apk add -U --no-cache \
     build-base \
     ca-certificates \
@@ -27,8 +27,8 @@ RUN go mod download
 COPY . .
 RUN GOOS=linux go build -o gonic cmd/gonic/gonic.go
 
-FROM alpine:3.20
-LABEL org.opencontainers.image.source https://github.com/sentriz/gonic
+FROM alpine:3.22
+LABEL org.opencontainers.image.source=https://github.com/sentriz/gonic
 RUN apk add -U --no-cache \
     ffmpeg \
     mpv \
@@ -47,12 +47,12 @@ COPY --from=builder \
     /bin/
 VOLUME ["/cache", "/data", "/music", "/podcasts"]
 EXPOSE 80
-ENV TZ ""
-ENV GONIC_DB_PATH /data/gonic.db
-ENV GONIC_LISTEN_ADDR :80
-ENV GONIC_MUSIC_PATH /music
-ENV GONIC_PODCAST_PATH /podcasts
-ENV GONIC_CACHE_PATH /cache
-ENV GONIC_PLAYLISTS_PATH /playlists
+ENV TZ=
+ENV GONIC_DB_PATH=/data/gonic.db
+ENV GONIC_LISTEN_ADDR=:80
+ENV GONIC_MUSIC_PATH=/music
+ENV GONIC_PODCAST_PATH=/podcasts
+ENV GONIC_CACHE_PATH=/cache
+ENV GONIC_PLAYLISTS_PATH=/playlists
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["gonic"]

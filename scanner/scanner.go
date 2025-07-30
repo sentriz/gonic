@@ -283,7 +283,7 @@ func (s *Scanner) scanDir(tx *db.DB, st *State, absPath string) error {
 		}
 
 		if coverparse.IsCover(item.Name()) {
-			coverparse.BestBetween(&cover, item.Name())
+			cover = coverparse.BestBetween(cover, item.Name())
 			continue
 		}
 		if s.tagReader.CanRead(absPath) {
