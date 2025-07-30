@@ -39,8 +39,8 @@ const (
 )
 
 const (
-	audioPath5s  = "testdata/audio/5s.flac"  //nolint:deadcode,varcheck
-	audioPath10s = "testdata/audio/10s.flac" //nolint:deadcode,varcheck
+	audioPath5s  = "testdata/audio/5s.flac"
+	audioPath10s = "testdata/audio/10s.flac"
 )
 
 type queryCase struct {

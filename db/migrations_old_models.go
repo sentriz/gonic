@@ -2,7 +2,7 @@ package db
 
 import "time"
 
-type __OldPlaylist struct { //nolint: revive,stylecheck
+type __OldPlaylist struct { //nolint: staticcheck
 	ID         int `gorm:"primary_key"`
 	CreatedAt  time.Time
 	UpdatedAt  time.Time

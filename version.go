@@ -1,4 +1,4 @@
-//nolint:gochecknoglobals,golint,stylecheck
+//nolint:gochecknoglobals
 package gonic
 
 import (

@@ -1,5 +1,6 @@
+version: "2"
 linters:
-  disable-all: true
+  default: none
   enable:
     - asasalint
     - asciicheck
@@ -14,8 +15,6 @@ linters:
     - errchkjson
     - errname
     - errorlint
-    - execinquery
-    - exportloopref
     - forbidigo
     - ginkgolinter
     - gocheckcompilerdirectives
@@ -24,13 +23,10 @@ linters:
     - goconst
     - gocritic
     - gocyclo
-    - gofmt
     - goheader
-    - goimports
     - gomodguard
     - goprintffuncname
     - gosec
-    - gosimple
     - gosmopolitan
     - govet
     - grouper
@@ -51,40 +47,60 @@ linters:
     - rowserrcheck
     - sqlclosecheck
     - staticcheck
-    - stylecheck
-    - tenv
     - testableexamples
     - thelper
     - tparallel
-    - typecheck
     - unconvert
     - unparam
     - unused
     - wastedassign
     - whitespace
     - zerologlint
-
-issues:
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - errcheck
-        - gochecknoglobals
-    - text: "weak cryptographic primitive"
-      linters:
-        - gosec
-    - text: "weak random number generator"
-      linters:
-        - gosec
-    - text: "integer overflow conversion"
-      linters:
-        - gosec
-    - text: "at least one file in a package should have a package comment"
-      linters:
-        - stylecheck
-    - text: "should rewrite switch"
-      linters:
-        - gocritic
-  exclude-dirs:
-    - server/assets
-  exclude-dirs-use-default: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - errcheck
+          - gochecknoglobals
+        path: _test\.go
+      - linters:
+          - gosec
+        text: weak cryptographic primitive
+      - linters:
+          - gosec
+        text: weak random number generator
+      - linters:
+          - gosec
+        text: integer overflow conversion
+      - linters:
+          - staticcheck
+        text: at least one file in a package should have a package comment
+      - linters:
+          - gocritic
+        text: should rewrite switch
+    paths:
+      - server/assets
+      - third_party$
+      - builtin$
+      - examples$
+  settings:
+    staticcheck:
+      checks:
+        - all
+        - "-QF1001"
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - server/assets
+      - third_party$
+      - builtin$
+      - examples$
