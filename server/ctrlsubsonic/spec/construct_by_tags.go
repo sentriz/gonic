@@ -1,6 +1,7 @@
 package spec
 
 import (
+	"cmp"
 	"path/filepath"
 	"sort"
 
@@ -78,7 +79,7 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 		Path:               filepath.Join(album.LeftPath, album.RightPath, t.Filename),
 		Size:               t.Size,
 		Suffix:             formatExt(t.Ext()),
-		Title:              t.TagTitle,
+		Title:              cmp.Or(t.TagTitle, t.Filename),
 		TrackNumber:        t.TagTrackNumber,
 		DiscNumber:         t.TagDiscNumber,
 		Type:               "music",

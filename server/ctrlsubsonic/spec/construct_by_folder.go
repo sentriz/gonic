@@ -1,6 +1,7 @@
 package spec
 
 import (
+	"cmp"
 	"path/filepath"
 
 	"go.senan.xyz/gonic/db"
@@ -62,7 +63,7 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 		Suffix:      formatExt(t.Ext()),
 		Size:        t.Size,
 		Artist:      t.TagTrackArtist,
-		Title:       t.TagTitle,
+		Title:       cmp.Or(t.TagTitle, t.Filename),
 		TrackNumber: t.TagTrackNumber,
 		DiscNumber:  t.TagDiscNumber,
 		Path: filepath.Join(
