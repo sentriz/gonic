@@ -2,14 +2,15 @@ package spec
 
 import (
 	"fmt"
+	"html"
 	"regexp"
 	"strings"
 	"time"
 	"unicode"
 
+	"github.com/microcosm-cc/bluemonday"
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
-	"jaytaylor.com/html2text"
 )
 
 // https://web.archive.org/web/20220707025402/https://www.subsonic.org/pages/api.jsp
@@ -515,8 +516,11 @@ var doublePuncExpr = regexp.MustCompile(`\.\s+\.\s+`)
 var licenceExpr = regexp.MustCompile(`(?i)\buser-contributed text.*`)
 var readMoreExpr = regexp.MustCompile(`(?i)\bread more on.*`)
 
+var bluemondayPolicy = bluemonday.StrictPolicy() //nolint:gochecknoglobals
+
 func CleanExternalText(text string) string {
-	text, _ = html2text.FromString(text, html2text.Options{TextOnly: true})
+	text = bluemondayPolicy.Sanitize(text)
+	text = html.UnescapeString(text)
 	text = licenceExpr.ReplaceAllString(text, "")
 	text = readMoreExpr.ReplaceAllString(text, "")
 	text = doublePuncExpr.ReplaceAllString(text, ". ")
