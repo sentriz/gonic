@@ -9,6 +9,7 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/djherbis/times v1.6.0
 	github.com/dustin/go-humanize v1.0.1
+	github.com/env25/mpdlrc v0.7.4
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510

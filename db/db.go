@@ -235,6 +235,7 @@ type Track struct {
 	TagTrackNumber int       `sql:"default: null"`
 	TagDiscNumber  int       `sql:"default: null"`
 	TagBrainzID    string    `sql:"default: null"`
+	TagLyrics      string    `sql:"default:null"`
 
 	ReplayGainTrackGain float32
 	ReplayGainTrackPeak float32

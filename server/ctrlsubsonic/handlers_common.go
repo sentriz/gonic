@@ -8,10 +8,12 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 	"unicode"
 
+	"github.com/env25/mpdlrc/lrc"
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 
@@ -41,6 +43,7 @@ func (c *Controller) ServeGetOpenSubsonicExtensions(_ *http.Request) *spec.Respo
 	sub.OpenSubsonicExtensions = &spec.OpenSubsonicExtensions{
 		{Name: "transcodeOffset", Versions: []int{1}},
 		{Name: "formPost", Versions: []int{1}},
+		{Name: "songLyrics", Versions: []int{1}},
 	}
 	return sub
 }
@@ -482,10 +485,153 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 	return sub
 }
 
-func (c *Controller) ServeGetLyrics(_ *http.Request) *spec.Response {
+func (c *Controller) ServeGetLyrics(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	artist, _ := params.Get("artist")
+	title, _ := params.Get("title")
+
+	var track db.Track
+	err := c.dbc.
+		Preload("Album").
+		Joins("JOIN track_artists ON track_artists.track_id = tracks.id").
+		Joins("JOIN artists ON artists.id = track_artists.artist_id").
+		Where("tracks.tag_title LIKE ? AND artists.name LIKE ?", title, artist).
+		First(&track).
+		Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return spec.NewError(70, "couldn't find a track with that id")
+	}
+	if err != nil {
+		return spec.NewError(0, "lyrics: %v", err)
+	}
+
 	sub := spec.NewResponse()
-	sub.Lyrics = &spec.Lyrics{}
+
+	if track.TagLyrics != "" {
+		sub.Lyrics = &spec.Lyrics{
+			Value:  track.TagLyrics,
+			Artist: track.TagTrackArtist,
+			Title:  track.TagTitle,
+		}
+		return sub
+	}
+
+	_, text, err := lyricsFile(track)
+	if os.IsNotExist(err) {
+		return sub
+	}
+	if err != nil {
+		return spec.NewError(0, "lyricsFile: %v", err)
+	}
+
+	contents := strings.Join(text, "\n")
+
+	sub.Lyrics = &spec.Lyrics{
+		Value:  contents,
+		Artist: track.TagTrackArtist,
+		Title:  track.TagTitle,
+	}
 	return sub
+}
+
+func (c *Controller) ServeGetLyricsBySongID(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	id, err := params.GetID("id")
+	if err != nil {
+		return spec.NewError(10, "provide an `id` parameter")
+	}
+
+	var track db.Track
+	q := c.dbc.
+		Preload("Album").
+		Preload("Album.Artists").
+		Preload("Artists").
+		Where("id=?", id.Value).
+		First(&track)
+	if err := q.Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return spec.NewError(70, "couldn't find a track with that id")
+		} else {
+			return spec.NewError(0, "lyrics: %v", err)
+		}
+	}
+
+	sub := spec.NewResponse()
+
+	if track.TagLyrics != "" {
+		times, lrc, err := lrc.ParseString(track.TagLyrics)
+		if err != nil {
+			return spec.NewError(0, "lyricsFile: %v", err)
+		}
+
+		lines := make([]spec.Lyric, len(times))
+		for i, time := range times {
+			lines[i] = spec.Lyric{
+				Start: time.Milliseconds(),
+				Value: strings.TrimSpace(lrc[i]),
+			}
+		}
+
+		structured := spec.StructuredLyrics{
+			Lang:          "xxx",
+			Synced:        true,
+			Lines:         lines,
+			DisplayArtist: track.TagTrackArtist,
+			DisplayTitle:  track.TagTitle,
+			Offset:        0,
+		}
+
+		sub.LyricsList = &spec.LyricsList{
+			StructuredLyrics: []spec.StructuredLyrics{structured},
+		}
+		return sub
+	}
+
+	times, lrc, err := lyricsFile(track)
+	if err != nil {
+		if os.IsNotExist(err) {
+			sub.LyricsList = &spec.LyricsList{
+				StructuredLyrics: []spec.StructuredLyrics{},
+			}
+			return sub
+		}
+		return spec.NewError(0, "lyricsFile: %v", err)
+	}
+
+	lines := make([]spec.Lyric, len(times))
+	for i, time := range times {
+		lines[i] = spec.Lyric{
+			Start: time.Milliseconds(),
+			Value: strings.TrimSpace(lrc[i]),
+		}
+	}
+
+	structured := spec.StructuredLyrics{
+		Lang:          "xxx",
+		Synced:        true,
+		Lines:         lines,
+		DisplayArtist: track.TagTrackArtist,
+		DisplayTitle:  track.TagTitle,
+		Offset:        0,
+	}
+
+	sub.LyricsList = &spec.LyricsList{
+		StructuredLyrics: []spec.StructuredLyrics{structured},
+	}
+	return sub
+}
+
+func lyricsFile(file db.Track) ([]lrc.Duration, []lrc.Text, error) {
+	filePath := file.AbsPath()
+	fileDir := filepath.Dir(filePath)
+	fileName := strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath))
+
+	lrcContent, err := os.ReadFile(filepath.Join(fileDir, fileName+".lrc"))
+	if err != nil {
+		return []lrc.Duration{}, []lrc.Text{}, err
+	}
+
+	return lrc.Parse(lrcContent)
 }
 
 func scrobbleStatsUpdateTrack(dbc *db.DB, track *db.Track, userID int, playTime time.Time) error {

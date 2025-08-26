@@ -362,6 +362,7 @@ func (i *TagInfo) Genres() []string       { return []string{i.RawGenre} }
 func (i *TagInfo) TrackNumber() int       { return 1 }
 func (i *TagInfo) DiscNumber() int        { return 1 }
 func (i *TagInfo) Year() int              { return 2021 }
+func (i *TagInfo) Lyrics() string         { return "[00:01.58] Line one\n[00:03.44] Line two\n" }
 
 func (i *TagInfo) Compilation() bool   { return false }
 func (i *TagInfo) ReleaseType() string { return "album" }
