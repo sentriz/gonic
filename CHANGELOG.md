@@ -1,5 +1,13 @@
 # Changelog
 
+### [0.17.1](https://www.github.com/sentriz/gonic/compare/v0.17.0...v0.17.1) (2025-08-26)
+
+
+### Features
+
+* **subsonic:** add support for lyrics ([#519](https://www.github.com/sentriz/gonic/issues/519)) ([db97bc7](https://www.github.com/sentriz/gonic/commit/db97bc753e1070de12b3907b2b996511140a3259))
+* **subsonic:** replace html2text with bluemonday ([5916a7f](https://www.github.com/sentriz/gonic/commit/5916a7fe7bc7ac39ca1975665433da627d214769)), closes [#591](https://www.github.com/sentriz/gonic/issues/591)
+
 ## [0.17.0](https://www.github.com/sentriz/gonic/compare/v0.16.4...v0.17.0) (2025-08-21)
 
 
