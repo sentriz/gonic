@@ -27,6 +27,7 @@ package params
 
 import (
 	"errors"
+	"maps"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -44,9 +45,7 @@ func New(r *http.Request) Params {
 	params := r.URL.Query()
 	// also if there's any in the post body, use those too
 	if err := r.ParseForm(); err == nil {
-		for k, v := range r.Form {
-			params[k] = v
-		}
+		maps.Copy(params, r.Form)
 	}
 	return Params(params)
 }
@@ -389,7 +388,7 @@ func parseTime(in string) (time.Time, error) {
 	return time.Unix(0, ns), nil
 }
 
-func parse(values []string, i interface{}) error {
+func parse(values []string, i any) error {
 	if len(values) == 0 {
 		return ErrNoValues
 	}

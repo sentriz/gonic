@@ -43,7 +43,7 @@ func FuzzScanner(f *testing.F) {
 	})
 }
 
-func fuzzStruct(taken int, data []byte, seed int64, dest interface{}) {
+func fuzzStruct(taken int, data []byte, seed int64, dest any) {
 	if len(data) == 0 {
 		return
 	}

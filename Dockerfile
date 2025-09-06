@@ -7,7 +7,7 @@ RUN apk update && \
     abuild-keygen -a -n -i && \
     REPODEST=/pkgs abuild -F -r
 
-FROM golang:1.24-alpine3.22 AS builder
+FROM golang:1.25-alpine3.22 AS builder
 RUN apk add -U --no-cache \
     build-base \
     ca-certificates \

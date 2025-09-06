@@ -102,7 +102,7 @@ type Error struct {
 	Message string `xml:"message,attr" json:"message"`
 }
 
-func NewError(code int, message string, a ...interface{}) *Response {
+func NewError(code int, message string, a ...any) *Response {
 	r := NewResponse()
 	r.Status = "failed"
 	r.Error = &Error{
@@ -128,7 +128,7 @@ type GenreRef struct {
 // https://opensubsonic.netlify.app/docs/responses/albumid3/
 type Album struct {
 	ID      *specid.ID `xml:"id,attr,omitempty"       json:"id"`
-	Created time.Time  `xml:"created,attr,omitempty"  json:"created,omitempty"`
+	Created time.Time  `xml:"created,attr,omitempty"  json:"created"`
 
 	// legacy or single tag mode
 	ArtistID *specid.ID `xml:"artistId,attr,omitempty" json:"artistId,omitempty"`
@@ -201,7 +201,7 @@ type TrackChild struct {
 	Bitrate     int         `xml:"bitRate,attr,omitempty"     json:"bitRate,omitempty"`
 	ContentType string      `xml:"contentType,attr,omitempty" json:"contentType,omitempty"`
 	CoverID     *specid.ID  `xml:"coverArt,attr,omitempty"    json:"coverArt,omitempty"`
-	CreatedAt   time.Time   `xml:"created,attr,omitempty"     json:"created,omitempty"`
+	CreatedAt   time.Time   `xml:"created,attr,omitempty"     json:"created"`
 	Duration    int         `xml:"duration,attr,omitempty"    json:"duration,omitempty"`
 	Genre       string      `xml:"genre,attr,omitempty"       json:"genre,omitempty"`
 	Genres      []*GenreRef `xml:"genres,omitempty"           json:"genres,omitempty"`

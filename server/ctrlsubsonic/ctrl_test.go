@@ -87,7 +87,6 @@ func makeHTTPMockWithAdmin(query url.Values) (*httptest.ResponseRecorder, *http.
 func runQueryCases(t *testing.T, h handlerSubsonic, cases []*queryCase) {
 	t.Helper()
 	for _, qc := range cases {
-		qc := qc
 		t.Run(qc.expectPath, func(t *testing.T) {
 			t.Helper()
 			t.Parallel()

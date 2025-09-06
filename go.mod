@@ -1,6 +1,6 @@
 module go.senan.xyz/gonic
 
-go 1.24
+go 1.25
 
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
@@ -27,9 +27,9 @@ require (
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
 	github.com/sentriz/audiotags v0.0.0-20240918190302-048d6470aae6
 	github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	go.senan.xyz/flagconf v0.1.9
-	go.senan.xyz/wrtag v0.16.0
+	go.senan.xyz/wrtag v0.17.1
 	golang.org/x/net v0.43.0
 	golang.org/x/sync v0.16.0
 	gopkg.in/gormigrate.v1 v1.6.0
@@ -41,18 +41,16 @@ require (
 	github.com/PuerkitoBio/goquery v1.10.3 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/go-openapi/jsonpointer v0.21.2 // indirect
-	github.com/go-openapi/swag v0.23.1 // indirect
+	github.com/go-openapi/jsonpointer v0.22.0 // indirect
+	github.com/go-openapi/swag/jsonname v0.24.0 // indirect
 	github.com/gorilla/context v1.1.2 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.2 // indirect
-	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/lib/pq v1.3.0 // indirect
-	github.com/mailru/easyjson v0.9.0 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/mmcdole/goxpp v1.1.1 // indirect

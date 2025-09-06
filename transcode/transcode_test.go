@@ -116,15 +116,12 @@ func TestCachingParallelism(t *testing.T) {
 	cacheTranscoder := transcode.NewCachingTranscoder(transcoder, t.TempDir(), 1024)
 
 	var wg sync.WaitGroup
-	for i := 0; i < 5; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
+	for range 5 {
+		wg.Go(func() {
 			var buf bytes.Buffer
 			require.NoError(t, cacheTranscoder.Transcode(context.Background(), transcode.PCM16le, "testdata/5s.flac", &buf))
 			require.Equal(t, 5*bytesPerSec, buf.Len())
-		}()
+		})
 	}
 
 	wg.Wait()

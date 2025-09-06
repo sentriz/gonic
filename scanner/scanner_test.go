@@ -363,7 +363,7 @@ func TestNewAlbumForExistingArtist(t *testing.T) {
 	assert.NoError(t, m.DB().Where("name=?", "artist-2").Find(&artist).Error) // find orig artist
 	assert.Greater(t, artist.ID, 0)
 
-	for tr := 0; tr < 3; tr++ {
+	for tr := range 3 {
 		m.AddTrack(fmt.Sprintf("artist-2/new-album/track-%d.mp3", tr))
 		m.SetTags(fmt.Sprintf("artist-2/new-album/track-%d.mp3", tr), func(tags *mockfs.TagInfo) {
 			tags.RawArtist = "artist-2"
@@ -552,7 +552,7 @@ func TestCompilationAlbumWithoutAlbumArtist(t *testing.T) {
 	const toAdd = 5
 
 	// add tracks to one folder with random artists and no album artist tag
-	for i := 0; i < toAdd; i++ {
+	for i := range toAdd {
 		p := fmt.Sprintf("%s/%s/track-%d.flac", pathArtist, pathAlbum, i)
 		m.AddTrack(p)
 		m.SetTags(p, func(tags *mockfs.TagInfo) {
@@ -605,7 +605,7 @@ func TestAlbumAndArtistSameNameWeirdness(t *testing.T) {
 
 	const name = "same"
 
-	add := func(path string, a ...interface{}) {
+	add := func(path string, a ...any) {
 		m.AddTrack(fmt.Sprintf(path, a...))
 		m.SetTags(fmt.Sprintf(path, a...), func(tags *mockfs.TagInfo) {})
 	}

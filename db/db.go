@@ -67,7 +67,7 @@ func (db *DB) InsertBulkLeftMany(table string, head []string, left int, col []in
 		return nil
 	}
 	var rows []string
-	var values []interface{}
+	var values []any
 	for _, c := range col {
 		rows = append(rows, "(?, ?)")
 		values = append(values, left, c)
@@ -138,10 +138,7 @@ func (db *DB) TransactionChunked(data []int64, cb func(*DB, []int64) error) erro
 	const size = 999
 	return db.Transaction(func(tx *DB) error {
 		for i := 0; i < len(data); i += size {
-			end := i + size
-			if end > len(data) {
-				end = len(data)
-			}
+			end := min(i+size, len(data))
 			if err := cb(tx, data[i:end]); err != nil {
 				return err
 			}
@@ -643,8 +640,8 @@ func Dump(ctx context.Context, db *gorm.DB, to string) error {
 	}
 	defer connDest.Close()
 
-	err = connDest.Raw(func(connDest interface{}) error {
-		return connSrc.Raw(func(connSrc interface{}) error {
+	err = connDest.Raw(func(connDest any) error {
+		return connSrc.Raw(func(connSrc any) error {
 			connDestq := connDest.(*sqlite3.SQLiteConn)
 			connSrcq := connSrc.(*sqlite3.SQLiteConn)
 			bk, err := connDestq.Backup("main", connSrcq, "main")
