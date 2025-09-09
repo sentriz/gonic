@@ -89,6 +89,8 @@ the available modes are:
 | `delim <delim>`  | gonic will look at your normal audio metadata fields like "genre" or "album_artist", but split them on a delimiter. for example you could set `-multi-value-genre "delim ;"` to split the single genre field on ";". note this mode is not recommended unless you use an uncommon delimiter such as ";" or "\|". using a delimiter like "&" will likely lead to many [false positives](https://musicbrainz.org/artist/ccd4879c-5e88-4385-b131-bf65296bf245) |
 | `none` (default) | gonic will not attempt to do any multi value processing                                                                                                                                                                                                                                                                                                                                                                                                     |
 
+note: `,` is a special character in the environment variable parser. if you wish to use `,` for example for splitting genres, the `,` must be escaped with `\`. for example `"delim \,"`.
+
 ## screenshots
 
 |                                                                                 |                                                                                 |                                                                                 |                                                                                 |                                                                                 |
