@@ -240,20 +240,32 @@ func (j *Jukebox) ClearPlaylist() error {
 }
 
 func (j *Jukebox) Pause() error {
-	defer lock(&j.mu)()
-
-	if err := j.conn.Set("pause", true); err != nil {
-		return fmt.Errorf("pause: %w", err)
-	}
-	return nil
+	return j.SetPlay(false)
 }
 
 func (j *Jukebox) Play() error {
+	return j.SetPlay(true)
+}
+
+func (j *Jukebox) SetPlay(state bool) error {
 	defer lock(&j.mu)()
 
-	if err := j.conn.Set("pause", false); err != nil {
+	pause := !state
+
+	if err := j.conn.Set("pause", pause); err != nil {
 		return fmt.Errorf("pause: %w", err)
 	}
+
+	return nil
+}
+
+func (j *Jukebox) TogglePlay() error {
+	defer lock(&j.mu)()
+
+	if _, err := j.conn.Call("cycle", "pause"); err != nil {
+		return fmt.Errorf("cycle pause: %w", err)
+	}
+
 	return nil
 }
 
