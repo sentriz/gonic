@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.18.0](https://www.github.com/sentriz/gonic/compare/v0.17.0...v0.18.0) (2025-09-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** bump to go1.25
+
+### Features
+
+* **docker:** use alpine native taglib ([c9f4181](https://www.github.com/sentriz/gonic/commit/c9f41810af76d6a49c40af274b001f2b5b1d155d))
+* **readme:** document comma escaping in readme ([eaa82b0](https://www.github.com/sentriz/gonic/commit/eaa82b00e55dc56dd5f1b7683769c2f30dadcc63)), closes [#596](https://www.github.com/sentriz/gonic/issues/596)
+* **subsonic:** add support for lyrics ([#519](https://www.github.com/sentriz/gonic/issues/519)) ([db97bc7](https://www.github.com/sentriz/gonic/commit/db97bc753e1070de12b3907b2b996511140a3259))
+* **subsonic:** better support for internet radio and podcast episodes in jukebox ([3db183b](https://www.github.com/sentriz/gonic/commit/3db183bda4b9feda1adf7f4f67218d36eff61a49)), closes [#572](https://www.github.com/sentriz/gonic/issues/572)
+* **subsonic:** replace html2text with bluemonday ([5916a7f](https://www.github.com/sentriz/gonic/commit/5916a7fe7bc7ac39ca1975665433da627d214769)), closes [#591](https://www.github.com/sentriz/gonic/issues/591)
+
+
+### Bug Fixes
+
+* **subsonic:** restore disc/track ordering in getMusicDirectory ([8ac8779](https://www.github.com/sentriz/gonic/commit/8ac8779b92ec9c969bf6a26b26454a1c9e49748a)), closes [#597](https://www.github.com/sentriz/gonic/issues/597)
+
+
+### Miscellaneous Chores
+
+* **deps:** bump to go1.25 ([1bf4a5b](https://www.github.com/sentriz/gonic/commit/1bf4a5b0c1e209770b060c8b4a08910afb72078f)), closes [#594](https://www.github.com/sentriz/gonic/issues/594)
+
 ## [0.17.0](https://www.github.com/sentriz/gonic/compare/v0.16.4...v0.17.0) (2025-08-21)
 
 
