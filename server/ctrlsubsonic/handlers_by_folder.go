@@ -96,7 +96,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 		Preload("Artists").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
-		Order("tag_track_number").
+		Order("tracks.tag_disc_number, tracks.tag_track_number").
 		Order("filename").
 		Find(&childTracks)
 
