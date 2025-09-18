@@ -1,12 +1,3 @@
-FROM alpine:3.22 AS builder-taglib
-WORKDIR /tmp
-COPY alpine/taglib/APKBUILD .
-RUN apk update && \
-    apk add --no-cache abuild doas && \
-    echo "permit nopass root" > /etc/doas.conf && \
-    abuild-keygen -a -n -i && \
-    REPODEST=/pkgs abuild -F -r
-
 FROM golang:1.25-alpine3.22 AS builder
 RUN apk add -U --no-cache \
     build-base \
@@ -14,11 +5,8 @@ RUN apk add -U --no-cache \
     git \
     sqlite \
     zlib-dev \
+    taglib-dev \
     go
-
-# TODO: delete this block when taglib v2 is on alpine packages
-COPY --from=builder-taglib /pkgs/*/*.apk /pkgs/
-RUN apk add --no-cache --allow-untrusted /pkgs/*
 
 WORKDIR /src
 COPY go.mod .
