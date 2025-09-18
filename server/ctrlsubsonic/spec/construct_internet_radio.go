@@ -10,3 +10,13 @@ func NewInternetRadioStation(irs *db.InternetRadioStation) *InternetRadioStation
 		HomepageURL: irs.HomepageURL,
 	}
 }
+
+func NewTCInternetRadioStation(irs *db.InternetRadioStation) *TrackChild {
+	return &TrackChild{
+		ID:      irs.SID(),
+		Title:   irs.Name,
+		IsDir:   false,
+		IsVideo: false,
+		Type:    "internetradio",
+	}
+}

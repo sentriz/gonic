@@ -352,7 +352,7 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	return sub
 }
 
-var errNotATrack = errors.New("not a track")
+var errUnknownPlaylistEntry = errors.New("unknown playlist entry")
 
 func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:gocyclo
 	if c.jukebox == nil {
@@ -394,11 +394,16 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 			if err != nil {
 				return nil, fmt.Errorf("fetch track: %w", err)
 			}
-			track, ok := file.(*db.Track)
-			if !ok {
-				return nil, fmt.Errorf("%q: %w", path, errNotATrack)
+			switch f := file.(type) {
+			case *db.Track:
+				ret = append(ret, spec.NewTrackByTags(f, f.Album))
+			case *db.InternetRadioStation:
+				ret = append(ret, spec.NewTCInternetRadioStation(f))
+			case *db.PodcastEpisode:
+				ret = append(ret, spec.NewTCPodcastEpisode(f))
+			default:
+				return nil, fmt.Errorf("%q: %w", path, errUnknownPlaylistEntry)
 			}
-			ret = append(ret, spec.NewTrackByTags(track, track.Album))
 		}
 		return ret, nil
 	}
