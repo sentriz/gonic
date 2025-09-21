@@ -2,7 +2,6 @@ package ctrlsubsonic
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"math"
 	"net/http"
@@ -217,13 +216,17 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
 	query, err := params.Get("query")
-	var queries []string
 	if err != nil {
 		return spec.NewError(10, "please provide a `query` parameter")
 	}
-	for _, s := range strings.Fields(query) {
-		queries = append(queries, fmt.Sprintf("%%%s%%", strings.Trim(s, `*"'`)))
-	}
+
+	var isUUID = uuid.Validate(query) == nil
+	var isAll = query == `""`
+
+	var fuzzy = query
+	fuzzy = strings.Join(strings.Fields(fuzzy), "%")
+	fuzzy = strings.ToLower(fuzzy)
+	fuzzy = "%" + fuzzy + "%"
 
 	results := &spec.SearchResultThree{}
 
@@ -232,8 +235,12 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	q := c.dbc.
 		Select("*, count(albums.id) album_count").
 		Group("artists.id")
-	for _, s := range queries {
-		q = q.Where(`name LIKE ? OR name_u_dec LIKE ?`, s, s)
+	switch {
+	case isUUID:
+		q = q.Where(0)
+	case isAll:
+	default:
+		q = q.Where(`name LIKE ? OR name_u_dec LIKE ?`, fuzzy, fuzzy)
 	}
 	q = q.
 		Joins("JOIN album_artists ON album_artists.artist_id=artists.id").
@@ -261,8 +268,12 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		Preload("AlbumStar", "user_id=?", user.ID).
 		Preload("AlbumRating", "user_id=?", user.ID).
 		Preload("Play", "user_id=?", user.ID)
-	for _, s := range queries {
-		q = q.Where(`tag_title LIKE ? OR tag_title_u_dec LIKE ?`, s, s)
+	switch {
+	case isUUID:
+		q = q.Where(`tag_brainz_id = ?`, query)
+	case isAll:
+	default:
+		q = q.Where(`tag_title LIKE ? OR tag_title_u_dec LIKE ?`, fuzzy, fuzzy)
 	}
 	q = q.
 		Offset(params.GetOrInt("albumOffset", 0)).
@@ -286,8 +297,12 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		Preload("Artists").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID)
-	for _, s := range queries {
-		q = q.Where(`tracks.tag_title LIKE ? OR tracks.tag_title_u_dec LIKE ?`, s, s)
+	switch {
+	case isUUID:
+		q = q.Where(`tracks.tag_brainz_id = ?`, query)
+	case isAll:
+	default:
+		q = q.Where(`tracks.tag_title LIKE ? OR tracks.tag_title_u_dec LIKE ?`, fuzzy, fuzzy)
 	}
 	q = q.Offset(params.GetOrInt("songOffset", 0)).
 		Limit(params.GetOrInt("songCount", 20))
@@ -418,7 +433,7 @@ func (c *Controller) ServeGetAlbumInfoTwo(r *http.Request) *spec.Response {
 	sub.AlbumInfo.MusicBrainzID = info.MusicBrainzID
 	sub.AlbumInfo.LastFMURL = info.LastFMURL
 
-	if _, err := uuid.Parse(album.TagBrainzID); err == nil {
+	if err := uuid.Validate(album.TagBrainzID); err == nil {
 		sub.AlbumInfo.MusicBrainzID = album.TagBrainzID // prefer db musicbrainz ID over lastfm's
 	}
 

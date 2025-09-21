@@ -49,6 +49,10 @@ playlists-path              <path to your m3u playlist dir>
 # regenerated.
 cache-path                  /var/cache/gonic
 
+# Option to eject least recently used items from transcode cache.
+#transcode-cache-size		5000 # in Mb (0 = no limit)
+#transcode-eject-interval	1440 # in minutes (0 = never eject)
+
 # Interval (in minutes) to check for new music. Default: don't scan
 #scan-interval               0
 #scan-at-start-enabled       false

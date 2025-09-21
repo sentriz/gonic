@@ -1,5 +1,45 @@
 # Changelog
 
+## [0.17.0](https://www.github.com/sentriz/gonic/compare/v0.16.4...v0.17.0) (2025-08-21)
+
+
+### Features
+
+* **db:** add a covering index on tracks (album_id, length) ([018343d](https://www.github.com/sentriz/gonic/commit/018343dc32fd89685ca3eb80ceb3116615a6cbec)), closes [#508](https://www.github.com/sentriz/gonic/issues/508)
+* **lastfm:** paginate loved tracks ([5c7d065](https://www.github.com/sentriz/gonic/commit/5c7d065fd7513f66604d78409859c4028ca9ad70))
+* **playlist:** assume playlists in the root dir without a user dir belong to admin ([#499](https://www.github.com/sentriz/gonic/issues/499)) ([f5893ea](https://www.github.com/sentriz/gonic/commit/f5893ea5ea4d47a82212b47e85a15d9defdc5eff))
+* **podcast:** download most recent episode when switching to download recent mode ([c222ecb](https://www.github.com/sentriz/gonic/commit/c222ecb45cec5282e0ef892db21eb32632a0145d)), closes [#557](https://www.github.com/sentriz/gonic/issues/557)
+* **podcast:** use podcast author if episode author is not defined ([#574](https://www.github.com/sentriz/gonic/issues/574)) ([19b707c](https://www.github.com/sentriz/gonic/commit/19b707c5d4081242825704eed764c257e6161865))
+* **scanner:** cleanup bookmarks on scan ([#583](https://www.github.com/sentriz/gonic/issues/583)) ([b8dfe14](https://www.github.com/sentriz/gonic/commit/b8dfe1449e1f9ee93193b32b1e9d3e233e23706d))
+* **scanner:** support full scan cleanups in watcher ([#496](https://www.github.com/sentriz/gonic/issues/496)) ([93ce039](https://www.github.com/sentriz/gonic/commit/93ce039963821dbfa0acec6ee9c92134ff479fcc))
+* **scanner:** use wrtag/coverparse for cover selection ([453639e](https://www.github.com/sentriz/gonic/commit/453639ee34da28dc47f64865d490445968c23ce8)), closes [#338](https://www.github.com/sentriz/gonic/issues/338) [#516](https://www.github.com/sentriz/gonic/issues/516)
+* **subsonic:** allow search albums with MBID ([7b19101](https://www.github.com/sentriz/gonic/commit/7b19101a34702bdeaeacf57dbc3db9226f0169f3))
+* **subsonic:** allow search with MBID ([#579](https://www.github.com/sentriz/gonic/issues/579)) ([2d4111d](https://www.github.com/sentriz/gonic/commit/2d4111dfc5226e99fe9fee23e415806960ea7a5c))
+* **subsonic:** bump image cache expiration ([bbe16b7](https://www.github.com/sentriz/gonic/commit/bbe16b7555f1d7300f829171f73c8308ae506fd3))
+* **subsonic:** expose album `isCompilation` and `releaseTypes` ([29b7549](https://www.github.com/sentriz/gonic/commit/29b754973db9106bf1061a7aadb2b9b93b1fbf17))
+* **subsonic:** expose replaygain tags ([0e45f5e](https://www.github.com/sentriz/gonic/commit/0e45f5e84cd650211351179edf3eed89a54c6c75))
+* **subsonic:** fallback to filename when title is missing tags ([58d54c2](https://www.github.com/sentriz/gonic/commit/58d54c287cb6711959707b50207ea700df25d1cf)), closes [#541](https://www.github.com/sentriz/gonic/issues/541)
+* **subsonic:** support more podcast metadata and podcast bookmarks ([#569](https://www.github.com/sentriz/gonic/issues/569)) ([63a420d](https://www.github.com/sentriz/gonic/commit/63a420d2d32b006a92b3aa5d97bc39ad49fc8155))
+* **transcode:** add cache pruning and config options ([bcb613c](https://www.github.com/sentriz/gonic/commit/bcb613c79c6a822adeafc802f19b7626bfb64009))
+
+
+### Bug Fixes
+
+* **admin:** better handing of resolve proxy path escaping ([7b21e82](https://www.github.com/sentriz/gonic/commit/7b21e82aaf511d36300fd9cf2dae32a1196a4f77)), closes [#493](https://www.github.com/sentriz/gonic/issues/493)
+* **adminui:** resolve reverse proxy paths for fonts ([718686a](https://www.github.com/sentriz/gonic/commit/718686a93a4341c5b5ccb113a0ed7ae95c0524b4)), closes [#543](https://www.github.com/sentriz/gonic/issues/543)
+* **ci:** bump golangci-lint ([640d872](https://www.github.com/sentriz/gonic/commit/640d872f4c66d21b760590ae9413cc5b63b53cb6))
+* **ci:** ignore gosec integer overflow conversion ([120fd79](https://www.github.com/sentriz/gonic/commit/120fd7959a8e360fdccc6bd1a47e8cc7ebdbb0d4))
+* **ci:** update .golangci.yml exclude config ([e5f7ef3](https://www.github.com/sentriz/gonic/commit/e5f7ef3c86d6a52709336f2dd2d428203e7d9472))
+* **ci:** use new sqlite package name ([1c23771](https://www.github.com/sentriz/gonic/commit/1c2377189da75c78831955953f25dd09b3cb7bb2))
+* **dockerfile:** install abuild key ([#526](https://www.github.com/sentriz/gonic/issues/526)) ([fb36dbf](https://www.github.com/sentriz/gonic/commit/fb36dbf71991424879be85950ab508bcdf653902))
+* **playlist:** fix non-admin users not being able to create playlists ([#524](https://www.github.com/sentriz/gonic/issues/524)) ([ac798ac](https://www.github.com/sentriz/gonic/commit/ac798ac2d2cdf936b653577d9acd4b7d1e22ecaf))
+* **podcast:** gracefully handle no podcast cover URL ([#547](https://www.github.com/sentriz/gonic/issues/547)) ([aef5f92](https://www.github.com/sentriz/gonic/commit/aef5f920d24c57bc5b652891409926ff98458aa0))
+* **subsonic:** gracefully handle missing playqueue items ([3fc9d5d](https://www.github.com/sentriz/gonic/commit/3fc9d5dcb5af0db8286d7be7c895726cf9b437cc))
+* **subsonic:** order some browse-by-tag responses ([39df00e](https://www.github.com/sentriz/gonic/commit/39df00ef8f683a846efd0da7480c3db6d928d2c4)), closes [#512](https://www.github.com/sentriz/gonic/issues/512)
+* **subsonic:** populate ArtistID and AlbumID for playlists ([#567](https://www.github.com/sentriz/gonic/issues/567)) ([c6d8751](https://www.github.com/sentriz/gonic/commit/c6d87515c6702c3ca22fef6ba1420ffc00eeaa77))
+* **subsonic:** skip bookmarks for missing items instead of failing ([#580](https://www.github.com/sentriz/gonic/issues/580)) ([e3dc188](https://www.github.com/sentriz/gonic/commit/e3dc1887730cb019a91e74ad8a133a31839dbf56))
+* **taglib:** support lower case filenames again ([8a0fa05](https://www.github.com/sentriz/gonic/commit/8a0fa05c7cdcb98066c263fea72af0715864bea5)), closes [#491](https://www.github.com/sentriz/gonic/issues/491)
+
 ### [0.16.4](https://www.github.com/sentriz/gonic/compare/v0.16.3...v0.16.4) (2024-03-20)
 
 

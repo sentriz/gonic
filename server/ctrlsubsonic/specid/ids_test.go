@@ -24,7 +24,6 @@ func TestParseID(t *testing.T) {
 	}
 
 	for _, tcase := range tcases {
-		tcase := tcase // pin
 		t.Run(tcase.param, func(t *testing.T) {
 			t.Parallel()
 

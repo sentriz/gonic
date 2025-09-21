@@ -25,6 +25,10 @@ type Info interface {
 	TrackNumber() int
 	DiscNumber() int
 	Year() int
+	Lyrics() string
+
+	Compilation() bool
+	ReleaseType() string
 
 	ReplayGainTrackGain() float32
 	ReplayGainTrackPeak() float32

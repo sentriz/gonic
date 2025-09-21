@@ -24,7 +24,9 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/fileutil"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"go.senan.xyz/gonic/tags/tagcommon"
+	"go.senan.xyz/wrtag/coverparse"
 )
 
 var (
@@ -104,6 +106,9 @@ func (s *Scanner) ScanAndClean(opts ScanOptions) (*State, error) {
 	}
 	if err := s.cleanGenres(st); err != nil {
 		return nil, fmt.Errorf("clean genres: %w", err)
+	}
+	if err := s.cleanBookmarks(st); err != nil {
+		return nil, fmt.Errorf("clean bookmarks: %w", err)
 	}
 
 	if err := s.db.SetSetting(db.LastScanTime, strconv.FormatInt(time.Now().Unix(), 10)); err != nil {
@@ -277,8 +282,8 @@ func (s *Scanner) scanDir(tx *db.DB, st *State, absPath string) error {
 			continue
 		}
 
-		if isCover(item.Name()) {
-			cover = item.Name()
+		if coverparse.IsCover(item.Name()) {
+			cover = coverparse.BestBetween(cover, item.Name())
 			continue
 		}
 		if s.tagReader.CanRead(absPath) {
@@ -419,6 +424,8 @@ func populateAlbum(tx *db.DB, album *db.Album, trags tagcommon.Info, modTime, cr
 	album.TagAlbumArtist = tagcommon.MustAlbumArtist(trags)
 	album.TagBrainzID = trags.AlbumBrainzID()
 	album.TagYear = trags.Year()
+	album.TagCompilation = trags.Compilation()
+	album.TagReleaseType = trags.ReleaseType()
 
 	album.ModifiedAt = modTime
 	if album.CreatedAt.After(createTime) {
@@ -461,6 +468,7 @@ func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trags tagcommon.
 	track.FilenameUDec = decoded(basename)
 	track.Size = size
 	track.AlbumID = album.ID
+	track.TagLyrics = trags.Lyrics()
 
 	track.TagTitle = trags.Title()
 	track.TagTitleUDec = decoded(trags.Title())
@@ -671,24 +679,35 @@ func (s *Scanner) cleanGenres(st *State) error { //nolint:unparam
 	return nil
 }
 
-//nolint:gochecknoglobals
-var coverNames = map[string]struct{}{}
+func (s *Scanner) cleanBookmarks(st *State) error {
+	start := time.Now()
+	defer func() {
+		log.Printf("finished clean bookmarks in %s, %d removed", durSince(start), st.BookmarksRemoved())
+	}()
 
-//nolint:gochecknoinits
-func init() {
-	for _, name := range []string{"cover", "folder", "front", "albumart", "album", "artist"} {
-		for _, ext := range []string{"jpg", "jpeg", "png", "bmp", "gif"} {
-			coverNames[fmt.Sprintf("%s.%s", name, ext)] = struct{}{}
-			for i := 0; i < 3; i++ {
-				coverNames[fmt.Sprintf("%s.%d.%s", name, i, ext)] = struct{}{} // support beets extras
-			}
-		}
-	}
-}
+	trackBookmarks := s.db.
+		Select("bookmarks.id").
+		Model(db.Bookmark{}).
+		Joins("LEFT JOIN tracks ON tracks.id=bookmarks.entry_id").
+		Where("tracks.id IS NULL AND bookmarks.entry_id_type=?", specid.Track).
+		SubQuery()
+	q := s.db.
+		Where("bookmarks.id IN ?", trackBookmarks).
+		Delete(db.Bookmark{})
+	st.bookmarksRemoved += int(q.RowsAffected)
 
-func isCover(name string) bool {
-	_, ok := coverNames[strings.ToLower(name)]
-	return ok
+	podcastBookmarks := s.db.
+		Select("bookmarks.id").
+		Model(db.Bookmark{}).
+		Joins("LEFT JOIN podcast_episodes ON podcast_episodes.id=bookmarks.entry_id").
+		Where("podcast_episodes.id IS NULL AND bookmarks.entry_id_type=?", specid.PodcastEpisode).
+		SubQuery()
+	q = s.db.
+		Where("bookmarks.id IN ?", podcastBookmarks).
+		Delete(db.Bookmark{})
+	st.bookmarksRemoved += int(q.RowsAffected)
+
+	return nil
 }
 
 // decoded converts a string to it's latin equivalent.
@@ -713,20 +732,22 @@ type State struct {
 	seenAlbums    map[int]struct{}
 	seenTracksNew int
 
-	tracksMissing  []int64
-	albumsMissing  []int64
-	artistsMissing int
-	genresMissing  int
+	tracksMissing    []int64
+	albumsMissing    []int64
+	artistsMissing   int
+	genresMissing    int
+	bookmarksRemoved int
 }
 
 func (s *State) SeenTracks() int    { return len(s.seenTracks) }
 func (s *State) SeenAlbums() int    { return len(s.seenAlbums) }
 func (s *State) SeenTracksNew() int { return s.seenTracksNew }
 
-func (s *State) TracksMissing() int  { return len(s.tracksMissing) }
-func (s *State) AlbumsMissing() int  { return len(s.albumsMissing) }
-func (s *State) ArtistsMissing() int { return s.artistsMissing }
-func (s *State) GenresMissing() int  { return s.genresMissing }
+func (s *State) TracksMissing() int    { return len(s.tracksMissing) }
+func (s *State) AlbumsMissing() int    { return len(s.albumsMissing) }
+func (s *State) ArtistsMissing() int   { return s.artistsMissing }
+func (s *State) GenresMissing() int    { return s.genresMissing }
+func (s *State) BookmarksRemoved() int { return s.bookmarksRemoved }
 
 type MultiValueMode uint8
 

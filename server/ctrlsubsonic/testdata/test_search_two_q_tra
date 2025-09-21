@@ -10,7 +10,9 @@
         {
           "id": "tr-1",
           "album": "album-0",
+          "albumId": "al-3",
           "artist": "artist-0",
+          "artistId": "ar-1",
           "artists": [{ "id": "ar-1", "name": "artist-0" }],
           "displayArtist": "",
           "albumArtists": null,
@@ -36,7 +38,9 @@
         {
           "id": "tr-2",
           "album": "album-0",
+          "albumId": "al-3",
           "artist": "artist-0",
+          "artistId": "ar-1",
           "artists": [{ "id": "ar-1", "name": "artist-0" }],
           "displayArtist": "",
           "albumArtists": null,
@@ -62,7 +66,9 @@
         {
           "id": "tr-3",
           "album": "album-0",
+          "albumId": "al-3",
           "artist": "artist-0",
+          "artistId": "ar-1",
           "artists": [{ "id": "ar-1", "name": "artist-0" }],
           "displayArtist": "",
           "albumArtists": null,
@@ -88,7 +94,9 @@
         {
           "id": "tr-4",
           "album": "album-1",
+          "albumId": "al-4",
           "artist": "artist-0",
+          "artistId": "ar-1",
           "artists": [{ "id": "ar-1", "name": "artist-0" }],
           "displayArtist": "",
           "albumArtists": null,
@@ -114,7 +122,9 @@
         {
           "id": "tr-5",
           "album": "album-1",
+          "albumId": "al-4",
           "artist": "artist-0",
+          "artistId": "ar-1",
           "artists": [{ "id": "ar-1", "name": "artist-0" }],
           "displayArtist": "",
           "albumArtists": null,
@@ -140,7 +150,9 @@
         {
           "id": "tr-6",
           "album": "album-1",
+          "albumId": "al-4",
           "artist": "artist-0",
+          "artistId": "ar-1",
           "artists": [{ "id": "ar-1", "name": "artist-0" }],
           "displayArtist": "",
           "albumArtists": null,
@@ -166,7 +178,9 @@
         {
           "id": "tr-7",
           "album": "album-2",
+          "albumId": "al-5",
           "artist": "artist-0",
+          "artistId": "ar-1",
           "artists": [{ "id": "ar-1", "name": "artist-0" }],
           "displayArtist": "",
           "albumArtists": null,
@@ -192,7 +206,9 @@
         {
           "id": "tr-8",
           "album": "album-2",
+          "albumId": "al-5",
           "artist": "artist-0",
+          "artistId": "ar-1",
           "artists": [{ "id": "ar-1", "name": "artist-0" }],
           "displayArtist": "",
           "albumArtists": null,
@@ -218,7 +234,9 @@
         {
           "id": "tr-9",
           "album": "album-2",
+          "albumId": "al-5",
           "artist": "artist-0",
+          "artistId": "ar-1",
           "artists": [{ "id": "ar-1", "name": "artist-0" }],
           "displayArtist": "",
           "albumArtists": null,
@@ -244,7 +262,9 @@
         {
           "id": "tr-10",
           "album": "album-0",
+          "albumId": "al-7",
           "artist": "artist-1",
+          "artistId": "ar-2",
           "artists": [{ "id": "ar-2", "name": "artist-1" }],
           "displayArtist": "",
           "albumArtists": null,
@@ -270,7 +290,9 @@
         {
           "id": "tr-11",
           "album": "album-0",
+          "albumId": "al-7",
           "artist": "artist-1",
+          "artistId": "ar-2",
           "artists": [{ "id": "ar-2", "name": "artist-1" }],
           "displayArtist": "",
           "albumArtists": null,
@@ -296,7 +318,9 @@
         {
           "id": "tr-12",
           "album": "album-0",
+          "albumId": "al-7",
           "artist": "artist-1",
+          "artistId": "ar-2",
           "artists": [{ "id": "ar-2", "name": "artist-1" }],
           "displayArtist": "",
           "albumArtists": null,
@@ -322,7 +346,9 @@
         {
           "id": "tr-13",
           "album": "album-1",
+          "albumId": "al-8",
           "artist": "artist-1",
+          "artistId": "ar-2",
           "artists": [{ "id": "ar-2", "name": "artist-1" }],
           "displayArtist": "",
           "albumArtists": null,
@@ -348,7 +374,9 @@
         {
           "id": "tr-14",
           "album": "album-1",
+          "albumId": "al-8",
           "artist": "artist-1",
+          "artistId": "ar-2",
           "artists": [{ "id": "ar-2", "name": "artist-1" }],
           "displayArtist": "",
           "albumArtists": null,
@@ -374,7 +402,9 @@
         {
           "id": "tr-15",
           "album": "album-1",
+          "albumId": "al-8",
           "artist": "artist-1",
+          "artistId": "ar-2",
           "artists": [{ "id": "ar-2", "name": "artist-1" }],
           "displayArtist": "",
           "albumArtists": null,
@@ -400,7 +430,9 @@
         {
           "id": "tr-16",
           "album": "album-2",
+          "albumId": "al-9",
           "artist": "artist-1",
+          "artistId": "ar-2",
           "artists": [{ "id": "ar-2", "name": "artist-1" }],
           "displayArtist": "",
           "albumArtists": null,
@@ -426,7 +458,9 @@
         {
           "id": "tr-17",
           "album": "album-2",
+          "albumId": "al-9",
           "artist": "artist-1",
+          "artistId": "ar-2",
           "artists": [{ "id": "ar-2", "name": "artist-1" }],
           "displayArtist": "",
           "albumArtists": null,
@@ -452,7 +486,9 @@
         {
           "id": "tr-18",
           "album": "album-2",
+          "albumId": "al-9",
           "artist": "artist-1",
+          "artistId": "ar-2",
           "artists": [{ "id": "ar-2", "name": "artist-1" }],
           "displayArtist": "",
           "albumArtists": null,
@@ -478,7 +514,9 @@
         {
           "id": "tr-19",
           "album": "album-0",
+          "albumId": "al-11",
           "artist": "artist-2",
+          "artistId": "ar-3",
           "artists": [{ "id": "ar-3", "name": "artist-2" }],
           "displayArtist": "",
           "albumArtists": null,
@@ -504,7 +542,9 @@
         {
           "id": "tr-20",
           "album": "album-0",
+          "albumId": "al-11",
           "artist": "artist-2",
+          "artistId": "ar-3",
           "artists": [{ "id": "ar-3", "name": "artist-2" }],
           "displayArtist": "",
           "albumArtists": null,

@@ -2,13 +2,15 @@ package spec
 
 import (
 	"fmt"
+	"html"
 	"regexp"
 	"strings"
 	"time"
+	"unicode"
 
+	"github.com/microcosm-cc/bluemonday"
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
-	"jaytaylor.com/html2text"
 )
 
 // https://web.archive.org/web/20220707025402/https://www.subsonic.org/pages/api.jsp
@@ -69,6 +71,7 @@ type Response struct {
 	SimilarSongsTwo       *SimilarSongsTwo       `xml:"similarSongs2"         json:"similarSongs2,omitempty"`
 	InternetRadioStations *InternetRadioStations `xml:"internetRadioStations" json:"internetRadioStations,omitempty"`
 	Lyrics                *Lyrics                `xml:"lyrics"                json:"lyrics,omitempty"`
+	LyricsList            *LyricsList            `xml:"lyricsList"            json:"lyricsList,omitempty"`
 }
 
 func NewResponse() *Response {
@@ -99,7 +102,7 @@ type Error struct {
 	Message string `xml:"message,attr" json:"message"`
 }
 
-func NewError(code int, message string, a ...interface{}) *Response {
+func NewError(code int, message string, a ...any) *Response {
 	r := NewResponse()
 	r.Status = "failed"
 	r.Error = &Error{
@@ -125,7 +128,7 @@ type GenreRef struct {
 // https://opensubsonic.netlify.app/docs/responses/albumid3/
 type Album struct {
 	ID      *specid.ID `xml:"id,attr,omitempty"       json:"id"`
-	Created time.Time  `xml:"created,attr,omitempty"  json:"created,omitempty"`
+	Created time.Time  `xml:"created,attr,omitempty"  json:"created"`
 
 	// legacy or single tag mode
 	ArtistID *specid.ID `xml:"artistId,attr,omitempty" json:"artistId,omitempty"`
@@ -149,6 +152,9 @@ type Album struct {
 	Genres     []*GenreRef   `xml:"genres,omitempty"       json:"genres,omitempty"`
 	Year       int           `xml:"year,attr,omitempty"    json:"year,omitempty"`
 	Tracks     []*TrackChild `xml:"song,omitempty"         json:"song,omitempty"`
+
+	IsCompilation bool     `xml:"isCompilation" json:"isCompilation"`
+	ReleaseTypes  []string `xml:"releaseTypes" json:"releaseTypes"`
 
 	// star / rating
 	Starred       *time.Time `xml:"starred,attr,omitempty"         json:"starred,omitempty"`
@@ -195,7 +201,7 @@ type TrackChild struct {
 	Bitrate     int         `xml:"bitRate,attr,omitempty"     json:"bitRate,omitempty"`
 	ContentType string      `xml:"contentType,attr,omitempty" json:"contentType,omitempty"`
 	CoverID     *specid.ID  `xml:"coverArt,attr,omitempty"    json:"coverArt,omitempty"`
-	CreatedAt   time.Time   `xml:"created,attr,omitempty"     json:"created,omitempty"`
+	CreatedAt   time.Time   `xml:"created,attr,omitempty"     json:"created"`
 	Duration    int         `xml:"duration,attr,omitempty"    json:"duration,omitempty"`
 	Genre       string      `xml:"genre,attr,omitempty"       json:"genre,omitempty"`
 	Genres      []*GenreRef `xml:"genres,omitempty"           json:"genres,omitempty"`
@@ -394,24 +400,26 @@ type PodcastChannel struct {
 }
 
 type PodcastEpisode struct {
-	ID          *specid.ID `xml:"id,attr"          json:"id"`
-	StreamID    *specid.ID `xml:"streamId,attr"    json:"streamId"`
-	ChannelID   *specid.ID `xml:"channelId,attr"   json:"channelId"`
-	Title       string     `xml:"title,attr"       json:"title"`
-	Description string     `xml:"description,attr" json:"description"`
-	PublishDate time.Time  `xml:"publishDate,attr" json:"publishDate"`
-	Status      string     `xml:"status,attr"      json:"status"`
-	Parent      string     `xml:"parent,attr"      json:"parent"`
-	IsDir       bool       `xml:"isDir,attr"       json:"isDir"`
-	Year        int        `xml:"year,attr"        json:"year"`
-	Genre       string     `xml:"genre,attr"       json:"genre"`
-	CoverArt    *specid.ID `xml:"coverArt,attr"    json:"coverArt"`
-	Size        int        `xml:"size,attr"        json:"size"`
-	ContentType string     `xml:"contentType,attr" json:"contentType"`
-	Suffix      string     `xml:"suffix,attr"      json:"suffix"`
-	Duration    int        `xml:"duration,attr"    json:"duration"`
-	BitRate     int        `xml:"bitRate,attr"     json:"bitrate"`
-	Path        string     `xml:"path,attr"        json:"path"`
+	ID          *specid.ID `xml:"id,attr"                  json:"id"`
+	StreamID    *specid.ID `xml:"streamId,attr"            json:"streamId"`
+	ChannelID   *specid.ID `xml:"channelId,attr"           json:"channelId"`
+	Title       string     `xml:"title,attr"               json:"title"`
+	Description string     `xml:"description,attr"         json:"description"`
+	PublishDate time.Time  `xml:"publishDate,attr"         json:"publishDate"`
+	Status      string     `xml:"status,attr"              json:"status"`
+	Parent      string     `xml:"parent,attr"              json:"parent"`
+	IsDir       bool       `xml:"isDir,attr"               json:"isDir"`
+	Year        int        `xml:"year,attr"                json:"year"`
+	Genre       string     `xml:"genre,attr"               json:"genre"`
+	CoverArt    *specid.ID `xml:"coverArt,attr"            json:"coverArt"`
+	Size        int        `xml:"size,attr"                json:"size"`
+	ContentType string     `xml:"contentType,attr"         json:"contentType"`
+	Suffix      string     `xml:"suffix,attr"              json:"suffix"`
+	Duration    int        `xml:"duration,attr"            json:"duration"`
+	BitRate     int        `xml:"bitRate,attr"             json:"bitrate"`
+	Path        string     `xml:"path,attr"                json:"path"`
+	Album       string     `xml:"album,attr"               json:"album"`
+	Artist      string     `xml:"artist,attr"              json:"artist"`
 }
 
 type Bookmarks struct {
@@ -468,6 +476,24 @@ type Lyrics struct {
 	Title  string `xml:"title,attr,omitempty"  json:"title,omitempty"`
 }
 
+type Lyric struct {
+	Start int64  `xml:"start,attr" json:"start"`
+	Value string `xml:",chardata" json:"value"`
+}
+
+type LyricsList struct {
+	StructuredLyrics []StructuredLyrics `xml:"structuredLyrics" json:"structuredLyrics"`
+}
+
+type StructuredLyrics struct {
+	Lang          string  `xml:"lang,attr" json:"lang"` // ISO 639 (or und, xxx if unknown)
+	Synced        bool    `xml:"synced,attr" json:"synced"`
+	Lines         []Lyric `xml:"line" json:"line"`
+	DisplayArtist string  `xml:"displayArtist,attr,omitempty" json:"displayArtist,omitempty"`
+	DisplayTitle  string  `xml:"displayTitle,attr,omitempty" json:"displayTitle,omitempty"`
+	Offset        int     `xml:"offset,attr,omitempty" json:"offset,omitempty"`
+}
+
 type OpenSubsonicExtension struct {
 	Name     string `xml:"name,attr" json:"name"`
 	Versions []int  `xml:"versions"  json:"versions"`
@@ -486,12 +512,34 @@ func formatExt(ext string) string {
 	return strings.TrimPrefix(ext, ".")
 }
 
+func formatReleaseTypes(types string) []string {
+	parts := strings.Split(types, ",")
+	if len(parts) == 0 {
+		return []string{}
+	}
+	for i, part := range parts {
+		part = strings.TrimSpace(part)
+		if len(part) == 0 {
+			continue
+		}
+		part = string(unicode.ToUpper([]rune(part)[0])) + string([]rune(part)[1:])
+		if part == "Ep" {
+			part = "EP"
+		}
+		parts[i] = part
+	}
+	return parts
+}
+
 var doublePuncExpr = regexp.MustCompile(`\.\s+\.\s+`)
 var licenceExpr = regexp.MustCompile(`(?i)\buser-contributed text.*`)
 var readMoreExpr = regexp.MustCompile(`(?i)\bread more on.*`)
 
+var bluemondayPolicy = bluemonday.StrictPolicy() //nolint:gochecknoglobals
+
 func CleanExternalText(text string) string {
-	text, _ = html2text.FromString(text, html2text.Options{TextOnly: true})
+	text = bluemondayPolicy.Sanitize(text)
+	text = html.UnescapeString(text)
 	text = licenceExpr.ReplaceAllString(text, "")
 	text = readMoreExpr.ReplaceAllString(text, "")
 	text = doublePuncExpr.ReplaceAllString(text, ". ")

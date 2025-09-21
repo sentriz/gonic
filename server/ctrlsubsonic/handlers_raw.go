@@ -155,11 +155,9 @@ func coverScaleAndSave(reader io.Reader, cachePath string, size int) error {
 	if err != nil {
 		return fmt.Errorf("resizing: %w", err)
 	}
-	width := size
-	if width > src.Bounds().Dx() {
+	width := min(size,
 		// don't upscale images
-		width = src.Bounds().Dx()
-	}
+		src.Bounds().Dx())
 	if err := imaging.Save(imaging.Resize(src, width, 0, imaging.Lanczos), cachePath); err != nil {
 		return fmt.Errorf("caching %q: %w", cachePath, err)
 	}
@@ -194,7 +192,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	}
 
 	client, _ := params.Get("c")
-	pref, err := streamGetTransodePreference(c.dbc, user.ID, client)
+	pref, err := streamGetTranscodePreference(c.dbc, user.ID, client)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewError(0, "couldn't find transcode preference: %v", err)
 	}
@@ -224,7 +222,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		profile = transcode.WithSeek(profile, time.Second*time.Duration(timeOffset))
 	}
 
-	log.Printf("trancoding to %q with at bitrate %d", profile.MIME(), profile.BitRate())
+	log.Printf("transcoding to %q with at bitrate %d", profile.MIME(), profile.BitRate())
 
 	w.Header().Set("Content-Type", profile.MIME())
 	if err := c.transcoder.Transcode(r.Context(), profile, file.AbsPath(), w); err != nil && !errors.Is(err, transcode.ErrFFmpegKilled) {
@@ -252,7 +250,7 @@ func (c *Controller) ServeGetAvatar(w http.ResponseWriter, r *http.Request) *spe
 	return nil
 }
 
-func streamGetTransodePreference(dbc *db.DB, userID int, client string) (*db.TranscodePreference, error) {
+func streamGetTranscodePreference(dbc *db.DB, userID int, client string) (*db.TranscodePreference, error) {
 	var pref db.TranscodePreference
 	err := dbc.
 		Where("user_id=?", userID).
@@ -270,7 +268,7 @@ func streamGetTransodePreference(dbc *db.DB, userID int, client string) (*db.Tra
 }
 
 func streamGetTranscodeMeta(dbc *db.DB, userID int, client string) spec.TranscodeMeta {
-	pref, _ := streamGetTransodePreference(dbc, userID, client)
+	pref, _ := streamGetTranscodePreference(dbc, userID, client)
 	if pref == nil {
 		return spec.TranscodeMeta{}
 	}

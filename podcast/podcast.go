@@ -1,6 +1,7 @@
 package podcast
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"io"
@@ -82,10 +83,14 @@ func (p *Podcasts) AddNewPodcast(rssURL string, feed *gofeed.Feed) (*db.Podcast,
 	}
 	podcast := db.Podcast{
 		Description: feed.Description,
-		ImageURL:    feed.Image.URL,
+		ImageURL:    "",
 		Title:       feed.Title,
 		URL:         rssURL,
 		RootDir:     rootDir,
+		Author:      feed.ITunesExt.Author,
+	}
+	if feed.Image != nil {
+		podcast.ImageURL = feed.Image.URL
 	}
 	if err := os.Mkdir(podcast.RootDir, 0o755); err != nil && !os.IsExist(err) {
 		return nil, err
@@ -114,6 +119,26 @@ func (p *Podcasts) SetAutoDownload(podcastID int, setting db.PodcastAutoDownload
 	podcast.AutoDownload = setting
 	if err := p.db.Save(&podcast).Error; err != nil {
 		return fmt.Errorf("save setting: %w", err)
+	}
+
+	// download most recent
+	if setting == db.PodcastAutoDownloadLatest {
+		err := p.db.
+			Model(db.PodcastEpisode{}).
+			Where("status=?", db.PodcastEpisodeStatusSkipped).
+			Where("id=?", p.db.
+				Select("id").
+				Model(db.PodcastEpisode{}).
+				Where("podcast_id=?", podcast.ID).
+				Order("publish_date DESC").
+				Limit(1).
+				SubQuery(),
+			).
+			Update("status", db.PodcastEpisodeStatusDownloading).
+			Error
+		if err != nil {
+			return fmt.Errorf("update podcast most recent episode: %w", err)
+		}
 	}
 	return nil
 }
@@ -146,7 +171,7 @@ func (p *Podcasts) RefreshPodcast(podcast *db.Podcast, items []*gofeed.Item) err
 
 	var episodeErrs []error
 	for _, item := range items {
-		podcastEpisode, err := p.addEpisode(podcast.ID, item)
+		podcastEpisode, err := p.addEpisode(podcast, item)
 		if err != nil {
 			episodeErrs = append(episodeErrs, err)
 			continue
@@ -163,7 +188,7 @@ func (p *Podcasts) RefreshPodcast(podcast *db.Podcast, items []*gofeed.Item) err
 	return errors.Join(episodeErrs...)
 }
 
-func (p *Podcasts) addEpisode(podcastID int, item *gofeed.Item) (*db.PodcastEpisode, error) {
+func (p *Podcasts) addEpisode(podcast *db.Podcast, item *gofeed.Item) (*db.PodcastEpisode, error) {
 	var duration int
 	// if it has the media extension use it
 	for _, content := range item.Extensions["media"]["content"] {
@@ -177,14 +202,13 @@ func (p *Podcasts) addEpisode(podcastID int, item *gofeed.Item) (*db.PodcastEpis
 	if duration == 0 && item.ITunesExt != nil {
 		duration = getSecondsFromString(item.ITunesExt.Duration)
 	}
-
-	if episode, ok := p.findEnclosureAudio(podcastID, duration, item); ok {
+	if episode, ok := p.findEnclosureAudio(podcast, duration, item); ok {
 		if err := p.db.Save(episode).Error; err != nil {
 			return nil, err
 		}
 		return episode, nil
 	}
-	if episode, ok := p.findMediaAudio(podcastID, duration, item); ok {
+	if episode, ok := p.findMediaAudio(podcast, duration, item); ok {
 		if err := p.db.Save(episode).Error; err != nil {
 			return nil, err
 		}
@@ -201,9 +225,9 @@ func (p *Podcasts) isAudio(rawItemURL string) (bool, error) {
 	return p.tagReader.CanRead(itemURL.Path), nil
 }
 
-func itemToEpisode(podcastID, size, duration int, audio string, item *gofeed.Item) *db.PodcastEpisode {
+func itemToEpisode(podcast *db.Podcast, size, duration int, audio string, item *gofeed.Item) *db.PodcastEpisode {
 	return &db.PodcastEpisode{
-		PodcastID:   podcastID,
+		PodcastID:   podcast.ID,
 		Description: item.Description,
 		Title:       item.Title,
 		Length:      duration,
@@ -211,21 +235,23 @@ func itemToEpisode(podcastID, size, duration int, audio string, item *gofeed.Ite
 		PublishDate: item.PublishedParsed,
 		AudioURL:    audio,
 		Status:      db.PodcastEpisodeStatusSkipped,
+		Artist:      cmp.Or(item.ITunesExt.Author, podcast.Author),
+		Album:       podcast.Title,
 	}
 }
 
-func (p *Podcasts) findEnclosureAudio(podcastID, duration int, item *gofeed.Item) (*db.PodcastEpisode, bool) {
+func (p *Podcasts) findEnclosureAudio(podcast *db.Podcast, duration int, item *gofeed.Item) (*db.PodcastEpisode, bool) {
 	for _, enc := range item.Enclosures {
 		if t, err := p.isAudio(enc.URL); !t || err != nil {
 			continue
 		}
 		size, _ := strconv.Atoi(enc.Length)
-		return itemToEpisode(podcastID, size, duration, enc.URL, item), true
+		return itemToEpisode(podcast, size, duration, enc.URL, item), true
 	}
 	return nil, false
 }
 
-func (p *Podcasts) findMediaAudio(podcastID, duration int, item *gofeed.Item) (*db.PodcastEpisode, bool) {
+func (p *Podcasts) findMediaAudio(podcast *db.Podcast, duration int, item *gofeed.Item) (*db.PodcastEpisode, bool) {
 	extensions, ok := item.Extensions["media"]["content"]
 	if !ok {
 		return nil, false
@@ -234,7 +260,7 @@ func (p *Podcasts) findMediaAudio(podcastID, duration int, item *gofeed.Item) (*
 		if t, err := p.isAudio(ext.Attrs["url"]); !t || err != nil {
 			continue
 		}
-		return itemToEpisode(podcastID, 0, duration, ext.Attrs["url"], item), true
+		return itemToEpisode(podcast, 0, duration, ext.Attrs["url"], item), true
 	}
 	return nil, false
 }
@@ -316,6 +342,10 @@ func getPodcastEpisodeFilename(podcast *db.Podcast, podcastEpisode *db.PodcastEp
 }
 
 func (p *Podcasts) downloadPodcastCover(podcast *db.Podcast) error {
+	if podcast.ImageURL == "" {
+		return nil
+	}
+
 	imageURL, err := url.Parse(podcast.ImageURL)
 	if err != nil {
 		return fmt.Errorf("parse image url: %w", err)
@@ -455,11 +485,13 @@ func (p *Podcasts) DownloadTick() error {
 		return nil
 	}
 
+	log.Printf("starting podcast episode download %q - %q", podcastEpisode.Podcast.Title, podcastEpisode.Title)
+
 	if err := p.doPodcastDownload(podcastEpisode.Podcast, &podcastEpisode); err != nil {
 		return fmt.Errorf("do download: %w", err)
 	}
 
-	log.Printf("downloaded podcast episode %q - %q", podcastEpisode.Podcast.Title, podcastEpisode.Title)
+	log.Printf("downloaded podcast episode")
 	return nil
 }
 

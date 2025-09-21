@@ -73,6 +73,14 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202311082304", migrateTemporaryDisplayAlbumArtist),
 		construct(ctx, "202312110003", migrateAddExtraIndexes),
 		construct(ctx, "202405301140", migrateAddReplayGainFields),
+		construct(ctx, "202501152035", migrateTrackAddIndexOnAlbumID),
+		construct(ctx, "202501152036", migrateAlbumAddIndexOnParentID),
+		construct(ctx, "202502012036", migratePodcastEpisode),
+		construct(ctx, "202504132036", migratePodcast),
+		construct(ctx, "202505211202", migrateTrackAddIndexOnBrainzID),
+		construct(ctx, "202505262025", migrateAlbumAddIndexOnBrainzID),
+		construct(ctx, "202507062103", migrateAlbumCompilationReleaseType),
+		construct(ctx, "202508261102", migrateAddLyrics),
 	}
 
 	return gormigrate.
@@ -816,5 +824,45 @@ func migrateAddExtraIndexes(tx *gorm.DB, _ MigrationContext) error {
 }
 
 func migrateAddReplayGainFields(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(Track{}).Error
+}
+
+func migrateTrackAddIndexOnAlbumID(tx *gorm.DB, _ MigrationContext) error {
+	return tx.Exec(`
+		CREATE INDEX idx_tracks_album_id ON "tracks" (album_id, length);
+	`).Error
+}
+
+func migrateAlbumAddIndexOnParentID(tx *gorm.DB, _ MigrationContext) error {
+	return tx.Exec(`
+		CREATE INDEX idx_albums_parent_id ON "albums" (parent_id);
+	`).Error
+}
+
+func migratePodcastEpisode(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(
+		PodcastEpisode{},
+	).Error
+}
+
+func migrateTrackAddIndexOnBrainzID(tx *gorm.DB, _ MigrationContext) error {
+	return tx.Exec(`
+		CREATE INDEX idx_tracks_brainz_id ON "tracks" (tag_brainz_id);
+		`).Error
+}
+
+func migrateAlbumAddIndexOnBrainzID(tx *gorm.DB, _ MigrationContext) error {
+	return tx.Exec(`
+		CREATE INDEX idx_albums_brainz_id ON "albums" (tag_brainz_id);
+		`).Error
+}
+
+func migrateAlbumCompilationReleaseType(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(
+		Album{},
+	).Error
+}
+
+func migrateAddLyrics(tx *gorm.DB, _ MigrationContext) error {
 	return tx.AutoMigrate(Track{}).Error
 }

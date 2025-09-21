@@ -274,7 +274,7 @@ func respRaw(h http.HandlerFunc) http.Handler {
 
 type templateData struct {
 	// common
-	Flashes []interface{}
+	Flashes []any
 	User    *db.User
 	Version string
 

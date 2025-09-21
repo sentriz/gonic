@@ -8,10 +8,12 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 	"unicode"
 
+	"github.com/env25/mpdlrc/lrc"
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 
@@ -41,6 +43,7 @@ func (c *Controller) ServeGetOpenSubsonicExtensions(_ *http.Request) *spec.Respo
 	sub.OpenSubsonicExtensions = &spec.OpenSubsonicExtensions{
 		{Name: "transcodeOffset", Versions: []int{1}},
 		{Name: "formPost", Versions: []int{1}},
+		{Name: "songLyrics", Versions: []int{1}},
 	}
 	return sub
 }
@@ -75,10 +78,10 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 		scrobbleTrack.AlbumArtist = track.Album.TagAlbumArtist
 		scrobbleTrack.TrackNumber = uint(track.TagTrackNumber)
 		scrobbleTrack.Duration = time.Second * time.Duration(track.Length)
-		if _, err := uuid.Parse(track.TagBrainzID); err == nil {
+		if err := uuid.Validate(track.TagBrainzID); err == nil {
 			scrobbleTrack.MusicBrainzID = track.TagBrainzID
 		}
-		if _, err := uuid.Parse(track.Album.TagBrainzID); err == nil {
+		if err := uuid.Validate(track.Album.TagBrainzID); err == nil {
 			scrobbleTrack.MusicBrainzReleaseID = track.Album.TagBrainzID
 		}
 
@@ -206,30 +209,44 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 	sub.PlayQueue.ChangedBy = queue.ChangedBy
 
 	trackIDs := queue.GetItems()
-	sub.PlayQueue.List = make([]*spec.TrackChild, len(trackIDs))
+	sub.PlayQueue.List = make([]*spec.TrackChild, 0, len(trackIDs))
 
 	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
 
-	for i, id := range trackIDs {
+	for _, id := range trackIDs {
 		switch id.Type {
 		case specid.Track:
-			track := db.Track{}
-			c.dbc.
+			var track db.Track
+			err := c.dbc.
 				Where("id=?", id.Value).
 				Preload("Album").
 				Preload("Artists").
 				Preload("TrackStar", "user_id=?", user.ID).
 				Preload("TrackRating", "user_id=?", user.ID).
-				Find(&track)
-			sub.PlayQueue.List[i] = spec.NewTCTrackByFolder(&track, track.Album)
-			sub.PlayQueue.List[i].TranscodeMeta = transcodeMeta
+				Find(&track).
+				Error
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+				return spec.NewError(0, "error finding track")
+			}
+			if track.ID != 0 {
+				tc := spec.NewTCTrackByFolder(&track, track.Album)
+				tc.TranscodeMeta = transcodeMeta
+				sub.PlayQueue.List = append(sub.PlayQueue.List, tc)
+			}
 		case specid.PodcastEpisode:
-			pe := db.PodcastEpisode{}
-			c.dbc.
+			var pe db.PodcastEpisode
+			err := c.dbc.
 				Where("id=?", id.Value).
-				Find(&pe)
-			sub.PlayQueue.List[i] = spec.NewTCPodcastEpisode(&pe)
-			sub.PlayQueue.List[i].TranscodeMeta = transcodeMeta
+				Find(&pe).
+				Error
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+				return spec.NewError(0, "error finding podcast episode")
+			}
+			if pe.ID != 0 {
+				tc := spec.NewTCPodcastEpisode(&pe)
+				tc.TranscodeMeta = transcodeMeta
+				sub.PlayQueue.List = append(sub.PlayQueue.List, tc)
+			}
 		}
 	}
 	return sub
@@ -335,7 +352,7 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	return sub
 }
 
-var errNotATrack = errors.New("not a track")
+var errUnknownPlaylistEntry = errors.New("unknown playlist entry")
 
 func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:gocyclo
 	if c.jukebox == nil {
@@ -377,11 +394,16 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 			if err != nil {
 				return nil, fmt.Errorf("fetch track: %w", err)
 			}
-			track, ok := file.(*db.Track)
-			if !ok {
-				return nil, fmt.Errorf("%q: %w", path, errNotATrack)
+			switch f := file.(type) {
+			case *db.Track:
+				ret = append(ret, spec.NewTrackByTags(f, f.Album))
+			case *db.InternetRadioStation:
+				ret = append(ret, spec.NewTCInternetRadioStation(f))
+			case *db.PodcastEpisode:
+				ret = append(ret, spec.NewTCPodcastEpisode(f))
+			default:
+				return nil, fmt.Errorf("%q: %w", path, errUnknownPlaylistEntry)
 			}
-			ret = append(ret, spec.NewTrackByTags(track, track.Album))
 		}
 		return ret, nil
 	}
@@ -468,10 +490,153 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 	return sub
 }
 
-func (c *Controller) ServeGetLyrics(_ *http.Request) *spec.Response {
+func (c *Controller) ServeGetLyrics(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	artist, _ := params.Get("artist")
+	title, _ := params.Get("title")
+
+	var track db.Track
+	err := c.dbc.
+		Preload("Album").
+		Joins("JOIN track_artists ON track_artists.track_id = tracks.id").
+		Joins("JOIN artists ON artists.id = track_artists.artist_id").
+		Where("tracks.tag_title LIKE ? AND artists.name LIKE ?", title, artist).
+		First(&track).
+		Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return spec.NewError(70, "couldn't find a track with that id")
+	}
+	if err != nil {
+		return spec.NewError(0, "lyrics: %v", err)
+	}
+
 	sub := spec.NewResponse()
-	sub.Lyrics = &spec.Lyrics{}
+
+	if track.TagLyrics != "" {
+		sub.Lyrics = &spec.Lyrics{
+			Value:  track.TagLyrics,
+			Artist: track.TagTrackArtist,
+			Title:  track.TagTitle,
+		}
+		return sub
+	}
+
+	_, text, err := lyricsFile(track)
+	if os.IsNotExist(err) {
+		return sub
+	}
+	if err != nil {
+		return spec.NewError(0, "lyricsFile: %v", err)
+	}
+
+	contents := strings.Join(text, "\n")
+
+	sub.Lyrics = &spec.Lyrics{
+		Value:  contents,
+		Artist: track.TagTrackArtist,
+		Title:  track.TagTitle,
+	}
 	return sub
+}
+
+func (c *Controller) ServeGetLyricsBySongID(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	id, err := params.GetID("id")
+	if err != nil {
+		return spec.NewError(10, "provide an `id` parameter")
+	}
+
+	var track db.Track
+	q := c.dbc.
+		Preload("Album").
+		Preload("Album.Artists").
+		Preload("Artists").
+		Where("id=?", id.Value).
+		First(&track)
+	if err := q.Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return spec.NewError(70, "couldn't find a track with that id")
+		} else {
+			return spec.NewError(0, "lyrics: %v", err)
+		}
+	}
+
+	sub := spec.NewResponse()
+
+	if track.TagLyrics != "" {
+		times, lrc, err := lrc.ParseString(track.TagLyrics)
+		if err != nil {
+			return spec.NewError(0, "lyricsFile: %v", err)
+		}
+
+		lines := make([]spec.Lyric, len(times))
+		for i, time := range times {
+			lines[i] = spec.Lyric{
+				Start: time.Milliseconds(),
+				Value: strings.TrimSpace(lrc[i]),
+			}
+		}
+
+		structured := spec.StructuredLyrics{
+			Lang:          "xxx",
+			Synced:        true,
+			Lines:         lines,
+			DisplayArtist: track.TagTrackArtist,
+			DisplayTitle:  track.TagTitle,
+			Offset:        0,
+		}
+
+		sub.LyricsList = &spec.LyricsList{
+			StructuredLyrics: []spec.StructuredLyrics{structured},
+		}
+		return sub
+	}
+
+	times, lrc, err := lyricsFile(track)
+	if err != nil {
+		if os.IsNotExist(err) {
+			sub.LyricsList = &spec.LyricsList{
+				StructuredLyrics: []spec.StructuredLyrics{},
+			}
+			return sub
+		}
+		return spec.NewError(0, "lyricsFile: %v", err)
+	}
+
+	lines := make([]spec.Lyric, len(times))
+	for i, time := range times {
+		lines[i] = spec.Lyric{
+			Start: time.Milliseconds(),
+			Value: strings.TrimSpace(lrc[i]),
+		}
+	}
+
+	structured := spec.StructuredLyrics{
+		Lang:          "xxx",
+		Synced:        true,
+		Lines:         lines,
+		DisplayArtist: track.TagTrackArtist,
+		DisplayTitle:  track.TagTitle,
+		Offset:        0,
+	}
+
+	sub.LyricsList = &spec.LyricsList{
+		StructuredLyrics: []spec.StructuredLyrics{structured},
+	}
+	return sub
+}
+
+func lyricsFile(file db.Track) ([]lrc.Duration, []lrc.Text, error) {
+	filePath := file.AbsPath()
+	fileDir := filepath.Dir(filePath)
+	fileName := strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath))
+
+	lrcContent, err := os.ReadFile(filepath.Join(fileDir, fileName+".lrc"))
+	if err != nil {
+		return []lrc.Duration{}, []lrc.Text{}, err
+	}
+
+	return lrc.Parse(lrcContent)
 }
 
 func scrobbleStatsUpdateTrack(dbc *db.DB, track *db.Track, userID int, playTime time.Time) error {

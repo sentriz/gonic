@@ -1,6 +1,7 @@
 package spec
 
 import (
+	"cmp"
 	"path/filepath"
 
 	"go.senan.xyz/gonic/db"
@@ -19,6 +20,7 @@ func NewAlbumByFolder(f *db.Album) *Album {
 		Duration:      f.Duration,
 		Created:       f.CreatedAt,
 		AverageRating: formatRating(f.AverageRating),
+		ReleaseTypes:  []string{},
 	}
 	if f.AlbumStar != nil {
 		a.Starred = &f.AlbumStar.StarDate
@@ -40,6 +42,7 @@ func NewTCAlbumByFolder(f *db.Album) *TrackChild {
 		ParentID:      f.ParentSID(),
 		CreatedAt:     f.CreatedAt,
 		AverageRating: formatRating(f.AverageRating),
+		Year:          f.TagYear,
 	}
 	if f.AlbumStar != nil {
 		trCh.Starred = &f.AlbumStar.StarDate
@@ -60,7 +63,7 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 		Suffix:      formatExt(t.Ext()),
 		Size:        t.Size,
 		Artist:      t.TagTrackArtist,
-		Title:       t.TagTitle,
+		Title:       cmp.Or(t.TagTitle, t.Filename),
 		TrackNumber: t.TagTrackNumber,
 		DiscNumber:  t.TagDiscNumber,
 		Path: filepath.Join(
@@ -86,6 +89,7 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 	}
 	if t.Album != nil {
 		trCh.Album = t.Album.RightPath
+		trCh.AlbumID = t.Album.SID()
 	}
 	if t.TrackStar != nil {
 		trCh.Starred = &t.TrackStar.StarDate
@@ -100,6 +104,9 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 		trCh.Genres = append(trCh.Genres, &GenreRef{Name: g.Name})
 	}
 	for _, a := range t.Artists {
+		if a.Name == t.TagTrackArtist {
+			trCh.ArtistID = a.SID()
+		}
 		trCh.Artists = append(trCh.Artists, &ArtistRef{ID: a.SID(), Name: a.Name})
 	}
 	if t.ReplayGainTrackGain != 0 || t.ReplayGainAlbumGain != 0 {
@@ -126,6 +133,9 @@ func NewTCPodcastEpisode(pe *db.PodcastEpisode) *TrackChild {
 		IsDir:       false,
 		Type:        "podcastepisode",
 		CreatedAt:   pe.CreatedAt,
+		Album:       pe.Album,
+		Artist:      pe.Artist,
+		CoverID:     pe.SID(),
 	}
 	if pe.Podcast != nil {
 		trCh.ParentID = pe.Podcast.SID()
@@ -135,7 +145,7 @@ func NewTCPodcastEpisode(pe *db.PodcastEpisode) *TrackChild {
 }
 
 func NewArtistByFolder(f *db.Album) *Artist {
-	// the db is structued around "browse by tags", and where
+	// the db is structured around "browse by tags", and where
 	// an album is also a folder. so we're constructing an artist
 	// from an "album" where
 	// maybe TODO: rename the Album model to Folder

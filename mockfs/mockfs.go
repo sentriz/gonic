@@ -116,12 +116,12 @@ func (m *MockFS) AddItemsWithCovers()                    { m.addItems("", "", tr
 func (m *MockFS) AddItemsPrefixWithCovers(prefix string) { m.addItems(prefix, "", true) }
 
 func (m *MockFS) addItems(prefix string, onlyGlob string, covers bool) {
-	p := func(format string, a ...interface{}) string {
+	p := func(format string, a ...any) string {
 		return filepath.Join(prefix, fmt.Sprintf(format, a...))
 	}
-	for ar := 0; ar < 3; ar++ {
-		for al := 0; al < 3; al++ {
-			for tr := 0; tr < 3; tr++ {
+	for ar := range 3 {
+		for al := range 3 {
+			for tr := range 3 {
 				path := p("artist-%d/album-%d/track-%d.flac", ar, al, tr)
 				if !match(onlyGlob, path) {
 					continue
@@ -362,6 +362,10 @@ func (i *TagInfo) Genres() []string       { return []string{i.RawGenre} }
 func (i *TagInfo) TrackNumber() int       { return 1 }
 func (i *TagInfo) DiscNumber() int        { return 1 }
 func (i *TagInfo) Year() int              { return 2021 }
+func (i *TagInfo) Lyrics() string         { return "[00:01.58] Line one\n[00:03.44] Line two\n" }
+
+func (i *TagInfo) Compilation() bool   { return false }
+func (i *TagInfo) ReleaseType() string { return "album" }
 
 func (i *TagInfo) ReplayGainTrackGain() float32 { return 0 }
 func (i *TagInfo) ReplayGainTrackPeak() float32 { return 0 }

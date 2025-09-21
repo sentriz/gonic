@@ -21,7 +21,9 @@
           "name": "album-0",
           "songCount": 3,
           "duration": 300,
-          "playCount": 0
+          "playCount": 0,
+          "isCompilation": false,
+          "releaseTypes": []
         },
         {
           "id": "al-4",
@@ -37,7 +39,9 @@
           "name": "album-1",
           "songCount": 3,
           "duration": 300,
-          "playCount": 0
+          "playCount": 0,
+          "isCompilation": false,
+          "releaseTypes": []
         },
         {
           "id": "al-5",
@@ -53,7 +57,9 @@
           "name": "album-2",
           "songCount": 3,
           "duration": 300,
-          "playCount": 0
+          "playCount": 0,
+          "isCompilation": false,
+          "releaseTypes": []
         },
         {
           "id": "al-7",
@@ -69,7 +75,9 @@
           "name": "album-0",
           "songCount": 3,
           "duration": 300,
-          "playCount": 0
+          "playCount": 0,
+          "isCompilation": false,
+          "releaseTypes": []
         },
         {
           "id": "al-8",
@@ -85,7 +93,9 @@
           "name": "album-1",
           "songCount": 3,
           "duration": 300,
-          "playCount": 0
+          "playCount": 0,
+          "isCompilation": false,
+          "releaseTypes": []
         },
         {
           "id": "al-9",
@@ -101,7 +111,9 @@
           "name": "album-2",
           "songCount": 3,
           "duration": 300,
-          "playCount": 0
+          "playCount": 0,
+          "isCompilation": false,
+          "releaseTypes": []
         },
         {
           "id": "al-11",
@@ -117,7 +129,9 @@
           "name": "album-0",
           "songCount": 3,
           "duration": 300,
-          "playCount": 0
+          "playCount": 0,
+          "isCompilation": false,
+          "releaseTypes": []
         },
         {
           "id": "al-12",
@@ -133,7 +147,9 @@
           "name": "album-1",
           "songCount": 3,
           "duration": 300,
-          "playCount": 0
+          "playCount": 0,
+          "isCompilation": false,
+          "releaseTypes": []
         },
         {
           "id": "al-13",
@@ -149,7 +165,9 @@
           "name": "album-2",
           "songCount": 3,
           "duration": 300,
-          "playCount": 0
+          "playCount": 0,
+          "isCompilation": false,
+          "releaseTypes": []
         }
       ]
     }

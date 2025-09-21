@@ -107,7 +107,9 @@
           "musicBrainzId": "",
           "replayGain": null
         }
-      ]
+      ],
+      "isCompilation": false,
+      "releaseTypes": ["Album"]
     }
   }
 }

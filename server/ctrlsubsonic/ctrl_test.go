@@ -39,8 +39,8 @@ const (
 )
 
 const (
-	audioPath5s  = "testdata/audio/5s.flac"  //nolint:deadcode,varcheck
-	audioPath10s = "testdata/audio/10s.flac" //nolint:deadcode,varcheck
+	audioPath5s  = "testdata/audio/5s.flac"
+	audioPath10s = "testdata/audio/10s.flac"
 )
 
 type queryCase struct {
@@ -87,7 +87,6 @@ func makeHTTPMockWithAdmin(query url.Values) (*httptest.ResponseRecorder, *http.
 func runQueryCases(t *testing.T, h handlerSubsonic, cases []*queryCase) {
 	t.Helper()
 	for _, qc := range cases {
-		qc := qc
 		t.Run(qc.expectPath, func(t *testing.T) {
 			t.Helper()
 			t.Parallel()
