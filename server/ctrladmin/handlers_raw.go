@@ -25,13 +25,15 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Println("Failed to check LDAP credentials:", err)
 			sessAddFlashW(session, []string{"failed to check LDAP credentials"})
+			sessLogSave(session, w, r)
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
 		} else if !ok {
 			sessAddFlashW(session, []string{"invalid username / password"})
+			sessLogSave(session, w, r)
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
 		}
-
-		sessLogSave(session, w, r)
-		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-		return
 	} else if user == nil || user.Password != password {
 		sessAddFlashW(session, []string{"invalid username / password"})
 		sessLogSave(session, w, r)

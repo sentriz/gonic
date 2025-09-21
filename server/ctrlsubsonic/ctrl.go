@@ -10,6 +10,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"go.senan.xyz/gonic/db"
@@ -231,16 +232,33 @@ func withUser(dbc *db.DB, ldapConfig ldap.Config) handlerutil.Middleware {
 			params := r.Context().Value(CtxParams).(params.Params)
 			// ignoring errors here, a middleware has already ensured they exist
 			username, _ := params.Get("u")
-			password, _ := params.Get("p")
+			passwordHex, _ := params.Get("p")
 			token, _ := params.Get("t")
 			salt, _ := params.Get("s")
 
 			passwordAuth := token == "" && salt == ""
-			tokenAuth := password == ""
+			tokenAuth := passwordHex == ""
 			if tokenAuth == passwordAuth {
 				_ = writeResp(w, r, spec.NewError(10,
 					"please provide `t` and `s`, or just `p`"))
 				return
+			}
+
+			var password string
+			if passwordAuth && passwordHex != "" {
+				if strings.HasPrefix(passwordHex, "enc:") {
+					raw := strings.TrimPrefix(passwordHex, "enc:")
+					decoded, err := hex.DecodeString(raw)
+					if err != nil {
+						log.Println("Failed to decode hex password:", err)
+						_ = writeResp(w, r, spec.NewError(40, "invalid password encoding"))
+						return
+					}
+					password = string(decoded)
+				} else {
+					// if not prefixed with "enc:", treat as plain text
+					password = passwordHex
+				}
 			}
 
 			user := dbc.GetUserByName(username)

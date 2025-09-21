@@ -11,6 +11,7 @@ import (
 	"github.com/go-ldap/ldap/v3"
 )
 
+//nolint:gochecknoglobals
 var ldapStore = make(LDAPStore)
 
 // LDAPStore maps users to a cached password
@@ -128,7 +129,7 @@ func createUserFromLDAP(username string, dbc *db.DB, config Config, l *ldap.Conn
 	isAdmin := doesLDAPAdminExist(username, config, l)
 	log.Println(username, isAdmin)
 
-	if doesLDAPUserExist(username, config, l) && !isAdmin {
+	if !doesLDAPUserExist(username, config, l) {
 		return errors.New("no such user")
 	}
 
