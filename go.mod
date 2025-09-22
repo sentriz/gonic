@@ -2,8 +2,6 @@ module go.senan.xyz/gonic
 
 go 1.23.0
 
-replace github.com/sentriz/audiotags => github.com/turtletowerz/audiotags v1.0.1-0.20250112090906-d044f29536ef
-
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/andybalholm/cascadia v1.3.2
@@ -25,7 +23,7 @@ require (
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/philippta/go-template v0.0.0-20220911145045-4556aca435e4
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
-	github.com/sentriz/audiotags v0.0.0-20240918190302-048d6470aae6
+	github.com/sentriz/audiotags v0.0.0-20250922130348-7ea48bcba851
 	github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981
 	github.com/stretchr/testify v1.9.0
 	go.senan.xyz/flagconf v0.1.9
