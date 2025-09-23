@@ -133,11 +133,15 @@ github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
+github.com/tetratelabs/wazero v1.9.0 h1:IcZ56OuxrtaEz8UYNRHBrUa9bYeX9oVY93KspZZBf/I=
+github.com/tetratelabs/wazero v1.9.0/go.mod h1:TSbcXCfFP0L2FGkRPxHphadXPjo1T6W+CseNNY7EkjM=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 go.senan.xyz/flagconf v0.1.9 h1:LBDmqiVFgijfqFXDzH97gPn0qDbg1Dq6/vxsxS/TzC4=
 go.senan.xyz/flagconf v0.1.9/go.mod h1:NqOFfSwJvNWXOTUabcRZ8mPK9+sJmhStJhqtEt74wNQ=
-go.senan.xyz/wrtag v0.17.1 h1:QC40z0rRAZ8zjIwwIrFIhldviP9cW0Jpe9EDh5Bt2J8=
-go.senan.xyz/wrtag v0.17.1/go.mod h1:rrC+QaFcZACW/hcsZpQj6kTh69rjhxIoePk3MZG3/rA=
+go.senan.xyz/taglib v0.8.0 h1:wV67dr0TXtMcw+19K5xalSm/VDB7+a235GPNWB7bDQ8=
+go.senan.xyz/taglib v0.8.0/go.mod h1:UMXxjvVuML3bZ63elOoUFtY2ZjwH88KB+DKWfF50ln8=
+go.senan.xyz/wrtag v0.18.1-0.20250923221009-9a21c1669c66 h1:4roMuxM/8dq/NL/IzeT7PWm11R9N5ufyj9Dxu5ChC68=
+go.senan.xyz/wrtag v0.18.1-0.20250923221009-9a21c1669c66/go.mod h1:iBOnQIdvi55Y47SJxc4e5k1eu1bSeUwsq4hbFZOnXHU=
 golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20190325154230-a5d413f7728c/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
