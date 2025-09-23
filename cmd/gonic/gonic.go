@@ -26,7 +26,6 @@ import (
 
 	"github.com/google/shlex"
 	"github.com/gorilla/securecookie"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/sentriz/gormstore"
 	"golang.org/x/sync/errgroup"
 

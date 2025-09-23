@@ -2,7 +2,6 @@
 package mockfs
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -79,8 +78,8 @@ func newMockFS(tb testing.TB, dirs []string, excludePattern string) *MockFS {
 	}
 }
 
-func (m *MockFS) DB() *db.DB                  { return m.db }
-func (m *MockFS) TmpDir() string              { return m.dir }
+func (m *MockFS) DB() *db.DB             { return m.db }
+func (m *MockFS) TmpDir() string         { return m.dir }
 func (m *MockFS) TagReader() tags.Reader { return m.tagReader }
 
 func (m *MockFS) ScanAndClean() *scanner.State {
@@ -297,23 +296,6 @@ func (m *MockFS) SetTags(path string, cb func(*TagInfo)) {
 		m.tagReader.paths[absPath] = &TagInfo{}
 	}
 	cb(m.tagReader.paths[absPath])
-}
-
-func (m *MockFS) DumpDB(suffix ...string) {
-	var p []string
-	p = append(p,
-		"gonic", "dump",
-		strings.ReplaceAll(m.t.Name(), string(filepath.Separator), "-"),
-		fmt.Sprint(time.Now().UnixNano()),
-	)
-	p = append(p, suffix...)
-
-	destPath := filepath.Join(os.TempDir(), strings.Join(p, "-"))
-	if err := db.Dump(context.Background(), m.db.DB, destPath); err != nil {
-		m.t.Fatalf("dumping db: %v", err)
-	}
-
-	m.t.Error(destPath)
 }
 
 type tagReader struct {

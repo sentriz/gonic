@@ -12,6 +12,9 @@ import (
 	"go.senan.xyz/gonic/lastfm"
 	"go.senan.xyz/gonic/lastfm/mockclient"
 	"go.senan.xyz/gonic/mockfs"
+
+	_ "github.com/ncruces/go-sqlite3/driver"
+	_ "github.com/ncruces/go-sqlite3/embed"
 )
 
 func TestInfoCache(t *testing.T) {
