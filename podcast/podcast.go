@@ -21,7 +21,7 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/fileutil"
-	"go.senan.xyz/gonic/tags/tagcommon"
+	"go.senan.xyz/gonic/tags"
 )
 
 var ErrNoAudioInFeedItem = errors.New("no audio in feed item")
@@ -34,10 +34,10 @@ type Podcasts struct {
 	httpClient *http.Client
 	db         *db.DB
 	baseDir    string
-	tagReader  tagcommon.Reader
+	tagReader  tags.Reader
 }
 
-func New(db *db.DB, base string, tagReader tagcommon.Reader) *Podcasts {
+func New(db *db.DB, base string, tagReader tags.Reader) *Podcasts {
 	return &Podcasts{
 		db:         db,
 		baseDir:    base,

@@ -45,8 +45,6 @@ import (
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/server/ctrladmin"
 	"go.senan.xyz/gonic/server/ctrlsubsonic"
-	"go.senan.xyz/gonic/tags/tagcommon"
-	"go.senan.xyz/gonic/tags/taglib"
 	"go.senan.xyz/gonic/transcode"
 )
 
@@ -182,12 +180,6 @@ func main() {
 		value := strings.ReplaceAll(f.Value.String(), "\n", "")
 		log.Printf("    %-25s %s\n", f.Name, value)
 	})
-
-	tagReader := tagcommon.ChainReader{
-		taglib.TagLib{},
-		// ffprobe reader?
-		// nfo reader?
-	}
 
 	scannr := scanner.New(
 		ctrlsubsonic.MusicPaths(musicPaths),
