@@ -1,7 +1,6 @@
 package db
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -13,7 +12,6 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
-	"github.com/mattn/go-sqlite3"
 
 	// TODO: remove this dep
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
@@ -43,7 +41,6 @@ type DB struct {
 }
 
 func New(path string, options url.Values) (*DB, error) {
-	// https://github.com/mattn/go-sqlite3#connection-string
 	url := url.URL{
 		Scheme: "file",
 		Opaque: path,
@@ -619,46 +616,4 @@ func join[T fmt.Stringer](in []T, sep string) string {
 		strs = append(strs, id.String())
 	}
 	return strings.Join(strs, sep)
-}
-
-func Dump(ctx context.Context, db *gorm.DB, to string) error {
-	dest, err := New(to, url.Values{})
-	if err != nil {
-		return fmt.Errorf("create dest db: %w", err)
-	}
-	defer dest.Close()
-
-	connSrc, err := db.DB().Conn(ctx)
-	if err != nil {
-		return fmt.Errorf("getting src raw conn: %w", err)
-	}
-	defer connSrc.Close()
-
-	connDest, err := dest.DB.DB().Conn(ctx)
-	if err != nil {
-		return fmt.Errorf("getting dest raw conn: %w", err)
-	}
-	defer connDest.Close()
-
-	err = connDest.Raw(func(connDest any) error {
-		return connSrc.Raw(func(connSrc any) error {
-			connDestq := connDest.(*sqlite3.SQLiteConn)
-			connSrcq := connSrc.(*sqlite3.SQLiteConn)
-			bk, err := connDestq.Backup("main", connSrcq, "main")
-			if err != nil {
-				return fmt.Errorf("create backup db: %w", err)
-			}
-			for done, _ := bk.Step(-1); !done; { //nolint: revive
-			}
-			if err := bk.Finish(); err != nil {
-				return fmt.Errorf("finishing dump: %w", err)
-			}
-			return nil
-		})
-	})
-	if err != nil {
-		return fmt.Errorf("backing up: %w", err)
-	}
-
-	return nil
 }
