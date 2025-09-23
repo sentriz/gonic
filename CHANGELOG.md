@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.19.0](https://www.github.com/sentriz/gonic/compare/v0.18.0...v0.19.0) (2025-09-23)
+
+
+### Features
+
+* **subsonic:** also read unsynced lyrics from .txt files and tag metadata ([eb0d8fd](https://www.github.com/sentriz/gonic/commit/eb0d8fd1c710bf0367348873858662c39515b676)), closes [#593](https://www.github.com/sentriz/gonic/issues/593)
+
 ## [0.18.0](https://www.github.com/sentriz/gonic/compare/v0.17.0...v0.18.0) (2025-09-18)
 
 
