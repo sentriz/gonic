@@ -250,16 +250,15 @@ func (s *Scanner) scanCallback(st *State, absPath string, d fs.DirEntry, err err
 
 	log.Printf("processing folder %q", absPath)
 
-	return s.db.Transaction(func(tx *db.DB) error {
-		if err := s.scanDir(tx, st, absPath); err != nil {
-			st.errs = append(st.errs, fmt.Errorf("%q: %w", absPath, err))
-			return nil
-		}
+	if err := s.scanDir(st, absPath); err != nil {
+		st.errs = append(st.errs, fmt.Errorf("%q: %w", absPath, err))
 		return nil
-	})
+	}
+
+	return nil
 }
 
-func (s *Scanner) scanDir(tx *db.DB, st *State, absPath string) error {
+func (s *Scanner) scanDir(st *State, absPath string) error {
 	musicDir, relPath := musicDirRelative(s.musicDirs, absPath)
 	if musicDir == absPath {
 		return nil
@@ -270,7 +269,7 @@ func (s *Scanner) scanDir(tx *db.DB, st *State, absPath string) error {
 		return err
 	}
 
-	var tracks []string
+	var trackPaths []string
 	var cover string
 	for _, item := range items {
 		absPath := filepath.Join(absPath, item.Name())
@@ -287,14 +286,14 @@ func (s *Scanner) scanDir(tx *db.DB, st *State, absPath string) error {
 			continue
 		}
 		if s.tagReader.CanRead(absPath) {
-			tracks = append(tracks, item.Name())
+			trackPaths = append(trackPaths, item.Name())
 			continue
 		}
 	}
 
 	pdir, pbasename := filepath.Split(filepath.Dir(relPath))
 	var parent db.Album
-	if err := tx.Where("root_dir=? AND left_path=? AND right_path=?", musicDir, pdir, pbasename).Assign(db.Album{RootDir: musicDir, LeftPath: pdir, RightPath: pbasename}).FirstOrCreate(&parent).Error; err != nil {
+	if err := s.db.Where("root_dir=? AND left_path=? AND right_path=?", musicDir, pdir, pbasename).Assign(db.Album{RootDir: musicDir, LeftPath: pdir, RightPath: pbasename}).FirstOrCreate(&parent).Error; err != nil {
 		return fmt.Errorf("first or create parent: %w", err)
 	}
 
@@ -302,40 +301,75 @@ func (s *Scanner) scanDir(tx *db.DB, st *State, absPath string) error {
 
 	dir, basename := filepath.Split(relPath)
 	var album db.Album
-	if err := populateAlbumBasics(tx, musicDir, &parent, &album, dir, basename, cover); err != nil {
+	if err := populateAlbumBasics(s.db, musicDir, &parent, &album, dir, basename, cover); err != nil {
 		return fmt.Errorf("populate album basics: %w", err)
 	}
 
 	st.seenAlbums[album.ID] = struct{}{}
 
-	sort.Strings(tracks)
-	for i, basename := range tracks {
-		absPath := filepath.Join(musicDir, relPath, basename)
-		if err := s.populateTrackAndArtists(tx, st, i, &album, basename, absPath); err != nil {
-			return fmt.Errorf("populate track %q: %w", basename, err)
-		}
-	}
-
-	return nil
-}
-
-func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db.Album, basename string, absPath string) error {
-	// useful to get the real create/birth time for filesystems and kernels which support it
-	timeSpec, err := times.Stat(absPath)
-	if err != nil {
-		return fmt.Errorf("get times %q: %w", basename, err)
-	}
-
-	var track db.Track
-	if err := tx.Where("album_id=? AND filename=?", album.ID, filepath.Base(basename)).First(&track).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return fmt.Errorf("query track: %w", err)
-	}
-
-	if !st.isFull && track.ID != 0 && timeSpec.ModTime().Before(track.UpdatedAt) {
-		st.seenTracks[track.ID] = struct{}{}
+	if len(trackPaths) == 0 {
 		return nil
 	}
 
+	var tracks []*db.Track
+	if err := s.db.Where("album_id=? AND filename IN (?)", album.ID, trackPaths).Find(&tracks).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return fmt.Errorf("query track: %w", err)
+	}
+
+	trackMap := make(map[string]*db.Track, len(tracks))
+	for _, t := range tracks {
+		trackMap[t.Filename] = t
+		st.seenTracks[t.ID] = struct{}{}
+	}
+
+	type trackUpdate struct {
+		i        int
+		basename string
+		absPath  string
+		track    *db.Track
+		timeSpec times.Timespec
+	}
+	trackUpdates := make([]trackUpdate, 0, len(trackPaths))
+
+	sort.Strings(trackPaths)
+
+	for i, basename := range trackPaths {
+		absPath := filepath.Join(musicDir, relPath, basename)
+
+		timeSpec, err := times.Stat(absPath)
+		if err != nil {
+			return fmt.Errorf("get times %q: %w", basename, err)
+		}
+
+		// might be nil if new track
+		track := trackMap[basename]
+
+		if st.isFull || track == nil || timeSpec.ModTime().After(track.UpdatedAt) {
+			trackUpdates = append(trackUpdates, trackUpdate{
+				i:        i,
+				basename: basename,
+				absPath:  absPath,
+				track:    track,
+				timeSpec: timeSpec,
+			})
+		}
+	}
+
+	if len(trackUpdates) == 0 {
+		return nil
+	}
+
+	return s.db.Transaction(func(tx *db.DB) error {
+		for _, t := range trackUpdates {
+			if err := s.populateTrackAndArtists(tx, st, t.i, &album, t.track, t.timeSpec, t.basename, t.absPath); err != nil {
+				return fmt.Errorf("populate track %q: %w", t.basename, err)
+			}
+		}
+		return nil
+	})
+}
+
+func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db.Album, track *db.Track, timeSpec times.Timespec, basename, absPath string) error {
 	trags, err := s.tagReader.Read(absPath)
 	if err != nil {
 		return fmt.Errorf("%w: %w", err, ErrReadingTags)
@@ -387,10 +421,15 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 	if err != nil {
 		return fmt.Errorf("stating %q: %w", basename, err)
 	}
-	if err := populateTrack(tx, album, &track, trags, basename, int(stat.Size())); err != nil {
+
+	if track == nil {
+		track = &db.Track{}
+	}
+
+	if err := populateTrack(tx, album, track, trags, basename, int(stat.Size())); err != nil {
 		return fmt.Errorf("process %q: %w", basename, err)
 	}
-	if err := populateTrackGenres(tx, &track, genreIDs); err != nil {
+	if err := populateTrackGenres(tx, track, genreIDs); err != nil {
 		return fmt.Errorf("populate track genres: %w", err)
 	}
 
@@ -403,7 +442,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		}
 		trackArtistIDs = append(trackArtistIDs, trackArtist.ID)
 	}
-	if err := populateTrackArtists(tx, &track, trackArtistIDs); err != nil {
+	if err := populateTrackArtists(tx, track, trackArtistIDs); err != nil {
 		return fmt.Errorf("populate track artists: %w", err)
 	}
 
