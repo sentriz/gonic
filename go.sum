@@ -138,8 +138,6 @@ github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
-github.com/turtletowerz/audiotags v1.0.1-0.20250112090906-d044f29536ef h1:uK0EcJGS9pHWzYDNTGd+R9aMsv96XSiNqHM1rO9RHKc=
-github.com/turtletowerz/audiotags v1.0.1-0.20250112090906-d044f29536ef/go.mod h1:+pmkMFDEXJuu/u4h2OYJVfYF2qIhXJD7kqvWq6q5Zo0=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 go.senan.xyz/flagconf v0.1.9 h1:LBDmqiVFgijfqFXDzH97gPn0qDbg1Dq6/vxsxS/TzC4=
 go.senan.xyz/flagconf v0.1.9/go.mod h1:NqOFfSwJvNWXOTUabcRZ8mPK9+sJmhStJhqtEt74wNQ=
