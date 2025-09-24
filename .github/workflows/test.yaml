@@ -9,16 +9,12 @@ jobs:
     name: Lint and test
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Setup Go
-        uses: actions/setup-go@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Golang with cache
+        uses: magnetikonline/action-golang-cache@v5
         with:
           go-version-file: go.mod
-      - name: Install dependencies
-        run: |
-          sudo apt update -qq
-          sudo apt install -y -qq build-essential git sqlite3 libtag1-dev ffmpeg mpv zlib1g-dev
       - name: Lint
         uses: golangci/golangci-lint-action@v8
         with:
