@@ -1,3 +1,5 @@
+//go:build nowasm
+
 package taglib
 
 import (
@@ -7,12 +9,12 @@ import (
 	"strings"
 
 	"github.com/sentriz/audiotags"
-	"go.senan.xyz/gonic/tags/tagcommon"
+	"go.senan.xyz/gonic/tags"
 )
 
-type TagLib struct{}
+type Reader struct{}
 
-func (TagLib) CanRead(absPath string) bool {
+func (Reader) CanRead(absPath string) bool {
 	switch ext := strings.ToLower(filepath.Ext(absPath)); ext {
 	case ".mp3", ".flac", ".aac", ".m4a", ".m4b", ".ogg", ".opus", ".wma", ".wav", ".wv":
 		return true
@@ -20,7 +22,7 @@ func (TagLib) CanRead(absPath string) bool {
 	return false
 }
 
-func (TagLib) Read(absPath string) (tagcommon.Info, error) {
+func (Reader) Read(absPath string) (tags.Info, error) {
 	f, err := audiotags.Open(absPath)
 	if err != nil {
 		return nil, fmt.Errorf("open: %w", err)

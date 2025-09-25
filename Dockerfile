@@ -1,19 +1,16 @@
-FROM golang:1.25-alpine3.22 AS builder
-RUN apk add -U --no-cache \
-    build-base \
-    ca-certificates \
-    git \
-    sqlite \
-    zlib-dev \
-    taglib-dev \
-    go
-
+# syntax=docker/dockerfile:1
+FROM --platform=$BUILDPLATFORM golang:1.25-alpine3.22 AS builder
+ARG TARGETOS
+ARG TARGETARCH
 WORKDIR /src
 COPY go.mod .
 COPY go.sum .
 RUN go mod download
 COPY . .
-RUN GOOS=linux go build -o gonic cmd/gonic/gonic.go
+RUN  \
+    --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /out/ ./cmd/...
 
 FROM alpine:3.22
 LABEL org.opencontainers.image.source=https://github.com/sentriz/gonic
@@ -24,15 +21,7 @@ RUN apk add -U --no-cache \
     tzdata \
     tini \
     shared-mime-info
-
-COPY --from=builder \
-    /usr/lib/libgcc_s.so.1 \
-    /usr/lib/libstdc++.so.6 \
-    /usr/lib/libtag.so.2 \
-    /usr/lib/
-COPY --from=builder \
-    /src/gonic \
-    /bin/
+COPY --from=builder /out/* /usr/local/bin/
 VOLUME ["/cache", "/data", "/music", "/podcasts"]
 EXPOSE 80
 ENV TZ=

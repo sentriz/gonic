@@ -25,7 +25,7 @@ import (
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/fileutil"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
-	"go.senan.xyz/gonic/tags/tagcommon"
+	"go.senan.xyz/gonic/tags"
 	"go.senan.xyz/wrtag/coverparse"
 )
 
@@ -38,12 +38,12 @@ type Scanner struct {
 	db                 *db.DB
 	musicDirs          []string
 	multiValueSettings map[Tag]MultiValueSetting
-	tagReader          tagcommon.Reader
+	tagReader          tags.Reader
 	excludePattern     *regexp.Regexp
 	scanning           *int32
 }
 
-func New(musicDirs []string, db *db.DB, multiValueSettings map[Tag]MultiValueSetting, tagReader tagcommon.Reader, excludePattern string) *Scanner {
+func New(musicDirs []string, db *db.DB, multiValueSettings map[Tag]MultiValueSetting, tagReader tags.Reader, excludePattern string) *Scanner {
 	var excludePatternRegExp *regexp.Regexp
 	if excludePattern != "" {
 		excludePatternRegExp = regexp.MustCompile(excludePattern)
@@ -375,7 +375,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		return fmt.Errorf("%w: %w", err, ErrReadingTags)
 	}
 
-	genreNames := ParseMulti(s.multiValueSettings[Genre], tagcommon.MustGenres(trags), tagcommon.MustGenre(trags))
+	genreNames := ParseMulti(s.multiValueSettings[Genre], tags.MustGenres(trags), tags.MustGenre(trags))
 	genreIDs, err := populateGenres(tx, genreNames)
 	if err != nil {
 		return fmt.Errorf("populate genres: %w", err)
@@ -387,7 +387,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 			return fmt.Errorf("delete artist appearances: %w", err)
 		}
 
-		albumArtistNames := ParseMulti(s.multiValueSettings[AlbumArtist], tagcommon.MustAlbumArtists(trags), tagcommon.MustAlbumArtist(trags))
+		albumArtistNames := ParseMulti(s.multiValueSettings[AlbumArtist], tags.MustAlbumArtists(trags), tags.MustAlbumArtist(trags))
 		var albumArtistIDs []int
 		for _, albumArtistName := range albumArtistNames {
 			albumArtist, err := populateArtist(tx, albumArtistName)
@@ -433,7 +433,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		return fmt.Errorf("populate track genres: %w", err)
 	}
 
-	trackArtistNames := ParseMulti(s.multiValueSettings[Artist], tagcommon.MustArtists(trags), tagcommon.MustArtist(trags))
+	trackArtistNames := ParseMulti(s.multiValueSettings[Artist], tags.MustArtists(trags), tags.MustArtist(trags))
 	var trackArtistIDs []int
 	for _, trackArtistName := range trackArtistNames {
 		trackArtist, err := populateArtist(tx, trackArtistName)
@@ -456,11 +456,11 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 	return nil
 }
 
-func populateAlbum(tx *db.DB, album *db.Album, trags tagcommon.Info, modTime, createTime time.Time) error {
-	albumName := tagcommon.MustAlbum(trags)
+func populateAlbum(tx *db.DB, album *db.Album, trags tags.Info, modTime, createTime time.Time) error {
+	albumName := tags.MustAlbum(trags)
 	album.TagTitle = albumName
 	album.TagTitleUDec = decoded(albumName)
-	album.TagAlbumArtist = tagcommon.MustAlbumArtist(trags)
+	album.TagAlbumArtist = tags.MustAlbumArtist(trags)
 	album.TagBrainzID = trags.AlbumBrainzID()
 	album.TagYear = trags.Year()
 	album.TagCompilation = trags.Compilation()
@@ -501,7 +501,7 @@ func populateAlbumBasics(tx *db.DB, musicDir string, parent, album *db.Album, di
 	return nil
 }
 
-func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trags tagcommon.Info, absPath string, size int) error {
+func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trags tags.Info, absPath string, size int) error {
 	basename := filepath.Base(absPath)
 	track.Filename = basename
 	track.FilenameUDec = decoded(basename)
@@ -511,7 +511,7 @@ func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trags tagcommon.
 
 	track.TagTitle = trags.Title()
 	track.TagTitleUDec = decoded(trags.Title())
-	track.TagTrackArtist = tagcommon.MustArtist(trags)
+	track.TagTrackArtist = tags.MustArtist(trags)
 	track.TagTrackNumber = trags.TrackNumber()
 	track.TagDiscNumber = trags.DiscNumber()
 	track.TagBrainzID = trags.BrainzID()

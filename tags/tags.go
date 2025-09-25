@@ -1,4 +1,4 @@
-package tagcommon
+package tags
 
 import (
 	"errors"

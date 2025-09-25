@@ -2,7 +2,6 @@
 package mockfs
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -13,7 +12,7 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/scanner"
-	"go.senan.xyz/gonic/tags/tagcommon"
+	"go.senan.xyz/gonic/tags"
 )
 
 var ErrPathNotFound = errors.New("path not found")
@@ -79,9 +78,9 @@ func newMockFS(tb testing.TB, dirs []string, excludePattern string) *MockFS {
 	}
 }
 
-func (m *MockFS) DB() *db.DB                  { return m.db }
-func (m *MockFS) TmpDir() string              { return m.dir }
-func (m *MockFS) TagReader() tagcommon.Reader { return m.tagReader }
+func (m *MockFS) DB() *db.DB             { return m.db }
+func (m *MockFS) TmpDir() string         { return m.dir }
+func (m *MockFS) TagReader() tags.Reader { return m.tagReader }
 
 func (m *MockFS) ScanAndClean() *scanner.State {
 	m.t.Helper()
@@ -299,23 +298,6 @@ func (m *MockFS) SetTags(path string, cb func(*TagInfo)) {
 	cb(m.tagReader.paths[absPath])
 }
 
-func (m *MockFS) DumpDB(suffix ...string) {
-	var p []string
-	p = append(p,
-		"gonic", "dump",
-		strings.ReplaceAll(m.t.Name(), string(filepath.Separator), "-"),
-		fmt.Sprint(time.Now().UnixNano()),
-	)
-	p = append(p, suffix...)
-
-	destPath := filepath.Join(os.TempDir(), strings.Join(p, "-"))
-	if err := db.Dump(context.Background(), m.db.DB, destPath); err != nil {
-		m.t.Fatalf("dumping db: %v", err)
-	}
-
-	m.t.Error(destPath)
-}
-
 type tagReader struct {
 	paths map[string]*TagInfo
 }
@@ -325,7 +307,7 @@ func (m *tagReader) CanRead(absPath string) bool {
 	return stat.Mode().IsRegular()
 }
 
-func (m *tagReader) Read(absPath string) (tagcommon.Info, error) {
+func (m *tagReader) Read(absPath string) (tags.Info, error) {
 	p, ok := m.paths[absPath]
 	if !ok {
 		return nil, ErrPathNotFound
@@ -375,7 +357,7 @@ func (i *TagInfo) ReplayGainAlbumPeak() float32 { return 0 }
 func (i *TagInfo) Length() int  { return firstInt(100, i.RawLength) }
 func (i *TagInfo) Bitrate() int { return firstInt(100, i.RawBitrate) }
 
-var _ tagcommon.Reader = (*tagReader)(nil)
+var _ tags.Reader = (*tagReader)(nil)
 
 func firstInt(or int, ints ...int) int {
 	for _, int := range ints {
