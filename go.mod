@@ -5,6 +5,7 @@ go 1.25
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/andybalholm/cascadia v1.3.3
+	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/dexterlb/mpvipc v0.0.0-20241005113212-7cdefca0e933
 	github.com/disintegration/imaging v1.6.2
 	github.com/djherbis/times v1.6.0
@@ -30,7 +31,8 @@ require (
 	github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981
 	github.com/stretchr/testify v1.11.1
 	go.senan.xyz/flagconf v0.1.9
-	go.senan.xyz/wrtag v0.18.1-0.20250925164920-d759d9bc343f
+	go.senan.xyz/taglib v0.8.0
+	go.senan.xyz/wrtag v0.18.1-0.20250928180031-0a43d0fd8cb1
 	golang.org/x/net v0.44.0
 	golang.org/x/sync v0.17.0
 	gopkg.in/gormigrate.v1 v1.6.0
@@ -60,7 +62,6 @@ require (
 	github.com/ncruces/julianday v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/tetratelabs/wazero v1.9.0 // indirect
-	go.senan.xyz/taglib v0.8.0 // indirect
 	golang.org/x/crypto v0.42.0 // indirect
 	golang.org/x/image v0.31.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect

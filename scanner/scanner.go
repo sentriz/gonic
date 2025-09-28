@@ -27,6 +27,7 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"go.senan.xyz/gonic/tags"
 	"go.senan.xyz/wrtag/coverparse"
+	"go.senan.xyz/wrtag/tags/normtag"
 )
 
 var (
@@ -370,7 +371,7 @@ func (s *Scanner) scanDir(st *State, absPath string) error {
 }
 
 func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db.Album, track *db.Track, timeSpec times.Timespec, basename, absPath string) error {
-	trags, err := s.tagReader.Read(absPath)
+	trprops, trags, err := s.tagReader.Read(absPath)
 	if err != nil {
 		return fmt.Errorf("%w: %w", err, ErrReadingTags)
 	}
@@ -426,7 +427,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		track = &db.Track{}
 	}
 
-	if err := populateTrack(tx, album, track, trags, basename, int(stat.Size())); err != nil {
+	if err := populateTrack(tx, album, track, trprops, trags, basename, int(stat.Size())); err != nil {
 		return fmt.Errorf("process %q: %w", basename, err)
 	}
 	if err := populateTrackGenres(tx, track, genreIDs); err != nil {
@@ -456,15 +457,15 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 	return nil
 }
 
-func populateAlbum(tx *db.DB, album *db.Album, trags tags.Info, modTime, createTime time.Time) error {
+func populateAlbum(tx *db.DB, album *db.Album, trags map[string][]string, modTime, createTime time.Time) error {
 	albumName := tags.MustAlbum(trags)
 	album.TagTitle = albumName
 	album.TagTitleUDec = decoded(albumName)
 	album.TagAlbumArtist = tags.MustAlbumArtist(trags)
-	album.TagBrainzID = trags.AlbumBrainzID()
-	album.TagYear = trags.Year()
-	album.TagCompilation = trags.Compilation()
-	album.TagReleaseType = trags.ReleaseType()
+	album.TagBrainzID = normtag.Get(trags, normtag.MusicBrainzReleaseID)
+	album.TagYear = tags.MustYear(trags)
+	album.TagCompilation = tags.ParseBool(normtag.Get(trags, normtag.Compilation))
+	album.TagReleaseType = normtag.Get(trags, normtag.ReleaseType)
 
 	album.ModifiedAt = modTime
 	if album.CreatedAt.After(createTime) {
@@ -501,29 +502,30 @@ func populateAlbumBasics(tx *db.DB, musicDir string, parent, album *db.Album, di
 	return nil
 }
 
-func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trags tags.Info, absPath string, size int) error {
+func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trprops tags.Properties, trags map[string][]string, absPath string, size int) error {
 	basename := filepath.Base(absPath)
 	track.Filename = basename
 	track.FilenameUDec = decoded(basename)
 	track.Size = size
 	track.AlbumID = album.ID
-	track.TagLyrics = trags.Lyrics()
+	track.TagLyrics = normtag.Get(trags, normtag.Lyrics)
 
-	track.TagTitle = trags.Title()
-	track.TagTitleUDec = decoded(trags.Title())
+	trackTitle := normtag.Get(trags, normtag.Title)
+	track.TagTitle = trackTitle
+	track.TagTitleUDec = decoded(trackTitle)
 	track.TagTrackArtist = tags.MustArtist(trags)
-	track.TagTrackNumber = trags.TrackNumber()
-	track.TagDiscNumber = trags.DiscNumber()
-	track.TagBrainzID = trags.BrainzID()
+	track.TagTrackNumber = tags.ParseInt(normtag.Get(trags, normtag.TrackNumber))
+	track.TagDiscNumber = tags.ParseInt(normtag.Get(trags, normtag.DiscNumber))
+	track.TagBrainzID = normtag.Get(trags, normtag.MusicBrainzRecordingID)
 
-	track.ReplayGainTrackGain = trags.ReplayGainTrackGain()
-	track.ReplayGainTrackPeak = trags.ReplayGainTrackPeak()
-	track.ReplayGainAlbumGain = trags.ReplayGainAlbumGain()
-	track.ReplayGainAlbumPeak = trags.ReplayGainAlbumPeak()
+	track.ReplayGainTrackGain = tags.ParseDB(normtag.Get(trags, normtag.ReplayGainTrackGain))
+	track.ReplayGainTrackPeak = tags.ParseFloat(normtag.Get(trags, normtag.ReplayGainTrackPeak))
+	track.ReplayGainAlbumGain = tags.ParseDB(normtag.Get(trags, normtag.ReplayGainAlbumGain))
+	track.ReplayGainAlbumPeak = tags.ParseFloat(normtag.Get(trags, normtag.ReplayGainAlbumPeak))
 
 	// these two are calculated from the file instead of tags
-	track.Length = trags.Length()
-	track.Bitrate = trags.Bitrate()
+	track.Length = int(trprops.Length.Seconds())
+	track.Bitrate = int(trprops.Bitrate)
 
 	if err := tx.Save(&track).Error; err != nil {
 		return fmt.Errorf("saving track: %w", err)

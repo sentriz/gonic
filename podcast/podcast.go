@@ -536,14 +536,14 @@ func (p *Podcasts) doPodcastDownload(podcast *db.Podcast, podcastEpisode *db.Pod
 		return fmt.Errorf("writing podcast episode: %w", err)
 	}
 
-	podcastTags, err := p.tagReader.Read(podcastEpisode.AbsPath())
+	podcastProps, _, err := p.tagReader.Read(podcastEpisode.AbsPath())
 	if err != nil {
 		return fmt.Errorf("read podcast tags: %w", err)
 	}
 
 	podcastEpisode.Status = db.PodcastEpisodeStatusCompleted
-	podcastEpisode.Bitrate = podcastTags.Bitrate()
-	podcastEpisode.Length = podcastTags.Length()
+	podcastEpisode.Bitrate = int(podcastProps.Bitrate)
+	podcastEpisode.Length = int(podcastProps.Length.Seconds())
 
 	stat, _ := file.Stat()
 	podcastEpisode.Size = int(stat.Size())

@@ -7,8 +7,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	// Cgo tagger
-	"go.senan.xyz/gonic/tags/taglib"
+	"go.senan.xyz/gonic/tags/ffprobe"
 )
 
 //nolint:gochecknoglobals
-var tagReader = taglib.Reader{}
+var tagReader = ffprobe.Reader{}

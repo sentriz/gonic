@@ -8,8 +8,8 @@ import (
 	_ "github.com/ncruces/go-sqlite3/embed"
 
 	// Cgo-free Wasm tagger
-	"go.senan.xyz/gonic/tags/wrtag"
+	"go.senan.xyz/gonic/tags/taglib"
 )
 
 //nolint:gochecknoglobals
-var tagReader = wrtag.Reader{}
+var tagReader = taglib.Reader{}

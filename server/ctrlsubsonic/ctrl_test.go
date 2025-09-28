@@ -13,6 +13,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	jd "github.com/josephburnett/jd/lib"
 	"github.com/stretchr/testify/require"
@@ -142,9 +143,9 @@ func makec(tb testing.TB, roots []string, audio bool) *Controller {
 		if !audio {
 			continue
 		}
-		m.SetRealAudio(filepath.Join(root, "artist-0/album-0/track-0.flac"), 10, audioPath10s)
-		m.SetRealAudio(filepath.Join(root, "artist-0/album-0/track-1.flac"), 10, audioPath10s)
-		m.SetRealAudio(filepath.Join(root, "artist-0/album-0/track-2.flac"), 10, audioPath10s)
+		m.SetAudio(filepath.Join(root, "artist-0/album-0/track-0.flac"), 10*time.Second, 0, audioPath10s)
+		m.SetAudio(filepath.Join(root, "artist-0/album-0/track-1.flac"), 10*time.Second, 0, audioPath10s)
+		m.SetAudio(filepath.Join(root, "artist-0/album-0/track-2.flac"), 10*time.Second, 0, audioPath10s)
 	}
 
 	m.ScanAndClean()

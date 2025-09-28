@@ -13,6 +13,7 @@ import (
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/tags"
+	"go.senan.xyz/wrtag/tags/normtag"
 )
 
 var ErrPathNotFound = errors.New("path not found")
@@ -127,11 +128,11 @@ func (m *MockFS) addItems(prefix string, onlyGlob string, covers bool) {
 				}
 
 				m.AddTrack(path)
-				m.SetTags(path, func(tags *TagInfo) {
-					tags.RawArtist = fmt.Sprintf("artist-%d", ar)
-					tags.RawAlbumArtist = fmt.Sprintf("artist-%d", ar)
-					tags.RawAlbum = fmt.Sprintf("album-%d", al)
-					tags.RawTitle = fmt.Sprintf("title-%d", tr)
+				m.SetTags(path, func(info *TagInfo) {
+					normtag.Set(info.Tags, normtag.Artist, fmt.Sprintf("artist-%d", ar))
+					normtag.Set(info.Tags, normtag.AlbumArtist, fmt.Sprintf("artist-%d", ar))
+					normtag.Set(info.Tags, normtag.Album, fmt.Sprintf("album-%d", al))
+					normtag.Set(info.Tags, normtag.Title, fmt.Sprintf("title-%d", tr))
 				})
 			}
 			if covers {
@@ -171,7 +172,7 @@ func (m *MockFS) Symlink(src, dest string) {
 	}
 }
 
-func (m *MockFS) SetRealAudio(path string, length int, audioPath string) {
+func (m *MockFS) SetAudio(path string, length time.Duration, bitrate uint, audioPath string) {
 	abspath := filepath.Join(m.dir, path)
 	if err := os.Remove(abspath); err != nil {
 		m.t.Fatalf("remove all: %v", err)
@@ -181,8 +182,8 @@ func (m *MockFS) SetRealAudio(path string, length int, audioPath string) {
 		m.t.Fatalf("symlink: %v", err)
 	}
 	m.SetTags(path, func(tags *TagInfo) {
-		tags.RawLength = length
-		tags.RawBitrate = 0
+		tags.Length = length
+		tags.Bitrate = bitrate
 	})
 }
 
@@ -287,13 +288,28 @@ func (m *MockFS) AddCover(path string) {
 	defer f.Close()
 }
 
+func newTagInfo() *TagInfo {
+	var info TagInfo
+	info.Tags = map[string][]string{}
+
+	normtag.Set(info.Tags, normtag.TrackNumber, "1")
+	normtag.Set(info.Tags, normtag.DiscNumber, "1")
+	normtag.Set(info.Tags, normtag.Date, "2021-01-01")
+	normtag.Set(info.Tags, normtag.ReleaseType, "Album")
+
+	info.Length = 100 * time.Second
+	info.Bitrate = 100
+
+	return &info
+}
+
 func (m *MockFS) SetTags(path string, cb func(*TagInfo)) {
 	absPath := filepath.Join(m.dir, path)
 	if err := os.Chtimes(absPath, time.Time{}, time.Now()); err != nil {
 		m.t.Fatalf("touch track: %v", err)
 	}
 	if _, ok := m.tagReader.paths[absPath]; !ok {
-		m.tagReader.paths[absPath] = &TagInfo{}
+		m.tagReader.paths[absPath] = newTagInfo()
 	}
 	cb(m.tagReader.paths[absPath])
 }
@@ -307,66 +323,30 @@ func (m *tagReader) CanRead(absPath string) bool {
 	return stat.Mode().IsRegular()
 }
 
-func (m *tagReader) Read(absPath string) (tags.Info, error) {
+func (m *tagReader) Read(absPath string) (tags.Properties, map[string][]string, error) {
 	p, ok := m.paths[absPath]
 	if !ok {
-		return nil, ErrPathNotFound
+		return tags.Properties{}, nil, ErrPathNotFound
 	}
 	if p.Error != nil {
-		return nil, p.Error
+		return tags.Properties{}, nil, p.Error
 	}
-	return p, nil
+
+	props := tags.Properties{
+		Length:  p.Length,
+		Bitrate: p.Bitrate,
+	}
+	return props, p.Tags, nil
 }
 
 type TagInfo struct {
-	RawTitle        string
-	RawArtist       string
-	RawArtists      []string
-	RawAlbum        string
-	RawAlbumArtist  string
-	RawAlbumArtists []string
-	RawGenre        string
-	RawBitrate      int
-	RawLength       int
-	Error           error
+	Tags    map[string][]string
+	Length  time.Duration
+	Bitrate uint
+	Error   error
 }
-
-func (i *TagInfo) Title() string          { return i.RawTitle }
-func (i *TagInfo) BrainzID() string       { return "" }
-func (i *TagInfo) Artist() string         { return i.RawArtist }
-func (i *TagInfo) Artists() []string      { return i.RawArtists }
-func (i *TagInfo) Album() string          { return i.RawAlbum }
-func (i *TagInfo) AlbumArtist() string    { return i.RawAlbumArtist }
-func (i *TagInfo) AlbumArtists() []string { return i.RawAlbumArtists }
-func (i *TagInfo) AlbumBrainzID() string  { return "" }
-func (i *TagInfo) Genre() string          { return i.RawGenre }
-func (i *TagInfo) Genres() []string       { return []string{i.RawGenre} }
-func (i *TagInfo) TrackNumber() int       { return 1 }
-func (i *TagInfo) DiscNumber() int        { return 1 }
-func (i *TagInfo) Year() int              { return 2021 }
-func (i *TagInfo) Lyrics() string         { return "[00:01.58] Line one\n[00:03.44] Line two\n" }
-
-func (i *TagInfo) Compilation() bool   { return false }
-func (i *TagInfo) ReleaseType() string { return "album" }
-
-func (i *TagInfo) ReplayGainTrackGain() float32 { return 0 }
-func (i *TagInfo) ReplayGainTrackPeak() float32 { return 0 }
-func (i *TagInfo) ReplayGainAlbumGain() float32 { return 0 }
-func (i *TagInfo) ReplayGainAlbumPeak() float32 { return 0 }
-
-func (i *TagInfo) Length() int  { return firstInt(100, i.RawLength) }
-func (i *TagInfo) Bitrate() int { return firstInt(100, i.RawBitrate) }
 
 var _ tags.Reader = (*tagReader)(nil)
-
-func firstInt(or int, ints ...int) int {
-	for _, int := range ints {
-		if int > 0 {
-			return int
-		}
-	}
-	return or
-}
 
 func match(pattern, name string) bool {
 	if pattern == "" {
