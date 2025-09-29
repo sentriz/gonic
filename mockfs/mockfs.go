@@ -339,6 +339,10 @@ func (m *tagReader) Read(absPath string) (tags.Properties, map[string][]string, 
 	return props, p.Tags, nil
 }
 
+func (m *tagReader) ReadCover(absPath string) ([]byte, error) {
+	return nil, nil
+}
+
 type TagInfo struct {
 	Tags    map[string][]string
 	Length  time.Duration

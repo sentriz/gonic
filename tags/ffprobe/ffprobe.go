@@ -60,3 +60,11 @@ func (Reader) Read(absPath string) (tags.Properties, map[string][]string, error)
 
 	return props, tgs, nil
 }
+
+func (Reader) ReadCover(absPath string) ([]byte, error) {
+	out, err := exec.Command("ffmpeg", "-i", absPath, "-map", "0:v", "-c", "copy", "-f", "image2pipe", "-").Output()
+	if err != nil {
+		return nil, fmt.Errorf("exec: %w", err)
+	}
+	return out, nil
+}

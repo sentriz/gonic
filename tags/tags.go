@@ -16,6 +16,7 @@ var ErrUnsupported = errors.New("filetype unsupported")
 type Reader interface {
 	CanRead(absPath string) bool
 	Read(absPath string) (properties Properties, tags map[string][]string, err error)
+	ReadCover(absPath string) ([]byte, error)
 }
 
 type Properties struct {

@@ -34,3 +34,7 @@ func (Reader) Read(absPath string) (tags.Properties, map[string][]string, error)
 
 	return tags.Properties{Length: tp.Length, Bitrate: tp.Bitrate}, tag, nil
 }
+
+func (Reader) ReadCover(absPath string) ([]byte, error) {
+	return taglib.ReadImage(absPath)
+}
