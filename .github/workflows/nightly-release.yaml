@@ -2,7 +2,12 @@ name: Nightly Release
 on:
   schedule:
     - cron: "0 0 * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      custom_tag:
+        description: 'Custom tag (optional, will use "nightly" if not provided)'
+        required: false
+        type: string
 jobs:
   check-date:
     runs-on: ubuntu-latest
@@ -53,10 +58,15 @@ jobs:
         run: echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
       - name: Login into GitHub Container Registry
         run: echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-      - name: Generate short hash
+      - name: Generate short hash and set tag
         run: |
           _short_hash=${{ github.sha }}
           echo "SHORT_HASH=${_short_hash:0:7}" >> $GITHUB_ENV
+          if [ -n "${{ github.event.inputs.custom_tag }}" ]; then
+            echo "TAG_NAME=${{ github.event.inputs.custom_tag }}" >> $GITHUB_ENV
+          else
+            echo "TAG_NAME=nightly" >> $GITHUB_ENV
+          fi
       - name: Build and Push
         uses: docker/build-push-action@v6
         with:
@@ -66,6 +76,6 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ github.repository }}:${{ env.SHORT_HASH }}
-            ghcr.io/${{ github.repository }}:nightly
+            ghcr.io/${{ github.repository }}:${{ env.TAG_NAME }}
             ${{ github.repository }}:${{ env.SHORT_HASH }}
-            ${{ github.repository }}:nightly
+            ${{ github.repository }}:${{ env.TAG_NAME }}
