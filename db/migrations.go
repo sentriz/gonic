@@ -79,6 +79,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202505262025", migrateAlbumAddIndexOnBrainzID),
 		construct(ctx, "202507062103", migrateAlbumCompilationReleaseType),
 		construct(ctx, "202508261102", migrateAddLyrics),
+		construct(ctx, "202509291741", migrateAddAlbumEmbeddedCoverTrackID),
 	}
 
 	return gormigrate.
@@ -856,4 +857,8 @@ func migrateAlbumCompilationReleaseType(tx *gorm.DB, _ MigrationContext) error {
 
 func migrateAddLyrics(tx *gorm.DB, _ MigrationContext) error {
 	return tx.AutoMigrate(Track{}).Error
+}
+
+func migrateAddAlbumEmbeddedCoverTrackID(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(Album{}).Error
 }

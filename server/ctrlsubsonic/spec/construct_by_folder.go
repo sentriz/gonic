@@ -30,6 +30,8 @@ func NewAlbumByFolder(f *db.Album) *Album {
 	}
 	if f.Cover != "" {
 		a.CoverID = f.SID()
+	} else if f.EmbeddedCoverTrackID != nil {
+		a.CoverID = f.EmbeddedCoverTrackSID()
 	}
 	return a
 }
@@ -52,7 +54,10 @@ func NewTCAlbumByFolder(f *db.Album) *TrackChild {
 	}
 	if f.Cover != "" {
 		trCh.CoverID = f.SID()
+	} else if f.EmbeddedCoverTrackID != nil {
+		trCh.CoverID = f.EmbeddedCoverTrackSID()
 	}
+
 	return trCh
 }
 
@@ -86,7 +91,10 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 	}
 	if parent.Cover != "" {
 		trCh.CoverID = parent.SID()
+	} else if parent.EmbeddedCoverTrackID != nil {
+		trCh.CoverID = parent.EmbeddedCoverTrackSID()
 	}
+
 	if t.Album != nil {
 		trCh.Album = t.Album.RightPath
 		trCh.AlbumID = t.Album.SID()
@@ -163,6 +171,8 @@ func NewArtistByFolder(f *db.Album) *Artist {
 	}
 	if f.Cover != "" {
 		a.CoverID = f.SID()
+	} else if f.EmbeddedCoverTrackID != nil {
+		a.CoverID = f.EmbeddedCoverTrackSID()
 	}
 	return a
 }

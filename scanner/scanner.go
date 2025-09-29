@@ -451,9 +451,39 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		return fmt.Errorf("populate track artists: %w", err)
 	}
 
+	// embedded covers come only from the first track
+	if i == 0 && album.Cover == "" && track.ID > 0 {
+		if err := populateEmbeddedCover(tx, s.tagReader, album, track, absPath); err != nil {
+			return fmt.Errorf("populate embedded cover: %w", err)
+		}
+	}
+
 	st.seenTracks[track.ID] = struct{}{}
 	st.seenTracksNew++
 
+	return nil
+}
+
+func populateEmbeddedCover(tx *db.DB, tagReader tags.Reader, album *db.Album, track *db.Track, absPath string) error {
+	var trackID int
+	if data, _ := tagReader.ReadCover(absPath); len(data) > 0 {
+		trackID = track.ID
+	}
+	var prevTrackID int
+	if album.EmbeddedCoverTrackID != nil {
+		prevTrackID = *album.EmbeddedCoverTrackID
+	}
+	if prevTrackID == trackID {
+		return nil
+	}
+
+	album.EmbeddedCoverTrackID = nil
+	if trackID > 0 {
+		album.EmbeddedCoverTrackID = &trackID
+	}
+	if err := tx.Save(&album).Error; err != nil {
+		return fmt.Errorf("saving album for embedded cover track id: %w", err)
+	}
 	return nil
 }
 

@@ -28,6 +28,8 @@ func NewAlbumByTags(a *db.Album, artists []*db.Artist) *Album {
 	}
 	if a.Cover != "" {
 		ret.CoverID = a.SID()
+	} else if a.EmbeddedCoverTrackID != nil {
+		ret.CoverID = a.EmbeddedCoverTrackSID()
 	}
 	if a.AlbumStar != nil {
 		ret.Starred = &a.AlbumStar.StarDate
@@ -90,6 +92,8 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 	}
 	if album.Cover != "" {
 		ret.CoverID = album.SID()
+	} else if album.EmbeddedCoverTrackID != nil {
+		ret.CoverID = album.EmbeddedCoverTrackSID()
 	}
 	if t.TrackStar != nil {
 		ret.Starred = &t.TrackStar.StarDate
