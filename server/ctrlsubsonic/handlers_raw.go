@@ -85,7 +85,7 @@ func coverFor(dbc *db.DB, artistInfoCache *artistinfocache.ArtistInfoCache, id s
 	case specid.Podcast:
 		return coverForPodcast(dbc, id.Value)
 	case specid.PodcastEpisode:
-		return coverGetPathPodcastEpisode(dbc, id.Value)
+		return coverForPodcastEpisode(dbc, id.Value)
 	default:
 		return nil, errCoverNotFound
 	}
@@ -135,7 +135,7 @@ func coverForPodcast(dbc *db.DB, id int) (*os.File, error) {
 	return os.Open(filepath.Join(podcast.RootDir, podcast.Image))
 }
 
-func coverGetPathPodcastEpisode(dbc *db.DB, id int) (*os.File, error) {
+func coverForPodcastEpisode(dbc *db.DB, id int) (*os.File, error) {
 	var pe db.PodcastEpisode
 	err := dbc.
 		Preload("Podcast").
@@ -155,9 +155,10 @@ func coverScaleAndSave(reader io.Reader, cachePath string, size int) error {
 	if err != nil {
 		return fmt.Errorf("resizing: %w", err)
 	}
-	width := min(size,
-		// don't upscale images
-		src.Bounds().Dx())
+
+	// don't upscale images
+	width := min(size, src.Bounds().Dx())
+
 	if err := imaging.Save(imaging.Resize(src, width, 0, imaging.Lanczos), cachePath); err != nil {
 		return fmt.Errorf("caching %q: %w", cachePath, err)
 	}

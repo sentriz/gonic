@@ -24,6 +24,7 @@ import (
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
+	"go.senan.xyz/gonic/tags"
 	"go.senan.xyz/gonic/transcode"
 )
 
@@ -52,41 +53,45 @@ type ProxyPathResolver func(in string) string
 type Controller struct {
 	*http.ServeMux
 
-	dbc              *db.DB
-	scanner          *scanner.Scanner
-	musicPaths       []MusicPath
-	podcastsPath     string
-	cacheAudioPath   string
-	cacheCoverPath   string
-	jukebox          *jukebox.Jukebox
-	playlistStore    *playlist.Store
-	scrobblers       []scrobble.Scrobbler
-	podcasts         *podcast.Podcasts
-	transcoder       transcode.Transcoder
-	lastFMClient     *lastfm.Client
-	artistInfoCache  *artistinfocache.ArtistInfoCache
-	albumInfoCache   *albuminfocache.AlbumInfoCache
+	dbc             *db.DB
+	scanner         *scanner.Scanner
+	musicPaths      []MusicPath
+	podcastsPath    string
+	cacheAudioPath  string
+	cacheCoverPath  string
+	jukebox         *jukebox.Jukebox
+	playlistStore   *playlist.Store
+	scrobblers      []scrobble.Scrobbler
+	podcasts        *podcast.Podcasts
+	transcoder      transcode.Transcoder
+	lastFMClient    *lastfm.Client
+	artistInfoCache *artistinfocache.ArtistInfoCache
+	albumInfoCache  *albuminfocache.AlbumInfoCache
+	tagReader       tags.Reader
+
 	resolveProxyPath ProxyPathResolver
 }
 
-func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPath string, cacheAudioPath string, cacheCoverPath string, jukebox *jukebox.Jukebox, playlistStore *playlist.Store, scrobblers []scrobble.Scrobbler, podcasts *podcast.Podcasts, transcoder transcode.Transcoder, lastFMClient *lastfm.Client, artistInfoCache *artistinfocache.ArtistInfoCache, albumInfoCache *albuminfocache.AlbumInfoCache, resolveProxyPath ProxyPathResolver) (*Controller, error) {
+func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPath string, cacheAudioPath string, cacheCoverPath string, jukebox *jukebox.Jukebox, playlistStore *playlist.Store, scrobblers []scrobble.Scrobbler, podcasts *podcast.Podcasts, transcoder transcode.Transcoder, lastFMClient *lastfm.Client, artistInfoCache *artistinfocache.ArtistInfoCache, albumInfoCache *albuminfocache.AlbumInfoCache, tagReader tags.Reader, resolveProxyPath ProxyPathResolver) (*Controller, error) {
 	c := Controller{
 		ServeMux: http.NewServeMux(),
 
-		dbc:              dbc,
-		scanner:          scannr,
-		musicPaths:       musicPaths,
-		podcastsPath:     podcastsPath,
-		cacheAudioPath:   cacheAudioPath,
-		cacheCoverPath:   cacheCoverPath,
-		jukebox:          jukebox,
-		playlistStore:    playlistStore,
-		scrobblers:       scrobblers,
-		podcasts:         podcasts,
-		transcoder:       transcoder,
-		lastFMClient:     lastFMClient,
-		artistInfoCache:  artistInfoCache,
-		albumInfoCache:   albumInfoCache,
+		dbc:             dbc,
+		scanner:         scannr,
+		musicPaths:      musicPaths,
+		podcastsPath:    podcastsPath,
+		cacheAudioPath:  cacheAudioPath,
+		cacheCoverPath:  cacheCoverPath,
+		jukebox:         jukebox,
+		playlistStore:   playlistStore,
+		scrobblers:      scrobblers,
+		podcasts:        podcasts,
+		transcoder:      transcoder,
+		lastFMClient:    lastFMClient,
+		artistInfoCache: artistInfoCache,
+		albumInfoCache:  albumInfoCache,
+		tagReader:       tagReader,
+
 		resolveProxyPath: resolveProxyPath,
 	}
 
