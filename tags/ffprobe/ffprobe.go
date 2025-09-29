@@ -18,7 +18,7 @@ type Reader struct{}
 
 func (Reader) CanRead(absPath string) bool {
 	switch ext := strings.ToLower(filepath.Ext(absPath)); ext {
-	case ".mp3", ".flac", ".aac", ".m4a", ".m4b", ".ogg", ".opus", ".wma", ".wav", ".wv":
+	case ".3ga", ".3gp", ".669", ".aa3", ".aac", ".aif", ".aiff", ".aifc", ".ape", ".caf", ".dsf", ".f4a", ".f4b", ".flac", ".it", ".m4a", ".m4b", ".m4r", ".mka", ".mkv", ".mod", ".mov", ".mp1", ".mp2", ".mp3", ".mp4", ".mpc", ".mpp", ".oga", ".ogg", ".oma", ".opus", ".ra", ".rf64", ".rm", ".s3m", ".sph", ".spx", ".stm", ".tak", ".tta", ".wav", ".webm", ".w64", ".wma", ".wv", ".asf":
 		return true
 	}
 	return false
