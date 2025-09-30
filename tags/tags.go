@@ -116,23 +116,3 @@ func ParseDate(in string) time.Time {
 	t, _ := dateparse.ParseAny(in)
 	return t
 }
-
-type ChainReader []Reader
-
-func (cr ChainReader) CanRead(absPath string) bool {
-	for _, reader := range cr {
-		if reader.CanRead(absPath) {
-			return true
-		}
-	}
-	return false
-}
-
-func (cr ChainReader) Read(absPath string) (Properties, map[string][]string, error) {
-	for _, reader := range cr {
-		if reader.CanRead(absPath) {
-			return reader.Read(absPath)
-		}
-	}
-	return Properties{}, nil, ErrUnsupported
-}
