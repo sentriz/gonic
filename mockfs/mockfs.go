@@ -119,6 +119,7 @@ func (m *MockFS) addItems(prefix string, onlyGlob string, covers bool) {
 	p := func(format string, a ...any) string {
 		return filepath.Join(prefix, fmt.Sprintf(format, a...))
 	}
+
 	for ar := range 3 {
 		for al := range 3 {
 			for tr := range 3 {
@@ -135,6 +136,7 @@ func (m *MockFS) addItems(prefix string, onlyGlob string, covers bool) {
 					normtag.Set(info.Tags, normtag.Title, fmt.Sprintf("title-%d", tr))
 				})
 			}
+
 			if covers {
 				path := p("artist-%d/album-%d/cover.png", ar, al)
 				if !match(onlyGlob, path) {
@@ -314,6 +316,8 @@ func (m *MockFS) SetTags(path string, cb func(*TagInfo)) {
 	cb(m.tagReader.paths[absPath])
 }
 
+var _ tags.Reader = (*tagReader)(nil)
+
 type tagReader struct {
 	paths map[string]*TagInfo
 }
@@ -349,8 +353,6 @@ type TagInfo struct {
 	Bitrate uint
 	Error   error
 }
-
-var _ tags.Reader = (*tagReader)(nil)
 
 func match(pattern, name string) bool {
 	if pattern == "" {
