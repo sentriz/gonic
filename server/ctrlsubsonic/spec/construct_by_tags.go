@@ -90,11 +90,16 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 		AverageRating:      formatRating(t.AverageRating),
 		TranscodeMeta:      TranscodeMeta{},
 	}
-	if album.Cover != "" {
+
+	switch {
+	case t.HasEmbeddedCover:
+		ret.CoverID = t.SID()
+	case album.Cover != "":
 		ret.CoverID = album.SID()
-	} else if album.EmbeddedCoverTrackID != nil {
+	case album.EmbeddedCoverTrackID != nil:
 		ret.CoverID = album.EmbeddedCoverTrackSID()
 	}
+
 	if t.TrackStar != nil {
 		ret.Starred = &t.TrackStar.StarDate
 	}

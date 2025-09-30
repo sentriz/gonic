@@ -236,6 +236,8 @@ type Track struct {
 	ReplayGainAlbumGain float32
 	ReplayGainAlbumPeak float32
 
+	HasEmbeddedCover bool
+
 	TrackStar     *TrackStar
 	TrackRating   *TrackRating
 	AverageRating float64 `sql:"default: null"`

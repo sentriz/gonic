@@ -80,6 +80,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202507062103", migrateAlbumCompilationReleaseType),
 		construct(ctx, "202508261102", migrateAddLyrics),
 		construct(ctx, "202509291741", migrateAddAlbumEmbeddedCoverTrackID),
+		construct(ctx, "202509301448", migrateAddTrackEmbeddedCover),
 	}
 
 	return gormigrate.
@@ -861,4 +862,8 @@ func migrateAddLyrics(tx *gorm.DB, _ MigrationContext) error {
 
 func migrateAddAlbumEmbeddedCoverTrackID(tx *gorm.DB, _ MigrationContext) error {
 	return tx.AutoMigrate(Album{}).Error
+}
+
+func migrateAddTrackEmbeddedCover(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(Track{}).Error
 }

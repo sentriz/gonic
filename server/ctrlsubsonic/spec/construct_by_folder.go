@@ -89,9 +89,13 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 	if trCh.Title == "" {
 		trCh.Title = t.Filename
 	}
-	if parent.Cover != "" {
+
+	switch {
+	case t.HasEmbeddedCover:
+		trCh.CoverID = t.SID()
+	case parent.Cover != "":
 		trCh.CoverID = parent.SID()
-	} else if parent.EmbeddedCoverTrackID != nil {
+	case parent.EmbeddedCoverTrackID != nil:
 		trCh.CoverID = parent.EmbeddedCoverTrackSID()
 	}
 

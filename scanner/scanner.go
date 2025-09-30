@@ -429,7 +429,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		track = &db.Track{}
 	}
 
-	if err := populateTrack(tx, album, track, trprops, trags, basename, int(stat.Size())); err != nil {
+	if err := populateTrack(tx, s.scanEmbeddedCover, album, track, trprops, trags, basename, int(stat.Size())); err != nil {
 		return fmt.Errorf("process %q: %w", basename, err)
 	}
 	if err := populateTrackGenres(tx, track, genreIDs); err != nil {
@@ -453,9 +453,9 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		return fmt.Errorf("populate track artists: %w", err)
 	}
 
-	// embedded covers come only from the first track
-	if i == 0 && s.scanEmbeddedCover && album.Cover == "" && track.ID > 0 {
-		if err := populateEmbeddedCover(tx, s.tagReader, album, track, absPath); err != nil {
+	// possible album level embedded covers come only from the first track
+	if i == 0 {
+		if err := populateAlbumEmbeddedCover(tx, album, track, trprops); err != nil {
 			return fmt.Errorf("populate embedded cover: %w", err)
 		}
 	}
@@ -466,9 +466,9 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 	return nil
 }
 
-func populateEmbeddedCover(tx *db.DB, tagReader tags.Reader, album *db.Album, track *db.Track, absPath string) error {
+func populateAlbumEmbeddedCover(tx *db.DB, album *db.Album, track *db.Track, trprops tags.Properties) error {
 	var trackID int
-	if data, _ := tagReader.ReadCover(absPath); len(data) > 0 {
+	if trprops.HasCover {
 		trackID = track.ID
 	}
 	var prevTrackID int
@@ -534,7 +534,7 @@ func populateAlbumBasics(tx *db.DB, musicDir string, parent, album *db.Album, di
 	return nil
 }
 
-func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trprops tags.Properties, trags map[string][]string, absPath string, size int) error {
+func populateTrack(tx *db.DB, scanEmbeddedCover bool, album *db.Album, track *db.Track, trprops tags.Properties, trags map[string][]string, absPath string, size int) error {
 	basename := filepath.Base(absPath)
 	track.Filename = basename
 	track.FilenameUDec = decoded(basename)
@@ -554,6 +554,11 @@ func populateTrack(tx *db.DB, album *db.Album, track *db.Track, trprops tags.Pro
 	track.ReplayGainTrackPeak = tags.ParseFloat(normtag.Get(trags, normtag.ReplayGainTrackPeak))
 	track.ReplayGainAlbumGain = tags.ParseDB(normtag.Get(trags, normtag.ReplayGainAlbumGain))
 	track.ReplayGainAlbumPeak = tags.ParseFloat(normtag.Get(trags, normtag.ReplayGainAlbumPeak))
+
+	track.HasEmbeddedCover = false
+	if scanEmbeddedCover {
+		track.HasEmbeddedCover = trprops.HasCover
+	}
 
 	// these two are calculated from the file instead of tags
 	track.Length = int(trprops.Length.Seconds())
