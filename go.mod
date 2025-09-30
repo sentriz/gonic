@@ -27,12 +27,11 @@ require (
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/philippta/go-template v0.0.0-20220911145045-4556aca435e4
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
-	github.com/sentriz/audiotags v0.0.0-20250922130348-7ea48bcba851
 	github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981
 	github.com/stretchr/testify v1.11.1
 	go.senan.xyz/flagconf v0.1.9
 	go.senan.xyz/taglib v0.8.0
-	go.senan.xyz/wrtag v0.18.1-0.20250928180031-0a43d0fd8cb1
+	go.senan.xyz/wrtag v0.18.1-0.20250930121808-19bf03481e5e
 	golang.org/x/net v0.44.0
 	golang.org/x/sync v0.17.0
 	gopkg.in/gormigrate.v1 v1.6.0
@@ -44,8 +43,8 @@ require (
 	github.com/PuerkitoBio/goquery v1.10.3 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/go-openapi/jsonpointer v0.22.0 // indirect
-	github.com/go-openapi/swag/jsonname v0.25.0 // indirect
+	github.com/go-openapi/jsonpointer v0.22.1 // indirect
+	github.com/go-openapi/swag/jsonname v0.25.1 // indirect
 	github.com/gorilla/context v1.1.2 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
