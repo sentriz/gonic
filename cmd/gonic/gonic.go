@@ -68,6 +68,7 @@ func main() {
 	confScanIntervalMins := flag.Uint("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
 	confScanAtStart := flag.Bool("scan-at-start-enabled", false, "whether to perform an initial scan at startup (optional)")
 	confScanWatcher := flag.Bool("scan-watcher-enabled", false, "whether to watch file system for new music and rescan (optional)")
+	confScanEmbeddedCover := flag.Bool("scan-embedded-cover-enabled", true, "whether to scan for embedded covers in audio files (optional)")
 
 	confJukeboxEnabled := flag.Bool("jukebox-enabled", false, "whether the subsonic jukebox api should be enabled (optional)")
 	confJukeboxMPVExtraArgs := flag.String("jukebox-mpv-extra-args", "", "extra command line arguments to pass to the jukebox mpv daemon (optional)")
@@ -177,7 +178,7 @@ func main() {
 	log.Printf("provided config\n")
 	flag.VisitAll(func(f *flag.Flag) {
 		value := strings.ReplaceAll(f.Value.String(), "\n", "")
-		log.Printf("    %-25s %s\n", f.Name, value)
+		log.Printf("    %-30s %s\n", f.Name, value)
 	})
 
 	scannr := scanner.New(
@@ -190,6 +191,7 @@ func main() {
 		},
 		tagReader,
 		*confExcludePattern,
+		*confScanEmbeddedCover,
 	)
 	podcast := podcast.New(dbc, *confPodcastPath, tagReader)
 	transcoder := transcode.NewCachingTranscoder(

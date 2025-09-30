@@ -41,10 +41,11 @@ type Scanner struct {
 	multiValueSettings map[Tag]MultiValueSetting
 	tagReader          tags.Reader
 	excludePattern     *regexp.Regexp
+	scanEmbeddedCover  bool
 	scanning           *int32
 }
 
-func New(musicDirs []string, db *db.DB, multiValueSettings map[Tag]MultiValueSetting, tagReader tags.Reader, excludePattern string) *Scanner {
+func New(musicDirs []string, db *db.DB, multiValueSettings map[Tag]MultiValueSetting, tagReader tags.Reader, excludePattern string, scanEmbeddedCover bool) *Scanner {
 	var excludePatternRegExp *regexp.Regexp
 	if excludePattern != "" {
 		excludePatternRegExp = regexp.MustCompile(excludePattern)
@@ -56,6 +57,7 @@ func New(musicDirs []string, db *db.DB, multiValueSettings map[Tag]MultiValueSet
 		multiValueSettings: multiValueSettings,
 		tagReader:          tagReader,
 		excludePattern:     excludePatternRegExp,
+		scanEmbeddedCover:  scanEmbeddedCover,
 		scanning:           new(int32),
 	}
 }
@@ -452,7 +454,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 	}
 
 	// embedded covers come only from the first track
-	if i == 0 && album.Cover == "" && track.ID > 0 {
+	if i == 0 && s.scanEmbeddedCover && album.Cover == "" && track.ID > 0 {
 		if err := populateEmbeddedCover(tx, s.tagReader, album, track, absPath); err != nil {
 			return fmt.Errorf("populate embedded cover: %w", err)
 		}
