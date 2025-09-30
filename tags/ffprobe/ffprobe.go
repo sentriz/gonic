@@ -24,28 +24,31 @@ func (Reader) CanRead(absPath string) bool {
 	return false
 }
 
-func (Reader) Read(absPath string) (tags.Properties, map[string][]string, error) {
-	out, err := exec.Command("ffprobe", "-hide_banner", "-v", "0", "-i", absPath, "-show_entries", "format", "-of", "json").Output()
+func (Reader) Read(absPath string) (tags.Properties, tags.Tags, error) {
+	out, err := exec.Command("ffprobe", "-hide_banner", "-v", "0", "-i", absPath, "-show_entries", "format:stream=codec_type", "-of", "json").Output()
 	if err != nil {
 		return tags.Properties{}, nil, fmt.Errorf("output: %w", err)
 	}
 
-	var format struct {
+	var d struct {
+		Streams []struct {
+			CodecType string `json:"codec_type"`
+		} `json:"streams"`
 		Format struct {
 			Duration string            `json:"duration"`
 			BitRate  string            `json:"bit_rate"`
 			Tags     map[string]string `json:"tags"`
 		} `json:"format"`
 	}
-	if err := json.Unmarshal(out, &format); err != nil {
+	if err := json.Unmarshal(out, &d); err != nil {
 		return tags.Properties{}, nil, fmt.Errorf("read json: %w", err)
 	}
 
-	durationSecs, _ := strconv.ParseFloat(format.Format.Duration, 64)
-	bitRateBitsPerSec, _ := strconv.Atoi(format.Format.BitRate)
+	durationSecs, _ := strconv.ParseFloat(d.Format.Duration, 64)
+	bitRateBitsPerSec, _ := strconv.Atoi(d.Format.BitRate)
 
 	var tgs = map[string][]string{}
-	for k, vs := range format.Format.Tags {
+	for k, vs := range d.Format.Tags {
 		switch k {
 		case "OK":
 			continue
@@ -53,9 +56,18 @@ func (Reader) Read(absPath string) (tags.Properties, map[string][]string, error)
 		tgs[k] = strings.Split(vs, ";")
 	}
 
+	var hasCover bool
+	for _, s := range d.Streams {
+		if s.CodecType == "video" {
+			hasCover = true
+			break
+		}
+	}
+
 	props := tags.Properties{
-		Length:  time.Duration(durationSecs) * time.Second,
-		Bitrate: uint(bitRateBitsPerSec / 1000),
+		Length:   time.Duration(durationSecs) * time.Second,
+		Bitrate:  uint(bitRateBitsPerSec / 1000),
+		HasCover: hasCover,
 	}
 
 	return props, tgs, nil

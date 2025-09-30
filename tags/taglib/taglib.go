@@ -21,7 +21,7 @@ func (Reader) CanRead(absPath string) bool {
 	return false
 }
 
-func (Reader) Read(absPath string) (tags.Properties, map[string][]string, error) {
+func (Reader) Read(absPath string) (tags.Properties, tags.Tags, error) {
 	tp, err := taglib.ReadProperties(absPath)
 	if err != nil {
 		return tags.Properties{}, nil, fmt.Errorf("read properties: %w", err)
@@ -32,7 +32,7 @@ func (Reader) Read(absPath string) (tags.Properties, map[string][]string, error)
 		return tags.Properties{}, nil, fmt.Errorf("read tags: %w", err)
 	}
 
-	return tags.Properties{Length: tp.Length, Bitrate: tp.Bitrate}, tag, nil
+	return tags.Properties{Length: tp.Length, Bitrate: tp.Bitrate, HasCover: tp.HasImage}, tag, nil
 }
 
 func (Reader) ReadCover(absPath string) ([]byte, error) {

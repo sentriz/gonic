@@ -15,13 +15,16 @@ var ErrUnsupported = errors.New("filetype unsupported")
 
 type Reader interface {
 	CanRead(absPath string) bool
-	Read(absPath string) (properties Properties, tags map[string][]string, err error)
+	Read(absPath string) (properties Properties, tags Tags, err error)
 	ReadCover(absPath string) ([]byte, error)
 }
 
+type Tags = map[string][]string
+
 type Properties struct {
-	Length  time.Duration
-	Bitrate uint
+	Length   time.Duration
+	Bitrate  uint
+	HasCover bool
 }
 
 const (
@@ -30,56 +33,56 @@ const (
 	FallbackGenre  = "Unknown Genre"
 )
 
-func MustAlbum(p map[string][]string) string {
+func MustAlbum(p Tags) string {
 	if r := normtag.Get(p, normtag.Album); r != "" {
 		return r
 	}
 	return FallbackAlbum
 }
 
-func MustArtist(p map[string][]string) string {
+func MustArtist(p Tags) string {
 	if r := normtag.Get(p, normtag.Artist); r != "" {
 		return r
 	}
 	return FallbackArtist
 }
 
-func MustArtists(p map[string][]string) []string {
+func MustArtists(p Tags) []string {
 	if r := normtag.Values(p, normtag.Artists); len(r) > 0 {
 		return r
 	}
 	return []string{MustArtist(p)}
 }
 
-func MustAlbumArtist(p map[string][]string) string {
+func MustAlbumArtist(p Tags) string {
 	if r := normtag.Get(p, normtag.AlbumArtist); r != "" {
 		return r
 	}
 	return MustArtist(p)
 }
 
-func MustAlbumArtists(p map[string][]string) []string {
+func MustAlbumArtists(p Tags) []string {
 	if r := normtag.Values(p, normtag.AlbumArtists); len(r) > 0 {
 		return r
 	}
 	return []string{MustAlbumArtist(p)}
 }
 
-func MustGenre(p map[string][]string) string {
+func MustGenre(p Tags) string {
 	if r := normtag.Get(p, normtag.Genre); r != "" {
 		return r
 	}
 	return FallbackGenre
 }
 
-func MustGenres(p map[string][]string) []string {
+func MustGenres(p Tags) []string {
 	if r := normtag.Values(p, normtag.Genres); len(r) > 0 {
 		return r
 	}
 	return []string{MustGenre(p)}
 }
 
-func MustYear(p map[string][]string) int {
+func MustYear(p Tags) int {
 	if t := ParseDate(normtag.Get(p, normtag.OriginalDate)); !t.IsZero() {
 		return t.Year()
 	}

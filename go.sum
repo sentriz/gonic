@@ -146,8 +146,8 @@ github.com/tetratelabs/wazero v1.9.0/go.mod h1:TSbcXCfFP0L2FGkRPxHphadXPjo1T6W+C
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 go.senan.xyz/flagconf v0.1.9 h1:LBDmqiVFgijfqFXDzH97gPn0qDbg1Dq6/vxsxS/TzC4=
 go.senan.xyz/flagconf v0.1.9/go.mod h1:NqOFfSwJvNWXOTUabcRZ8mPK9+sJmhStJhqtEt74wNQ=
-go.senan.xyz/taglib v0.8.0 h1:wV67dr0TXtMcw+19K5xalSm/VDB7+a235GPNWB7bDQ8=
-go.senan.xyz/taglib v0.8.0/go.mod h1:UMXxjvVuML3bZ63elOoUFtY2ZjwH88KB+DKWfF50ln8=
+go.senan.xyz/taglib v0.9.0 h1:MD+SfrR2o+glb7+ZeLsixUcoGB81pX/AeT9vHDhFGbI=
+go.senan.xyz/taglib v0.9.0/go.mod h1:UMXxjvVuML3bZ63elOoUFtY2ZjwH88KB+DKWfF50ln8=
 go.senan.xyz/wrtag v0.18.1-0.20250930121808-19bf03481e5e h1:Q81nHdKVLExGp7+NosXA63dmPSwhijKZKzAhkC6gY4g=
 go.senan.xyz/wrtag v0.18.1-0.20250930121808-19bf03481e5e/go.mod h1:iBOnQIdvi55Y47SJxc4e5k1eu1bSeUwsq4hbFZOnXHU=
 golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
