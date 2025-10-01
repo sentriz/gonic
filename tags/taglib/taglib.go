@@ -32,7 +32,7 @@ func (Reader) Read(absPath string) (tags.Properties, tags.Tags, error) {
 		return tags.Properties{}, nil, fmt.Errorf("read tags: %w", err)
 	}
 
-	return tags.Properties{Length: tp.Length, Bitrate: tp.Bitrate, HasCover: tp.HasImage}, tag, nil
+	return tags.Properties{Length: tp.Length, Bitrate: tp.Bitrate, HasCover: len(tp.Images) > 0}, tag, nil
 }
 
 func (Reader) ReadCover(absPath string) ([]byte, error) {

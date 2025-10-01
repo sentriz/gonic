@@ -23,14 +23,14 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mmcdole/gofeed v1.3.0
-	github.com/ncruces/go-sqlite3 v0.29.0
+	github.com/ncruces/go-sqlite3 v0.29.1
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/philippta/go-template v0.0.0-20220911145045-4556aca435e4
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
 	github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981
 	github.com/stretchr/testify v1.11.1
 	go.senan.xyz/flagconf v0.1.9
-	go.senan.xyz/taglib v0.9.0
+	go.senan.xyz/taglib v0.10.1
 	go.senan.xyz/wrtag v0.18.1-0.20250930121808-19bf03481e5e
 	golang.org/x/net v0.44.0
 	golang.org/x/sync v0.17.0
