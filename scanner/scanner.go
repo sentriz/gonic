@@ -64,7 +64,7 @@ func New(musicDirs []string, db *db.DB, multiValueSettings map[Tag]MultiValueSet
 
 func (s *Scanner) IsScanning() bool    { return atomic.LoadInt32(s.scanning) == 1 }
 func (s *Scanner) StartScanning() bool { return atomic.CompareAndSwapInt32(s.scanning, 0, 1) }
-func (s *Scanner) StopScanning()       { defer atomic.StoreInt32(s.scanning, 0) }
+func (s *Scanner) StopScanning()       { atomic.StoreInt32(s.scanning, 0) }
 
 type ScanOptions struct {
 	IsFull bool
@@ -483,7 +483,7 @@ func populateAlbumEmbeddedCover(tx *db.DB, album *db.Album, track *db.Track, trp
 	if trackID > 0 {
 		album.EmbeddedCoverTrackID = &trackID
 	}
-	if err := tx.Save(&album).Error; err != nil {
+	if err := tx.Save(album).Error; err != nil {
 		return fmt.Errorf("saving album for embedded cover track id: %w", err)
 	}
 	return nil
@@ -504,7 +504,7 @@ func populateAlbum(tx *db.DB, album *db.Album, trags map[string][]string, modTim
 		album.CreatedAt = createTime // reset created at to match filesytem for new albums
 	}
 
-	if err := tx.Save(&album).Error; err != nil {
+	if err := tx.Save(album).Error; err != nil {
 		return fmt.Errorf("saving album: %w", err)
 	}
 	return nil
@@ -527,15 +527,14 @@ func populateAlbumBasics(tx *db.DB, musicDir string, parent, album *db.Album, di
 	album.RightPathUDec = decoded(basename)
 	album.ParentID = parent.ID
 
-	if err := tx.Save(&album).Error; err != nil {
+	if err := tx.Save(album).Error; err != nil {
 		return fmt.Errorf("saving album: %w", err)
 	}
 
 	return nil
 }
 
-func populateTrack(tx *db.DB, scanEmbeddedCover bool, album *db.Album, track *db.Track, trprops tags.Properties, trags map[string][]string, absPath string, size int) error {
-	basename := filepath.Base(absPath)
+func populateTrack(tx *db.DB, scanEmbeddedCover bool, album *db.Album, track *db.Track, trprops tags.Properties, trags map[string][]string, basename string, size int) error {
 	track.Filename = basename
 	track.FilenameUDec = decoded(basename)
 	track.Size = size
@@ -564,7 +563,7 @@ func populateTrack(tx *db.DB, scanEmbeddedCover bool, album *db.Album, track *db
 	track.Length = int(trprops.Length.Seconds())
 	track.Bitrate = int(trprops.Bitrate)
 
-	if err := tx.Save(&track).Error; err != nil {
+	if err := tx.Save(track).Error; err != nil {
 		return fmt.Errorf("saving track: %w", err)
 	}
 
