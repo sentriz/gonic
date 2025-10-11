@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.19.0](https://www.github.com/sentriz/gonic/compare/v0.18.0...v0.19.0) (2025-10-11)
+
+
+### Features
+
+* **build:** add Cgo free database ([505f7d8](https://www.github.com/sentriz/gonic/commit/505f7d8ae6116c5dc1cfa50a5caba6333672be20))
+* **build:** add Cgo free tagging backend ([7802e20](https://www.github.com/sentriz/gonic/commit/7802e20e7214e1912fc84bb29c877984b99913c9))
+* **ci:** merge nightly and debug workflows ([ca85eed](https://www.github.com/sentriz/gonic/commit/ca85eed4c156c5370c1e3e4c7fbc31d4c1811f57))
+* **ci:** remove Cgo dependencies, cross compile without QEMU, upload static binaries ([e3db819](https://www.github.com/sentriz/gonic/commit/e3db819d8fd5ae14332c56ab7cebc01d46a6c76b))
+* **ffprobe:** add more supported file types ([8e7820a](https://www.github.com/sentriz/gonic/commit/8e7820a72e2360e3b5808299123fd5a686c084e8))
+* **gonic:** add `scan-embedded-cover-enabled` flag ([c69cb8c](https://www.github.com/sentriz/gonic/commit/c69cb8cf35203c6db15d3c1bd68a86cb91108b40))
+* **gonic:** use wrtag/normtag for nag normalisation ([aba758f](https://www.github.com/sentriz/gonic/commit/aba758f2ba6e6d20887a36a0cba80127c2b110a9))
+* **subsonic:** also read unsynced lyrics from .txt files and tag metadata ([eb0d8fd](https://www.github.com/sentriz/gonic/commit/eb0d8fd1c710bf0367348873858662c39515b676)), closes [#593](https://www.github.com/sentriz/gonic/issues/593)
+* **subsonic:** keep original cover file format when caching ([#609](https://www.github.com/sentriz/gonic/issues/609)) ([1af4ce3](https://www.github.com/sentriz/gonic/commit/1af4ce35873ff17dc6331e0d7c0e0385213b53b3)), closes [#11](https://www.github.com/sentriz/gonic/issues/11)
+* **subsonic:** return genres for getAlbumListTwo2 ([3909e9b](https://www.github.com/sentriz/gonic/commit/3909e9b5bdbc3deb1b5f48ff6f04b3d865a1b1bc)), closes [#605](https://www.github.com/sentriz/gonic/issues/605)
+* **subsonic:** support embedded cover art ([ec7cffd](https://www.github.com/sentriz/gonic/commit/ec7cffdd57f235adce93b7faf1998fdc9a164c52)), closes [#11](https://www.github.com/sentriz/gonic/issues/11) [#556](https://www.github.com/sentriz/gonic/issues/556)
+* **subsonic:** support embedded track level cover art ([d66814b](https://www.github.com/sentriz/gonic/commit/d66814bfd1d39ba92c6c368c0006052451675454)), closes [#11](https://www.github.com/sentriz/gonic/issues/11)
+* **tags:** add ffprobe reader ([3a9c03a](https://www.github.com/sentriz/gonic/commit/3a9c03ac88b6e6476206a87e3703e247c965e7c9))
+* **tags:** add Properties.HasCover ([bc0b6c0](https://www.github.com/sentriz/gonic/commit/bc0b6c0da4738c3ee8f40525e2ed1d85c51f927a))
+* **tags:** add ReadCover interface method ([e413bc3](https://www.github.com/sentriz/gonic/commit/e413bc35ded9463b245ff913fb2d90ee80ea3184))
+
 ## [0.18.0](https://www.github.com/sentriz/gonic/compare/v0.17.0...v0.18.0) (2025-09-18)
 
 
