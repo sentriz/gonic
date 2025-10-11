@@ -1,5 +1,61 @@
 # Changelog
 
+## [0.19.0](https://www.github.com/sentriz/gonic/compare/v0.18.0...v0.19.0) (2025-10-11)
+
+This release uses WebAssesmby for the [tagging](https://github.com/sentriz/go-taglib) and [database](https://github.com/ncruces/go-sqlite3) backends. This means that gonic no longer requires Cgo or external dependencies to build. As a result, static binaries will be available in the releases page, and Docker images for more architectures. Performance of scanning and tagging should also be improved.
+
+### Features
+
+* **build:** add Cgo free database ([505f7d8](https://www.github.com/sentriz/gonic/commit/505f7d8ae6116c5dc1cfa50a5caba6333672be20))
+* **build:** add Cgo free tagging backend ([7802e20](https://www.github.com/sentriz/gonic/commit/7802e20e7214e1912fc84bb29c877984b99913c9))
+* **ci:** merge nightly and debug workflows ([ca85eed](https://www.github.com/sentriz/gonic/commit/ca85eed4c156c5370c1e3e4c7fbc31d4c1811f57))
+* **ci:** remove Cgo dependencies, cross compile without QEMU, upload static binaries ([e3db819](https://www.github.com/sentriz/gonic/commit/e3db819d8fd5ae14332c56ab7cebc01d46a6c76b))
+* **ffprobe:** add more supported file types ([8e7820a](https://www.github.com/sentriz/gonic/commit/8e7820a72e2360e3b5808299123fd5a686c084e8))
+* **gonic:** add `scan-embedded-cover-enabled` flag ([c69cb8c](https://www.github.com/sentriz/gonic/commit/c69cb8cf35203c6db15d3c1bd68a86cb91108b40))
+* **gonic:** use wrtag/normtag for nag normalisation ([aba758f](https://www.github.com/sentriz/gonic/commit/aba758f2ba6e6d20887a36a0cba80127c2b110a9))
+* **subsonic:** also read unsynced lyrics from .txt files and tag metadata ([eb0d8fd](https://www.github.com/sentriz/gonic/commit/eb0d8fd1c710bf0367348873858662c39515b676)), closes [#593](https://www.github.com/sentriz/gonic/issues/593)
+* **subsonic:** keep original cover file format when caching ([#609](https://www.github.com/sentriz/gonic/issues/609)) ([1af4ce3](https://www.github.com/sentriz/gonic/commit/1af4ce35873ff17dc6331e0d7c0e0385213b53b3)), closes [#11](https://www.github.com/sentriz/gonic/issues/11)
+* **subsonic:** return genres for getAlbumListTwo2 ([3909e9b](https://www.github.com/sentriz/gonic/commit/3909e9b5bdbc3deb1b5f48ff6f04b3d865a1b1bc)), closes [#605](https://www.github.com/sentriz/gonic/issues/605)
+* **subsonic:** support embedded cover art ([ec7cffd](https://www.github.com/sentriz/gonic/commit/ec7cffdd57f235adce93b7faf1998fdc9a164c52)), closes [#11](https://www.github.com/sentriz/gonic/issues/11) [#556](https://www.github.com/sentriz/gonic/issues/556)
+* **subsonic:** support embedded track level cover art ([d66814b](https://www.github.com/sentriz/gonic/commit/d66814bfd1d39ba92c6c368c0006052451675454)), closes [#11](https://www.github.com/sentriz/gonic/issues/11)
+* **tags:** add ffprobe reader ([3a9c03a](https://www.github.com/sentriz/gonic/commit/3a9c03ac88b6e6476206a87e3703e247c965e7c9))
+* **tags:** add Properties.HasCover ([bc0b6c0](https://www.github.com/sentriz/gonic/commit/bc0b6c0da4738c3ee8f40525e2ed1d85c51f927a))
+* **tags:** add ReadCover interface method ([e413bc3](https://www.github.com/sentriz/gonic/commit/e413bc35ded9463b245ff913fb2d90ee80ea3184))
+
+### ⚠ Note to package maintainers
+
+- The `sqlite-dev` and `libtag-dev` (or your distro's equivalents) packages are **no longer required**; please remove them from package dependencies.
+- Build with `CGO_ENABLED=0` to produce static binaries.
+
+gonic now vendors reproducible WebAssembly backends for TagLib and SQLite, eliminating Cgo and external system libraries. Builds are fully static, cross-compiling is straightforward, and supply-chain verification is easier.
+
+Verify the vendored WASM artifacts using Artifact Attestations:
+- <https://github.com/sentriz/go-taglib/raw/refs/tags/v0.10.4/taglib.wasm> ([Attestations](https://github.com/sentriz/go-taglib/attestations/11402786))
+- <https://github.com/ncruces/go-sqlite3/raw/refs/tags/v0.29.1/embed/sqlite3.wasm> ([Attestations](https://github.com/ncruces/go-sqlite3/attestations/11344814))
+
+Example build pipeline:
+```console
+$ git clone https://github.com/sentriz/gonic
+$ cd gonic
+
+$ sha256sum "$(go list -m -f '{{.Dir}}' go.senan.xyz/taglib)/taglib.wasm"
+# expected ca5ce04b35f1e6cad8b8d9f00906a4c108ccd004b56e713db5ce69aa69b3805d (https://github.com/sentriz/go-taglib/attestations/11402786)
+
+$ sha256sum "$(go list -m -f '{{.Dir}}' github.com/ncruces/go-sqlite3)/embed/sqlite3.wasm"
+# expected 117262b6241d8de78ba564a44383fa1562e52f1a978de269e20a02b3c06c02e3 (https://github.com/ncruces/go-sqlite3/attestations/11344814)
+
+$ CGO_ENABLED=0 go build ./cmd/gonic/.
+```
+
+Opting out of WebAssembly:
+- If you prefer not to use the WebAssembly binaries, you can build with Cgo:
+
+```console
+go build -tags nowasm ./cmd/gonic/.
+```
+
+- Note: this mode is not supported, and tagging/scan performance may degrade.
+
 ## [0.18.0](https://www.github.com/sentriz/gonic/compare/v0.17.0...v0.18.0) (2025-09-18)
 
 
