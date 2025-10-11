@@ -48,13 +48,16 @@ $ CGO_ENABLED=0 go build ./cmd/gonic/.
 ```
 
 Opting out of WebAssembly:
-- If you prefer not to use the WebAssembly binaries, you can build with Cgo:
+
+- If you prefer not to use the WebAssembly binaries, you can build with `nowasm`:
 
 ```console
-go build -tags nowasm ./cmd/gonic/.
+$ go build -tags nowasm ./cmd/gonic/.
 ```
 
-- Note: this mode is not supported, and tagging/scan performance may degrade.
+- This mode is not supported, and tagging/scan performance will degrade.
+- Cgo will be used for sqlite, so sqlite-dev is still required.
+- `ffprobe` will be used for tagging, so that must be available in `$PATH`. `libtag-dev` is still not used in this mode.
 
 ## [0.18.0](https://www.github.com/sentriz/gonic/compare/v0.17.0...v0.18.0) (2025-09-18)
 
