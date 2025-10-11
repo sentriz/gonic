@@ -2,6 +2,7 @@
 
 ## [0.19.0](https://www.github.com/sentriz/gonic/compare/v0.18.0...v0.19.0) (2025-10-11)
 
+This release uses WebAssesmby for the [tagging](https://github.com/sentriz/go-taglib) and [database](https://github.com/ncruces/go-sqlite3) backends. This means that gonic no longer requires Cgo or external dependencies to build. As a result, static binaries will be available in the releases page, and Docker images for more architectures. Performance of scanning and tagging should also be improved.
 
 ### Features
 
@@ -20,6 +21,40 @@
 * **tags:** add ffprobe reader ([3a9c03a](https://www.github.com/sentriz/gonic/commit/3a9c03ac88b6e6476206a87e3703e247c965e7c9))
 * **tags:** add Properties.HasCover ([bc0b6c0](https://www.github.com/sentriz/gonic/commit/bc0b6c0da4738c3ee8f40525e2ed1d85c51f927a))
 * **tags:** add ReadCover interface method ([e413bc3](https://www.github.com/sentriz/gonic/commit/e413bc35ded9463b245ff913fb2d90ee80ea3184))
+
+### ⚠ Note to package maintainers
+
+- The `sqlite-dev` and `libtag-dev` (or your distro's equivalents) packages are **no longer required**; please remove them from package dependencies.
+- Build with `CGO_ENABLED=0` to produce static binaries.
+
+gonic now vendors reproducible WebAssembly backends for TagLib and SQLite, eliminating Cgo and external system libraries. Builds are fully static, cross-compiling is straightforward, and supply-chain verification is easier.
+
+Verify the vendored WASM artifacts using Artifact Attestations:
+- <https://github.com/sentriz/go-taglib/raw/refs/tags/v0.10.4/taglib.wasm> ([Attestations](https://github.com/sentriz/go-taglib/attestations/11402786))
+- <https://github.com/ncruces/go-sqlite3/raw/refs/tags/v0.29.1/embed/sqlite3.wasm> ([Attestations](https://github.com/ncruces/go-sqlite3/attestations/11344814))
+
+Example build pipeline:
+```console
+$ git clone https://github.com/sentriz/gonic
+$ cd gonic
+
+$ sha256sum "$(go list -m -f '{{.Dir}}' go.senan.xyz/taglib)/taglib.wasm"
+# expected ca5ce04b35f1e6cad8b8d9f00906a4c108ccd004b56e713db5ce69aa69b3805d (https://github.com/sentriz/go-taglib/attestations/11402786)
+
+$ sha256sum "$(go list -m -f '{{.Dir}}' github.com/ncruces/go-sqlite3)/embed/sqlite3.wasm"
+# expected 117262b6241d8de78ba564a44383fa1562e52f1a978de269e20a02b3c06c02e3 (https://github.com/ncruces/go-sqlite3/attestations/11344814)
+
+$ CGO_ENABLED=0 go build ./cmd/gonic/.
+```
+
+Opting out of WebAssembly:
+- If you prefer not to use the WebAssembly binaries, you can build with Cgo:
+
+```console
+go build -tags nowasm ./cmd/gonic/.
+```
+
+- Note: this mode is not supported, and tagging/scan performance may degrade.
 
 ## [0.18.0](https://www.github.com/sentriz/gonic/compare/v0.17.0...v0.18.0) (2025-09-18)
 
