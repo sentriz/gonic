@@ -21,6 +21,7 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specidpaths"
+	"go.senan.xyz/gonic/tags"
 	"go.senan.xyz/gonic/transcode"
 )
 
@@ -49,7 +50,7 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 	_, err = os.Stat(cachePath)
 	switch {
 	case os.IsNotExist(err):
-		reader, err := coverFor(c.dbc, c.artistInfoCache, id)
+		reader, err := coverFor(c.dbc, c.artistInfoCache, c.tagReader, id)
 		if err != nil {
 			return spec.NewError(10, "couldn't find cover %q: %v", id, err)
 		}
@@ -76,7 +77,7 @@ var (
 )
 
 // TODO: can we use specidpaths.Locate here?
-func coverFor(dbc *db.DB, artistInfoCache *artistinfocache.ArtistInfoCache, id specid.ID) (io.ReadCloser, error) {
+func coverFor(dbc *db.DB, artistInfoCache *artistinfocache.ArtistInfoCache, tagReader tags.Reader, id specid.ID) (io.ReadCloser, error) {
 	switch id.Type {
 	case specid.Album:
 		return coverForAlbum(dbc, id.Value)
@@ -85,7 +86,9 @@ func coverFor(dbc *db.DB, artistInfoCache *artistinfocache.ArtistInfoCache, id s
 	case specid.Podcast:
 		return coverForPodcast(dbc, id.Value)
 	case specid.PodcastEpisode:
-		return coverGetPathPodcastEpisode(dbc, id.Value)
+		return coverForPodcastEpisode(dbc, id.Value)
+	case specid.Track:
+		return coverForTrack(dbc, tagReader, id.Value)
 	default:
 		return nil, errCoverNotFound
 	}
@@ -135,7 +138,7 @@ func coverForPodcast(dbc *db.DB, id int) (*os.File, error) {
 	return os.Open(filepath.Join(podcast.RootDir, podcast.Image))
 }
 
-func coverGetPathPodcastEpisode(dbc *db.DB, id int) (*os.File, error) {
+func coverForPodcastEpisode(dbc *db.DB, id int) (*os.File, error) {
 	var pe db.PodcastEpisode
 	err := dbc.
 		Preload("Podcast").
@@ -150,14 +153,38 @@ func coverGetPathPodcastEpisode(dbc *db.DB, id int) (*os.File, error) {
 	return os.Open(filepath.Join(pe.Podcast.RootDir, pe.Podcast.Image))
 }
 
+func coverForTrack(dbc *db.DB, tagReader tags.Reader, id int) (io.ReadCloser, error) {
+	var tr db.Track
+	err := dbc.
+		Preload("Album").
+		First(&tr, id).
+		Error
+	if err != nil {
+		return nil, fmt.Errorf("select track: %w", err)
+	}
+
+	absPath := tr.AbsPath()
+
+	cover, err := tagReader.ReadCover(absPath)
+	if err != nil {
+		return nil, fmt.Errorf("read cover: %w", err)
+	}
+	if len(cover) == 0 {
+		return nil, errCoverEmpty
+	}
+
+	return io.NopCloser(bytes.NewReader(cover)), nil
+}
+
 func coverScaleAndSave(reader io.Reader, cachePath string, size int) error {
 	src, err := imaging.Decode(reader)
 	if err != nil {
 		return fmt.Errorf("resizing: %w", err)
 	}
-	width := min(size,
-		// don't upscale images
-		src.Bounds().Dx())
+
+	// don't upscale images
+	width := min(size, src.Bounds().Dx())
+
 	if err := imaging.Save(imaging.Resize(src, width, 0, imaging.Lanczos), cachePath); err != nil {
 		return fmt.Errorf("caching %q: %w", cachePath, err)
 	}

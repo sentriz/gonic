@@ -2,7 +2,6 @@
 package db
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -59,7 +58,6 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202206101425", migrateUser),
 		construct(ctx, "202207251148", migrateStarRating),
 		construct(ctx, "202211111057", migratePlaylistsQueuesToFullID),
-		constructNoTx(ctx, "202212272312", backupDBPre016),
 		construct(ctx, "202304221528", migratePlaylistsToM3U),
 		construct(ctx, "202305301718", migratePlayCountToLength),
 		construct(ctx, "202307281628", migrateAlbumArtistsMany2Many),
@@ -81,6 +79,8 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202505262025", migrateAlbumAddIndexOnBrainzID),
 		construct(ctx, "202507062103", migrateAlbumCompilationReleaseType),
 		construct(ctx, "202508261102", migrateAddLyrics),
+		construct(ctx, "202509291741", migrateAddAlbumEmbeddedCoverTrackID),
+		construct(ctx, "202509301448", migrateAddTrackEmbeddedCover),
 	}
 
 	return gormigrate.
@@ -738,13 +738,6 @@ func migratePlaylistsPaths(tx *gorm.DB, ctx MigrationContext) error {
 	return nil
 }
 
-func backupDBPre016(tx *gorm.DB, ctx MigrationContext) error {
-	if !ctx.Production {
-		return nil
-	}
-	return Dump(context.Background(), tx, fmt.Sprintf("%s.%d.bak", ctx.DBPath, time.Now().Unix()))
-}
-
 func migrateAlbumTagArtistString(tx *gorm.DB, _ MigrationContext) error {
 	return tx.AutoMigrate(Album{}).Error
 }
@@ -864,5 +857,13 @@ func migrateAlbumCompilationReleaseType(tx *gorm.DB, _ MigrationContext) error {
 }
 
 func migrateAddLyrics(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(Track{}).Error
+}
+
+func migrateAddAlbumEmbeddedCoverTrackID(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(Album{}).Error
+}
+
+func migrateAddTrackEmbeddedCover(tx *gorm.DB, _ MigrationContext) error {
 	return tx.AutoMigrate(Track{}).Error
 }

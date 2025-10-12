@@ -21,7 +21,7 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/fileutil"
-	"go.senan.xyz/gonic/tags/tagcommon"
+	"go.senan.xyz/gonic/tags"
 )
 
 var ErrNoAudioInFeedItem = errors.New("no audio in feed item")
@@ -34,10 +34,10 @@ type Podcasts struct {
 	httpClient *http.Client
 	db         *db.DB
 	baseDir    string
-	tagReader  tagcommon.Reader
+	tagReader  tags.Reader
 }
 
-func New(db *db.DB, base string, tagReader tagcommon.Reader) *Podcasts {
+func New(db *db.DB, base string, tagReader tags.Reader) *Podcasts {
 	return &Podcasts{
 		db:         db,
 		baseDir:    base,
@@ -536,14 +536,14 @@ func (p *Podcasts) doPodcastDownload(podcast *db.Podcast, podcastEpisode *db.Pod
 		return fmt.Errorf("writing podcast episode: %w", err)
 	}
 
-	podcastTags, err := p.tagReader.Read(podcastEpisode.AbsPath())
+	podcastProps, _, err := p.tagReader.Read(podcastEpisode.AbsPath())
 	if err != nil {
 		return fmt.Errorf("read podcast tags: %w", err)
 	}
 
 	podcastEpisode.Status = db.PodcastEpisodeStatusCompleted
-	podcastEpisode.Bitrate = podcastTags.Bitrate()
-	podcastEpisode.Length = podcastTags.Length()
+	podcastEpisode.Bitrate = int(podcastProps.Bitrate)
+	podcastEpisode.Length = int(podcastProps.Length.Seconds())
 
 	stat, _ := file.Stat()
 	podcastEpisode.Size = int(stat.Size())

@@ -477,12 +477,12 @@ type Lyrics struct {
 }
 
 type Lyric struct {
-	Start int64  `xml:"start,attr" json:"start"`
+	Start *int64 `xml:"start,attr,omitempty" json:"start,omitempty"`
 	Value string `xml:",chardata" json:"value"`
 }
 
 type LyricsList struct {
-	StructuredLyrics []StructuredLyrics `xml:"structuredLyrics" json:"structuredLyrics"`
+	StructuredLyrics []*StructuredLyrics `xml:"structuredLyrics" json:"structuredLyrics"`
 }
 
 type StructuredLyrics struct {

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -512,30 +513,37 @@ func (c *Controller) ServeGetLyrics(r *http.Request) *spec.Response {
 
 	sub := spec.NewResponse()
 
-	if track.TagLyrics != "" {
-		sub.Lyrics = &spec.Lyrics{
-			Value:  track.TagLyrics,
-			Artist: track.TagTrackArtist,
-			Title:  track.TagTitle,
-		}
-		return sub
-	}
-
-	_, text, err := lyricsFile(track)
-	if os.IsNotExist(err) {
-		return sub
-	}
-	if err != nil {
-		return spec.NewError(0, "lyricsFile: %v", err)
-	}
-
-	contents := strings.Join(text, "\n")
-
 	sub.Lyrics = &spec.Lyrics{
-		Value:  contents,
 		Artist: track.TagTrackArtist,
 		Title:  track.TagTitle,
+		Value:  "",
 	}
+
+	lyrics, err := lyricsAll(track)
+	if err != nil {
+		return spec.NewError(0, "get lyrics: %v", err)
+	}
+	if len(lyrics) == 0 {
+		return sub
+	}
+
+	// prefer unsynced for this endpoint
+	slices.SortFunc(lyrics, func(a, b *spec.StructuredLyrics) int {
+		if a.Synced {
+			return +1
+		}
+		return -1
+	})
+
+	lyric := lyrics[0]
+
+	var lines []string
+	for _, l := range lyric.Lines {
+		lines = append(lines, l.Value)
+	}
+
+	sub.Lyrics.Value = strings.Join(lines, "\n")
+
 	return sub
 }
 
@@ -562,81 +570,165 @@ func (c *Controller) ServeGetLyricsBySongID(r *http.Request) *spec.Response {
 	}
 
 	sub := spec.NewResponse()
+	sub.LyricsList = &spec.LyricsList{
+		StructuredLyrics: []*spec.StructuredLyrics{},
+	}
 
-	if track.TagLyrics != "" {
-		times, lrc, err := lrc.ParseString(track.TagLyrics)
-		if err != nil {
-			return spec.NewError(0, "lyricsFile: %v", err)
-		}
+	structuredLyrics, err := lyricsAll(track)
+	if err != nil {
+		return spec.NewError(0, "get lyrics: %v", err)
+	}
 
+	sub.LyricsList.StructuredLyrics = structuredLyrics
+
+	return sub
+}
+
+func lyricsAll(track db.Track) ([]*spec.StructuredLyrics, error) {
+	var r []*spec.StructuredLyrics
+
+	fromTags, err := lyricsFromTags(track)
+	if err != nil {
+		return nil, fmt.Errorf("from tags: %w", err)
+	}
+	if fromTags != nil {
+		r = append(r, fromTags)
+	}
+
+	fromFile, err := lyricsFromFile(track)
+	if err != nil {
+		return nil, fmt.Errorf("from file: %w", err)
+	}
+	if fromFile != nil {
+		r = append(r, fromFile)
+	}
+
+	fromFileUnsynced, err := lyricsFromFileUnsynced(track)
+	if err != nil {
+		return nil, fmt.Errorf("from file unsynced: %w", err)
+	}
+	if fromFileUnsynced != nil {
+		r = append(r, fromFileUnsynced)
+	}
+
+	return r, nil
+}
+
+func lyricsFromTags(track db.Track) (*spec.StructuredLyrics, error) {
+	if track.TagLyrics == "" {
+		return nil, nil
+	}
+
+	r := spec.StructuredLyrics{
+		Lang:          "xxx",
+		DisplayArtist: track.TagTrackArtist,
+		DisplayTitle:  track.TagTitle,
+	}
+
+	times, lrc, err := lrc.ParseString(track.TagLyrics)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(times) > 0 {
 		lines := make([]spec.Lyric, len(times))
 		for i, time := range times {
+			start := time.Milliseconds()
 			lines[i] = spec.Lyric{
-				Start: time.Milliseconds(),
+				Start: &start,
 				Value: strings.TrimSpace(lrc[i]),
 			}
 		}
 
-		structured := spec.StructuredLyrics{
-			Lang:          "xxx",
-			Synced:        true,
-			Lines:         lines,
-			DisplayArtist: track.TagTrackArtist,
-			DisplayTitle:  track.TagTitle,
-			Offset:        0,
-		}
+		r.Synced = true
+		r.Lines = lines
 
-		sub.LyricsList = &spec.LyricsList{
-			StructuredLyrics: []spec.StructuredLyrics{structured},
-		}
-		return sub
+		return &r, nil
 	}
 
-	times, lrc, err := lyricsFile(track)
+	rawLines := strings.Split(track.TagLyrics, "\n")
+
+	lines := make([]spec.Lyric, 0, len(rawLines))
+	for _, line := range rawLines {
+		lines = append(lines, spec.Lyric{
+			Value: strings.TrimSpace(line),
+		})
+	}
+
+	r.Lines = lines
+
+	return &r, nil
+}
+
+func lyricsFromFile(track db.Track) (*spec.StructuredLyrics, error) {
+	filePath := track.AbsPath()
+	fileDir := filepath.Dir(filePath)
+	fileName := strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath))
+
+	lrcContent, err := os.ReadFile(filepath.Join(fileDir, fileName+".lrc"))
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
 	if err != nil {
-		if os.IsNotExist(err) {
-			sub.LyricsList = &spec.LyricsList{
-				StructuredLyrics: []spec.StructuredLyrics{},
-			}
-			return sub
-		}
-		return spec.NewError(0, "lyricsFile: %v", err)
+		return nil, err
+	}
+
+	times, lrc, err := lrc.Parse(lrcContent)
+	if err != nil {
+		return nil, err
 	}
 
 	lines := make([]spec.Lyric, len(times))
 	for i, time := range times {
+		start := time.Milliseconds()
 		lines[i] = spec.Lyric{
-			Start: time.Milliseconds(),
+			Start: &start,
 			Value: strings.TrimSpace(lrc[i]),
 		}
 	}
 
-	structured := spec.StructuredLyrics{
+	r := spec.StructuredLyrics{
 		Lang:          "xxx",
 		Synced:        true,
 		Lines:         lines,
 		DisplayArtist: track.TagTrackArtist,
 		DisplayTitle:  track.TagTitle,
-		Offset:        0,
 	}
 
-	sub.LyricsList = &spec.LyricsList{
-		StructuredLyrics: []spec.StructuredLyrics{structured},
-	}
-	return sub
+	return &r, nil
 }
 
-func lyricsFile(file db.Track) ([]lrc.Duration, []lrc.Text, error) {
-	filePath := file.AbsPath()
+func lyricsFromFileUnsynced(track db.Track) (*spec.StructuredLyrics, error) {
+	filePath := track.AbsPath()
 	fileDir := filepath.Dir(filePath)
 	fileName := strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath))
 
-	lrcContent, err := os.ReadFile(filepath.Join(fileDir, fileName+".lrc"))
+	text, err := os.ReadFile(filepath.Join(fileDir, fileName+".txt"))
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
 	if err != nil {
-		return []lrc.Duration{}, []lrc.Text{}, err
+		return nil, err
 	}
 
-	return lrc.Parse(lrcContent)
+	r := spec.StructuredLyrics{
+		Lang:          "xxx",
+		DisplayArtist: track.TagTrackArtist,
+		DisplayTitle:  track.TagTitle,
+	}
+
+	rawLines := strings.Split(string(text), "\n")
+
+	lines := make([]spec.Lyric, 0, len(rawLines))
+	for _, line := range rawLines {
+		lines = append(lines, spec.Lyric{
+			Value: strings.TrimSpace(line),
+		})
+	}
+
+	r.Lines = lines
+
+	return &r, nil
 }
 
 func scrobbleStatsUpdateTrack(dbc *db.DB, track *db.Track, userID int, playTime time.Time) error {

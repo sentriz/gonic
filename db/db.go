@@ -1,7 +1,6 @@
 package db
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -13,7 +12,6 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
-	"github.com/mattn/go-sqlite3"
 
 	// TODO: remove this dep
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
@@ -43,7 +41,6 @@ type DB struct {
 }
 
 func New(path string, options url.Values) (*DB, error) {
-	// https://github.com/mattn/go-sqlite3#connection-string
 	url := url.URL{
 		Scheme: "file",
 		Opaque: path,
@@ -239,6 +236,8 @@ type Track struct {
 	ReplayGainAlbumGain float32
 	ReplayGainAlbumPeak float32
 
+	HasEmbeddedCover bool
+
 	TrackStar     *TrackStar
 	TrackRating   *TrackRating
 	AverageRating float64 `sql:"default: null"`
@@ -319,33 +318,34 @@ type Play struct {
 }
 
 type Album struct {
-	ID             int `gorm:"primary_key"`
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	ModifiedAt     time.Time
-	LeftPath       string `gorm:"unique_index:idx_album_abs_path"`
-	RightPath      string `gorm:"not null; unique_index:idx_album_abs_path" sql:"default: null"`
-	RightPathUDec  string `sql:"default: null"`
-	Parent         *Album
-	ParentID       int       `sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
-	RootDir        string    `gorm:"unique_index:idx_album_abs_path" sql:"default: null"`
-	Genres         []*Genre  `gorm:"many2many:album_genres"`
-	Cover          string    `sql:"default: null"`
-	Artists        []*Artist `gorm:"many2many:album_artists"`
-	TagTitle       string    `sql:"default: null"`
-	TagAlbumArtist string    // display purposes only
-	TagTitleUDec   string    `sql:"default: null"`
-	TagBrainzID    string    `sql:"default: null"`
-	TagYear        int       `sql:"default: null"`
-	TagCompilation bool      `sql:"default: null"`
-	TagReleaseType string    `sql:"default: null"`
-	Tracks         []*Track
-	ChildCount     int `sql:"-"`
-	Duration       int `sql:"-"`
-	AlbumStar      *AlbumStar
-	AlbumRating    *AlbumRating
-	AverageRating  float64 `sql:"default: null"`
-	Play           *Play
+	ID                   int `gorm:"primary_key"`
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
+	ModifiedAt           time.Time
+	LeftPath             string `gorm:"unique_index:idx_album_abs_path"`
+	RightPath            string `gorm:"not null; unique_index:idx_album_abs_path" sql:"default: null"`
+	RightPathUDec        string `sql:"default: null"`
+	Parent               *Album
+	ParentID             int       `sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	RootDir              string    `gorm:"unique_index:idx_album_abs_path" sql:"default: null"`
+	Genres               []*Genre  `gorm:"many2many:album_genres"`
+	Cover                string    `sql:"default: null"`
+	EmbeddedCoverTrackID *int      `sql:"default: null; type:int REFERENCES tracks(id) ON DELETE SET NULL"`
+	Artists              []*Artist `gorm:"many2many:album_artists"`
+	TagTitle             string    `sql:"default: null"`
+	TagAlbumArtist       string    // display purposes only
+	TagTitleUDec         string    `sql:"default: null"`
+	TagBrainzID          string    `sql:"default: null"`
+	TagYear              int       `sql:"default: null"`
+	TagCompilation       bool      `sql:"default: null"`
+	TagReleaseType       string    `sql:"default: null"`
+	Tracks               []*Track
+	ChildCount           int `sql:"-"`
+	Duration             int `sql:"-"`
+	AlbumStar            *AlbumStar
+	AlbumRating          *AlbumRating
+	AverageRating        float64 `sql:"default: null"`
+	Play                 *Play
 }
 
 func (a *Album) SID() *specid.ID {
@@ -354,6 +354,10 @@ func (a *Album) SID() *specid.ID {
 
 func (a *Album) ParentSID() *specid.ID {
 	return &specid.ID{Type: specid.Album, Value: a.ParentID}
+}
+
+func (a *Album) EmbeddedCoverTrackSID() *specid.ID {
+	return &specid.ID{Type: specid.Track, Value: *a.EmbeddedCoverTrackID}
 }
 
 func (a *Album) IndexRightPath() string {
@@ -619,46 +623,4 @@ func join[T fmt.Stringer](in []T, sep string) string {
 		strs = append(strs, id.String())
 	}
 	return strings.Join(strs, sep)
-}
-
-func Dump(ctx context.Context, db *gorm.DB, to string) error {
-	dest, err := New(to, url.Values{})
-	if err != nil {
-		return fmt.Errorf("create dest db: %w", err)
-	}
-	defer dest.Close()
-
-	connSrc, err := db.DB().Conn(ctx)
-	if err != nil {
-		return fmt.Errorf("getting src raw conn: %w", err)
-	}
-	defer connSrc.Close()
-
-	connDest, err := dest.DB.DB().Conn(ctx)
-	if err != nil {
-		return fmt.Errorf("getting dest raw conn: %w", err)
-	}
-	defer connDest.Close()
-
-	err = connDest.Raw(func(connDest any) error {
-		return connSrc.Raw(func(connSrc any) error {
-			connDestq := connDest.(*sqlite3.SQLiteConn)
-			connSrcq := connSrc.(*sqlite3.SQLiteConn)
-			bk, err := connDestq.Backup("main", connSrcq, "main")
-			if err != nil {
-				return fmt.Errorf("create backup db: %w", err)
-			}
-			for done, _ := bk.Step(-1); !done; { //nolint: revive
-			}
-			if err := bk.Finish(); err != nil {
-				return fmt.Errorf("finishing dump: %w", err)
-			}
-			return nil
-		})
-	})
-	if err != nil {
-		return fmt.Errorf("backing up: %w", err)
-	}
-
-	return nil
 }

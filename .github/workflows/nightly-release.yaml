@@ -2,7 +2,12 @@ name: Nightly Release
 on:
   schedule:
     - cron: "0 0 * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      custom_tag:
+        description: 'Custom tag (optional, will use "nightly" if not provided)'
+        required: false
+        type: string
 jobs:
   check-date:
     runs-on: ubuntu-latest
@@ -22,16 +27,12 @@ jobs:
     if: ${{ needs.check-date.outputs.should_run == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Setup Go
-        uses: actions/setup-go@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Golang with cache
+        uses: magnetikonline/action-golang-cache@v5
         with:
           go-version-file: go.mod
-      - name: Install dependencies
-        run: |
-          sudo apt update -qq
-          sudo apt install -y -qq build-essential git sqlite3 libtag1-dev ffmpeg mpv zlib1g-dev
       - name: Lint
         uses: golangci/golangci-lint-action@v8
         with:
@@ -39,21 +40,15 @@ jobs:
           version: v2.4.0
       - name: Test
         run: go test ./...
-  build-release:
+  build-docker:
     name: Build and release Docker image
     needs: [check-date, test]
     if: ${{ needs.check-date.outputs.should_run == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-        with:
-          image: tonistiigi/binfmt:latest
-          platforms: all
+        uses: actions/checkout@v4
       - name: Set up Docker Buildx
-        id: buildx
         uses: docker/setup-buildx-action@v1
         with:
           install: true
@@ -63,19 +58,24 @@ jobs:
         run: echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
       - name: Login into GitHub Container Registry
         run: echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-      - name: Generate short hash
+      - name: Generate short hash and set tag
         run: |
           _short_hash=${{ github.sha }}
           echo "SHORT_HASH=${_short_hash:0:7}" >> $GITHUB_ENV
+          if [ -n "${{ github.event.inputs.custom_tag }}" ]; then
+            echo "TAG_NAME=${{ github.event.inputs.custom_tag }}" >> $GITHUB_ENV
+          else
+            echo "TAG_NAME=nightly" >> $GITHUB_ENV
+          fi
       - name: Build and Push
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
           push: true
           tags: |
             ghcr.io/${{ github.repository }}:${{ env.SHORT_HASH }}
-            ghcr.io/${{ github.repository }}:nightly
+            ghcr.io/${{ github.repository }}:${{ env.TAG_NAME }}
             ${{ github.repository }}:${{ env.SHORT_HASH }}
-            ${{ github.repository }}:nightly
+            ${{ github.repository }}:${{ env.TAG_NAME }}

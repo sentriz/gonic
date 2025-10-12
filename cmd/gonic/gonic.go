@@ -26,7 +26,6 @@ import (
 
 	"github.com/google/shlex"
 	"github.com/gorilla/securecookie"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/sentriz/gormstore"
 	"golang.org/x/sync/errgroup"
 
@@ -46,8 +45,6 @@ import (
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/server/ctrladmin"
 	"go.senan.xyz/gonic/server/ctrlsubsonic"
-	"go.senan.xyz/gonic/tags/tagcommon"
-	"go.senan.xyz/gonic/tags/taglib"
 	"go.senan.xyz/gonic/transcode"
 )
 
@@ -72,6 +69,7 @@ func main() {
 	confScanIntervalMins := flag.Uint("scan-interval", 0, "interval (in minutes) to automatically scan music (optional)")
 	confScanAtStart := flag.Bool("scan-at-start-enabled", false, "whether to perform an initial scan at startup (optional)")
 	confScanWatcher := flag.Bool("scan-watcher-enabled", false, "whether to watch file system for new music and rescan (optional)")
+	confScanEmbeddedCover := flag.Bool("scan-embedded-cover-enabled", true, "whether to scan for embedded covers in audio files (optional)")
 
 	confJukeboxEnabled := flag.Bool("jukebox-enabled", false, "whether the subsonic jukebox api should be enabled (optional)")
 	confJukeboxMPVExtraArgs := flag.String("jukebox-mpv-extra-args", "", "extra command line arguments to pass to the jukebox mpv daemon (optional)")
@@ -199,14 +197,8 @@ func main() {
 	log.Printf("provided config\n")
 	flag.VisitAll(func(f *flag.Flag) {
 		value := strings.ReplaceAll(f.Value.String(), "\n", "")
-		log.Printf("    %-25s %s\n", f.Name, value)
+		log.Printf("    %-30s %s\n", f.Name, value)
 	})
-
-	tagReader := tagcommon.ChainReader{
-		taglib.TagLib{},
-		// ffprobe reader?
-		// nfo reader?
-	}
 
 	scannr := scanner.New(
 		ctrlsubsonic.MusicPaths(musicPaths),
@@ -218,6 +210,7 @@ func main() {
 		},
 		tagReader,
 		*confExcludePattern,
+		*confScanEmbeddedCover,
 	)
 	podcast := podcast.New(dbc, *confPodcastPath, tagReader)
 	transcoder := transcode.NewCachingTranscoder(
@@ -277,7 +270,7 @@ func main() {
 	if err != nil {
 		log.Panicf("error creating admin controller: %v\n", err)
 	}
-	ctrlSubsonic, err := ctrlsubsonic.New(dbc, scannr, musicPaths, *confPodcastPath, cacheDirAudio, cacheDirCovers, jukebx, playlistStore, scrobblers, podcast, transcoder, lastfmClient, artistInfoCache, albumInfoCache, resolveProxyPath, ldapConfig)
+	ctrlSubsonic, err := ctrlsubsonic.New(dbc, scannr, musicPaths, *confPodcastPath, cacheDirAudio, cacheDirCovers, jukebx, playlistStore, scrobblers, podcast, transcoder, lastfmClient, artistInfoCache, albumInfoCache, tagReader, resolveProxyPath, ldapConfig)
 	if err != nil {
 		log.Panicf("error creating subsonic controller: %v\n", err)
 	}

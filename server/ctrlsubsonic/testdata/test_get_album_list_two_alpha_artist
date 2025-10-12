@@ -21,6 +21,8 @@
           "songCount": 3,
           "duration": 300,
           "playCount": 0,
+          "genre": "Unknown Genre",
+          "genres": [{ "name": "Unknown Genre" }],
           "year": 2021,
           "isCompilation": false,
           "releaseTypes": ["Album"]
@@ -39,6 +41,8 @@
           "songCount": 3,
           "duration": 300,
           "playCount": 0,
+          "genre": "Unknown Genre",
+          "genres": [{ "name": "Unknown Genre" }],
           "year": 2021,
           "isCompilation": false,
           "releaseTypes": ["Album"]
@@ -57,6 +61,8 @@
           "songCount": 3,
           "duration": 300,
           "playCount": 0,
+          "genre": "Unknown Genre",
+          "genres": [{ "name": "Unknown Genre" }],
           "year": 2021,
           "isCompilation": false,
           "releaseTypes": ["Album"]
@@ -75,6 +81,8 @@
           "songCount": 3,
           "duration": 300,
           "playCount": 0,
+          "genre": "Unknown Genre",
+          "genres": [{ "name": "Unknown Genre" }],
           "year": 2021,
           "isCompilation": false,
           "releaseTypes": ["Album"]
@@ -93,6 +101,8 @@
           "songCount": 3,
           "duration": 300,
           "playCount": 0,
+          "genre": "Unknown Genre",
+          "genres": [{ "name": "Unknown Genre" }],
           "year": 2021,
           "isCompilation": false,
           "releaseTypes": ["Album"]
@@ -111,6 +121,8 @@
           "songCount": 3,
           "duration": 300,
           "playCount": 0,
+          "genre": "Unknown Genre",
+          "genres": [{ "name": "Unknown Genre" }],
           "year": 2021,
           "isCompilation": false,
           "releaseTypes": ["Album"]
@@ -129,6 +141,8 @@
           "songCount": 3,
           "duration": 300,
           "playCount": 0,
+          "genre": "Unknown Genre",
+          "genres": [{ "name": "Unknown Genre" }],
           "year": 2021,
           "isCompilation": false,
           "releaseTypes": ["Album"]
@@ -147,6 +161,8 @@
           "songCount": 3,
           "duration": 300,
           "playCount": 0,
+          "genre": "Unknown Genre",
+          "genres": [{ "name": "Unknown Genre" }],
           "year": 2021,
           "isCompilation": false,
           "releaseTypes": ["Album"]
@@ -165,6 +181,8 @@
           "songCount": 3,
           "duration": 300,
           "playCount": 0,
+          "genre": "Unknown Genre",
+          "genres": [{ "name": "Unknown Genre" }],
           "year": 2021,
           "isCompilation": false,
           "releaseTypes": ["Album"]
