@@ -490,9 +490,8 @@ func populateAlbumEmbeddedCover(tx *db.DB, album *db.Album, track *db.Track, trp
 }
 
 func populateAlbum(tx *db.DB, album *db.Album, trags map[string][]string, modTime, createTime time.Time) error {
-	albumName := tags.MustAlbum(trags)
-	album.TagTitle = albumName
-	album.TagTitleUDec = decoded(albumName)
+	album.TagTitle = album.RightPath
+	album.TagTitleUDec = decoded(album.RightPath)
 	album.TagAlbumArtist = tags.MustAlbumArtist(trags)
 	album.TagBrainzID = normtag.Get(trags, normtag.MusicBrainzReleaseID)
 	album.TagYear = tags.MustYear(trags)
