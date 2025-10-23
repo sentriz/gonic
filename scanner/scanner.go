@@ -455,7 +455,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 
 	// possible album level embedded covers come only from the first track
 	if i == 0 {
-		if err := populateAlbumEmbeddedCover(tx, album, track, trprops); err != nil {
+		if err := populateAlbumEmbeddedCover(tx, s.scanEmbeddedCover, album, track, trprops); err != nil {
 			return fmt.Errorf("populate embedded cover: %w", err)
 		}
 	}
@@ -466,9 +466,9 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 	return nil
 }
 
-func populateAlbumEmbeddedCover(tx *db.DB, album *db.Album, track *db.Track, trprops tags.Properties) error {
+func populateAlbumEmbeddedCover(tx *db.DB, scanEmbeddedCover bool, album *db.Album, track *db.Track, trprops tags.Properties) error {
 	var trackID int
-	if trprops.HasCover {
+	if scanEmbeddedCover && trprops.HasCover {
 		trackID = track.ID
 	}
 	var prevTrackID int
