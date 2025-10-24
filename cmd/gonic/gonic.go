@@ -88,6 +88,7 @@ func main() {
 
 	confPprof := flag.Bool("pprof", false, "enable the /debug/pprof endpoint (optional)")
 	confExpvar := flag.Bool("expvar", false, "enable the /debug/vars endpoint (optional)")
+	confLogDB := flag.Bool("log-db", false, "enable database query logging (optional)")
 
 	deprecatedConfGenreSplit := flag.String("genre-split", "", "(deprecated, see multi-value settings)")
 
@@ -137,7 +138,7 @@ func main() {
 		log.Fatalf("couldn't create covers cache path: %v\n", err)
 	}
 
-	dbc, err := db.New(*confDBPath, db.DefaultOptions())
+	dbc, err := db.New(*confDBPath, db.DefaultOptions(), *confLogDB)
 	if err != nil {
 		log.Fatalf("error opening database: %v\n", err)
 	}

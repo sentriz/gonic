@@ -40,7 +40,7 @@ type DB struct {
 	*gorm.DB
 }
 
-func New(path string, options url.Values) (*DB, error) {
+func New(path string, options url.Values, logQueries bool) (*DB, error) {
 	url := url.URL{
 		Scheme: "file",
 		Opaque: path,
@@ -51,12 +51,15 @@ func New(path string, options url.Values) (*DB, error) {
 		return nil, fmt.Errorf("with gorm: %w", err)
 	}
 	db.SetLogger(log.New(os.Stdout, "gorm ", 0))
+	if logQueries {
+		db.LogMode(true)
+	}
 	db.DB().SetMaxOpenConns(1)
 	return &DB{DB: db}, nil
 }
 
 func NewMock() (*DB, error) {
-	return New(":memory:", mockOptions())
+	return New(":memory:", mockOptions(), false)
 }
 
 func (db *DB) InsertBulkLeftMany(table string, head []string, left int, col []int) error {
