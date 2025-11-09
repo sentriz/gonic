@@ -29,15 +29,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Setup Golang with cache
-        uses: magnetikonline/action-golang-cache@v5
+      - name: Setup Go
+        uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
       - name: Lint
-        uses: golangci/golangci-lint-action@v8
+        uses: golangci/golangci-lint-action@v9
         with:
           install-mode: goinstall
-          version: v2.4.0
+          version: v2.6.1
       - name: Test
         run: go test ./...
   build-docker:
@@ -48,7 +48,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Set up Docker Buildx
+      - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v1
         with:
           install: true
