@@ -30,7 +30,7 @@ require (
 	github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981
 	github.com/stretchr/testify v1.11.1
 	go.senan.xyz/flagconf v0.1.9
-	go.senan.xyz/taglib v0.11.0
+	go.senan.xyz/taglib v0.11.1
 	go.senan.xyz/wrtag v0.19.0
 	golang.org/x/net v0.46.0
 	golang.org/x/sync v0.18.0
@@ -60,7 +60,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/ncruces/julianday v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/tetratelabs/wazero v1.10.0 // indirect
+	github.com/tetratelabs/wazero v1.10.1 // indirect
 	golang.org/x/crypto v0.43.0 // indirect
 	golang.org/x/image v0.32.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
