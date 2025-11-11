@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.20.0](https://www.github.com/sentriz/gonic/compare/v0.19.0...v0.20.0) (2025-11-11)
+
+
+### Features
+
+* **ci:** bump golangci-lint ([79e3898](https://www.github.com/sentriz/gonic/commit/79e3898c3b47d4b3120265fa9aa6ddc22d2fbe7c))
+* **gonic:** add log-db option to log queries ([75a0918](https://www.github.com/sentriz/gonic/commit/75a0918a7ef8bb6c9506de69dd4e6b6e8c35e567)), closes [#620](https://www.github.com/sentriz/gonic/issues/620)
+* **subsonic:** allow non admins to download podcast episodes ([c2ebe96](https://www.github.com/sentriz/gonic/commit/c2ebe9631300b54f60bf3fd12a4eae526a84d3de)), closes [#623](https://www.github.com/sentriz/gonic/issues/623)
+* **taglib:** add `.ape` as a supported filetype ([82642eb](https://www.github.com/sentriz/gonic/commit/82642eb1ca4b9587fe1764bf7efe8bbb2cb28e42)), closes [#615](https://www.github.com/sentriz/gonic/issues/615)
+
+
+### Bug Fixes
+
+* **podcast:** truncate filenames longer than 200 chars ([e12ab54](https://www.github.com/sentriz/gonic/commit/e12ab544c21f286ead3c84ead113be6658cef318)), closes [#624](https://www.github.com/sentriz/gonic/issues/624)
+* **scanner:** reset embedded cover for album when toggling `scan-embedded-cover` ([ea5e625](https://www.github.com/sentriz/gonic/commit/ea5e6252a175c6dea688c2910f7cb270b60b1c27)), closes [#619](https://www.github.com/sentriz/gonic/issues/619)
+
 ## [0.19.0](https://www.github.com/sentriz/gonic/compare/v0.18.0...v0.19.0) (2025-10-11)
 
 This release uses WebAssesmby for the [tagging](https://github.com/sentriz/go-taglib) and [database](https://github.com/ncruces/go-sqlite3) backends. This means that gonic no longer requires Cgo or external dependencies to build. As a result, static binaries will be available in the releases page, and Docker images for more architectures. Performance of scanning and tagging should also be improved.
