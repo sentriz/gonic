@@ -19,9 +19,6 @@ import (
 
 func DefaultOptions() url.Values {
 	return url.Values{
-		// with this, multiple connections share a single data and schema cache.
-		// see https://www.sqlite.org/sharedcache.html
-		"cache": {"shared"},
 		// with this, the db sleeps for a little while when locked. can prevent
 		// a SQLITE_BUSY. see https://www.sqlite.org/c3ref/busy_timeout.html
 		"_busy_timeout": {"30000"},
@@ -54,12 +51,18 @@ func New(path string, options url.Values, logQueries bool) (*DB, error) {
 	if logQueries {
 		db.LogMode(true)
 	}
-	db.DB().SetMaxOpenConns(1)
+	db.DB().SetMaxOpenConns(4)
 	return &DB{DB: db}, nil
 }
 
 func NewMock() (*DB, error) {
-	return New(":memory:", mockOptions(), false)
+	d, err := New(":memory:", mockOptions(), false)
+	if err != nil {
+		return nil, err
+	}
+	// in-memory databases can't be shared across multiple connections
+	d.DB.DB().SetMaxOpenConns(1)
+	return d, nil
 }
 
 func (db *DB) InsertBulkLeftMany(table string, head []string, left int, col []int) error {
