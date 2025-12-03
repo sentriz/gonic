@@ -10,6 +10,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	"go.senan.xyz/gonic/db"
@@ -70,6 +71,51 @@ type Controller struct {
 	tagReader       tags.Reader
 
 	resolveProxyPath ProxyPathResolver
+	nowPlayingCache  *NowPlayingCache
+}
+
+// NowPlayingRecord holds the currently-playing information for a user in memory.
+type NowPlayingRecord struct {
+	TrackID  int
+	Title    string
+	IsDir    bool
+	Album    string
+	Artist   string
+	Username string
+	Time     time.Time
+	PlayerID int
+}
+
+// NowPlayingCache is a threadsafe in-memory cache of NowPlayingRecord keyed by user ID.
+type NowPlayingCache struct {
+	mu    sync.RWMutex
+	cache map[int]NowPlayingRecord
+}
+
+func NewNowPlayingCache() *NowPlayingCache {
+	return &NowPlayingCache{
+		cache: make(map[int]NowPlayingRecord),
+	}
+}
+
+func (c *NowPlayingCache) Set(userID int, rec NowPlayingRecord) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.cache[userID] = rec
+}
+
+// GetRecent returns most recent records with timestamp within the provided duration.
+func (c *NowPlayingCache) GetRecent(d time.Duration) []NowPlayingRecord {
+	cutoff := time.Now().Add(-d)
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	var out []NowPlayingRecord
+	for _, r := range c.cache {
+		if r.Time.After(cutoff) || r.Time.Equal(cutoff) {
+			out = append(out, r)
+		}
+	}
+	return out
 }
 
 func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPath string, cacheAudioPath string, cacheCoverPath string, jukebox *jukebox.Jukebox, playlistStore *playlist.Store, scrobblers []scrobble.Scrobbler, podcasts *podcast.Podcasts, transcoder transcode.Transcoder, lastFMClient *lastfm.Client, artistInfoCache *artistinfocache.ArtistInfoCache, albumInfoCache *albuminfocache.AlbumInfoCache, tagReader tags.Reader, resolveProxyPath ProxyPathResolver) (*Controller, error) {
@@ -93,6 +139,7 @@ func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPa
 		tagReader:       tagReader,
 
 		resolveProxyPath: resolveProxyPath,
+		nowPlayingCache:  NewNowPlayingCache(),
 	}
 
 	chain := handlerutil.Chain(
@@ -133,6 +180,7 @@ func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPa
 	c.Handle("/getSimilarSongs2", chain(resp(c.ServeGetSimilarSongsTwo)))
 	c.Handle("/getLyrics", chain(resp(c.ServeGetLyrics)))
 	c.Handle("/getLyricsBySongId", chain(resp(c.ServeGetLyricsBySongID)))
+	c.Handle("/getNowPlaying", chain(resp(c.ServeGetNowPlaying)))
 
 	// raw
 	c.Handle("/getCoverArt", chainRaw(respRaw(c.ServeGetCoverArt)))
