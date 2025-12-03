@@ -134,6 +134,7 @@ func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPa
 	c.Handle("/getSimilarSongs2", chain(resp(c.ServeGetSimilarSongsTwo)))
 	c.Handle("/getLyrics", chain(resp(c.ServeGetLyrics)))
 	c.Handle("/getLyricsBySongId", chain(resp(c.ServeGetLyricsBySongID)))
+	c.Handle("/getNowPlaying", chain(resp(c.ServeGetNowPlaying)))
 
 	// raw
 	c.Handle("/getCoverArt", chainRaw(respRaw(c.ServeGetCoverArt)))

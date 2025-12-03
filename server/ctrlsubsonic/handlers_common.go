@@ -802,3 +802,39 @@ func lowerUDecOrHash(in string) string {
 	}
 	return string(lower)
 }
+
+func (c *Controller) ServeGetNowPlaying(r *http.Request) *spec.Response {
+	sub := spec.NewResponse()
+	sub.NowPlaying = &spec.NowPlaying{}
+
+	type NowPlayingRecord struct {
+		Username    string
+		MinutesAgo  int
+		UserID      int
+		TrackPlayID int
+		Title       string
+		IsDir       bool
+		Album       string
+		Artist      string
+	}
+
+	var records []NowPlayingRecord
+	// use track_plays.user_id as PlayerID, and track_plays.id as ID; limit to entries within the last 60 minutes
+	c.dbc.Raw("SELECT u.name AS username, CAST(round((julianday(CURRENT_TIMESTAMP) - julianday(time)) * 1440) AS INTEGER) AS minutes_ago, tp.user_id AS player_id, tp.id AS id, t.tag_title AS title, FALSE AS is_dir, a.tag_title AS album, t.tag_track_artist AS artist FROM track_plays tp NATURAL JOIN (SELECT max(id) AS id, user_id FROM track_plays GROUP BY user_id) JOIN users u ON tp.user_id = u.id JOIN tracks t ON tp.track_id = t.id JOIN albums a ON t.album_id = a.id WHERE minutes_ago <= 60").Scan(&records)
+
+	for _, rec := range records {
+		entry := &spec.NowPlayingEntry{
+			ID:         rec.TrackPlayID,
+			Title:      rec.Title,
+			IsDir:      rec.IsDir,
+			Album:      rec.Album,
+			Artist:     rec.Artist,
+			Username:   rec.Username,
+			MinutesAgo: rec.MinutesAgo,
+			PlayerID:   rec.UserID,
+		}
+		sub.NowPlaying.List = append(sub.NowPlaying.List, entry)
+	}
+
+	return sub
+}
