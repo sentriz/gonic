@@ -46,16 +46,16 @@ func TestServeGetNowPlaying_FromCache(t *testing.T) {
 
 	// newest first: alice then bob
 	first := list[0]
-	require.Equal(t, 101, first.Id)
+	require.Equal(t, 101, first.ID)
 	require.Equal(t, "Track One", first.Title)
 	require.Equal(t, "alice", first.Username)
-	require.Equal(t, 11, first.PlayerId)
+	require.Equal(t, 11, first.PlayerID)
 	require.GreaterOrEqual(t, first.MinutesAgo, 0)
 	require.LessOrEqual(t, first.MinutesAgo, 5)
 	second := list[1]
-	require.Equal(t, 202, second.Id)
+	require.Equal(t, 202, second.ID)
 	require.Equal(t, "Track Two", second.Title)
 	require.Equal(t, "bob", second.Username)
-	require.Equal(t, 22, second.PlayerId)
+	require.Equal(t, 22, second.PlayerID)
 	require.GreaterOrEqual(t, second.MinutesAgo, 29)
 }

@@ -503,8 +503,8 @@ type NowPlaying struct {
 type NowPlayingEntry struct {
 	Username   string `xml:"username,attr" json:"username"`
 	MinutesAgo int    `xml:"minutesAgo,attr" json:"minutesAgo"`
-	PlayerId   int    `xml:"playerId,attr" json:"playerId"`
-	Id         int    `xml:"id,attr" json:"id"`
+	PlayerID   int    `xml:"playerId,attr" json:"playerId"`
+	ID         int    `xml:"id,attr" json:"id"`
 	Title      string `xml:"title,attr" json:"title"`
 	IsDir      bool   `xml:"isDir,attr" json:"isDir"`
 	Album      string `xml:"album,attr" json:"album"`

@@ -800,14 +800,14 @@ func (c *Controller) ServeGetNowPlaying(r *http.Request) *spec.Response {
 	for _, rec := range records {
 		minutesAgo := int(time.Since(rec.Time).Minutes())
 		entry := &spec.NowPlayingEntry{
-			Id:         rec.TrackID,
+			ID:         rec.TrackID,
 			Title:      rec.Title,
 			IsDir:      rec.IsDir,
 			Album:      rec.Album,
 			Artist:     rec.Artist,
 			Username:   rec.Username,
 			MinutesAgo: minutesAgo,
-			PlayerId:   rec.PlayerID,
+			PlayerID:   rec.PlayerID,
 		}
 		sub.NowPlaying.List = append(sub.NowPlaying.List, entry)
 	}
