@@ -10,9 +10,10 @@ import (
 	"testing"
 
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	_ "go.senan.xyz/gonic/deps"
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/mockfs"

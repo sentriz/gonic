@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/deps"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/tags"
 	"go.senan.xyz/wrtag/tags/normtag"
@@ -35,7 +36,7 @@ func NewWithExcludePattern(tb testing.TB, excludePattern string) *MockFS {
 func newMockFS(tb testing.TB, dirs []string, excludePattern string) *MockFS {
 	tb.Helper()
 
-	dbc, err := db.NewMock()
+	dbc, err := db.NewMock(deps.DBDriverOptions())
 	if err != nil {
 		tb.Fatalf("create db: %v", err)
 	}

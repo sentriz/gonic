@@ -30,8 +30,10 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"go.senan.xyz/flagconf"
+
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/deps"
 	"go.senan.xyz/gonic/handlerutil"
 	"go.senan.xyz/gonic/infocache/albuminfocache"
 	"go.senan.xyz/gonic/infocache/artistinfocache"
@@ -138,7 +140,7 @@ func main() {
 		log.Fatalf("couldn't create covers cache path: %v\n", err)
 	}
 
-	dbc, err := db.New(*confDBPath, *confLogDB)
+	dbc, err := db.New(*confDBPath, deps.DBDriverOptions(), *confLogDB)
 	if err != nil {
 		log.Fatalf("error opening database: %v\n", err)
 	}
@@ -181,6 +183,8 @@ func main() {
 		value := strings.ReplaceAll(f.Value.String(), "\n", "")
 		log.Printf("    %-30s %s\n", f.Name, value)
 	})
+
+	tagReader := deps.TagReader
 
 	scannr := scanner.New(
 		ctrlsubsonic.MusicPaths(musicPaths),

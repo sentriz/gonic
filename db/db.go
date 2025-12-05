@@ -21,13 +21,14 @@ type DB struct {
 	*gorm.DB
 }
 
-func New(path string, logQueries bool) (*DB, error) {
-	url := url.URL{
-		Scheme: "file",
-		Opaque: path,
+func New(path string, opts url.Values, logQueries bool) (*DB, error) {
+	u := url.URL{
+		Scheme:   "file",
+		Opaque:   path,
+		RawQuery: opts.Encode(),
 	}
 
-	db, err := gorm.Open("sqlite3", url.String())
+	db, err := gorm.Open("sqlite3", u.String())
 	if err != nil {
 		return nil, fmt.Errorf("with gorm: %w", err)
 	}
@@ -39,16 +40,11 @@ func New(path string, logQueries bool) (*DB, error) {
 
 	db.DB().SetMaxOpenConns(4)
 
-	// https://www.sqlite.org/pragma.html
-	db.Exec("PRAGMA busy_timeout = 30000")
-	db.Exec("PRAGMA journal_mode = WAL")
-	db.Exec("PRAGMA foreign_keys = ON")
-
 	return &DB{DB: db}, nil
 }
 
-func NewMock() (*DB, error) {
-	d, err := New(":memory:", false)
+func NewMock(opts url.Values) (*DB, error) {
+	d, err := New(":memory:", opts, false)
 	if err != nil {
 		return nil, err
 	}
