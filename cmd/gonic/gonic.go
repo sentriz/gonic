@@ -138,7 +138,7 @@ func main() {
 		log.Fatalf("couldn't create covers cache path: %v\n", err)
 	}
 
-	dbc, err := db.New(*confDBPath, db.DefaultOptions(), *confLogDB)
+	dbc, err := db.New(*confDBPath, *confLogDB)
 	if err != nil {
 		log.Fatalf("error opening database: %v\n", err)
 	}

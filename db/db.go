@@ -17,46 +17,38 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
-func DefaultOptions() url.Values {
-	return url.Values{
-		// with this, the db sleeps for a little while when locked. can prevent
-		// a SQLITE_BUSY. see https://www.sqlite.org/c3ref/busy_timeout.html
-		"_busy_timeout": {"30000"},
-		"_journal_mode": {"WAL"},
-		"_foreign_keys": {"true"},
-	}
-}
-
-func mockOptions() url.Values {
-	return url.Values{
-		"_foreign_keys": {"true"},
-	}
-}
-
 type DB struct {
 	*gorm.DB
 }
 
-func New(path string, options url.Values, logQueries bool) (*DB, error) {
+func New(path string, logQueries bool) (*DB, error) {
 	url := url.URL{
 		Scheme: "file",
 		Opaque: path,
 	}
-	url.RawQuery = options.Encode()
+
 	db, err := gorm.Open("sqlite3", url.String())
 	if err != nil {
 		return nil, fmt.Errorf("with gorm: %w", err)
 	}
+
 	db.SetLogger(log.New(os.Stdout, "gorm ", 0))
 	if logQueries {
 		db.LogMode(true)
 	}
+
 	db.DB().SetMaxOpenConns(4)
+
+	// https://www.sqlite.org/pragma.html
+	db.Exec("PRAGMA busy_timeout = 30000")
+	db.Exec("PRAGMA journal_mode = WAL")
+	db.Exec("PRAGMA foreign_keys = ON")
+
 	return &DB{DB: db}, nil
 }
 
 func NewMock() (*DB, error) {
-	d, err := New(":memory:", mockOptions(), false)
+	d, err := New(":memory:", false)
 	if err != nil {
 		return nil, err
 	}
