@@ -497,7 +497,7 @@ func populateAlbum(tx *db.DB, album *db.Album, trags map[string][]string, modTim
 	album.TagBrainzID = normtag.Get(trags, normtag.MusicBrainzReleaseID)
 	album.TagYear = tags.MustYear(trags)
 	album.TagCompilation = tags.ParseBool(normtag.Get(trags, normtag.Compilation))
-	album.TagReleaseType = normtag.Get(trags, normtag.ReleaseType)
+	album.TagReleaseType = strings.Join(normtag.Values(trags, normtag.ReleaseType), ", ")
 
 	album.ModifiedAt = modTime
 	if album.CreatedAt.After(createTime) {
