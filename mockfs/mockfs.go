@@ -161,6 +161,21 @@ func (m *MockFS) RemoveAll(path string) {
 	}
 }
 
+func (m *MockFS) Move(src, dest string) {
+	srcAbs := filepath.Join(m.dir, src)
+	destAbs := filepath.Join(m.dir, dest)
+	if err := os.MkdirAll(filepath.Dir(destAbs), os.ModePerm); err != nil {
+		m.t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.Rename(srcAbs, destAbs); err != nil {
+		m.t.Fatalf("rename: %v", err)
+	}
+	if info, ok := m.tagReader.paths[srcAbs]; ok {
+		m.tagReader.paths[destAbs] = info
+		delete(m.tagReader.paths, srcAbs)
+	}
+}
+
 func (m *MockFS) Symlink(src, dest string) {
 	if err := os.MkdirAll(filepath.Dir(dest), os.ModePerm); err != nil {
 		m.t.Fatalf("mkdir: %v", err)
