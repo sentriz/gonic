@@ -508,6 +508,10 @@ func (p *Podcasts) doPodcastDownload(podcast *db.Podcast, podcastEpisode *db.Pod
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode/100 != 2 {
+		return fmt.Errorf("fetch podcast audio: unexpected status %s", resp.Status)
+	}
+
 	filename, err := getPodcastEpisodeFilename(podcast, podcastEpisode, resp.Header)
 	if err != nil {
 		return fmt.Errorf("get podcast episode filename: %w", err)
