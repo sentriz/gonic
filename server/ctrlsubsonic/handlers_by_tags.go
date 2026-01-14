@@ -15,6 +15,7 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/handlerutil"
+	"go.senan.xyz/gonic/lastfm"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
@@ -654,17 +655,9 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 	return sub
 }
 
-func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
-	params := r.Context().Value(CtxParams).(params.Params)
-	user := r.Context().Value(CtxUser).(*db.User)
-	count := params.GetOrInt("count", 10)
-	id, err := params.GetID("id")
-	if err != nil || id.Type != specid.Track {
-		return spec.NewError(10, "please provide an track `id` parameter")
-	}
-
+func (c *Controller) getSimilarSongsFromTrack(id specid.ID, params params.Params, user *db.User, count int) *spec.Response {
 	var track db.Track
-	err = c.dbc.
+	err := c.dbc.
 		Preload("Album").
 		Where("id=?", id.Value).
 		First(&track).
@@ -721,17 +714,9 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 	return sub
 }
 
-func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
-	params := r.Context().Value(CtxParams).(params.Params)
-	user := r.Context().Value(CtxUser).(*db.User)
-	count := params.GetOrInt("count", 10)
-	id, err := params.GetID("id")
-	if err != nil || id.Type != specid.Artist {
-		return spec.NewError(10, "please provide an artist `id` parameter")
-	}
-
+func (c *Controller) getSimilarSongsFromArtist(id specid.ID, params params.Params, user *db.User, count int) *spec.Response {
 	var artist db.Artist
-	err = c.dbc.
+	err := c.dbc.
 		Where("id=?", id.Value).
 		First(&artist).
 		Error
@@ -785,6 +770,118 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 		sub.SimilarSongsTwo.Tracks[i].TranscodeMeta = transcodeMeta
 	}
 	return sub
+}
+
+func (c *Controller) getSimilarSongsFromAlbum(id specid.ID, params params.Params, user *db.User, count int) *spec.Response {
+	var album db.Album
+	err := c.dbc.
+		Preload("Tracks").
+		Where("id=?", id.Value).
+		First(&album).
+		Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return spec.NewError(70, "couldn't find an album with that id")
+	}
+
+	var albumTracks []*db.Track
+	err = c.dbc.
+		Select("tracks.*").
+		Where("tracks.album_id=?", id.Value).
+		Order(gorm.Expr("random()")).
+		Find(&albumTracks).
+		Error
+	if err != nil {
+		return spec.NewError(0, "error finding tracks: %v", err)
+	}
+
+	var similarTracks lastfm.SimilarTracks
+
+	for _, albumTrack := range albumTracks {
+		similarTracks, err = c.lastFMClient.TrackGetSimilarTracks(albumTrack.TagTrackArtist, albumTrack.TagTitle)
+		if err != nil {
+			log.Printf("error fetching similar songs from lastfm: %v", err)
+			continue
+		}
+		if len(similarTracks.Tracks) == 0 {
+			log.Printf("no similar songs found for track: %v", albumTrack.TagTitle)
+			continue
+		}
+
+		break
+	}
+
+	similarTrackNames := make([]string, len(similarTracks.Tracks))
+	for i, t := range similarTracks.Tracks {
+		similarTrackNames[i] = t.Name
+	}
+
+	var tracks []*db.Track
+	err = c.dbc.
+		Select("tracks.*").
+		Preload("Album").
+		Preload("Artists").
+		Preload("TrackStar", "user_id=?", user.ID).
+		Preload("TrackRating", "user_id=?", user.ID).
+		Where("tracks.tag_title IN (?)", similarTrackNames).
+		Order(gorm.Expr("random()")).
+		Limit(count).
+		Find(&tracks).
+		Error
+	if err != nil {
+		return spec.NewError(0, "error finding tracks: %v", err)
+	}
+	if len(tracks) == 0 {
+		return spec.NewError(70, "no similar songs could be matched with collection in database: %v", album.TagTitle)
+	}
+
+	sub := spec.NewResponse()
+	sub.SimilarSongs = &spec.SimilarSongs{
+		Tracks: make([]*spec.TrackChild, len(tracks)),
+	}
+
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
+
+	for i, track := range tracks {
+		sub.SimilarSongs.Tracks[i] = spec.NewTrackByTags(track, track.Album)
+		sub.SimilarSongs.Tracks[i].TranscodeMeta = transcodeMeta
+	}
+	return sub
+}
+
+func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
+	count := params.GetOrInt("count", 10)
+	id, err := params.GetID("id")
+	if err != nil {
+		return spec.NewError(10, "please provide an `id` parameter")
+	}
+
+	if id.Type == specid.Track {
+		return c.getSimilarSongsFromTrack(id, params, user, count)
+	}
+
+	if id.Type == specid.Album {
+		return c.getSimilarSongsFromAlbum(id, params, user, count)
+	}
+
+	if id.Type == specid.Artist {
+		return c.getSimilarSongsFromArtist(id, params, user, count)
+	}
+
+	return spec.NewError(10, "please provide a artist, album or track `id` parameter")
+}
+
+func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
+	count := params.GetOrInt("count", 10)
+	id, err := params.GetID("id")
+	if err != nil || id.Type != specid.Artist {
+		return spec.NewError(10, "please provide an artist `id` parameter")
+	}
+
+	return c.getSimilarSongsFromArtist(id, params, user, count)
 }
 
 func starIDsOfType(p params.Params, typ specid.IDT) []int {
