@@ -783,20 +783,9 @@ func (c *Controller) getSimilarSongsFromAlbum(id specid.ID, params params.Params
 		return spec.NewError(70, "couldn't find an album with that id")
 	}
 
-	var albumTracks []*db.Track
-	err = c.dbc.
-		Select("tracks.*").
-		Where("tracks.album_id=?", id.Value).
-		Order(gorm.Expr("random()")).
-		Find(&albumTracks).
-		Error
-	if err != nil {
-		return spec.NewError(0, "error finding tracks: %v", err)
-	}
-
 	var similarTracks lastfm.SimilarTracks
 
-	for _, albumTrack := range albumTracks {
+	for _, albumTrack := range album.Tracks {
 		similarTracks, err = c.lastFMClient.TrackGetSimilarTracks(albumTrack.TagTrackArtist, albumTrack.TagTitle)
 		if err != nil {
 			log.Printf("error fetching similar songs from lastfm: %v", err)
@@ -806,7 +795,6 @@ func (c *Controller) getSimilarSongsFromAlbum(id specid.ID, params params.Params
 			log.Printf("no similar songs found for track: %v", albumTrack.TagTitle)
 			continue
 		}
-
 		break
 	}
 
