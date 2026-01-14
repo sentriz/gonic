@@ -655,6 +655,42 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 	return sub
 }
 
+func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
+	count := params.GetOrInt("count", 10)
+	id, err := params.GetID("id")
+	if err != nil {
+		return spec.NewError(10, "please provide an `id` parameter")
+	}
+
+	if id.Type == specid.Track {
+		return getSimilarSongsFromTrack(c, id, params, user, count)
+	}
+
+	if id.Type == specid.Album {
+		return getSimilarSongsFromAlbum(c, id, params, user, count)
+	}
+
+	if id.Type == specid.Artist {
+		return getSimilarSongsFromArtist(c, id, params, user, count)
+	}
+
+	return spec.NewError(10, "please provide a artist, album or track `id` parameter")
+}
+
+func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
+	count := params.GetOrInt("count", 10)
+	id, err := params.GetID("id")
+	if err != nil || id.Type != specid.Artist {
+		return spec.NewError(10, "please provide an artist `id` parameter")
+	}
+
+	return getSimilarSongsFromArtist(c, id, params, user, count)
+}
+
 func getSimilarSongsFromTrack(c *Controller, id specid.ID, params params.Params, user *db.User, count int) *spec.Response {
 	var track db.Track
 	err := c.dbc.
@@ -838,42 +874,6 @@ func getSimilarSongsFromAlbum(c *Controller, id specid.ID, params params.Params,
 		sub.SimilarSongs.Tracks[i].TranscodeMeta = transcodeMeta
 	}
 	return sub
-}
-
-func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
-	params := r.Context().Value(CtxParams).(params.Params)
-	user := r.Context().Value(CtxUser).(*db.User)
-	count := params.GetOrInt("count", 10)
-	id, err := params.GetID("id")
-	if err != nil {
-		return spec.NewError(10, "please provide an `id` parameter")
-	}
-
-	if id.Type == specid.Track {
-		return getSimilarSongsFromTrack(c, id, params, user, count)
-	}
-
-	if id.Type == specid.Album {
-		return getSimilarSongsFromAlbum(c, id, params, user, count)
-	}
-
-	if id.Type == specid.Artist {
-		return getSimilarSongsFromArtist(c, id, params, user, count)
-	}
-
-	return spec.NewError(10, "please provide a artist, album or track `id` parameter")
-}
-
-func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
-	params := r.Context().Value(CtxParams).(params.Params)
-	user := r.Context().Value(CtxUser).(*db.User)
-	count := params.GetOrInt("count", 10)
-	id, err := params.GetID("id")
-	if err != nil || id.Type != specid.Artist {
-		return spec.NewError(10, "please provide an artist `id` parameter")
-	}
-
-	return getSimilarSongsFromArtist(c, id, params, user, count)
 }
 
 func starIDsOfType(p params.Params, typ specid.IDT) []int {
