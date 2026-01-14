@@ -798,6 +798,10 @@ func (c *Controller) getSimilarSongsFromAlbum(id specid.ID, params params.Params
 		break
 	}
 
+	if len(similarTracks.Tracks) == 0 {
+		return spec.NewError(0, "no similar songs found for album: %v", album.TagTitle)
+	}
+
 	similarTrackNames := make([]string, len(similarTracks.Tracks))
 	for i, t := range similarTracks.Tracks {
 		similarTrackNames[i] = t.Name
