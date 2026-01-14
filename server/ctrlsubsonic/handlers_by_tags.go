@@ -664,19 +664,29 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 
-	if id.Type == specid.Track {
-		return getSimilarSongsFromTrack(c, id, params, user, count)
+	var tracks []*spec.TrackChild
+	var sub *spec.Response
+
+	switch id.Type {
+	case specid.Track:
+		tracks, sub = getSimilarSongsFromTrack(c, id, params, user, count)
+	case specid.Album:
+		tracks, sub = getSimilarSongsFromAlbum(c, id, params, user, count)
+	case specid.Artist:
+		tracks, sub = getSimilarSongsFromArtist(c, id, params, user, count)
+	default:
+		return spec.NewError(10, "please provide a artist, album or track `id` parameter")
 	}
 
-	if id.Type == specid.Album {
-		return getSimilarSongsFromAlbum(c, id, params, user, count)
+	if sub != nil {
+		return sub
 	}
 
-	if id.Type == specid.Artist {
-		return getSimilarSongsFromArtist(c, id, params, user, count)
+	sub = spec.NewResponse()
+	sub.SimilarSongs = &spec.SimilarSongs{
+		Tracks: tracks,
 	}
-
-	return spec.NewError(10, "please provide a artist, album or track `id` parameter")
+	return sub
 }
 
 func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
@@ -688,10 +698,19 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide an artist `id` parameter")
 	}
 
-	return getSimilarSongsFromArtist(c, id, params, user, count)
+	tracks, sub := getSimilarSongsFromArtist(c, id, params, user, count)
+	if sub != nil {
+		return sub
+	}
+
+	sub = spec.NewResponse()
+	sub.SimilarSongsTwo = &spec.SimilarSongsTwo{
+		Tracks: tracks,
+	}
+	return sub
 }
 
-func getSimilarSongsFromTrack(c *Controller, id specid.ID, params params.Params, user *db.User, count int) *spec.Response {
+func getSimilarSongsFromTrack(c *Controller, id specid.ID, params params.Params, user *db.User, count int) ([]*spec.TrackChild, *spec.Response) {
 	var track db.Track
 	err := c.dbc.
 		Preload("Album").
@@ -699,17 +718,17 @@ func getSimilarSongsFromTrack(c *Controller, id specid.ID, params params.Params,
 		First(&track).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return spec.NewError(70, "couldn't find a track with that id")
+		return nil, spec.NewError(70, "couldn't find a track with that id")
 	}
 
 	similarTracks, err := c.lastFMClient.TrackGetSimilarTracks(track.TagTrackArtist, track.TagTitle)
 	if err != nil {
 		log.Printf("error fetching similar songs from lastfm: %v", err)
-		return spec.NewResponse()
+		return nil, spec.NewResponse()
 	}
 
 	if len(similarTracks.Tracks) == 0 {
-		return spec.NewError(70, "no similar songs found for track: %v", track.TagTitle)
+		return nil, spec.NewError(70, "no similar songs found for track: %v", track.TagTitle)
 	}
 
 	similarTrackNames := make([]string, len(similarTracks.Tracks))
@@ -730,43 +749,40 @@ func getSimilarSongsFromTrack(c *Controller, id specid.ID, params params.Params,
 		Find(&tracks).
 		Error
 	if err != nil {
-		return spec.NewError(0, "error finding tracks: %v", err)
+		return nil, spec.NewError(0, "error finding tracks: %v", err)
 	}
 	if len(tracks) == 0 {
-		return spec.NewError(70, "no similar song could be match with collection in database: %v", track.TagTitle)
+		return nil, spec.NewError(70, "no similar song could be match with collection in database: %v", track.TagTitle)
 	}
 
-	sub := spec.NewResponse()
-	sub.SimilarSongs = &spec.SimilarSongs{
-		Tracks: make([]*spec.TrackChild, len(tracks)),
-	}
-
+	trackChildren := make([]*spec.TrackChild, len(tracks))
 	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
 
 	for i, track := range tracks {
-		sub.SimilarSongs.Tracks[i] = spec.NewTrackByTags(track, track.Album)
-		sub.SimilarSongs.Tracks[i].TranscodeMeta = transcodeMeta
+		trackChildren[i] = spec.NewTrackByTags(track, track.Album)
+		trackChildren[i].TranscodeMeta = transcodeMeta
 	}
-	return sub
+
+	return trackChildren, nil
 }
 
-func getSimilarSongsFromArtist(c *Controller, id specid.ID, params params.Params, user *db.User, count int) *spec.Response {
+func getSimilarSongsFromArtist(c *Controller, id specid.ID, params params.Params, user *db.User, count int) ([]*spec.TrackChild, *spec.Response) {
 	var artist db.Artist
 	err := c.dbc.
 		Where("id=?", id.Value).
 		First(&artist).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return spec.NewError(70, "artist with id %q not found", id)
+		return nil, spec.NewError(70, "artist with id %q not found", id)
 	}
 
 	similarArtists, err := c.lastFMClient.ArtistGetSimilar(artist.Name)
 	if err != nil {
 		log.Printf("error fetching artist info from lastfm: %v", err)
-		return spec.NewResponse()
+		return nil, spec.NewResponse()
 	}
 	if len(similarArtists.Artists) == 0 {
-		return spec.NewError(0, "no similar artist found for: %v", artist.Name)
+		return nil, spec.NewError(0, "no similar artist found for: %v", artist.Name)
 	}
 
 	artistNames := make([]string, len(similarArtists.Artists))
@@ -789,26 +805,24 @@ func getSimilarSongsFromArtist(c *Controller, id specid.ID, params params.Params
 		Find(&tracks).
 		Error
 	if err != nil {
-		return spec.NewError(0, "error finding tracks: %v", err)
+		return nil, spec.NewError(0, "error finding tracks: %v", err)
 	}
 	if len(tracks) == 0 {
-		return spec.NewError(70, "no similar song could be match with collection in database: %v", artist.Name)
+		return nil, spec.NewError(70, "no similar song could be match with collection in database: %v", artist.Name)
 	}
 
-	sub := spec.NewResponse()
-	sub.SimilarSongsTwo = &spec.SimilarSongsTwo{
-		Tracks: make([]*spec.TrackChild, len(tracks)),
-	}
-
+	trackChildren := make([]*spec.TrackChild, len(tracks))
 	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
+
 	for i, track := range tracks {
-		sub.SimilarSongsTwo.Tracks[i] = spec.NewTrackByTags(track, track.Album)
-		sub.SimilarSongsTwo.Tracks[i].TranscodeMeta = transcodeMeta
+		trackChildren[i] = spec.NewTrackByTags(track, track.Album)
+		trackChildren[i].TranscodeMeta = transcodeMeta
 	}
-	return sub
+
+	return trackChildren, nil
 }
 
-func getSimilarSongsFromAlbum(c *Controller, id specid.ID, params params.Params, user *db.User, count int) *spec.Response {
+func getSimilarSongsFromAlbum(c *Controller, id specid.ID, params params.Params, user *db.User, count int) ([]*spec.TrackChild, *spec.Response) {
 	var album db.Album
 	err := c.dbc.
 		Preload("Tracks").
@@ -816,7 +830,7 @@ func getSimilarSongsFromAlbum(c *Controller, id specid.ID, params params.Params,
 		First(&album).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return spec.NewError(70, "couldn't find an album with that id")
+		return nil, spec.NewError(70, "couldn't find an album with that id")
 	}
 
 	var similarTracks lastfm.SimilarTracks
@@ -835,7 +849,7 @@ func getSimilarSongsFromAlbum(c *Controller, id specid.ID, params params.Params,
 	}
 
 	if len(similarTracks.Tracks) == 0 {
-		return spec.NewError(0, "no similar songs found for album: %v", album.TagTitle)
+		return nil, spec.NewError(0, "no similar songs found for album: %v", album.TagTitle)
 	}
 
 	similarTrackNames := make([]string, len(similarTracks.Tracks))
@@ -856,24 +870,21 @@ func getSimilarSongsFromAlbum(c *Controller, id specid.ID, params params.Params,
 		Find(&tracks).
 		Error
 	if err != nil {
-		return spec.NewError(0, "error finding tracks: %v", err)
+		return nil, spec.NewError(0, "error finding tracks: %v", err)
 	}
 	if len(tracks) == 0 {
-		return spec.NewError(70, "no similar songs could be matched with collection in database: %v", album.TagTitle)
+		return nil, spec.NewError(70, "no similar songs could be matched with collection in database: %v", album.TagTitle)
 	}
 
-	sub := spec.NewResponse()
-	sub.SimilarSongs = &spec.SimilarSongs{
-		Tracks: make([]*spec.TrackChild, len(tracks)),
-	}
-
+	trackChildren := make([]*spec.TrackChild, len(tracks))
 	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
 
 	for i, track := range tracks {
-		sub.SimilarSongs.Tracks[i] = spec.NewTrackByTags(track, track.Album)
-		sub.SimilarSongs.Tracks[i].TranscodeMeta = transcodeMeta
+		trackChildren[i] = spec.NewTrackByTags(track, track.Album)
+		trackChildren[i].TranscodeMeta = transcodeMeta
 	}
-	return sub
+
+	return trackChildren, nil
 }
 
 func starIDsOfType(p params.Params, typ specid.IDT) []int {
