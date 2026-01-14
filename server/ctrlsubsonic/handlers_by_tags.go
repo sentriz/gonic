@@ -655,7 +655,7 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 	return sub
 }
 
-func (c *Controller) getSimilarSongsFromTrack(id specid.ID, params params.Params, user *db.User, count int) *spec.Response {
+func getSimilarSongsFromTrack(c *Controller, id specid.ID, params params.Params, user *db.User, count int) *spec.Response {
 	var track db.Track
 	err := c.dbc.
 		Preload("Album").
@@ -714,7 +714,7 @@ func (c *Controller) getSimilarSongsFromTrack(id specid.ID, params params.Params
 	return sub
 }
 
-func (c *Controller) getSimilarSongsFromArtist(id specid.ID, params params.Params, user *db.User, count int) *spec.Response {
+func getSimilarSongsFromArtist(c *Controller, id specid.ID, params params.Params, user *db.User, count int) *spec.Response {
 	var artist db.Artist
 	err := c.dbc.
 		Where("id=?", id.Value).
@@ -772,7 +772,7 @@ func (c *Controller) getSimilarSongsFromArtist(id specid.ID, params params.Param
 	return sub
 }
 
-func (c *Controller) getSimilarSongsFromAlbum(id specid.ID, params params.Params, user *db.User, count int) *spec.Response {
+func getSimilarSongsFromAlbum(c *Controller, id specid.ID, params params.Params, user *db.User, count int) *spec.Response {
 	var album db.Album
 	err := c.dbc.
 		Preload("Tracks").
@@ -850,15 +850,15 @@ func (c *Controller) ServeGetSimilarSongs(r *http.Request) *spec.Response {
 	}
 
 	if id.Type == specid.Track {
-		return c.getSimilarSongsFromTrack(id, params, user, count)
+		return getSimilarSongsFromTrack(c, id, params, user, count)
 	}
 
 	if id.Type == specid.Album {
-		return c.getSimilarSongsFromAlbum(id, params, user, count)
+		return getSimilarSongsFromAlbum(c, id, params, user, count)
 	}
 
 	if id.Type == specid.Artist {
-		return c.getSimilarSongsFromArtist(id, params, user, count)
+		return getSimilarSongsFromArtist(c, id, params, user, count)
 	}
 
 	return spec.NewError(10, "please provide a artist, album or track `id` parameter")
@@ -873,7 +873,7 @@ func (c *Controller) ServeGetSimilarSongsTwo(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide an artist `id` parameter")
 	}
 
-	return c.getSimilarSongsFromArtist(id, params, user, count)
+	return getSimilarSongsFromArtist(c, id, params, user, count)
 }
 
 func starIDsOfType(p params.Params, typ specid.IDT) []int {
