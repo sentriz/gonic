@@ -75,46 +75,23 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 
 	if err != nil {
 		// If parsing as specid.ID fails, try as playlist ID (base64 string)
-		playlistPath := decodePlaylistID(idStr)
-		if playlistPath != "" {
-			idForCache = idStr // Use the original base64 string for cache
-			// Check cache for playlist cover
-			cachePath, err := findCachedCover(c.cacheCoverPath, idForCache, size)
-			if err != nil && !os.IsNotExist(err) {
-				log.Printf("error checking cache: %v", err)
-				return nil
-			}
-
-			if cachePath != "" {
-				serve(cachePath)
-				return nil
-			}
-
-			reader, err = coverForPlaylist(c.playlistStore, playlistPath)
-			if err != nil {
-				return spec.NewError(10, "couldn't find cover for playlist %q: %v", idStr, err)
-			}
-		} else {
-			return spec.NewError(10, "please provide a valid `id` parameter")
+		var resp *spec.Response
+		reader, idForCache, resp = c.handlePlaylistCover(idStr, size, serve)
+		if resp != nil {
+			return resp
+		}
+		if reader == nil {
+			return nil // Already served from cache
 		}
 	} else {
 		// Standard specid.ID handling
-		idForCache = id.String()
-		// cached cover could exist for any supported format
-		cachePath, err := findCachedCover(c.cacheCoverPath, idForCache, size)
-		if err != nil && !os.IsNotExist(err) {
-			log.Printf("error checking cache: %v", err)
-			return nil
+		var resp *spec.Response
+		reader, idForCache, resp = c.handleStandardCover(id, size, serve)
+		if resp != nil {
+			return resp
 		}
-
-		if cachePath != "" {
-			serve(cachePath)
-			return nil
-		}
-
-		reader, err = coverFor(c.dbc, c.artistInfoCache, c.tagReader, id)
-		if err != nil {
-			return spec.NewError(10, "couldn't find cover %q: %v", id, err)
+		if reader == nil {
+			return nil // Already served from cache
 		}
 	}
 	defer reader.Close()
@@ -269,6 +246,55 @@ func coverForTrack(dbc *db.DB, tagReader tags.Reader, id int) (io.ReadCloser, er
 func decodePlaylistID(id string) string {
 	path, _ := base64.URLEncoding.DecodeString(id)
 	return string(path)
+}
+
+func (c *Controller) handlePlaylistCover(idStr string, size int, serve func(string)) (io.ReadCloser, string, *spec.Response) {
+	playlistPath := decodePlaylistID(idStr)
+	if playlistPath == "" {
+		return nil, "", spec.NewError(10, "please provide a valid `id` parameter")
+	}
+
+	idForCache := idStr // Use the original base64 string for cache
+	// Check cache for playlist cover
+	cachePath, err := findCachedCover(c.cacheCoverPath, idForCache, size)
+	if err != nil && !os.IsNotExist(err) {
+		log.Printf("error checking cache: %v", err)
+		return nil, "", nil
+	}
+
+	if cachePath != "" {
+		serve(cachePath)
+		return nil, "", nil
+	}
+
+	reader, err := coverForPlaylist(c.playlistStore, playlistPath)
+	if err != nil {
+		return nil, "", spec.NewError(10, "couldn't find cover for playlist %q: %v", idStr, err)
+	}
+
+	return reader, idForCache, nil
+}
+
+func (c *Controller) handleStandardCover(id specid.ID, size int, serve func(string)) (io.ReadCloser, string, *spec.Response) {
+	idForCache := id.String()
+	// cached cover could exist for any supported format
+	cachePath, err := findCachedCover(c.cacheCoverPath, idForCache, size)
+	if err != nil && !os.IsNotExist(err) {
+		log.Printf("error checking cache: %v", err)
+		return nil, "", nil
+	}
+
+	if cachePath != "" {
+		serve(cachePath)
+		return nil, "", nil
+	}
+
+	reader, err := coverFor(c.dbc, c.artistInfoCache, c.tagReader, id)
+	if err != nil {
+		return nil, "", spec.NewError(10, "couldn't find cover %q: %v", id, err)
+	}
+
+	return reader, idForCache, nil
 }
 
 func coverForPlaylist(playlistStore *playlist.Store, playlistPath string) (*os.File, error) {

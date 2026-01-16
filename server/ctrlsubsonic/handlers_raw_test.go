@@ -9,6 +9,8 @@ import (
 	"go.senan.xyz/gonic/playlist"
 )
 
+const testPlaylistPath = "1/test-playlist.m3u"
+
 func TestCoverForPlaylist(t *testing.T) {
 	t.Parallel()
 
@@ -24,7 +26,7 @@ func TestCoverForPlaylist(t *testing.T) {
 		coversDir := filepath.Join(tmp, "1", "covers")
 		require.NoError(t, os.MkdirAll(coversDir, 0o755))
 
-		playlistPath := "1/test-playlist.m3u"
+		playlistPath := testPlaylistPath
 		coverPath := filepath.Join(coversDir, "test-playlist.jpg")
 		f, err := os.Create(coverPath)
 		require.NoError(t, err)
@@ -48,7 +50,7 @@ func TestCoverForPlaylist(t *testing.T) {
 		coversDir := filepath.Join(tmp, "1", "covers")
 		require.NoError(t, os.MkdirAll(coversDir, 0o755))
 
-		playlistPath := "1/test-playlist.m3u"
+		playlistPath := testPlaylistPath
 		coverPath := filepath.Join(coversDir, "test-playlist.jpeg")
 		f, err := os.Create(coverPath)
 		require.NoError(t, err)
@@ -115,7 +117,7 @@ func TestCoverForPlaylist(t *testing.T) {
 		coversDir := filepath.Join(tmp, "1", "covers")
 		require.NoError(t, os.MkdirAll(coversDir, 0o755))
 
-		m3u8Path := "1/test-playlist.m3u8"
+		m3u8Path := "1/test-playlist.m3u8" // Different path for m3u8 test
 		coverPath := filepath.Join(coversDir, "test-playlist.jpg")
 		f, err := os.Create(coverPath)
 		require.NoError(t, err)
@@ -136,7 +138,7 @@ func TestCoverForPlaylist(t *testing.T) {
 		require.NoError(t, err)
 
 		// Don't create covers directory
-		playlistPath := "1/test-playlist.m3u"
+		playlistPath := testPlaylistPath
 		file, err := coverForPlaylist(store, playlistPath)
 		require.Error(t, err)
 		require.Nil(t, file)
