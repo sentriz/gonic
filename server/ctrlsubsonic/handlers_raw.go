@@ -70,58 +70,13 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 
 	// Try to parse as specid.ID first
 	id, err := params.GetID("id")
-	var reader io.ReadCloser
-	var idForCache string
-
 	if err != nil {
 		// If parsing as specid.ID fails, try as playlist ID (base64 string)
-		var resp *spec.Response
-		reader, idForCache, resp = c.handlePlaylistCover(idStr, size, serve)
-		if resp != nil {
-			return resp
-		}
-		if reader == nil {
-			return nil // Already served from cache
-		}
-	} else {
-		// Standard specid.ID handling
-		var resp *spec.Response
-		reader, idForCache, resp = c.handleStandardCover(id, size, serve)
-		if resp != nil {
-			return resp
-		}
-		if reader == nil {
-			return nil // Already served from cache
-		}
-	}
-	defer reader.Close()
-
-	img, format, err := image.Decode(reader)
-	if err != nil {
-		return spec.NewError(0, "decode for cover %q: %v", idStr, err)
+		return c.handlePlaylistCoverRequest(idStr, size, serve)
 	}
 
-	// don't upscale
-	minSize := min(size, max(img.Bounds().Dx(), img.Bounds().Dy()))
-
-	cachePath := filepath.Join(c.cacheCoverPath, coverCacheFilename(idForCache, minSize, format))
-
-	if minSize != size {
-		// we down sized, check cache again
-		if _, err := os.Stat(cachePath); err == nil {
-			serve(cachePath)
-			return nil
-		}
-	}
-
-	resized := imaging.Fit(img, minSize, minSize, imaging.Lanczos)
-
-	if err := imaging.Save(resized, cachePath); err != nil {
-		return spec.NewError(10, "saving cover %q: %v", idStr, err)
-	}
-
-	serve(cachePath)
-	return nil
+	// Standard specid.ID handling
+	return c.handleStandardCoverRequest(id, size, serve)
 }
 
 func coverCacheFilename(idStr string, size int, format string) string {
@@ -248,10 +203,10 @@ func decodePlaylistID(id string) string {
 	return string(path)
 }
 
-func (c *Controller) handlePlaylistCover(idStr string, size int, serve func(string)) (io.ReadCloser, string, *spec.Response) {
+func (c *Controller) handlePlaylistCoverRequest(idStr string, size int, serve func(string)) *spec.Response {
 	playlistPath := decodePlaylistID(idStr)
 	if playlistPath == "" {
-		return nil, "", spec.NewError(10, "please provide a valid `id` parameter")
+		return spec.NewError(10, "please provide a valid `id` parameter")
 	}
 
 	idForCache := idStr // Use the original base64 string for cache
@@ -259,42 +214,73 @@ func (c *Controller) handlePlaylistCover(idStr string, size int, serve func(stri
 	cachePath, err := findCachedCover(c.cacheCoverPath, idForCache, size)
 	if err != nil && !os.IsNotExist(err) {
 		log.Printf("error checking cache: %v", err)
-		return nil, "", nil
+		return nil
 	}
 
 	if cachePath != "" {
 		serve(cachePath)
-		return nil, "", nil
+		return nil
 	}
 
 	reader, err := coverForPlaylist(c.playlistStore, playlistPath)
 	if err != nil {
-		return nil, "", spec.NewError(10, "couldn't find cover for playlist %q: %v", idStr, err)
+		return spec.NewError(10, "couldn't find cover for playlist %q: %v", idStr, err)
 	}
+	defer reader.Close()
 
-	return reader, idForCache, nil
+	return c.processAndServeCover(reader, idForCache, size, serve)
 }
 
-func (c *Controller) handleStandardCover(id specid.ID, size int, serve func(string)) (io.ReadCloser, string, *spec.Response) {
+func (c *Controller) handleStandardCoverRequest(id specid.ID, size int, serve func(string)) *spec.Response {
 	idForCache := id.String()
 	// cached cover could exist for any supported format
 	cachePath, err := findCachedCover(c.cacheCoverPath, idForCache, size)
 	if err != nil && !os.IsNotExist(err) {
 		log.Printf("error checking cache: %v", err)
-		return nil, "", nil
+		return nil
 	}
 
 	if cachePath != "" {
 		serve(cachePath)
-		return nil, "", nil
+		return nil
 	}
 
 	reader, err := coverFor(c.dbc, c.artistInfoCache, c.tagReader, id)
 	if err != nil {
-		return nil, "", spec.NewError(10, "couldn't find cover %q: %v", id, err)
+		return spec.NewError(10, "couldn't find cover %q: %v", id, err)
+	}
+	defer reader.Close()
+
+	return c.processAndServeCover(reader, idForCache, size, serve)
+}
+
+func (c *Controller) processAndServeCover(reader io.ReadCloser, idForCache string, size int, serve func(string)) *spec.Response {
+	img, format, err := image.Decode(reader)
+	if err != nil {
+		return spec.NewError(0, "decode for cover %q: %v", idForCache, err)
 	}
 
-	return reader, idForCache, nil
+	// don't upscale
+	minSize := min(size, max(img.Bounds().Dx(), img.Bounds().Dy()))
+
+	cachePath := filepath.Join(c.cacheCoverPath, coverCacheFilename(idForCache, minSize, format))
+
+	if minSize != size {
+		// we down sized, check cache again
+		if _, err := os.Stat(cachePath); err == nil {
+			serve(cachePath)
+			return nil
+		}
+	}
+
+	resized := imaging.Fit(img, minSize, minSize, imaging.Lanczos)
+
+	if err := imaging.Save(resized, cachePath); err != nil {
+		return spec.NewError(10, "saving cover %q: %v", idForCache, err)
+	}
+
+	serve(cachePath)
+	return nil
 }
 
 func coverForPlaylist(playlistStore *playlist.Store, playlistPath string) (*os.File, error) {
