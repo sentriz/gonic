@@ -3,6 +3,7 @@ package ctrlsubsonic
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"image"
@@ -11,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/disintegration/imaging"
@@ -18,6 +20,7 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/infocache/artistinfocache"
+	"go.senan.xyz/gonic/playlist"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
@@ -50,7 +53,7 @@ var (
 
 func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	id, err := params.GetID("id")
+	idStr, err := params.Get("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
@@ -60,38 +63,71 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 		return spec.NewError(0, "invalid size")
 	}
 
-	// cached cover could exist for any supported format
-	cachePath, err := findCachedCover(c.cacheCoverPath, id.String(), size)
-	if err != nil && !os.IsNotExist(err) {
-		log.Printf("error checking cache: %v", err)
-		return nil
-	}
-
 	serve := func(p string) {
 		w.Header().Set("Cache-Control", "public, max-age=1209600")
 		http.ServeFile(w, r, p)
 	}
 
-	if cachePath != "" {
-		serve(cachePath)
-		return nil
-	}
+	// Try to parse as specid.ID first
+	id, err := params.GetID("id")
+	var reader io.ReadCloser
+	var idForCache string
 
-	reader, err := coverFor(c.dbc, c.artistInfoCache, c.tagReader, id)
 	if err != nil {
-		return spec.NewError(10, "couldn't find cover %q: %v", id, err)
+		// If parsing as specid.ID fails, try as playlist ID (base64 string)
+		playlistPath := decodePlaylistID(idStr)
+		if playlistPath != "" {
+			idForCache = idStr // Use the original base64 string for cache
+			// Check cache for playlist cover
+			cachePath, err := findCachedCover(c.cacheCoverPath, idForCache, size)
+			if err != nil && !os.IsNotExist(err) {
+				log.Printf("error checking cache: %v", err)
+				return nil
+			}
+
+			if cachePath != "" {
+				serve(cachePath)
+				return nil
+			}
+
+			reader, err = coverForPlaylist(c.playlistStore, playlistPath)
+			if err != nil {
+				return spec.NewError(10, "couldn't find cover for playlist %q: %v", idStr, err)
+			}
+		} else {
+			return spec.NewError(10, "please provide a valid `id` parameter")
+		}
+	} else {
+		// Standard specid.ID handling
+		idForCache = id.String()
+		// cached cover could exist for any supported format
+		cachePath, err := findCachedCover(c.cacheCoverPath, idForCache, size)
+		if err != nil && !os.IsNotExist(err) {
+			log.Printf("error checking cache: %v", err)
+			return nil
+		}
+
+		if cachePath != "" {
+			serve(cachePath)
+			return nil
+		}
+
+		reader, err = coverFor(c.dbc, c.artistInfoCache, c.tagReader, id)
+		if err != nil {
+			return spec.NewError(10, "couldn't find cover %q: %v", id, err)
+		}
 	}
 	defer reader.Close()
 
 	img, format, err := image.Decode(reader)
 	if err != nil {
-		return spec.NewError(0, "decode for cover %q: %v", id, err)
+		return spec.NewError(0, "decode for cover %q: %v", idStr, err)
 	}
 
 	// don't upscale
 	minSize := min(size, max(img.Bounds().Dx(), img.Bounds().Dy()))
 
-	cachePath = filepath.Join(c.cacheCoverPath, coverCacheFilename(id.String(), minSize, format))
+	cachePath := filepath.Join(c.cacheCoverPath, coverCacheFilename(idForCache, minSize, format))
 
 	if minSize != size {
 		// we down sized, check cache again
@@ -104,7 +140,7 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 	resized := imaging.Fit(img, minSize, minSize, imaging.Lanczos)
 
 	if err := imaging.Save(resized, cachePath); err != nil {
-		return spec.NewError(10, "saving cover %q: %v", id, err)
+		return spec.NewError(10, "saving cover %q: %v", idStr, err)
 	}
 
 	serve(cachePath)
@@ -228,6 +264,47 @@ func coverForTrack(dbc *db.DB, tagReader tags.Reader, id int) (io.ReadCloser, er
 	}
 
 	return io.NopCloser(bytes.NewReader(cover)), nil
+}
+
+func decodePlaylistID(id string) string {
+	path, _ := base64.URLEncoding.DecodeString(id)
+	return string(path)
+}
+
+func coverForPlaylist(playlistStore *playlist.Store, playlistPath string) (*os.File, error) {
+	// Extract playlist name from path (e.g., "1/my-playlist.m3u" -> "my-playlist")
+	playlistName := filepath.Base(playlistPath)
+	playlistName = strings.TrimSuffix(playlistName, filepath.Ext(playlistName))
+
+	// Get the base path from the store
+	basePath := playlistStore.BasePath()
+
+	// Extract user ID from path (e.g., "1/my-playlist.m3u" -> "1")
+	// The covers folder should be inside the user's folder: <playlists-path>/<user-id>/covers/
+	userID := firstPathEl(playlistPath)
+	if userID == "" {
+		return nil, errCoverEmpty
+	}
+
+	// Look for cover in user's covers subfolder: <playlists-path>/<user-id>/covers/<playlist-name>.jpg or .jpeg
+	coversDir := filepath.Join(basePath, userID, "covers")
+	for _, ext := range []string{".jpg", ".jpeg"} {
+		coverPath := filepath.Join(coversDir, playlistName+ext)
+		if file, err := os.Open(coverPath); err == nil {
+			return file, nil
+		}
+	}
+
+	return nil, errCoverEmpty
+}
+
+func firstPathEl(path string) string {
+	path = strings.TrimPrefix(path, string(filepath.Separator))
+	parts := strings.Split(path, string(filepath.Separator))
+	if len(parts) == 0 {
+		return ""
+	}
+	return parts[0]
 }
 
 func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.Response {

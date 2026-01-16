@@ -53,6 +53,10 @@ func NewStore(basePath string) (*Store, error) {
 	}, nil
 }
 
+func (s *Store) BasePath() string {
+	return s.basePath
+}
+
 // List finds playlist items in s.basePath.
 // the expected format is <base path>/<user id>/**/<playlist name>.m3u
 func (s *Store) List() ([]string, error) {
