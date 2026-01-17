@@ -3,7 +3,6 @@ package ctrlsubsonic
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"image"
@@ -53,7 +52,7 @@ var (
 
 func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	idStr, err := params.Get("id")
+	id, err := params.GetID("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
@@ -68,15 +67,50 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 		http.ServeFile(w, r, p)
 	}
 
-	// Try to parse as specid.ID first
-	id, err := params.GetID("id")
-	if err != nil {
-		// If parsing as specid.ID fails, try as playlist ID (base64 string)
-		return c.handlePlaylistCoverRequest(idStr, size, serve)
+	// cached cover could exist for any supported format
+	cachePath, err := findCachedCover(c.cacheCoverPath, id.String(), size)
+	if err != nil && !os.IsNotExist(err) {
+		log.Printf("error checking cache: %v", err)
+		return nil
 	}
 
-	// Standard specid.ID handling
-	return c.handleStandardCoverRequest(id, size, serve)
+	if cachePath != "" {
+		serve(cachePath)
+		return nil
+	}
+
+	reader, err := coverFor(c.dbc, c.artistInfoCache, c.tagReader, c.playlistStore, c.playlistIDMap, id)
+	if err != nil {
+		return spec.NewError(10, "couldn't find cover %q: %v", id, err)
+	}
+	defer reader.Close()
+
+	img, format, err := image.Decode(reader)
+	if err != nil {
+		return spec.NewError(0, "decode for cover %q: %v", id, err)
+	}
+
+	// don't upscale
+	minSize := min(size, max(img.Bounds().Dx(), img.Bounds().Dy()))
+
+	cachePath = filepath.Join(c.cacheCoverPath, coverCacheFilename(id.String(), minSize, format))
+
+	if minSize != size {
+		// we down sized, check cache again
+		if _, err := os.Stat(cachePath); err == nil {
+			serve(cachePath)
+			return nil
+		}
+	}
+
+	resized := imaging.Fit(img, minSize, minSize, imaging.Lanczos)
+
+	if err := imaging.Save(resized, cachePath); err != nil {
+		return spec.NewError(10, "saving cover %q: %v", id, err)
+	}
+
+	serve(cachePath)
+	return nil
 }
 
 func coverCacheFilename(idStr string, size int, format string) string {
@@ -99,7 +133,7 @@ var (
 )
 
 // TODO: can we use specidpaths.Locate here?
-func coverFor(dbc *db.DB, artistInfoCache *artistinfocache.ArtistInfoCache, tagReader tags.Reader, id specid.ID) (io.ReadCloser, error) {
+func coverFor(dbc *db.DB, artistInfoCache *artistinfocache.ArtistInfoCache, tagReader tags.Reader, playlistStore *playlist.Store, playlistIDMap *playlistIDMap, id specid.ID) (io.ReadCloser, error) {
 	switch id.Type {
 	case specid.Album:
 		return coverForAlbum(dbc, id.Value)
@@ -111,6 +145,8 @@ func coverFor(dbc *db.DB, artistInfoCache *artistinfocache.ArtistInfoCache, tagR
 		return coverForPodcastEpisode(dbc, id.Value)
 	case specid.Track:
 		return coverForTrack(dbc, tagReader, id.Value)
+	case specid.Playlist:
+		return coverForPlaylist(playlistStore, playlistIDMap, id)
 	default:
 		return nil, errCoverNotFound
 	}
@@ -198,92 +234,12 @@ func coverForTrack(dbc *db.DB, tagReader tags.Reader, id int) (io.ReadCloser, er
 	return io.NopCloser(bytes.NewReader(cover)), nil
 }
 
-func decodePlaylistID(id string) string {
-	path, _ := base64.URLEncoding.DecodeString(id)
-	return string(path)
-}
-
-func (c *Controller) handlePlaylistCoverRequest(idStr string, size int, serve func(string)) *spec.Response {
-	playlistPath := decodePlaylistID(idStr)
-	if playlistPath == "" {
-		return spec.NewError(10, "please provide a valid `id` parameter")
+func coverForPlaylist(playlistStore *playlist.Store, playlistIDMap *playlistIDMap, id specid.ID) (*os.File, error) {
+	playlistPath, ok := playlistIDMap.specIDToPath(id)
+	if !ok {
+		return nil, errCoverNotFound
 	}
 
-	idForCache := idStr // Use the original base64 string for cache
-	// Check cache for playlist cover
-	cachePath, err := findCachedCover(c.cacheCoverPath, idForCache, size)
-	if err != nil && !os.IsNotExist(err) {
-		log.Printf("error checking cache: %v", err)
-		return nil
-	}
-
-	if cachePath != "" {
-		serve(cachePath)
-		return nil
-	}
-
-	reader, err := coverForPlaylist(c.playlistStore, playlistPath)
-	if err != nil {
-		return spec.NewError(10, "couldn't find cover for playlist %q: %v", idStr, err)
-	}
-	defer reader.Close()
-
-	return c.processAndServeCover(reader, idForCache, size, serve)
-}
-
-func (c *Controller) handleStandardCoverRequest(id specid.ID, size int, serve func(string)) *spec.Response {
-	idForCache := id.String()
-	// cached cover could exist for any supported format
-	cachePath, err := findCachedCover(c.cacheCoverPath, idForCache, size)
-	if err != nil && !os.IsNotExist(err) {
-		log.Printf("error checking cache: %v", err)
-		return nil
-	}
-
-	if cachePath != "" {
-		serve(cachePath)
-		return nil
-	}
-
-	reader, err := coverFor(c.dbc, c.artistInfoCache, c.tagReader, id)
-	if err != nil {
-		return spec.NewError(10, "couldn't find cover %q: %v", id, err)
-	}
-	defer reader.Close()
-
-	return c.processAndServeCover(reader, idForCache, size, serve)
-}
-
-func (c *Controller) processAndServeCover(reader io.ReadCloser, idForCache string, size int, serve func(string)) *spec.Response {
-	img, format, err := image.Decode(reader)
-	if err != nil {
-		return spec.NewError(0, "decode for cover %q: %v", idForCache, err)
-	}
-
-	// don't upscale
-	minSize := min(size, max(img.Bounds().Dx(), img.Bounds().Dy()))
-
-	cachePath := filepath.Join(c.cacheCoverPath, coverCacheFilename(idForCache, minSize, format))
-
-	if minSize != size {
-		// we down sized, check cache again
-		if _, err := os.Stat(cachePath); err == nil {
-			serve(cachePath)
-			return nil
-		}
-	}
-
-	resized := imaging.Fit(img, minSize, minSize, imaging.Lanczos)
-
-	if err := imaging.Save(resized, cachePath); err != nil {
-		return spec.NewError(10, "saving cover %q: %v", idForCache, err)
-	}
-
-	serve(cachePath)
-	return nil
-}
-
-func coverForPlaylist(playlistStore *playlist.Store, playlistPath string) (*os.File, error) {
 	// Extract playlist name from path (e.g., "1/my-playlist.m3u" -> "my-playlist")
 	playlistName := filepath.Base(playlistPath)
 	playlistName = strings.TrimSuffix(playlistName, filepath.Ext(playlistName))

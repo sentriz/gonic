@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.senan.xyz/gonic/playlist"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
 const testPlaylistPath = "1/test-playlist.m3u"
@@ -32,7 +33,9 @@ func TestCoverForPlaylist(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, f.Close())
 
-		file, err := coverForPlaylist(store, playlistPath)
+		idMap := newPlaylistIDMap()
+		playlistID := idMap.pathToSpecID(playlistPath)
+		file, err := coverForPlaylist(store, idMap, playlistID)
 		require.NoError(t, err)
 		require.NotNil(t, file)
 		require.NoError(t, file.Close())
@@ -56,7 +59,9 @@ func TestCoverForPlaylist(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, f.Close())
 
-		file, err := coverForPlaylist(store, playlistPath)
+		idMap := newPlaylistIDMap()
+		playlistID := idMap.pathToSpecID(playlistPath)
+		file, err := coverForPlaylist(store, idMap, playlistID)
 		require.NoError(t, err)
 		require.NotNil(t, file)
 		require.NoError(t, file.Close())
@@ -75,7 +80,9 @@ func TestCoverForPlaylist(t *testing.T) {
 		require.NoError(t, os.MkdirAll(coversDir, 0o755))
 
 		playlistPath := "1/nonexistent-playlist.m3u"
-		file, err := coverForPlaylist(store, playlistPath)
+		idMap := newPlaylistIDMap()
+		playlistID := idMap.pathToSpecID(playlistPath)
+		file, err := coverForPlaylist(store, idMap, playlistID)
 		require.Error(t, err)
 		require.Nil(t, file)
 		require.Equal(t, errCoverEmpty, err)
@@ -99,7 +106,9 @@ func TestCoverForPlaylist(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, f.Close())
 
-		file, err := coverForPlaylist(store, nestedPath)
+		idMap := newPlaylistIDMap()
+		playlistID := idMap.pathToSpecID(nestedPath)
+		file, err := coverForPlaylist(store, idMap, playlistID)
 		require.NoError(t, err)
 		require.NotNil(t, file)
 		require.NoError(t, file.Close())
@@ -123,7 +132,9 @@ func TestCoverForPlaylist(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, f.Close())
 
-		file, err := coverForPlaylist(store, m3u8Path)
+		idMap := newPlaylistIDMap()
+		playlistID := idMap.pathToSpecID(m3u8Path)
+		file, err := coverForPlaylist(store, idMap, playlistID)
 		require.NoError(t, err)
 		require.NotNil(t, file)
 		require.NoError(t, file.Close())
@@ -139,44 +150,56 @@ func TestCoverForPlaylist(t *testing.T) {
 
 		// Don't create covers directory
 		playlistPath := testPlaylistPath
-		file, err := coverForPlaylist(store, playlistPath)
+		idMap := newPlaylistIDMap()
+		playlistID := idMap.pathToSpecID(playlistPath)
+		file, err := coverForPlaylist(store, idMap, playlistID)
 		require.Error(t, err)
 		require.Nil(t, file)
 		require.Equal(t, errCoverEmpty, err)
 	})
 }
 
-func TestDecodePlaylistID(t *testing.T) {
+func TestPlaylistIDMap(t *testing.T) {
 	t.Parallel()
 
-	tcases := []struct {
-		name     string
-		id       string
-		expected string
-	}{
-		{
-			name:     "valid base64 playlist id",
-			id:       "MS9teS1wbGF5bGlzdC5tM3U=", // base64 of "1/my-playlist.m3u"
-			expected: "1/my-playlist.m3u",
-		},
-		{
-			name:     "empty string",
-			id:       "",
-			expected: "",
-		},
-		{
-			name:     "nested path",
-			id:       "MS9zdWJmb2xkZXIvbXktbmVzdGVkLXBsYXlsaXN0Lm0zdQ==", // base64 of "1/subfolder/my-nested-playlist.m3u"
-			expected: "1/subfolder/my-nested-playlist.m3u",
-		},
-	}
+	t.Run("path to spec ID and back", func(t *testing.T) {
+		t.Parallel()
 
-	for _, tcase := range tcases {
-		t.Run(tcase.name, func(t *testing.T) {
-			t.Parallel()
+		idMap := newPlaylistIDMap()
+		path := "1/my-playlist.m3u"
 
-			result := decodePlaylistID(tcase.id)
-			require.Equal(t, tcase.expected, result)
-		})
-	}
+		// Convert path to spec ID
+		specID := idMap.pathToSpecID(path)
+		require.Equal(t, specid.Playlist, specID.Type)
+		require.NotZero(t, specID.Value)
+
+		// Convert spec ID back to path
+		recoveredPath, ok := idMap.specIDToPath(specID)
+		require.True(t, ok)
+		require.Equal(t, path, recoveredPath)
+	})
+
+	t.Run("spec ID to path not found", func(t *testing.T) {
+		t.Parallel()
+
+		idMap := newPlaylistIDMap()
+		unknownID := specid.ID{Type: specid.Playlist, Value: 99999}
+
+		path, ok := idMap.specIDToPath(unknownID)
+		require.False(t, ok)
+		require.Empty(t, path)
+	})
+
+	t.Run("different paths get different IDs", func(t *testing.T) {
+		t.Parallel()
+
+		idMap := newPlaylistIDMap()
+		path1 := "1/playlist1.m3u"
+		path2 := "1/playlist2.m3u"
+
+		id1 := idMap.pathToSpecID(path1)
+		id2 := idMap.pathToSpecID(path2)
+
+		require.NotEqual(t, id1.Value, id2.Value)
+	})
 }

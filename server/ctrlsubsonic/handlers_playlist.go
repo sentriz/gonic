@@ -1,7 +1,6 @@
 package ctrlsubsonic
 
 import (
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"log"
@@ -38,8 +37,8 @@ func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
 		if playlist.UserID != user.ID && !playlist.IsPublic {
 			continue
 		}
-		playlistID := playlistIDEncode(path)
-		rendered, err := playlistRender(c, params, playlistID, playlist, false)
+		playlistSpecID := c.playlistIDMap.pathToSpecID(path)
+		rendered, err := playlistRender(c, params, playlistSpecID.String(), playlist, false)
 		if err != nil {
 			return spec.NewError(0, "error rendering playlist %q: %v", path, err)
 		}
@@ -50,16 +49,26 @@ func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	playlistID, err := params.GetFirst("id", "playlistId")
+	playlistID, err := params.GetID("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	playlist, err := c.playlistStore.Read(playlistIDDecode(playlistID))
-	if err != nil {
-		return spec.NewError(70, "playlist with id %s not found", playlistID)
+	if playlistID.Type != specid.Playlist {
+		return spec.NewError(10, "invalid playlist id")
 	}
+
+	playlistPath, ok := c.playlistIDMap.specIDToPath(playlistID)
+	if !ok {
+		return spec.NewError(70, "playlist with id %s not found", playlistID.String())
+	}
+
+	playlist, err := c.playlistStore.Read(playlistPath)
+	if err != nil {
+		return spec.NewError(70, "playlist with id %s not found", playlistID.String())
+	}
+
 	sub := spec.NewResponse()
-	rendered, err := playlistRender(c, params, playlistID, playlist, true)
+	rendered, err := playlistRender(c, params, playlistID.String(), playlist, true)
 	if err != nil {
 		return spec.NewError(0, "error rendering playlist: %v", err)
 	}
@@ -71,8 +80,17 @@ func (c *Controller) ServeCreateOrUpdatePlaylist(r *http.Request) *spec.Response
 	user := r.Context().Value(CtxUser).(*db.User)
 	params := r.Context().Value(CtxParams).(params.Params)
 
-	playlistID := params.GetFirstOr( /* default */ "", "id", "playlistId")
-	playlistPath := playlistIDDecode(playlistID)
+	var playlistPath string
+	if playlistID, err := params.GetID("id"); err == nil {
+		if playlistID.Type != specid.Playlist {
+			return spec.NewError(10, "invalid playlist id")
+		}
+		var ok bool
+		playlistPath, ok = c.playlistIDMap.specIDToPath(playlistID)
+		if !ok {
+			return spec.NewError(70, "playlist with id %s not found", playlistID.String())
+		}
+	}
 
 	var playlist playlistp.Playlist
 	if playlistPath != "" {
@@ -104,15 +122,15 @@ func (c *Controller) ServeCreateOrUpdatePlaylist(r *http.Request) *spec.Response
 
 	if playlistPath == "" {
 		playlistPath = playlistp.NewPath(user.ID, fmt.Sprint(time.Now().UnixMilli()))
-		playlistID = playlistIDEncode(playlistPath)
 	}
 
 	if err := c.playlistStore.Write(playlistPath, &playlist); err != nil {
 		return spec.NewError(0, "save playlist: %v", err)
 	}
 
+	playlistSpecID := c.playlistIDMap.pathToSpecID(playlistPath)
 	sub := spec.NewResponse()
-	rendered, err := playlistRender(c, params, playlistID, &playlist, true)
+	rendered, err := playlistRender(c, params, playlistSpecID.String(), &playlist, true)
 	if err != nil {
 		return spec.NewError(0, "error rendering playlist: %v", err)
 	}
@@ -124,8 +142,18 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	params := r.Context().Value(CtxParams).(params.Params)
 
-	playlistID := params.GetFirstOr( /* default */ "", "id", "playlistId")
-	playlistPath := playlistIDDecode(playlistID)
+	playlistID, err := params.GetID("id")
+	if err != nil {
+		return spec.NewError(10, "please provide an `id` parameter")
+	}
+	if playlistID.Type != specid.Playlist {
+		return spec.NewError(10, "invalid playlist id")
+	}
+
+	playlistPath, ok := c.playlistIDMap.specIDToPath(playlistID)
+	if !ok {
+		return spec.NewError(70, "playlist with id %s not found", playlistID.String())
+	}
 	playlist, err := c.playlistStore.Read(playlistPath)
 	if err != nil {
 		return spec.NewError(0, "find playlist: %v", err)
@@ -173,20 +201,22 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeDeletePlaylist(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	playlistID := params.GetFirstOr( /* default */ "", "id", "playlistId")
-	if err := c.playlistStore.Delete(playlistIDDecode(playlistID)); err != nil {
+	playlistID, err := params.GetID("id")
+	if err != nil {
+		return spec.NewError(10, "please provide an `id` parameter")
+	}
+	if playlistID.Type != specid.Playlist {
+		return spec.NewError(10, "invalid playlist id")
+	}
+
+	playlistPath, ok := c.playlistIDMap.specIDToPath(playlistID)
+	if !ok {
+		return spec.NewError(70, "playlist with id %s not found", playlistID.String())
+	}
+	if err := c.playlistStore.Delete(playlistPath); err != nil {
 		return spec.NewError(0, "delete playlist: %v", err)
 	}
 	return spec.NewResponse()
-}
-
-func playlistIDEncode(path string) string {
-	return base64.URLEncoding.EncodeToString([]byte(path))
-}
-
-func playlistIDDecode(id string) string {
-	path, _ := base64.URLEncoding.DecodeString(id)
-	return string(path)
 }
 
 func playlistRender(c *Controller, params params.Params, playlistID string, playlist *playlistp.Playlist, withItems bool) (*spec.Playlist, error) {

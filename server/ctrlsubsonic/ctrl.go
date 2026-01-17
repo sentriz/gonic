@@ -61,6 +61,7 @@ type Controller struct {
 	cacheCoverPath  string
 	jukebox         *jukebox.Jukebox
 	playlistStore   *playlist.Store
+	playlistIDMap   *playlistIDMap
 	scrobblers      []scrobble.Scrobbler
 	podcasts        *podcast.Podcasts
 	transcoder      transcode.Transcoder
@@ -84,6 +85,7 @@ func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPa
 		cacheCoverPath:  cacheCoverPath,
 		jukebox:         jukebox,
 		playlistStore:   playlistStore,
+		playlistIDMap:   newPlaylistIDMap(),
 		scrobblers:      scrobblers,
 		podcasts:        podcasts,
 		transcoder:      transcoder,
