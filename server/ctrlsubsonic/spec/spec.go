@@ -320,7 +320,7 @@ type Playlists struct {
 }
 
 type Playlist struct {
-	ID        string        `xml:"id,attr"         json:"id"`
+	ID        specid.ID     `xml:"id,attr"         json:"id"`
 	Name      string        `xml:"name,attr"       json:"name"`
 	Comment   string        `xml:"comment,attr"    json:"comment"`
 	Owner     string        `xml:"owner,attr"      json:"owner"`
