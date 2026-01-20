@@ -340,6 +340,7 @@ type Album struct {
 	AlbumRating          *AlbumRating
 	AverageRating        float64 `sql:"default: null"`
 	Play                 *Play
+	DiscTitles           []*AlbumDiscTitle
 }
 
 func (a *Album) SID() *specid.ID {
@@ -415,6 +416,12 @@ type TrackGenre struct {
 type AlbumGenre struct {
 	AlbumID int `gorm:"not null; unique_index:idx_album_id_genre_id" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	GenreID int `gorm:"not null; unique_index:idx_album_id_genre_id" sql:"default: null; type:int REFERENCES genres(id) ON DELETE CASCADE"`
+}
+
+type AlbumDiscTitle struct {
+	AlbumID    int    `gorm:"not null; unique_index:idx_album_disc" sql:"type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	DiscNumber int    `gorm:"not null; unique_index:idx_album_disc"`
+	Title      string `gorm:"not null"`
 }
 
 type AlbumStar struct {

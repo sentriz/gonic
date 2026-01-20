@@ -82,6 +82,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202509291741", migrateAddAlbumEmbeddedCoverTrackID),
 		construct(ctx, "202509301448", migrateAddTrackEmbeddedCover),
 		construct(ctx, "202512021147", migrateAlbumAddIndexOnCreatedAt),
+		construct(ctx, "202601201000", migrateAddAlbumDiscTitles),
 	}
 
 	return gormigrate.
@@ -873,4 +874,8 @@ func migrateAlbumAddIndexOnCreatedAt(tx *gorm.DB, _ MigrationContext) error {
 	return tx.Exec(`
 		CREATE INDEX idx_albums_created_at ON "albums" (created_at);
 		`).Error
+}
+
+func migrateAddAlbumDiscTitles(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(AlbumDiscTitle{}).Error
 }

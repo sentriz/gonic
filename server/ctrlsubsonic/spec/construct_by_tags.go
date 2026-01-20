@@ -59,6 +59,17 @@ func NewAlbumByTags(a *db.Album, artists []*db.Artist) *Album {
 	if a.Play != nil {
 		ret.PlayCount = a.Play.Count
 	}
+	if len(a.DiscTitles) > 0 {
+		sort.Slice(a.DiscTitles, func(i, j int) bool {
+			return a.DiscTitles[i].DiscNumber < a.DiscTitles[j].DiscNumber
+		})
+		for _, dt := range a.DiscTitles {
+			ret.DiscTitles = append(ret.DiscTitles, &DiscTitle{
+				Disc:  dt.DiscNumber,
+				Title: dt.Title,
+			})
+		}
+	}
 	return ret
 }
 

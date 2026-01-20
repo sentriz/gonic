@@ -108,6 +108,7 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 		Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
 		Preload("Artists").
 		Preload("Genres").
+		Preload("DiscTitles").
 		Preload("Tracks", func(db *gorm.DB) *gorm.DB {
 			return db.
 				Order("tracks.tag_disc_number, tracks.tag_track_number").
@@ -200,6 +201,7 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 		Limit(params.GetOrInt("size", 10)).
 		Preload("Artists").
 		Preload("Genres").
+		Preload("DiscTitles").
 		Preload("AlbumStar", "user_id=?", user.ID).
 		Preload("AlbumRating", "user_id=?", user.ID).
 		Preload("Play", "user_id=?", user.ID).
@@ -267,6 +269,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	q = c.dbc.
 		Preload("Artists").
 		Preload("Genres").
+		Preload("DiscTitles").
 		Preload("AlbumStar", "user_id=?", user.ID).
 		Preload("AlbumRating", "user_id=?", user.ID).
 		Preload("Play", "user_id=?", user.ID)
@@ -537,6 +540,7 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 		Where("album_stars.user_id=?", user.ID).
 		Order("album_stars.star_date DESC").
 		Preload("Artists").
+		Preload("DiscTitles").
 		Preload("AlbumStar", "user_id=?", user.ID).
 		Preload("AlbumRating", "user_id=?", user.ID).
 		Preload("Play", "user_id=?", user.ID)
