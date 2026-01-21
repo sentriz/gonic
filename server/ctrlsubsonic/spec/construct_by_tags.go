@@ -25,6 +25,7 @@ func NewAlbumByTags(a *db.Album, artists []*db.Artist) *Album {
 		AverageRating: formatRating(a.AverageRating),
 		IsCompilation: a.TagCompilation,
 		ReleaseTypes:  formatReleaseTypes(a.TagReleaseType),
+		DiscTitles:    []*DiscTitle{},
 	}
 	if a.Cover != "" {
 		ret.CoverID = a.SID()

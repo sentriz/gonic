@@ -25,7 +25,8 @@
           "genres": [{ "name": "Unknown Genre" }],
           "year": 2021,
           "isCompilation": false,
-          "releaseTypes": ["Album"]
+          "releaseTypes": ["Album"],
+          "discTitles": []
         },
         {
           "id": "al-7",
@@ -45,7 +46,8 @@
           "genres": [{ "name": "Unknown Genre" }],
           "year": 2021,
           "isCompilation": false,
-          "releaseTypes": ["Album"]
+          "releaseTypes": ["Album"],
+          "discTitles": []
         },
         {
           "id": "al-11",
@@ -65,7 +67,8 @@
           "genres": [{ "name": "Unknown Genre" }],
           "year": 2021,
           "isCompilation": false,
-          "releaseTypes": ["Album"]
+          "releaseTypes": ["Album"],
+          "discTitles": []
         },
         {
           "id": "al-4",
@@ -85,7 +88,8 @@
           "genres": [{ "name": "Unknown Genre" }],
           "year": 2021,
           "isCompilation": false,
-          "releaseTypes": ["Album"]
+          "releaseTypes": ["Album"],
+          "discTitles": []
         },
         {
           "id": "al-8",
@@ -105,7 +109,8 @@
           "genres": [{ "name": "Unknown Genre" }],
           "year": 2021,
           "isCompilation": false,
-          "releaseTypes": ["Album"]
+          "releaseTypes": ["Album"],
+          "discTitles": []
         },
         {
           "id": "al-12",
@@ -125,7 +130,8 @@
           "genres": [{ "name": "Unknown Genre" }],
           "year": 2021,
           "isCompilation": false,
-          "releaseTypes": ["Album"]
+          "releaseTypes": ["Album"],
+          "discTitles": []
         },
         {
           "id": "al-5",
@@ -145,7 +151,8 @@
           "genres": [{ "name": "Unknown Genre" }],
           "year": 2021,
           "isCompilation": false,
-          "releaseTypes": ["Album"]
+          "releaseTypes": ["Album"],
+          "discTitles": []
         },
         {
           "id": "al-9",
@@ -165,7 +172,8 @@
           "genres": [{ "name": "Unknown Genre" }],
           "year": 2021,
           "isCompilation": false,
-          "releaseTypes": ["Album"]
+          "releaseTypes": ["Album"],
+          "discTitles": []
         },
         {
           "id": "al-13",
@@ -185,7 +193,8 @@
           "genres": [{ "name": "Unknown Genre" }],
           "year": 2021,
           "isCompilation": false,
-          "releaseTypes": ["Album"]
+          "releaseTypes": ["Album"],
+          "discTitles": []
         }
       ]
     }

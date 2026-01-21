@@ -18,7 +18,8 @@
       "duration": 0,
       "playCount": 0,
       "isCompilation": false,
-      "releaseTypes": [""]
+      "releaseTypes": [""],
+      "discTitles": []
     }
   }
 }

@@ -28,7 +28,8 @@
           "genres": [{ "name": "Unknown Genre" }],
           "year": 2021,
           "isCompilation": false,
-          "releaseTypes": ["Album"]
+          "releaseTypes": ["Album"],
+          "discTitles": []
         },
         {
           "id": "al-4",
@@ -48,7 +49,8 @@
           "genres": [{ "name": "Unknown Genre" }],
           "year": 2021,
           "isCompilation": false,
-          "releaseTypes": ["Album"]
+          "releaseTypes": ["Album"],
+          "discTitles": []
         },
         {
           "id": "al-5",
@@ -68,7 +70,8 @@
           "genres": [{ "name": "Unknown Genre" }],
           "year": 2021,
           "isCompilation": false,
-          "releaseTypes": ["Album"]
+          "releaseTypes": ["Album"],
+          "discTitles": []
         }
       ]
     }

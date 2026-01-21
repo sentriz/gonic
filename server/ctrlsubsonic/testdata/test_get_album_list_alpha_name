@@ -23,7 +23,8 @@
           "duration": 300,
           "playCount": 0,
           "isCompilation": false,
-          "releaseTypes": []
+          "releaseTypes": [],
+          "discTitles": null
         },
         {
           "id": "al-7",
@@ -41,7 +42,8 @@
           "duration": 300,
           "playCount": 0,
           "isCompilation": false,
-          "releaseTypes": []
+          "releaseTypes": [],
+          "discTitles": null
         },
         {
           "id": "al-11",
@@ -59,7 +61,8 @@
           "duration": 300,
           "playCount": 0,
           "isCompilation": false,
-          "releaseTypes": []
+          "releaseTypes": [],
+          "discTitles": null
         },
         {
           "id": "al-4",
@@ -77,7 +80,8 @@
           "duration": 300,
           "playCount": 0,
           "isCompilation": false,
-          "releaseTypes": []
+          "releaseTypes": [],
+          "discTitles": null
         },
         {
           "id": "al-8",
@@ -95,7 +99,8 @@
           "duration": 300,
           "playCount": 0,
           "isCompilation": false,
-          "releaseTypes": []
+          "releaseTypes": [],
+          "discTitles": null
         },
         {
           "id": "al-12",
@@ -113,7 +118,8 @@
           "duration": 300,
           "playCount": 0,
           "isCompilation": false,
-          "releaseTypes": []
+          "releaseTypes": [],
+          "discTitles": null
         },
         {
           "id": "al-5",
@@ -131,7 +137,8 @@
           "duration": 300,
           "playCount": 0,
           "isCompilation": false,
-          "releaseTypes": []
+          "releaseTypes": [],
+          "discTitles": null
         },
         {
           "id": "al-9",
@@ -149,7 +156,8 @@
           "duration": 300,
           "playCount": 0,
           "isCompilation": false,
-          "releaseTypes": []
+          "releaseTypes": [],
+          "discTitles": null
         },
         {
           "id": "al-13",
@@ -167,7 +175,8 @@
           "duration": 300,
           "playCount": 0,
           "isCompilation": false,
-          "releaseTypes": []
+          "releaseTypes": [],
+          "discTitles": null
         }
       ]
     }

@@ -160,7 +160,7 @@ type Album struct {
 
 	IsCompilation bool         `xml:"isCompilation" json:"isCompilation"`
 	ReleaseTypes  []string     `xml:"releaseTypes" json:"releaseTypes"`
-	DiscTitles    []*DiscTitle `xml:"discTitles,omitempty" json:"discTitles,omitempty"`
+	DiscTitles    []*DiscTitle `xml:"discTitles" json:"discTitles"`
 
 	// star / rating
 	Starred       *time.Time `xml:"starred,attr,omitempty"         json:"starred,omitempty"`
