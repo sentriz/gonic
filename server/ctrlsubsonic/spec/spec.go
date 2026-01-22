@@ -140,7 +140,7 @@ type Album struct {
 	Artist   string     `xml:"artist,attr"             json:"artist"`
 
 	Artists       []*ArtistRef `xml:"artists"           json:"artists"`
-	DisplayArtist string       `xml:"diplayArtist,attr" json:"displayArtist"`
+	DisplayArtist string       `xml:"displayArtist,attr" json:"displayArtist"`
 
 	// folder stuff
 	Title    string     `xml:"title,attr,omitempty"  json:"title"`
@@ -199,10 +199,10 @@ type TrackChild struct {
 	ArtistID *specid.ID `xml:"artistId,attr,omitempty" json:"artistId,omitempty"`
 
 	Artists       []*ArtistRef `xml:"artists"           json:"artists"`
-	DisplayArtist string       `xml:"diplayArtist,attr" json:"displayArtist"`
+	DisplayArtist string       `xml:"displayArtist,attr" json:"displayArtist"`
 
 	AlbumArtists       []*ArtistRef `xml:"albumArtists"           json:"albumArtists"`
-	AlbumDisplayArtist string       `xml:"diplayAlbumArtist,attr" json:"displayAlbumArtist"`
+	AlbumDisplayArtist string       `xml:"displayAlbumArtist,attr" json:"displayAlbumArtist"`
 
 	Bitrate     int         `xml:"bitRate,attr,omitempty"     json:"bitRate,omitempty"`
 	ContentType string      `xml:"contentType,attr,omitempty" json:"contentType,omitempty"`
