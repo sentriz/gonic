@@ -286,6 +286,32 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	format, _ := params.Get("format")
 	timeOffset, _ := params.GetInt("timeOffset")
 
+	// preload Album so we can access album tag/title
+	if id.Type == specid.Track {
+		var tr db.Track
+		if err := c.dbc.Preload("Album").First(&tr, id.Value).Error; err != nil {
+			log.Printf("now_playing: select track %d: %v", id.Value, err)
+		} else {
+			albumTitle := ""
+			if tr.Album != nil {
+				albumTitle = tr.Album.TagTitle
+			}
+			artist := tr.TagTrackArtist
+
+			rec := NowPlayingRecord{
+				TrackID:  tr.ID,
+				Title:    tr.TagTitle,
+				IsDir:    false,
+				Album:    albumTitle,
+				Artist:   artist,
+				Username: user.Name,
+				Time:     time.Now().UTC(),
+				PlayerID: 0,
+			}
+			c.nowPlayingCache.Set(user.ID, rec)
+		}
+	}
+
 	if format == "raw" {
 		http.ServeFile(w, r, file.AbsPath())
 		return nil
