@@ -1,5 +1,12 @@
 # Changelog
 
+### [0.20.1](https://www.github.com/sentriz/gonic/compare/v0.20.0...v0.20.1) (2026-01-30)
+
+
+### Bug Fixes
+
+* **playlist:** fix regression in playlist ID handling ([103a048](https://www.github.com/sentriz/gonic/commit/103a048e8497597be9b930ea9ef6d57ca755c0eb)), closes [#655](https://www.github.com/sentriz/gonic/issues/655)
+
 ## [0.20.0](https://www.github.com/sentriz/gonic/compare/v0.19.0...v0.20.0) (2026-01-22)
 
 
