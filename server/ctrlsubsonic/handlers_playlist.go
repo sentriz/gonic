@@ -71,10 +71,7 @@ func (c *Controller) ServeCreateOrUpdatePlaylist(r *http.Request) *spec.Response
 	user := r.Context().Value(CtxUser).(*db.User)
 	params := r.Context().Value(CtxParams).(params.Params)
 
-	playlistID, err := params.GetFirstID("id", "playlistId")
-	if err != nil {
-		return spec.NewError(10, "please provide an `id` or `playlistId` parameter")
-	}
+	playlistID, _ := params.GetFirstID("id", "playlistId")
 	playlistPath := playlistIDDecode(playlistID)
 
 	var playlist playlistp.Playlist
