@@ -379,7 +379,7 @@ func (s *Scanner) scanDir(st *State, absPath string) error {
 			}
 
 			discNum := cmp.Or(tags.ParseInt(normtag.Get(trags, normtag.DiscNumber)), 1)
-			discSubtitle := normtag.Get(trags, normtag.DiscSubtitle)
+			discSubtitle := normtag.Get(trags, "DISCSUBTITLE")
 
 			if _, exists := discTitles[discNum]; !exists && discSubtitle != "" {
 				discTitles[discNum] = discSubtitle

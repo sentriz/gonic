@@ -31,7 +31,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	go.senan.xyz/flagconf v0.1.11
 	go.senan.xyz/taglib v0.11.1
-	go.senan.xyz/wrtag v0.20.1-0.20260122190811-2b0e15bc039d
+	go.senan.xyz/wrtag v0.20.0
 	golang.org/x/net v0.49.0
 	golang.org/x/sync v0.19.0
 	gopkg.in/gormigrate.v1 v1.6.0
