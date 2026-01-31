@@ -64,6 +64,7 @@ func main() {
 	flag.Var(&confMusicPaths, "music-path", "path to music")
 
 	confPlaylistsPath := flag.String("playlists-path", "", "path to your list of new or existing m3u playlists that gonic can manage")
+	confPlaylistsRelative := flag.Bool("playlists-relative", false, "make song file paths relative in the m3u playlists gonic generates")
 
 	confDBPath := flag.String("db-path", "gonic.db", "path to database (optional)")
 
@@ -151,6 +152,7 @@ func main() {
 		DBPath:            *confDBPath,
 		OriginalMusicPath: confMusicPaths[0].path,
 		PlaylistsPath:     *confPlaylistsPath,
+		PlaylistsRelative: *confPlaylistsRelative,
 		PodcastsPath:      *confPodcastPath,
 	})
 	if err != nil {
@@ -217,7 +219,7 @@ func main() {
 	listenbrainzClient := listenbrainz.NewClient()
 	lastfmClient := lastfm.NewClient(lastfmClientKeySecretFunc)
 
-	playlistStore, err := playlist.NewStore(*confPlaylistsPath)
+	playlistStore, err := playlist.NewStore(*confPlaylistsPath, *confPlaylistsRelative)
 	if err != nil {
 		log.Panicf("error creating playlists store: %v", err)
 	}
