@@ -564,6 +564,7 @@ func populateTrack(tx *db.DB, scanEmbeddedCover bool, album *db.Album, track *db
 	track.TagTrackNumber = tags.ParseInt(normtag.Get(trags, normtag.TrackNumber))
 	track.TagDiscNumber = tags.ParseInt(normtag.Get(trags, normtag.DiscNumber))
 	track.TagBrainzID = normtag.Get(trags, normtag.MusicBrainzRecordingID)
+	track.TagYear = tags.ParseInt(normtag.Get(trags, "YEAR"))
 
 	track.ReplayGainTrackGain = tags.ParseDB(normtag.Get(trags, normtag.ReplayGainTrackGain))
 	track.ReplayGainTrackPeak = tags.ParseFloat(normtag.Get(trags, normtag.ReplayGainTrackPeak))
