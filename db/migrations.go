@@ -882,5 +882,5 @@ func migrateAddAlbumDiscTitles(tx *gorm.DB, _ MigrationContext) error {
 }
 
 func migrateAddTrackYear(tx *gorm.DB, _ MigrationContext) error {
-	return tx.Exec(`ALTER TABLE tracks ADD COLUMN tag_year`).Error
+	return tx.AutoMigrate(Track{}).Error
 }
