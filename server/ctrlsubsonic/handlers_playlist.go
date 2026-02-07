@@ -221,14 +221,14 @@ func playlistRender(c *Controller, params params.Params, playlist *playlistp.Pla
 	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
 
 	for _, path := range playlist.Items {
-		file, err := specidpaths.Lookup(c.dbc, MusicPaths(c.musicPaths), c.podcastsPath, path)
+		id, err := specidpaths.Lookup(c.dbc, MusicPaths(c.musicPaths), c.podcastsPath, path)
 		if err != nil {
 			log.Printf("error looking up path %q: %s", path, err)
 			continue
 		}
 
 		var trch *spec.TrackChild
-		switch id := file.SID(); id.Type {
+		switch id.Type {
 		case specid.Track:
 			var track db.Track
 			if err := c.dbc.Where("id=?", id.Value).Preload("Album").Preload("Album.Artists").Preload("Artists").Preload("TrackStar", "user_id=?", user.ID).Preload("TrackRating", "user_id=?", user.ID).Find(&track).Error; errors.Is(err, gorm.ErrRecordNotFound) {

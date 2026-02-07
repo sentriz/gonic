@@ -391,17 +391,29 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 			return nil, fmt.Errorf("get playlist: %w", err)
 		}
 		for _, path := range playlist {
-			file, err := specidpaths.Lookup(c.dbc, MusicPaths(c.musicPaths), c.podcastsPath, path)
+			id, err := specidpaths.Lookup(c.dbc, MusicPaths(c.musicPaths), c.podcastsPath, path)
 			if err != nil {
 				return nil, fmt.Errorf("fetch track: %w", err)
 			}
-			switch f := file.(type) {
-			case *db.Track:
-				ret = append(ret, spec.NewTrackByTags(f, f.Album))
-			case *db.InternetRadioStation:
-				ret = append(ret, spec.NewTCInternetRadioStation(f))
-			case *db.PodcastEpisode:
-				ret = append(ret, spec.NewTCPodcastEpisode(f))
+			switch id.Type {
+			case specid.Track:
+				var track db.Track
+				if err := c.dbc.Where("id=?", id.Value).Preload("Album").Preload("Album.Artists").Preload("Artists").Find(&track).Error; err != nil {
+					return nil, fmt.Errorf("load track: %w", err)
+				}
+				ret = append(ret, spec.NewTrackByTags(&track, track.Album))
+			case specid.InternetRadioStation:
+				var irs db.InternetRadioStation
+				if err := c.dbc.Where("id=?", id.Value).Find(&irs).Error; err != nil {
+					return nil, fmt.Errorf("load internet radio station: %w", err)
+				}
+				ret = append(ret, spec.NewTCInternetRadioStation(&irs))
+			case specid.PodcastEpisode:
+				var pe db.PodcastEpisode
+				if err := c.dbc.Preload("Podcast").Where("id=?", id.Value).Find(&pe).Error; err != nil {
+					return nil, fmt.Errorf("load podcast episode: %w", err)
+				}
+				ret = append(ret, spec.NewTCPodcastEpisode(&pe))
 			default:
 				return nil, fmt.Errorf("%q: %w", path, errUnknownPlaylistEntry)
 			}
