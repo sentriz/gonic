@@ -376,7 +376,7 @@ func (s *Scanner) scanDir(st *State, absPath string) error {
 		for _, t := range trackUpdates {
 			trprops, trags, err := s.tagReader.Read(t.absPath)
 			if err != nil {
-				return fmt.Errorf("%w: %w", err, ErrReadingTags)
+				return fmt.Errorf("read %q: %w: %w", t.basename, err, ErrReadingTags)
 			}
 
 			if err := s.populateTrackAndArtists(tx, st, t.i, &album, t.track, t.timeSpec, trprops, trags, t.basename, t.absPath); err != nil {
