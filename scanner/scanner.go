@@ -288,6 +288,11 @@ func (s *Scanner) scanDir(st *State, absPath string) error {
 			continue
 		}
 
+		// skip macOS ._ resource fork files
+		if strings.HasPrefix(item.Name(), "._") {
+			continue
+		}
+
 		if coverparse.IsCover(item.Name()) {
 			cover = coverparse.BestBetween(cover, item.Name())
 			continue
