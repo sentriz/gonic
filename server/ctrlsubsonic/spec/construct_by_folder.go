@@ -84,7 +84,7 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 		MusicBrainzID: t.TagBrainzID,
 		CreatedAt:     t.CreatedAt,
 		AverageRating: formatRating(t.AverageRating),
-		Year: t.TagYear,
+		Year:          t.TagYear,
 	}
 	if trCh.Title == "" {
 		trCh.Title = t.Filename
