@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"image"
 	"io"
 	"log"
 	"net/http"
@@ -33,7 +34,18 @@ import (
 
 const (
 	coverDefaultSize = 600
-	coverCacheFormat = "png"
+)
+
+var (
+	//nolint:gochecknoglobals
+	// after the image is decoded with image.Decode, we use the "format" param as the extension
+	coverCacheFormats = []string{
+		"jpeg", // from image.RegisterFormat("jpeg") @ image/jpeg/reader.go
+		"png",  // from image.RegisterFormat("png")  @ image/png/reader.go
+		"gif",  // from image.RegisterFormat("gif")  @ image/gif/reader.go
+		"bmp",  // from image.RegisterFormat("bmp")  @ golang.org/x/image/bmp/reader.go
+		"tiff", // from image.RegisterFormat("tiff") @ golang.org/x/image/tiff/reader.go
+	}
 )
 
 func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *spec.Response {
@@ -42,33 +54,75 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	size := params.GetOrInt("size", coverDefaultSize)
-	cachePath := filepath.Join(
-		c.cacheCoverPath,
-		fmt.Sprintf("%s-%d.%s", id.String(), size, coverCacheFormat),
-	)
-	_, err = os.Stat(cachePath)
-	switch {
-	case os.IsNotExist(err):
-		reader, err := coverFor(c.dbc, c.artistInfoCache, c.tagReader, id)
-		if err != nil {
-			return spec.NewError(10, "couldn't find cover %q: %v", id, err)
-		}
-		defer reader.Close()
 
-		if err := coverScaleAndSave(reader, cachePath, size); err != nil {
-			log.Printf("error scaling cover: %v", err)
-			return nil
-		}
-	case err != nil:
-		log.Printf("error stating %q: %v", cachePath, err)
+	size := params.GetOrInt("size", coverDefaultSize)
+	if size <= 0 {
+		return spec.NewError(0, "invalid size")
+	}
+
+	// cached cover could exist for any supported format
+	cachePath, err := findCachedCover(c.cacheCoverPath, id.String(), size)
+	if err != nil && !os.IsNotExist(err) {
+		log.Printf("error checking cache: %v", err)
 		return nil
 	}
 
-	w.Header().Set("Cache-Control", "public, max-age=1209600")
-	http.ServeFile(w, r, cachePath)
+	serve := func(p string) {
+		w.Header().Set("Cache-Control", "public, max-age=1209600")
+		http.ServeFile(w, r, p)
+	}
 
+	if cachePath != "" {
+		serve(cachePath)
+		return nil
+	}
+
+	reader, err := coverFor(c.dbc, c.artistInfoCache, c.tagReader, id)
+	if err != nil {
+		return spec.NewError(10, "couldn't find cover %q: %v", id, err)
+	}
+	defer reader.Close()
+
+	img, format, err := image.Decode(reader)
+	if err != nil {
+		return spec.NewError(0, "decode for cover %q: %v", id, err)
+	}
+
+	// don't upscale
+	minSize := min(size, max(img.Bounds().Dx(), img.Bounds().Dy()))
+
+	cachePath = filepath.Join(c.cacheCoverPath, coverCacheFilename(id.String(), minSize, format))
+
+	if minSize != size {
+		// we down sized, check cache again
+		if _, err := os.Stat(cachePath); err == nil {
+			serve(cachePath)
+			return nil
+		}
+	}
+
+	resized := imaging.Fit(img, minSize, minSize, imaging.Lanczos)
+
+	if err := imaging.Save(resized, cachePath); err != nil {
+		return spec.NewError(10, "saving cover %q: %v", id, err)
+	}
+
+	serve(cachePath)
 	return nil
+}
+
+func coverCacheFilename(idStr string, size int, format string) string {
+	return fmt.Sprintf("%s-%d.%s", idStr, size, format)
+}
+
+func findCachedCover(cacheDir, idStr string, size int) (string, error) {
+	for _, format := range coverCacheFormats {
+		cachePath := filepath.Join(cacheDir, coverCacheFilename(idStr, size, format))
+		if _, err := os.Stat(cachePath); err == nil {
+			return cachePath, nil
+		}
+	}
+	return "", os.ErrNotExist
 }
 
 var (
@@ -174,21 +228,6 @@ func coverForTrack(dbc *db.DB, tagReader tags.Reader, id int) (io.ReadCloser, er
 	}
 
 	return io.NopCloser(bytes.NewReader(cover)), nil
-}
-
-func coverScaleAndSave(reader io.Reader, cachePath string, size int) error {
-	src, err := imaging.Decode(reader)
-	if err != nil {
-		return fmt.Errorf("resizing: %w", err)
-	}
-
-	// don't upscale images
-	width := min(size, src.Bounds().Dx())
-
-	if err := imaging.Save(imaging.Resize(src, width, 0, imaging.Lanczos), cachePath); err != nil {
-		return fmt.Errorf("caching %q: %w", cachePath, err)
-	}
-	return nil
 }
 
 func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.Response {

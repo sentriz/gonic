@@ -30,8 +30,10 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"go.senan.xyz/flagconf"
+
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/deps"
 	"go.senan.xyz/gonic/handlerutil"
 	"go.senan.xyz/gonic/infocache/albuminfocache"
 	"go.senan.xyz/gonic/infocache/artistinfocache"
@@ -101,12 +103,13 @@ func main() {
 	}
 
 	var confMultiValueGenre, confMultiValueArtist, confMultiValueAlbumArtist multiValueSetting
-	flag.Var(&confMultiValueGenre, "multi-value-genre", "setting for mutli-valued genre scanning (optional)")
-	flag.Var(&confMultiValueArtist, "multi-value-artist", "setting for mutli-valued track artist scanning (optional)")
-	flag.Var(&confMultiValueAlbumArtist, "multi-value-album-artist", "setting for mutli-valued album artist scanning (optional)")
+	flag.Var(&confMultiValueGenre, "multi-value-genre", "setting for multi-valued genre scanning (optional)")
+	flag.Var(&confMultiValueArtist, "multi-value-artist", "setting for multi-valued track artist scanning (optional)")
+	flag.Var(&confMultiValueAlbumArtist, "multi-value-album-artist", "setting for multi-valued album artist scanning (optional)")
 
 	confPprof := flag.Bool("pprof", false, "enable the /debug/pprof endpoint (optional)")
 	confExpvar := flag.Bool("expvar", false, "enable the /debug/vars endpoint (optional)")
+	confLogDB := flag.Bool("log-db", false, "enable database query logging (optional)")
 
 	deprecatedConfGenreSplit := flag.String("genre-split", "", "(deprecated, see multi-value settings)")
 
@@ -156,7 +159,7 @@ func main() {
 		log.Fatalf("couldn't create covers cache path: %v\n", err)
 	}
 
-	dbc, err := db.New(*confDBPath, db.DefaultOptions())
+	dbc, err := db.New(*confDBPath, deps.DBDriverOptions(), *confLogDB)
 	if err != nil {
 		log.Fatalf("error opening database: %v\n", err)
 	}
@@ -199,6 +202,8 @@ func main() {
 		value := strings.ReplaceAll(f.Value.String(), "\n", "")
 		log.Printf("    %-30s %s\n", f.Name, value)
 	})
+
+	tagReader := deps.TagReader
 
 	scannr := scanner.New(
 		ctrlsubsonic.MusicPaths(musicPaths),

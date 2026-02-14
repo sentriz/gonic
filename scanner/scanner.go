@@ -104,6 +104,9 @@ func (s *Scanner) ScanAndClean(opts ScanOptions) (*State, error) {
 	if err := s.cleanAlbums(st); err != nil {
 		return nil, fmt.Errorf("clean albums: %w", err)
 	}
+	if err := s.cleanAlbumMetadata(); err != nil {
+		return nil, fmt.Errorf("clean album metadata: %w", err)
+	}
 	if err := s.cleanArtists(st); err != nil {
 		return nil, fmt.Errorf("clean artists: %w", err)
 	}
@@ -455,7 +458,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 
 	// possible album level embedded covers come only from the first track
 	if i == 0 {
-		if err := populateAlbumEmbeddedCover(tx, album, track, trprops); err != nil {
+		if err := populateAlbumEmbeddedCover(tx, s.scanEmbeddedCover, album, track, trprops); err != nil {
 			return fmt.Errorf("populate embedded cover: %w", err)
 		}
 	}
@@ -466,9 +469,9 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 	return nil
 }
 
-func populateAlbumEmbeddedCover(tx *db.DB, album *db.Album, track *db.Track, trprops tags.Properties) error {
+func populateAlbumEmbeddedCover(tx *db.DB, scanEmbeddedCover bool, album *db.Album, track *db.Track, trprops tags.Properties) error {
 	var trackID int
-	if trprops.HasCover {
+	if scanEmbeddedCover && trprops.HasCover {
 		trackID = track.ID
 	}
 	var prevTrackID int
@@ -497,7 +500,7 @@ func populateAlbum(tx *db.DB, album *db.Album, trags map[string][]string, modTim
 	album.TagBrainzID = normtag.Get(trags, normtag.MusicBrainzReleaseID)
 	album.TagYear = tags.MustYear(trags)
 	album.TagCompilation = tags.ParseBool(normtag.Get(trags, normtag.Compilation))
-	album.TagReleaseType = normtag.Get(trags, normtag.ReleaseType)
+	album.TagReleaseType = strings.Join(normtag.Values(trags, normtag.ReleaseType), ", ")
 
 	album.ModifiedAt = modTime
 	if album.CreatedAt.After(createTime) {
@@ -695,6 +698,62 @@ func (s *Scanner) cleanAlbums(st *State) error {
 	return s.db.TransactionChunked(st.albumsMissing, func(tx *db.DB, chunk []int64) error {
 		return tx.Where(chunk).Delete(&db.Album{}).Error
 	})
+}
+
+func (s *Scanner) cleanAlbumMetadata() error {
+	var numModified int
+
+	start := time.Now()
+	defer func() { log.Printf("finished clean album metadata in %s, %d modified", durSince(start), numModified) }()
+
+	subTracks := s.db.Model(db.Track{}).Select("DISTINCT album_id").SubQuery()
+
+	var emptyAlbumIDs []int
+	err := s.db.
+		Model(db.Album{}).
+		Where("id NOT IN ?", subTracks).
+		Where("tag_title != '' OR tag_album_artist != ''").
+		Pluck("id", &emptyAlbumIDs).
+		Error
+	if err != nil {
+		return fmt.Errorf("finding empty albums: %w", err)
+	}
+	if len(emptyAlbumIDs) == 0 {
+		return nil
+	}
+
+	numModified = len(emptyAlbumIDs)
+
+	if err := s.db.Where("album_id IN (?)", emptyAlbumIDs).Delete(db.AlbumArtist{}).Error; err != nil {
+		return err
+	}
+	if err := s.db.Where("album_id IN (?)", emptyAlbumIDs).Delete(db.AlbumGenre{}).Error; err != nil {
+		return err
+	}
+	if err := s.db.Where("album_id IN (?)", emptyAlbumIDs).Delete(db.ArtistAppearances{}).Error; err != nil {
+		return err
+	}
+
+	q := s.db.
+		Model(&db.Album{}).
+		Where("id IN (?)", emptyAlbumIDs).
+		Updates(map[string]any{
+			"tag_title":               "",
+			"tag_title_u_dec":         "",
+			"tag_album_artist":        "",
+			"tag_year":                0,
+			"tag_brainz_id":           "",
+			"tag_compilation":         0,
+			"tag_release_type":        "",
+			"embedded_cover_track_id": nil,
+		})
+	if err := q.Error; err != nil {
+		return err
+	}
+
+	numModified = int(q.RowsAffected)
+
+	return nil
 }
 
 func (s *Scanner) cleanArtists(st *State) error {

@@ -1,6 +1,3 @@
-//go:build go1.18
-// +build go1.18
-
 package scanner_test
 
 import (
@@ -9,7 +6,6 @@ import (
 	"reflect"
 	"testing"
 
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/stretchr/testify/assert"
 	"go.senan.xyz/gonic/mockfs"
 )

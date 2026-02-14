@@ -513,7 +513,7 @@ func (p *Podcasts) doPodcastDownload(podcast *db.Podcast, podcastEpisode *db.Pod
 		return fmt.Errorf("get podcast episode filename: %w", err)
 	}
 	podcastEpisode.Filename = filename
-	if err := p.db.Save(&podcastEpisode).Error; err != nil {
+	if err := p.db.Save(podcastEpisode).Error; err != nil {
 		return fmt.Errorf("save podcast episode: %w", err)
 	}
 	if err := os.MkdirAll(filepath.Dir(filepath.Join(podcast.RootDir, podcastEpisode.Filename)), os.ModePerm); err != nil {
@@ -528,7 +528,7 @@ func (p *Podcasts) doPodcastDownload(podcast *db.Podcast, podcastEpisode *db.Pod
 	defer func() {
 		if err != nil {
 			podcastEpisode.Status = db.PodcastEpisodeStatusError
-			_ = p.db.Save(&podcastEpisode).Error
+			_ = p.db.Save(podcastEpisode).Error
 		}
 	}()
 

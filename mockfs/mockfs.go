@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/deps"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/tags"
 	"go.senan.xyz/wrtag/tags/normtag"
@@ -35,7 +36,7 @@ func NewWithExcludePattern(tb testing.TB, excludePattern string) *MockFS {
 func newMockFS(tb testing.TB, dirs []string, excludePattern string) *MockFS {
 	tb.Helper()
 
-	dbc, err := db.NewMock()
+	dbc, err := db.NewMock(deps.DBDriverOptions())
 	if err != nil {
 		tb.Fatalf("create db: %v", err)
 	}
@@ -157,6 +158,21 @@ func (m *MockFS) RemoveAll(path string) {
 	abspath := filepath.Join(m.dir, path)
 	if err := os.RemoveAll(abspath); err != nil {
 		m.t.Fatalf("remove all: %v", err)
+	}
+}
+
+func (m *MockFS) Move(src, dest string) {
+	srcAbs := filepath.Join(m.dir, src)
+	destAbs := filepath.Join(m.dir, dest)
+	if err := os.MkdirAll(filepath.Dir(destAbs), os.ModePerm); err != nil {
+		m.t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.Rename(srcAbs, destAbs); err != nil {
+		m.t.Fatalf("rename: %v", err)
+	}
+	if info, ok := m.tagReader.paths[srcAbs]; ok {
+		m.tagReader.paths[destAbs] = info
+		delete(m.tagReader.paths, srcAbs)
 	}
 }
 

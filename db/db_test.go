@@ -7,8 +7,9 @@ import (
 	"os"
 	"testing"
 
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/stretchr/testify/require"
+
+	"go.senan.xyz/gonic/deps"
 )
 
 func TestMain(m *testing.M) {
@@ -22,7 +23,7 @@ func TestGetSetting(t *testing.T) {
 	key := SettingKey(randKey())
 	value := "howdy"
 
-	testDB, err := NewMock()
+	testDB, err := NewMock(deps.DBDriverOptions())
 	if err != nil {
 		t.Fatalf("error creating db: %v", err)
 	}

@@ -10,9 +10,10 @@ import (
 	"testing"
 
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	_ "go.senan.xyz/gonic/deps"
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/mockfs"
@@ -121,6 +122,37 @@ func TestCoverBeforeTracks(t *testing.T) {
 	var tracks []*db.Track
 	assert.NoError(t, m.DB().Where("album_id=?", album.ID).Find(&tracks).Error) // album has tracks
 	assert.Equal(t, 3, len(tracks))                                             // album has tracks
+}
+
+// https://github.com/sentriz/gonic/issues/638
+func TestAlbumArtistsClearedWhenFolderLosesTracks(t *testing.T) {
+	t.Parallel()
+	m := mockfs.New(t)
+
+	loosePath := "artist-0/fusion.flac"
+	nestedPath := "artist-0/album-0/track-0.flac"
+
+	m.AddTrack(loosePath)
+	m.SetTags(loosePath, func(tags *mockfs.TagInfo) {
+		normtag.Set(tags.Tags, normtag.Artist, "artist-0")
+		normtag.Set(tags.Tags, normtag.AlbumArtist, "artist-0")
+		normtag.Set(tags.Tags, normtag.Album, "Fusion Firespace")
+		normtag.Set(tags.Tags, normtag.Title, "Fusion Firespace")
+	})
+
+	m.ScanAndClean()
+
+	var albumArtistCount int
+	require.NoError(t, m.DB().Model(db.AlbumArtist{}).Count(&albumArtistCount).Error)
+	require.Equal(t, 1, albumArtistCount)
+
+	m.Move(loosePath, nestedPath)
+
+	m.ScanAndClean()
+
+	var postAlbumArtistCount int
+	require.NoError(t, m.DB().Model(db.AlbumArtist{}).Count(&postAlbumArtistCount).Error)
+	require.Equal(t, 1, postAlbumArtistCount)
 }
 
 func TestUpdatedTags(t *testing.T) {

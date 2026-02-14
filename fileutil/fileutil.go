@@ -14,9 +14,13 @@ import (
 
 var nonAlphaNumExpr = regexp.MustCompile("[^a-zA-Z0-9_.]+")
 
+const maxFilenameLength = 200
+
 func Safe(filename string) string {
 	filename = nonAlphaNumExpr.ReplaceAllString(filename, "")
-	return filename
+	ext := filepath.Ext(filename)
+	filename = filename[:min(maxFilenameLength, len(filename))-len(ext)]
+	return filename + ext
 }
 
 // try to find a unqiue file (or dir) name. incrementing like "example (1)"

@@ -18,6 +18,8 @@ import (
 	jd "github.com/josephburnett/jd/lib"
 	"github.com/stretchr/testify/require"
 
+	_ "go.senan.xyz/gonic/deps"
+
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/mockfs"

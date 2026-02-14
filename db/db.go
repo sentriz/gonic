@@ -17,46 +17,40 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
-func DefaultOptions() url.Values {
-	return url.Values{
-		// with this, multiple connections share a single data and schema cache.
-		// see https://www.sqlite.org/sharedcache.html
-		"cache": {"shared"},
-		// with this, the db sleeps for a little while when locked. can prevent
-		// a SQLITE_BUSY. see https://www.sqlite.org/c3ref/busy_timeout.html
-		"_busy_timeout": {"30000"},
-		"_journal_mode": {"WAL"},
-		"_foreign_keys": {"true"},
-	}
-}
-
-func mockOptions() url.Values {
-	return url.Values{
-		"_foreign_keys": {"true"},
-	}
-}
-
 type DB struct {
 	*gorm.DB
 }
 
-func New(path string, options url.Values) (*DB, error) {
-	url := url.URL{
-		Scheme: "file",
-		Opaque: path,
+func New(path string, opts url.Values, logQueries bool) (*DB, error) {
+	u := url.URL{
+		Scheme:   "file",
+		Opaque:   path,
+		RawQuery: opts.Encode(),
 	}
-	url.RawQuery = options.Encode()
-	db, err := gorm.Open("sqlite3", url.String())
+
+	db, err := gorm.Open("sqlite3", u.String())
 	if err != nil {
 		return nil, fmt.Errorf("with gorm: %w", err)
 	}
+
 	db.SetLogger(log.New(os.Stdout, "gorm ", 0))
-	db.DB().SetMaxOpenConns(1)
+	if logQueries {
+		db.LogMode(true)
+	}
+
+	db.DB().SetMaxOpenConns(4)
+
 	return &DB{DB: db}, nil
 }
 
-func NewMock() (*DB, error) {
-	return New(":memory:", mockOptions())
+func NewMock(opts url.Values) (*DB, error) {
+	d, err := New(":memory:", opts, false)
+	if err != nil {
+		return nil, err
+	}
+	// in-memory databases can't be shared across multiple connections
+	d.DB.DB().SetMaxOpenConns(1)
+	return d, nil
 }
 
 func (db *DB) InsertBulkLeftMany(table string, head []string, left int, col []int) error {
@@ -229,7 +223,7 @@ type Track struct {
 	TagTrackNumber int       `sql:"default: null"`
 	TagDiscNumber  int       `sql:"default: null"`
 	TagBrainzID    string    `sql:"default: null"`
-	TagLyrics      string    `sql:"default:null"`
+	TagLyrics      string    `sql:"default: null"`
 
 	ReplayGainTrackGain float32
 	ReplayGainTrackPeak float32

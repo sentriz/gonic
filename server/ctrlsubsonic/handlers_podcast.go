@@ -44,10 +44,6 @@ func (c *Controller) ServeGetNewestPodcasts(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeDownloadPodcastEpisode(r *http.Request) *spec.Response {
-	user := r.Context().Value(CtxUser).(*db.User)
-	if !user.IsAdmin {
-		return spec.NewError(50, "user not admin")
-	}
 	params := r.Context().Value(CtxParams).(params.Params)
 	id, err := params.GetID("id")
 	if err != nil || id.Type != specid.PodcastEpisode {
