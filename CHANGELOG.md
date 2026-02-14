@@ -1,5 +1,39 @@
 # Changelog
 
+### [0.20.1](https://www.github.com/sentriz/gonic/compare/v0.20.0...v0.20.1) (2026-01-30)
+
+
+### Bug Fixes
+
+* **playlist:** fix regression in playlist ID handling ([103a048](https://www.github.com/sentriz/gonic/commit/103a048e8497597be9b930ea9ef6d57ca755c0eb)), closes [#655](https://www.github.com/sentriz/gonic/issues/655)
+
+## [0.20.0](https://www.github.com/sentriz/gonic/compare/v0.19.0...v0.20.0) (2026-01-22)
+
+
+### Features
+
+* add support for playlist cover art on filesystem ([aad729e](https://www.github.com/sentriz/gonic/commit/aad729e3ea79a0a542496802c815851d8e0f702a)), closes [#650](https://www.github.com/sentriz/gonic/issues/650)
+* **ci:** bump golangci-lint ([79e3898](https://www.github.com/sentriz/gonic/commit/79e3898c3b47d4b3120265fa9aa6ddc22d2fbe7c))
+* **db:** add an index on albums.created_at ([816e437](https://www.github.com/sentriz/gonic/commit/816e437d44b2feb40f82e8d589e3d17c0bf87b0c)), closes [#620](https://www.github.com/sentriz/gonic/issues/620)
+* **gonic:** add log-db option to log queries ([75a0918](https://www.github.com/sentriz/gonic/commit/75a0918a7ef8bb6c9506de69dd4e6b6e8c35e567)), closes [#620](https://www.github.com/sentriz/gonic/issues/620)
+* **scanner:** read multi valued release types ([c752a22](https://www.github.com/sentriz/gonic/commit/c752a22808527a034531418263662261fe83f9d4))
+* **subsonic:** allow non admins to download podcast episodes ([c2ebe96](https://www.github.com/sentriz/gonic/commit/c2ebe9631300b54f60bf3fd12a4eae526a84d3de)), closes [#623](https://www.github.com/sentriz/gonic/issues/623)
+* **subsonic:** implement getSimilarSongs for artists and albums ([#649](https://www.github.com/sentriz/gonic/issues/649)) ([db9aa2b](https://www.github.com/sentriz/gonic/commit/db9aa2b2e37903e8cce770d76bed6e568570599e))
+* **subsonic:** return disc titles ([0377bfa](https://www.github.com/sentriz/gonic/commit/0377bfa696e7f5dc02497bd49b96cebeefd7ef2f))
+* **taglib:** add `.ape` as a supported filetype ([82642eb](https://www.github.com/sentriz/gonic/commit/82642eb1ca4b9587fe1764bf7efe8bbb2cb28e42)), closes [#615](https://www.github.com/sentriz/gonic/issues/615)
+
+
+### Bug Fixes
+
+* **db:** enable WAL also for Wasm driver ([b67c1c1](https://www.github.com/sentriz/gonic/commit/b67c1c14d2b883f634f7aaecc0367a15ec7dab71)), closes [#620](https://www.github.com/sentriz/gonic/issues/620)
+* **db:** use separate DSN for both drivers ([4696499](https://www.github.com/sentriz/gonic/commit/469649935e26ef279a4a805cd964d3b010aa8146))
+* **gonic:** correct typo in command line help ([#640](https://www.github.com/sentriz/gonic/issues/640)) ([99e2ccf](https://www.github.com/sentriz/gonic/commit/99e2ccfb0f7ce038669fef2f9ff281da4174fee6))
+* **podcast:** truncate filenames longer than 200 chars ([e12ab54](https://www.github.com/sentriz/gonic/commit/e12ab544c21f286ead3c84ead113be6658cef318)), closes [#624](https://www.github.com/sentriz/gonic/issues/624)
+* **podcast:** validate response status code when fetching podcast audio ([2900ce5](https://www.github.com/sentriz/gonic/commit/2900ce51024e5dafdf23ca0c5a6280bd3bd48059)), closes [#639](https://www.github.com/sentriz/gonic/issues/639)
+* **scanner:** clear metadata of albums who no longer have tracks ([ca59601](https://www.github.com/sentriz/gonic/commit/ca59601484371d41564f84e33af62642df6de3e5)), closes [#638](https://www.github.com/sentriz/gonic/issues/638)
+* **scanner:** reset embedded cover for album when toggling `scan-embedded-cover` ([ea5e625](https://www.github.com/sentriz/gonic/commit/ea5e6252a175c6dea688c2910f7cb270b60b1c27)), closes [#619](https://www.github.com/sentriz/gonic/issues/619)
+* **subsonic:** correct spec typos ([04ff7f3](https://www.github.com/sentriz/gonic/commit/04ff7f3c331445abbbcf6a64465aa523c1775386)), closes [#653](https://www.github.com/sentriz/gonic/issues/653)
+
 ## [0.19.0](https://www.github.com/sentriz/gonic/compare/v0.18.0...v0.19.0) (2025-10-11)
 
 This release uses WebAssesmby for the [tagging](https://github.com/sentriz/go-taglib) and [database](https://github.com/ncruces/go-sqlite3) backends. This means that gonic no longer requires Cgo or external dependencies to build. As a result, static binaries will be available in the releases page, and Docker images for more architectures. Performance of scanning and tagging should also be improved.

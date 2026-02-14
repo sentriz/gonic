@@ -37,32 +37,40 @@ func Locate(dbc *db.DB, id specid.ID) (Result, error) {
 	}
 }
 
-// Locate maps a location on the filesystem to a specid
-func Lookup(dbc *db.DB, musicPaths []string, podcastsPath string, path string) (Result, error) {
+// Lookup maps a location on the filesystem to a specid
+func Lookup(dbc *db.DB, musicPaths []string, podcastsPath string, path string) (*specid.ID, error) {
 	if !strings.HasPrefix(path, "http") && !filepath.IsAbs(path) {
 		return nil, ErrNotAbs
 	}
 
 	if strings.HasPrefix(path, podcastsPath) {
 		podcastPath, episodeFilename := filepath.Split(path)
+
 		q := dbc.
+			Select("podcast_episodes.id").
+			Model(db.PodcastEpisode{}).
 			Joins(`JOIN podcasts ON podcasts.id=podcast_episodes.podcast_id`).
 			Where(`podcasts.root_dir=? AND podcast_episodes.filename=?`, filepath.Clean(podcastPath), filepath.Clean(episodeFilename))
 
-		var pe db.PodcastEpisode
-		if err := q.First(&pe).Error; err == nil {
-			return &pe, nil
+		var id int
+		if err := q.Row().Scan(&id); err != nil {
+			return nil, ErrNotFound
 		}
-		return nil, ErrNotFound
+		return &specid.ID{Type: specid.PodcastEpisode, Value: id}, nil
 	}
 
 	// probably internet radio
 	if strings.HasPrefix(path, "http") {
-		var irs db.InternetRadioStation
-		if err := dbc.First(&irs, "stream_url=?", path).Error; err == nil {
-			return &irs, nil
+		q := dbc.
+			Select("internet_radio_stations.id").
+			Model(db.InternetRadioStation{}).
+			Where("stream_url=?", path)
+
+		var id int
+		if err := q.Row().Scan(&id); err != nil {
+			return nil, ErrNotFound
 		}
-		return nil, ErrNotFound
+		return &specid.ID{Type: specid.InternetRadioStation, Value: id}, nil
 	}
 
 	var musicPath string
@@ -81,13 +89,14 @@ func Lookup(dbc *db.DB, musicPaths []string, podcastsPath string, path string) (
 	leftPath, rightPath := filepath.Split(filepath.Clean(relDir))
 
 	q := dbc.
+		Select("tracks.id").
+		Model(db.Track{}).
 		Where(`albums.root_dir=? AND albums.left_path=? AND albums.right_path=? AND tracks.filename=?`, musicPath, leftPath, rightPath, filename).
-		Joins(`JOIN albums ON tracks.album_id=albums.id`).
-		Preload("Album")
+		Joins(`JOIN albums ON tracks.album_id=albums.id`)
 
-	var track db.Track
-	if err := q.First(&track).Error; err == nil {
-		return &track, nil
+	var id int
+	if err := q.Row().Scan(&id); err != nil {
+		return nil, ErrNotFound
 	}
-	return nil, ErrNotFound
+	return &specid.ID{Type: specid.Track, Value: id}, nil
 }

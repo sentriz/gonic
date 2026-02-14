@@ -25,6 +25,7 @@ func NewAlbumByTags(a *db.Album, artists []*db.Artist) *Album {
 		AverageRating: formatRating(a.AverageRating),
 		IsCompilation: a.TagCompilation,
 		ReleaseTypes:  formatReleaseTypes(a.TagReleaseType),
+		DiscTitles:    []*DiscTitle{},
 	}
 	if a.Cover != "" {
 		ret.CoverID = a.SID()
@@ -59,6 +60,17 @@ func NewAlbumByTags(a *db.Album, artists []*db.Artist) *Album {
 	if a.Play != nil {
 		ret.PlayCount = a.Play.Count
 	}
+	if len(a.DiscTitles) > 0 {
+		sort.Slice(a.DiscTitles, func(i, j int) bool {
+			return a.DiscTitles[i].DiscNumber < a.DiscTitles[j].DiscNumber
+		})
+		for _, dt := range a.DiscTitles {
+			ret.DiscTitles = append(ret.DiscTitles, &DiscTitle{
+				Disc:  dt.DiscNumber,
+				Title: dt.Title,
+			})
+		}
+	}
 	return ret
 }
 
@@ -67,7 +79,6 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 		ID:                 t.SID(),
 		Album:              album.TagTitle,
 		AlbumID:            album.SID(),
-		Artist:             t.TagTrackArtist,
 		Artists:            []*ArtistRef{},
 		DisplayArtist:      t.TagTrackArtist,
 		AlbumArtists:       []*ArtistRef{},
@@ -106,20 +117,30 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 	if t.TrackRating != nil {
 		ret.UserRating = t.TrackRating.Rating
 	}
-	if len(album.Artists) > 0 {
-		sort.Slice(album.Artists, func(i, j int) bool {
-			return album.Artists[i].ID < album.Artists[j].ID
-		})
+
+	sort.Slice(t.Artists, func(i, j int) bool {
+		return t.Artists[i].ID < t.Artists[j].ID
+	})
+	sort.Slice(album.Artists, func(i, j int) bool {
+		return album.Artists[i].ID < album.Artists[j].ID
+	})
+
+	switch {
+	case len(t.Artists) > 0:
+		ret.Artist = t.Artists[0].Name
+		ret.ArtistID = t.Artists[0].SID()
+	case len(album.Artists) > 0:
+		ret.Artist = album.Artists[0].Name
 		ret.ArtistID = album.Artists[0].SID()
+	}
+	for _, a := range t.Artists {
+		ret.Artists = append(ret.Artists, &ArtistRef{ID: a.SID(), Name: a.Name})
 	}
 	if len(t.Genres) > 0 {
 		ret.Genre = t.Genres[0].Name
 	}
 	for _, g := range t.Genres {
 		ret.Genres = append(ret.Genres, &GenreRef{Name: g.Name})
-	}
-	for _, a := range t.Artists {
-		ret.Artists = append(ret.Artists, &ArtistRef{ID: a.SID(), Name: a.Name})
 	}
 	for _, a := range album.Artists {
 		ret.AlbumArtists = append(ret.AlbumArtists, &ArtistRef{ID: a.SID(), Name: a.Name})

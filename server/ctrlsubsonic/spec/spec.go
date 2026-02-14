@@ -125,6 +125,11 @@ type GenreRef struct {
 	Name string `xml:"name,attr" json:"name"`
 }
 
+type DiscTitle struct {
+	Disc  int    `xml:"disc,attr" json:"disc"`
+	Title string `xml:"title,attr" json:"title"`
+}
+
 // https://opensubsonic.netlify.app/docs/responses/albumid3/
 type Album struct {
 	ID      *specid.ID `xml:"id,attr,omitempty"       json:"id"`
@@ -135,7 +140,7 @@ type Album struct {
 	Artist   string     `xml:"artist,attr"             json:"artist"`
 
 	Artists       []*ArtistRef `xml:"artists"           json:"artists"`
-	DisplayArtist string       `xml:"diplayArtist,attr" json:"displayArtist"`
+	DisplayArtist string       `xml:"displayArtist,attr" json:"displayArtist"`
 
 	// folder stuff
 	Title    string     `xml:"title,attr,omitempty"  json:"title"`
@@ -153,8 +158,9 @@ type Album struct {
 	Year       int           `xml:"year,attr,omitempty"    json:"year,omitempty"`
 	Tracks     []*TrackChild `xml:"song,omitempty"         json:"song,omitempty"`
 
-	IsCompilation bool     `xml:"isCompilation" json:"isCompilation"`
-	ReleaseTypes  []string `xml:"releaseTypes" json:"releaseTypes"`
+	IsCompilation bool         `xml:"isCompilation" json:"isCompilation"`
+	ReleaseTypes  []string     `xml:"releaseTypes" json:"releaseTypes"`
+	DiscTitles    []*DiscTitle `xml:"discTitles" json:"discTitles"`
 
 	// star / rating
 	Starred       *time.Time `xml:"starred,attr,omitempty"         json:"starred,omitempty"`
@@ -193,10 +199,10 @@ type TrackChild struct {
 	ArtistID *specid.ID `xml:"artistId,attr,omitempty" json:"artistId,omitempty"`
 
 	Artists       []*ArtistRef `xml:"artists"           json:"artists"`
-	DisplayArtist string       `xml:"diplayArtist,attr" json:"displayArtist"`
+	DisplayArtist string       `xml:"displayArtist,attr" json:"displayArtist"`
 
 	AlbumArtists       []*ArtistRef `xml:"albumArtists"           json:"albumArtists"`
-	AlbumDisplayArtist string       `xml:"diplayAlbumArtist,attr" json:"displayAlbumArtist"`
+	AlbumDisplayArtist string       `xml:"displayAlbumArtist,attr" json:"displayAlbumArtist"`
 
 	Bitrate     int         `xml:"bitRate,attr,omitempty"     json:"bitRate,omitempty"`
 	ContentType string      `xml:"contentType,attr,omitempty" json:"contentType,omitempty"`
@@ -320,7 +326,7 @@ type Playlists struct {
 }
 
 type Playlist struct {
-	ID        string        `xml:"id,attr"         json:"id"`
+	ID        specid.ID     `xml:"id,attr"         json:"id"`
 	Name      string        `xml:"name,attr"       json:"name"`
 	Comment   string        `xml:"comment,attr"    json:"comment"`
 	Owner     string        `xml:"owner,attr"      json:"owner"`

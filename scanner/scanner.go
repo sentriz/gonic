@@ -2,6 +2,7 @@
 package scanner
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -287,6 +288,11 @@ func (s *Scanner) scanDir(st *State, absPath string) error {
 			continue
 		}
 
+		// skip macOS ._ resource fork files
+		if strings.HasPrefix(item.Name(), "._") {
+			continue
+		}
+
 		if coverparse.IsCover(item.Name()) {
 			cover = coverparse.BestBetween(cover, item.Name())
 			continue
@@ -366,21 +372,33 @@ func (s *Scanner) scanDir(st *State, absPath string) error {
 	}
 
 	return s.db.Transaction(func(tx *db.DB) error {
+		var discTitles = map[int]string{}
 		for _, t := range trackUpdates {
-			if err := s.populateTrackAndArtists(tx, st, t.i, &album, t.track, t.timeSpec, t.basename, t.absPath); err != nil {
+			trprops, trags, err := s.tagReader.Read(t.absPath)
+			if err != nil {
+				return fmt.Errorf("read %q: %w: %w", t.basename, err, ErrReadingTags)
+			}
+
+			if err := s.populateTrackAndArtists(tx, st, t.i, &album, t.track, t.timeSpec, trprops, trags, t.basename, t.absPath); err != nil {
 				return fmt.Errorf("populate track %q: %w", t.basename, err)
 			}
+
+			discNum := cmp.Or(tags.ParseInt(normtag.Get(trags, normtag.DiscNumber)), 1)
+			discSubtitle := normtag.Get(trags, "DISCSUBTITLE")
+
+			if _, exists := discTitles[discNum]; !exists && discSubtitle != "" {
+				discTitles[discNum] = discSubtitle
+			}
+		}
+
+		if err := populateAlbumDiscTitles(tx, &album, discTitles); err != nil {
+			return fmt.Errorf("populate disc titles: %w", err)
 		}
 		return nil
 	})
 }
 
-func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db.Album, track *db.Track, timeSpec times.Timespec, basename, absPath string) error {
-	trprops, trags, err := s.tagReader.Read(absPath)
-	if err != nil {
-		return fmt.Errorf("%w: %w", err, ErrReadingTags)
-	}
-
+func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db.Album, track *db.Track, timeSpec times.Timespec, trprops tags.Properties, trags tags.Tags, basename, absPath string) error {
 	genreNames := ParseMulti(s.multiValueSettings[Genre], tags.MustGenres(trags), tags.MustGenre(trags))
 	genreIDs, err := populateGenres(tx, genreNames)
 	if err != nil {
@@ -627,6 +645,24 @@ func populateAlbumGenres(tx *db.DB, album *db.Album, genreIDs []int) error {
 	return nil
 }
 
+func populateAlbumDiscTitles(tx *db.DB, album *db.Album, discTitles map[int]string) error {
+	if err := tx.Where("album_id=?", album.ID).Delete(db.AlbumDiscTitle{}).Error; err != nil {
+		return fmt.Errorf("delete old album disc titles: %w", err)
+	}
+
+	for discNum, title := range discTitles {
+		discTitle := db.AlbumDiscTitle{
+			AlbumID:    album.ID,
+			DiscNumber: discNum,
+			Title:      title,
+		}
+		if err := tx.Create(&discTitle).Error; err != nil {
+			return fmt.Errorf("create disc title: %w", err)
+		}
+	}
+	return nil
+}
+
 func populateAlbumArtists(tx *db.DB, album *db.Album, albumArtistIDs []int) error {
 	if err := tx.Where("album_id=?", album.ID).Delete(db.AlbumArtist{}).Error; err != nil {
 		return fmt.Errorf("delete old album artists: %w", err)
@@ -731,6 +767,9 @@ func (s *Scanner) cleanAlbumMetadata() error {
 		return err
 	}
 	if err := s.db.Where("album_id IN (?)", emptyAlbumIDs).Delete(db.ArtistAppearances{}).Error; err != nil {
+		return err
+	}
+	if err := s.db.Where("album_id IN (?)", emptyAlbumIDs).Delete(db.AlbumDiscTitle{}).Error; err != nil {
 		return err
 	}
 

@@ -39,7 +39,7 @@ func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
 			continue
 		}
 		playlistID := playlistIDEncode(path)
-		rendered, err := playlistRender(c, params, playlistID, playlist, false)
+		rendered, err := playlistRender(c, params, playlist, playlistID, false)
 		if err != nil {
 			return spec.NewError(0, "error rendering playlist %q: %v", path, err)
 		}
@@ -50,7 +50,7 @@ func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	playlistID, err := params.GetFirst("id", "playlistId")
+	playlistID, err := params.GetFirstID("id", "playlistId")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
@@ -59,7 +59,7 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 		return spec.NewError(70, "playlist with id %s not found", playlistID)
 	}
 	sub := spec.NewResponse()
-	rendered, err := playlistRender(c, params, playlistID, playlist, true)
+	rendered, err := playlistRender(c, params, playlist, playlistID, true)
 	if err != nil {
 		return spec.NewError(0, "error rendering playlist: %v", err)
 	}
@@ -71,7 +71,7 @@ func (c *Controller) ServeCreateOrUpdatePlaylist(r *http.Request) *spec.Response
 	user := r.Context().Value(CtxUser).(*db.User)
 	params := r.Context().Value(CtxParams).(params.Params)
 
-	playlistID := params.GetFirstOr( /* default */ "", "id", "playlistId")
+	playlistID, _ := params.GetFirstID("id", "playlistId")
 	playlistPath := playlistIDDecode(playlistID)
 
 	var playlist playlistp.Playlist
@@ -112,7 +112,7 @@ func (c *Controller) ServeCreateOrUpdatePlaylist(r *http.Request) *spec.Response
 	}
 
 	sub := spec.NewResponse()
-	rendered, err := playlistRender(c, params, playlistID, &playlist, true)
+	rendered, err := playlistRender(c, params, &playlist, playlistID, true)
 	if err != nil {
 		return spec.NewError(0, "error rendering playlist: %v", err)
 	}
@@ -124,7 +124,10 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	params := r.Context().Value(CtxParams).(params.Params)
 
-	playlistID := params.GetFirstOr( /* default */ "", "id", "playlistId")
+	playlistID, err := params.GetFirstID("id", "playlistId")
+	if err != nil {
+		return spec.NewError(10, "please provide an `id` or `playlistId` parameter")
+	}
 	playlistPath := playlistIDDecode(playlistID)
 	playlist, err := c.playlistStore.Read(playlistPath)
 	if err != nil {
@@ -173,23 +176,29 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeDeletePlaylist(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	playlistID := params.GetFirstOr( /* default */ "", "id", "playlistId")
+	playlistID, err := params.GetFirstID("id", "playlistId")
+	if err != nil {
+		return spec.NewError(10, "please provide an `id` or `playlistId` parameter")
+	}
 	if err := c.playlistStore.Delete(playlistIDDecode(playlistID)); err != nil {
 		return spec.NewError(0, "delete playlist: %v", err)
 	}
 	return spec.NewResponse()
 }
 
-func playlistIDEncode(path string) string {
-	return base64.URLEncoding.EncodeToString([]byte(path))
+func playlistIDEncode(path string) specid.ID {
+	return specid.ID{
+		Type:        specid.Playlist,
+		StringValue: base64.URLEncoding.EncodeToString([]byte(path)),
+	}
 }
 
-func playlistIDDecode(id string) string {
-	path, _ := base64.URLEncoding.DecodeString(id)
+func playlistIDDecode(id specid.ID) string {
+	path, _ := base64.URLEncoding.DecodeString(id.StringValue)
 	return string(path)
 }
 
-func playlistRender(c *Controller, params params.Params, playlistID string, playlist *playlistp.Playlist, withItems bool) (*spec.Playlist, error) {
+func playlistRender(c *Controller, params params.Params, playlist *playlistp.Playlist, playlistID specid.ID, withItems bool) (*spec.Playlist, error) {
 	user := &db.User{}
 	if err := c.dbc.Where("id=?", playlist.UserID).Find(user).Error; err != nil {
 		return nil, fmt.Errorf("find user by id: %w", err)
@@ -212,14 +221,14 @@ func playlistRender(c *Controller, params params.Params, playlistID string, play
 	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
 
 	for _, path := range playlist.Items {
-		file, err := specidpaths.Lookup(c.dbc, MusicPaths(c.musicPaths), c.podcastsPath, path)
+		id, err := specidpaths.Lookup(c.dbc, MusicPaths(c.musicPaths), c.podcastsPath, path)
 		if err != nil {
 			log.Printf("error looking up path %q: %s", path, err)
 			continue
 		}
 
 		var trch *spec.TrackChild
-		switch id := file.SID(); id.Type {
+		switch id.Type {
 		case specid.Track:
 			var track db.Track
 			if err := c.dbc.Where("id=?", id.Value).Preload("Album").Preload("Album.Artists").Preload("Artists").Preload("TrackStar", "user_id=?", user.ID).Preload("TrackRating", "user_id=?", user.ID).Find(&track).Error; errors.Is(err, gorm.ErrRecordNotFound) {

@@ -11,13 +11,16 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/disintegration/imaging"
 	"github.com/jinzhu/gorm"
+	"go.senan.xyz/wrtag/coverparse"
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/infocache/artistinfocache"
+	"go.senan.xyz/gonic/playlist"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
@@ -77,7 +80,7 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 		return nil
 	}
 
-	reader, err := coverFor(c.dbc, c.artistInfoCache, c.tagReader, id)
+	reader, err := coverFor(c.dbc, c.artistInfoCache, c.playlistStore, c.tagReader, id)
 	if err != nil {
 		return spec.NewError(10, "couldn't find cover %q: %v", id, err)
 	}
@@ -131,7 +134,7 @@ var (
 )
 
 // TODO: can we use specidpaths.Locate here?
-func coverFor(dbc *db.DB, artistInfoCache *artistinfocache.ArtistInfoCache, tagReader tags.Reader, id specid.ID) (io.ReadCloser, error) {
+func coverFor(dbc *db.DB, artistInfoCache *artistinfocache.ArtistInfoCache, playlistStore *playlist.Store, tagReader tags.Reader, id specid.ID) (io.ReadCloser, error) {
 	switch id.Type {
 	case specid.Album:
 		return coverForAlbum(dbc, id.Value)
@@ -143,6 +146,8 @@ func coverFor(dbc *db.DB, artistInfoCache *artistinfocache.ArtistInfoCache, tagR
 		return coverForPodcastEpisode(dbc, id.Value)
 	case specid.Track:
 		return coverForTrack(dbc, tagReader, id.Value)
+	case specid.Playlist:
+		return coverForPlaylist(playlistStore, id)
 	default:
 		return nil, errCoverNotFound
 	}
@@ -228,6 +233,35 @@ func coverForTrack(dbc *db.DB, tagReader tags.Reader, id int) (io.ReadCloser, er
 	}
 
 	return io.NopCloser(bytes.NewReader(cover)), nil
+}
+
+func coverForPlaylist(playlistStore *playlist.Store, id specid.ID) (*os.File, error) {
+	playlistPath := playlistIDDecode(id)
+	playlistDir := filepath.Join(playlistStore.BasePath(), filepath.Dir(playlistPath))
+	playlistBase := strings.TrimSuffix(filepath.Base(playlistPath), filepath.Ext(playlistPath))
+
+	entries, err := os.ReadDir(playlistDir)
+	if err != nil {
+		return nil, fmt.Errorf("read playlist dir: %w", err)
+	}
+
+	var cover string
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		nameBase := strings.TrimSuffix(name, filepath.Ext(name))
+		if nameBase == playlistBase && coverparse.IsCover(name) {
+			cover = coverparse.BestBetween(cover, name)
+		}
+	}
+
+	if cover == "" {
+		return nil, errCoverEmpty
+	}
+
+	return os.Open(filepath.Join(playlistDir, cover))
 }
 
 func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.Response {

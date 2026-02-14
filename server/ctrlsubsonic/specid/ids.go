@@ -27,13 +27,15 @@ const (
 	Podcast              IDT = "pd"
 	PodcastEpisode       IDT = "pe"
 	InternetRadioStation IDT = "ir"
+	Playlist             IDT = "pl"
 	separator                = "-"
 )
 
 //nolint:musttag
 type ID struct {
-	Type  IDT
-	Value int
+	Type        IDT
+	Value       int
+	StringValue string
 }
 
 func New(in string) (ID, error) {
@@ -41,10 +43,17 @@ func New(in string) (ID, error) {
 	if !ok {
 		return ID{}, ErrBadSeparator
 	}
+
+	switch IDT(partType) {
+	case Playlist:
+		return ID{Type: Playlist, StringValue: partValue}, nil
+	}
+
 	val, err := strconv.Atoi(partValue)
 	if err != nil {
 		return ID{}, fmt.Errorf("%q: %w", partValue, ErrNotAnInt)
 	}
+
 	switch IDT(partType) {
 	case Artist:
 		return ID{Type: Artist, Value: val}, nil
@@ -64,10 +73,13 @@ func New(in string) (ID, error) {
 }
 
 func (i ID) String() string {
-	if i.Value == 0 {
-		return "-1"
+	switch {
+	case i.Value != 0:
+		return fmt.Sprintf("%s%s%d", i.Type, separator, i.Value)
+	case i.StringValue != "":
+		return fmt.Sprintf("%s%s%s", i.Type, separator, i.StringValue)
 	}
-	return fmt.Sprintf("%s%s%d", i.Type, separator, i.Value)
+	return "-1"
 }
 
 func (i ID) MarshalJSON() ([]byte, error) {

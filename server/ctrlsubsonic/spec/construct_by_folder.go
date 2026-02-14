@@ -3,6 +3,7 @@ package spec
 import (
 	"cmp"
 	"path/filepath"
+	"sort"
 
 	"go.senan.xyz/gonic/db"
 )
@@ -63,14 +64,14 @@ func NewTCAlbumByFolder(f *db.Album) *TrackChild {
 
 func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 	trCh := &TrackChild{
-		ID:          t.SID(),
-		ContentType: t.MIME(),
-		Suffix:      formatExt(t.Ext()),
-		Size:        t.Size,
-		Artist:      t.TagTrackArtist,
-		Title:       cmp.Or(t.TagTitle, t.Filename),
-		TrackNumber: t.TagTrackNumber,
-		DiscNumber:  t.TagDiscNumber,
+		ID:            t.SID(),
+		ContentType:   t.MIME(),
+		Suffix:        formatExt(t.Ext()),
+		Size:          t.Size,
+		DisplayArtist: t.TagTrackArtist,
+		Title:         cmp.Or(t.TagTitle, t.Filename),
+		TrackNumber:   t.TagTrackNumber,
+		DiscNumber:    t.TagDiscNumber,
 		Path: filepath.Join(
 			parent.LeftPath,
 			parent.RightPath,
@@ -115,10 +116,14 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 	for _, g := range t.Genres {
 		trCh.Genres = append(trCh.Genres, &GenreRef{Name: g.Name})
 	}
+	sort.Slice(t.Artists, func(i, j int) bool {
+		return t.Artists[i].ID < t.Artists[j].ID
+	})
+	if len(t.Artists) > 0 {
+		trCh.Artist = t.Artists[0].Name
+		trCh.ArtistID = t.Artists[0].SID()
+	}
 	for _, a := range t.Artists {
-		if a.Name == t.TagTrackArtist {
-			trCh.ArtistID = a.SID()
-		}
 		trCh.Artists = append(trCh.Artists, &ArtistRef{ID: a.SID(), Name: a.Name})
 	}
 	if t.ReplayGainTrackGain != 0 || t.ReplayGainAlbumGain != 0 {
