@@ -74,7 +74,7 @@ type Controller struct {
 	resolveProxyPath ProxyPathResolver
 }
 
-func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPath string, cacheAudioPath string, cacheCoverPath string, jukebox *jukebox.Jukebox, playlistStore *playlist.Store, scrobblers []scrobble.Scrobbler, podcasts *podcast.Podcasts, transcoder transcode.Transcoder, lastFMClient *lastfm.Client, artistInfoCache *artistinfocache.ArtistInfoCache, albumInfoCache *albuminfocache.AlbumInfoCache, tagReader tags.Reader, resolveProxyPath ProxyPathResolver, ldapConfig ldap.Config) (*Controller, error) {
+func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPath string, cacheAudioPath string, cacheCoverPath string, jukebox *jukebox.Jukebox, playlistStore *playlist.Store, scrobblers []scrobble.Scrobbler, podcasts *podcast.Podcasts, transcoder transcode.Transcoder, lastFMClient *lastfm.Client, artistInfoCache *artistinfocache.ArtistInfoCache, albumInfoCache *albuminfocache.AlbumInfoCache, tagReader tags.Reader, resolveProxyPath ProxyPathResolver, ldapConfig ldap.Config, ldapStore ldap.LDAPStore) (*Controller, error) {
 	c := Controller{
 		ServeMux: http.NewServeMux(),
 
@@ -100,7 +100,7 @@ func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPa
 	chain := handlerutil.Chain(
 		withParams,
 		withRequiredParams,
-		withUser(dbc, ldapConfig),
+		withUser(dbc, ldapConfig, ldapStore),
 	)
 	chainRaw := handlerutil.Chain(
 		chain,
@@ -231,7 +231,7 @@ func withRequiredParams(next http.Handler) http.Handler {
 	})
 }
 
-func withUser(dbc *db.DB, ldapConfig ldap.Config) handlerutil.Middleware {
+func withUser(dbc *db.DB, ldapConfig ldap.Config, ldapStore ldap.LDAPStore) handlerutil.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			params := r.Context().Value(CtxParams).(params.Params)
@@ -272,7 +272,7 @@ func withUser(dbc *db.DB, ldapConfig ldap.Config) handlerutil.Middleware {
 				// Complete auth using LDAP
 				log.Println("Authenticating using LDAP ...")
 
-				ok, err := ldap.CheckLDAPcreds(username, password, dbc, ldapConfig)
+				ok, err := ldap.CheckLDAPcreds(username, password, dbc, ldapConfig, ldapStore)
 				if err != nil {
 					log.Println("Failed to check LDAP creds:", err)
 					_ = writeResp(w, r, spec.NewError(40, "invalid password"))

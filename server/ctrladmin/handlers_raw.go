@@ -21,7 +21,7 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if c.ldapConfig.IsSetup() {
-		ok, err := ldap.CheckLDAPcreds(username, password, c.dbc, c.ldapConfig)
+		ok, err := ldap.CheckLDAPcreds(username, password, c.dbc, c.ldapConfig, c.ldapStore)
 		if err != nil {
 			log.Println("Failed to check LDAP credentials:", err)
 			sessAddFlashW(session, []string{"failed to check LDAP credentials"})

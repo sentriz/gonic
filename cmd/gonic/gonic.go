@@ -85,6 +85,7 @@ func main() {
 	confExcludePattern := flag.String("exclude-pattern", "", "regex pattern to exclude files from scan (optional)")
 
 	var ldapConfig ldap.Config
+	var ldapStore = make(ldap.LDAPStore)
 	flag.StringVar(&ldapConfig.BindUser, "ldap-bind-user", "", "the bind user to bind to LDAP with (required for LDAP)")
 	flag.StringVar(&ldapConfig.BindPass, "ldap-bind-pass", "", "the password of the LDAP bind user (required for LDAP)")
 	flag.StringVar(&ldapConfig.BaseDN, "ldap-base-dn", "", "the base DN for LDAP objects (required for LDAP)")
@@ -271,11 +272,11 @@ func main() {
 		return url.String()
 	}
 
-	ctrlAdmin, err := ctrladmin.New(dbc, sessDB, scannr, podcast, lastfmClient, resolveProxyPath, ldapConfig)
+	ctrlAdmin, err := ctrladmin.New(dbc, sessDB, scannr, podcast, lastfmClient, resolveProxyPath, ldapConfig, ldapStore)
 	if err != nil {
 		log.Panicf("error creating admin controller: %v\n", err)
 	}
-	ctrlSubsonic, err := ctrlsubsonic.New(dbc, scannr, musicPaths, *confPodcastPath, cacheDirAudio, cacheDirCovers, jukebx, playlistStore, scrobblers, podcast, transcoder, lastfmClient, artistInfoCache, albumInfoCache, tagReader, resolveProxyPath, ldapConfig)
+	ctrlSubsonic, err := ctrlsubsonic.New(dbc, scannr, musicPaths, *confPodcastPath, cacheDirAudio, cacheDirCovers, jukebx, playlistStore, scrobblers, podcast, transcoder, lastfmClient, artistInfoCache, albumInfoCache, tagReader, resolveProxyPath, ldapConfig, ldapStore)
 	if err != nil {
 		log.Panicf("error creating subsonic controller: %v\n", err)
 	}

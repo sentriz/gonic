@@ -50,11 +50,12 @@ type Controller struct {
 	lastfmClient     *lastfm.Client
 	resolveProxyPath ProxyPathResolver
 	ldapConfig       ldap.Config
+	ldapStore        ldap.LDAPStore
 }
 
 type ProxyPathResolver func(in string) string
 
-func New(dbc *db.DB, sessDB *gormstore.Store, scanner *scanner.Scanner, podcasts *podcast.Podcasts, lastfmClient *lastfm.Client, resolveProxyPath ProxyPathResolver, ldapConfig ldap.Config) (*Controller, error) {
+func New(dbc *db.DB, sessDB *gormstore.Store, scanner *scanner.Scanner, podcasts *podcast.Podcasts, lastfmClient *lastfm.Client, resolveProxyPath ProxyPathResolver, ldapConfig ldap.Config, ldapStore ldap.LDAPStore) (*Controller, error) {
 	c := Controller{
 		ServeMux: http.NewServeMux(),
 
@@ -65,6 +66,7 @@ func New(dbc *db.DB, sessDB *gormstore.Store, scanner *scanner.Scanner, podcasts
 		lastfmClient:     lastfmClient,
 		resolveProxyPath: resolveProxyPath,
 		ldapConfig:       ldapConfig,
+		ldapStore:        ldapStore,
 	}
 
 	resp := respHandler(adminui.TemplatesFS, resolveProxyPath)

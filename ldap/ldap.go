@@ -11,9 +11,6 @@ import (
 	"github.com/go-ldap/ldap/v3"
 )
 
-//nolint:gochecknoglobals
-var ldapStore = make(LDAPStore)
-
 // LDAPStore maps users to a cached password
 type LDAPStore map[string]CachedLDAPpassword
 
@@ -71,12 +68,12 @@ func (c Config) IsSetup() bool {
 	return c.FQDN != ""
 }
 
-func CheckLDAPcreds(username string, password string, dbc *db.DB, config Config) (bool, error) {
+func CheckLDAPcreds(username string, password string, dbc *db.DB, config Config, store LDAPStore) (bool, error) {
 	if !config.IsSetup() {
 		return false, nil
 	}
 
-	if ldapStore.IsValid(username, password) {
+	if store.IsValid(username, password) {
 		log.Println("Password authenticated via cache!")
 		return true, nil
 	}
@@ -107,7 +104,7 @@ func CheckLDAPcreds(username string, password string, dbc *db.DB, config Config)
 
 	if err == nil {
 		// Authentication was OK
-		ldapStore.Add(username, password)
+		store.Add(username, password)
 		return true, nil
 	}
 
