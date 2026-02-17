@@ -30,7 +30,13 @@ type Client struct {
 }
 
 func NewClient() *Client {
-	return NewClientCustom(http.DefaultClient)
+	// disable keep-alive to avoid "connection reset by peer" errors caused by a race between
+	// the server closing idle connections and the client reusing them for new requests
+	return NewClientCustom(&http.Client{
+		Transport: &http.Transport{
+			DisableKeepAlives: true,
+		},
+	})
 }
 
 func NewClientCustom(httpClient *http.Client) *Client {
