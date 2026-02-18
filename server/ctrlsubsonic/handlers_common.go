@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -798,4 +799,30 @@ func lowerUDecOrHash(in string) string {
 		return "#"
 	}
 	return string(lower)
+}
+
+func (c *Controller) ServeGetNowPlaying(r *http.Request) *spec.Response {
+	sub := spec.NewResponse()
+	sub.NowPlaying = &spec.NowPlaying{}
+
+	records := c.nowPlayingCache.GetRecent(60 * time.Minute)
+	// sort newest first
+	sort.Slice(records, func(i, j int) bool { return records[i].Time.After(records[j].Time) })
+
+	for _, rec := range records {
+		minutesAgo := int(time.Since(rec.Time).Minutes())
+		entry := &spec.NowPlayingEntry{
+			ID:         rec.TrackID,
+			Title:      rec.Title,
+			IsDir:      rec.IsDir,
+			Album:      rec.Album,
+			Artist:     rec.Artist,
+			Username:   rec.Username,
+			MinutesAgo: minutesAgo,
+			PlayerID:   rec.PlayerID,
+		}
+		sub.NowPlaying.List = append(sub.NowPlaying.List, entry)
+	}
+
+	return sub
 }
