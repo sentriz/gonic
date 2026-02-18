@@ -89,6 +89,7 @@ func main() {
 	flag.StringVar(&ldapConfig.BindUser, "ldap-bind-user", "", "the bind user to bind to LDAP with (required for LDAP)")
 	flag.StringVar(&ldapConfig.BindPass, "ldap-bind-pass", "", "the password of the LDAP bind user (required for LDAP)")
 	flag.StringVar(&ldapConfig.BaseDN, "ldap-base-dn", "", "the base DN for LDAP objects (required for LDAP)")
+	flag.StringVar(&ldapConfig.UsernameAttr, "ldap-username-attr", "uid", "attribute used by the LDAP server for usernames, gets prepended to BaseDN (optional)")
 
 	flag.StringVar(&ldapConfig.Filter, "ldap-filter", "", "the filter to select LDAP objects with (optional)")
 	flag.StringVar(&ldapConfig.AdminFilter, "ldap-admin-filter", "(memberof=cn=admin)", "the filter to select LDAP objects with (optional)")

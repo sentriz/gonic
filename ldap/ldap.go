@@ -50,9 +50,10 @@ func (password CachedLDAPpassword) IsValid() bool {
 
 // Cofig stores the user's LDAP server options.
 type Config struct {
-	BindUser string
-	BindPass string
-	BaseDN   string
+	BindUser     string
+	BindPass     string
+	BaseDN       string
+	UsernameAttr string
 
 	Filter      string
 	AdminFilter string
@@ -98,7 +99,7 @@ func CheckLDAPcreds(username string, password string, dbc *db.DB, config Config,
 
 	// After we have a connection, let's try binding
 	_, err = l.SimpleBind(&ldap.SimpleBindRequest{
-		Username: fmt.Sprintf("uid=%s,%s", username, config.BaseDN),
+		Username: fmt.Sprintf("%s=%s,%s", config.UsernameAttr, username, config.BaseDN),
 		Password: password,
 	})
 
@@ -147,7 +148,7 @@ func createUserFromLDAP(username string, dbc *db.DB, config Config, l *ldap.Conn
 
 // doesLDAPAdminExist checks if an admin exists on the server.
 func doesLDAPAdminExist(username string, config Config, l *ldap.Conn) bool {
-	filter := fmt.Sprintf("(&(uid=%s)%s)", ldap.EscapeFilter(username), config.AdminFilter)
+	filter := fmt.Sprintf("(&(%s=%s)%s)", config.UsernameAttr, ldap.EscapeFilter(username), config.AdminFilter)
 
 	searchReq := ldap.NewSearchRequest(
 		config.BaseDN,
@@ -172,7 +173,7 @@ func doesLDAPAdminExist(username string, config Config, l *ldap.Conn) bool {
 
 // doesLDAPUserExist checks if a user exists on the server.
 func doesLDAPUserExist(username string, config Config, l *ldap.Conn) bool {
-	filter := fmt.Sprintf("(&(uid=%s)%s)", ldap.EscapeFilter(username), config.Filter)
+	filter := fmt.Sprintf("(&(%s=%s)%s)", config.UsernameAttr, ldap.EscapeFilter(username), config.Filter)
 
 	searchReq := ldap.NewSearchRequest(
 		config.BaseDN,
@@ -212,7 +213,7 @@ func createLDAPconnection(config Config) (*ldap.Conn, error) {
 
 	// After we have a connection, let's try binding
 	_, err = l.SimpleBind(&ldap.SimpleBindRequest{
-		Username: fmt.Sprintf("uid=%s,%s", config.BindUser, config.BaseDN),
+		Username: fmt.Sprintf("%s=%s,%s", config.UsernameAttr, config.BindUser, config.BaseDN),
 		Password: config.BindPass,
 	})
 	if err != nil {
