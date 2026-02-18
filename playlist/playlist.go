@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -37,10 +38,11 @@ type Playlist struct {
 
 type Store struct {
 	basePath string
+	relative bool
 	mu       sync.Mutex
 }
 
-func NewStore(basePath string) (*Store, error) {
+func NewStore(basePath string, relative bool) (*Store, error) {
 	if basePath == "" {
 		return nil, ErrInvalidBasePath
 	}
@@ -50,6 +52,7 @@ func NewStore(basePath string) (*Store, error) {
 
 	return &Store{
 		basePath: basePath,
+		relative: relative,
 	}, nil
 }
 
@@ -134,6 +137,12 @@ func (s *Store) Read(relPath string) (*Playlist, error) {
 		if strings.HasPrefix(line, "#") {
 			continue
 		}
+
+		// file path might be relative if using -playlists-relative
+		if !filepath.IsAbs(line) {
+			line = filepath.Join(filepath.Dir(absPath), line)
+		}
+
 		playlist.Items = append(playlist.Items, line)
 	}
 
@@ -186,9 +195,17 @@ func (s *Store) Write(relPath string, playlist *Playlist) error {
 	fmt.Fprintln(file, encodeAttr(attrCommment, playlist.Comment))
 	fmt.Fprintln(file, encodeAttr(attrIsPublic, fmt.Sprint(playlist.IsPublic)))
 	for _, line := range playlist.Items {
+		if s.relative {
+			// transform to path relative to playlist's dir
+			relativePath, err := filepath.Rel(filepath.Dir(absPath), line)
+			if err == nil {
+				line = relativePath
+			} else {
+				log.Printf("Warning: could not make playlist entry path's relative - %v\n", err)
+			}
+		}
 		fmt.Fprintln(file, line)
 	}
-
 	return nil
 }
 
