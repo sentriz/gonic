@@ -889,7 +889,7 @@ func migrateAddTrackYear(tx *gorm.DB, _ MigrationContext) error {
 
 	step = tx.Exec(`
 	UPDATE tracks
-	SET year=(SELECT year LIMIT 1
+	SET tag_year=(SELECT tag_year
 	FROM albums
 	WHERE tracks.album_id = albums.id)
 	`)
