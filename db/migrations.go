@@ -83,6 +83,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202509301448", migrateAddTrackEmbeddedCover),
 		construct(ctx, "202512021147", migrateAlbumAddIndexOnCreatedAt),
 		construct(ctx, "202601201000", migrateAddAlbumDiscTitles),
+		construct(ctx, "202602061800", migrateAddTrackYear),
 	}
 
 	return gormigrate.
@@ -878,4 +879,24 @@ func migrateAlbumAddIndexOnCreatedAt(tx *gorm.DB, _ MigrationContext) error {
 
 func migrateAddAlbumDiscTitles(tx *gorm.DB, _ MigrationContext) error {
 	return tx.AutoMigrate(AlbumDiscTitle{}).Error
+}
+
+func migrateAddTrackYear(tx *gorm.DB, _ MigrationContext) error {
+	step := tx.AutoMigrate(Track{})
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step drop song track column: %w", err)
+	}
+
+	step = tx.Exec(`
+	UPDATE tracks
+	SET tag_year=(SELECT tag_year
+	FROM albums
+	WHERE tracks.album_id = albums.id)
+	`)
+
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step set default track year based on album's : %w", err)
+	}
+
+	return nil
 }
