@@ -882,5 +882,21 @@ func migrateAddAlbumDiscTitles(tx *gorm.DB, _ MigrationContext) error {
 }
 
 func migrateAddTrackYear(tx *gorm.DB, _ MigrationContext) error {
-	return tx.AutoMigrate(Track{}).Error
+	step := tx.AutoMigrate(Track{})
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step drop song track column: %w", err)
+	}
+
+	step = tx.Exec(`
+	UPDATE tracks
+	SET year=(SELECT year LIMIT 1
+	FROM albums
+	WHERE tracks.album_id = albums.id)
+	`)
+
+	if err := step.Error; err != nil {
+		return fmt.Errorf("step set default track year based on album's : %w", err)
+	}
+
+	return nil
 }
