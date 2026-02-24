@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.21.0](https://www.github.com/sentriz/gonic/compare/v0.20.1...v0.21.0) (2026-02-24)
+
+
+### Features
+
+* **scanner:** also read multi vorbis singular tags ([896b0dd](https://www.github.com/sentriz/gonic/commit/896b0dde2baa941472dd9c3f7662473f61c8f5f0)), closes [#659](https://www.github.com/sentriz/gonic/issues/659)
+* **scanner:** skip macOS resource fork files ([e2dabd2](https://www.github.com/sentriz/gonic/commit/e2dabd2519d4fa1914171601543cf370afc31ddf)), closes [#657](https://www.github.com/sentriz/gonic/issues/657)
+* support track level year tags ([#661](https://www.github.com/sentriz/gonic/issues/661)) ([5e916d0](https://www.github.com/sentriz/gonic/commit/5e916d0f4c1f9895cfcbecd479a8b686f6307b8a))
+
+
+### Bug Fixes
+
+* **listenbrainz:** disable post-quantum TLS to avoid connection reset errors ([b2674f8](https://www.github.com/sentriz/gonic/commit/b2674f8e5a13ac1a4fffc21a9b8b61507e405373))
+* **subsonic:** return artist as track artist in TrackChild ([9407450](https://www.github.com/sentriz/gonic/commit/9407450660db6083639e3b5cd3cff1c35aeaa07b)), closes [#654](https://www.github.com/sentriz/gonic/issues/654)
+
 ### [0.20.1](https://www.github.com/sentriz/gonic/compare/v0.20.0...v0.20.1) (2026-01-30)
 
 
