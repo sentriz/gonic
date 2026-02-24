@@ -97,9 +97,9 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 		DiscNumber:         t.TagDiscNumber,
 		Type:               "music",
 		MusicBrainzID:      t.TagBrainzID,
-		Year:               album.TagYear,
 		AverageRating:      formatRating(t.AverageRating),
 		TranscodeMeta:      TranscodeMeta{},
+		Year:               t.TagYear,
 	}
 
 	switch {

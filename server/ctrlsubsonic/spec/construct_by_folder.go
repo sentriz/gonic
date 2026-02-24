@@ -79,13 +79,13 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 		),
 		ParentID:      parent.SID(),
 		Duration:      t.Length,
-		Year:          parent.TagYear,
 		Bitrate:       t.Bitrate,
 		IsDir:         false,
 		Type:          "music",
 		MusicBrainzID: t.TagBrainzID,
 		CreatedAt:     t.CreatedAt,
 		AverageRating: formatRating(t.AverageRating),
+		Year:          t.TagYear,
 	}
 	if trCh.Title == "" {
 		trCh.Title = t.Filename
