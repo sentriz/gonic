@@ -81,13 +81,17 @@ func (p *Podcasts) AddNewPodcast(rssURL string, feed *gofeed.Feed) (*db.Podcast,
 	if err != nil {
 		return nil, fmt.Errorf("find unique podcast dir: %w", err)
 	}
+	var author string
+	if feed.ITunesExt != nil {
+		author = feed.ITunesExt.Author
+	}
 	podcast := db.Podcast{
 		Description: feed.Description,
 		ImageURL:    "",
 		Title:       feed.Title,
 		URL:         rssURL,
 		RootDir:     rootDir,
-		Author:      feed.ITunesExt.Author,
+		Author:      author,
 	}
 	if feed.Image != nil {
 		podcast.ImageURL = feed.Image.URL
@@ -226,6 +230,10 @@ func (p *Podcasts) isAudio(rawItemURL string) (bool, error) {
 }
 
 func itemToEpisode(podcast *db.Podcast, size, duration int, audio string, item *gofeed.Item) *db.PodcastEpisode {
+	author := podcast.Author
+	if item.ITunesExt != nil {
+		author = cmp.Or(item.ITunesExt.Author, podcast.Author)
+	}
 	return &db.PodcastEpisode{
 		PodcastID:   podcast.ID,
 		Description: item.Description,
@@ -235,7 +243,7 @@ func itemToEpisode(podcast *db.Podcast, size, duration int, audio string, item *
 		PublishDate: item.PublishedParsed,
 		AudioURL:    audio,
 		Status:      db.PodcastEpisodeStatusSkipped,
-		Artist:      cmp.Or(item.ITunesExt.Author, podcast.Author),
+		Artist:      cmp.Or(author),
 		Album:       podcast.Title,
 	}
 }
