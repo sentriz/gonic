@@ -893,7 +893,6 @@ func migrateAddTrackYear(tx *gorm.DB, _ MigrationContext) error {
 	FROM albums
 	WHERE tracks.album_id = albums.id)
 	`)
-
 	if err := step.Error; err != nil {
 		return fmt.Errorf("step set default track year based on album's : %w", err)
 	}
