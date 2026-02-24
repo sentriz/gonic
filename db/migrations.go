@@ -884,7 +884,7 @@ func migrateAddAlbumDiscTitles(tx *gorm.DB, _ MigrationContext) error {
 func migrateAddTrackYear(tx *gorm.DB, _ MigrationContext) error {
 	step := tx.AutoMigrate(Track{})
 	if err := step.Error; err != nil {
-		return fmt.Errorf("step drop song track column: %w", err)
+		return fmt.Errorf("step auto migrate: %w", err)
 	}
 
 	step = tx.Exec(`
