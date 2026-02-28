@@ -84,6 +84,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202512021147", migrateAlbumAddIndexOnCreatedAt),
 		construct(ctx, "202601201000", migrateAddAlbumDiscTitles),
 		construct(ctx, "202602061800", migrateAddTrackYear),
+		construct(ctx, "202602281000", migrateAddGenreInherited),
 	}
 
 	return gormigrate.
@@ -898,4 +899,9 @@ func migrateAddTrackYear(tx *gorm.DB, _ MigrationContext) error {
 	}
 
 	return nil
+}
+
+func migrateAddGenreInherited(tx *gorm.DB, _ MigrationContext) error {
+	step := tx.AutoMigrate(TrackGenre{}, AlbumGenre{})
+	return step.Error
 }

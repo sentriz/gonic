@@ -43,10 +43,11 @@ type Scanner struct {
 	tagReader          tags.Reader
 	excludePattern     *regexp.Regexp
 	scanEmbeddedCover  bool
+	genreTree          map[string][]string
 	scanning           *int32
 }
 
-func New(musicDirs []string, db *db.DB, multiValueSettings map[Tag]MultiValueSetting, tagReader tags.Reader, excludePattern string, scanEmbeddedCover bool) *Scanner {
+func New(musicDirs []string, db *db.DB, multiValueSettings map[Tag]MultiValueSetting, tagReader tags.Reader, excludePattern string, scanEmbeddedCover bool, genreTree map[string][]string) *Scanner {
 	var excludePatternRegExp *regexp.Regexp
 	if excludePattern != "" {
 		excludePatternRegExp = regexp.MustCompile(excludePattern)
@@ -59,6 +60,7 @@ func New(musicDirs []string, db *db.DB, multiValueSettings map[Tag]MultiValueSet
 		tagReader:          tagReader,
 		excludePattern:     excludePatternRegExp,
 		scanEmbeddedCover:  scanEmbeddedCover,
+		genreTree:          genreTree,
 		scanning:           new(int32),
 	}
 }
@@ -405,6 +407,30 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		return fmt.Errorf("populate genres: %w", err)
 	}
 
+	var inheritedGenreIDs []int
+	if len(s.genreTree) > 0 {
+		direct := map[string]struct{}{}
+		for _, name := range genreNames {
+			direct[name] = struct{}{}
+		}
+		var inheritedNames []string
+		for parent, descendants := range s.genreTree {
+			if _, ok := direct[parent]; ok {
+				continue
+			}
+			for _, desc := range descendants {
+				if _, ok := direct[desc]; ok {
+					inheritedNames = append(inheritedNames, parent)
+					break
+				}
+			}
+		}
+		inheritedGenreIDs, err = populateGenres(tx, inheritedNames)
+		if err != nil {
+			return fmt.Errorf("populate inherited genres: %w", err)
+		}
+	}
+
 	// metadata for the album table comes only from the first track's tags
 	if i == 0 {
 		if err := tx.Where("album_id=?", album.ID).Delete(db.ArtistAppearances{}).Error; err != nil {
@@ -436,7 +462,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 			return fmt.Errorf("populate album: %w", err)
 		}
 
-		if err := populateAlbumGenres(tx, album, genreIDs); err != nil {
+		if err := populateAlbumGenres(tx, album, genreIDs, inheritedGenreIDs); err != nil {
 			return fmt.Errorf("populate album genres: %w", err)
 		}
 	}
@@ -453,7 +479,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 	if err := populateTrack(tx, s.scanEmbeddedCover, album, track, trprops, trags, basename, int(stat.Size())); err != nil {
 		return fmt.Errorf("process %q: %w", basename, err)
 	}
-	if err := populateTrackGenres(tx, track, genreIDs); err != nil {
+	if err := populateTrackGenres(tx, track, genreIDs, inheritedGenreIDs); err != nil {
 		return fmt.Errorf("populate track genres: %w", err)
 	}
 
@@ -624,26 +650,46 @@ func populateGenres(tx *db.DB, names []string) ([]int, error) {
 	return ids, nil
 }
 
-func populateTrackGenres(tx *db.DB, track *db.Track, genreIDs []int) error {
+func populateTrackGenres(tx *db.DB, track *db.Track, directIDs, inheritedIDs []int) error {
 	if err := tx.Where("track_id=?", track.ID).Delete(db.TrackGenre{}).Error; err != nil {
 		return fmt.Errorf("delete old track genre records: %w", err)
 	}
-
-	if err := tx.InsertBulkLeftMany("track_genres", []string{"track_id", "genre_id"}, track.ID, genreIDs); err != nil {
-		return fmt.Errorf("insert bulk track genres: %w", err)
+	rows := genreRows(directIDs, inheritedIDs)
+	if err := tx.InsertBulkLeftManyRows("track_genres", []string{"track_id", "genre_id", "inherited"}, track.ID, rows); err != nil {
+		return fmt.Errorf("insert track genres: %w", err)
 	}
 	return nil
 }
 
-func populateAlbumGenres(tx *db.DB, album *db.Album, genreIDs []int) error {
+func populateAlbumGenres(tx *db.DB, album *db.Album, directIDs, inheritedIDs []int) error {
 	if err := tx.Where("album_id=?", album.ID).Delete(db.AlbumGenre{}).Error; err != nil {
 		return fmt.Errorf("delete old album genre records: %w", err)
 	}
-
-	if err := tx.InsertBulkLeftMany("album_genres", []string{"album_id", "genre_id"}, album.ID, genreIDs); err != nil {
-		return fmt.Errorf("insert bulk album genres: %w", err)
+	rows := genreRows(directIDs, inheritedIDs)
+	if err := tx.InsertBulkLeftManyRows("album_genres", []string{"album_id", "genre_id", "inherited"}, album.ID, rows); err != nil {
+		return fmt.Errorf("insert album genres: %w", err)
 	}
 	return nil
+}
+
+func genreRows(directIDs, inheritedIDs []int) [][]any {
+	seen := map[int]struct{}{}
+	var rows [][]any
+	for _, id := range directIDs {
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		rows = append(rows, []any{id, false})
+	}
+	for _, id := range inheritedIDs {
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		rows = append(rows, []any{id, true})
+	}
+	return rows
 }
 
 func populateAlbumDiscTitles(tx *db.DB, album *db.Album, discTitles map[int]string) error {
