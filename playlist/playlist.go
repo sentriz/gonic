@@ -134,6 +134,9 @@ func (s *Store) Read(relPath string) (*Playlist, error) {
 		if strings.HasPrefix(line, "#") {
 			continue
 		}
+		if !filepath.IsAbs(line) {
+			line = filepath.Join(filepath.Dir(absPath), line)
+		}
 		playlist.Items = append(playlist.Items, line)
 	}
 
@@ -186,6 +189,9 @@ func (s *Store) Write(relPath string, playlist *Playlist) error {
 	fmt.Fprintln(file, encodeAttr(attrCommment, playlist.Comment))
 	fmt.Fprintln(file, encodeAttr(attrIsPublic, fmt.Sprint(playlist.IsPublic)))
 	for _, line := range playlist.Items {
+		if rel, err := filepath.Rel(filepath.Dir(absPath), line); err == nil {
+			line = rel
+		}
 		fmt.Fprintln(file, line)
 	}
 
