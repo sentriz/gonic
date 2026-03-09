@@ -473,7 +473,7 @@ type InternetRadioStation struct {
 	ID          *specid.ID `xml:"id,attr"          json:"id"`
 	Name        string     `xml:"name,attr"        json:"name"`
 	StreamURL   string     `xml:"streamUrl,attr"   json:"streamUrl"`
-	HomepageURL string     `xml:"homepageUrl,attr" json:"homepageUrl"`
+	HomepageURL string     `xml:"homePageUrl,attr" json:"homePageUrl"`
 }
 
 type Lyrics struct {
