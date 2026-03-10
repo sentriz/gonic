@@ -82,7 +82,7 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 
 	reader, err := coverFor(c.dbc, c.artistInfoCache, c.playlistStore, c.tagReader, id)
 	if err != nil {
-		return spec.NewError(10, "couldn't find cover %q: %v", id, err)
+		return spec.NewError(70, "couldn't find cover %q: %v", id, err)
 	}
 	defer reader.Close()
 
@@ -107,7 +107,7 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 	resized := imaging.Fit(img, minSize, minSize, imaging.Lanczos)
 
 	if err := imaging.Save(resized, cachePath); err != nil {
-		return spec.NewError(10, "saving cover %q: %v", id, err)
+		return spec.NewError(0, "saving cover %q: %v", id, err)
 	}
 
 	serve(cachePath)
