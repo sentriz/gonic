@@ -14,10 +14,13 @@ import (
 func (c *Controller) ServeGetPodcasts(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	isIncludeEpisodes := params.GetOrBool("includeEpisodes", true)
-	id, _ := params.GetID("id")
-	podcasts, err := c.podcasts.GetPodcastOrAll(id.Value, isIncludeEpisodes)
+	id, err := params.GetID("id")
 	if err != nil {
 		return spec.NewError(10, "failed get podcast(s): %s", err)
+	}
+	podcasts, err := c.podcasts.GetPodcastOrAll(id.Value, isIncludeEpisodes)
+	if err != nil {
+		return spec.NewError(70, "failed get podcast(s): %s", err)
 	}
 	sub := spec.NewResponse()
 	sub.Podcasts = &spec.Podcasts{}
@@ -33,7 +36,7 @@ func (c *Controller) ServeGetNewestPodcasts(r *http.Request) *spec.Response {
 	count := params.GetOrInt("count", 10)
 	episodes, err := c.podcasts.GetNewestPodcastEpisodes(count)
 	if err != nil {
-		return spec.NewError(10, "failed get podcast(s): %s", err)
+		return spec.NewError(0, "failed get podcast(s): %s", err)
 	}
 	sub := spec.NewResponse()
 	sub.NewestPodcasts = &spec.NewestPodcasts{}
@@ -50,7 +53,7 @@ func (c *Controller) ServeDownloadPodcastEpisode(r *http.Request) *spec.Response
 		return spec.NewError(10, "please provide a valid podcast episode id")
 	}
 	if err := c.podcasts.DownloadEpisode(id.Value); err != nil {
-		return spec.NewError(10, "failed to download episode: %s", err)
+		return spec.NewError(0, "failed to download episode: %s", err)
 	}
 	return spec.NewResponse()
 }
@@ -65,10 +68,10 @@ func (c *Controller) ServeCreatePodcastChannel(r *http.Request) *spec.Response {
 	fp := gofeed.NewParser()
 	feed, err := fp.ParseURL(rssURL)
 	if err != nil {
-		return spec.NewError(10, "failed to parse feed: %s", err)
+		return spec.NewError(0, "failed to parse feed: %s", err)
 	}
 	if _, err = c.podcasts.AddNewPodcast(rssURL, feed); err != nil {
-		return spec.NewError(10, "failed to add feed: %s", err)
+		return spec.NewError(0, "failed to add feed: %s", err)
 	}
 	return spec.NewResponse()
 }
@@ -79,7 +82,7 @@ func (c *Controller) ServeRefreshPodcasts(r *http.Request) *spec.Response {
 		return spec.NewError(50, "user not admin")
 	}
 	if err := c.podcasts.RefreshPodcasts(); err != nil {
-		return spec.NewError(10, "failed to refresh feeds: %s", err)
+		return spec.NewError(0, "failed to refresh feeds: %s", err)
 	}
 	return spec.NewResponse()
 }
@@ -95,7 +98,7 @@ func (c *Controller) ServeDeletePodcastChannel(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide a valid podcast id")
 	}
 	if err := c.podcasts.DeletePodcast(id.Value); err != nil {
-		return spec.NewError(10, "failed to delete podcast: %s", err)
+		return spec.NewError(70, "failed to delete podcast: %s", err)
 	}
 	return spec.NewResponse()
 }
@@ -111,7 +114,7 @@ func (c *Controller) ServeDeletePodcastEpisode(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide a valid podcast episode id")
 	}
 	if err := c.podcasts.DeletePodcastEpisode(id.Value); err != nil {
-		return spec.NewError(10, "failed to delete podcast: %s", err)
+		return spec.NewError(70, "failed to delete podcast: %s", err)
 	}
 	return spec.NewResponse()
 }

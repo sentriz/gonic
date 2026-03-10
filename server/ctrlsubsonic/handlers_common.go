@@ -100,7 +100,7 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 			return spec.NewError(0, "error updating stats: %v", err)
 		}
 	default:
-		return spec.NewError(10, "can't scrobble type %s", id.Type)
+		return spec.NewError(0, "can't scrobble type %s", id.Type)
 	}
 
 	if scrobbleTrack.Track == "" {
