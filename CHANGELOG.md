@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.21.0](https://www.github.com/sentriz/gonic/compare/v0.20.1...v0.21.0) (2026-03-11)
+
+
+### Features
+
+* **playlist:** use relative paths in m3u playlists ([798e7f8](https://www.github.com/sentriz/gonic/commit/798e7f875a03c8579616da364802958ef7265795)), closes [#537](https://www.github.com/sentriz/gonic/issues/537) [#529](https://www.github.com/sentriz/gonic/issues/529)
+* **podcast:** ensure that any error path out of doPodcastDownload sets status ([#672](https://www.github.com/sentriz/gonic/issues/672)) ([192ee10](https://www.github.com/sentriz/gonic/commit/192ee10b3f10e45e12c419085f83be5588b06388))
+* **scanner:** also read multi vorbis singular tags ([896b0dd](https://www.github.com/sentriz/gonic/commit/896b0dde2baa941472dd9c3f7662473f61c8f5f0)), closes [#659](https://www.github.com/sentriz/gonic/issues/659)
+* **scanner:** skip macOS resource fork files ([e2dabd2](https://www.github.com/sentriz/gonic/commit/e2dabd2519d4fa1914171601543cf370afc31ddf)), closes [#657](https://www.github.com/sentriz/gonic/issues/657)
+* **subsonic:** make error codes match Open Subsonic spec ([#671](https://www.github.com/sentriz/gonic/issues/671)) ([1b770c9](https://www.github.com/sentriz/gonic/commit/1b770c95d8347423585758fa3c44817dfdc4af80))
+* support track level year tags ([#661](https://www.github.com/sentriz/gonic/issues/661)) ([5e916d0](https://www.github.com/sentriz/gonic/commit/5e916d0f4c1f9895cfcbecd479a8b686f6307b8a))
+
+
+### Bug Fixes
+
+* **listenbrainz:** disable post-quantum TLS to avoid connection reset errors ([b2674f8](https://www.github.com/sentriz/gonic/commit/b2674f8e5a13ac1a4fffc21a9b8b61507e405373))
+* **podcast:** fix crash if itunes extensions are missing ([#668](https://www.github.com/sentriz/gonic/issues/668)) ([9473ec7](https://www.github.com/sentriz/gonic/commit/9473ec7539bff08d1cba1968ed7b2a534230d400))
+* **scanner:** reset batch timer on fsnotify Remove events ([65c4674](https://www.github.com/sentriz/gonic/commit/65c4674da0b42216c8a9b4642f80be60ac1fdf53)), closes [#637](https://www.github.com/sentriz/gonic/issues/637)
+* **subsonic:** return artist as track artist in TrackChild ([9407450](https://www.github.com/sentriz/gonic/commit/9407450660db6083639e3b5cd3cff1c35aeaa07b)), closes [#654](https://www.github.com/sentriz/gonic/issues/654)
+* **subsonic:** update homepage URL casing ([e535e78](https://www.github.com/sentriz/gonic/commit/e535e7888ce6162f234fe3ea4a67565df8d1ed57)), closes [#664](https://www.github.com/sentriz/gonic/issues/664)
+
 ### [0.20.1](https://www.github.com/sentriz/gonic/compare/v0.20.0...v0.20.1) (2026-01-30)
 
 
