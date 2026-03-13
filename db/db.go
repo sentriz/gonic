@@ -54,19 +54,30 @@ func NewMock(opts url.Values) (*DB, error) {
 }
 
 func (db *DB) InsertBulkLeftMany(table string, head []string, left int, col []int) error {
-	if len(col) == 0 {
+	var rows [][]any
+	for _, c := range col {
+		rows = append(rows, []any{c})
+	}
+	return db.InsertBulkLeftManyRows(table, head, left, rows)
+}
+
+func (db *DB) InsertBulkLeftManyRows(table string, head []string, left int, rows [][]any) error {
+	if len(rows) == 0 {
 		return nil
 	}
-	var rows []string
+	extraCols := len(head) - 1
+	placeholders := "(?," + strings.TrimSuffix(strings.Repeat(" ?,", extraCols), ",") + ")"
+	var rowStrs []string
 	var values []any
-	for _, c := range col {
-		rows = append(rows, "(?, ?)")
-		values = append(values, left, c)
+	for _, row := range rows {
+		rowStrs = append(rowStrs, placeholders)
+		values = append(values, left)
+		values = append(values, row...)
 	}
 	q := fmt.Sprintf("INSERT OR IGNORE INTO %q (%s) VALUES %s",
 		table,
 		strings.Join(head, ", "),
-		strings.Join(rows, ", "),
+		strings.Join(rowStrs, ", "),
 	)
 	return db.Exec(q, values...).Error
 }
@@ -410,13 +421,15 @@ type ArtistAppearances struct {
 }
 
 type TrackGenre struct {
-	TrackID int `gorm:"not null; unique_index:idx_track_id_genre_id" sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
-	GenreID int `gorm:"not null; unique_index:idx_track_id_genre_id" sql:"default: null; type:int REFERENCES genres(id) ON DELETE CASCADE"`
+	TrackID   int  `gorm:"not null; unique_index:idx_track_id_genre_id" sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
+	GenreID   int  `gorm:"not null; unique_index:idx_track_id_genre_id" sql:"default: null; type:int REFERENCES genres(id) ON DELETE CASCADE"`
+	Inherited bool `gorm:"not null; default:false"`
 }
 
 type AlbumGenre struct {
-	AlbumID int `gorm:"not null; unique_index:idx_album_id_genre_id" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
-	GenreID int `gorm:"not null; unique_index:idx_album_id_genre_id" sql:"default: null; type:int REFERENCES genres(id) ON DELETE CASCADE"`
+	AlbumID   int  `gorm:"not null; unique_index:idx_album_id_genre_id" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	GenreID   int  `gorm:"not null; unique_index:idx_album_id_genre_id" sql:"default: null; type:int REFERENCES genres(id) ON DELETE CASCADE"`
+	Inherited bool `gorm:"not null; default:false"`
 }
 
 type AlbumDiscTitle struct {

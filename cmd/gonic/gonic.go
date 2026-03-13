@@ -46,6 +46,7 @@ import (
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/server/ctrladmin"
 	"go.senan.xyz/gonic/server/ctrlsubsonic"
+	"go.senan.xyz/gonic/texttree"
 	"go.senan.xyz/gonic/transcode"
 )
 
@@ -82,6 +83,7 @@ func main() {
 	confConfigPath := flag.String("config-path", "", "path to config (optional)")
 
 	confExcludePattern := flag.String("exclude-pattern", "", "regex pattern to exclude files from scan (optional)")
+	confGenreTree := flag.String("genre-tree", "", "path to a tab-separated genre tree file for hierarchical genre browsing (optional)")
 
 	var confMultiValueGenre, confMultiValueArtist, confMultiValueAlbumArtist multiValueSetting
 	flag.Var(&confMultiValueGenre, "multi-value-genre", "setting for multi-valued genre scanning (optional)")
@@ -138,6 +140,14 @@ func main() {
 	}
 	if err := os.MkdirAll(cacheDirCovers, os.ModePerm); err != nil {
 		log.Fatalf("couldn't create covers cache path: %v\n", err)
+	}
+
+	var genreTree map[string][]string
+	if *confGenreTree != "" {
+		genreTree, err = texttree.ParseFile(*confGenreTree)
+		if err != nil {
+			log.Fatalf("error parsing genre tree: %v\n", err)
+		}
 	}
 
 	dbc, err := db.New(*confDBPath, deps.DBDriverOptions(), *confLogDB)
@@ -197,6 +207,7 @@ func main() {
 		tagReader,
 		*confExcludePattern,
 		*confScanEmbeddedCover,
+		genreTree,
 	)
 	podcast := podcast.New(dbc, *confPodcastPath, tagReader)
 	transcoder := transcode.NewCachingTranscoder(
