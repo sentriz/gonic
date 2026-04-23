@@ -26,7 +26,7 @@ func FuzzScanner(f *testing.F) {
 		m := mockfs.New(t)
 
 		const toAdd = 1000
-		for i := 0; i < toAdd; i++ {
+		for i := range toAdd {
 			path := fmt.Sprintf("artist-%d/album-%d/track-%d.flac", i/6, i/3, i)
 			m.AddTrack(path)
 			m.SetTags(path, func(tags *mockfs.TagInfo) {

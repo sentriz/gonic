@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/andybalholm/cascadia"
@@ -343,12 +344,12 @@ func GetParamSignature(params url.Values, secret string) string {
 		paramKeys = append(paramKeys, k)
 	}
 	sort.Strings(paramKeys)
-	toHash := ""
+	var toHash strings.Builder
 	for _, k := range paramKeys {
-		toHash += k
-		toHash += params[k][0]
+		toHash.WriteString(k)
+		toHash.WriteString(params[k][0])
 	}
-	toHash += secret
-	hash := md5.Sum([]byte(toHash))
+	toHash.WriteString(secret)
+	hash := md5.Sum([]byte(toHash.String()))
 	return hex.EncodeToString(hash[:])
 }
