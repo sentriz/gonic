@@ -293,6 +293,7 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 		Preload("Album").
 		Preload("Album.Artists").
 		Preload("Artists").
+		Preload("Contributors.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		First(&track).
@@ -320,6 +321,7 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 		Preload("Album").
 		Preload("Album.Artists").
 		Preload("Artists").
+		Preload("Contributors.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Joins("JOIN albums ON tracks.album_id=albums.id").
@@ -398,7 +400,7 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 			switch id.Type {
 			case specid.Track:
 				var track db.Track
-				if err := c.dbc.Where("id=?", id.Value).Preload("Album").Preload("Album.Artists").Preload("Artists").Find(&track).Error; err != nil {
+				if err := c.dbc.Where("id=?", id.Value).Preload("Album").Preload("Album.Artists").Preload("Artists").Preload("Contributors.Artist").Find(&track).Error; err != nil {
 					return nil, fmt.Errorf("load track: %w", err)
 				}
 				ret = append(ret, spec.NewTrackByTags(&track, track.Album))

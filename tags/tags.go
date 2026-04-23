@@ -33,6 +33,15 @@ const (
 	FallbackGenre  = "Unknown Genre"
 )
 
+func FirstValues(p Tags, keys ...string) []string {
+	for _, k := range keys {
+		if v := normtag.Values(p, k); len(v) > 0 {
+			return v
+		}
+	}
+	return nil
+}
+
 func MustAlbum(p Tags) string {
 	if r := normtag.Get(p, normtag.Album); r != "" {
 		return r
@@ -48,10 +57,7 @@ func MustArtist(p Tags) string {
 }
 
 func MustArtists(p Tags) []string {
-	if r := normtag.Values(p, normtag.Artists); len(r) > 0 {
-		return r
-	}
-	if r := normtag.Values(p, normtag.Artist); len(r) > 0 {
+	if r := FirstValues(p, normtag.Artists, normtag.Artist); len(r) > 0 {
 		return r
 	}
 	return []string{FallbackArtist}
@@ -65,10 +71,7 @@ func MustAlbumArtist(p Tags) string {
 }
 
 func MustAlbumArtists(p Tags) []string {
-	if r := normtag.Values(p, normtag.AlbumArtists); len(r) > 0 {
-		return r
-	}
-	if r := normtag.Values(p, normtag.AlbumArtist); len(r) > 0 {
+	if r := FirstValues(p, normtag.AlbumArtists, normtag.AlbumArtist); len(r) > 0 {
 		return r
 	}
 	return []string{MustArtist(p)}
@@ -82,10 +85,7 @@ func MustGenre(p Tags) string {
 }
 
 func MustGenres(p Tags) []string {
-	if r := normtag.Values(p, normtag.Genres); len(r) > 0 {
-		return r
-	}
-	if r := normtag.Values(p, normtag.Genre); len(r) > 0 {
+	if r := FirstValues(p, normtag.Genres, normtag.Genre); len(r) > 0 {
 		return r
 	}
 	return []string{FallbackGenre}

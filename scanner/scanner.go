@@ -485,6 +485,14 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		return fmt.Errorf("populate track artists: %w", err)
 	}
 
+	contributorIDs, err := populateTrackContributors(tx, track, trags)
+	if err != nil {
+		return fmt.Errorf("populate track contributors: %w", err)
+	}
+	if err := populateArtistAppearances(tx, album, contributorIDs); err != nil {
+		return fmt.Errorf("populate contributor appearances: %w", err)
+	}
+
 	// possible album level embedded covers come only from the first track
 	if i == 0 {
 		if err := populateAlbumEmbeddedCover(tx, s.scanEmbeddedCover, album, track, trprops); err != nil {
@@ -684,6 +692,46 @@ func populateAlbumArtists(tx *db.DB, album *db.Album, albumArtistIDs []int) erro
 		return fmt.Errorf("insert bulk album artists: %w", err)
 	}
 	return nil
+}
+
+//nolint:gochecknoglobals
+var contributorTagKeys = []struct {
+	keys []string
+	role db.ContributorRole
+}{
+	{[]string{normtag.Remixers, normtag.Remixer}, db.ContributorRoleRemixer},
+	{[]string{normtag.Composers, normtag.Composer}, db.ContributorRoleComposer},
+	{[]string{normtag.Lyricists, normtag.Lyricist}, db.ContributorRoleLyricist},
+	{[]string{normtag.Conductors, normtag.Conductor}, db.ContributorRoleConductor},
+	{[]string{normtag.Producers, normtag.Producer}, db.ContributorRoleProducer},
+	{[]string{normtag.Arrangers, normtag.Arranger}, db.ContributorRoleArranger},
+}
+
+func populateTrackContributors(tx *db.DB, track *db.Track, trags tags.Tags) ([]int, error) {
+	if err := tx.Where("track_id=?", track.ID).Delete(db.TrackContributor{}).Error; err != nil {
+		return nil, fmt.Errorf("delete old track contributors: %w", err)
+	}
+
+	var rows [][]any
+	var artistIDs []int
+	for _, rk := range contributorTagKeys {
+		for _, name := range tags.FirstValues(trags, rk.keys...) {
+			if name == "" {
+				continue
+			}
+			artist, err := populateArtist(tx, name)
+			if err != nil {
+				return nil, fmt.Errorf("populate contributor artist: %w", err)
+			}
+			rows = append(rows, []any{artist.ID, string(rk.role)})
+			artistIDs = append(artistIDs, artist.ID)
+		}
+	}
+
+	if err := tx.InsertBulkLeftManyRows("track_contributors", []string{"track_id", "artist_id", "role"}, track.ID, rows); err != nil {
+		return nil, fmt.Errorf("insert bulk track contributors: %w", err)
+	}
+	return artistIDs, nil
 }
 
 func populateTrackArtists(tx *db.DB, track *db.Track, trackArtistIDs []int) error {

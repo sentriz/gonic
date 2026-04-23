@@ -3,6 +3,7 @@ package spec
 import (
 	"cmp"
 	"path/filepath"
+	"slices"
 	"sort"
 
 	"go.senan.xyz/gonic/db"
@@ -118,12 +119,8 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 		ret.UserRating = t.TrackRating.Rating
 	}
 
-	sort.Slice(t.Artists, func(i, j int) bool {
-		return t.Artists[i].ID < t.Artists[j].ID
-	})
-	sort.Slice(album.Artists, func(i, j int) bool {
-		return album.Artists[i].ID < album.Artists[j].ID
-	})
+	slices.SortFunc(t.Artists, func(a, b *db.Artist) int { return cmp.Compare(a.ID, b.ID) })
+	slices.SortFunc(album.Artists, func(a, b *db.Artist) int { return cmp.Compare(a.ID, b.ID) })
 
 	switch {
 	case len(t.Artists) > 0:
@@ -145,6 +142,24 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 	for _, a := range album.Artists {
 		ret.AlbumArtists = append(ret.AlbumArtists, &ArtistRef{ID: a.SID(), Name: a.Name})
 	}
+
+	slices.SortStableFunc(t.Contributors, func(a, b *db.TrackContributor) int {
+		return cmp.Or(
+			cmp.Compare(a.Role, b.Role),
+			cmp.Compare(a.ArtistID, b.ArtistID),
+		)
+	})
+
+	for _, c := range t.Contributors {
+		if c.Artist == nil {
+			continue
+		}
+		ret.Contributors = append(ret.Contributors, &Contributor{
+			Role:   string(c.Role),
+			Artist: &ArtistRef{ID: c.Artist.SID(), Name: c.Artist.Name},
+		})
+	}
+
 	if t.ReplayGainTrackGain != 0 || t.ReplayGainAlbumGain != 0 {
 		ret.ReplayGain = &ReplayGain{
 			TrackGain: t.ReplayGainTrackGain,

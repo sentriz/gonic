@@ -461,6 +461,74 @@ func TestMultiFolderWithSharedArtist(t *testing.T) {
 	}
 }
 
+func TestTrackContributors(t *testing.T) {
+	t.Parallel()
+	m := mockfs.New(t)
+
+	m.AddTrack("artist-a/album-a/track-1.flac")
+	m.SetTags("artist-a/album-a/track-1.flac", func(tags *mockfs.TagInfo) {
+		normtag.Set(tags.Tags, normtag.Artist, "artist-a")
+		normtag.Set(tags.Tags, normtag.AlbumArtist, "artist-a")
+		normtag.Set(tags.Tags, normtag.Album, "album-a")
+		normtag.Set(tags.Tags, normtag.Title, "track-1")
+		normtag.Set(tags.Tags, normtag.Composers, "comp-a", "comp-b")
+		normtag.Set(tags.Tags, normtag.Remixer, "rem-a")
+		normtag.Set(tags.Tags, "LYRICIST", "lyr-a")
+		normtag.Set(tags.Tags, "PRODUCER", "prod-a")
+	})
+	m.ScanAndClean()
+
+	var track db.Track
+	require.NoError(t, m.DB().Preload("Contributors.Artist").Where("tag_title=?", "track-1").First(&track).Error)
+
+	type pair struct {
+		Role   db.ContributorRole
+		Artist string
+	}
+	var got []pair
+	for _, c := range track.Contributors {
+		got = append(got, pair{Role: c.Role, Artist: c.Artist.Name})
+	}
+	assert.ElementsMatch(t, []pair{
+		{db.ContributorRoleComposer, "comp-a"},
+		{db.ContributorRoleComposer, "comp-b"},
+		{db.ContributorRoleRemixer, "rem-a"},
+		{db.ContributorRoleLyricist, "lyr-a"},
+		{db.ContributorRoleProducer, "prod-a"},
+	}, got)
+
+	// contributor artists should also show up on the album via artist_appearances
+	for _, name := range []string{"comp-a", "comp-b", "rem-a", "lyr-a", "prod-a"} {
+		var count int
+		require.NoError(t, m.DB().
+			Model(&db.ArtistAppearances{}).
+			Joins("JOIN artists ON artists.id=artist_appearances.artist_id").
+			Where("artists.name=?", name).
+			Count(&count).Error)
+		assert.Equal(t, 1, count, "expected %q in artist_appearances", name)
+	}
+
+	// re-scanning with a changed composer list should clear the stale row (comp-b)
+	// and add the new one (comp-c). other roles stay since their tags didn't change.
+	m.SetTags("artist-a/album-a/track-1.flac", func(tags *mockfs.TagInfo) {
+		normtag.Set(tags.Tags, normtag.Composers, "comp-a", "comp-c")
+	})
+	m.ScanAndClean()
+
+	require.NoError(t, m.DB().Preload("Contributors.Artist").Where("tag_title=?", "track-1").First(&track).Error)
+	got = got[:0]
+	for _, c := range track.Contributors {
+		got = append(got, pair{Role: c.Role, Artist: c.Artist.Name})
+	}
+	assert.ElementsMatch(t, []pair{
+		{db.ContributorRoleComposer, "comp-a"},
+		{db.ContributorRoleComposer, "comp-c"},
+		{db.ContributorRoleRemixer, "rem-a"},
+		{db.ContributorRoleLyricist, "lyr-a"},
+		{db.ContributorRoleProducer, "prod-a"},
+	}, got)
+}
+
 func TestSymlinkedAlbum(t *testing.T) {
 	t.Parallel()
 	m := mockfs.NewWithDirs(t, []string{"scan"})

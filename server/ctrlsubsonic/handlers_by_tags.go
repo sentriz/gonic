@@ -113,6 +113,7 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 			return db.
 				Order("tracks.tag_disc_number, tracks.tag_track_number").
 				Preload("Artists").
+				Preload("Contributors.Artist").
 				Preload("TrackStar", "user_id=?", user.ID).
 				Preload("TrackRating", "user_id=?", user.ID)
 		}).
@@ -300,6 +301,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		Preload("Album.Artists").
 		Preload("Genres").
 		Preload("Artists").
+		Preload("Contributors.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID)
 	switch {
@@ -479,6 +481,7 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 		Preload("Album").
 		Preload("Album.Artists").
 		Preload("Artists").
+		Preload("Contributors.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Offset(params.GetOrInt("offset", 0)).
@@ -564,6 +567,7 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 		Preload("Album").
 		Preload("Album.Artists").
 		Preload("Artists").
+		Preload("Contributors.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID)
 	if m := getMusicFolder(c.musicPaths, params); m != "" {
@@ -637,6 +641,7 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 		Where("artists.id=?", artist.ID).
 		Preload("Album").
 		Preload("Artists").
+		Preload("Contributors.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Group("tracks.id").
@@ -746,6 +751,7 @@ func getSimilarSongsFromTrack(c *Controller, id specid.ID, params params.Params,
 		Select("tracks.*").
 		Preload("Album").
 		Preload("Artists").
+		Preload("Contributors.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Where("tracks.tag_title IN (?)", similarTrackNames).
@@ -799,6 +805,7 @@ func getSimilarSongsFromArtist(c *Controller, id specid.ID, params params.Params
 	err = c.dbc.
 		Preload("Album").
 		Preload("Artists").
+		Preload("Contributors.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Joins("JOIN track_artists ON track_artists.track_id=tracks.id").
@@ -867,6 +874,7 @@ func getSimilarSongsFromAlbum(c *Controller, id specid.ID, params params.Params,
 		Select("tracks.*").
 		Preload("Album").
 		Preload("Artists").
+		Preload("Contributors.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Where("tracks.tag_title IN (?)", similarTrackNames).
