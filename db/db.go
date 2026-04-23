@@ -54,19 +54,34 @@ func NewMock(opts url.Values) (*DB, error) {
 }
 
 func (db *DB) InsertBulkLeftMany(table string, head []string, left int, col []int) error {
-	if len(col) == 0 {
+	rows := make([][]any, len(col))
+	for i, c := range col {
+		rows[i] = []any{c}
+	}
+	return db.InsertBulkLeftManyRows(table, head, left, rows)
+}
+
+func (db *DB) InsertBulkLeftManyRows(table string, head []string, left int, rows [][]any) error {
+	if len(rows) == 0 {
 		return nil
 	}
-	var rows []string
-	var values []any
-	for _, c := range col {
-		rows = append(rows, "(?, ?)")
-		values = append(values, left, c)
+	tail := len(head) - 1
+	placeholder := "(?" + strings.Repeat(", ?", tail) + ")"
+
+	placeholders := make([]string, len(rows))
+	values := make([]any, 0, len(rows)*len(head))
+	for i, r := range rows {
+		if len(r) != tail {
+			return fmt.Errorf("row %d has %d values, expected %d", i, len(r), tail)
+		}
+		placeholders[i] = placeholder
+		values = append(values, left)
+		values = append(values, r...)
 	}
 	q := fmt.Sprintf("INSERT OR IGNORE INTO %q (%s) VALUES %s",
 		table,
 		strings.Join(head, ", "),
-		strings.Join(rows, ", "),
+		strings.Join(placeholders, ", "),
 	)
 	return db.Exec(q, values...).Error
 }
@@ -211,20 +226,21 @@ type Track struct {
 	Filename       string `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null"`
 	FilenameUDec   string `sql:"default: null"`
 	Album          *Album
-	AlbumID        int       `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
-	Artists        []*Artist `gorm:"many2many:track_artists"`
-	Genres         []*Genre  `gorm:"many2many:track_genres"`
-	Size           int       `sql:"default: null"`
-	Length         int       `sql:"default: null"`
-	Bitrate        int       `sql:"default: null"`
-	TagTitle       string    `sql:"default: null"`
-	TagTitleUDec   string    `sql:"default: null"`
-	TagTrackArtist string    `sql:"default: null"`
-	TagTrackNumber int       `sql:"default: null"`
-	TagDiscNumber  int       `sql:"default: null"`
-	TagBrainzID    string    `sql:"default: null"`
-	TagLyrics      string    `sql:"default: null"`
-	TagYear        int       `sql:"default: null"`
+	AlbumID        int                 `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	Artists        []*Artist           `gorm:"many2many:track_artists"`
+	Contributors   []*TrackContributor `gorm:"foreignkey:track_id"`
+	Genres         []*Genre            `gorm:"many2many:track_genres"`
+	Size           int                 `sql:"default: null"`
+	Length         int                 `sql:"default: null"`
+	Bitrate        int                 `sql:"default: null"`
+	TagTitle       string              `sql:"default: null"`
+	TagTitleUDec   string              `sql:"default: null"`
+	TagTrackArtist string              `sql:"default: null"`
+	TagTrackNumber int                 `sql:"default: null"`
+	TagDiscNumber  int                 `sql:"default: null"`
+	TagBrainzID    string              `sql:"default: null"`
+	TagLyrics      string              `sql:"default: null"`
+	TagYear        int                 `sql:"default: null"`
 
 	ReplayGainTrackGain float32
 	ReplayGainTrackPeak float32
@@ -402,6 +418,24 @@ type AlbumArtist struct {
 type TrackArtist struct {
 	TrackID  int `gorm:"not null; unique_index:idx_track_id_artist_id" sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
 	ArtistID int `gorm:"not null; unique_index:idx_track_id_artist_id" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
+}
+
+type ContributorRole string
+
+const (
+	ContributorRoleComposer  ContributorRole = "composer"
+	ContributorRoleLyricist  ContributorRole = "lyricist"
+	ContributorRoleRemixer   ContributorRole = "remixer"
+	ContributorRoleConductor ContributorRole = "conductor"
+	ContributorRoleProducer  ContributorRole = "producer"
+	ContributorRoleArranger  ContributorRole = "arranger"
+)
+
+type TrackContributor struct {
+	TrackID  int             `gorm:"not null; unique_index:idx_track_contributor" sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
+	ArtistID int             `gorm:"not null; unique_index:idx_track_contributor" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
+	Role     ContributorRole `gorm:"not null; unique_index:idx_track_contributor" sql:"default: null"`
+	Artist   *Artist
 }
 
 type ArtistAppearances struct {

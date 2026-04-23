@@ -125,6 +125,12 @@ type GenreRef struct {
 	Name string `xml:"name,attr" json:"name"`
 }
 
+// https://opensubsonic.netlify.app/docs/responses/contributor/
+type Contributor struct {
+	Role   string     `xml:"role,attr"    json:"role"`
+	Artist *ArtistRef `xml:"artist"       json:"artist"`
+}
+
 type DiscTitle struct {
 	Disc  int    `xml:"disc,attr" json:"disc"`
 	Title string `xml:"title,attr" json:"title"`
@@ -203,6 +209,9 @@ type TrackChild struct {
 
 	AlbumArtists       []*ArtistRef `xml:"albumArtists"           json:"albumArtists"`
 	AlbumDisplayArtist string       `xml:"displayAlbumArtist,attr" json:"displayAlbumArtist"`
+
+	Contributors    []*Contributor `xml:"contributors"            json:"contributors"`
+	DisplayComposer string         `xml:"displayComposer,attr"    json:"displayComposer"`
 
 	Bitrate     int         `xml:"bitRate,attr,omitempty"     json:"bitRate,omitempty"`
 	ContentType string      `xml:"contentType,attr,omitempty" json:"contentType,omitempty"`
