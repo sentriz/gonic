@@ -1,5 +1,42 @@
 # Changelog
 
+## [1.0.0](https://www.github.com/sentriz/gonic/compare/v0.20.1...v1.0.0) (2026-04-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** bump to go1.26
+
+### Features
+
+* **docs:** add Music Assistant to list of tested applications ([#676](https://www.github.com/sentriz/gonic/issues/676)) ([f5eecae](https://www.github.com/sentriz/gonic/commit/f5eecae4ef4cf4a6491252bb9551aee5e82aecd9))
+* **playlist:** use relative paths in m3u playlists ([798e7f8](https://www.github.com/sentriz/gonic/commit/798e7f875a03c8579616da364802958ef7265795)), closes [#537](https://www.github.com/sentriz/gonic/issues/537) [#529](https://www.github.com/sentriz/gonic/issues/529)
+* **podcast:** ensure that any error path out of doPodcastDownload sets status ([#672](https://www.github.com/sentriz/gonic/issues/672)) ([192ee10](https://www.github.com/sentriz/gonic/commit/192ee10b3f10e45e12c419085f83be5588b06388))
+* scan and return track contributors ([a3a55dd](https://www.github.com/sentriz/gonic/commit/a3a55dddf65aeb56d2fc8519f10a3d23e14c1d69))
+* **scanner:** also read multi vorbis singular tags ([896b0dd](https://www.github.com/sentriz/gonic/commit/896b0dde2baa941472dd9c3f7662473f61c8f5f0)), closes [#659](https://www.github.com/sentriz/gonic/issues/659)
+* **scanner:** skip macOS resource fork files ([e2dabd2](https://www.github.com/sentriz/gonic/commit/e2dabd2519d4fa1914171601543cf370afc31ddf)), closes [#657](https://www.github.com/sentriz/gonic/issues/657)
+* **subsonic:** make error codes match Open Subsonic spec ([#671](https://www.github.com/sentriz/gonic/issues/671)) ([1b770c9](https://www.github.com/sentriz/gonic/commit/1b770c95d8347423585758fa3c44817dfdc4af80))
+* **subsonic:** sort genres alphabetically by default ([bf8469c](https://www.github.com/sentriz/gonic/commit/bf8469cbf8f7bb6b9720bcd567c8b937968a9752))
+* support track level year tags ([#661](https://www.github.com/sentriz/gonic/issues/661)) ([5e916d0](https://www.github.com/sentriz/gonic/commit/5e916d0f4c1f9895cfcbecd479a8b686f6307b8a))
+
+
+### Bug Fixes
+
+* **lastfm:** don't replace cached artist image with empty on refresh ([ec457fb](https://www.github.com/sentriz/gonic/commit/ec457fb380c5e447dbe1556e588623bc38d87e44))
+* **listenbrainz:** disable post-quantum TLS to avoid connection reset errors ([b2674f8](https://www.github.com/sentriz/gonic/commit/b2674f8e5a13ac1a4fffc21a9b8b61507e405373))
+* **podcast:** fix crash if itunes extensions are missing ([#668](https://www.github.com/sentriz/gonic/issues/668)) ([9473ec7](https://www.github.com/sentriz/gonic/commit/9473ec7539bff08d1cba1968ed7b2a534230d400))
+* **scanner:** reduce sqlite lock contention during scans ([5daf95c](https://www.github.com/sentriz/gonic/commit/5daf95cdebd6bef1d07074ec670e176d1f75b461)), closes [#678](https://www.github.com/sentriz/gonic/issues/678)
+* **scanner:** reset batch timer on fsnotify Remove events ([65c4674](https://www.github.com/sentriz/gonic/commit/65c4674da0b42216c8a9b4642f80be60ac1fdf53)), closes [#637](https://www.github.com/sentriz/gonic/issues/637)
+* **subsonic:** return artist as track artist in TrackChild ([9407450](https://www.github.com/sentriz/gonic/commit/9407450660db6083639e3b5cd3cff1c35aeaa07b)), closes [#654](https://www.github.com/sentriz/gonic/issues/654)
+* **subsonic:** return averageRating as float ([0f98064](https://www.github.com/sentriz/gonic/commit/0f98064bca1bfd2b9567517f655e94175e3ae63a)), closes [#677](https://www.github.com/sentriz/gonic/issues/677)
+* **subsonic:** unambiguate all columns ([dec4000](https://www.github.com/sentriz/gonic/commit/dec400022d7b777eb7ae466af9c7904e77c87f7b))
+* **subsonic:** update homepage URL casing ([e535e78](https://www.github.com/sentriz/gonic/commit/e535e7888ce6162f234fe3ea4a67565df8d1ed57)), closes [#664](https://www.github.com/sentriz/gonic/issues/664)
+
+
+### Miscellaneous Chores
+
+* **deps:** bump to go1.26 ([26e488a](https://www.github.com/sentriz/gonic/commit/26e488aabdd3b42040de9c748af104fe915379c6))
+
 ### [0.20.1](https://www.github.com/sentriz/gonic/compare/v0.20.0...v0.20.1) (2026-01-30)
 
 
