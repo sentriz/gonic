@@ -98,6 +98,9 @@ func main() {
 	confTranscodeCacheSize := flag.Int("transcode-cache-size", 0, "size of the transcode cache in MB (0 = no limit) (optional)")
 	confTranscodeEjectInterval := flag.Int("transcode-eject-interval", 0, "interval (in minutes) to eject transcode cache (0 = never) (optional)")
 
+	confCoverCacheSize := flag.Int("cover-cache-size", 0, "size of the cover art cache in MB (0 = no limit) (optional)")
+	confCoverEjectInterval := flag.Int("cover-eject-interval", 0, "interval (in minutes) to eject cover art cache (0 = never) (optional)")
+
 	flag.Parse()
 	flagconf.ParseEnv()
 	flagconf.ParseConfig(*confConfigPath)
@@ -259,7 +262,8 @@ func main() {
 	if err != nil {
 		log.Panicf("error creating admin controller: %v\n", err)
 	}
-	ctrlSubsonic, err := ctrlsubsonic.New(dbc, scannr, musicPaths, *confPodcastPath, cacheDirAudio, cacheDirCovers, jukebx, playlistStore, scrobblers, podcast, transcoder, lastfmClient, artistInfoCache, albumInfoCache, tagReader, resolveProxyPath)
+	coverCache := ctrlsubsonic.NewCoverCache(cacheDirCovers, *confCoverCacheSize)
+	ctrlSubsonic, err := ctrlsubsonic.New(dbc, scannr, musicPaths, *confPodcastPath, cacheDirAudio, coverCache, jukebx, playlistStore, scrobblers, podcast, transcoder, lastfmClient, artistInfoCache, albumInfoCache, tagReader, resolveProxyPath)
 	if err != nil {
 		log.Panicf("error creating subsonic controller: %v\n", err)
 	}
@@ -419,6 +423,21 @@ func main() {
 		ctxTick(ctx, time.Duration(*confTranscodeEjectInterval)*time.Minute, func() {
 			if err := transcoder.CacheEject(); err != nil {
 				log.Printf("error ejecting transcode cache: %v", err)
+			}
+		})
+		return nil
+	})
+
+	errgrp.Go(func() error {
+		if *confCoverEjectInterval == 0 || *confCoverCacheSize == 0 {
+			return nil
+		}
+
+		defer logJob("cover cache eject")()
+
+		ctxTick(ctx, time.Duration(*confCoverEjectInterval)*time.Minute, func() {
+			if err := coverCache.CacheEject(); err != nil {
+				log.Printf("error ejecting cover cache: %v", err)
 			}
 		})
 		return nil
