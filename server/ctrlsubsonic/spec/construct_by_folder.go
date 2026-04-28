@@ -8,7 +8,7 @@ import (
 	"go.senan.xyz/gonic/db"
 )
 
-func NewAlbumByFolder(f *db.Album) *Album {
+func NewAlbumByFolder(f *AlbumRow) *Album {
 	a := &Album{
 		Artist:        f.Parent.RightPath,
 		ID:            f.SID(),
@@ -165,7 +165,7 @@ func NewTCPodcastEpisode(pe *db.PodcastEpisode) *TrackChild {
 	return trCh
 }
 
-func NewArtistByFolder(f *db.Album) *Artist {
+func NewArtistByFolder(f *AlbumRow) *Artist {
 	// the db is structured around "browse by tags", and where
 	// an album is also a folder. so we're constructing an artist
 	// from an "album" where

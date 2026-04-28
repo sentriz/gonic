@@ -443,9 +443,16 @@ func TestMultiFolderWithSharedArtist(t *testing.T) {
 	assert.NoError(t, m.DB().Where("name=?", artistName).First(&artist).Error)
 	assert.Equal(t, artistName, artist.Name)
 
-	var artistAlbums []*db.Album
+	type albumWithCounts struct {
+		db.Album
+		ChildCount int
+		Duration   int
+	}
+
+	var artistAlbums []*albumWithCounts
 	assert.NoError(t, m.DB().
-		Select("*, count(sub.id) child_count, sum(sub.length) duration").
+		Table("albums").
+		Select("albums.*, count(sub.id) child_count, sum(sub.length) duration").
 		Joins("JOIN album_credits ON album_credits.album_id=albums.id AND album_credits.role='albumartist'").
 		Joins("LEFT JOIN tracks sub ON albums.id=sub.album_id").
 		Where("album_credits.artist_id=?", artist.ID).

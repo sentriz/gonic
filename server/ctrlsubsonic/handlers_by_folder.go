@@ -24,19 +24,12 @@ func (c *Controller) ServeGetIndexes(r *http.Request) *spec.Response {
 	rootQ := c.dbc.
 		Select("id").
 		Model(&db.Album{}).
-		Where("parent_id IS NULL")
-	if m := getMusicFolder(c.musicPaths, params); m != "" {
-		rootQ = rootQ.
-			Where("root_dir=?", m)
-	}
-	var folders []*db.Album
+		Where("parent_id IS NULL").
+		Scopes(spec.WithAlbumRootDir(getMusicFolder(c.musicPaths, params)))
+	var folders []*spec.AlbumRow
 	c.dbc.
-		Select("*, count(sub.id) child_count").
-		Preload("AlbumStar", "user_id=?", user.ID).
-		Preload("AlbumRating", "user_id=?", user.ID).
-		Joins("LEFT JOIN albums sub ON albums.id=sub.parent_id").
+		Scopes(spec.AlbumWithChildAlbumCounts, spec.AlbumWithUserData(user.ID)).
 		Where("albums.parent_id IN ?", rootQ.SubQuery()).
-		Group("albums.id").
 		Order("albums.right_path COLLATE NOCASE").
 		Find(&folders)
 	// [a-z#] -> 27
@@ -71,15 +64,13 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	childrenObj := []*spec.TrackChild{}
 	folder := &db.Album{}
 	c.dbc.
-		Preload("AlbumStar", "user_id=?", user.ID).
-		Preload("AlbumRating", "user_id=?", user.ID).
+		Scopes(spec.AlbumWithUserData(user.ID)).
 		First(folder, id.Value)
 	// start looking for child childFolders in the current dir
 	var childFolders []*db.Album
 	c.dbc.
+		Scopes(spec.AlbumWithUserData(user.ID)).
 		Where("parent_id=?", id.Value).
-		Preload("AlbumStar", "user_id=?", user.ID).
-		Preload("AlbumRating", "user_id=?", user.ID).
 		Order("tag_year").
 		Order("albums.right_path COLLATE NOCASE").
 		Find(&childFolders)
@@ -90,11 +81,9 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	// start looking for child childTracks in the current dir
 	var childTracks []*db.Track
 	c.dbc.
+		Scopes(spec.TrackWithArtistCredits, spec.TrackWithUserData(user.ID)).
 		Where("album_id=?", id.Value).
 		Preload("Album").
-		Preload("Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleArtist).Preload("Artist") }).
-		Preload("TrackStar", "user_id=?", user.ID).
-		Preload("TrackRating", "user_id=?", user.ID).
 		Order("tracks.tag_disc_number, tracks.tag_track_number").
 		Order("filename").
 		Find(&childTracks)
@@ -169,22 +158,16 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 		return spec.NewError(10, "unknown value %q for parameter 'type'", v)
 	}
 
-	if m := getMusicFolder(c.musicPaths, params); m != "" {
-		q = q.Where("root_dir=?", m)
-	}
-	var folders []*db.Album
+	q = q.Scopes(spec.WithAlbumRootDir(getMusicFolder(c.musicPaths, params)))
+	var folders []*spec.AlbumRow
 	// TODO: think about removing this extra join to count number
 	// of children. it might make sense to store that in the db
 	q.
-		Select("albums.*, count(tracks.id) child_count, sum(tracks.length) duration").
-		Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
-		Group("albums.id").
+		Scopes(spec.AlbumWithTrackCounts, spec.AlbumWithUserData(user.ID)).
 		Joins("JOIN album_credits ON album_credits.album_id=albums.id AND album_credits.role=?", db.RoleAlbumArtist).
 		Offset(params.GetOrInt("offset", 0)).
 		Limit(params.GetOrInt("size", 10)).
 		Preload("Parent").
-		Preload("AlbumStar", "user_id=?", user.ID).
-		Preload("AlbumRating", "user_id=?", user.ID).
 		Find(&folders)
 	sub := spec.NewResponse()
 	sub.Albums = &spec.Albums{
@@ -212,19 +195,20 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	fuzzy = strings.ToLower(fuzzy)
 	fuzzy = "%" + fuzzy + "%"
 
+	musicFolder := getMusicFolder(c.musicPaths, params)
 	results := &spec.SearchResultTwo{}
 
 	// search "artists"
 	rootQ := c.dbc.
 		Select("id").
 		Model(&db.Album{}).
-		Where("parent_id IS NULL")
-	if m := getMusicFolder(c.musicPaths, params); m != "" {
-		rootQ = rootQ.Where("root_dir=?", m)
-	}
+		Where("parent_id IS NULL").
+		Scopes(spec.WithAlbumRootDir(musicFolder))
 
 	var artists []*db.Album
-	q := c.dbc.Where(`parent_id IN ?`, rootQ.SubQuery())
+	q := c.dbc.
+		Scopes(spec.AlbumWithUserData(user.ID)).
+		Where(`parent_id IN ?`, rootQ.SubQuery())
 	switch {
 	case isUUID:
 		q = q.Where(0)
@@ -233,8 +217,6 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 		q = q.Where(`right_path LIKE ? OR right_path_u_dec LIKE ?`, fuzzy, fuzzy)
 	}
 	q = q.
-		Preload("AlbumStar", "user_id=?", user.ID).
-		Preload("AlbumRating", "user_id=?", user.ID).
 		Offset(params.GetOrInt("artistOffset", 0)).
 		Limit(params.GetOrInt("artistCount", 20))
 	if err := q.Find(&artists).Error; err != nil {
@@ -247,6 +229,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	// search "albums"
 	var albums []*db.Album
 	q = c.dbc.
+		Scopes(spec.AlbumWithUserData(user.ID), spec.WithAlbumRootDir(musicFolder)).
 		Joins("JOIN album_credits ON album_credits.album_id=albums.id AND album_credits.role=?", db.RoleAlbumArtist)
 	switch {
 	case isUUID:
@@ -256,13 +239,8 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 		q = q.Where(`right_path LIKE ? OR right_path_u_dec LIKE ?`, fuzzy, fuzzy)
 	}
 	q = q.
-		Preload("AlbumStar", "user_id=?", user.ID).
-		Preload("AlbumRating", "user_id=?", user.ID).
 		Offset(params.GetOrInt("albumOffset", 0)).
 		Limit(params.GetOrInt("albumCount", 20))
-	if m := getMusicFolder(c.musicPaths, params); m != "" {
-		q = q.Where("root_dir=?", m)
-	}
 	if err := q.Find(&albums).Error; err != nil {
 		return spec.NewError(0, "find albums: %v", err)
 	}
@@ -272,7 +250,9 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 
 	// search tracks
 	var tracks []*db.Track
-	q = c.dbc.Preload("Album")
+	q = c.dbc.
+		Scopes(spec.TrackWithArtistCredits, spec.TrackWithUserData(user.ID)).
+		Preload("Album")
 	switch {
 	case isUUID:
 		q = q.Where(`tag_brainz_id = ?`, query)
@@ -281,15 +261,12 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 		q = q.Where(`filename LIKE ?`, fuzzy)
 	}
 	q = q.
-		Preload("Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleArtist).Preload("Artist") }).
-		Preload("TrackStar", "user_id=?", user.ID).
-		Preload("TrackRating", "user_id=?", user.ID).
 		Offset(params.GetOrInt("songOffset", 0)).
 		Limit(params.GetOrInt("songCount", 20))
-	if m := getMusicFolder(c.musicPaths, params); m != "" {
+	if musicFolder != "" {
 		q = q.
 			Joins("JOIN albums ON albums.id=tracks.album_id").
-			Where("albums.root_dir=?", m)
+			Scopes(spec.WithAlbumRootDir(musicFolder))
 	}
 	if err := q.Find(&tracks).Error; err != nil {
 		return spec.NewError(0, "find tracks: %v", err)
@@ -315,6 +292,7 @@ func (c *Controller) ServeGetArtistInfo(_ *http.Request) *spec.Response {
 func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
+	musicFolder := getMusicFolder(c.musicPaths, params)
 
 	results := &spec.Starred{}
 
@@ -322,18 +300,15 @@ func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {
 	rootQ := c.dbc.
 		Select("id").
 		Model(&db.Album{}).
-		Where("parent_id IS NULL")
-	if m := getMusicFolder(c.musicPaths, params); m != "" {
-		rootQ = rootQ.Where("root_dir=?", m)
-	}
+		Where("parent_id IS NULL").
+		Scopes(spec.WithAlbumRootDir(musicFolder))
 
 	var artists []*db.Album
 	q := c.dbc.
+		Scopes(spec.AlbumWithUserData(user.ID)).
 		Where(`parent_id IN ?`, rootQ.SubQuery()).
 		Joins("JOIN album_stars ON albums.id=album_stars.album_id").
-		Where("album_stars.user_id=?", user.ID).
-		Preload("AlbumStar", "user_id=?", user.ID).
-		Preload("AlbumRating", "user_id=?", user.ID)
+		Where("album_stars.user_id=?", user.ID)
 	if err := q.Find(&artists).Error; err != nil {
 		return spec.NewError(0, "find artists: %v", err)
 	}
@@ -344,14 +319,10 @@ func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {
 	// "albums"
 	var albums []*db.Album
 	q = c.dbc.
+		Scopes(spec.AlbumWithUserData(user.ID), spec.WithAlbumRootDir(musicFolder)).
 		Joins("JOIN album_credits ON album_credits.album_id=albums.id AND album_credits.role=?", db.RoleAlbumArtist).
 		Joins("JOIN album_stars ON albums.id=album_stars.album_id").
-		Where("album_stars.user_id=?", user.ID).
-		Preload("AlbumStar", "user_id=?", user.ID).
-		Preload("AlbumRating", "user_id=?", user.ID)
-	if m := getMusicFolder(c.musicPaths, params); m != "" {
-		q = q.Where("root_dir=?", m)
-	}
+		Where("album_stars.user_id=?", user.ID)
 	if err := q.Find(&albums).Error; err != nil {
 		return spec.NewError(0, "find albums: %v", err)
 	}
@@ -362,16 +333,14 @@ func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {
 	// tracks
 	var tracks []*db.Track
 	q = c.dbc.
+		Scopes(spec.TrackWithArtistCredits, spec.TrackWithUserData(user.ID)).
 		Preload("Album").
 		Joins("JOIN track_stars ON tracks.id=track_stars.track_id").
-		Where("track_stars.user_id=?", user.ID).
-		Preload("Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleArtist).Preload("Artist") }).
-		Preload("TrackStar", "user_id=?", user.ID).
-		Preload("TrackRating", "user_id=?", user.ID)
-	if m := getMusicFolder(c.musicPaths, params); m != "" {
+		Where("track_stars.user_id=?", user.ID)
+	if musicFolder != "" {
 		q = q.
 			Joins("JOIN albums ON albums.id=tracks.album_id").
-			Where("albums.root_dir=?", m)
+			Scopes(spec.WithAlbumRootDir(musicFolder))
 	}
 	if err := q.Find(&tracks).Error; err != nil {
 		return spec.NewError(0, "find tracks: %v", err)

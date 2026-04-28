@@ -9,7 +9,7 @@ import (
 	"go.senan.xyz/gonic/db"
 )
 
-func NewAlbumByTags(a *db.Album, credits []*db.AlbumCredit) *Album {
+func NewAlbumByTags(a *AlbumRow, credits []*db.AlbumCredit) *Album {
 	ret := &Album{
 		ID:            a.SID(),
 		Created:       a.CreatedAt,
@@ -197,7 +197,7 @@ func NewTrackByTags(client string, t *db.Track, album *db.Album) *TrackChild {
 	return ret
 }
 
-func NewArtistByTags(a *db.Artist) *Artist {
+func NewArtistByTags(a *ArtistRow) *Artist {
 	roles := a.GetRoles()
 	if roles == nil {
 		roles = []string{}
@@ -242,7 +242,7 @@ func filterTrackCreditsByRole(credits []*db.TrackCredit, role string) []*db.Trac
 	return out
 }
 
-func NewGenre(g *db.Genre) *Genre {
+func NewGenre(g *GenreRow) *Genre {
 	return &Genre{
 		Name:       g.Name,
 		AlbumCount: g.AlbumCount,
