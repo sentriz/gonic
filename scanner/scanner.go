@@ -418,8 +418,8 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 
 	// metadata for the album table comes only from the first track's tags
 	if i == 0 {
-		if err := tx.Where("album_id=?", album.ID).Delete(db.ArtistAppearances{}).Error; err != nil {
-			return fmt.Errorf("delete artist appearances: %w", err)
+		if err := tx.Where("album_id=?", album.ID).Delete(db.AlbumCredit{}).Error; err != nil {
+			return fmt.Errorf("delete album credits: %w", err)
 		}
 
 		albumArtistEntries := pairCredits(
@@ -434,12 +434,8 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 			}
 			albumArtists = append(albumArtists, artistRef{id: artist.ID, credit: e.credit})
 		}
-		if err := populateAlbumArtists(tx, album, albumArtists); err != nil {
-			return fmt.Errorf("populate album artists: %w", err)
-		}
-
-		if err := populateArtistAppearances(tx, album, artistRefIDs(albumArtists)); err != nil {
-			return fmt.Errorf("populate track artists: %w", err)
+		if err := populateAlbumCredits(tx, album, db.RoleAlbumArtist, albumArtists); err != nil {
+			return fmt.Errorf("populate album credits: %w", err)
 		}
 
 		modTime, createTime := timeSpec.ModTime(), timeSpec.ModTime()
@@ -471,6 +467,10 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		return fmt.Errorf("populate track genres: %w", err)
 	}
 
+	if err := tx.Where("track_id=?", track.ID).Delete(db.TrackCredit{}).Error; err != nil {
+		return fmt.Errorf("delete track credits: %w", err)
+	}
+
 	trackArtistEntries := pairCredits(
 		ParseMulti(s.multiValueSettings[Artist], tags.MustArtists(trags), tags.MustArtist(trags)),
 		ParseMulti(s.multiValueSettings[Artist], tags.FirstValues(trags, normtag.ArtistsCredit, normtag.ArtistCredit), normtag.Get(trags, normtag.ArtistCredit)),
@@ -483,20 +483,12 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		}
 		trackArtists = append(trackArtists, artistRef{id: artist.ID, credit: e.credit})
 	}
-	if err := populateTrackArtists(tx, track, trackArtists); err != nil {
-		return fmt.Errorf("populate track artists: %w", err)
+	if err := populateTrackCredits(tx, track, db.RoleArtist, trackArtists); err != nil {
+		return fmt.Errorf("populate track credits: %w", err)
 	}
 
-	if err := populateArtistAppearances(tx, album, artistRefIDs(trackArtists)); err != nil {
-		return fmt.Errorf("populate track artists: %w", err)
-	}
-
-	contributorIDs, err := populateTrackContributors(tx, track, trags)
-	if err != nil {
-		return fmt.Errorf("populate track contributors: %w", err)
-	}
-	if err := populateArtistAppearances(tx, album, contributorIDs); err != nil {
-		return fmt.Errorf("populate contributor appearances: %w", err)
+	if err := populateTrackContributorCredits(tx, track, trags); err != nil {
+		return fmt.Errorf("populate track contributor credits: %w", err)
 	}
 
 	// possible album level embedded covers come only from the first track
@@ -689,78 +681,55 @@ func populateAlbumDiscTitles(tx *db.DB, album *db.Album, discTitles map[int]stri
 	return nil
 }
 
-func populateAlbumArtists(tx *db.DB, album *db.Album, refs []artistRef) error {
-	if err := tx.Where("album_id=?", album.ID).Delete(db.AlbumArtist{}).Error; err != nil {
-		return fmt.Errorf("delete old album artists: %w", err)
-	}
-
+func populateAlbumCredits(tx *db.DB, album *db.Album, role string, refs []artistRef) error {
 	rows := make([][]any, len(refs))
 	for i, r := range refs {
-		rows[i] = []any{r.id, r.credit}
+		rows[i] = []any{r.id, role, r.credit}
 	}
-	if err := tx.InsertBulkLeftManyRows("album_artists", []string{"album_id", "artist_id", "credited_as"}, album.ID, rows); err != nil {
-		return fmt.Errorf("insert bulk album artists: %w", err)
+	if err := tx.InsertBulkLeftManyRows("album_credits", []string{"album_id", "artist_id", "role", "credited_as"}, album.ID, rows); err != nil {
+		return fmt.Errorf("insert bulk album credits: %w", err)
 	}
 	return nil
 }
 
 //nolint:gochecknoglobals
 var contributorTagKeys = []struct {
-	role       db.ContributorRole
-	keys       []string
-	creditKeys []string
+	role                                       string
+	key, keySingle, keyCredit, keyCreditSingle string
 }{
-	{db.ContributorRoleRemixer, []string{normtag.Remixers, normtag.Remixer}, []string{normtag.RemixersCredit, normtag.RemixerCredit}},
-	{db.ContributorRoleComposer, []string{normtag.Composers, normtag.Composer}, []string{normtag.ComposersCredit, normtag.ComposerCredit}},
-	{db.ContributorRoleLyricist, []string{normtag.Lyricists, normtag.Lyricist}, []string{normtag.LyricistsCredit, normtag.LyricistCredit}},
-	{db.ContributorRoleConductor, []string{normtag.Conductors, normtag.Conductor}, []string{normtag.ConductorsCredit, normtag.ConductorCredit}},
-	{db.ContributorRoleProducer, []string{normtag.Producers, normtag.Producer}, []string{normtag.ProducersCredit, normtag.ProducerCredit}},
-	{db.ContributorRoleArranger, []string{normtag.Arrangers, normtag.Arranger}, []string{normtag.ArrangersCredit, normtag.ArrangerCredit}},
+	{db.RoleRemixer, normtag.Remixers, normtag.Remixer, normtag.RemixersCredit, normtag.RemixerCredit},
+	{db.RoleComposer, normtag.Composers, normtag.Composer, normtag.ComposersCredit, normtag.ComposerCredit},
+	{db.RoleLyricist, normtag.Lyricists, normtag.Lyricist, normtag.LyricistsCredit, normtag.LyricistCredit},
+	{db.RoleConductor, normtag.Conductors, normtag.Conductor, normtag.ConductorsCredit, normtag.ConductorCredit},
+	{db.RoleProducer, normtag.Producers, normtag.Producer, normtag.ProducersCredit, normtag.ProducerCredit},
+	{db.RoleArranger, normtag.Arrangers, normtag.Arranger, normtag.ArrangersCredit, normtag.ArrangerCredit},
 }
 
-func populateTrackContributors(tx *db.DB, track *db.Track, trags tags.Tags) ([]int, error) {
-	if err := tx.Where("track_id=?", track.ID).Delete(db.TrackContributor{}).Error; err != nil {
-		return nil, fmt.Errorf("delete old track contributors: %w", err)
-	}
-
+func populateTrackContributorCredits(tx *db.DB, track *db.Track, trags tags.Tags) error {
 	var rows [][]any
-	var artistIDs []int
 	for _, rk := range contributorTagKeys {
-		entries := pairCredits(tags.FirstValues(trags, rk.keys...), tags.FirstValues(trags, rk.creditKeys...))
+		entries := pairCredits(tags.FirstValues(trags, rk.key, rk.keySingle), tags.FirstValues(trags, rk.keyCredit, rk.keyCreditSingle))
 		for _, e := range entries {
 			artist, err := populateArtist(tx, e.name)
 			if err != nil {
-				return nil, fmt.Errorf("populate contributor artist: %w", err)
+				return fmt.Errorf("populate contributor artist: %w", err)
 			}
-			rows = append(rows, []any{artist.ID, string(rk.role), e.credit})
-			artistIDs = append(artistIDs, artist.ID)
+			rows = append(rows, []any{artist.ID, rk.role, e.credit})
 		}
 	}
-
-	if err := tx.InsertBulkLeftManyRows("track_contributors", []string{"track_id", "artist_id", "role", "credited_as"}, track.ID, rows); err != nil {
-		return nil, fmt.Errorf("insert bulk track contributors: %w", err)
-	}
-	return artistIDs, nil
-}
-
-func populateTrackArtists(tx *db.DB, track *db.Track, refs []artistRef) error {
-	if err := tx.Where("track_id=?", track.ID).Delete(db.TrackArtist{}).Error; err != nil {
-		return fmt.Errorf("delete old track artists: %w", err)
-	}
-
-	rows := make([][]any, len(refs))
-	for i, r := range refs {
-		rows[i] = []any{r.id, r.credit}
-	}
-	if err := tx.InsertBulkLeftManyRows("track_artists", []string{"track_id", "artist_id", "credited_as"}, track.ID, rows); err != nil {
-		return fmt.Errorf("insert bulk track artists: %w", err)
+	if err := tx.InsertBulkLeftManyRows("track_credits", []string{"track_id", "artist_id", "role", "credited_as"}, track.ID, rows); err != nil {
+		return fmt.Errorf("insert bulk track contributor credits: %w", err)
 	}
 	return nil
 }
 
-func populateArtistAppearances(tx *db.DB, album *db.Album, artistIDs []int) error {
-	if err := tx.InsertBulkLeftMany("artist_appearances", []string{"album_id", "artist_id"}, album.ID, artistIDs); err != nil {
-		return fmt.Errorf("insert bulk track artists: %w", err)
+func populateTrackCredits(tx *db.DB, track *db.Track, role string, refs []artistRef) error {
+	rows := make([][]any, len(refs))
+	for i, r := range refs {
+		rows[i] = []any{r.id, role, r.credit}
+	}
+	if err := tx.InsertBulkLeftManyRows("track_credits", []string{"track_id", "artist_id", "role", "credited_as"}, track.ID, rows); err != nil {
+		return fmt.Errorf("insert bulk track credits: %w", err)
 	}
 	return nil
 }
@@ -833,13 +802,10 @@ func (s *Scanner) cleanAlbumMetadata() error {
 
 	numModified = len(emptyAlbumIDs)
 
-	if err := s.db.Where("album_id IN (?)", emptyAlbumIDs).Delete(db.AlbumArtist{}).Error; err != nil {
+	if err := s.db.Where("album_id IN (?)", emptyAlbumIDs).Delete(db.AlbumCredit{}).Error; err != nil {
 		return err
 	}
 	if err := s.db.Where("album_id IN (?)", emptyAlbumIDs).Delete(db.AlbumGenre{}).Error; err != nil {
-		return err
-	}
-	if err := s.db.Where("album_id IN (?)", emptyAlbumIDs).Delete(db.ArtistAppearances{}).Error; err != nil {
 		return err
 	}
 	if err := s.db.Where("album_id IN (?)", emptyAlbumIDs).Delete(db.AlbumDiscTitle{}).Error; err != nil {
@@ -876,11 +842,9 @@ func (s *Scanner) cleanArtists(st *State) error {
 	q := s.db.Exec(`
 		DELETE FROM artists
 		WHERE id NOT IN (
-			SELECT artist_id FROM track_artists
+			SELECT artist_id FROM album_credits
 			UNION
-			SELECT artist_id FROM album_artists
-			UNION
-			SELECT artist_id FROM artist_appearances
+			SELECT artist_id FROM track_credits
 		)
     `)
 	if err := q.Error; err != nil {
@@ -1037,14 +1001,6 @@ func ParseMulti(setting MultiValueSetting, values []string, value string) []stri
 type artistRef struct {
 	id     int
 	credit string
-}
-
-func artistRefIDs(refs []artistRef) []int {
-	ids := make([]int, len(refs))
-	for i, r := range refs {
-		ids[i] = r.id
-	}
-	return ids
 }
 
 type credited struct {

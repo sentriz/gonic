@@ -9,7 +9,7 @@ import (
 	"go.senan.xyz/gonic/db"
 )
 
-func NewAlbumByTags(a *db.Album, artists []*db.AlbumArtist) *Album {
+func NewAlbumByTags(a *db.Album, credits []*db.AlbumCredit) *Album {
 	ret := &Album{
 		ID:            a.SID(),
 		Created:       a.CreatedAt,
@@ -39,18 +39,21 @@ func NewAlbumByTags(a *db.Album, artists []*db.AlbumArtist) *Album {
 	if a.AlbumRating != nil {
 		ret.UserRating = a.AlbumRating.Rating
 	}
-	slices.SortFunc(artists, func(a, b *db.AlbumArtist) int { return cmp.Compare(a.ArtistID, b.ArtistID) })
-	if len(artists) > 0 && artists[0].Artist != nil {
-		ret.Artist = cmp.Or(artists[0].CreditedAs, artists[0].Artist.Name)
-		ret.ArtistID = artists[0].Artist.SID()
+
+	albumArtists := filterAlbumCreditsByRole(credits, db.RoleAlbumArtist)
+	slices.SortFunc(albumArtists, func(a, b *db.AlbumCredit) int { return cmp.Compare(a.ArtistID, b.ArtistID) })
+
+	if len(albumArtists) > 0 && albumArtists[0].Artist != nil {
+		ret.Artist = cmp.Or(albumArtists[0].CreditedAs, albumArtists[0].Artist.Name)
+		ret.ArtistID = albumArtists[0].Artist.SID()
 	}
-	for _, a := range artists {
-		if a.Artist == nil {
+	for _, c := range albumArtists {
+		if c.Artist == nil {
 			continue
 		}
 		ret.Artists = append(ret.Artists, &ArtistRef{
-			ID:   a.Artist.SID(),
-			Name: cmp.Or(a.CreditedAs, a.Artist.Name),
+			ID:   c.Artist.SID(),
+			Name: cmp.Or(c.CreditedAs, c.Artist.Name),
 		})
 	}
 	if len(a.Genres) > 0 {
@@ -120,22 +123,25 @@ func NewTrackByTags(client string, t *db.Track, album *db.Album) *TrackChild {
 		ret.UserRating = t.TrackRating.Rating
 	}
 
-	slices.SortFunc(t.Artists, func(a, b *db.TrackArtist) int { return cmp.Compare(a.ArtistID, b.ArtistID) })
-	slices.SortFunc(album.Artists, func(a, b *db.AlbumArtist) int { return cmp.Compare(a.ArtistID, b.ArtistID) })
+	trackArtists := filterTrackCreditsByRole(t.Credits, db.RoleArtist)
+	slices.SortFunc(trackArtists, func(a, b *db.TrackCredit) int { return cmp.Compare(a.ArtistID, b.ArtistID) })
+
+	albumArtists := filterAlbumCreditsByRole(album.Credits, db.RoleAlbumArtist)
+	slices.SortFunc(albumArtists, func(a, b *db.AlbumCredit) int { return cmp.Compare(a.ArtistID, b.ArtistID) })
 
 	switch {
-	case len(t.Artists) > 0 && t.Artists[0].Artist != nil:
-		ret.Artist = cmp.Or(t.Artists[0].CreditedAs, t.Artists[0].Artist.Name)
-		ret.ArtistID = t.Artists[0].Artist.SID()
-	case len(album.Artists) > 0 && album.Artists[0].Artist != nil:
-		ret.Artist = cmp.Or(album.Artists[0].CreditedAs, album.Artists[0].Artist.Name)
-		ret.ArtistID = album.Artists[0].Artist.SID()
+	case len(trackArtists) > 0 && trackArtists[0].Artist != nil:
+		ret.Artist = cmp.Or(trackArtists[0].CreditedAs, trackArtists[0].Artist.Name)
+		ret.ArtistID = trackArtists[0].Artist.SID()
+	case len(albumArtists) > 0 && albumArtists[0].Artist != nil:
+		ret.Artist = cmp.Or(albumArtists[0].CreditedAs, albumArtists[0].Artist.Name)
+		ret.ArtistID = albumArtists[0].Artist.SID()
 	}
-	for _, a := range t.Artists {
-		if a.Artist == nil {
+	for _, c := range trackArtists {
+		if c.Artist == nil {
 			continue
 		}
-		ret.Artists = append(ret.Artists, &ArtistRef{ID: a.Artist.SID(), Name: cmp.Or(a.CreditedAs, a.Artist.Name)})
+		ret.Artists = append(ret.Artists, &ArtistRef{ID: c.Artist.SID(), Name: cmp.Or(c.CreditedAs, c.Artist.Name)})
 	}
 	if len(t.Genres) > 0 {
 		ret.Genre = t.Genres[0].Name
@@ -143,30 +149,38 @@ func NewTrackByTags(client string, t *db.Track, album *db.Album) *TrackChild {
 	for _, g := range t.Genres {
 		ret.Genres = append(ret.Genres, &GenreRef{Name: g.Name})
 	}
-	for _, a := range album.Artists {
-		if a.Artist == nil {
+	for _, c := range albumArtists {
+		if c.Artist == nil {
 			continue
 		}
-		ret.AlbumArtists = append(ret.AlbumArtists, &ArtistRef{ID: a.Artist.SID(), Name: cmp.Or(a.CreditedAs, a.Artist.Name)})
+		ret.AlbumArtists = append(ret.AlbumArtists, &ArtistRef{ID: c.Artist.SID(), Name: cmp.Or(c.CreditedAs, c.Artist.Name)})
 	}
 
 	// DSub treats nested <artist> elements as top-level artists, so the <artist> inside
 	// <contributors> shows up as a phantom artist in search results and overwrites the
 	// directory header in album views.
 	if client != "DSub" {
-		slices.SortStableFunc(t.Contributors, func(a, b *db.TrackContributor) int {
+		var contributors []*db.TrackCredit
+		for _, c := range t.Credits {
+			switch c.Role {
+			case db.RoleArtist, db.RoleAlbumArtist:
+			default:
+				contributors = append(contributors, c)
+			}
+		}
+		slices.SortStableFunc(contributors, func(a, b *db.TrackCredit) int {
 			return cmp.Or(
 				cmp.Compare(a.Role, b.Role),
 				cmp.Compare(a.ArtistID, b.ArtistID),
 			)
 		})
 
-		for _, c := range t.Contributors {
+		for _, c := range contributors {
 			if c.Artist == nil {
 				continue
 			}
 			ret.Contributors = append(ret.Contributors, &Contributor{
-				Role:   string(c.Role),
+				Role:   c.Role,
 				Artist: &ArtistRef{ID: c.Artist.SID(), Name: cmp.Or(c.CreditedAs, c.Artist.Name)},
 			})
 		}
@@ -201,6 +215,26 @@ func NewArtistByTags(a *db.Artist) *Artist {
 		r.UserRating = a.ArtistRating.Rating
 	}
 	return r
+}
+
+func filterAlbumCreditsByRole(credits []*db.AlbumCredit, role string) []*db.AlbumCredit {
+	out := make([]*db.AlbumCredit, 0, len(credits))
+	for _, c := range credits {
+		if c.Role == role {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
+func filterTrackCreditsByRole(credits []*db.TrackCredit, role string) []*db.TrackCredit {
+	out := make([]*db.TrackCredit, 0, len(credits))
+	for _, c := range credits {
+		if c.Role == role {
+			out = append(out, c)
+		}
+	}
+	return out
 }
 
 func NewGenre(g *db.Genre) *Genre {

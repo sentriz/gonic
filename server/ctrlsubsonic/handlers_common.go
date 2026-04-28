@@ -66,7 +66,7 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 	switch id.Type {
 	case specid.Track:
 		var track db.Track
-		if err := c.dbc.Preload("Album").Preload("Album.Artists.Artist").First(&track, id.Value).Error; err != nil {
+		if err := c.dbc.Preload("Album").First(&track, id.Value).Error; err != nil {
 			return spec.NewError(0, "error finding track: %v", err)
 		}
 		if track.Album == nil {
@@ -221,7 +221,7 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 			err := c.dbc.
 				Where("id=?", id.Value).
 				Preload("Album").
-				Preload("Artists.Artist").
+				Preload("Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleArtist).Preload("Artist") }).
 				Preload("TrackStar", "user_id=?", user.ID).
 				Preload("TrackRating", "user_id=?", user.ID).
 				Find(&track).
@@ -291,9 +291,8 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 	err = c.dbc.
 		Where("id=?", id.Value).
 		Preload("Album").
-		Preload("Album.Artists.Artist").
-		Preload("Artists.Artist").
-		Preload("Contributors.Artist").
+		Preload("Album.Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleAlbumArtist).Preload("Artist") }).
+		Preload("Credits.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		First(&track).
@@ -319,9 +318,8 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	q := c.dbc.DB.
 		Limit(params.GetOrInt("size", 10)).
 		Preload("Album").
-		Preload("Album.Artists.Artist").
-		Preload("Artists.Artist").
-		Preload("Contributors.Artist").
+		Preload("Album.Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleAlbumArtist).Preload("Artist") }).
+		Preload("Credits.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Joins("JOIN albums ON tracks.album_id=albums.id").
@@ -401,7 +399,12 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 			switch id.Type {
 			case specid.Track:
 				var track db.Track
-				if err := c.dbc.Where("id=?", id.Value).Preload("Album").Preload("Album.Artists.Artist").Preload("Artists.Artist").Preload("Contributors.Artist").Find(&track).Error; err != nil {
+				if err := c.dbc.
+					Where("id=?", id.Value).
+					Preload("Album").
+					Preload("Album.Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleAlbumArtist).Preload("Artist") }).
+					Preload("Credits.Artist").
+					Find(&track).Error; err != nil {
 					return nil, fmt.Errorf("load track: %w", err)
 				}
 				ret = append(ret, spec.NewTrackByTags(params.GetOr("c", ""), &track, track.Album))
@@ -514,8 +517,8 @@ func (c *Controller) ServeGetLyrics(r *http.Request) *spec.Response {
 	var track db.Track
 	err := c.dbc.
 		Preload("Album").
-		Joins("JOIN track_artists ON track_artists.track_id = tracks.id").
-		Joins("JOIN artists ON artists.id = track_artists.artist_id").
+		Joins("JOIN track_credits ON track_credits.track_id = tracks.id AND track_credits.role = ?", db.RoleArtist).
+		Joins("JOIN artists ON artists.id = track_credits.artist_id").
 		Where("tracks.tag_title LIKE ? AND artists.name LIKE ?", title, artist).
 		First(&track).
 		Error
@@ -572,8 +575,6 @@ func (c *Controller) ServeGetLyricsBySongID(r *http.Request) *spec.Response {
 	var track db.Track
 	q := c.dbc.
 		Preload("Album").
-		Preload("Album.Artists.Artist").
-		Preload("Artists.Artist").
 		Where("id=?", id.Value).
 		First(&track)
 	if err := q.Error; err != nil {

@@ -116,8 +116,8 @@ func TestCoverBeforeTracks(t *testing.T) {
 	assert.Equal(t, "cover.jpg", album.Cover)                                                                  // album has cover
 
 	var albumArtist db.Artist
-	assert.NoError(t, m.DB().Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Where("album_artists.album_id=?", album.ID).Find(&albumArtist).Error) // album has cover
-	assert.Equal(t, "artist-2", albumArtist.Name)                                                                                                                    // album artist
+	assert.NoError(t, m.DB().Joins("JOIN album_credits ON album_credits.artist_id=artists.id AND album_credits.role='albumartist'").Where("album_credits.album_id=?", album.ID).Find(&albumArtist).Error) // album has cover
+	assert.Equal(t, "artist-2", albumArtist.Name)                                                                                                                                                         // album artist
 
 	var tracks []*db.Track
 	assert.NoError(t, m.DB().Where("album_id=?", album.ID).Find(&tracks).Error) // album has tracks
@@ -143,7 +143,7 @@ func TestAlbumArtistsClearedWhenFolderLosesTracks(t *testing.T) {
 	m.ScanAndClean()
 
 	var albumArtistCount int
-	require.NoError(t, m.DB().Model(db.AlbumArtist{}).Count(&albumArtistCount).Error)
+	require.NoError(t, m.DB().Model(db.AlbumCredit{}).Where("role=?", db.RoleAlbumArtist).Count(&albumArtistCount).Error)
 	require.Equal(t, 1, albumArtistCount)
 
 	m.Move(loosePath, nestedPath)
@@ -151,7 +151,7 @@ func TestAlbumArtistsClearedWhenFolderLosesTracks(t *testing.T) {
 	m.ScanAndClean()
 
 	var postAlbumArtistCount int
-	require.NoError(t, m.DB().Model(db.AlbumArtist{}).Count(&postAlbumArtistCount).Error)
+	require.NoError(t, m.DB().Model(db.AlbumCredit{}).Where("role=?", db.RoleAlbumArtist).Count(&postAlbumArtistCount).Error)
 	require.Equal(t, 1, postAlbumArtistCount)
 }
 
@@ -176,8 +176,8 @@ func TestUpdatedTags(t *testing.T) {
 	assert.Equal(t, "title", track.TagTitle)                                                           // track has tags
 
 	var trackArtistA db.Artist
-	assert.NoError(t, m.DB().Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Where("album_artists.album_id=?", track.AlbumID).Limit(1).Find(&trackArtistA).Error) // updated has tags
-	assert.Equal(t, "album-artist", trackArtistA.Name)                                                                                                                              // track has tags
+	assert.NoError(t, m.DB().Joins("JOIN album_credits ON album_credits.artist_id=artists.id AND album_credits.role='albumartist'").Where("album_credits.album_id=?", track.AlbumID).Limit(1).Find(&trackArtistA).Error) // updated has tags
+	assert.Equal(t, "album-artist", trackArtistA.Name)                                                                                                                                                                   // track has tags
 
 	m.SetTags("artist-10/album-10/track-10.flac", func(tags *mockfs.TagInfo) {
 		normtag.Set(tags.Tags, normtag.Artist, "artist-upd")
@@ -196,8 +196,8 @@ func TestUpdatedTags(t *testing.T) {
 	assert.Equal(t, "title-upd", updated.TagTitle)                                                       // updated has tags
 
 	var trackArtistB db.Artist
-	assert.NoError(t, m.DB().Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Where("album_artists.album_id=?", track.AlbumID).Limit(1).Find(&trackArtistB).Error) // updated has tags
-	assert.Equal(t, "album-artist-upd", trackArtistB.Name)                                                                                                                          // updated has tags
+	assert.NoError(t, m.DB().Joins("JOIN album_credits ON album_credits.artist_id=artists.id AND album_credits.role='albumartist'").Where("album_credits.album_id=?", track.AlbumID).Limit(1).Find(&trackArtistB).Error) // updated has tags
+	assert.Equal(t, "album-artist-upd", trackArtistB.Name)                                                                                                                                                               // updated has tags
 }
 
 // https://github.com/sentriz/gonic/issues/225
@@ -446,9 +446,9 @@ func TestMultiFolderWithSharedArtist(t *testing.T) {
 	var artistAlbums []*db.Album
 	assert.NoError(t, m.DB().
 		Select("*, count(sub.id) child_count, sum(sub.length) duration").
-		Joins("JOIN album_artists ON album_artists.album_id=albums.id").
+		Joins("JOIN album_credits ON album_credits.album_id=albums.id AND album_credits.role='albumartist'").
 		Joins("LEFT JOIN tracks sub ON albums.id=sub.album_id").
-		Where("album_artists.artist_id=?", artist.ID).
+		Where("album_credits.artist_id=?", artist.ID).
 		Group("albums.id").
 		Find(&artistAlbums).Error)
 
@@ -479,33 +479,39 @@ func TestTrackContributors(t *testing.T) {
 	m.ScanAndClean()
 
 	var track db.Track
-	require.NoError(t, m.DB().Preload("Contributors.Artist").Where("tag_title=?", "track-1").First(&track).Error)
+	require.NoError(t, m.DB().Preload("Credits.Artist").Where("tag_title=?", "track-1").First(&track).Error)
 
 	type pair struct {
-		Role   db.ContributorRole
+		Role   string
 		Artist string
 	}
-	var got []pair
-	for _, c := range track.Contributors {
-		got = append(got, pair{Role: c.Role, Artist: c.Artist.Name})
+	contributors := func(t *db.Track) []pair {
+		var out []pair
+		for _, c := range t.Credits {
+			if c.Role == db.RoleArtist {
+				continue
+			}
+			out = append(out, pair{Role: c.Role, Artist: c.Artist.Name})
+		}
+		return out
 	}
 	assert.ElementsMatch(t, []pair{
-		{db.ContributorRoleComposer, "comp-a"},
-		{db.ContributorRoleComposer, "comp-b"},
-		{db.ContributorRoleRemixer, "rem-a"},
-		{db.ContributorRoleLyricist, "lyr-a"},
-		{db.ContributorRoleProducer, "prod-a"},
-	}, got)
+		{db.RoleComposer, "comp-a"},
+		{db.RoleComposer, "comp-b"},
+		{db.RoleRemixer, "rem-a"},
+		{db.RoleLyricist, "lyr-a"},
+		{db.RoleProducer, "prod-a"},
+	}, contributors(&track))
 
-	// contributor artists should also show up on the album via artist_appearances
+	// contributor artists should also be reachable as track credits on the album's tracks
 	for _, name := range []string{"comp-a", "comp-b", "rem-a", "lyr-a", "prod-a"} {
 		var count int
 		require.NoError(t, m.DB().
-			Model(&db.ArtistAppearances{}).
-			Joins("JOIN artists ON artists.id=artist_appearances.artist_id").
+			Model(&db.TrackCredit{}).
+			Joins("JOIN artists ON artists.id=track_credits.artist_id").
 			Where("artists.name=?", name).
 			Count(&count).Error)
-		assert.Equal(t, 1, count, "expected %q in artist_appearances", name)
+		assert.Equal(t, 1, count, "expected %q to have a track credit", name)
 	}
 
 	// re-scanning with a changed composer list should clear the stale row (comp-b)
@@ -515,18 +521,14 @@ func TestTrackContributors(t *testing.T) {
 	})
 	m.ScanAndClean()
 
-	require.NoError(t, m.DB().Preload("Contributors.Artist").Where("tag_title=?", "track-1").First(&track).Error)
-	got = got[:0]
-	for _, c := range track.Contributors {
-		got = append(got, pair{Role: c.Role, Artist: c.Artist.Name})
-	}
+	require.NoError(t, m.DB().Preload("Credits.Artist").Where("tag_title=?", "track-1").First(&track).Error)
 	assert.ElementsMatch(t, []pair{
-		{db.ContributorRoleComposer, "comp-a"},
-		{db.ContributorRoleComposer, "comp-c"},
-		{db.ContributorRoleRemixer, "rem-a"},
-		{db.ContributorRoleLyricist, "lyr-a"},
-		{db.ContributorRoleProducer, "prod-a"},
-	}, got)
+		{db.RoleComposer, "comp-a"},
+		{db.RoleComposer, "comp-c"},
+		{db.RoleRemixer, "rem-a"},
+		{db.RoleLyricist, "lyr-a"},
+		{db.RoleProducer, "prod-a"},
+	}, contributors(&track))
 }
 
 func TestArtistsCreditedAs(t *testing.T) {
@@ -546,8 +548,8 @@ func TestArtistsCreditedAs(t *testing.T) {
 
 	var track db.Track
 	require.NoError(t, m.DB().
-		Preload("Album.Artists.Artist").
-		Preload("Contributors.Artist").
+		Preload("Album.Credits.Artist").
+		Preload("Credits.Artist").
 		Where("tag_title=?", "track-1").First(&track).Error)
 
 	type pair struct {
@@ -555,8 +557,11 @@ func TestArtistsCreditedAs(t *testing.T) {
 	}
 
 	var albumArtists []pair
-	for _, aa := range track.Album.Artists {
-		albumArtists = append(albumArtists, pair{aa.Artist.Name, aa.CreditedAs})
+	for _, c := range track.Album.Credits {
+		if c.Role != db.RoleAlbumArtist {
+			continue
+		}
+		albumArtists = append(albumArtists, pair{c.Artist.Name, c.CreditedAs})
 	}
 	assert.ElementsMatch(t, []pair{
 		{"Alan Vega", "Vega"},
@@ -564,7 +569,10 @@ func TestArtistsCreditedAs(t *testing.T) {
 	}, albumArtists)
 
 	var contributors []pair
-	for _, c := range track.Contributors {
+	for _, c := range track.Credits {
+		if c.Role == db.RoleArtist {
+			continue
+		}
 		contributors = append(contributors, pair{c.Artist.Name, c.CreditedAs})
 	}
 	assert.ElementsMatch(t, []pair{
@@ -715,12 +723,12 @@ func TestCompilationAlbumWithoutAlbumArtist(t *testing.T) {
 	assert.Equal(t, 5, trackCount)
 
 	var artists []*db.Artist
-	assert.NoError(t, m.DB().Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Group("artists.id").Find(&artists).Error)
+	assert.NoError(t, m.DB().Joins("JOIN album_credits ON album_credits.artist_id=artists.id AND album_credits.role='albumartist'").Group("artists.id").Find(&artists).Error)
 	assert.Equal(t, 1, len(artists))             // we only have one album artist
 	assert.Equal(t, "artist 0", artists[0].Name) // it came from the first track's fallback to artist tag
 
 	var artistAlbums []*db.Album
-	assert.NoError(t, m.DB().Joins("JOIN album_artists ON album_artists.album_id=albums.id").Where("album_artists.artist_id=?", artists[0].ID).Find(&artistAlbums).Error)
+	assert.NoError(t, m.DB().Joins("JOIN album_credits ON album_credits.album_id=albums.id AND album_credits.role='albumartist'").Where("album_credits.artist_id=?", artists[0].ID).Find(&artistAlbums).Error)
 	assert.Equal(t, 1, len(artistAlbums)) // the artist has one album
 	assert.Equal(t, pathAlbum, artistAlbums[0].RightPath)
 	assert.Equal(t, pathArtist+"/", artistAlbums[0].LeftPath)
@@ -734,11 +742,11 @@ func TestIncrementalScanNoChangeNoUpdatedAt(t *testing.T) {
 
 	m.ScanAndClean()
 	var albumA db.Album
-	assert.NoError(t, m.DB().Joins("JOIN album_artists ON album_artists.album_id=albums.id").Order("updated_at DESC").Find(&albumA).Error)
+	assert.NoError(t, m.DB().Joins("JOIN album_credits ON album_credits.album_id=albums.id AND album_credits.role='albumartist'").Order("updated_at DESC").Find(&albumA).Error)
 
 	m.ScanAndClean()
 	var albumB db.Album
-	assert.NoError(t, m.DB().Joins("JOIN album_artists ON album_artists.album_id=albums.id").Order("updated_at DESC").Find(&albumB).Error)
+	assert.NoError(t, m.DB().Joins("JOIN album_credits ON album_credits.album_id=albums.id AND album_credits.role='albumartist'").Order("updated_at DESC").Find(&albumB).Error)
 
 	assert.Equal(t, albumB.UpdatedAt, albumA.UpdatedAt)
 }
@@ -844,11 +852,11 @@ func TestMultiArtistSupport(t *testing.T) {
 	m.ScanAndClean()
 
 	var artists []*db.Artist
-	assert.NoError(t, m.DB().Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Group("artists.id").Find(&artists).Error)
+	assert.NoError(t, m.DB().Joins("JOIN album_credits ON album_credits.artist_id=artists.id AND album_credits.role='albumartist'").Group("artists.id").Find(&artists).Error)
 	assert.Len(t, artists, 3) // alan, liz, mercury
 
-	var albumArtists []*db.AlbumArtist
-	assert.NoError(t, m.DB().Find(&albumArtists).Error)
+	var albumArtists []*db.AlbumCredit
+	assert.NoError(t, m.DB().Where("role=?", db.RoleAlbumArtist).Find(&albumArtists).Error)
 	assert.Len(t, albumArtists, 5)
 
 	type row struct{ Artist, Albums string }
@@ -857,8 +865,8 @@ func TestMultiArtistSupport(t *testing.T) {
 		assert.NoError(t, m.DB().
 			Select("artists.name artist, group_concat(albums.tag_title, ';') albums").
 			Model(db.Artist{}).
-			Joins("JOIN album_artists ON album_artists.artist_id=artists.id").
-			Joins("JOIN albums ON albums.id=album_artists.album_id").
+			Joins("JOIN album_credits ON album_credits.artist_id=artists.id AND album_credits.role='albumartist'").
+			Joins("JOIN albums ON albums.id=album_credits.album_id").
 			Order("artists.name, albums.tag_title").
 			Group("artists.id").
 			Scan(&table).
@@ -883,10 +891,10 @@ func TestMultiArtistSupport(t *testing.T) {
 
 	m.ScanAndClean()
 
-	assert.NoError(t, m.DB().Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Group("artists.id").Find(&artists).Error)
+	assert.NoError(t, m.DB().Joins("JOIN album_credits ON album_credits.artist_id=artists.id AND album_credits.role='albumartist'").Group("artists.id").Find(&artists).Error)
 	assert.Len(t, artists, 2) // alan, liz
 
-	assert.NoError(t, m.DB().Find(&albumArtists).Error)
+	assert.NoError(t, m.DB().Where("role=?", db.RoleAlbumArtist).Find(&albumArtists).Error)
 	assert.Len(t, albumArtists, 3)
 
 	assert.Equal(t,
@@ -918,32 +926,42 @@ func TestMultiArtistPreload(t *testing.T) {
 	m.ScanAndClean()
 
 	var albums []*db.Album
-	assert.NoError(t, m.DB().Preload("Artists.Artist").Find(&albums).Error)
+	assert.NoError(t, m.DB().Preload("Credits.Artist").Find(&albums).Error)
 	assert.GreaterOrEqual(t, len(albums), 3)
 
 	for _, album := range albums {
 		switch album.TagTitle {
 		case "Mutator":
-			assert.Len(t, album.Artists, 2)
+			assert.Len(t, album.Credits, 2)
 		case "Dead Man":
-			assert.Len(t, album.Artists, 2)
+			assert.Len(t, album.Credits, 2)
 		case "Yerself Is Steam":
-			assert.Len(t, album.Artists, 1)
+			assert.Len(t, album.Credits, 1)
 		}
 	}
 
 	var artists []*db.Artist
-	assert.NoError(t, m.DB().Preload("Albums").Joins("JOIN album_artists ON album_artists.artist_id=artists.id").Group("artists.id").Find(&artists).Error)
+	assert.NoError(t, m.DB().
+		Joins("JOIN album_credits ON album_credits.artist_id=artists.id AND album_credits.role=?", db.RoleAlbumArtist).
+		Group("artists.id").Find(&artists).Error)
 	assert.Equal(t, 3, len(artists))
 
+	albumsForArtist := func(artistID int) int {
+		var count int
+		assert.NoError(t, m.DB().
+			Model(&db.AlbumCredit{}).
+			Where("artist_id=? AND role=?", artistID, db.RoleAlbumArtist).
+			Count(&count).Error)
+		return count
+	}
 	for _, artist := range artists {
 		switch artist.Name {
 		case "Alan Vega":
-			assert.Len(t, artist.Albums, 2)
+			assert.Equal(t, 2, albumsForArtist(artist.ID))
 		case "Mercury Rev":
-			assert.Len(t, artist.Albums, 2)
+			assert.Equal(t, 2, albumsForArtist(artist.ID))
 		case "Liz Lamere":
-			assert.Len(t, artist.Albums, 1)
+			assert.Equal(t, 1, albumsForArtist(artist.ID))
 		}
 	}
 }

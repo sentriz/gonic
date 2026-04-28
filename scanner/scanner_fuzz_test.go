@@ -46,7 +46,7 @@ func fuzzStruct(taken int, data []byte, seed int64, dest any) {
 
 	r := rand.New(rand.NewSource(seed))
 	v := reflect.ValueOf(dest)
-	for i := 0; i < v.Elem().NumField(); i++ {
+	for _, field := range v.Elem().Fields() {
 		if r.Float64() < 0.1 {
 			continue
 		}
@@ -58,7 +58,7 @@ func fuzzStruct(taken int, data []byte, seed int64, dest any) {
 		}
 		taken += take
 
-		switch f := v.Elem().Field(i); f.Kind() {
+		switch f := field; f.Kind() {
 		case reflect.Bool:
 			f.SetBool(b[0] < 128)
 		case reflect.String:

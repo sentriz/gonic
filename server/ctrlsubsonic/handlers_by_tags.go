@@ -26,8 +26,8 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	var artists []*db.Artist
 	q := c.dbc.
-		Select("*, count(album_artists.album_id) album_count").
-		Joins("JOIN album_artists ON album_artists.artist_id=artists.id").
+		Select("*, count(album_credits.album_id) album_count").
+		Joins("JOIN album_credits ON album_credits.artist_id=artists.id AND album_credits.role=?", db.RoleAlbumArtist).
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
 		Preload("Info").
@@ -35,7 +35,7 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 		Order("artists.name COLLATE NOCASE")
 	if m := getMusicFolder(c.musicPaths, params); m != "" {
 		q = q.
-			Joins("JOIN albums ON albums.id=album_artists.album_id").
+			Joins("JOIN albums ON albums.id=album_credits.album_id").
 			Where("albums.root_dir=?", m)
 	}
 	if err := q.Find(&artists).Error; err != nil {
@@ -70,28 +70,44 @@ func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 	var artist db.Artist
-	c.dbc.
-		Preload("Appearances", func(db *gorm.DB) *gorm.DB {
-			return db.
-				Select("*, count(sub.id) child_count, sum(sub.length) duration").
-				Joins("LEFT JOIN tracks sub ON albums.id=sub.album_id").
-				Order("albums.right_path").
-				Group("albums.id")
-		}).
-		Preload("Appearances.Artists.Artist").
-		Preload("Appearances.Genres").
+	if err := c.dbc.
 		Preload("Info").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
-		First(&artist, id.Value)
+		First(&artist, id.Value).
+		Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return spec.NewError(70, "couldn't find an artist with that id")
+		}
+		return spec.NewError(0, "find artist: %v", err)
+	}
+
+	var appearances []*db.Album
+	if err := c.dbc.
+		Select("albums.*, count(sub.id) child_count, sum(sub.length) duration").
+		Joins("LEFT JOIN tracks sub ON albums.id=sub.album_id").
+		Where(`albums.id IN (
+			SELECT album_id FROM album_credits WHERE artist_id=?
+			UNION
+			SELECT tracks.album_id FROM track_credits
+				JOIN tracks ON tracks.id=track_credits.track_id
+				WHERE track_credits.artist_id=?
+		)`, artist.ID, artist.ID).
+		Order("albums.right_path").
+		Group("albums.id").
+		Preload("Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleAlbumArtist).Preload("Artist") }).
+		Preload("Genres").
+		Find(&appearances).Error; err != nil {
+		return spec.NewError(0, "find artist appearances: %v", err)
+	}
 
 	sub := spec.NewResponse()
 	sub.Artist = spec.NewArtistByTags(&artist)
-	sub.Artist.Albums = make([]*spec.Album, len(artist.Appearances))
-	for i, album := range artist.Appearances {
-		sub.Artist.Albums[i] = spec.NewAlbumByTags(album, album.Artists)
+	sub.Artist.Albums = make([]*spec.Album, len(appearances))
+	for i, album := range appearances {
+		sub.Artist.Albums[i] = spec.NewAlbumByTags(album, album.Credits)
 	}
-	sub.Artist.AlbumCount = len(artist.Appearances)
+	sub.Artist.AlbumCount = len(appearances)
 	return sub
 }
 
@@ -106,14 +122,13 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 	err = c.dbc.
 		Select("albums.*, count(tracks.id) child_count, sum(tracks.length) duration").
 		Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
-		Preload("Artists.Artist").
+		Preload("Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleAlbumArtist).Preload("Artist") }).
 		Preload("Genres").
 		Preload("DiscTitles").
-		Preload("Tracks", func(db *gorm.DB) *gorm.DB {
-			return db.
+		Preload("Tracks", func(q *gorm.DB) *gorm.DB {
+			return q.
 				Order("tracks.tag_disc_number, tracks.tag_track_number").
-				Preload("Artists.Artist").
-				Preload("Contributors.Artist").
+				Preload("Credits.Artist").
 				Preload("TrackStar", "user_id=?", user.ID).
 				Preload("TrackRating", "user_id=?", user.ID)
 		}).
@@ -127,7 +142,7 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 		return spec.NewError(70, "couldn't find an album with that id")
 	}
 	sub := spec.NewResponse()
-	sub.Album = spec.NewAlbumByTags(album, album.Artists)
+	sub.Album = spec.NewAlbumByTags(album, album.Credits)
 	sub.Album.Tracks = make([]*spec.TrackChild, len(album.Tracks))
 
 	client := params.GetOr("c", "")
@@ -153,7 +168,7 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	q := c.dbc.DB
 	switch listType {
 	case "alphabeticalByArtist":
-		q = q.Joins("JOIN artists ON artists.id=album_artists.artist_id")
+		q = q.Joins("JOIN artists ON artists.id=album_credits.artist_id")
 		q = q.Order("artists.name")
 	case "alphabeticalByName":
 		q = q.Order("albums.tag_title")
@@ -198,10 +213,10 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 		Select("albums.*, count(tracks.id) child_count, sum(tracks.length) duration").
 		Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
 		Group("albums.id").
-		Joins("JOIN album_artists ON album_artists.album_id=albums.id").
+		Joins("JOIN album_credits ON album_credits.album_id=albums.id AND album_credits.role=?", db.RoleAlbumArtist).
 		Offset(params.GetOrInt("offset", 0)).
 		Limit(params.GetOrInt("size", 10)).
-		Preload("Artists.Artist").
+		Preload("Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleAlbumArtist).Preload("Artist") }).
 		Preload("Genres").
 		Preload("DiscTitles").
 		Preload("AlbumStar", "user_id=?", user.ID).
@@ -213,7 +228,7 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 		List: make([]*spec.Album, len(albums)),
 	}
 	for i, album := range albums {
-		sub.AlbumsTwo.List[i] = spec.NewAlbumByTags(album, album.Artists)
+		sub.AlbumsTwo.List[i] = spec.NewAlbumByTags(album, album.Credits)
 	}
 	return sub
 }
@@ -249,8 +264,8 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		q = q.Where(`name LIKE ? OR name_u_dec LIKE ?`, fuzzy, fuzzy)
 	}
 	q = q.
-		Joins("JOIN album_artists ON album_artists.artist_id=artists.id").
-		Joins("JOIN albums ON albums.id=album_artists.album_id").
+		Joins("JOIN album_credits ON album_credits.artist_id=artists.id AND album_credits.role=?", db.RoleAlbumArtist).
+		Joins("JOIN albums ON albums.id=album_credits.album_id").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
 		Preload("Info").
@@ -269,7 +284,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	// search albums
 	var albums []*db.Album
 	q = c.dbc.
-		Preload("Artists.Artist").
+		Preload("Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleAlbumArtist).Preload("Artist") }).
 		Preload("Genres").
 		Preload("DiscTitles").
 		Preload("AlbumStar", "user_id=?", user.ID).
@@ -292,17 +307,16 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find albums: %v", err)
 	}
 	for _, a := range albums {
-		results.Albums = append(results.Albums, spec.NewAlbumByTags(a, a.Artists))
+		results.Albums = append(results.Albums, spec.NewAlbumByTags(a, a.Credits))
 	}
 
 	// search tracks
 	var tracks []*db.Track
 	q = c.dbc.
 		Preload("Album").
-		Preload("Album.Artists.Artist").
+		Preload("Album.Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleAlbumArtist).Preload("Artist") }).
 		Preload("Genres").
-		Preload("Artists.Artist").
-		Preload("Contributors.Artist").
+		Preload("Credits.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID)
 	switch {
@@ -387,10 +401,10 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		var artist db.Artist
 		err = c.dbc.
 			Preload("Info").
-			Select("artists.*, count(albums.id) album_count").
+			Select("artists.*, count(album_credits.album_id) album_count").
 			Where("name=?", similarName).
-			Joins("LEFT JOIN artist_appearances ON artist_appearances.artist_id=artists.id").
-			Joins("LEFT JOIN albums ON albums.id=artist_appearances.album_id").
+			Joins("LEFT JOIN album_credits ON album_credits.artist_id=artists.id AND album_credits.role=?", db.RoleAlbumArtist).
+			Joins("LEFT JOIN albums ON albums.id=album_credits.album_id").
 			Group("artists.id").
 			Find(&artist).
 			Error
@@ -481,9 +495,8 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 		Joins("JOIN track_genres ON track_genres.track_id=tracks.id").
 		Joins("JOIN genres ON track_genres.genre_id=genres.id AND genres.name=?", genre).
 		Preload("Album").
-		Preload("Album.Artists.Artist").
-		Preload("Artists.Artist").
-		Preload("Contributors.Artist").
+		Preload("Album.Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleAlbumArtist).Preload("Artist") }).
+		Preload("Credits.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Offset(params.GetOrInt("offset", 0)).
@@ -520,11 +533,11 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 	// artists
 	var artists []*db.Artist
 	q := c.dbc.
-		Select("artists.*, count(albums.id) album_count").
+		Select("artists.*, count(album_credits.album_id) album_count").
 		Joins("JOIN artist_stars ON artist_stars.artist_id=artists.id").
 		Where("artist_stars.user_id=?", user.ID).
-		Joins("JOIN artist_appearances ON artist_appearances.artist_id=artists.id").
-		Joins("JOIN albums ON albums.id=artist_appearances.album_id").
+		Joins("JOIN album_credits ON album_credits.artist_id=artists.id AND album_credits.role=?", db.RoleAlbumArtist).
+		Joins("JOIN albums ON albums.id=album_credits.album_id").
 		Order("artist_stars.star_date DESC").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
@@ -546,7 +559,7 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 		Joins("JOIN album_stars ON album_stars.album_id=albums.id").
 		Where("album_stars.user_id=?", user.ID).
 		Order("album_stars.star_date DESC").
-		Preload("Artists.Artist").
+		Preload("Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleAlbumArtist).Preload("Artist") }).
 		Preload("DiscTitles").
 		Preload("AlbumStar", "user_id=?", user.ID).
 		Preload("AlbumRating", "user_id=?", user.ID).
@@ -558,7 +571,7 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find albums: %v", err)
 	}
 	for _, a := range albums {
-		results.Albums = append(results.Albums, spec.NewAlbumByTags(a, a.Artists))
+		results.Albums = append(results.Albums, spec.NewAlbumByTags(a, a.Credits))
 	}
 
 	// tracks
@@ -568,9 +581,8 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 		Where("track_stars.user_id=?", user.ID).
 		Order("track_stars.star_date DESC").
 		Preload("Album").
-		Preload("Album.Artists.Artist").
-		Preload("Artists.Artist").
-		Preload("Contributors.Artist").
+		Preload("Album.Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleAlbumArtist).Preload("Artist") }).
+		Preload("Credits.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID)
 	if m := getMusicFolder(c.musicPaths, params); m != "" {
@@ -640,12 +652,11 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 	var tracks []*db.Track
 	err = c.dbc.
 		Where("tracks.tag_title IN (?)", topTrackNames).
-		Joins("JOIN track_artists ON track_artists.track_id=tracks.id").
-		Joins("JOIN artists ON artists.id=track_artists.artist_id").
+		Joins("JOIN track_credits ON track_credits.track_id=tracks.id AND track_credits.role=?", db.RoleArtist).
+		Joins("JOIN artists ON artists.id=track_credits.artist_id").
 		Where("artists.id=?", artist.ID).
 		Preload("Album").
-		Preload("Artists.Artist").
-		Preload("Contributors.Artist").
+		Preload("Credits.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Group("tracks.id").
@@ -755,8 +766,7 @@ func getSimilarSongsFromTrack(c *Controller, id specid.ID, params params.Params,
 	err = c.dbc.
 		Select("tracks.*").
 		Preload("Album").
-		Preload("Artists.Artist").
-		Preload("Contributors.Artist").
+		Preload("Credits.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Where("tracks.tag_title IN (?)", similarTrackNames).
@@ -810,12 +820,11 @@ func getSimilarSongsFromArtist(c *Controller, id specid.ID, params params.Params
 	var tracks []*db.Track
 	err = c.dbc.
 		Preload("Album").
-		Preload("Artists.Artist").
-		Preload("Contributors.Artist").
+		Preload("Credits.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
-		Joins("JOIN track_artists ON track_artists.track_id=tracks.id").
-		Joins("JOIN artists ON artists.id=track_artists.artist_id").
+		Joins("JOIN track_credits ON track_credits.track_id=tracks.id AND track_credits.role=?", db.RoleArtist).
+		Joins("JOIN artists ON artists.id=track_credits.artist_id").
 		Where("artists.name IN (?)", artistNames).
 		Order(gorm.Expr("random()")).
 		Group("tracks.id").
@@ -880,8 +889,7 @@ func getSimilarSongsFromAlbum(c *Controller, id specid.ID, params params.Params,
 	err = c.dbc.
 		Select("tracks.*").
 		Preload("Album").
-		Preload("Artists.Artist").
-		Preload("Contributors.Artist").
+		Preload("Credits.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Where("tracks.tag_title IN (?)", similarTrackNames).

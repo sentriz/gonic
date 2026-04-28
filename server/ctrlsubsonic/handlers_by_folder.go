@@ -92,8 +92,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	c.dbc.
 		Where("album_id=?", id.Value).
 		Preload("Album").
-		Preload("Album.Artists.Artist").
-		Preload("Artists.Artist").
+		Preload("Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleArtist).Preload("Artist") }).
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Order("tracks.tag_disc_number, tracks.tag_track_number").
@@ -180,7 +179,7 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 		Select("albums.*, count(tracks.id) child_count, sum(tracks.length) duration").
 		Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
 		Group("albums.id").
-		Joins("JOIN album_artists ON album_artists.album_id=albums.id").
+		Joins("JOIN album_credits ON album_credits.album_id=albums.id AND album_credits.role=?", db.RoleAlbumArtist).
 		Offset(params.GetOrInt("offset", 0)).
 		Limit(params.GetOrInt("size", 10)).
 		Preload("Parent").
@@ -248,7 +247,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	// search "albums"
 	var albums []*db.Album
 	q = c.dbc.
-		Joins("JOIN album_artists ON album_artists.album_id=albums.id")
+		Joins("JOIN album_credits ON album_credits.album_id=albums.id AND album_credits.role=?", db.RoleAlbumArtist)
 	switch {
 	case isUUID:
 		q = q.Where(`tag_brainz_id = ?`, query)
@@ -282,7 +281,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 		q = q.Where(`filename LIKE ?`, fuzzy)
 	}
 	q = q.
-		Preload("Artists.Artist").
+		Preload("Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleArtist).Preload("Artist") }).
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
 		Offset(params.GetOrInt("songOffset", 0)).
@@ -345,7 +344,7 @@ func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {
 	// "albums"
 	var albums []*db.Album
 	q = c.dbc.
-		Joins("JOIN album_artists ON album_artists.album_id=albums.id").
+		Joins("JOIN album_credits ON album_credits.album_id=albums.id AND album_credits.role=?", db.RoleAlbumArtist).
 		Joins("JOIN album_stars ON albums.id=album_stars.album_id").
 		Where("album_stars.user_id=?", user.ID).
 		Preload("AlbumStar", "user_id=?", user.ID).
@@ -366,7 +365,7 @@ func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {
 		Preload("Album").
 		Joins("JOIN track_stars ON tracks.id=track_stars.track_id").
 		Where("track_stars.user_id=?", user.ID).
-		Preload("Artists.Artist").
+		Preload("Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleArtist).Preload("Artist") }).
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID)
 	if m := getMusicFolder(c.musicPaths, params); m != "" {

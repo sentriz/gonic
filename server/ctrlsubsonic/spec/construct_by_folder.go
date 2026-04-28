@@ -116,18 +116,19 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 	for _, g := range t.Genres {
 		trCh.Genres = append(trCh.Genres, &GenreRef{Name: g.Name})
 	}
-	sort.Slice(t.Artists, func(i, j int) bool {
-		return t.Artists[i].ArtistID < t.Artists[j].ArtistID
+	trackArtists := filterTrackCreditsByRole(t.Credits, db.RoleArtist)
+	sort.Slice(trackArtists, func(i, j int) bool {
+		return trackArtists[i].ArtistID < trackArtists[j].ArtistID
 	})
-	if len(t.Artists) > 0 && t.Artists[0].Artist != nil {
-		trCh.Artist = cmp.Or(t.Artists[0].CreditedAs, t.Artists[0].Artist.Name)
-		trCh.ArtistID = t.Artists[0].Artist.SID()
+	if len(trackArtists) > 0 && trackArtists[0].Artist != nil {
+		trCh.Artist = cmp.Or(trackArtists[0].CreditedAs, trackArtists[0].Artist.Name)
+		trCh.ArtistID = trackArtists[0].Artist.SID()
 	}
-	for _, a := range t.Artists {
-		if a.Artist == nil {
+	for _, c := range trackArtists {
+		if c.Artist == nil {
 			continue
 		}
-		trCh.Artists = append(trCh.Artists, &ArtistRef{ID: a.Artist.SID(), Name: cmp.Or(a.CreditedAs, a.Artist.Name)})
+		trCh.Artists = append(trCh.Artists, &ArtistRef{ID: c.Artist.SID(), Name: cmp.Or(c.CreditedAs, c.Artist.Name)})
 	}
 	if t.ReplayGainTrackGain != 0 || t.ReplayGainAlbumGain != 0 {
 		trCh.ReplayGain = &ReplayGain{

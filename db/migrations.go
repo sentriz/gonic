@@ -86,6 +86,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202602061800", migrateAddTrackYear),
 		construct(ctx, "202604231200", migrateAddTrackContributors),
 		construct(ctx, "202604280000", migrateAddCreditedAs),
+		construct(ctx, "202604281200", migrateUnifyCredits),
 	}
 
 	return gormigrate.
@@ -578,13 +579,13 @@ func migratePlayCountToLength(tx *gorm.DB, _ MigrationContext) error {
 
 func migrateAlbumArtistsMany2Many(tx *gorm.DB, _ MigrationContext) error {
 	// gorms seems to want to create the table automatically without ON DELETE rules
-	step := tx.DropTableIfExists(AlbumArtist{})
+	step := tx.DropTableIfExists(__OldAlbumArtist{})
 	if err := step.Error; err != nil {
 		return fmt.Errorf("step drop prev: %w", err)
 	}
 
 	step = tx.AutoMigrate(
-		AlbumArtist{},
+		__OldAlbumArtist{},
 		Album{},
 		Artist{},
 	)
@@ -749,21 +750,21 @@ func migrateAlbumTagArtistString(tx *gorm.DB, _ MigrationContext) error {
 
 func migrateTrackArtists(tx *gorm.DB, _ MigrationContext) error {
 	// gorms seems to want to create the table automatically without ON DELETE rules
-	step := tx.DropTableIfExists(TrackArtist{})
+	step := tx.DropTableIfExists(__OldTrackArtist{})
 	if err := step.Error; err != nil {
 		return fmt.Errorf("step drop prev: %w", err)
 	}
-	return tx.AutoMigrate(TrackArtist{}).Error
+	return tx.AutoMigrate(__OldTrackArtist{}).Error
 }
 
 func migrateArtistAppearances(tx *gorm.DB, _ MigrationContext) error {
 	// gorms seems to want to create the table automatically without ON DELETE rules
-	step := tx.DropTableIfExists(ArtistAppearances{})
+	step := tx.DropTableIfExists(__OldArtistAppearances{})
 	if err := step.Error; err != nil {
 		return fmt.Errorf("step drop prev: %w", err)
 	}
 
-	step = tx.AutoMigrate(ArtistAppearances{})
+	step = tx.AutoMigrate(__OldArtistAppearances{})
 	if err := step.Error; err != nil {
 		return fmt.Errorf("step auto migrate: %w", err)
 	}
@@ -884,11 +885,39 @@ func migrateAddAlbumDiscTitles(tx *gorm.DB, _ MigrationContext) error {
 }
 
 func migrateAddTrackContributors(tx *gorm.DB, _ MigrationContext) error {
-	return tx.AutoMigrate(TrackContributor{}).Error
+	return tx.AutoMigrate(__OldTrackContributor{}).Error
 }
 
 func migrateAddCreditedAs(tx *gorm.DB, _ MigrationContext) error {
-	return tx.AutoMigrate(TrackArtist{}, AlbumArtist{}, TrackContributor{}).Error
+	return tx.AutoMigrate(__OldTrackArtist{}, __OldAlbumArtist{}, __OldTrackContributor{}).Error
+}
+
+func migrateUnifyCredits(tx *gorm.DB, _ MigrationContext) error {
+	step := tx.AutoMigrate(AlbumCredit{}, TrackCredit{})
+	if err := step.Error; err != nil {
+		return fmt.Errorf("auto migrate credit tables: %w", err)
+	}
+
+	backfills := []string{
+		`INSERT INTO album_credits (album_id, artist_id, role, credited_as)
+			SELECT album_id, artist_id, 'albumartist', credited_as FROM album_artists`,
+		`INSERT INTO track_credits (track_id, artist_id, role, credited_as)
+			SELECT track_id, artist_id, 'artist', credited_as FROM track_artists`,
+		`INSERT INTO track_credits (track_id, artist_id, role, credited_as)
+			SELECT track_id, artist_id, role, credited_as FROM track_contributors`,
+	}
+	for _, q := range backfills {
+		if err := tx.Exec(q).Error; err != nil {
+			return fmt.Errorf("backfill: %w", err)
+		}
+	}
+
+	for _, t := range []string{"album_artists", "track_artists", "track_contributors", "artist_appearances"} {
+		if err := tx.Exec(`DROP TABLE ` + t).Error; err != nil {
+			return fmt.Errorf("drop %s: %w", t, err)
+		}
+	}
+	return nil
 }
 
 func migrateAddTrackYear(tx *gorm.DB, _ MigrationContext) error {
