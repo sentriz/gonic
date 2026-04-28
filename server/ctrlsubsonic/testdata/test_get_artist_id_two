@@ -9,6 +9,7 @@
       "id": "ar-2",
       "name": "artist-1",
       "albumCount": 3,
+      "roles": ["albumartist", "artist"],
       "album": [
         {
           "id": "al-7",

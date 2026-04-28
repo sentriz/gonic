@@ -26,7 +26,7 @@ func (c *Controller) ServeGetArtists(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	var artists []*db.Artist
 	q := c.dbc.
-		Select("*, count(album_credits.album_id) album_count").
+		Select(db.ArtistColumns("count(album_credits.album_id) album_count")).
 		Joins("JOIN album_credits ON album_credits.artist_id=artists.id AND album_credits.role=?", db.RoleAlbumArtist).
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
@@ -71,6 +71,7 @@ func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 	}
 	var artist db.Artist
 	if err := c.dbc.
+		Select(db.ArtistColumns()).
 		Preload("Info").
 		Preload("ArtistStar", "user_id=?", user.ID).
 		Preload("ArtistRating", "user_id=?", user.ID).
@@ -254,7 +255,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	// search artists
 	var artists []*db.Artist
 	q := c.dbc.
-		Select("*, count(albums.id) album_count").
+		Select(db.ArtistColumns("count(albums.id) album_count")).
 		Group("artists.id")
 	switch {
 	case isUUID:
@@ -401,7 +402,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		var artist db.Artist
 		err = c.dbc.
 			Preload("Info").
-			Select("artists.*, count(album_credits.album_id) album_count").
+			Select(db.ArtistColumns("count(album_credits.album_id) album_count")).
 			Where("name=?", similarName).
 			Joins("LEFT JOIN album_credits ON album_credits.artist_id=artists.id AND album_credits.role=?", db.RoleAlbumArtist).
 			Joins("LEFT JOIN albums ON albums.id=album_credits.album_id").
@@ -415,8 +416,9 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		if artist.ID == 0 {
 			// add a very limited artist, since we don't have everything with `inclNotPresent`
 			sub.ArtistInfoTwo.Similar = append(sub.ArtistInfoTwo.Similar, &spec.Artist{
-				ID:   &specid.ID{},
-				Name: similarName,
+				ID:    &specid.ID{},
+				Name:  similarName,
+				Roles: []string{},
 			})
 			continue
 		}
@@ -533,7 +535,7 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 	// artists
 	var artists []*db.Artist
 	q := c.dbc.
-		Select("artists.*, count(album_credits.album_id) album_count").
+		Select(db.ArtistColumns("count(album_credits.album_id) album_count")).
 		Joins("JOIN artist_stars ON artist_stars.artist_id=artists.id").
 		Where("artist_stars.user_id=?", user.ID).
 		Joins("JOIN album_credits ON album_credits.artist_id=artists.id AND album_credits.role=?", db.RoleAlbumArtist).

@@ -174,6 +174,7 @@ func NewArtistByFolder(f *db.Album) *Artist {
 		ID:            f.SID(),
 		Name:          f.RightPath,
 		AlbumCount:    f.ChildCount,
+		Roles:         []string{},
 		AverageRating: f.AverageRating,
 	}
 	if f.AlbumStar != nil {

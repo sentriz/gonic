@@ -182,14 +182,34 @@ type Artist struct {
 	Name          string `gorm:"not null; unique_index"`
 	NameUDec      string `sql:"default: null"`
 	AlbumCount    int    `sql:"-"`
+	Roles         string `sql:"-"`
 	ArtistStar    *ArtistStar
 	ArtistRating  *ArtistRating
 	AverageRating float64     `sql:"default: null"`
 	Info          *ArtistInfo `gorm:"foreignkey:id"`
 }
 
+func ArtistColumns(extras ...string) string {
+	cols := append([]string{"artists.*"}, extras...)
+	cols = append(cols, `(
+		SELECT GROUP_CONCAT(role) FROM (
+			SELECT role FROM album_credits WHERE artist_id=artists.id
+			UNION
+			SELECT role FROM track_credits WHERE artist_id=artists.id
+		)
+	) roles`)
+	return strings.Join(cols, ", ")
+}
+
 func (a *Artist) SID() *specid.ID {
 	return &specid.ID{Type: specid.Artist, Value: a.ID}
+}
+
+func (a *Artist) GetRoles() []string {
+	if a.Roles == "" {
+		return nil
+	}
+	return strings.Split(a.Roles, ",")
 }
 
 func (a *Artist) IndexName() string {

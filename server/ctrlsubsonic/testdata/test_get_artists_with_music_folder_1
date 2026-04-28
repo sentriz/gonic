@@ -11,9 +11,24 @@
         {
           "name": "a",
           "artist": [
-            { "id": "ar-1", "name": "artist-0", "albumCount": 3 },
-            { "id": "ar-2", "name": "artist-1", "albumCount": 3 },
-            { "id": "ar-3", "name": "artist-2", "albumCount": 3 }
+            {
+              "id": "ar-1",
+              "name": "artist-0",
+              "albumCount": 3,
+              "roles": ["albumartist", "artist"]
+            },
+            {
+              "id": "ar-2",
+              "name": "artist-1",
+              "albumCount": 3,
+              "roles": ["albumartist", "artist"]
+            },
+            {
+              "id": "ar-3",
+              "name": "artist-2",
+              "albumCount": 3,
+              "roles": ["albumartist", "artist"]
+            }
           ]
         }
       ]

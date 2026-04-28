@@ -198,10 +198,15 @@ func NewTrackByTags(client string, t *db.Track, album *db.Album) *TrackChild {
 }
 
 func NewArtistByTags(a *db.Artist) *Artist {
+	roles := a.GetRoles()
+	if roles == nil {
+		roles = []string{}
+	}
 	r := &Artist{
 		ID:            a.SID(),
 		Name:          a.Name,
 		AlbumCount:    a.AlbumCount,
+		Roles:         roles,
 		Albums:        []*Album{},
 		AverageRating: a.AverageRating,
 	}
