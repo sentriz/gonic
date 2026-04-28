@@ -117,14 +117,17 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 		trCh.Genres = append(trCh.Genres, &GenreRef{Name: g.Name})
 	}
 	sort.Slice(t.Artists, func(i, j int) bool {
-		return t.Artists[i].ID < t.Artists[j].ID
+		return t.Artists[i].ArtistID < t.Artists[j].ArtistID
 	})
-	if len(t.Artists) > 0 {
-		trCh.Artist = t.Artists[0].Name
-		trCh.ArtistID = t.Artists[0].SID()
+	if len(t.Artists) > 0 && t.Artists[0].Artist != nil {
+		trCh.Artist = cmp.Or(t.Artists[0].CreditedAs, t.Artists[0].Artist.Name)
+		trCh.ArtistID = t.Artists[0].Artist.SID()
 	}
 	for _, a := range t.Artists {
-		trCh.Artists = append(trCh.Artists, &ArtistRef{ID: a.SID(), Name: a.Name})
+		if a.Artist == nil {
+			continue
+		}
+		trCh.Artists = append(trCh.Artists, &ArtistRef{ID: a.Artist.SID(), Name: cmp.Or(a.CreditedAs, a.Artist.Name)})
 	}
 	if t.ReplayGainTrackGain != 0 || t.ReplayGainAlbumGain != 0 {
 		trCh.ReplayGain = &ReplayGain{

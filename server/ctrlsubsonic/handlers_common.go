@@ -66,7 +66,7 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 	switch id.Type {
 	case specid.Track:
 		var track db.Track
-		if err := c.dbc.Preload("Album").Preload("Album.Artists").First(&track, id.Value).Error; err != nil {
+		if err := c.dbc.Preload("Album").Preload("Album.Artists.Artist").First(&track, id.Value).Error; err != nil {
 			return spec.NewError(0, "error finding track: %v", err)
 		}
 		if track.Album == nil {
@@ -221,7 +221,7 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 			err := c.dbc.
 				Where("id=?", id.Value).
 				Preload("Album").
-				Preload("Artists").
+				Preload("Artists.Artist").
 				Preload("TrackStar", "user_id=?", user.ID).
 				Preload("TrackRating", "user_id=?", user.ID).
 				Find(&track).
@@ -291,8 +291,8 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 	err = c.dbc.
 		Where("id=?", id.Value).
 		Preload("Album").
-		Preload("Album.Artists").
-		Preload("Artists").
+		Preload("Album.Artists.Artist").
+		Preload("Artists.Artist").
 		Preload("Contributors.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
@@ -319,8 +319,8 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	q := c.dbc.DB.
 		Limit(params.GetOrInt("size", 10)).
 		Preload("Album").
-		Preload("Album.Artists").
-		Preload("Artists").
+		Preload("Album.Artists.Artist").
+		Preload("Artists.Artist").
 		Preload("Contributors.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
@@ -400,7 +400,7 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 			switch id.Type {
 			case specid.Track:
 				var track db.Track
-				if err := c.dbc.Where("id=?", id.Value).Preload("Album").Preload("Album.Artists").Preload("Artists").Preload("Contributors.Artist").Find(&track).Error; err != nil {
+				if err := c.dbc.Where("id=?", id.Value).Preload("Album").Preload("Album.Artists.Artist").Preload("Artists.Artist").Preload("Contributors.Artist").Find(&track).Error; err != nil {
 					return nil, fmt.Errorf("load track: %w", err)
 				}
 				ret = append(ret, spec.NewTrackByTags(&track, track.Album))
@@ -571,8 +571,8 @@ func (c *Controller) ServeGetLyricsBySongID(r *http.Request) *spec.Response {
 	var track db.Track
 	q := c.dbc.
 		Preload("Album").
-		Preload("Album.Artists").
-		Preload("Artists").
+		Preload("Album.Artists.Artist").
+		Preload("Artists.Artist").
 		Where("id=?", id.Value).
 		First(&track)
 	if err := q.Error; err != nil {

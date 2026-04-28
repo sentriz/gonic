@@ -78,7 +78,7 @@ func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 				Order("albums.right_path").
 				Group("albums.id")
 		}).
-		Preload("Appearances.Artists").
+		Preload("Appearances.Artists.Artist").
 		Preload("Appearances.Genres").
 		Preload("Info").
 		Preload("ArtistStar", "user_id=?", user.ID).
@@ -106,13 +106,13 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 	err = c.dbc.
 		Select("albums.*, count(tracks.id) child_count, sum(tracks.length) duration").
 		Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
-		Preload("Artists").
+		Preload("Artists.Artist").
 		Preload("Genres").
 		Preload("DiscTitles").
 		Preload("Tracks", func(db *gorm.DB) *gorm.DB {
 			return db.
 				Order("tracks.tag_disc_number, tracks.tag_track_number").
-				Preload("Artists").
+				Preload("Artists.Artist").
 				Preload("Contributors.Artist").
 				Preload("TrackStar", "user_id=?", user.ID).
 				Preload("TrackRating", "user_id=?", user.ID)
@@ -200,7 +200,7 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 		Joins("JOIN album_artists ON album_artists.album_id=albums.id").
 		Offset(params.GetOrInt("offset", 0)).
 		Limit(params.GetOrInt("size", 10)).
-		Preload("Artists").
+		Preload("Artists.Artist").
 		Preload("Genres").
 		Preload("DiscTitles").
 		Preload("AlbumStar", "user_id=?", user.ID).
@@ -268,7 +268,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	// search albums
 	var albums []*db.Album
 	q = c.dbc.
-		Preload("Artists").
+		Preload("Artists.Artist").
 		Preload("Genres").
 		Preload("DiscTitles").
 		Preload("AlbumStar", "user_id=?", user.ID).
@@ -298,9 +298,9 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	var tracks []*db.Track
 	q = c.dbc.
 		Preload("Album").
-		Preload("Album.Artists").
+		Preload("Album.Artists.Artist").
 		Preload("Genres").
-		Preload("Artists").
+		Preload("Artists.Artist").
 		Preload("Contributors.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID)
@@ -479,8 +479,8 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 		Joins("JOIN track_genres ON track_genres.track_id=tracks.id").
 		Joins("JOIN genres ON track_genres.genre_id=genres.id AND genres.name=?", genre).
 		Preload("Album").
-		Preload("Album.Artists").
-		Preload("Artists").
+		Preload("Album.Artists.Artist").
+		Preload("Artists.Artist").
 		Preload("Contributors.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
@@ -543,7 +543,7 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 		Joins("JOIN album_stars ON album_stars.album_id=albums.id").
 		Where("album_stars.user_id=?", user.ID).
 		Order("album_stars.star_date DESC").
-		Preload("Artists").
+		Preload("Artists.Artist").
 		Preload("DiscTitles").
 		Preload("AlbumStar", "user_id=?", user.ID).
 		Preload("AlbumRating", "user_id=?", user.ID).
@@ -565,8 +565,8 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 		Where("track_stars.user_id=?", user.ID).
 		Order("track_stars.star_date DESC").
 		Preload("Album").
-		Preload("Album.Artists").
-		Preload("Artists").
+		Preload("Album.Artists.Artist").
+		Preload("Artists.Artist").
 		Preload("Contributors.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID)
@@ -640,7 +640,7 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 		Joins("JOIN artists ON artists.id=track_artists.artist_id").
 		Where("artists.id=?", artist.ID).
 		Preload("Album").
-		Preload("Artists").
+		Preload("Artists.Artist").
 		Preload("Contributors.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
@@ -750,7 +750,7 @@ func getSimilarSongsFromTrack(c *Controller, id specid.ID, params params.Params,
 	err = c.dbc.
 		Select("tracks.*").
 		Preload("Album").
-		Preload("Artists").
+		Preload("Artists.Artist").
 		Preload("Contributors.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
@@ -804,7 +804,7 @@ func getSimilarSongsFromArtist(c *Controller, id specid.ID, params params.Params
 	var tracks []*db.Track
 	err = c.dbc.
 		Preload("Album").
-		Preload("Artists").
+		Preload("Artists.Artist").
 		Preload("Contributors.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).
@@ -873,7 +873,7 @@ func getSimilarSongsFromAlbum(c *Controller, id specid.ID, params params.Params,
 	err = c.dbc.
 		Select("tracks.*").
 		Preload("Album").
-		Preload("Artists").
+		Preload("Artists.Artist").
 		Preload("Contributors.Artist").
 		Preload("TrackStar", "user_id=?", user.ID).
 		Preload("TrackRating", "user_id=?", user.ID).

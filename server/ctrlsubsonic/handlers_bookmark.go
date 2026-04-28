@@ -42,8 +42,8 @@ func (c *Controller) ServeGetBookmarks(r *http.Request) *spec.Response {
 			var track db.Track
 			err := c.dbc.
 				Preload("Album").
-				Preload("Album.Artists").
-				Preload("Artists").
+				Preload("Album.Artists.Artist").
+				Preload("Artists.Artist").
 				Preload("Contributors.Artist").
 				Find(&track, "id=?", bookmark.EntryID).
 				Error

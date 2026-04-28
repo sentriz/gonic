@@ -529,6 +529,50 @@ func TestTrackContributors(t *testing.T) {
 	}, got)
 }
 
+func TestArtistsCreditedAs(t *testing.T) {
+	t.Parallel()
+	m := mockfs.New(t)
+
+	m.AddTrack("vega/mutator/track-1.flac")
+	m.SetTags("vega/mutator/track-1.flac", func(tags *mockfs.TagInfo) {
+		normtag.Set(tags.Tags, normtag.Album, "Mutator")
+		normtag.Set(tags.Tags, normtag.Title, "track-1")
+		normtag.Set(tags.Tags, normtag.AlbumArtists, "Alan Vega", "Liz Lamere")
+		normtag.Set(tags.Tags, normtag.AlbumArtistsCredit, "Vega", "Lamere")
+		normtag.Set(tags.Tags, normtag.Composers, "Liz Lamere", "Alan Vega")
+		normtag.Set(tags.Tags, normtag.ComposersCredit, "Lamere", "") // empty credit -> use canonical
+	})
+	m.ScanAndClean()
+
+	var track db.Track
+	require.NoError(t, m.DB().
+		Preload("Album.Artists.Artist").
+		Preload("Contributors.Artist").
+		Where("tag_title=?", "track-1").First(&track).Error)
+
+	type pair struct {
+		Canonical, Credited string
+	}
+
+	var albumArtists []pair
+	for _, aa := range track.Album.Artists {
+		albumArtists = append(albumArtists, pair{aa.Artist.Name, aa.CreditedAs})
+	}
+	assert.ElementsMatch(t, []pair{
+		{"Alan Vega", "Vega"},
+		{"Liz Lamere", "Lamere"},
+	}, albumArtists)
+
+	var contributors []pair
+	for _, c := range track.Contributors {
+		contributors = append(contributors, pair{c.Artist.Name, c.CreditedAs})
+	}
+	assert.ElementsMatch(t, []pair{
+		{"Liz Lamere", "Lamere"},
+		{"Alan Vega", ""},
+	}, contributors)
+}
+
 func TestSymlinkedAlbum(t *testing.T) {
 	t.Parallel()
 	m := mockfs.NewWithDirs(t, []string{"scan"})
@@ -874,7 +918,7 @@ func TestMultiArtistPreload(t *testing.T) {
 	m.ScanAndClean()
 
 	var albums []*db.Album
-	assert.NoError(t, m.DB().Preload("Artists").Find(&albums).Error)
+	assert.NoError(t, m.DB().Preload("Artists.Artist").Find(&albums).Error)
 	assert.GreaterOrEqual(t, len(albums), 3)
 
 	for _, album := range albums {
@@ -957,8 +1001,5 @@ func TestParseMultiDoubleDelim(t *testing.T) {
 	}
 
 	values := scanner.ParseMulti(setting, nil, `DON'T//BE//⚜⚜⚜`)
-	require.Len(t, values, 3)
-	require.Equal(t, `DON'T`, values[0])
-	require.Equal(t, `BE`, values[1])
-	require.Equal(t, `⚜⚜⚜`, values[2])
+	require.Equal(t, []string{`DON'T`, ``, `BE`, ``, `⚜⚜⚜`}, values)
 }

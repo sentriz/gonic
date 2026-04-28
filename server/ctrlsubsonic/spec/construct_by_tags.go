@@ -9,7 +9,7 @@ import (
 	"go.senan.xyz/gonic/db"
 )
 
-func NewAlbumByTags(a *db.Album, artists []*db.Artist) *Album {
+func NewAlbumByTags(a *db.Album, artists []*db.AlbumArtist) *Album {
 	ret := &Album{
 		ID:            a.SID(),
 		Created:       a.CreatedAt,
@@ -39,17 +39,18 @@ func NewAlbumByTags(a *db.Album, artists []*db.Artist) *Album {
 	if a.AlbumRating != nil {
 		ret.UserRating = a.AlbumRating.Rating
 	}
-	sort.Slice(artists, func(i, j int) bool {
-		return artists[i].ID < artists[j].ID
-	})
-	if len(artists) > 0 {
-		ret.Artist = artists[0].Name
-		ret.ArtistID = artists[0].SID()
+	slices.SortFunc(artists, func(a, b *db.AlbumArtist) int { return cmp.Compare(a.ArtistID, b.ArtistID) })
+	if len(artists) > 0 && artists[0].Artist != nil {
+		ret.Artist = cmp.Or(artists[0].CreditedAs, artists[0].Artist.Name)
+		ret.ArtistID = artists[0].Artist.SID()
 	}
 	for _, a := range artists {
+		if a.Artist == nil {
+			continue
+		}
 		ret.Artists = append(ret.Artists, &ArtistRef{
-			ID:   a.SID(),
-			Name: a.Name,
+			ID:   a.Artist.SID(),
+			Name: cmp.Or(a.CreditedAs, a.Artist.Name),
 		})
 	}
 	if len(a.Genres) > 0 {
@@ -119,19 +120,22 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 		ret.UserRating = t.TrackRating.Rating
 	}
 
-	slices.SortFunc(t.Artists, func(a, b *db.Artist) int { return cmp.Compare(a.ID, b.ID) })
-	slices.SortFunc(album.Artists, func(a, b *db.Artist) int { return cmp.Compare(a.ID, b.ID) })
+	slices.SortFunc(t.Artists, func(a, b *db.TrackArtist) int { return cmp.Compare(a.ArtistID, b.ArtistID) })
+	slices.SortFunc(album.Artists, func(a, b *db.AlbumArtist) int { return cmp.Compare(a.ArtistID, b.ArtistID) })
 
 	switch {
-	case len(t.Artists) > 0:
-		ret.Artist = t.Artists[0].Name
-		ret.ArtistID = t.Artists[0].SID()
-	case len(album.Artists) > 0:
-		ret.Artist = album.Artists[0].Name
-		ret.ArtistID = album.Artists[0].SID()
+	case len(t.Artists) > 0 && t.Artists[0].Artist != nil:
+		ret.Artist = cmp.Or(t.Artists[0].CreditedAs, t.Artists[0].Artist.Name)
+		ret.ArtistID = t.Artists[0].Artist.SID()
+	case len(album.Artists) > 0 && album.Artists[0].Artist != nil:
+		ret.Artist = cmp.Or(album.Artists[0].CreditedAs, album.Artists[0].Artist.Name)
+		ret.ArtistID = album.Artists[0].Artist.SID()
 	}
 	for _, a := range t.Artists {
-		ret.Artists = append(ret.Artists, &ArtistRef{ID: a.SID(), Name: a.Name})
+		if a.Artist == nil {
+			continue
+		}
+		ret.Artists = append(ret.Artists, &ArtistRef{ID: a.Artist.SID(), Name: cmp.Or(a.CreditedAs, a.Artist.Name)})
 	}
 	if len(t.Genres) > 0 {
 		ret.Genre = t.Genres[0].Name
@@ -140,7 +144,10 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 		ret.Genres = append(ret.Genres, &GenreRef{Name: g.Name})
 	}
 	for _, a := range album.Artists {
-		ret.AlbumArtists = append(ret.AlbumArtists, &ArtistRef{ID: a.SID(), Name: a.Name})
+		if a.Artist == nil {
+			continue
+		}
+		ret.AlbumArtists = append(ret.AlbumArtists, &ArtistRef{ID: a.Artist.SID(), Name: cmp.Or(a.CreditedAs, a.Artist.Name)})
 	}
 
 	slices.SortStableFunc(t.Contributors, func(a, b *db.TrackContributor) int {
@@ -156,7 +163,7 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 		}
 		ret.Contributors = append(ret.Contributors, &Contributor{
 			Role:   string(c.Role),
-			Artist: &ArtistRef{ID: c.Artist.SID(), Name: c.Artist.Name},
+			Artist: &ArtistRef{ID: c.Artist.SID(), Name: cmp.Or(c.CreditedAs, c.Artist.Name)},
 		})
 	}
 
