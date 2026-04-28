@@ -305,7 +305,7 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
 
 	sub := spec.NewResponse()
-	sub.Track = spec.NewTrackByTags(&track, track.Album)
+	sub.Track = spec.NewTrackByTags(params.GetOr("c", ""), &track, track.Album)
 
 	sub.Track.TranscodeMeta = transcodeMeta
 
@@ -346,10 +346,11 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	sub.RandomTracks = &spec.RandomTracks{}
 	sub.RandomTracks.List = make([]*spec.TrackChild, len(tracks))
 
-	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
+	client := params.GetOr("c", "")
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, client)
 
 	for i, track := range tracks {
-		sub.RandomTracks.List[i] = spec.NewTrackByTags(track, track.Album)
+		sub.RandomTracks.List[i] = spec.NewTrackByTags(client, track, track.Album)
 		sub.RandomTracks.List[i].TranscodeMeta = transcodeMeta
 	}
 	return sub
@@ -403,7 +404,7 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 				if err := c.dbc.Where("id=?", id.Value).Preload("Album").Preload("Album.Artists.Artist").Preload("Artists.Artist").Preload("Contributors.Artist").Find(&track).Error; err != nil {
 					return nil, fmt.Errorf("load track: %w", err)
 				}
-				ret = append(ret, spec.NewTrackByTags(&track, track.Album))
+				ret = append(ret, spec.NewTrackByTags(params.GetOr("c", ""), &track, track.Album))
 			case specid.InternetRadioStation:
 				var irs db.InternetRadioStation
 				if err := c.dbc.Where("id=?", id.Value).Find(&irs).Error; err != nil {

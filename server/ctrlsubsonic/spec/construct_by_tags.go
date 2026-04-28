@@ -76,7 +76,7 @@ func NewAlbumByTags(a *db.Album, artists []*db.AlbumArtist) *Album {
 	return ret
 }
 
-func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
+func NewTrackByTags(client string, t *db.Track, album *db.Album) *TrackChild {
 	ret := &TrackChild{
 		ID:                 t.SID(),
 		Album:              album.TagTitle,
@@ -150,21 +150,26 @@ func NewTrackByTags(t *db.Track, album *db.Album) *TrackChild {
 		ret.AlbumArtists = append(ret.AlbumArtists, &ArtistRef{ID: a.Artist.SID(), Name: cmp.Or(a.CreditedAs, a.Artist.Name)})
 	}
 
-	slices.SortStableFunc(t.Contributors, func(a, b *db.TrackContributor) int {
-		return cmp.Or(
-			cmp.Compare(a.Role, b.Role),
-			cmp.Compare(a.ArtistID, b.ArtistID),
-		)
-	})
-
-	for _, c := range t.Contributors {
-		if c.Artist == nil {
-			continue
-		}
-		ret.Contributors = append(ret.Contributors, &Contributor{
-			Role:   string(c.Role),
-			Artist: &ArtistRef{ID: c.Artist.SID(), Name: cmp.Or(c.CreditedAs, c.Artist.Name)},
+	// DSub treats nested <artist> elements as top-level artists, so the <artist> inside
+	// <contributors> shows up as a phantom artist in search results and overwrites the
+	// directory header in album views.
+	if client != "DSub" {
+		slices.SortStableFunc(t.Contributors, func(a, b *db.TrackContributor) int {
+			return cmp.Or(
+				cmp.Compare(a.Role, b.Role),
+				cmp.Compare(a.ArtistID, b.ArtistID),
+			)
 		})
+
+		for _, c := range t.Contributors {
+			if c.Artist == nil {
+				continue
+			}
+			ret.Contributors = append(ret.Contributors, &Contributor{
+				Role:   string(c.Role),
+				Artist: &ArtistRef{ID: c.Artist.SID(), Name: cmp.Or(c.CreditedAs, c.Artist.Name)},
+			})
+		}
 	}
 
 	if t.ReplayGainTrackGain != 0 || t.ReplayGainAlbumGain != 0 {

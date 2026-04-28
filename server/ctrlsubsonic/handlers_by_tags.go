@@ -130,10 +130,11 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 	sub.Album = spec.NewAlbumByTags(album, album.Artists)
 	sub.Album.Tracks = make([]*spec.TrackChild, len(album.Tracks))
 
-	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
+	client := params.GetOr("c", "")
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, client)
 
 	for i, track := range album.Tracks {
-		sub.Album.Tracks[i] = spec.NewTrackByTags(track, album)
+		sub.Album.Tracks[i] = spec.NewTrackByTags(client, track, album)
 		sub.Album.Tracks[i].TranscodeMeta = transcodeMeta
 	}
 	return sub
@@ -322,10 +323,11 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
 
-	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
+	client := params.GetOr("c", "")
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, client)
 
 	for _, t := range tracks {
-		track := spec.NewTrackByTags(t, t.Album)
+		track := spec.NewTrackByTags(client, t, t.Album)
 		track.TranscodeMeta = transcodeMeta
 		results.Tracks = append(results.Tracks, track)
 	}
@@ -498,10 +500,11 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 		List: make([]*spec.TrackChild, len(tracks)),
 	}
 
-	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
+	client := params.GetOr("c", "")
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, client)
 
 	for i, t := range tracks {
-		sub.TracksByGenre.List[i] = spec.NewTrackByTags(t, t.Album)
+		sub.TracksByGenre.List[i] = spec.NewTrackByTags(client, t, t.Album)
 		sub.TracksByGenre.List[i].TranscodeMeta = transcodeMeta
 	}
 
@@ -579,10 +582,11 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find tracks: %v", err)
 	}
 
-	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
+	client := params.GetOr("c", "")
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, client)
 
 	for _, t := range tracks {
-		track := spec.NewTrackByTags(t, t.Album)
+		track := spec.NewTrackByTags(client, t, t.Album)
 		track.TranscodeMeta = transcodeMeta
 		results.Tracks = append(results.Tracks, track)
 	}
@@ -655,10 +659,11 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 		return sub
 	}
 
-	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
+	client := params.GetOr("c", "")
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, client)
 
 	for _, track := range tracks {
-		tc := spec.NewTrackByTags(track, track.Album)
+		tc := spec.NewTrackByTags(client, track, track.Album)
 		tc.TranscodeMeta = transcodeMeta
 		sub.TopSongs.Tracks = append(sub.TopSongs.Tracks, tc)
 	}
@@ -767,10 +772,11 @@ func getSimilarSongsFromTrack(c *Controller, id specid.ID, params params.Params,
 	}
 
 	trackChildren := make([]*spec.TrackChild, len(tracks))
-	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
+	client := params.GetOr("c", "")
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, client)
 
 	for i, track := range tracks {
-		trackChildren[i] = spec.NewTrackByTags(track, track.Album)
+		trackChildren[i] = spec.NewTrackByTags(client, track, track.Album)
 		trackChildren[i].TranscodeMeta = transcodeMeta
 	}
 
@@ -824,10 +830,11 @@ func getSimilarSongsFromArtist(c *Controller, id specid.ID, params params.Params
 	}
 
 	trackChildren := make([]*spec.TrackChild, len(tracks))
-	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
+	client := params.GetOr("c", "")
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, client)
 
 	for i, track := range tracks {
-		trackChildren[i] = spec.NewTrackByTags(track, track.Album)
+		trackChildren[i] = spec.NewTrackByTags(client, track, track.Album)
 		trackChildren[i].TranscodeMeta = transcodeMeta
 	}
 
@@ -890,10 +897,11 @@ func getSimilarSongsFromAlbum(c *Controller, id specid.ID, params params.Params,
 	}
 
 	trackChildren := make([]*spec.TrackChild, len(tracks))
-	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
+	client := params.GetOr("c", "")
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, client)
 
 	for i, track := range tracks {
-		trackChildren[i] = spec.NewTrackByTags(track, track.Album)
+		trackChildren[i] = spec.NewTrackByTags(client, track, track.Album)
 		trackChildren[i].TranscodeMeta = transcodeMeta
 	}
 

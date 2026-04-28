@@ -13,7 +13,9 @@ import (
 )
 
 func (c *Controller) ServeGetBookmarks(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
+	client := params.GetOr("c", "")
 	bookmarks := []*db.Bookmark{}
 	err := c.dbc.
 		Where("user_id=?", user.ID).
@@ -55,7 +57,7 @@ func (c *Controller) ServeGetBookmarks(r *http.Request) *spec.Response {
 				 */
 				continue
 			}
-			respBookmark.Entry = spec.NewTrackByTags(&track, track.Album)
+			respBookmark.Entry = spec.NewTrackByTags(client, &track, track.Album)
 		case specid.PodcastEpisode:
 			var podcastEpisode db.PodcastEpisode
 			err := c.dbc.
