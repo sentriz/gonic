@@ -1,0 +1,126 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "album": {
+      "id": "al-17",
+      "created": "2019-11-30T00:00:00Z",
+      "artistId": "ar-19",
+      "artist": "Various Artists",
+      "artists": [
+        {
+          "id": "ar-19",
+          "name": "Various Artists"
+        }
+      ],
+      "displayArtist": "Various Artists",
+      "title": "comp",
+      "album": "comp",
+      "coverArt": "tr-11",
+      "name": "comp",
+      "songCount": 2,
+      "duration": 200,
+      "playCount": 0,
+      "genre": "Rock",
+      "genres": [
+        {
+          "name": "Rock"
+        }
+      ],
+      "year": 2020,
+      "song": [
+        {
+          "id": "tr-11",
+          "album": "comp",
+          "albumId": "al-17",
+          "artist": "artist-x",
+          "artistId": "ar-20",
+          "artists": [
+            {
+              "id": "ar-20",
+              "name": "artist-x"
+            }
+          ],
+          "displayArtist": "artist-x",
+          "albumArtists": [
+            {
+              "id": "ar-19",
+              "name": "Various Artists"
+            }
+          ],
+          "displayAlbumArtist": "Various Artists",
+          "contributors": null,
+          "bitRate": 100,
+          "contentType": "audio/flac",
+          "coverArt": "tr-11",
+          "created": "2019-11-30T00:00:00Z",
+          "duration": 100,
+          "isDir": false,
+          "isVideo": false,
+          "parent": "al-17",
+          "path": "various/comp/track-0.flac",
+          "suffix": "flac",
+          "title": "comp-track-0",
+          "track": 1,
+          "discNumber": 1,
+          "type": "music",
+          "year": 2020,
+          "musicBrainzId": "",
+          "userRating": 4,
+          "averageRating": 4,
+          "replayGain": null
+        },
+        {
+          "id": "tr-12",
+          "album": "comp",
+          "albumId": "al-17",
+          "artist": "artist-y",
+          "artistId": "ar-21",
+          "artists": [
+            {
+              "id": "ar-21",
+              "name": "artist-y"
+            }
+          ],
+          "displayArtist": "artist-y",
+          "albumArtists": [
+            {
+              "id": "ar-19",
+              "name": "Various Artists"
+            }
+          ],
+          "displayAlbumArtist": "Various Artists",
+          "contributors": null,
+          "bitRate": 100,
+          "contentType": "audio/flac",
+          "coverArt": "tr-11",
+          "created": "2019-11-30T00:00:00Z",
+          "duration": 100,
+          "isDir": false,
+          "isVideo": false,
+          "parent": "al-17",
+          "path": "various/comp/track-1.flac",
+          "suffix": "flac",
+          "title": "comp-track-1",
+          "track": 2,
+          "discNumber": 1,
+          "type": "music",
+          "year": 2020,
+          "musicBrainzId": "",
+          "replayGain": null
+        }
+      ],
+      "isCompilation": true,
+      "releaseTypes": [
+        "Album",
+        "Compilation"
+      ],
+      "discTitles": [],
+      "userRating": 5,
+      "averageRating": 5
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "artist": {
+      "id": "ar-20",
+      "name": "artist-x",
+      "albumCount": 1,
+      "roles": [
+        "artist"
+      ],
+      "album": [
+        {
+          "id": "al-17",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-19",
+          "artist": "Various Artists",
+          "artists": [
+            {
+              "id": "ar-19",
+              "name": "Various Artists"
+            }
+          ],
+          "displayArtist": "Various Artists",
+          "title": "comp",
+          "album": "comp",
+          "coverArt": "tr-11",
+          "name": "comp",
+          "songCount": 2,
+          "duration": 200,
+          "playCount": 0,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "year": 2020,
+          "isCompilation": true,
+          "releaseTypes": [
+            "Album",
+            "Compilation"
+          ],
+          "discTitles": []
+        }
+      ]
+    }
+  }
+}

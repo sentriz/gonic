@@ -1,0 +1,59 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "bookmarks": {
+      "bookmark": [
+        {
+          "entry": {
+            "id": "tr-11",
+            "album": "comp",
+            "albumId": "al-17",
+            "artist": "artist-x",
+            "artistId": "ar-20",
+            "artists": [
+              {
+                "id": "ar-20",
+                "name": "artist-x"
+              }
+            ],
+            "displayArtist": "artist-x",
+            "albumArtists": [
+              {
+                "id": "ar-19",
+                "name": "Various Artists"
+              }
+            ],
+            "displayAlbumArtist": "Various Artists",
+            "contributors": null,
+            "bitRate": 100,
+            "contentType": "audio/flac",
+            "coverArt": "tr-11",
+            "created": "2019-11-30T00:00:00Z",
+            "duration": 100,
+            "isDir": false,
+            "isVideo": false,
+            "parent": "al-17",
+            "path": "various/comp/track-0.flac",
+            "suffix": "flac",
+            "title": "comp-track-0",
+            "track": 1,
+            "discNumber": 1,
+            "type": "music",
+            "year": 2020,
+            "musicBrainzId": "",
+            "replayGain": null
+          },
+          "username": "alt",
+          "position": 5000,
+          "comment": "",
+          "created": "2000-01-01T00:00:00Z",
+          "changed": "2000-01-01T00:00:00Z"
+        }
+      ]
+    }
+  }
+}

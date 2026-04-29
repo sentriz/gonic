@@ -8,192 +8,307 @@
     "albumList2": {
       "album": [
         {
-          "id": "al-5",
+          "id": "al-8",
           "created": "2019-11-30T00:00:00Z",
           "artistId": "ar-1",
-          "artist": "artist-0",
-          "artists": [{ "id": "ar-1", "name": "artist-0" }],
-          "displayArtist": "artist-0",
-          "title": "album-2",
-          "album": "album-2",
-          "coverArt": "al-5",
-          "name": "album-2",
-          "songCount": 3,
-          "duration": 300,
+          "artist": "Artist A!",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "Artist A!"
+            },
+            {
+              "id": "ar-17",
+              "name": "Artist B!"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "album-collab",
+          "album": "album-collab",
+          "name": "album-collab",
+          "songCount": 2,
+          "duration": 200,
           "playCount": 0,
-          "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
+          "genre": "Pop",
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
           "year": 2021,
           "isCompilation": false,
-          "releaseTypes": ["Album"],
-          "discTitles": []
+          "releaseTypes": [
+            "Album"
+          ],
+          "discTitles": [],
+          "starred": "2020-06-02T12:00:00Z"
         },
         {
-          "id": "al-13",
+          "id": "al-18",
           "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-3",
-          "artist": "artist-2",
-          "artists": [{ "id": "ar-3", "name": "artist-2" }],
-          "displayArtist": "artist-2",
-          "title": "album-2",
-          "album": "album-2",
-          "coverArt": "al-13",
-          "name": "album-2",
-          "songCount": 3,
-          "duration": 300,
+          "artistId": "ar-1",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "empty-album",
+          "album": "empty-album",
+          "name": "empty-album",
+          "songCount": 0,
+          "duration": 0,
           "playCount": 0,
-          "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
-          "year": 2021,
+          "year": 2015,
           "isCompilation": false,
-          "releaseTypes": ["Album"],
-          "discTitles": []
-        },
-        {
-          "id": "al-12",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-3",
-          "artist": "artist-2",
-          "artists": [{ "id": "ar-3", "name": "artist-2" }],
-          "displayArtist": "artist-2",
-          "title": "album-1",
-          "album": "album-1",
-          "coverArt": "al-12",
-          "name": "album-1",
-          "songCount": 3,
-          "duration": 300,
-          "playCount": 0,
-          "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
-          "year": 2021,
-          "isCompilation": false,
-          "releaseTypes": ["Album"],
+          "releaseTypes": [
+            "Album"
+          ],
           "discTitles": []
         },
         {
           "id": "al-3",
           "created": "2019-11-30T00:00:00Z",
           "artistId": "ar-1",
-          "artist": "artist-0",
-          "artists": [{ "id": "ar-1", "name": "artist-0" }],
-          "displayArtist": "artist-0",
-          "title": "album-0",
-          "album": "album-0",
-          "coverArt": "al-3",
-          "name": "album-0",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "album-aa",
+          "album": "album-aa",
+          "name": "album-aa",
           "songCount": 3,
           "duration": 300,
-          "playCount": 0,
-          "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
-          "year": 2021,
+          "playCount": 7,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            },
+            {
+              "name": "Pop"
+            }
+          ],
+          "year": 2018,
           "isCompilation": false,
-          "releaseTypes": ["Album"],
+          "releaseTypes": [
+            "Album"
+          ],
+          "discTitles": [],
+          "starred": "2020-05-01T12:00:00Z",
+          "userRating": 4,
+          "averageRating": 4
+        },
+        {
+          "id": "al-17",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-19",
+          "artist": "Various Artists",
+          "artists": [
+            {
+              "id": "ar-19",
+              "name": "Various Artists"
+            }
+          ],
+          "displayArtist": "Various Artists",
+          "title": "comp",
+          "album": "comp",
+          "coverArt": "tr-11",
+          "name": "comp",
+          "songCount": 2,
+          "duration": 200,
+          "playCount": 0,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "year": 2020,
+          "isCompilation": true,
+          "releaseTypes": [
+            "Album",
+            "Compilation"
+          ],
+          "discTitles": []
+        },
+        {
+          "id": "al-15",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-1",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "album-cross",
+          "album": "album-cross",
+          "name": "album-cross",
+          "songCount": 1,
+          "duration": 100,
+          "playCount": 0,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "year": 2022,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Album"
+          ],
           "discTitles": []
         },
         {
           "id": "al-4",
           "created": "2019-11-30T00:00:00Z",
           "artistId": "ar-1",
-          "artist": "artist-0",
-          "artists": [{ "id": "ar-1", "name": "artist-0" }],
-          "displayArtist": "artist-0",
-          "title": "album-1",
-          "album": "album-1",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "album-ab",
+          "album": "album-ab",
           "coverArt": "al-4",
-          "name": "album-1",
-          "songCount": 3,
-          "duration": 300,
-          "playCount": 0,
-          "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
-          "year": 2021,
+          "name": "album-ab",
+          "songCount": 2,
+          "duration": 200,
+          "playCount": 2,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            },
+            {
+              "name": "Pop"
+            }
+          ],
+          "year": 2019,
           "isCompilation": false,
-          "releaseTypes": ["Album"],
+          "releaseTypes": [
+            "EP"
+          ],
+          "discTitles": [
+            {
+              "disc": 1,
+              "title": "Disc One"
+            },
+            {
+              "disc": 2,
+              "title": "Disc Two"
+            }
+          ],
+          "averageRating": 5
+        },
+        {
+          "id": "al-12",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-18",
+          "artist": "ärtist-c",
+          "artists": [
+            {
+              "id": "ar-18",
+              "name": "ärtist-c"
+            }
+          ],
+          "displayArtist": "ärtist-c",
+          "title": "album-ca",
+          "album": "album-ca",
+          "name": "album-ca",
+          "songCount": 1,
+          "duration": 100,
+          "playCount": 0,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "year": 2016,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Album"
+          ],
           "discTitles": []
         },
         {
-          "id": "al-8",
+          "id": "al-6",
           "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-2",
-          "artist": "artist-1",
-          "artists": [{ "id": "ar-2", "name": "artist-1" }],
-          "displayArtist": "artist-1",
-          "title": "album-1",
-          "album": "album-1",
-          "coverArt": "al-8",
-          "name": "album-1",
-          "songCount": 3,
-          "duration": 300,
+          "artistId": "ar-17",
+          "artist": "The Mighty B (LP)",
+          "artists": [
+            {
+              "id": "ar-17",
+              "name": "The Mighty B (LP)"
+            }
+          ],
+          "displayArtist": "artist-b",
+          "title": "album-ba",
+          "album": "album-ba",
+          "name": "album-ba",
+          "songCount": 1,
+          "duration": 100,
           "playCount": 0,
-          "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
-          "year": 2021,
+          "genre": "Jazz",
+          "genres": [
+            {
+              "name": "Jazz"
+            }
+          ],
+          "year": 2017,
           "isCompilation": false,
-          "releaseTypes": ["Album"],
+          "releaseTypes": [
+            "Single"
+          ],
           "discTitles": []
         },
         {
-          "id": "al-9",
+          "id": "al-10",
           "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-2",
-          "artist": "artist-1",
-          "artists": [{ "id": "ar-2", "name": "artist-1" }],
-          "displayArtist": "artist-1",
-          "title": "album-2",
-          "album": "album-2",
-          "coverArt": "al-9",
-          "name": "album-2",
-          "songCount": 3,
-          "duration": 300,
+          "artistId": "ar-1",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            },
+            {
+              "id": "ar-17",
+              "name": "artist-b"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "album-split",
+          "album": "album-split",
+          "name": "album-split",
+          "songCount": 2,
+          "duration": 200,
           "playCount": 0,
-          "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
-          "year": 2021,
+          "genre": "Pop",
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
+          "year": 2023,
           "isCompilation": false,
-          "releaseTypes": ["Album"],
-          "discTitles": []
-        },
-        {
-          "id": "al-11",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-3",
-          "artist": "artist-2",
-          "artists": [{ "id": "ar-3", "name": "artist-2" }],
-          "displayArtist": "artist-2",
-          "title": "album-0",
-          "album": "album-0",
-          "coverArt": "al-11",
-          "name": "album-0",
-          "songCount": 3,
-          "duration": 300,
-          "playCount": 0,
-          "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
-          "year": 2021,
-          "isCompilation": false,
-          "releaseTypes": ["Album"],
-          "discTitles": []
-        },
-        {
-          "id": "al-7",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-2",
-          "artist": "artist-1",
-          "artists": [{ "id": "ar-2", "name": "artist-1" }],
-          "displayArtist": "artist-1",
-          "title": "album-0",
-          "album": "album-0",
-          "coverArt": "al-7",
-          "name": "album-0",
-          "songCount": 3,
-          "duration": 300,
-          "playCount": 0,
-          "genre": "Unknown Genre",
-          "genres": [{ "name": "Unknown Genre" }],
-          "year": 2021,
-          "isCompilation": false,
-          "releaseTypes": ["Album"],
+          "releaseTypes": [
+            "Album"
+          ],
           "discTitles": []
         }
       ]

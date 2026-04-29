@@ -1,0 +1,164 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "albumList2": {
+      "album": [
+        {
+          "id": "al-8",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-1",
+          "artist": "Artist A!",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "Artist A!"
+            },
+            {
+              "id": "ar-17",
+              "name": "Artist B!"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "album-collab",
+          "album": "album-collab",
+          "name": "album-collab",
+          "songCount": 2,
+          "duration": 200,
+          "playCount": 0,
+          "genre": "Pop",
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
+          "year": 2021,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Album"
+          ],
+          "discTitles": [],
+          "starred": "2020-06-02T12:00:00Z"
+        },
+        {
+          "id": "al-17",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-19",
+          "artist": "Various Artists",
+          "artists": [
+            {
+              "id": "ar-19",
+              "name": "Various Artists"
+            }
+          ],
+          "displayArtist": "Various Artists",
+          "title": "comp",
+          "album": "comp",
+          "coverArt": "tr-11",
+          "name": "comp",
+          "songCount": 2,
+          "duration": 200,
+          "playCount": 0,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "year": 2020,
+          "isCompilation": true,
+          "releaseTypes": [
+            "Album",
+            "Compilation"
+          ],
+          "discTitles": []
+        },
+        {
+          "id": "al-4",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-1",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "album-ab",
+          "album": "album-ab",
+          "coverArt": "al-4",
+          "name": "album-ab",
+          "songCount": 2,
+          "duration": 200,
+          "playCount": 2,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            },
+            {
+              "name": "Pop"
+            }
+          ],
+          "year": 2019,
+          "isCompilation": false,
+          "releaseTypes": [
+            "EP"
+          ],
+          "discTitles": [
+            {
+              "disc": 1,
+              "title": "Disc One"
+            },
+            {
+              "disc": 2,
+              "title": "Disc Two"
+            }
+          ],
+          "averageRating": 5
+        },
+        {
+          "id": "al-3",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-1",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "album-aa",
+          "album": "album-aa",
+          "name": "album-aa",
+          "songCount": 3,
+          "duration": 300,
+          "playCount": 7,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            },
+            {
+              "name": "Pop"
+            }
+          ],
+          "year": 2018,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Album"
+          ],
+          "discTitles": [],
+          "starred": "2020-05-01T12:00:00Z",
+          "userRating": 4,
+          "averageRating": 4
+        }
+      ]
+    }
+  }
+}

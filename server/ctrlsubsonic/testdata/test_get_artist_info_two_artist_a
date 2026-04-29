@@ -1,0 +1,29 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "artistInfo2": {
+      "biography": "an artist that exists.",
+      "musicBrainzId": "00000000-0000-0000-0000-aaaaaaaaaaaa",
+      "lastFmUrl": "https://example.invalid/artist-a",
+      "smallImageUrl": "https://example.invalid/artist-a.jpg",
+      "mediumImageUrl": "https://example.invalid/artist-a.jpg",
+      "largeImageUrl": "https://example.invalid/artist-a.jpg",
+      "artistImageUrl": "https://example.invalid/artist-a.jpg",
+      "similarArtist": [
+        {
+          "id": "ar-17",
+          "name": "artist-b",
+          "albumCount": 3,
+          "roles": [
+            "albumartist",
+            "artist"
+          ]
+        }
+      ]
+    }
+  }
+}

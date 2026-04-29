@@ -1,0 +1,93 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "album": {
+      "id": "al-8",
+      "created": "2019-11-30T00:00:00Z",
+      "artistId": "ar-1",
+      "artist": "Artist A!",
+      "artists": [
+        {
+          "id": "ar-1",
+          "name": "Artist A!"
+        },
+        {
+          "id": "ar-17",
+          "name": "Artist B!"
+        }
+      ],
+      "displayArtist": "artist-a",
+      "title": "album-collab",
+      "album": "album-collab",
+      "name": "album-collab",
+      "songCount": 1,
+      "duration": 100,
+      "playCount": 0,
+      "genre": "Pop",
+      "genres": [
+        {
+          "name": "Pop"
+        }
+      ],
+      "year": 2021,
+      "song": [
+        {
+          "id": "tr-7",
+          "album": "album-collab",
+          "albumId": "al-8",
+          "artist": "Artist A!",
+          "artistId": "ar-1",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "Artist A!"
+            },
+            {
+              "id": "ar-17",
+              "name": "Artist B!"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "Artist A!"
+            },
+            {
+              "id": "ar-17",
+              "name": "Artist B!"
+            }
+          ],
+          "displayAlbumArtist": "artist-a",
+          "contributors": null,
+          "bitRate": 100,
+          "contentType": "audio/flac",
+          "created": "2019-11-30T00:00:00Z",
+          "duration": 100,
+          "isDir": false,
+          "isVideo": false,
+          "parent": "al-8",
+          "path": "collab-ab/album-collab/track-0.flac",
+          "suffix": "flac",
+          "title": "collab-track",
+          "track": 1,
+          "discNumber": 1,
+          "type": "music",
+          "year": 2021,
+          "musicBrainzId": "",
+          "replayGain": null
+        }
+      ],
+      "isCompilation": false,
+      "releaseTypes": [
+        "Album"
+      ],
+      "discTitles": [],
+      "starred": "2020-06-02T12:00:00Z"
+    }
+  }
+}

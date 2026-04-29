@@ -1,0 +1,121 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "artist": {
+      "id": "ar-17",
+      "name": "artist-b",
+      "albumCount": 3,
+      "roles": [
+        "albumartist",
+        "artist"
+      ],
+      "album": [
+        {
+          "id": "al-6",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-17",
+          "artist": "The Mighty B (LP)",
+          "artists": [
+            {
+              "id": "ar-17",
+              "name": "The Mighty B (LP)"
+            }
+          ],
+          "displayArtist": "artist-b",
+          "title": "album-ba",
+          "album": "album-ba",
+          "name": "album-ba",
+          "songCount": 1,
+          "duration": 100,
+          "playCount": 0,
+          "genre": "Jazz",
+          "genres": [
+            {
+              "name": "Jazz"
+            }
+          ],
+          "year": 2017,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Single"
+          ],
+          "discTitles": []
+        },
+        {
+          "id": "al-8",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-1",
+          "artist": "Artist A!",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "Artist A!"
+            },
+            {
+              "id": "ar-17",
+              "name": "Artist B!"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "album-collab",
+          "album": "album-collab",
+          "name": "album-collab",
+          "songCount": 1,
+          "duration": 100,
+          "playCount": 0,
+          "genre": "Pop",
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
+          "year": 2021,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Album"
+          ],
+          "discTitles": []
+        },
+        {
+          "id": "al-10",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-1",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            },
+            {
+              "id": "ar-17",
+              "name": "artist-b"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "album-split",
+          "album": "album-split",
+          "name": "album-split",
+          "songCount": 1,
+          "duration": 100,
+          "playCount": 0,
+          "genre": "Pop",
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
+          "year": 2023,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Album"
+          ],
+          "discTitles": []
+        }
+      ]
+    }
+  }
+}

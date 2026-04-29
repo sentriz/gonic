@@ -1,0 +1,33 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "searchResult2": {
+      "artist": [
+        {
+          "id": "al-2",
+          "parent": "al-1",
+          "name": "artist-a"
+        },
+        {
+          "id": "al-5",
+          "parent": "al-1",
+          "name": "artist-b"
+        },
+        {
+          "id": "al-11",
+          "parent": "al-1",
+          "name": "ärtist-c"
+        },
+        {
+          "id": "al-14",
+          "parent": "al-13",
+          "name": "artist-a"
+        }
+      ]
+    }
+  }
+}

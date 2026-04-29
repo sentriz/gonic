@@ -1,0 +1,72 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "directory": {
+      "id": "al-2",
+      "parent": "al-1",
+      "name": "artist-a",
+      "child": [
+        {
+          "id": "al-18",
+          "artist": "",
+          "artists": null,
+          "displayArtist": "",
+          "albumArtists": null,
+          "displayAlbumArtist": "",
+          "contributors": null,
+          "created": "2019-11-30T00:00:00Z",
+          "isDir": true,
+          "isVideo": false,
+          "parent": "al-2",
+          "title": "empty-album",
+          "year": 2015,
+          "musicBrainzId": "",
+          "replayGain": null
+        },
+        {
+          "id": "al-3",
+          "artist": "",
+          "artists": null,
+          "displayArtist": "",
+          "albumArtists": null,
+          "displayAlbumArtist": "",
+          "contributors": null,
+          "created": "2019-11-30T00:00:00Z",
+          "isDir": true,
+          "isVideo": false,
+          "parent": "al-2",
+          "title": "album-aa",
+          "year": 2018,
+          "musicBrainzId": "",
+          "starred": "2020-05-01T12:00:00Z",
+          "userRating": 4,
+          "averageRating": 4,
+          "replayGain": null
+        },
+        {
+          "id": "al-4",
+          "artist": "",
+          "artists": null,
+          "displayArtist": "",
+          "albumArtists": null,
+          "displayAlbumArtist": "",
+          "contributors": null,
+          "coverArt": "al-4",
+          "created": "2019-11-30T00:00:00Z",
+          "isDir": true,
+          "isVideo": false,
+          "parent": "al-2",
+          "title": "album-ab",
+          "year": 2019,
+          "musicBrainzId": "",
+          "averageRating": 5,
+          "replayGain": null
+        }
+      ]
+    }
+  }
+}

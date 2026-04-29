@@ -12,12 +12,63 @@
         {
           "name": "a",
           "artist": [
-            { "id": "al-2", "name": "artist-0", "albumCount": 3, "roles": [] },
-            { "id": "al-15", "name": "artist-0", "albumCount": 3, "roles": [] },
-            { "id": "al-6", "name": "artist-1", "albumCount": 3, "roles": [] },
-            { "id": "al-19", "name": "artist-1", "albumCount": 3, "roles": [] },
-            { "id": "al-10", "name": "artist-2", "albumCount": 3, "roles": [] },
-            { "id": "al-23", "name": "artist-2", "albumCount": 3, "roles": [] }
+            {
+              "id": "al-2",
+              "name": "artist-a",
+              "albumCount": 3,
+              "roles": []
+            },
+            {
+              "id": "al-14",
+              "name": "artist-a",
+              "albumCount": 1,
+              "roles": []
+            },
+            {
+              "id": "al-5",
+              "name": "artist-b",
+              "albumCount": 1,
+              "roles": []
+            },
+            {
+              "id": "al-11",
+              "name": "ärtist-c",
+              "albumCount": 1,
+              "roles": []
+            }
+          ]
+        },
+        {
+          "name": "c",
+          "artist": [
+            {
+              "id": "al-7",
+              "name": "collab-ab",
+              "albumCount": 1,
+              "roles": []
+            }
+          ]
+        },
+        {
+          "name": "s",
+          "artist": [
+            {
+              "id": "al-9",
+              "name": "split-ab",
+              "albumCount": 1,
+              "roles": []
+            }
+          ]
+        },
+        {
+          "name": "v",
+          "artist": [
+            {
+              "id": "al-16",
+              "name": "various",
+              "albumCount": 1,
+              "roles": []
+            }
           ]
         }
       ]

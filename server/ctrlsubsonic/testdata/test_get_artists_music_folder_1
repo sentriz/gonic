@@ -1,0 +1,45 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "artists": {
+      "ignoredArticles": "",
+      "index": [
+        {
+          "name": "a",
+          "artist": [
+            {
+              "id": "ar-1",
+              "name": "artist-a",
+              "coverArt": "ar-1",
+              "albumCount": 1,
+              "roles": [
+                "albumartist",
+                "artist"
+              ],
+              "starred": "2020-05-01T12:00:00Z",
+              "userRating": 5,
+              "averageRating": 5
+            }
+          ]
+        },
+        {
+          "name": "v",
+          "artist": [
+            {
+              "id": "ar-19",
+              "name": "Various Artists",
+              "albumCount": 1,
+              "roles": [
+                "albumartist"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

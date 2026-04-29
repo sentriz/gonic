@@ -1,0 +1,19 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "internetRadioStations": {
+      "internetRadioStation": [
+        {
+          "id": "ir-2",
+          "name": "KCRW Santa Barbara",
+          "streamUrl": "http://media.kcrw.com/pls/kcrwsantabarbara.pls",
+          "homePageUrl": ""
+        }
+      ]
+    }
+  }
+}

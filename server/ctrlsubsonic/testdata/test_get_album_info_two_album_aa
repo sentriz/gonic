@@ -1,0 +1,14 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "albumInfo": {
+      "notes": "an album that exists.",
+      "musicBrainzId": "00000000-0000-0000-0000-0000000000aa",
+      "lastFmUrl": "https://example.invalid/album-aa"
+    }
+  }
+}

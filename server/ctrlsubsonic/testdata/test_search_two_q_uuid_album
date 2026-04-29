@@ -1,0 +1,33 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "searchResult2": {
+      "album": [
+        {
+          "id": "al-3",
+          "artist": "",
+          "artists": null,
+          "displayArtist": "",
+          "albumArtists": null,
+          "displayAlbumArtist": "",
+          "contributors": null,
+          "created": "2019-11-30T00:00:00Z",
+          "isDir": true,
+          "isVideo": false,
+          "parent": "al-2",
+          "title": "album-aa",
+          "year": 2018,
+          "musicBrainzId": "",
+          "starred": "2020-05-01T12:00:00Z",
+          "userRating": 4,
+          "averageRating": 4,
+          "replayGain": null
+        }
+      ]
+    }
+  }
+}

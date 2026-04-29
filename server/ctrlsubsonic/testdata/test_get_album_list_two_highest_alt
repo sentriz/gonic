@@ -1,0 +1,59 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "albumList2": {
+      "album": [
+        {
+          "id": "al-4",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-1",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "album-ab",
+          "album": "album-ab",
+          "coverArt": "al-4",
+          "name": "album-ab",
+          "songCount": 2,
+          "duration": 200,
+          "playCount": 0,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            },
+            {
+              "name": "Pop"
+            }
+          ],
+          "year": 2019,
+          "isCompilation": false,
+          "releaseTypes": [
+            "EP"
+          ],
+          "discTitles": [
+            {
+              "disc": 1,
+              "title": "Disc One"
+            },
+            {
+              "disc": 2,
+              "title": "Disc Two"
+            }
+          ],
+          "userRating": 5,
+          "averageRating": 5
+        }
+      ]
+    }
+  }
+}

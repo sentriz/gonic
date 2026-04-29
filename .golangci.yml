@@ -69,6 +69,10 @@ linters:
           - gochecknoglobals
         path: _test\.go
       - linters:
+          - tparallel
+        text: subtests should call t.Parallel
+        path: server/ctrlsubsonic/.*_test\.go # false positive
+      - linters:
           - gosec
         text: weak cryptographic primitive
       - linters:

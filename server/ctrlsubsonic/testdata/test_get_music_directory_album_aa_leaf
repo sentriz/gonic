@@ -1,0 +1,133 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "directory": {
+      "id": "al-3",
+      "parent": "al-2",
+      "name": "album-aa",
+      "starred": "2020-05-01T12:00:00Z",
+      "userRating": 4,
+      "averageRating": 4,
+      "child": [
+        {
+          "id": "tr-1",
+          "album": "album-aa",
+          "albumId": "al-3",
+          "artist": "artist-a",
+          "artistId": "ar-1",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "albumArtists": null,
+          "displayAlbumArtist": "",
+          "contributors": null,
+          "bitRate": 100,
+          "contentType": "audio/flac",
+          "created": "2019-11-30T00:00:00Z",
+          "duration": 100,
+          "isDir": false,
+          "isVideo": false,
+          "parent": "al-3",
+          "path": "artist-a/album-aa/track-0.flac",
+          "suffix": "flac",
+          "title": "title-0",
+          "track": 1,
+          "discNumber": 1,
+          "type": "music",
+          "year": 2018,
+          "musicBrainzId": "00000000-0000-0000-0000-aa0000000000",
+          "replayGain": {
+            "trackGain": -3.5,
+            "trackPeak": 0.95,
+            "albumGain": -4,
+            "albumPeak": 0.99
+          }
+        },
+        {
+          "id": "tr-2",
+          "album": "album-aa",
+          "albumId": "al-3",
+          "artist": "artist-a",
+          "artistId": "ar-1",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "albumArtists": null,
+          "displayAlbumArtist": "",
+          "contributors": null,
+          "bitRate": 100,
+          "contentType": "audio/flac",
+          "created": "2019-11-30T00:00:00Z",
+          "duration": 100,
+          "isDir": false,
+          "isVideo": false,
+          "parent": "al-3",
+          "path": "artist-a/album-aa/track-1.flac",
+          "suffix": "flac",
+          "title": "title-1",
+          "track": 2,
+          "discNumber": 1,
+          "type": "music",
+          "year": 2018,
+          "musicBrainzId": "00000000-0000-0000-0000-aa0000000001",
+          "replayGain": {
+            "trackGain": -3.5,
+            "trackPeak": 0.95,
+            "albumGain": -4,
+            "albumPeak": 0.99
+          }
+        },
+        {
+          "id": "tr-3",
+          "album": "album-aa",
+          "albumId": "al-3",
+          "artist": "artist-a",
+          "artistId": "ar-1",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "albumArtists": null,
+          "displayAlbumArtist": "",
+          "contributors": null,
+          "bitRate": 100,
+          "contentType": "audio/flac",
+          "created": "2019-11-30T00:00:00Z",
+          "duration": 100,
+          "isDir": false,
+          "isVideo": false,
+          "parent": "al-3",
+          "path": "artist-a/album-aa/track-2.flac",
+          "suffix": "flac",
+          "title": "title-2",
+          "track": 3,
+          "discNumber": 1,
+          "type": "music",
+          "year": 2018,
+          "musicBrainzId": "00000000-0000-0000-0000-aa0000000002",
+          "replayGain": {
+            "trackGain": -3.5,
+            "trackPeak": 0.95,
+            "albumGain": -4,
+            "albumPeak": 0.99
+          }
+        }
+      ]
+    }
+  }
+}

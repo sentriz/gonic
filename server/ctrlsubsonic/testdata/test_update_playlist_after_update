@@ -1,0 +1,19 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "playlist": {
+      "id": "pl-MS9zaGFyZWQubTN1",
+      "name": "updated name",
+      "comment": "updated comment",
+      "owner": "admin",
+      "songCount": 0,
+      "created": "2020-05-01T12:00:00Z",
+      "changed": "2020-05-01T12:00:00Z",
+      "duration": 0
+    }
+  }
+}

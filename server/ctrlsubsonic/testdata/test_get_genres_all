@@ -1,0 +1,28 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "genres": {
+      "genre": [
+        {
+          "value": "Jazz",
+          "songCount": 3,
+          "albumCount": 1
+        },
+        {
+          "value": "Pop",
+          "songCount": 5,
+          "albumCount": 4
+        },
+        {
+          "value": "Rock",
+          "songCount": 6,
+          "albumCount": 5
+        }
+      ]
+    }
+  }
+}

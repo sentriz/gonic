@@ -1,0 +1,13 @@
+{
+  "subsonic-response": {
+    "status": "failed",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "error": {
+      "code": 70,
+      "message": "bad homepage URL provided: parse \"not_a_url\": invalid URI for request"
+    }
+  }
+}

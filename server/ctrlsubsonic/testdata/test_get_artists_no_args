@@ -13,21 +13,47 @@
           "artist": [
             {
               "id": "ar-1",
-              "name": "artist-0",
+              "name": "artist-a",
+              "coverArt": "ar-1",
               "albumCount": 6,
-              "roles": ["albumartist", "artist"]
+              "roles": [
+                "albumartist",
+                "artist"
+              ],
+              "starred": "2020-05-01T12:00:00Z",
+              "userRating": 5,
+              "averageRating": 5
             },
             {
-              "id": "ar-2",
-              "name": "artist-1",
-              "albumCount": 6,
-              "roles": ["albumartist", "artist"]
+              "id": "ar-17",
+              "name": "artist-b",
+              "albumCount": 3,
+              "roles": [
+                "albumartist",
+                "artist"
+              ]
             },
             {
-              "id": "ar-3",
-              "name": "artist-2",
-              "albumCount": 6,
-              "roles": ["albumartist", "artist"]
+              "id": "ar-18",
+              "name": "ärtist-c",
+              "albumCount": 1,
+              "roles": [
+                "albumartist",
+                "artist"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "v",
+          "artist": [
+            {
+              "id": "ar-19",
+              "name": "Various Artists",
+              "albumCount": 1,
+              "roles": [
+                "albumartist"
+              ]
             }
           ]
         }

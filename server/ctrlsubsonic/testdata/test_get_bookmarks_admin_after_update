@@ -1,0 +1,124 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "bookmarks": {
+      "bookmark": [
+        {
+          "entry": {
+            "id": "tr-4",
+            "album": "album-ab",
+            "albumId": "al-4",
+            "artist": "artist-a",
+            "artistId": "ar-1",
+            "artists": [
+              {
+                "id": "ar-1",
+                "name": "artist-a"
+              }
+            ],
+            "displayArtist": "artist-a",
+            "albumArtists": [
+              {
+                "id": "ar-1",
+                "name": "artist-a"
+              }
+            ],
+            "displayAlbumArtist": "artist-a",
+            "contributors": [
+              {
+                "role": "arranger",
+                "artist": {
+                  "id": "ar-10",
+                  "name": "arr-a"
+                }
+              },
+              {
+                "role": "composer",
+                "artist": {
+                  "id": "ar-4",
+                  "name": "Composer A!"
+                }
+              },
+              {
+                "role": "composer",
+                "artist": {
+                  "id": "ar-5",
+                  "name": "Composer B!"
+                }
+              },
+              {
+                "role": "conductor",
+                "artist": {
+                  "id": "ar-8",
+                  "name": "cond-a"
+                }
+              },
+              {
+                "role": "lyricist",
+                "artist": {
+                  "id": "ar-6",
+                  "name": "lyr-a"
+                }
+              },
+              {
+                "role": "lyricist",
+                "artist": {
+                  "id": "ar-7",
+                  "name": "lyr-b"
+                }
+              },
+              {
+                "role": "producer",
+                "artist": {
+                  "id": "ar-9",
+                  "name": "prod-a"
+                }
+              },
+              {
+                "role": "remixer",
+                "artist": {
+                  "id": "ar-2",
+                  "name": "Remixer A!"
+                }
+              },
+              {
+                "role": "remixer",
+                "artist": {
+                  "id": "ar-3",
+                  "name": "Remixer B!"
+                }
+              }
+            ],
+            "bitRate": 100,
+            "contentType": "audio/flac",
+            "coverArt": "al-4",
+            "created": "2019-11-30T00:00:00Z",
+            "duration": 100,
+            "isDir": false,
+            "isVideo": false,
+            "parent": "al-4",
+            "path": "artist-a/album-ab/d1-track-0.flac",
+            "suffix": "flac",
+            "title": "rich-title-d1",
+            "track": 1,
+            "discNumber": 1,
+            "type": "music",
+            "year": 2019,
+            "musicBrainzId": "00000000-0000-0000-0000-ab00000000d1",
+            "averageRating": 3,
+            "replayGain": null
+          },
+          "username": "admin",
+          "position": 99000,
+          "comment": "almost done",
+          "created": "2000-01-01T00:00:00Z",
+          "changed": "2000-01-01T00:00:00Z"
+        }
+      ]
+    }
+  }
+}

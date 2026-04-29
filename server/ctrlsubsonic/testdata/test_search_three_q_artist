@@ -1,0 +1,52 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "searchResult3": {
+      "artist": [
+        {
+          "id": "ar-1",
+          "name": "artist-a",
+          "coverArt": "ar-1",
+          "albumCount": 6,
+          "roles": [
+            "albumartist",
+            "artist"
+          ],
+          "starred": "2020-05-01T12:00:00Z",
+          "userRating": 5,
+          "averageRating": 5
+        },
+        {
+          "id": "ar-17",
+          "name": "artist-b",
+          "albumCount": 3,
+          "roles": [
+            "albumartist",
+            "artist"
+          ]
+        },
+        {
+          "id": "ar-18",
+          "name": "ärtist-c",
+          "albumCount": 1,
+          "roles": [
+            "albumartist",
+            "artist"
+          ]
+        },
+        {
+          "id": "ar-19",
+          "name": "Various Artists",
+          "albumCount": 1,
+          "roles": [
+            "albumartist"
+          ]
+        }
+      ]
+    }
+  }
+}

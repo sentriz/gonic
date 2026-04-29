@@ -65,6 +65,7 @@ func newMockFS(tb testing.TB, dirs []string, excludePattern string) *MockFS {
 
 	multiValueSettings := map[scanner.Tag]scanner.MultiValueSetting{
 		scanner.Genre:       {Mode: scanner.Delim, Delim: ";"},
+		scanner.Artist:      {Mode: scanner.Multi},
 		scanner.AlbumArtist: {Mode: scanner.Multi},
 	}
 
@@ -129,8 +130,7 @@ func (m *MockFS) addItems(prefix string, onlyGlob string, covers bool) {
 					continue
 				}
 
-				m.AddTrack(path)
-				m.SetTags(path, func(info *TagInfo) {
+				m.SetTrack(path, func(info *TagInfo) {
 					normtag.Set(info.Tags, normtag.Artist, fmt.Sprintf("artist-%d", ar))
 					normtag.Set(info.Tags, normtag.AlbumArtist, fmt.Sprintf("artist-%d", ar))
 					normtag.Set(info.Tags, normtag.Album, fmt.Sprintf("album-%d", al))
@@ -188,21 +188,6 @@ func (m *MockFS) Symlink(src, dest string) {
 	for k, v := range m.tagReader.paths {
 		m.tagReader.paths[strings.Replace(k, src, dest, 1)] = v
 	}
-}
-
-func (m *MockFS) SetAudio(path string, length time.Duration, bitrate uint, audioPath string) {
-	abspath := filepath.Join(m.dir, path)
-	if err := os.Remove(abspath); err != nil {
-		m.t.Fatalf("remove all: %v", err)
-	}
-	wd, _ := os.Getwd()
-	if err := os.Symlink(filepath.Join(wd, audioPath), abspath); err != nil {
-		m.t.Fatalf("symlink: %v", err)
-	}
-	m.SetTags(path, func(tags *TagInfo) {
-		tags.Length = length
-		tags.Bitrate = bitrate
-	})
 }
 
 func (m *MockFS) LogItems() {
@@ -281,17 +266,25 @@ func (m *MockFS) LogTrackGenres() {
 	m.t.Logf("total %d", len(tgs))
 }
 
-func (m *MockFS) AddTrack(path string) {
+func (m *MockFS) SetTrack(path string, cb func(*TagInfo)) {
 	abspath := filepath.Join(m.dir, path)
-	dir := filepath.Dir(abspath)
-	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-		m.t.Fatalf("mkdir: %v", err)
+	if _, err := os.Stat(abspath); errors.Is(err, os.ErrNotExist) {
+		if err := os.MkdirAll(filepath.Dir(abspath), os.ModePerm); err != nil {
+			m.t.Fatalf("mkdir: %v", err)
+		}
+		f, err := os.Create(abspath)
+		if err != nil {
+			m.t.Fatalf("create track: %v", err)
+		}
+		f.Close()
 	}
-	f, err := os.Create(abspath)
-	if err != nil {
-		m.t.Fatalf("create track: %v", err)
+	if err := os.Chtimes(abspath, time.Time{}, time.Now()); err != nil {
+		m.t.Fatalf("touch track: %v", err)
 	}
-	defer f.Close()
+	if _, ok := m.tagReader.paths[abspath]; !ok {
+		m.tagReader.paths[abspath] = newTagInfo()
+	}
+	cb(m.tagReader.paths[abspath])
 }
 
 func (m *MockFS) AddCover(path string) {
@@ -319,17 +312,6 @@ func newTagInfo() *TagInfo {
 	info.Bitrate = 100
 
 	return &info
-}
-
-func (m *MockFS) SetTags(path string, cb func(*TagInfo)) {
-	absPath := filepath.Join(m.dir, path)
-	if err := os.Chtimes(absPath, time.Time{}, time.Now()); err != nil {
-		m.t.Fatalf("touch track: %v", err)
-	}
-	if _, ok := m.tagReader.paths[absPath]; !ok {
-		m.tagReader.paths[absPath] = newTagInfo()
-	}
-	cb(m.tagReader.paths[absPath])
 }
 
 var _ tags.Reader = (*tagReader)(nil)

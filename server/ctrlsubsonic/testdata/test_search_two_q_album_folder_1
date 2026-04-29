@@ -1,0 +1,30 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "searchResult2": {
+      "album": [
+        {
+          "id": "al-15",
+          "artist": "",
+          "artists": null,
+          "displayArtist": "",
+          "albumArtists": null,
+          "displayAlbumArtist": "",
+          "contributors": null,
+          "created": "2019-11-30T00:00:00Z",
+          "isDir": true,
+          "isVideo": false,
+          "parent": "al-14",
+          "title": "album-cross",
+          "year": 2022,
+          "musicBrainzId": "",
+          "replayGain": null
+        }
+      ]
+    }
+  }
+}

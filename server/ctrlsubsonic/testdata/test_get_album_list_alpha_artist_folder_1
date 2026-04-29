@@ -1,0 +1,50 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "albumList": {
+      "album": [
+        {
+          "id": "al-15",
+          "created": "2019-11-30T00:00:00Z",
+          "artist": "artist-a",
+          "artists": null,
+          "displayArtist": "",
+          "title": "album-cross",
+          "album": "album-cross",
+          "parent": "al-14",
+          "isDir": true,
+          "name": "album-cross",
+          "songCount": 1,
+          "duration": 100,
+          "playCount": 0,
+          "isCompilation": false,
+          "releaseTypes": [],
+          "discTitles": null
+        },
+        {
+          "id": "al-17",
+          "created": "2019-11-30T00:00:00Z",
+          "artist": "various",
+          "artists": null,
+          "displayArtist": "",
+          "title": "comp",
+          "album": "comp",
+          "parent": "al-16",
+          "isDir": true,
+          "coverArt": "tr-11",
+          "name": "comp",
+          "songCount": 2,
+          "duration": 200,
+          "playCount": 0,
+          "isCompilation": false,
+          "releaseTypes": [],
+          "discTitles": null
+        }
+      ]
+    }
+  }
+}

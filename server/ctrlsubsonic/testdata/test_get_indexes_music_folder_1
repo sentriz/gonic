@@ -1,0 +1,37 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "indexes": {
+      "lastModified": 0,
+      "ignoredArticles": "",
+      "index": [
+        {
+          "name": "a",
+          "artist": [
+            {
+              "id": "al-14",
+              "name": "artist-a",
+              "albumCount": 1,
+              "roles": []
+            }
+          ]
+        },
+        {
+          "name": "v",
+          "artist": [
+            {
+              "id": "al-16",
+              "name": "various",
+              "albumCount": 1,
+              "roles": []
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

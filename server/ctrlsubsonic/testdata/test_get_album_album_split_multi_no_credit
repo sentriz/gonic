@@ -1,0 +1,92 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "album": {
+      "id": "al-10",
+      "created": "2019-11-30T00:00:00Z",
+      "artistId": "ar-1",
+      "artist": "artist-a",
+      "artists": [
+        {
+          "id": "ar-1",
+          "name": "artist-a"
+        },
+        {
+          "id": "ar-17",
+          "name": "artist-b"
+        }
+      ],
+      "displayArtist": "artist-a",
+      "title": "album-split",
+      "album": "album-split",
+      "name": "album-split",
+      "songCount": 1,
+      "duration": 100,
+      "playCount": 0,
+      "genre": "Pop",
+      "genres": [
+        {
+          "name": "Pop"
+        }
+      ],
+      "year": 2023,
+      "song": [
+        {
+          "id": "tr-8",
+          "album": "album-split",
+          "albumId": "al-10",
+          "artist": "artist-a",
+          "artistId": "ar-1",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            },
+            {
+              "id": "ar-17",
+              "name": "artist-b"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            },
+            {
+              "id": "ar-17",
+              "name": "artist-b"
+            }
+          ],
+          "displayAlbumArtist": "artist-a",
+          "contributors": null,
+          "bitRate": 100,
+          "contentType": "audio/flac",
+          "created": "2019-11-30T00:00:00Z",
+          "duration": 100,
+          "isDir": false,
+          "isVideo": false,
+          "parent": "al-10",
+          "path": "split-ab/album-split/track-0.flac",
+          "suffix": "flac",
+          "title": "split-track",
+          "track": 1,
+          "discNumber": 1,
+          "type": "music",
+          "year": 2023,
+          "musicBrainzId": "",
+          "replayGain": null
+        }
+      ],
+      "isCompilation": false,
+      "releaseTypes": [
+        "Album"
+      ],
+      "discTitles": []
+    }
+  }
+}

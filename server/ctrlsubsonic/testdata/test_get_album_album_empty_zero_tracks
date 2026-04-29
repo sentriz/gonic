@@ -1,0 +1,34 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "album": {
+      "id": "al-18",
+      "created": "2019-11-30T00:00:00Z",
+      "artistId": "ar-1",
+      "artist": "artist-a",
+      "artists": [
+        {
+          "id": "ar-1",
+          "name": "artist-a"
+        }
+      ],
+      "displayArtist": "artist-a",
+      "title": "empty-album",
+      "album": "empty-album",
+      "name": "empty-album",
+      "songCount": 0,
+      "duration": 0,
+      "playCount": 0,
+      "year": 2015,
+      "isCompilation": false,
+      "releaseTypes": [
+        "Album"
+      ],
+      "discTitles": []
+    }
+  }
+}

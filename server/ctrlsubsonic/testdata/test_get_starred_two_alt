@@ -1,0 +1,51 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "starred2": {
+      "artist": [
+        {
+          "id": "ar-18",
+          "name": "ärtist-c",
+          "albumCount": 1,
+          "roles": [
+            "albumartist",
+            "artist"
+          ],
+          "starred": "2020-06-02T12:00:00Z"
+        }
+      ],
+      "album": [
+        {
+          "id": "al-6",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-17",
+          "artist": "The Mighty B (LP)",
+          "artists": [
+            {
+              "id": "ar-17",
+              "name": "The Mighty B (LP)"
+            }
+          ],
+          "displayArtist": "artist-b",
+          "title": "album-ba",
+          "album": "album-ba",
+          "name": "album-ba",
+          "songCount": 0,
+          "duration": 0,
+          "playCount": 0,
+          "year": 2017,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Single"
+          ],
+          "discTitles": [],
+          "starred": "2020-06-02T12:00:00Z"
+        }
+      ]
+    }
+  }
+}

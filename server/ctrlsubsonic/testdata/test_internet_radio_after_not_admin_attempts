@@ -1,0 +1,25 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "internetRadioStations": {
+      "internetRadioStation": [
+        {
+          "id": "ir-1",
+          "name": "NRK P1",
+          "streamUrl": "http://lyd.nrk.no/nrk_radio_p1_ostlandssendingen_mp3_m",
+          "homePageUrl": "http://www.nrk.no/p1"
+        },
+        {
+          "id": "ir-2",
+          "name": "NRK P2",
+          "streamUrl": "http://lyd.nrk.no/nrk_radio_p2_mp3_m",
+          "homePageUrl": "http://p3.no"
+        }
+      ]
+    }
+  }
+}

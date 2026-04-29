@@ -1,0 +1,60 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "indexes": {
+      "lastModified": 0,
+      "ignoredArticles": "",
+      "index": [
+        {
+          "name": "a",
+          "artist": [
+            {
+              "id": "al-2",
+              "name": "artist-a",
+              "albumCount": 3,
+              "roles": []
+            },
+            {
+              "id": "al-5",
+              "name": "artist-b",
+              "albumCount": 1,
+              "roles": []
+            },
+            {
+              "id": "al-11",
+              "name": "ärtist-c",
+              "albumCount": 1,
+              "roles": []
+            }
+          ]
+        },
+        {
+          "name": "c",
+          "artist": [
+            {
+              "id": "al-7",
+              "name": "collab-ab",
+              "albumCount": 1,
+              "roles": []
+            }
+          ]
+        },
+        {
+          "name": "s",
+          "artist": [
+            {
+              "id": "al-9",
+              "name": "split-ab",
+              "albumCount": 1,
+              "roles": []
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

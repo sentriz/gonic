@@ -1,0 +1,108 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "starred": {
+      "album": [
+        {
+          "id": "al-3",
+          "artist": "",
+          "artists": null,
+          "displayArtist": "",
+          "albumArtists": null,
+          "displayAlbumArtist": "",
+          "contributors": null,
+          "created": "2019-11-30T00:00:00Z",
+          "isDir": true,
+          "isVideo": false,
+          "parent": "al-2",
+          "title": "album-aa",
+          "year": 2018,
+          "musicBrainzId": "",
+          "starred": "2020-05-01T12:00:00Z",
+          "userRating": 4,
+          "averageRating": 4,
+          "replayGain": null
+        },
+        {
+          "id": "al-8",
+          "artist": "",
+          "artists": null,
+          "displayArtist": "",
+          "albumArtists": null,
+          "displayAlbumArtist": "",
+          "contributors": null,
+          "created": "2019-11-30T00:00:00Z",
+          "isDir": true,
+          "isVideo": false,
+          "parent": "al-7",
+          "title": "album-collab",
+          "year": 2021,
+          "musicBrainzId": "",
+          "starred": "2020-06-02T12:00:00Z",
+          "replayGain": null
+        },
+        {
+          "id": "al-8",
+          "artist": "",
+          "artists": null,
+          "displayArtist": "",
+          "albumArtists": null,
+          "displayAlbumArtist": "",
+          "contributors": null,
+          "created": "2019-11-30T00:00:00Z",
+          "isDir": true,
+          "isVideo": false,
+          "parent": "al-7",
+          "title": "album-collab",
+          "year": 2021,
+          "musicBrainzId": "",
+          "starred": "2020-06-02T12:00:00Z",
+          "replayGain": null
+        }
+      ],
+      "song": [
+        {
+          "id": "tr-4",
+          "album": "album-ab",
+          "albumId": "al-4",
+          "artist": "artist-a",
+          "artistId": "ar-1",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "albumArtists": null,
+          "displayAlbumArtist": "",
+          "contributors": null,
+          "bitRate": 100,
+          "contentType": "audio/flac",
+          "coverArt": "al-4",
+          "created": "2019-11-30T00:00:00Z",
+          "duration": 100,
+          "isDir": false,
+          "isVideo": false,
+          "parent": "al-4",
+          "path": "artist-a/album-ab/d1-track-0.flac",
+          "suffix": "flac",
+          "title": "rich-title-d1",
+          "track": 1,
+          "discNumber": 1,
+          "type": "music",
+          "year": 2019,
+          "musicBrainzId": "00000000-0000-0000-0000-ab00000000d1",
+          "starred": "2020-05-01T12:00:00Z",
+          "userRating": 3,
+          "averageRating": 3,
+          "replayGain": null
+        }
+      ]
+    }
+  }
+}
