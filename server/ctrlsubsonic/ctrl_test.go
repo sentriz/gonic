@@ -37,7 +37,7 @@ import (
 func TestMain(m *testing.M) {
 	gonic.Version = ""
 	log.SetOutput(io.Discard)
-	time.Local = time.UTC
+	time.Local = time.UTC //nolint:gosmopolitan
 	os.Exit(m.Run())
 }
 
