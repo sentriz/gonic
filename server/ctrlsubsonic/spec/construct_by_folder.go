@@ -5,8 +5,19 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/jinzhu/gorm"
+
 	"go.senan.xyz/gonic/db"
 )
+
+func LoadTrackByFolder(userID int) func(*gorm.DB) *gorm.DB {
+	return func(q *gorm.DB) *gorm.DB {
+		return q.
+			Scopes(TrackWithArtistCredits, TrackWithUserData(userID)).
+			Preload("Album").
+			Preload("Genres")
+	}
+}
 
 func NewAlbumByFolder(f *AlbumRow) *Album {
 	a := &Album{

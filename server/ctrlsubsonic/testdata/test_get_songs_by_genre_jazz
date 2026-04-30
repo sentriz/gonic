@@ -32,6 +32,12 @@
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Jazz",
+          "genres": [
+            {
+              "name": "Jazz"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-3",
@@ -75,6 +81,12 @@
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Jazz",
+          "genres": [
+            {
+              "name": "Jazz"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-6",
@@ -114,6 +126,12 @@
           "coverArt": "tr-11",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Jazz",
+          "genres": [
+            {
+              "name": "Jazz"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-17",

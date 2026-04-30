@@ -261,6 +261,15 @@
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            },
+            {
+              "name": "Pop"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-3",
@@ -299,6 +308,12 @@
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-3",
@@ -337,6 +352,12 @@
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Jazz",
+          "genres": [
+            {
+              "name": "Jazz"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-3",
@@ -376,6 +397,15 @@
           "coverArt": "al-4",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            },
+            {
+              "name": "Pop"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-4",
@@ -413,6 +443,12 @@
           "coverArt": "al-4",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Pop",
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-4",
@@ -446,6 +482,12 @@
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Jazz",
+          "genres": [
+            {
+              "name": "Jazz"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-6",
@@ -483,6 +525,12 @@
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Pop",
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-8",
@@ -520,6 +568,12 @@
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Pop",
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-10",
@@ -553,6 +607,12 @@
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-12",
@@ -586,6 +646,12 @@
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-15",
@@ -620,6 +686,12 @@
           "coverArt": "tr-11",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-17",
@@ -654,6 +726,12 @@
           "coverArt": "tr-11",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Jazz",
+          "genres": [
+            {
+              "name": "Jazz"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-17",

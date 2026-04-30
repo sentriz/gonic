@@ -41,9 +41,15 @@
           "title": "album-collab",
           "album": "album-collab",
           "name": "album-collab",
-          "songCount": 0,
-          "duration": 0,
+          "songCount": 1,
+          "duration": 100,
           "playCount": 0,
+          "genre": "Pop",
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
           "year": 2021,
           "isCompilation": false,
           "releaseTypes": [
@@ -67,9 +73,18 @@
           "title": "album-aa",
           "album": "album-aa",
           "name": "album-aa",
-          "songCount": 0,
-          "duration": 0,
+          "songCount": 3,
+          "duration": 300,
           "playCount": 7,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            },
+            {
+              "name": "Pop"
+            }
+          ],
           "year": 2018,
           "isCompilation": false,
           "releaseTypes": [
@@ -172,6 +187,15 @@
           "coverArt": "al-4",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            },
+            {
+              "name": "Pop"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-4",

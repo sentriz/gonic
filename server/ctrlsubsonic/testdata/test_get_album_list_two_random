@@ -8,6 +8,64 @@
     "albumList2": {
       "album": [
         {
+          "id": "al-18",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-1",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "empty-album",
+          "album": "empty-album",
+          "name": "empty-album",
+          "songCount": 0,
+          "duration": 0,
+          "playCount": 0,
+          "year": 2015,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Album"
+          ],
+          "discTitles": []
+        },
+        {
+          "id": "al-17",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-19",
+          "artist": "Various Artists",
+          "artists": [
+            {
+              "id": "ar-19",
+              "name": "Various Artists"
+            }
+          ],
+          "displayArtist": "Various Artists",
+          "title": "comp",
+          "album": "comp",
+          "coverArt": "tr-11",
+          "name": "comp",
+          "songCount": 2,
+          "duration": 200,
+          "playCount": 0,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "year": 2020,
+          "isCompilation": true,
+          "releaseTypes": [
+            "Album",
+            "Compilation"
+          ],
+          "discTitles": []
+        },
+        {
           "id": "al-8",
           "created": "2019-11-30T00:00:00Z",
           "artistId": "ar-1",
@@ -42,31 +100,6 @@
           ],
           "discTitles": [],
           "starred": "2020-06-02T12:00:00Z"
-        },
-        {
-          "id": "al-18",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-1",
-          "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
-          "displayArtist": "artist-a",
-          "title": "empty-album",
-          "album": "empty-album",
-          "name": "empty-album",
-          "songCount": 0,
-          "duration": 0,
-          "playCount": 0,
-          "year": 2015,
-          "isCompilation": false,
-          "releaseTypes": [
-            "Album"
-          ],
-          "discTitles": []
         },
         {
           "id": "al-3",
@@ -104,115 +137,6 @@
           "starred": "2020-05-01T12:00:00Z",
           "userRating": 4,
           "averageRating": 4
-        },
-        {
-          "id": "al-17",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-19",
-          "artist": "Various Artists",
-          "artists": [
-            {
-              "id": "ar-19",
-              "name": "Various Artists"
-            }
-          ],
-          "displayArtist": "Various Artists",
-          "title": "comp",
-          "album": "comp",
-          "coverArt": "tr-11",
-          "name": "comp",
-          "songCount": 2,
-          "duration": 200,
-          "playCount": 0,
-          "genre": "Rock",
-          "genres": [
-            {
-              "name": "Rock"
-            }
-          ],
-          "year": 2020,
-          "isCompilation": true,
-          "releaseTypes": [
-            "Album",
-            "Compilation"
-          ],
-          "discTitles": []
-        },
-        {
-          "id": "al-15",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-1",
-          "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
-          "displayArtist": "artist-a",
-          "title": "album-cross",
-          "album": "album-cross",
-          "name": "album-cross",
-          "songCount": 1,
-          "duration": 100,
-          "playCount": 0,
-          "genre": "Rock",
-          "genres": [
-            {
-              "name": "Rock"
-            }
-          ],
-          "year": 2022,
-          "isCompilation": false,
-          "releaseTypes": [
-            "Album"
-          ],
-          "discTitles": []
-        },
-        {
-          "id": "al-4",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-1",
-          "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
-          "displayArtist": "artist-a",
-          "title": "album-ab",
-          "album": "album-ab",
-          "coverArt": "al-4",
-          "name": "album-ab",
-          "songCount": 2,
-          "duration": 200,
-          "playCount": 2,
-          "genre": "Rock",
-          "genres": [
-            {
-              "name": "Rock"
-            },
-            {
-              "name": "Pop"
-            }
-          ],
-          "year": 2019,
-          "isCompilation": false,
-          "releaseTypes": [
-            "EP"
-          ],
-          "discTitles": [
-            {
-              "disc": 1,
-              "title": "Disc One"
-            },
-            {
-              "disc": 2,
-              "title": "Disc Two"
-            }
-          ],
-          "averageRating": 5
         },
         {
           "id": "al-12",
@@ -277,6 +201,51 @@
           "discTitles": []
         },
         {
+          "id": "al-4",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-1",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "album-ab",
+          "album": "album-ab",
+          "coverArt": "al-4",
+          "name": "album-ab",
+          "songCount": 2,
+          "duration": 200,
+          "playCount": 2,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            },
+            {
+              "name": "Pop"
+            }
+          ],
+          "year": 2019,
+          "isCompilation": false,
+          "releaseTypes": [
+            "EP"
+          ],
+          "discTitles": [
+            {
+              "disc": 1,
+              "title": "Disc One"
+            },
+            {
+              "disc": 2,
+              "title": "Disc Two"
+            }
+          ],
+          "averageRating": 5
+        },
+        {
           "id": "al-10",
           "created": "2019-11-30T00:00:00Z",
           "artistId": "ar-1",
@@ -305,6 +274,37 @@
             }
           ],
           "year": 2023,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Album"
+          ],
+          "discTitles": []
+        },
+        {
+          "id": "al-15",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-1",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "album-cross",
+          "album": "album-cross",
+          "name": "album-cross",
+          "songCount": 1,
+          "duration": 100,
+          "playCount": 0,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "year": 2022,
           "isCompilation": false,
           "releaseTypes": [
             "Album"

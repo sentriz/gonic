@@ -98,6 +98,15 @@
             "coverArt": "al-4",
             "created": "2019-11-30T00:00:00Z",
             "duration": 100,
+            "genre": "Rock",
+            "genres": [
+              {
+                "name": "Rock"
+              },
+              {
+                "name": "Pop"
+              }
+            ],
             "isDir": false,
             "isVideo": false,
             "parent": "al-4",
@@ -109,6 +118,8 @@
             "type": "music",
             "year": 2019,
             "musicBrainzId": "00000000-0000-0000-0000-ab00000000d1",
+            "starred": "2020-05-01T12:00:00Z",
+            "userRating": 3,
             "averageRating": 3,
             "replayGain": null
           },

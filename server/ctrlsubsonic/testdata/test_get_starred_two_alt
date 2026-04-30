@@ -34,9 +34,15 @@
           "title": "album-ba",
           "album": "album-ba",
           "name": "album-ba",
-          "songCount": 0,
-          "duration": 0,
+          "songCount": 1,
+          "duration": 100,
           "playCount": 0,
+          "genre": "Jazz",
+          "genres": [
+            {
+              "name": "Jazz"
+            }
+          ],
           "year": 2017,
           "isCompilation": false,
           "releaseTypes": [

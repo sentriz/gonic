@@ -43,9 +43,7 @@ func (c *Controller) ServeGetBookmarks(r *http.Request) *spec.Response {
 		case specid.Track:
 			var track db.Track
 			err := c.dbc.
-				Preload("Album").
-				Preload("Album.Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleAlbumArtist).Preload("Artist") }).
-				Preload("Credits.Artist").
+				Scopes(spec.LoadTrackByTags(user.ID)).
 				Find(&track, "id=?", bookmark.EntryID).
 				Error
 			if err != nil {

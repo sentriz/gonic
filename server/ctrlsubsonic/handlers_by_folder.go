@@ -81,9 +81,8 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	// start looking for child childTracks in the current dir
 	var childTracks []*db.Track
 	c.dbc.
-		Scopes(spec.TrackWithArtistCredits, spec.TrackWithUserData(user.ID)).
+		Scopes(spec.LoadTrackByFolder(user.ID)).
 		Where("album_id=?", id.Value).
-		Preload("Album").
 		Order("tracks.tag_disc_number, tracks.tag_track_number").
 		Order("filename").
 		Find(&childTracks)
@@ -251,8 +250,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	// search tracks
 	var tracks []*db.Track
 	q = c.dbc.
-		Scopes(spec.TrackWithArtistCredits, spec.TrackWithUserData(user.ID)).
-		Preload("Album")
+		Scopes(spec.LoadTrackByFolder(user.ID))
 	switch {
 	case isUUID:
 		q = q.Where(`tag_brainz_id = ?`, query)
@@ -333,8 +331,7 @@ func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {
 	// tracks
 	var tracks []*db.Track
 	q = c.dbc.
-		Scopes(spec.TrackWithArtistCredits, spec.TrackWithUserData(user.ID)).
-		Preload("Album").
+		Scopes(spec.LoadTrackByFolder(user.ID)).
 		Joins("JOIN track_stars ON tracks.id=track_stars.track_id").
 		Where("track_stars.user_id=?", user.ID)
 	if musicFolder != "" {

@@ -219,11 +219,8 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 		case specid.Track:
 			var track db.Track
 			err := c.dbc.
+				Scopes(spec.LoadTrackByFolder(user.ID)).
 				Where("id=?", id.Value).
-				Preload("Album").
-				Preload("Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleArtist).Preload("Artist") }).
-				Preload("TrackStar", "user_id=?", user.ID).
-				Preload("TrackRating", "user_id=?", user.ID).
 				Find(&track).
 				Error
 			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -289,12 +286,8 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 	}
 	var track db.Track
 	err = c.dbc.
+		Scopes(spec.LoadTrackByTags(user.ID)).
 		Where("id=?", id.Value).
-		Preload("Album").
-		Preload("Album.Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleAlbumArtist).Preload("Artist") }).
-		Preload("Credits.Artist").
-		Preload("TrackStar", "user_id=?", user.ID).
-		Preload("TrackRating", "user_id=?", user.ID).
 		First(&track).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -316,12 +309,8 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	var tracks []*db.Track
 	q := c.dbc.DB.
+		Scopes(spec.LoadTrackByTags(user.ID)).
 		Limit(params.GetOrInt("size", 10)).
-		Preload("Album").
-		Preload("Album.Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleAlbumArtist).Preload("Artist") }).
-		Preload("Credits.Artist").
-		Preload("TrackStar", "user_id=?", user.ID).
-		Preload("TrackRating", "user_id=?", user.ID).
 		Joins("JOIN albums ON tracks.album_id=albums.id").
 		Order(gorm.Expr("random()"))
 	if year, err := params.GetInt("fromYear"); err == nil {
@@ -334,9 +323,7 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 		q = q.Joins("JOIN track_genres ON track_genres.track_id=tracks.id")
 		q = q.Joins("JOIN genres ON genres.id=track_genres.genre_id AND genres.name=?", genre)
 	}
-	if m := getMusicFolder(c.musicPaths, params); m != "" {
-		q = q.Where("albums.root_dir=?", m)
-	}
+	q = q.Scopes(spec.WithAlbumRootDir(getMusicFolder(c.musicPaths, params)))
 	if err := q.Find(&tracks).Error; err != nil {
 		return spec.NewError(10, "get random songs: %v", err)
 	}
@@ -362,6 +349,7 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 	}
 
 	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
 	trackPaths := func(ids []specid.ID) ([]string, error) {
 		var paths []string
 		for _, id := range ids {
@@ -400,10 +388,8 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 			case specid.Track:
 				var track db.Track
 				if err := c.dbc.
+					Scopes(spec.LoadTrackByTags(user.ID)).
 					Where("id=?", id.Value).
-					Preload("Album").
-					Preload("Album.Credits", func(q *gorm.DB) *gorm.DB { return q.Where("role=?", db.RoleAlbumArtist).Preload("Artist") }).
-					Preload("Credits.Artist").
 					Find(&track).Error; err != nil {
 					return nil, fmt.Errorf("load track: %w", err)
 				}

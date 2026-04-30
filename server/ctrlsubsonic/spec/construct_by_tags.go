@@ -6,8 +6,38 @@ import (
 	"slices"
 	"sort"
 
+	"github.com/jinzhu/gorm"
+
 	"go.senan.xyz/gonic/db"
 )
+
+func LoadAlbumByTags(userID int) func(*gorm.DB) *gorm.DB {
+	return func(q *gorm.DB) *gorm.DB {
+		return q.
+			Scopes(AlbumWithTrackCounts, AlbumWithAlbumArtistCredits, AlbumWithUserData(userID)).
+			Preload("Genres").
+			Preload("DiscTitles").
+			Preload("Play", "user_id=?", userID)
+	}
+}
+
+func LoadTrackByTags(userID int) func(*gorm.DB) *gorm.DB {
+	return func(q *gorm.DB) *gorm.DB {
+		return q.
+			Scopes(TrackWithAlbumArtistCredits, TrackWithUserData(userID)).
+			Preload("Album").
+			Preload("Credits.Artist").
+			Preload("Genres")
+	}
+}
+
+func LoadArtistByTags(userID int) func(*gorm.DB) *gorm.DB {
+	return func(q *gorm.DB) *gorm.DB {
+		return q.
+			Scopes(ArtistWithRolesAndAlbumCount, ArtistWithUserData(userID)).
+			Preload("Info")
+	}
+}
 
 func NewAlbumByTags(a *AlbumRow, credits []*db.AlbumCredit) *Album {
 	ret := &Album{
