@@ -33,7 +33,7 @@ func New(path string, opts url.Values, logQueries bool) (*DB, error) {
 		return nil, fmt.Errorf("with gorm: %w", err)
 	}
 
-	db.SetLogger(log.New(os.Stdout, "gorm ", 0))
+	db.SetLogger(queryLogger{log.New(os.Stdout, "", log.LstdFlags)})
 	if logQueries {
 		db.LogMode(true)
 	}
@@ -644,4 +644,15 @@ func join[T fmt.Stringer](in []T, sep string) string {
 		strs = append(strs, id.String())
 	}
 	return strings.Join(strs, sep)
+}
+
+type queryLogger struct{ *log.Logger }
+
+func (l queryLogger) Print(values ...any) {
+	if len(values) < 4 || values[0] != "sql" {
+		return
+	}
+	dur, _ := values[2].(time.Duration)
+	sql, _ := values[3].(string)
+	l.Printf("query %s %q", dur, sql)
 }
