@@ -172,7 +172,6 @@ func TestUpdatedTags(t *testing.T) {
 	assert.Equal(t, "artist", track.TagTrackArtist)                                                    // track has tags
 	assert.Equal(t, "album", track.Album.TagTitle)                                                     // track has tags
 	assert.Equal(t, "title", track.TagTitle)                                                           // track has tags
-
 	var trackArtistA db.Artist
 	assert.NoError(t, m.DB().Joins("JOIN album_credits ON album_credits.artist_id=artists.id AND album_credits.role='albumartist'").Where("album_credits.album_id=?", track.AlbumID).Limit(1).Find(&trackArtistA).Error) // updated has tags
 	assert.Equal(t, "album-artist", trackArtistA.Name)                                                                                                                                                                   // track has tags
