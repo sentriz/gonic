@@ -58,7 +58,7 @@ type Controller struct {
 	musicPaths      []MusicPath
 	podcastsPath    string
 	cacheAudioPath  string
-	cacheCoverPath  string
+	coverCache      *CoverCache
 	jukebox         *jukebox.Jukebox
 	playlistStore   *playlist.Store
 	scrobblers      []scrobble.Scrobbler
@@ -72,7 +72,7 @@ type Controller struct {
 	resolveProxyPath ProxyPathResolver
 }
 
-func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPath string, cacheAudioPath string, cacheCoverPath string, jukebox *jukebox.Jukebox, playlistStore *playlist.Store, scrobblers []scrobble.Scrobbler, podcasts *podcast.Podcasts, transcoder transcode.Transcoder, lastFMClient *lastfm.Client, artistInfoCache *artistinfocache.ArtistInfoCache, albumInfoCache *albuminfocache.AlbumInfoCache, tagReader tags.Reader, resolveProxyPath ProxyPathResolver) (*Controller, error) {
+func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPath string, cacheAudioPath string, coverCache *CoverCache, jukebox *jukebox.Jukebox, playlistStore *playlist.Store, scrobblers []scrobble.Scrobbler, podcasts *podcast.Podcasts, transcoder transcode.Transcoder, lastFMClient *lastfm.Client, artistInfoCache *artistinfocache.ArtistInfoCache, albumInfoCache *albuminfocache.AlbumInfoCache, tagReader tags.Reader, resolveProxyPath ProxyPathResolver) (*Controller, error) {
 	c := Controller{
 		ServeMux: http.NewServeMux(),
 
@@ -81,7 +81,7 @@ func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPa
 		musicPaths:      musicPaths,
 		podcastsPath:    podcastsPath,
 		cacheAudioPath:  cacheAudioPath,
-		cacheCoverPath:  cacheCoverPath,
+		coverCache:      coverCache,
 		jukebox:         jukebox,
 		playlistStore:   playlistStore,
 		scrobblers:      scrobblers,
