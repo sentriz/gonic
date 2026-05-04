@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"time"
 
+	"go.senan.xyz/gonic/cache"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/handlerutil"
 	"go.senan.xyz/gonic/infocache/albuminfocache"
@@ -58,7 +59,7 @@ type Controller struct {
 	musicPaths      []MusicPath
 	podcastsPath    string
 	cacheAudioPath  string
-	coverCache      *CoverCache
+	coverCache      *cache.DirCache
 	jukebox         *jukebox.Jukebox
 	playlistStore   *playlist.Store
 	scrobblers      []scrobble.Scrobbler
@@ -72,7 +73,7 @@ type Controller struct {
 	resolveProxyPath ProxyPathResolver
 }
 
-func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPath string, cacheAudioPath string, coverCache *CoverCache, jukebox *jukebox.Jukebox, playlistStore *playlist.Store, scrobblers []scrobble.Scrobbler, podcasts *podcast.Podcasts, transcoder transcode.Transcoder, lastFMClient *lastfm.Client, artistInfoCache *artistinfocache.ArtistInfoCache, albumInfoCache *albuminfocache.AlbumInfoCache, tagReader tags.Reader, resolveProxyPath ProxyPathResolver) (*Controller, error) {
+func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPath string, cacheAudioPath string, coverCache *cache.DirCache, jukebox *jukebox.Jukebox, playlistStore *playlist.Store, scrobblers []scrobble.Scrobbler, podcasts *podcast.Podcasts, transcoder transcode.Transcoder, lastFMClient *lastfm.Client, artistInfoCache *artistinfocache.ArtistInfoCache, albumInfoCache *albuminfocache.AlbumInfoCache, tagReader tags.Reader, resolveProxyPath ProxyPathResolver) (*Controller, error) {
 	c := Controller{
 		ServeMux: http.NewServeMux(),
 
