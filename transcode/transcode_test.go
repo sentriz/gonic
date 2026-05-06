@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"go.senan.xyz/gonic/cache"
 	"go.senan.xyz/gonic/transcode"
 )
 
@@ -113,7 +114,7 @@ func TestCachingParallelism(t *testing.T) {
 		callback:   func() { realTranscodeCount.Add(1) },
 	}
 
-	cacheTranscoder := transcode.NewCachingTranscoder(transcoder, t.TempDir(), 1024)
+	cacheTranscoder := transcode.NewCachingTranscoder(transcoder, cache.New(t.TempDir(), 1024))
 
 	var wg sync.WaitGroup
 	for range 5 {

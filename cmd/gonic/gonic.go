@@ -32,6 +32,7 @@ import (
 	"go.senan.xyz/flagconf"
 
 	"go.senan.xyz/gonic"
+	"go.senan.xyz/gonic/cache"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/deps"
 	"go.senan.xyz/gonic/handlerutil"
@@ -217,11 +218,8 @@ func main() {
 		genreTree,
 	)
 	podcast := podcast.New(dbc, *confPodcastPath, tagReader)
-	transcoder := transcode.NewCachingTranscoder(
-		transcode.NewFFmpegTranscoder(),
-		cacheDirAudio,
-		*confTranscodeCacheSize,
-	)
+	transcodeCache := cache.New(cacheDirAudio, *confTranscodeCacheSize)
+	transcoder := transcode.NewCachingTranscoder(transcode.NewFFmpegTranscoder(), transcodeCache)
 
 	lastfmClientKeySecretFunc := func() (string, string, error) {
 		apiKey, _ := dbc.GetSetting(db.LastFMAPIKey)
@@ -275,7 +273,7 @@ func main() {
 	if err != nil {
 		log.Panicf("error creating admin controller: %v\n", err)
 	}
-	coverCache := ctrlsubsonic.NewCoverCache(cacheDirCovers, *confCoverCacheSize)
+	coverCache := cache.New(cacheDirCovers, *confCoverCacheSize)
 	ctrlSubsonic, err := ctrlsubsonic.New(dbc, scannr, musicPaths, *confPodcastPath, cacheDirAudio, coverCache, jukebx, playlistStore, scrobblers, podcast, transcoder, lastfmClient, artistInfoCache, albumInfoCache, tagReader, resolveProxyPath)
 	if err != nil {
 		log.Panicf("error creating subsonic controller: %v\n", err)
@@ -434,7 +432,7 @@ func main() {
 		defer logJob("transcode cache eject")()
 
 		ctxTick(ctx, time.Duration(*confTranscodeEjectInterval)*time.Minute, func() {
-			if err := transcoder.CacheEject(); err != nil {
+			if err := transcodeCache.Eject(); err != nil {
 				log.Printf("error ejecting transcode cache: %v", err)
 			}
 		})
@@ -449,7 +447,7 @@ func main() {
 		defer logJob("cover cache eject")()
 
 		ctxTick(ctx, time.Duration(*confCoverEjectInterval)*time.Minute, func() {
-			if err := coverCache.CacheEject(); err != nil {
+			if err := coverCache.Eject(); err != nil {
 				log.Printf("error ejecting cover cache: %v", err)
 			}
 		})

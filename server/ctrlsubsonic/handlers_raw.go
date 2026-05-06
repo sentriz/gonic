@@ -63,11 +63,11 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 		return spec.NewError(0, "invalid size")
 	}
 
-	c.coverCache.cleanLock.RLock()
-	defer c.coverCache.cleanLock.RUnlock()
+	c.coverCache.RLock()
+	defer c.coverCache.RUnlock()
 
 	// cached cover could exist for any supported format
-	cachePath, err := findCachedCover(c.coverCache.path, id.String(), size)
+	cachePath, err := findCachedCover(c.coverCache.Path(), id.String(), size)
 	if err != nil && !os.IsNotExist(err) {
 		log.Printf("error checking cache: %v", err)
 		return nil
@@ -98,7 +98,7 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 	// don't upscale
 	minSize := min(size, max(img.Bounds().Dx(), img.Bounds().Dy()))
 
-	cachePath = filepath.Join(c.coverCache.path, coverCacheFilename(id.String(), minSize, format))
+	cachePath = filepath.Join(c.coverCache.Path(), coverCacheFilename(id.String(), minSize, format))
 
 	if minSize != size {
 		// we down sized, check cache again
