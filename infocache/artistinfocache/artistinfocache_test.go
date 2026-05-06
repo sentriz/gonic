@@ -44,7 +44,7 @@ func TestInfoCache(t *testing.T) {
 		},
 	)
 
-	cache := New(m.DB(), lastfmClient)
+	cache := New(m.DB(), lastfmClient, nil)
 	_, err := cache.GetOrLookup(context.Background(), artist.ID)
 	require.NoError(t, err)
 	_, err = cache.GetOrLookup(context.Background(), artist.ID)

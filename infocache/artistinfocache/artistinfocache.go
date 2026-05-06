@@ -11,6 +11,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/lastfm"
+	"go.senan.xyz/gonic/musicbrainz"
 )
 
 const keepFor = 30 * time.Hour * 24
@@ -18,10 +19,11 @@ const keepFor = 30 * time.Hour * 24
 type ArtistInfoCache struct {
 	db           *db.DB
 	lastfmClient *lastfm.Client
+	mbClient     *musicbrainz.Client
 }
 
-func New(db *db.DB, lastfmClient *lastfm.Client) *ArtistInfoCache {
-	return &ArtistInfoCache{db: db, lastfmClient: lastfmClient}
+func New(db *db.DB, lastfmClient *lastfm.Client, mbClient *musicbrainz.Client) *ArtistInfoCache {
+	return &ArtistInfoCache{db: db, lastfmClient: lastfmClient, mbClient: mbClient}
 }
 
 func (a *ArtistInfoCache) GetOrLookup(ctx context.Context, artistID int) (*db.ArtistInfo, error) {
@@ -53,6 +55,8 @@ func (a *ArtistInfoCache) Get(ctx context.Context, artistID int) (*db.ArtistInfo
 	return &artistInfo, nil
 }
 
+// TODO: this fails on lastfmClient.ArtistGetInfo if there no lastfm api key.
+// but once we scan mb artist IDs from tags, we can do the MB performer look up without lastfm
 func (a *ArtistInfoCache) Lookup(ctx context.Context, artist *db.Artist) (*db.ArtistInfo, error) {
 	var artistInfo db.ArtistInfo
 	artistInfo.ID = artist.ID
@@ -78,7 +82,10 @@ func (a *ArtistInfoCache) Lookup(ctx context.Context, artist *db.Artist) (*db.Ar
 	for _, sim := range info.Similar.Artists {
 		similar = append(similar, sim.Name)
 	}
-	artistInfo.SetSimilarArtists(similar)
+	if a.mbClient != nil && info.MBID != "" {
+		similar = append(similar, musicBrainzPerformaceNames(ctx, a.mbClient, info.MBID)...)
+	}
+	artistInfo.SetSimilarArtists(dedupe(similar))
 
 	if url, _ := a.lastfmClient.StealArtistImage(info.URL); url != "" {
 		artistInfo.ImageURL = url
@@ -122,4 +129,55 @@ func (a *ArtistInfoCache) Refresh() error {
 	log.Printf("cached artist info for %q", artist.Name)
 
 	return nil
+}
+
+func musicBrainzPerformaceNames(ctx context.Context, mbClient *musicbrainz.Client, mbid string) []string {
+	seen := map[string]struct{}{mbid: {}}
+	return walkMusicBrainzPerformanceNames(ctx, mbClient, mbid, seen, 0)
+}
+
+func walkMusicBrainzPerformanceNames(ctx context.Context, mbClient *musicbrainz.Client, mbid string, seen map[string]struct{}, depth int) []string {
+	const maxDepth = 1
+
+	artist, err := mbClient.GetArtist(ctx, mbid, "artist-rels")
+	if err != nil {
+		log.Printf("error fetching musicbrainz artist %s: %v", mbid, err)
+		return nil
+	}
+
+	var out []string
+	for _, rel := range artist.Relations {
+		if rel.TypeID != musicbrainz.LinkTypeIDIsPerson || rel.TargetType != "artist" {
+			continue
+		}
+		target := rel.Artist
+		if _, ok := seen[target.ID]; ok {
+			continue
+		}
+		seen[target.ID] = struct{}{}
+
+		switch rel.Direction {
+		case musicbrainz.DirectionForward:
+			out = append(out, target.Name)
+		case musicbrainz.DirectionBackward:
+			if depth >= maxDepth {
+				continue
+			}
+			out = append(out, walkMusicBrainzPerformanceNames(ctx, mbClient, target.ID, seen, depth+1)...)
+		}
+	}
+	return out
+}
+
+func dedupe(in []string) []string {
+	seen := make(map[string]struct{}, len(in))
+	out := in[:0]
+	for _, s := range in {
+		if _, ok := seen[s]; ok {
+			continue
+		}
+		seen[s] = struct{}{}
+		out = append(out, s)
+	}
+	return out
 }

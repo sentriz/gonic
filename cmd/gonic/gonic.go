@@ -40,6 +40,7 @@ import (
 	"go.senan.xyz/gonic/jukebox"
 	"go.senan.xyz/gonic/lastfm"
 	"go.senan.xyz/gonic/listenbrainz"
+	"go.senan.xyz/gonic/musicbrainz"
 	"go.senan.xyz/gonic/playlist"
 	"go.senan.xyz/gonic/podcast"
 	"go.senan.xyz/gonic/scanner"
@@ -222,6 +223,7 @@ func main() {
 
 	listenbrainzClient := listenbrainz.NewClient()
 	lastfmClient := lastfm.NewClient(lastfmClientKeySecretFunc)
+	mbClient := musicbrainz.NewClient(fmt.Sprintf("gonic/%s", gonic.Version))
 
 	playlistStore, err := playlist.NewStore(*confPlaylistsPath)
 	if err != nil {
@@ -247,7 +249,7 @@ func main() {
 	sessDB.SessionOpts.HttpOnly = true
 	sessDB.SessionOpts.SameSite = http.SameSiteLaxMode
 
-	artistInfoCache := artistinfocache.New(dbc, lastfmClient)
+	artistInfoCache := artistinfocache.New(dbc, lastfmClient, mbClient)
 	albumInfoCache := albuminfocache.New(dbc, lastfmClient)
 
 	scrobblers := []scrobble.Scrobbler{lastfmClient, listenbrainzClient}

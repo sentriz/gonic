@@ -34,6 +34,7 @@ require (
 	go.senan.xyz/wrtag v0.30.1-0.20260423121427-fec4b6e433cb
 	golang.org/x/net v0.53.0
 	golang.org/x/sync v0.20.0
+	golang.org/x/time v0.15.0
 	gopkg.in/gormigrate.v1 v1.6.0
 )
 

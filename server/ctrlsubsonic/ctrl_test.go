@@ -436,7 +436,7 @@ func newFixture(tb testing.TB) *fixture {
 		dbc:              dbc,
 		musicPaths:       musicPaths,
 		transcoder:       transcode.NewFFmpegTranscoder(),
-		artistInfoCache:  artistinfocache.New(dbc, nil),
+		artistInfoCache:  artistinfocache.New(dbc, nil, nil),
 		albumInfoCache:   albuminfocache.New(dbc, nil),
 		playlistStore:    playlistStore,
 		resolveProxyPath: func(in string) string { return in },
