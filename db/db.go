@@ -401,6 +401,12 @@ type TranscodePreference struct {
 	Profile string `gorm:"not null" sql:"default: null"`
 }
 
+type ClientCoverSizePreference struct {
+	UserID        int    `gorm:"not null; unique_index:idx_client_pref_user_client" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
+	Client        string `gorm:"not null; unique_index:idx_client_pref_user_client" sql:"default: null"`
+	LastCoverSize int    `sql:"default: null"`
+}
+
 type AlbumCredit struct {
 	AlbumID    int    `gorm:"not null; unique_index:idx_album_credit" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	ArtistID   int    `gorm:"not null; unique_index:idx_album_credit; index:idx_album_credits_artist_id" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`

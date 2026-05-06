@@ -87,6 +87,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202604231200", migrateAddTrackContributors),
 		construct(ctx, "202604280000", migrateAddCreditedAs),
 		construct(ctx, "202604281200", migrateUnifyCredits),
+		construct(ctx, "202605061000", migrateAddClientCoverSizePreference),
 	}
 
 	return gormigrate.
@@ -937,4 +938,8 @@ func migrateAddTrackYear(tx *gorm.DB, _ MigrationContext) error {
 	}
 
 	return nil
+}
+
+func migrateAddClientCoverSizePreference(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(ClientCoverSizePreference{}).Error
 }
