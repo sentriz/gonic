@@ -30,6 +30,7 @@ require (
 	github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981
 	github.com/stretchr/testify v1.11.1
 	go.senan.xyz/flagconf v0.1.11
+	go.senan.xyz/sqlitenotify v0.0.0-20260507184820-add96f678480
 	go.senan.xyz/taglib v0.11.1
 	go.senan.xyz/wrtag v0.30.1-0.20260423121427-fec4b6e433cb
 	golang.org/x/net v0.53.0

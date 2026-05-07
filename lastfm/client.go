@@ -17,6 +17,7 @@ import (
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/scrobble"
 	"golang.org/x/net/html"
+	"golang.org/x/time/rate"
 )
 
 var (
@@ -29,6 +30,7 @@ type KeySecretFunc func() (apiKey, secret string, err error)
 type Client struct {
 	httpClient *http.Client
 	keySecret  KeySecretFunc
+	Limiter    *rate.Limiter
 }
 
 func NewClient(keySecret KeySecretFunc) *Client {
@@ -36,7 +38,11 @@ func NewClient(keySecret KeySecretFunc) *Client {
 }
 
 func NewClientCustom(httpClient *http.Client, keySecret KeySecretFunc) *Client {
-	return &Client{httpClient: httpClient, keySecret: keySecret}
+	return &Client{
+		httpClient: httpClient,
+		keySecret:  keySecret,
+		Limiter:    rate.NewLimiter(rate.Every(time.Second/5), 1),
+	}
 }
 
 const (
@@ -319,6 +325,10 @@ func (c *Client) makeRequest(method string, params url.Values) (LastFM, error) {
 	}
 
 	req.URL.RawQuery = params.Encode()
+
+	if err := c.Limiter.Wait(req.Context()); err != nil {
+		return LastFM{}, fmt.Errorf("rate limit: %w", err)
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

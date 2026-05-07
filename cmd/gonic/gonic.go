@@ -30,6 +30,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"go.senan.xyz/flagconf"
+	"go.senan.xyz/sqlitenotify"
 
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/cache"
@@ -325,6 +326,11 @@ func main() {
 	defer cancel()
 	errgrp, ctx := errgroup.WithContext(ctx)
 
+	dbNotify, err := sqlitenotify.NewNotifier(ctx, sqlitenotify.SQLite(dbc.DB.DB()))
+	if err != nil {
+		log.Panicf("create sqlitenotify: %v\n", err)
+	}
+
 	errgrp.Go(func() error {
 		defer logJob("http")()
 
@@ -381,7 +387,9 @@ func main() {
 	errgrp.Go(func() error {
 		defer logJob("session clean")()
 
-		ctxTick(ctx, 10*time.Minute, func() {
+		sessDB.Cleanup()
+
+		ctxTick(ctx, 24*time.Hour, func() {
 			sessDB.Cleanup()
 		})
 		return nil
@@ -401,11 +409,11 @@ func main() {
 	errgrp.Go(func() error {
 		defer logJob("podcast download")()
 
-		ctxTick(ctx, 5*time.Second, func() {
+		for range dbNotify.Listen(ctx, 5*time.Second, 0) {
 			if err := podcast.DownloadTick(); err != nil {
 				log.Printf("failed to download podcast: %s", err)
 			}
-		})
+		}
 		return nil
 	})
 
@@ -476,11 +484,11 @@ func main() {
 
 		defer logJob("refresh artist info")()
 
-		ctxTick(ctx, 8*time.Second, func() {
+		for range dbNotify.Listen(ctx, 8*time.Second, 6*time.Hour) {
 			if err := artistInfoCache.Refresh(); err != nil {
 				log.Printf("error in artist info cache: %v", err)
 			}
-		})
+		}
 		return nil
 	})
 

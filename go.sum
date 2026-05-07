@@ -152,6 +152,8 @@ github.com/tetratelabs/wazero v1.11.0/go.mod h1:eV28rsN8Q+xwjogd7f4/Pp4xFxO7uOGb
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 go.senan.xyz/flagconf v0.1.11 h1:ApA9DpoSrfVQlLt8spKJC3fOT7oTEZ2/MmBGMnb9mt4=
 go.senan.xyz/flagconf v0.1.11/go.mod h1:NqOFfSwJvNWXOTUabcRZ8mPK9+sJmhStJhqtEt74wNQ=
+go.senan.xyz/sqlitenotify v0.0.0-20260507184820-add96f678480 h1:ATcMLf99i3qjs7RFXB1eYGWD58c5bO/yLDG1qRQtQ0w=
+go.senan.xyz/sqlitenotify v0.0.0-20260507184820-add96f678480/go.mod h1:6iYUddh5viOCB1OKkwDRGxNRkLCUve9wWqfO4X7fD/U=
 go.senan.xyz/taglib v0.11.1 h1:S3mO5e3HRRG0Ehw1jLUodYbAJK8TtqdOoNgqkC0D3uU=
 go.senan.xyz/taglib v0.11.1/go.mod h1:qyTl978MnGeZ/ny4d/t0ErLXxysA+39X4+SNSCk56Zs=
 go.senan.xyz/wrtag v0.30.1-0.20260423121427-fec4b6e433cb h1:hFxxWH6MlgcHZQv2BpkQ1KSp8MSbXMHtN338/HfSzdY=
