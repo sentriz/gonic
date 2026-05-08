@@ -205,7 +205,7 @@ func (c *Client) GetSession(token string) (string, error) {
 var artistOpenGraphQuery = cascadia.MustCompile(`html > head > meta[property="og:image"]`)
 
 func (c *Client) StealArtistImage(artistURL string) (string, error) {
-	resp, err := c.httpClient.Get(artistURL) //nolint:gosec
+	resp, err := httpGetRetry(c.httpClient, artistURL, 3) //nolint:gosec
 	if err != nil {
 		return "", fmt.Errorf("get artist url: %w", err)
 	}
@@ -233,6 +233,24 @@ func (c *Client) StealArtistImage(artistURL string) (string, error) {
 	}
 
 	return imageURL, nil
+}
+
+func httpGetRetry(client *http.Client, url string, attempts int) (*http.Response, error) {
+	var resp *http.Response
+	var err error
+	for i := range attempts {
+		if i > 0 {
+			if resp != nil {
+				resp.Body.Close()
+			}
+			time.Sleep(time.Duration(i) * 2 * time.Second)
+		}
+		resp, err = client.Get(url) //nolint:gosec
+		if err == nil && resp.StatusCode/100 != 5 {
+			return resp, nil
+		}
+	}
+	return resp, err
 }
 
 func (c *Client) IsUserAuthenticated(user db.User) bool {
