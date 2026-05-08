@@ -12,18 +12,18 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/env25/mpdlrc v0.7.4
 	github.com/fatih/structs v1.1.0
-	github.com/fsnotify/fsnotify v1.9.0
+	github.com/fsnotify/fsnotify v1.10.1
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/securecookie v1.1.2
 	github.com/gorilla/sessions v1.4.0
 	github.com/jinzhu/gorm v1.9.17-0.20211120011537-5c235b72a414
 	github.com/josephburnett/jd v1.9.2
-	github.com/mattn/go-sqlite3 v1.14.42
+	github.com/mattn/go-sqlite3 v1.14.44
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mmcdole/gofeed v1.3.0
-	github.com/ncruces/go-sqlite3 v0.33.3
+	github.com/ncruces/go-sqlite3 v0.34.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/philippta/go-template v0.0.0-20220911145045-4556aca435e4
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
@@ -31,8 +31,8 @@ require (
 	github.com/stretchr/testify v1.11.1
 	go.senan.xyz/flagconf v0.1.11
 	go.senan.xyz/sqlitenotify v0.0.0-20260507184820-add96f678480
-	go.senan.xyz/taglib v0.11.1
-	go.senan.xyz/wrtag v0.30.1-0.20260423121427-fec4b6e433cb
+	go.senan.xyz/taglib v0.12.0
+	go.senan.xyz/wrtag v0.30.1-0.20260508114350-7dd3a6ce9fc9
 	golang.org/x/net v0.53.0
 	golang.org/x/sync v0.20.0
 	golang.org/x/time v0.15.0
@@ -61,10 +61,10 @@ require (
 	github.com/mmcdole/goxpp v1.1.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/ncruces/go-sqlite3-wasm v1.1.1-0.20260409221933-87e4b35a38d0 // indirect
+	github.com/ncruces/go-sqlite3-wasm/v2 v2.2.35300 // indirect
 	github.com/ncruces/julianday v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/tetratelabs/wazero v1.11.0 // indirect
+	github.com/tetratelabs/wazero v1.11.1-0.20260428013916-2bbd517b7633 // indirect
 	golang.org/x/crypto v0.50.0 // indirect
 	golang.org/x/image v0.39.0 // indirect
 	golang.org/x/sys v0.43.0 // indirect
