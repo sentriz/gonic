@@ -353,9 +353,8 @@ func TestISRCs(t *testing.T) {
 
 	trackISRC := func(artist, album, filename, isrcVal string) error {
 		return m.DB().
-			Where("albums.left_path=? AND albums.right_path=? AND tracks.filename=? AND isrcs.value=?", artist, album, filename, isrcVal).
+			Where("albums.left_path=? AND albums.right_path=? AND tracks.filename=? AND isrc=?", artist, album, filename, isrcVal).
 			Joins("JOIN tracks ON tracks.id=track_isrcs.track_id").
-			Joins("JOIN isrcs ON isrcs.id=track_isrcs.isrc_id").
 			Joins("JOIN albums ON albums.id=tracks.album_id").
 			Find(&db.TrackISRC{}).
 			Error
@@ -368,7 +367,7 @@ func TestISRCs(t *testing.T) {
 	}
 
 	isrc := func(isrcVal string) error {
-		return m.DB().Where("value=?", isrcVal).Find(&db.ISRC{}).Error
+		return m.DB().Where("isrc=?", isrcVal).Find(&db.TrackISRC{}).Error
 	}
 	isISRC := func(isrcVal string) {
 		assert.NoError(t, isrc(isrcVal))
@@ -414,6 +413,7 @@ func TestISRCs(t *testing.T) {
 	isISRCMissing("123456789A")
 	isISRCMissing("123456789B")
 }
+
 func TestMultiFolders(t *testing.T) {
 	t.Parallel()
 	m := mockfs.NewWithDirs(t, []string{"m-1", "m-2", "m-3"})

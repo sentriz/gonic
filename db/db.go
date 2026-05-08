@@ -203,11 +203,6 @@ type Genre struct {
 	Name string `gorm:"not null; unique_index"`
 }
 
-type ISRC struct {
-	ID    int    `gorm:"primary_key"`
-	Value string `gorm:"not null; unique_index"`
-}
-
 // AudioFile is used to avoid some duplication in handlers_raw.go
 // between Track and Podcast
 type AudioFile interface {
@@ -228,7 +223,7 @@ type Track struct {
 	AlbumID        int            `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Credits        []*TrackCredit `gorm:"foreignkey:track_id"`
 	Genres         []*Genre       `gorm:"many2many:track_genres"`
-	ISRCs          []*ISRC        `gorm:"many2many:track_isrcs"`
+	ISRCs          []*TrackISRC   `gorm:"foreignkey:track_id"`
 	Size           int            `sql:"default: null"`
 	Length         int            `sql:"default: null"`
 	Bitrate        int            `sql:"default: null"`
@@ -441,8 +436,8 @@ type TrackGenre struct {
 }
 
 type TrackISRC struct {
-	TrackID int `gorm:"not null; unique_index:idx_track_id_isrc_id" sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
-	IsrcID  int `gorm:"not null; unique_index:idx_track_id_isrc_id" sql:"default: null; type:int REFERENCES isrcs(id) ON DELETE CASCADE"`
+	TrackID int    `gorm:"not null unique_index:idx_track_isrc" sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
+	ISRC    string `gorm:"not null; unique_index:idx_track_isrc" sql:"default: null;"`
 }
 
 type AlbumGenre struct {

@@ -180,8 +180,8 @@ func NewTrackByTags(client string, t *db.Track, album *db.Album) *TrackChild {
 	for _, g := range t.Genres {
 		ret.Genres = append(ret.Genres, &GenreRef{Name: g.Name})
 	}
-	for _, t := range t.ISRCs {
-		ret.ISRC = append(ret.ISRC, t.Value)
+	for _, trI := range t.ISRCs {
+		ret.ISRC = append(ret.ISRC, trI.ISRC)
 	}
 	for _, c := range albumArtists {
 		if c.Artist == nil {

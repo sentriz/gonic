@@ -128,8 +128,8 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 	for _, g := range t.Genres {
 		trCh.Genres = append(trCh.Genres, &GenreRef{Name: g.Name})
 	}
-	for _, t := range t.ISRCs {
-		trCh.ISRC = append(trCh.ISRC, t.Value)
+	for _, trI := range t.ISRCs {
+		trCh.ISRC = append(trCh.ISRC, trI.ISRC)
 	}
 	trackArtists := filterTrackCreditsByRole(t.Credits, db.RoleArtist)
 	sort.Slice(trackArtists, func(i, j int) bool {

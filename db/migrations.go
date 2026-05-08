@@ -947,16 +947,8 @@ func migrateAddGenreInherited(tx *gorm.DB, _ MigrationContext) error {
 }
 
 func migrateAddTrackIsrc(tx *gorm.DB, _ MigrationContext) error {
-	step := tx.AutoMigrate(
+	return tx.AutoMigrate(
 		Track{},
-		ISRC{},
 		TrackISRC{},
-	)
-	if err := step.Error; err != nil {
-		return fmt.Errorf("step auto migrate track for ISRC addition: %w", err)
-	}
-
-	return tx.Exec(`
-		CREATE INDEX idx_track_isrcs_id ON "track_isrcs" (isrc_id);
-		`).Error
+	).Error
 }
