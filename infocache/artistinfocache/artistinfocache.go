@@ -83,7 +83,12 @@ func (a *ArtistInfoCache) Lookup(ctx context.Context, artist *db.Artist) (*db.Ar
 		similar = append(similar, sim.Name)
 	}
 	if a.mbClient != nil && info.MBID != "" {
-		similar = append(similar, musicBrainzPerformaceNames(ctx, a.mbClient, info.MBID)...)
+		if related, err := musicBrainzRelatedArtists(ctx, a.mbClient, info.MBID); err != nil {
+			log.Printf("error fetching musicbrainz artist %s: %v", info.MBID, err)
+			// non-fatal
+		} else {
+			similar = append(similar, related...)
+		}
 	}
 	artistInfo.SetSimilarArtists(dedupe(similar))
 
@@ -138,23 +143,25 @@ func (a *ArtistInfoCache) Refresh() error {
 	}
 }
 
-func musicBrainzPerformaceNames(ctx context.Context, mbClient *musicbrainz.Client, mbid string) []string {
+func musicBrainzRelatedArtists(ctx context.Context, mbClient *musicbrainz.Client, mbid string) ([]string, error) {
 	seen := map[string]struct{}{mbid: {}}
-	return walkMusicBrainzPerformanceNames(ctx, mbClient, mbid, seen, 0)
+	return walkMusicBrainzRelatedArtists(ctx, mbClient, mbid, seen, 0)
 }
 
-func walkMusicBrainzPerformanceNames(ctx context.Context, mbClient *musicbrainz.Client, mbid string, seen map[string]struct{}, depth int) []string {
+func walkMusicBrainzRelatedArtists(ctx context.Context, mbClient *musicbrainz.Client, mbid string, seen map[string]struct{}, depth int) ([]string, error) {
 	const maxDepth = 1
 
 	artist, err := mbClient.GetArtist(ctx, mbid, "artist-rels")
 	if err != nil {
-		log.Printf("error fetching musicbrainz artist %s: %v", mbid, err)
-		return nil
+		return nil, fmt.Errorf("fetch %s: %w", mbid, err)
 	}
 
 	var out []string
 	for _, rel := range artist.Relations {
-		if rel.TypeID != musicbrainz.LinkTypeIDIsPerson || rel.TargetType != "artist" {
+		if rel.TargetType != "artist" {
+			continue
+		}
+		if rel.TypeID != musicbrainz.LinkTypeIDIsPerson && rel.TypeID != musicbrainz.LinkTypeIDMemberOfBand {
 			continue
 		}
 		target := rel.Artist
@@ -163,17 +170,16 @@ func walkMusicBrainzPerformanceNames(ctx context.Context, mbClient *musicbrainz.
 		}
 		seen[target.ID] = struct{}{}
 
-		switch rel.Direction {
-		case musicbrainz.DirectionForward:
-			out = append(out, target.Name)
-		case musicbrainz.DirectionBackward:
-			if depth >= maxDepth {
-				continue
+		out = append(out, target.Name)
+		if rel.Direction == musicbrainz.DirectionBackward && depth < maxDepth {
+			sub, err := walkMusicBrainzRelatedArtists(ctx, mbClient, target.ID, seen, depth+1)
+			if err != nil {
+				return nil, err
 			}
-			out = append(out, walkMusicBrainzPerformanceNames(ctx, mbClient, target.ID, seen, depth+1)...)
+			out = append(out, sub...)
 		}
 	}
-	return out
+	return out, nil
 }
 
 func dedupe(in []string) []string {
