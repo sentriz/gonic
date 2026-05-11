@@ -436,8 +436,8 @@ type TrackGenre struct {
 }
 
 type TrackISRC struct {
-	TrackID int    `gorm:"not null unique_index:idx_track_isrc" sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
-	ISRC    string `gorm:"not null; unique_index:idx_track_isrc" sql:"default: null;"`
+	ISRC    string `gorm:"not null; unique_index:idx_isrc_track" sql:"default: null;"`
+	TrackID int    `gorm:"not null unique_index:idx_isrc_track" sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
 }
 
 type AlbumGenre struct {
