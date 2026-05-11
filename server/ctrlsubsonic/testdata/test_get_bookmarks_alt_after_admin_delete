@@ -51,6 +51,7 @@
             "type": "music",
             "year": 2020,
             "musicBrainzId": "",
+            "isrc": [],
             "replayGain": null
           },
           "username": "alt",

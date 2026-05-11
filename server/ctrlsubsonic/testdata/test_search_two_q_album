@@ -22,6 +22,7 @@
           "title": "album-aa",
           "year": 2018,
           "musicBrainzId": "",
+          "isrc": [],
           "starred": "2020-05-01T12:00:00Z",
           "userRating": 4,
           "averageRating": 4,
@@ -43,6 +44,7 @@
           "title": "album-ab",
           "year": 2019,
           "musicBrainzId": "",
+          "isrc": [],
           "averageRating": 5,
           "replayGain": null
         },
@@ -61,6 +63,7 @@
           "title": "album-ba",
           "year": 2017,
           "musicBrainzId": "",
+          "isrc": [],
           "replayGain": null
         },
         {
@@ -78,6 +81,7 @@
           "title": "album-collab",
           "year": 2021,
           "musicBrainzId": "",
+          "isrc": [],
           "starred": "2020-06-02T12:00:00Z",
           "replayGain": null
         },
@@ -96,6 +100,7 @@
           "title": "album-collab",
           "year": 2021,
           "musicBrainzId": "",
+          "isrc": [],
           "starred": "2020-06-02T12:00:00Z",
           "replayGain": null
         },
@@ -114,6 +119,7 @@
           "title": "album-split",
           "year": 2023,
           "musicBrainzId": "",
+          "isrc": [],
           "replayGain": null
         },
         {
@@ -131,6 +137,7 @@
           "title": "album-split",
           "year": 2023,
           "musicBrainzId": "",
+          "isrc": [],
           "replayGain": null
         },
         {
@@ -148,6 +155,7 @@
           "title": "album-ca",
           "year": 2016,
           "musicBrainzId": "",
+          "isrc": [],
           "replayGain": null
         },
         {
@@ -165,6 +173,7 @@
           "title": "album-cross",
           "year": 2022,
           "musicBrainzId": "",
+          "isrc": [],
           "replayGain": null
         },
         {
@@ -182,6 +191,7 @@
           "title": "empty-album",
           "year": 2015,
           "musicBrainzId": "",
+          "isrc": [],
           "replayGain": null
         }
       ]
