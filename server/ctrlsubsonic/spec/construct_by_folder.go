@@ -58,6 +58,7 @@ func NewTCAlbumByFolder(f *db.Album) *TrackChild {
 		CreatedAt:     f.CreatedAt,
 		AverageRating: f.AverageRating,
 		Year:          f.TagYear,
+		ISRC:          []string{},
 	}
 	if f.AlbumStar != nil {
 		trCh.Starred = &f.AlbumStar.StarDate
@@ -80,6 +81,7 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 		ContentType:   t.MIME(),
 		Suffix:        formatExt(t.Ext()),
 		Size:          t.Size,
+		ISRC:          []string{},
 		DisplayArtist: t.TagTrackArtist,
 		Title:         cmp.Or(t.TagTitle, t.Filename),
 		TrackNumber:   t.TagTrackNumber,

@@ -124,6 +124,7 @@ func NewTrackByTags(client string, t *db.Track, album *db.Album) *TrackChild {
 		CreatedAt:          t.CreatedAt,
 		Duration:           t.Length,
 		Genres:             []*GenreRef{},
+		ISRC:               []string{},
 		ParentID:           t.AlbumSID(),
 		Path:               filepath.Join(album.LeftPath, album.RightPath, t.Filename),
 		Size:               t.Size,

@@ -688,9 +688,12 @@ func populateTrackISRCs(tx *db.DB, track *db.Track, isrcs []string) error {
 		return fmt.Errorf("delete old track ISRCs records: %w", err)
 	}
 
-	col := make([][]any, len(isrcs))
-	for idx, isrc := range isrcs {
-		col[idx] = []any{isrc}
+	var col [][]any
+	for _, isrc := range isrcs {
+		if isrc == "" {
+			continue
+		}
+		col = append(col, []any{isrc})
 	}
 	if err := tx.InsertBulkLeftManyRows("track_isrcs", []string{"track_id", "isrc"}, track.ID, col); err != nil {
 		return fmt.Errorf("insert bulk track ISRCs: %w", err)
