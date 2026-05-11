@@ -561,6 +561,7 @@
           "type": "music",
           "year": 2018,
           "musicBrainzId": "00000000-0000-0000-0000-aa0000000000",
+          "isrc": [],
           "replayGain": {
             "trackGain": -3.5,
             "trackPeak": 0.95,
@@ -610,6 +611,7 @@
           "type": "music",
           "year": 2018,
           "musicBrainzId": "00000000-0000-0000-0000-aa0000000001",
+          "isrc": [],
           "replayGain": {
             "trackGain": -3.5,
             "trackPeak": 0.95,
@@ -659,6 +661,7 @@
           "type": "music",
           "year": 2018,
           "musicBrainzId": "00000000-0000-0000-0000-aa0000000002",
+          "isrc": [],
           "replayGain": {
             "trackGain": -3.5,
             "trackPeak": 0.95,
@@ -776,6 +779,7 @@
           "type": "music",
           "year": 2019,
           "musicBrainzId": "00000000-0000-0000-0000-ab00000000d1",
+          "isrc": [],
           "starred": "2020-05-01T12:00:00Z",
           "userRating": 3,
           "averageRating": 3,
@@ -867,6 +871,7 @@
           "type": "music",
           "year": 2019,
           "musicBrainzId": "",
+          "isrc": [],
           "replayGain": null
         },
         {
@@ -911,6 +916,7 @@
           "type": "music",
           "year": 2017,
           "musicBrainzId": "",
+          "isrc": [],
           "replayGain": null
         },
         {
@@ -963,6 +969,7 @@
           "type": "music",
           "year": 2021,
           "musicBrainzId": "",
+          "isrc": [],
           "replayGain": null
         },
         {
@@ -1015,6 +1022,7 @@
           "type": "music",
           "year": 2023,
           "musicBrainzId": "",
+          "isrc": [],
           "replayGain": null
         },
         {
@@ -1059,6 +1067,7 @@
           "type": "music",
           "year": 2016,
           "musicBrainzId": "",
+          "isrc": [],
           "replayGain": null
         },
         {
@@ -1103,6 +1112,7 @@
           "type": "music",
           "year": 2022,
           "musicBrainzId": "",
+          "isrc": [],
           "replayGain": null
         },
         {
@@ -1148,6 +1158,7 @@
           "type": "music",
           "year": 2020,
           "musicBrainzId": "",
+          "isrc": [],
           "replayGain": null
         },
         {
@@ -1193,6 +1204,7 @@
           "type": "music",
           "year": 2020,
           "musicBrainzId": "",
+          "isrc": [],
           "replayGain": null
         }
       ]

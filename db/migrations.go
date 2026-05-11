@@ -89,6 +89,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202604281200", migrateUnifyCredits),
 		construct(ctx, "202605061812", migrateAddGenreInherited),
 		construct(ctx, "202605061813", migrateAddClientCoverSizePreference),
+		construct(ctx, "202605081200", migrateAddTrackIsrc),
 	}
 
 	return gormigrate.
@@ -948,4 +949,11 @@ func migrateAddClientCoverSizePreference(tx *gorm.DB, _ MigrationContext) error 
 func migrateAddGenreInherited(tx *gorm.DB, _ MigrationContext) error {
 	step := tx.AutoMigrate(TrackGenre{}, AlbumGenre{})
 	return step.Error
+}
+
+func migrateAddTrackIsrc(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(
+		Track{},
+		TrackISRC{},
+	).Error
 }

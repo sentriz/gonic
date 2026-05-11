@@ -493,6 +493,11 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		return fmt.Errorf("populate track genres: %w", err)
 	}
 
+	isrcs := ParseMulti(s.multiValueSettings[ISRC], normtag.Values(trags, normtag.ISRC), normtag.Get(trags, normtag.ISRC))
+	if err := populateTrackISRCs(tx, track, isrcs); err != nil {
+		return fmt.Errorf("populate track ISRCs: %w", err)
+	}
+
 	if err := tx.Where("track_id=?", track.ID).Delete(db.TrackCredit{}).Error; err != nil {
 		return fmt.Errorf("delete track credits: %w", err)
 	}
@@ -674,6 +679,24 @@ func populateTrackGenres(tx *db.DB, track *db.Track, directIDs, inheritedIDs []i
 	rows := genreRows(directIDs, inheritedIDs)
 	if err := tx.InsertBulkLeftManyRows("track_genres", []string{"track_id", "genre_id", "inherited"}, track.ID, rows); err != nil {
 		return fmt.Errorf("insert track genres: %w", err)
+	}
+	return nil
+}
+
+func populateTrackISRCs(tx *db.DB, track *db.Track, isrcs []string) error {
+	if err := tx.Where("track_id=?", track.ID).Delete(db.TrackISRC{}).Error; err != nil {
+		return fmt.Errorf("delete old track ISRCs records: %w", err)
+	}
+
+	var col [][]any
+	for _, isrc := range isrcs {
+		if isrc == "" {
+			continue
+		}
+		col = append(col, []any{isrc})
+	}
+	if err := tx.InsertBulkLeftManyRows("track_isrcs", []string{"track_id", "isrc"}, track.ID, col); err != nil {
+		return fmt.Errorf("insert bulk track ISRCs: %w", err)
 	}
 	return nil
 }
@@ -1021,6 +1044,7 @@ const (
 	Genre Tag = iota
 	Artist
 	AlbumArtist
+	ISRC
 )
 
 type MultiValueSetting struct {

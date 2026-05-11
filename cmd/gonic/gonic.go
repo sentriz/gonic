@@ -30,6 +30,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"go.senan.xyz/flagconf"
+	"go.senan.xyz/sqlitenotify"
 
 	"go.senan.xyz/gonic"
 	"go.senan.xyz/gonic/cache"
@@ -88,10 +89,11 @@ func main() {
 	confExcludePattern := flag.String("exclude-pattern", "", "regex pattern to exclude files from scan (optional)")
 	confGenreTree := flag.String("genre-tree", "", "path to a tab-separated genre tree file for hierarchical genre browsing (optional)")
 
-	var confMultiValueGenre, confMultiValueArtist, confMultiValueAlbumArtist multiValueSetting
+	var confMultiValueGenre, confMultiValueArtist, confMultiValueAlbumArtist, confMultiValueISRC multiValueSetting
 	flag.Var(&confMultiValueGenre, "multi-value-genre", "setting for multi-valued genre scanning (optional)")
 	flag.Var(&confMultiValueArtist, "multi-value-artist", "setting for multi-valued track artist scanning (optional)")
 	flag.Var(&confMultiValueAlbumArtist, "multi-value-album-artist", "setting for multi-valued album artist scanning (optional)")
+	flag.Var(&confMultiValueISRC, "multi-value-isrc", "setting for multi-valued isrc scanning (optional)")
 
 	confPprof := flag.Bool("pprof", false, "enable the /debug/pprof endpoint (optional)")
 	confExpvar := flag.Bool("expvar", false, "enable the /debug/vars endpoint (optional)")
@@ -211,6 +213,7 @@ func main() {
 			scanner.Genre:       scanner.MultiValueSetting(confMultiValueGenre),
 			scanner.Artist:      scanner.MultiValueSetting(confMultiValueArtist),
 			scanner.AlbumArtist: scanner.MultiValueSetting(confMultiValueAlbumArtist),
+			scanner.ISRC:        scanner.MultiValueSetting(confMultiValueISRC),
 		},
 		tagReader,
 		*confExcludePattern,
@@ -325,6 +328,11 @@ func main() {
 	defer cancel()
 	errgrp, ctx := errgroup.WithContext(ctx)
 
+	dbNotify, err := sqlitenotify.NewNotifier(ctx, sqlitenotify.SQLite(dbc.DB.DB()))
+	if err != nil {
+		log.Panicf("create sqlitenotify: %v\n", err)
+	}
+
 	errgrp.Go(func() error {
 		defer logJob("http")()
 
@@ -381,7 +389,9 @@ func main() {
 	errgrp.Go(func() error {
 		defer logJob("session clean")()
 
-		ctxTick(ctx, 10*time.Minute, func() {
+		sessDB.Cleanup()
+
+		ctxTick(ctx, 24*time.Hour, func() {
 			sessDB.Cleanup()
 		})
 		return nil
@@ -401,11 +411,11 @@ func main() {
 	errgrp.Go(func() error {
 		defer logJob("podcast download")()
 
-		ctxTick(ctx, 5*time.Second, func() {
+		for range dbNotify.Listen(ctx, 5*time.Second, 0) {
 			if err := podcast.DownloadTick(); err != nil {
 				log.Printf("failed to download podcast: %s", err)
 			}
-		})
+		}
 		return nil
 	})
 
@@ -476,11 +486,11 @@ func main() {
 
 		defer logJob("refresh artist info")()
 
-		ctxTick(ctx, 8*time.Second, func() {
+		for range dbNotify.Listen(ctx, 8*time.Second, 6*time.Hour) {
 			if err := artistInfoCache.Refresh(); err != nil {
 				log.Printf("error in artist info cache: %v", err)
 			}
-		})
+		}
 		return nil
 	})
 

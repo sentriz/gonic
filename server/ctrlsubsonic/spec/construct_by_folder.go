@@ -15,7 +15,8 @@ func LoadTrackByFolder(userID int) func(*gorm.DB) *gorm.DB {
 		return q.
 			Scopes(TrackWithArtistCredits, TrackWithUserData(userID)).
 			Preload("Album").
-			Preload("Genres")
+			Preload("Genres").
+			Preload("ISRCs")
 	}
 }
 
@@ -57,6 +58,7 @@ func NewTCAlbumByFolder(f *db.Album) *TrackChild {
 		CreatedAt:     f.CreatedAt,
 		AverageRating: f.AverageRating,
 		Year:          f.TagYear,
+		ISRC:          []string{},
 	}
 	if f.AlbumStar != nil {
 		trCh.Starred = &f.AlbumStar.StarDate
@@ -79,6 +81,7 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 		ContentType:   t.MIME(),
 		Suffix:        formatExt(t.Ext()),
 		Size:          t.Size,
+		ISRC:          []string{},
 		DisplayArtist: t.TagTrackArtist,
 		Title:         cmp.Or(t.TagTitle, t.Filename),
 		TrackNumber:   t.TagTrackNumber,
@@ -126,6 +129,9 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 	}
 	for _, g := range t.Genres {
 		trCh.Genres = append(trCh.Genres, &GenreRef{Name: g.Name})
+	}
+	for _, trI := range t.ISRCs {
+		trCh.ISRC = append(trCh.ISRC, trI.ISRC)
 	}
 	trackArtists := filterTrackCreditsByRole(t.Credits, db.RoleArtist)
 	sort.Slice(trackArtists, func(i, j int) bool {

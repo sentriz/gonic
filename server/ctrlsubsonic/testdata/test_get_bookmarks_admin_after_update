@@ -118,6 +118,7 @@
             "type": "music",
             "year": 2019,
             "musicBrainzId": "00000000-0000-0000-0000-ab00000000d1",
+            "isrc": [],
             "starred": "2020-05-01T12:00:00Z",
             "userRating": 3,
             "averageRating": 3,

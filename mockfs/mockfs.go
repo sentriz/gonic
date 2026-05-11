@@ -67,6 +67,7 @@ func newMockFS(tb testing.TB, dirs []string, excludePattern string) *MockFS {
 		scanner.Genre:       {Mode: scanner.Delim, Delim: ";"},
 		scanner.Artist:      {Mode: scanner.Multi},
 		scanner.AlbumArtist: {Mode: scanner.Multi},
+		scanner.ISRC:        {Mode: scanner.Delim, Delim: ";"},
 	}
 
 	tagReader := &tagReader{paths: map[string]*TagInfo{}}

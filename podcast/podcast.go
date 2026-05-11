@@ -479,28 +479,29 @@ func getSecondsFromString(time string) int {
 }
 
 func (p *Podcasts) DownloadTick() error {
-	var podcastEpisode db.PodcastEpisode
-	err := p.db.
-		Preload("Podcast").
-		Where("status=?", db.PodcastEpisodeStatusDownloading).
-		Order("updated_at DESC").
-		Find(&podcastEpisode).
-		Error
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return fmt.Errorf("find episode: %w", err)
-	}
-	if podcastEpisode.ID == 0 {
-		return nil
-	}
+	for {
+		var podcastEpisode db.PodcastEpisode
+		err := p.db.
+			Preload("Podcast").
+			Where("status=?", db.PodcastEpisodeStatusDownloading).
+			Order("updated_at DESC").
+			Find(&podcastEpisode).
+			Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("find episode: %w", err)
+		}
+		if podcastEpisode.ID == 0 {
+			return nil
+		}
 
-	log.Printf("starting podcast episode download %q - %q", podcastEpisode.Podcast.Title, podcastEpisode.Title)
+		log.Printf("starting podcast episode download %q - %q", podcastEpisode.Podcast.Title, podcastEpisode.Title)
 
-	if err := p.doPodcastDownload(podcastEpisode.Podcast, &podcastEpisode); err != nil {
-		return fmt.Errorf("do download: %w", err)
+		if err := p.doPodcastDownload(podcastEpisode.Podcast, &podcastEpisode); err != nil {
+			return fmt.Errorf("do download: %w", err)
+		}
+
+		log.Printf("downloaded podcast episode")
 	}
-
-	log.Printf("downloaded podcast episode")
-	return nil
 }
 
 func (p *Podcasts) doPodcastDownload(podcast *db.Podcast, podcastEpisode *db.PodcastEpisode) (err error) {

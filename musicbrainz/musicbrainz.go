@@ -15,7 +15,10 @@ import (
 
 const BaseURL = "https://musicbrainz.org/ws/2/"
 
-const LinkTypeIDIsPerson = "dd9886f2-1dfe-4270-97db-283f6839a666"
+const (
+	LinkTypeIDIsPerson     = "dd9886f2-1dfe-4270-97db-283f6839a666"
+	LinkTypeIDMemberOfBand = "5be4c609-9afa-4ea0-910b-12ffb71e3821"
+)
 
 const (
 	DirectionForward  = "forward"
