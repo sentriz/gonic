@@ -223,6 +223,7 @@ type Track struct {
 	AlbumID        int            `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	Credits        []*TrackCredit `gorm:"foreignkey:track_id"`
 	Genres         []*Genre       `gorm:"many2many:track_genres"`
+	ISRCs          []*TrackISRC   `gorm:"foreignkey:track_id"`
 	Size           int            `sql:"default: null"`
 	Length         int            `sql:"default: null"`
 	Bitrate        int            `sql:"default: null"`
@@ -432,6 +433,11 @@ type TrackGenre struct {
 	TrackID   int  `gorm:"not null; unique_index:idx_track_id_genre_id" sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
 	GenreID   int  `gorm:"not null; unique_index:idx_track_id_genre_id" sql:"default: null; type:int REFERENCES genres(id) ON DELETE CASCADE"`
 	Inherited bool `gorm:"not null; default:false"`
+}
+
+type TrackISRC struct {
+	ISRC    string `gorm:"not null; unique_index:idx_isrc_track" sql:"default: null;"`
+	TrackID int    `gorm:"not null unique_index:idx_isrc_track" sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
 }
 
 type AlbumGenre struct {

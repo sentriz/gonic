@@ -49,6 +49,7 @@
           "type": "music",
           "year": 2022,
           "musicBrainzId": "",
+          "isrc": [],
           "replayGain": null
         },
         {
@@ -94,6 +95,7 @@
           "type": "music",
           "year": 2020,
           "musicBrainzId": "",
+          "isrc": [],
           "replayGain": null
         }
       ]

@@ -79,6 +79,7 @@
           "type": "music",
           "year": 2023,
           "musicBrainzId": "",
+          "isrc": [],
           "replayGain": null
         }
       ],

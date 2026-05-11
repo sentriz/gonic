@@ -27,7 +27,8 @@ func LoadTrackByTags(userID int) func(*gorm.DB) *gorm.DB {
 			Scopes(TrackWithAlbumArtistCredits, TrackWithUserData(userID)).
 			Preload("Album").
 			Preload("Credits.Artist").
-			Preload("Genres")
+			Preload("Genres").
+			Preload("ISRCs")
 	}
 }
 
@@ -123,6 +124,7 @@ func NewTrackByTags(client string, t *db.Track, album *db.Album) *TrackChild {
 		CreatedAt:          t.CreatedAt,
 		Duration:           t.Length,
 		Genres:             []*GenreRef{},
+		ISRC:               []string{},
 		ParentID:           t.AlbumSID(),
 		Path:               filepath.Join(album.LeftPath, album.RightPath, t.Filename),
 		Size:               t.Size,
@@ -178,6 +180,9 @@ func NewTrackByTags(client string, t *db.Track, album *db.Album) *TrackChild {
 	}
 	for _, g := range t.Genres {
 		ret.Genres = append(ret.Genres, &GenreRef{Name: g.Name})
+	}
+	for _, trI := range t.ISRCs {
+		ret.ISRC = append(ret.ISRC, trI.ISRC)
 	}
 	for _, c := range albumArtists {
 		if c.Artist == nil {

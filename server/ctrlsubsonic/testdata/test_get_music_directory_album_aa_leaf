@@ -53,6 +53,7 @@
           "type": "music",
           "year": 2018,
           "musicBrainzId": "00000000-0000-0000-0000-aa0000000000",
+          "isrc": [],
           "replayGain": {
             "trackGain": -3.5,
             "trackPeak": 0.95,
@@ -97,6 +98,7 @@
           "type": "music",
           "year": 2018,
           "musicBrainzId": "00000000-0000-0000-0000-aa0000000001",
+          "isrc": [],
           "replayGain": {
             "trackGain": -3.5,
             "trackPeak": 0.95,
@@ -141,6 +143,7 @@
           "type": "music",
           "year": 2018,
           "musicBrainzId": "00000000-0000-0000-0000-aa0000000002",
+          "isrc": [],
           "replayGain": {
             "trackGain": -3.5,
             "trackPeak": 0.95,

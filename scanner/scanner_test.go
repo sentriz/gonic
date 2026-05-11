@@ -172,7 +172,6 @@ func TestUpdatedTags(t *testing.T) {
 	assert.Equal(t, "artist", track.TagTrackArtist)                                                    // track has tags
 	assert.Equal(t, "album", track.Album.TagTitle)                                                     // track has tags
 	assert.Equal(t, "title", track.TagTitle)                                                           // track has tags
-
 	var trackArtistA db.Artist
 	assert.NoError(t, m.DB().Joins("JOIN album_credits ON album_credits.artist_id=artists.id AND album_credits.role='albumartist'").Where("album_credits.album_id=?", track.AlbumID).Limit(1).Find(&trackArtistA).Error) // updated has tags
 	assert.Equal(t, "album-artist", trackArtistA.Name)                                                                                                                                                                   // track has tags
@@ -346,6 +345,73 @@ func TestGenres(t *testing.T) {
 
 	isGenreMissing("genre-a") // old genre missing
 	isGenreMissing("genre-b") // old genre missing
+}
+
+func TestISRCs(t *testing.T) {
+	t.Parallel()
+	m := mockfs.New(t)
+
+	trackISRC := func(artist, album, filename, isrcVal string) error {
+		return m.DB().
+			Where("albums.left_path=? AND albums.right_path=? AND tracks.filename=? AND isrc=?", artist, album, filename, isrcVal).
+			Joins("JOIN tracks ON tracks.id=track_isrcs.track_id").
+			Joins("JOIN albums ON albums.id=tracks.album_id").
+			Find(&db.TrackISRC{}).
+			Error
+	}
+	isTrackISRC := func(artist, album, filename, isrcVal string) {
+		assert.NoError(t, trackISRC(artist, album, filename, isrcVal))
+	}
+	isTrackISRCMissing := func(artist, album, filename, isrcVal string) {
+		assert.Equal(t, trackISRC(artist, album, filename, isrcVal), gorm.ErrRecordNotFound)
+	}
+
+	isrc := func(isrcVal string) error {
+		return m.DB().Where("isrc=?", isrcVal).Find(&db.TrackISRC{}).Error
+	}
+	isISRC := func(isrcVal string) {
+		assert.NoError(t, isrc(isrcVal))
+	}
+	isISRCMissing := func(isrcVal string) {
+		assert.Equal(t, isrc(isrcVal), gorm.ErrRecordNotFound)
+	}
+
+	m.AddItems()
+	m.SetTrack("artist-0/album-0/track-0.flac", func(tags *mockfs.TagInfo) { normtag.Set(tags.Tags, normtag.ISRC, "123456789A;123456789B") })
+	m.SetTrack("artist-0/album-0/track-1.flac", func(tags *mockfs.TagInfo) { normtag.Set(tags.Tags, normtag.ISRC, "123456789C;123456789D") })
+	m.SetTrack("artist-1/album-2/track-0.flac", func(tags *mockfs.TagInfo) { normtag.Set(tags.Tags, normtag.ISRC, "123456789E;123456789F") })
+	m.SetTrack("artist-1/album-2/track-1.flac", func(tags *mockfs.TagInfo) { normtag.Set(tags.Tags, normtag.ISRC, "123456789G;123456789H") })
+	m.ScanAndClean()
+
+	// irsc value exists
+	isISRC("123456789A")
+	isISRC("123456789B")
+	isISRC("123456789C")
+	isISRC("123456789D")
+
+	// track isrc exists
+	isTrackISRC("artist-0/", "album-0", "track-0.flac", "123456789A")
+	isTrackISRC("artist-0/", "album-0", "track-0.flac", "123456789B")
+	isTrackISRC("artist-0/", "album-0", "track-1.flac", "123456789C")
+	isTrackISRC("artist-0/", "album-0", "track-1.flac", "123456789D")
+	isTrackISRC("artist-1/", "album-2", "track-0.flac", "123456789E")
+	isTrackISRC("artist-1/", "album-2", "track-0.flac", "123456789F")
+	isTrackISRC("artist-1/", "album-2", "track-1.flac", "123456789G")
+	isTrackISRC("artist-1/", "album-2", "track-1.flac", "123456789H")
+
+	m.SetTrack("artist-0/album-0/track-0.flac", func(tags *mockfs.TagInfo) { normtag.Set(tags.Tags, normtag.ISRC, "123456789AA;123456789BB") })
+	m.ScanAndClean()
+
+	// updated ISRC exists
+	isTrackISRC("artist-0/", "album-0", "track-0.flac", "123456789AA")
+	isTrackISRC("artist-0/", "album-0", "track-0.flac", "123456789BB")
+	// old track ISRC missing
+	isTrackISRCMissing("artist-0/", "album-0", "track-0.flac", "123456789A")
+	isTrackISRCMissing("artist-0/", "album-0", "track-0.flac", "123456789B")
+
+	// old ISRC missing
+	isISRCMissing("123456789A")
+	isISRCMissing("123456789B")
 }
 
 func TestMultiFolders(t *testing.T) {
