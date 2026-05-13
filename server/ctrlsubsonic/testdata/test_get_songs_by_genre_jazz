@@ -69,14 +69,14 @@
               "name": "The Mighty B"
             }
           ],
-          "displayArtist": "artist-b",
+          "displayArtist": "The Mighty B",
           "albumArtists": [
             {
               "id": "ar-17",
               "name": "The Mighty B (LP)"
             }
           ],
-          "displayAlbumArtist": "artist-b",
+          "displayAlbumArtist": "The Mighty B (LP)",
           "contributors": null,
           "bitRate": 100,
           "contentType": "audio/flac",

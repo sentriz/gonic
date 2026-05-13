@@ -89,6 +89,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202604281200", migrateUnifyCredits),
 		construct(ctx, "202605061812", migrateAddGenreInherited),
 		construct(ctx, "202605081200", migrateAddTrackIsrc),
+		construct(ctx, "202605131200", migrateAddArtistCreditDisplay),
 	}
 
 	return gormigrate.
@@ -951,4 +952,8 @@ func migrateAddTrackIsrc(tx *gorm.DB, _ MigrationContext) error {
 		Track{},
 		TrackISRC{},
 	).Error
+}
+
+func migrateAddArtistCreditDisplay(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(Album{}, Track{}).Error
 }

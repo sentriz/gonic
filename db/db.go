@@ -214,27 +214,28 @@ type AudioFile interface {
 }
 
 type Track struct {
-	ID             int `gorm:"primary_key"`
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	Filename       string `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null"`
-	FilenameUDec   string `sql:"default: null"`
-	Album          *Album
-	AlbumID        int            `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
-	Credits        []*TrackCredit `gorm:"foreignkey:track_id"`
-	Genres         []*Genre       `gorm:"many2many:track_genres"`
-	ISRCs          []*TrackISRC   `gorm:"foreignkey:track_id"`
-	Size           int            `sql:"default: null"`
-	Length         int            `sql:"default: null"`
-	Bitrate        int            `sql:"default: null"`
-	TagTitle       string         `sql:"default: null"`
-	TagTitleUDec   string         `sql:"default: null"`
-	TagTrackArtist string         `sql:"default: null"`
-	TagTrackNumber int            `sql:"default: null"`
-	TagDiscNumber  int            `sql:"default: null"`
-	TagBrainzID    string         `sql:"default: null"`
-	TagLyrics      string         `sql:"default: null"`
-	TagYear        int            `sql:"default: null"`
+	ID                   int `gorm:"primary_key"`
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
+	Filename             string `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null"`
+	FilenameUDec         string `sql:"default: null"`
+	Album                *Album
+	AlbumID              int            `gorm:"not null; unique_index:idx_folder_filename" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	Credits              []*TrackCredit `gorm:"foreignkey:track_id"`
+	Genres               []*Genre       `gorm:"many2many:track_genres"`
+	ISRCs                []*TrackISRC   `gorm:"foreignkey:track_id"`
+	Size                 int            `sql:"default: null"`
+	Length               int            `sql:"default: null"`
+	Bitrate              int            `sql:"default: null"`
+	TagTitle             string         `sql:"default: null"`
+	TagTitleUDec         string         `sql:"default: null"`
+	TagTrackArtist       string         `sql:"default: null"`
+	TagTrackArtistCredit string         `sql:"default: null"` // set when ARTIST_CREDIT differs from ARTIST
+	TagTrackNumber       int            `sql:"default: null"`
+	TagDiscNumber        int            `sql:"default: null"`
+	TagBrainzID          string         `sql:"default: null"`
+	TagLyrics            string         `sql:"default: null"`
+	TagYear              int            `sql:"default: null"`
 
 	ReplayGainTrackGain float32
 	ReplayGainTrackPeak float32
@@ -339,6 +340,7 @@ type Album struct {
 	Credits              []*AlbumCredit `gorm:"foreignkey:album_id"`
 	TagTitle             string         `sql:"default: null"`
 	TagAlbumArtist       string         // display purposes only
+	TagAlbumArtistCredit string         `sql:"default: null"` // set when ALBUMARTIST_CREDIT differs from ALBUMARTIST
 	TagTitleUDec         string         `sql:"default: null"`
 	TagBrainzID          string         `sql:"default: null"`
 	TagYear              int            `sql:"default: null"`

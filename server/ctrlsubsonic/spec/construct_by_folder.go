@@ -82,7 +82,7 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 		Suffix:        formatExt(t.Ext()),
 		Size:          t.Size,
 		ISRC:          []string{},
-		DisplayArtist: t.TagTrackArtist,
+		DisplayArtist: cmp.Or(t.TagTrackArtistCredit, t.TagTrackArtist),
 		Title:         cmp.Or(t.TagTitle, t.Filename),
 		TrackNumber:   t.TagTrackNumber,
 		DiscNumber:    t.TagDiscNumber,

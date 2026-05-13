@@ -1,6 +1,7 @@
 package ctrlsubsonic
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"log"
@@ -623,7 +624,7 @@ func lyricsFromTags(track db.Track) (*spec.StructuredLyrics, error) {
 
 	r := spec.StructuredLyrics{
 		Lang:          "xxx",
-		DisplayArtist: track.TagTrackArtist,
+		DisplayArtist: cmp.Or(track.TagTrackArtistCredit, track.TagTrackArtist),
 		DisplayTitle:  track.TagTitle,
 	}
 
@@ -693,7 +694,7 @@ func lyricsFromFile(track db.Track) (*spec.StructuredLyrics, error) {
 		Lang:          "xxx",
 		Synced:        true,
 		Lines:         lines,
-		DisplayArtist: track.TagTrackArtist,
+		DisplayArtist: cmp.Or(track.TagTrackArtistCredit, track.TagTrackArtist),
 		DisplayTitle:  track.TagTitle,
 	}
 
@@ -715,7 +716,7 @@ func lyricsFromFileUnsynced(track db.Track) (*spec.StructuredLyrics, error) {
 
 	r := spec.StructuredLyrics{
 		Lang:          "xxx",
-		DisplayArtist: track.TagTrackArtist,
+		DisplayArtist: cmp.Or(track.TagTrackArtistCredit, track.TagTrackArtist),
 		DisplayTitle:  track.TagTitle,
 	}
 
