@@ -328,10 +328,11 @@ func main() {
 	defer cancel()
 	errgrp, ctx := errgroup.WithContext(ctx)
 
-	dbNotify, err := sqlitenotify.NewNotifier(ctx, sqlitenotify.SQLite(dbc.DB.DB()))
-	if err != nil {
-		log.Panicf("create sqlitenotify: %v\n", err)
-	}
+	var dbNotify sqlitenotify.Notifier
+	errgrp.Go(func() error {
+		defer logJob("watch db")()
+		return dbNotify.Start(ctx, sqlitenotify.SQLite(dbc.DB.DB()))
+	})
 
 	errgrp.Go(func() error {
 		defer logJob("http")()

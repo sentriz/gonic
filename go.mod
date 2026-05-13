@@ -23,17 +23,17 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mmcdole/gofeed v1.3.0
-	github.com/ncruces/go-sqlite3 v0.34.0
+	github.com/ncruces/go-sqlite3 v0.34.1
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/philippta/go-template v0.0.0-20220911145045-4556aca435e4
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
 	github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981
 	github.com/stretchr/testify v1.11.1
 	go.senan.xyz/flagconf v0.1.11
-	go.senan.xyz/sqlitenotify v0.0.0-20260507184820-add96f678480
+	go.senan.xyz/sqlitenotify v0.0.0-20260513112327-19a2c9e09109
 	go.senan.xyz/taglib v0.12.0
-	go.senan.xyz/wrtag v0.30.1-0.20260508114350-7dd3a6ce9fc9
-	golang.org/x/net v0.53.0
+	go.senan.xyz/wrtag v0.30.1-0.20260513112435-d7797c7b8a9f
+	golang.org/x/net v0.54.0
 	golang.org/x/sync v0.20.0
 	golang.org/x/time v0.15.0
 	gopkg.in/gormigrate.v1 v1.6.0
@@ -61,14 +61,14 @@ require (
 	github.com/mmcdole/goxpp v1.1.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/ncruces/go-sqlite3-wasm/v2 v2.2.35300 // indirect
+	github.com/ncruces/go-sqlite3-wasm/v2 v2.2.35301 // indirect
 	github.com/ncruces/julianday v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/tetratelabs/wazero v1.11.1-0.20260428013916-2bbd517b7633 // indirect
-	golang.org/x/crypto v0.50.0 // indirect
-	golang.org/x/image v0.39.0 // indirect
-	golang.org/x/sys v0.43.0 // indirect
-	golang.org/x/text v0.36.0 // indirect
+	github.com/tetratelabs/wazero v1.11.1-0.20260511190115-a3374cf27a3a // indirect
+	golang.org/x/crypto v0.51.0 // indirect
+	golang.org/x/image v0.40.0 // indirect
+	golang.org/x/sys v0.44.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
