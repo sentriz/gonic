@@ -272,6 +272,7 @@ func coverForPlaylist(playlistStore *playlist.Store, id specid.ID) (*os.File, er
 func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
+	urlPath := r.URL.Path
 	id, err := params.GetID("id")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
@@ -291,7 +292,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	format, _ := params.Get("format")
 	timeOffset, _ := params.GetInt("timeOffset")
 
-	if format == "raw" {
+	if format == "raw" || urlPath == "/download" {
 		http.ServeFile(w, r, file.AbsPath())
 		return nil
 	}
