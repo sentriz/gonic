@@ -63,11 +63,11 @@ func newMockFS(tb testing.TB, dirs []string, excludePattern string) *MockFS {
 		}
 	}
 
-	multiValueSettings := map[scanner.Tag]scanner.MultiValueSetting{
-		scanner.Genre:       {Mode: scanner.Delim, Delim: ";"},
-		scanner.Artist:      {Mode: scanner.Multi},
-		scanner.AlbumArtist: {Mode: scanner.Multi},
-		scanner.ISRC:        {Mode: scanner.Delim, Delim: ";"},
+	multiValueSettings := map[*tags.Spec]tags.MultiValueSetting{
+		tags.Genre:       {Mode: tags.Delim, Delim: ";"},
+		tags.Artist:      {Mode: tags.Multi},
+		tags.AlbumArtist: {Mode: tags.Multi},
+		tags.ISRC:        {Mode: tags.Delim, Delim: ";"},
 	}
 
 	tagReader := &tagReader{paths: map[string]*TagInfo{}}

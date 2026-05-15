@@ -50,6 +50,7 @@ import (
 	"go.senan.xyz/gonic/server/ctrladmin"
 	"go.senan.xyz/gonic/server/ctrlsubsonic"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
+	"go.senan.xyz/gonic/tags"
 	"go.senan.xyz/gonic/texttree"
 	"go.senan.xyz/gonic/transcode"
 )
@@ -186,10 +187,10 @@ func main() {
 	*confProxyPrefix = proxyPrefixExpr.ReplaceAllString(*confProxyPrefix, `/$1`)
 
 	if *deprecatedConfGenreSplit != "" && *deprecatedConfGenreSplit != "\n" {
-		confMultiValueGenre = multiValueSetting{Mode: scanner.Delim, Delim: *deprecatedConfGenreSplit}
+		confMultiValueGenre = multiValueSetting{Mode: tags.Delim, Delim: *deprecatedConfGenreSplit}
 		*deprecatedConfGenreSplit = "<deprecated>"
 	}
-	if confMultiValueArtist.Mode == scanner.None && confMultiValueAlbumArtist.Mode > scanner.None {
+	if confMultiValueArtist.Mode == tags.None && confMultiValueAlbumArtist.Mode > tags.None {
 		confMultiValueArtist.Mode = confMultiValueAlbumArtist.Mode
 		confMultiValueArtist.Delim = confMultiValueAlbumArtist.Delim
 	}
@@ -209,11 +210,11 @@ func main() {
 	scannr := scanner.New(
 		ctrlsubsonic.MusicPaths(musicPaths),
 		dbc,
-		map[scanner.Tag]scanner.MultiValueSetting{
-			scanner.Genre:       scanner.MultiValueSetting(confMultiValueGenre),
-			scanner.Artist:      scanner.MultiValueSetting(confMultiValueArtist),
-			scanner.AlbumArtist: scanner.MultiValueSetting(confMultiValueAlbumArtist),
-			scanner.ISRC:        scanner.MultiValueSetting(confMultiValueISRC),
+		map[*tags.Spec]tags.MultiValueSetting{
+			tags.Genre:       tags.MultiValueSetting(confMultiValueGenre),
+			tags.Artist:      tags.MultiValueSetting(confMultiValueArtist),
+			tags.AlbumArtist: tags.MultiValueSetting(confMultiValueAlbumArtist),
+			tags.ISRC:        tags.MultiValueSetting(confMultiValueISRC),
 		},
 		tagReader,
 		*confExcludePattern,
@@ -557,13 +558,13 @@ func validatePath(p string) (string, error) {
 	return p, nil
 }
 
-type multiValueSetting scanner.MultiValueSetting
+type multiValueSetting tags.MultiValueSetting
 
 func (mvs multiValueSetting) String() string {
 	switch mvs.Mode {
-	case scanner.Delim:
+	case tags.Delim:
 		return fmt.Sprintf("delim(%s)", mvs.Delim)
-	case scanner.Multi:
+	case tags.Multi:
 		return "multi"
 	default:
 		return "none"
@@ -577,10 +578,10 @@ func (mvs *multiValueSetting) Set(value string) error {
 		if delim == "" {
 			return fmt.Errorf("no delimiter provided for delimiter mode")
 		}
-		mvs.Mode = scanner.Delim
+		mvs.Mode = tags.Delim
 		mvs.Delim = delim
 	case "multi":
-		mvs.Mode = scanner.Multi
+		mvs.Mode = tags.Multi
 	case "none":
 	default:
 		return fmt.Errorf(`unknown multi value mode %q. should be "none" | "multi" | "delim <delim>"`, mode)

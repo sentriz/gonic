@@ -11,7 +11,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -39,7 +38,7 @@ var (
 type Scanner struct {
 	db                 *db.DB
 	musicDirs          []string
-	multiValueSettings map[Tag]MultiValueSetting
+	multiValueSettings map[*tags.Spec]tags.MultiValueSetting
 	tagReader          tags.Reader
 	excludePattern     *regexp.Regexp
 	scanEmbeddedCover  bool
@@ -47,7 +46,7 @@ type Scanner struct {
 	scanning           *int32
 }
 
-func New(musicDirs []string, db *db.DB, multiValueSettings map[Tag]MultiValueSetting, tagReader tags.Reader, excludePattern string, scanEmbeddedCover bool, genreTree map[string][]string) *Scanner {
+func New(musicDirs []string, db *db.DB, multiValueSettings map[*tags.Spec]tags.MultiValueSetting, tagReader tags.Reader, excludePattern string, scanEmbeddedCover bool, genreTree map[string][]string) *Scanner {
 	var excludePatternRegExp *regexp.Regexp
 	if excludePattern != "" {
 		excludePatternRegExp = regexp.MustCompile(excludePattern)
@@ -412,7 +411,7 @@ func (s *Scanner) scanDir(st *State, absPath string) error {
 }
 
 func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db.Album, track *db.Track, timeSpec times.Timespec, trprops tags.Properties, trags tags.Tags, basename, absPath string) error {
-	genreNames := ParseMulti(s.multiValueSettings[Genre], tags.MustGenres(trags), tags.MustGenre(trags))
+	genreNames, _ := tags.ReadMulti(trags, tags.Genre, s.multiValueSettings)
 	genreIDs, err := populateGenres(tx, genreNames)
 	if err != nil {
 		return fmt.Errorf("populate genres: %w", err)
@@ -448,17 +447,14 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 			return fmt.Errorf("delete album credits: %w", err)
 		}
 
-		albumArtistEntries := pairCredits(
-			ParseMulti(s.multiValueSettings[AlbumArtist], tags.MustAlbumArtists(trags), tags.MustAlbumArtist(trags)),
-			ParseMulti(s.multiValueSettings[AlbumArtist], tags.FirstValues(trags, normtag.AlbumArtistsCredit, normtag.AlbumArtistCredit), normtag.Get(trags, normtag.AlbumArtistCredit)),
-		)
+		albumArtistEntries := tags.PairCredits(tags.ReadMulti(trags, tags.AlbumArtist, s.multiValueSettings))
 		var albumArtists []artistRef
 		for _, e := range albumArtistEntries {
-			artist, err := populateArtist(tx, e.name)
+			artist, err := populateArtist(tx, e.Value)
 			if err != nil {
 				return fmt.Errorf("populate album artist: %w", err)
 			}
-			albumArtists = append(albumArtists, artistRef{id: artist.ID, credit: e.credit})
+			albumArtists = append(albumArtists, artistRef{id: artist.ID, credit: e.ValueCredit})
 		}
 		if err := populateAlbumCredits(tx, album, db.RoleAlbumArtist, albumArtists); err != nil {
 			return fmt.Errorf("populate album credits: %w", err)
@@ -493,7 +489,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		return fmt.Errorf("populate track genres: %w", err)
 	}
 
-	isrcs := ParseMulti(s.multiValueSettings[ISRC], normtag.Values(trags, normtag.ISRC), normtag.Get(trags, normtag.ISRC))
+	isrcs, _ := tags.ReadMulti(trags, tags.ISRC, s.multiValueSettings)
 	if err := populateTrackISRCs(tx, track, isrcs); err != nil {
 		return fmt.Errorf("populate track ISRCs: %w", err)
 	}
@@ -502,17 +498,14 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		return fmt.Errorf("delete track credits: %w", err)
 	}
 
-	trackArtistEntries := pairCredits(
-		ParseMulti(s.multiValueSettings[Artist], tags.MustArtists(trags), tags.MustArtist(trags)),
-		ParseMulti(s.multiValueSettings[Artist], tags.FirstValues(trags, normtag.ArtistsCredit, normtag.ArtistCredit), normtag.Get(trags, normtag.ArtistCredit)),
-	)
+	trackArtistEntries := tags.PairCredits(tags.ReadMulti(trags, tags.Artist, s.multiValueSettings))
 	var trackArtists []artistRef
 	for _, e := range trackArtistEntries {
-		artist, err := populateArtist(tx, e.name)
+		artist, err := populateArtist(tx, e.Value)
 		if err != nil {
 			return fmt.Errorf("populate track artist: %w", err)
 		}
-		trackArtists = append(trackArtists, artistRef{id: artist.ID, credit: e.credit})
+		trackArtists = append(trackArtists, artistRef{id: artist.ID, credit: e.ValueCredit})
 	}
 	if err := populateTrackCredits(tx, track, db.RoleArtist, trackArtists); err != nil {
 		return fmt.Errorf("populate track credits: %w", err)
@@ -559,16 +552,14 @@ func populateAlbumEmbeddedCover(tx *db.DB, scanEmbeddedCover bool, album *db.Alb
 }
 
 func populateAlbum(tx *db.DB, album *db.Album, trags map[string][]string, modTime, createTime time.Time) error {
-	albumName := tags.MustAlbum(trags)
-	album.TagTitle = albumName
-	album.TagTitleUDec = decoded(albumName)
-	album.TagAlbumArtist = tags.MustAlbumArtist(trags)
-	album.TagAlbumArtistCredit = ""
-	if c := normtag.Get(trags, normtag.AlbumArtistCredit); c != "" && c != album.TagAlbumArtist {
-		album.TagAlbumArtistCredit = c
-	}
+	album.TagTitle, _ = tags.Read(trags, tags.AlbumTitle)
+	album.TagTitleUDec = decoded(album.TagTitle)
+	album.TagAlbumArtist, album.TagAlbumArtistCredit = tags.Read(trags, tags.AlbumArtist)
 	album.TagBrainzID = normtag.Get(trags, normtag.MusicBrainzReleaseID)
-	album.TagYear = tags.MustYear(trags)
+	album.TagYear = 0
+	if v, _ := tags.Read(trags, tags.Year); v != "" {
+		album.TagYear = tags.ParseDate(v).Year()
+	}
 	album.TagCompilation = tags.ParseBool(normtag.Get(trags, normtag.Compilation))
 	album.TagReleaseType = strings.Join(normtag.Values(trags, normtag.ReleaseType), ", ")
 
@@ -614,18 +605,16 @@ func populateTrack(tx *db.DB, scanEmbeddedCover bool, album *db.Album, track *db
 	track.AlbumID = album.ID
 	track.TagLyrics = normtag.Get(trags, normtag.Lyrics)
 
-	trackTitle := normtag.Get(trags, normtag.Title)
-	track.TagTitle = trackTitle
-	track.TagTitleUDec = decoded(trackTitle)
-	track.TagTrackArtist = tags.MustArtist(trags)
-	track.TagTrackArtistCredit = ""
-	if c := normtag.Get(trags, normtag.ArtistCredit); c != "" && c != track.TagTrackArtist {
-		track.TagTrackArtistCredit = c
-	}
+	track.TagTitle, _ = tags.Read(trags, tags.TrackTitle)
+	track.TagTitleUDec = decoded(track.TagTitle)
+	track.TagTrackArtist, track.TagTrackArtistCredit = tags.Read(trags, tags.Artist)
 	track.TagTrackNumber = tags.ParseInt(normtag.Get(trags, normtag.TrackNumber))
 	track.TagDiscNumber = tags.ParseInt(normtag.Get(trags, normtag.DiscNumber))
 	track.TagBrainzID = normtag.Get(trags, normtag.MusicBrainzRecordingID)
-	track.TagYear = tags.MustYear(trags)
+	track.TagYear = 0
+	if v, _ := tags.Read(trags, tags.Year); v != "" {
+		track.TagYear = tags.ParseDate(v).Year()
+	}
 
 	track.ReplayGainTrackGain = tags.ParseDB(normtag.Get(trags, normtag.ReplayGainTrackGain))
 	track.ReplayGainTrackPeak = tags.ParseFloat(normtag.Get(trags, normtag.ReplayGainTrackPeak))
@@ -769,29 +758,27 @@ func populateAlbumCredits(tx *db.DB, album *db.Album, role string, refs []artist
 	return nil
 }
 
-//nolint:gochecknoglobals
-var contributorTagKeys = []struct {
-	role                                       string
-	key, keySingle, keyCredit, keyCreditSingle string
-}{
-	{db.RoleRemixer, normtag.Remixers, normtag.Remixer, normtag.RemixersCredit, normtag.RemixerCredit},
-	{db.RoleComposer, normtag.Composers, normtag.Composer, normtag.ComposersCredit, normtag.ComposerCredit},
-	{db.RoleLyricist, normtag.Lyricists, normtag.Lyricist, normtag.LyricistsCredit, normtag.LyricistCredit},
-	{db.RoleConductor, normtag.Conductors, normtag.Conductor, normtag.ConductorsCredit, normtag.ConductorCredit},
-	{db.RoleProducer, normtag.Producers, normtag.Producer, normtag.ProducersCredit, normtag.ProducerCredit},
-	{db.RoleArranger, normtag.Arrangers, normtag.Arranger, normtag.ArrangersCredit, normtag.ArrangerCredit},
-}
-
 func populateTrackContributorCredits(tx *db.DB, track *db.Track, trags tags.Tags) error {
+	roles := []struct {
+		role string
+		spec *tags.Spec
+	}{
+		{db.RoleRemixer, tags.Remixer},
+		{db.RoleComposer, tags.Composer},
+		{db.RoleLyricist, tags.Lyricist},
+		{db.RoleConductor, tags.Conductor},
+		{db.RoleProducer, tags.Producer},
+		{db.RoleArranger, tags.Arranger},
+	}
+
 	var rows [][]any
-	for _, rk := range contributorTagKeys {
-		entries := pairCredits(tags.FirstValues(trags, rk.key, rk.keySingle), tags.FirstValues(trags, rk.keyCredit, rk.keyCreditSingle))
-		for _, e := range entries {
-			artist, err := populateArtist(tx, e.name)
+	for _, rs := range roles {
+		for _, e := range tags.PairCredits(tags.ReadMulti(trags, rs.spec, nil)) {
+			artist, err := populateArtist(tx, e.Value)
 			if err != nil {
 				return fmt.Errorf("populate contributor artist: %w", err)
 			}
-			rows = append(rows, []any{artist.ID, rk.role, e.credit})
+			rows = append(rows, []any{artist.ID, rs.role, e.ValueCredit})
 		}
 	}
 	if err := tx.InsertBulkLeftManyRows("track_credits", []string{"track_id", "artist_id", "role", "credited_as"}, track.ID, rows); err != nil {
@@ -809,6 +796,11 @@ func populateTrackCredits(tx *db.DB, track *db.Track, role string, refs []artist
 		return fmt.Errorf("insert bulk track credits: %w", err)
 	}
 	return nil
+}
+
+type artistRef struct {
+	id     int
+	credit string
 }
 
 func (s *Scanner) cleanTracks(st *State) error {
@@ -1037,69 +1029,6 @@ func (s *State) AlbumsMissing() int    { return len(s.albumsMissing) }
 func (s *State) ArtistsMissing() int   { return s.artistsMissing }
 func (s *State) GenresMissing() int    { return s.genresMissing }
 func (s *State) BookmarksRemoved() int { return s.bookmarksRemoved }
-
-type MultiValueMode uint8
-
-const (
-	None MultiValueMode = iota
-	Delim
-	Multi
-)
-
-type Tag uint8
-
-const (
-	Genre Tag = iota
-	Artist
-	AlbumArtist
-	ISRC
-)
-
-type MultiValueSetting struct {
-	Mode  MultiValueMode
-	Delim string
-}
-
-func ParseMulti(setting MultiValueSetting, values []string, value string) []string {
-	var parts []string
-	switch setting.Mode {
-	case Multi:
-		parts = slices.Clone(values)
-	case Delim:
-		parts = strings.Split(value, setting.Delim)
-	default:
-		parts = []string{value}
-	}
-	for i := range parts {
-		parts[i] = strings.TrimSpace(parts[i])
-	}
-	return parts
-}
-
-type artistRef struct {
-	id     int
-	credit string
-}
-
-type credited struct {
-	name   string
-	credit string
-}
-
-func pairCredits(names, credits []string) []credited {
-	out := make([]credited, 0, len(names))
-	for i, n := range names {
-		if n == "" {
-			continue
-		}
-		e := credited{name: n}
-		if i < len(credits) && credits[i] != "" && credits[i] != n {
-			e.credit = credits[i]
-		}
-		out = append(out, e)
-	}
-	return out
-}
 
 func musicDirRelative(musicDirs []string, absPath string) (musicDir, relPath string) {
 	for _, musicDir := range musicDirs {

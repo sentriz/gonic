@@ -18,6 +18,7 @@ import (
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/mockfs"
 	"go.senan.xyz/gonic/scanner"
+	"go.senan.xyz/gonic/tags"
 	"go.senan.xyz/wrtag/tags/normtag"
 )
 
@@ -1073,14 +1074,15 @@ func TestPrefixOverlap(t *testing.T) {
 }
 
 // https://github.com/sentriz/gonic/pull/448
-func TestParseMultiDoubleDelim(t *testing.T) {
+func TestReadDoubleDelim(t *testing.T) {
 	t.Parallel()
 
-	setting := scanner.MultiValueSetting{
-		Mode:  scanner.Delim,
-		Delim: `/`,
+	spec := &tags.Spec{Keys: tags.Keys{Key: []string{"X"}}}
+	trags := tags.Tags{"X": {`DON'T//BE//⚜⚜⚜`}}
+	settings := map[*tags.Spec]tags.MultiValueSetting{
+		spec: {Mode: tags.Delim, Delim: `/`},
 	}
 
-	values := scanner.ParseMulti(setting, nil, `DON'T//BE//⚜⚜⚜`)
+	values, _ := tags.ReadMulti(trags, spec, settings)
 	require.Equal(t, []string{`DON'T`, ``, `BE`, ``, `⚜⚜⚜`}, values)
 }
