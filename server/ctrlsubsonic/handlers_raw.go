@@ -63,6 +63,10 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 		return spec.NewError(0, "invalid size")
 	}
 
+	user := r.Context().Value(CtxUser).(*db.User)
+	client, _ := params.Get("c")
+	go c.recordCoverPreference(user.ID, client, size)
+
 	c.coverCache.RLock()
 	defer c.coverCache.RUnlock()
 
@@ -84,39 +88,57 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 		return nil
 	}
 
-	reader, err := coverFor(c.dbc, c.artistInfoCache, c.playlistStore, c.tagReader, id)
+	cachePath, err = c.ensureCoverCached(id, size)
 	if err != nil {
 		return spec.NewError(70, "couldn't find cover %q: %v", id, err)
+	}
+
+	_ = os.Chtimes(cachePath, time.Now(), time.Now()) // touch for LRU eviction
+	serve(cachePath)
+	return nil
+}
+
+// ensureCoverCached fetches, resizes, and saves the cover for id at up to size pixels.
+// It returns the path of the cached file. Caller must hold c.coverCache.RLock.
+func (c *Controller) ensureCoverCached(id specid.ID, size int) (string, error) {
+	reader, err := coverFor(c.dbc, c.artistInfoCache, c.playlistStore, c.tagReader, id)
+	if err != nil {
+		return "", err
 	}
 	defer reader.Close()
 
 	img, format, err := image.Decode(reader)
 	if err != nil {
-		return spec.NewError(0, "decode for cover %q: %v", id, err)
+		return "", fmt.Errorf("decode cover: %w", err)
 	}
 
 	// don't upscale
 	minSize := min(size, max(img.Bounds().Dx(), img.Bounds().Dy()))
+	cachePath := filepath.Join(c.coverCache.Path(), coverCacheFilename(id.String(), minSize, format))
 
-	cachePath = filepath.Join(c.coverCache.Path(), coverCacheFilename(id.String(), minSize, format))
-
-	if minSize != size {
-		// we down sized, check cache again
-		if _, err := os.Stat(cachePath); err == nil {
-			_ = os.Chtimes(cachePath, time.Now(), time.Now()) // touch for LRU eviction
-			serve(cachePath)
-			return nil
-		}
+	if _, err := os.Stat(cachePath); err == nil {
+		return cachePath, nil // already cached at the effective size
 	}
 
 	resized := imaging.Fit(img, minSize, minSize, imaging.Lanczos)
-
 	if err := imaging.Save(resized, cachePath); err != nil {
-		return spec.NewError(0, "saving cover %q: %v", id, err)
+		return "", fmt.Errorf("save cover: %w", err)
 	}
+	return cachePath, nil
+}
 
-	serve(cachePath)
-	return nil
+func (c *Controller) recordCoverPreference(userID int, client string, size int) {
+	var pref db.ClientCoverSizePreference
+	c.dbc.Where("user_id=? AND client=?", userID, client).First(&pref)
+	if pref.LastCoverSize == size {
+		return
+	}
+	pref.UserID = userID
+	pref.Client = client
+	pref.LastCoverSize = size
+	if err := c.dbc.Save(&pref).Error; err != nil {
+		log.Printf("record cover preference: %v", err)
+	}
 }
 
 func coverCacheFilename(idStr string, size int, format string) string {
