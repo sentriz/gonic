@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	playlistp "go.senan.xyz/gonic/playlist"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 )
 
@@ -114,4 +115,56 @@ func TestDeletePlaylist(t *testing.T) {
 	f.run(t, f.contr.ServeGetPlaylists, f.admin,
 		query{url.Values{}, "after_delete", false},
 	)
+}
+
+func TestGetPlaylistDeniesOtherUsersPrivate(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	privateID := writePrivatePlaylist(t, f)
+
+	body := f.query(t, f.contr.ServeGetPlaylist, f.alt, url.Values{
+		"id": {privateID},
+	})
+	var sub spec.SubsonicResponse
+	if err := json.Unmarshal([]byte(body), &sub); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if sub.Response.Status != "failed" || sub.Response.Error == nil || sub.Response.Error.Code != 50 {
+		t.Fatalf("expected error 50, got: %s", body)
+	}
+}
+
+func TestDeletePlaylistDeniesOtherUsers(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	body := f.query(t, f.contr.ServeDeletePlaylist, f.alt, url.Values{
+		"id": {f.sharedPlaylistID()},
+	})
+	var sub spec.SubsonicResponse
+	if err := json.Unmarshal([]byte(body), &sub); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if sub.Response.Status != "failed" || sub.Response.Error == nil || sub.Response.Error.Code != 50 {
+		t.Fatalf("expected error 50, got: %s", body)
+	}
+	if _, err := f.contr.playlistStore.Read(filepath.Join("1", "shared.m3u")); err != nil {
+		t.Fatalf("playlist was deleted despite auth failure: %v", err)
+	}
+}
+
+func writePrivatePlaylist(t *testing.T, f *fixture) string {
+	t.Helper()
+	relPath := filepath.Join("1", "private.m3u")
+	err := f.contr.playlistStore.Write(relPath, &playlistp.Playlist{
+		UserID:    f.admin.ID,
+		UpdatedAt: time.Date(2020, 5, 1, 12, 0, 0, 0, time.UTC),
+		Name:      "private playlist",
+		IsPublic:  false,
+	})
+	if err != nil {
+		t.Fatalf("write private playlist: %v", err)
+	}
+	return playlistIDEncode(relPath).String()
 }

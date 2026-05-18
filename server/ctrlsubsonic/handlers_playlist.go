@@ -49,6 +49,7 @@ func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
+	user := r.Context().Value(CtxUser).(*db.User)
 	params := r.Context().Value(CtxParams).(params.Params)
 	playlistID, err := params.GetFirstID("id", "playlistId")
 	if err != nil {
@@ -57,6 +58,9 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 	playlist, err := c.playlistStore.Read(playlistIDDecode(playlistID))
 	if err != nil {
 		return spec.NewError(70, "playlist with id %s not found", playlistID)
+	}
+	if playlist.UserID != user.ID && !playlist.IsPublic {
+		return spec.NewError(50, "you aren't allowed to read that user's playlist")
 	}
 	sub := spec.NewResponse()
 	rendered, err := playlistRender(c, params, playlist, playlistID, true)
@@ -175,12 +179,21 @@ func (c *Controller) ServeUpdatePlaylist(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeDeletePlaylist(r *http.Request) *spec.Response {
+	user := r.Context().Value(CtxUser).(*db.User)
 	params := r.Context().Value(CtxParams).(params.Params)
 	playlistID, err := params.GetFirstID("id", "playlistId")
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` or `playlistId` parameter")
 	}
-	if err := c.playlistStore.Delete(playlistIDDecode(playlistID)); err != nil {
+	playlistPath := playlistIDDecode(playlistID)
+	playlist, err := c.playlistStore.Read(playlistPath)
+	if err != nil {
+		return spec.NewError(70, "playlist with id %s not found", playlistID)
+	}
+	if playlist.UserID != 0 && playlist.UserID != user.ID {
+		return spec.NewError(50, "you aren't allowed to delete that user's playlist")
+	}
+	if err := c.playlistStore.Delete(playlistPath); err != nil {
 		return spec.NewError(0, "delete playlist: %v", err)
 	}
 	return spec.NewResponse()
