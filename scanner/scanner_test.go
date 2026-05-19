@@ -1078,7 +1078,7 @@ func TestPrefixOverlap(t *testing.T) {
 func TestReadDoubleDelim(t *testing.T) {
 	t.Parallel()
 
-	spec := &tags.Spec{Keys: tags.Keys{Key: []string{"X"}}}
+	spec := &tags.Spec{Key: []string{"X"}}
 	trags := tags.Tags{"X": {`DON'T//BE//⚜⚜⚜`}}
 	settings := map[*tags.Spec]tags.MultiValueSetting{
 		spec: {Mode: tags.Delim, Delim: `/`},
