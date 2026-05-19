@@ -441,6 +441,11 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		}
 	}
 
+	modTime, createTime := timeSpec.ModTime(), timeSpec.ModTime()
+	if timeSpec.HasBirthTime() {
+		createTime = timeSpec.BirthTime()
+	}
+
 	// metadata for the album table comes only from the first track's tags
 	if i == 0 {
 		if err := tx.Where("album_id=?", album.ID).Delete(db.AlbumCredit{}).Error; err != nil {
@@ -460,10 +465,6 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 			return fmt.Errorf("populate album credits: %w", err)
 		}
 
-		modTime, createTime := timeSpec.ModTime(), timeSpec.ModTime()
-		if timeSpec.HasBirthTime() {
-			createTime = timeSpec.BirthTime()
-		}
 		if err := populateAlbum(tx, album, trags, modTime, createTime); err != nil {
 			return fmt.Errorf("populate album: %w", err)
 		}
@@ -482,7 +483,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		track = &db.Track{}
 	}
 
-	if err := populateTrack(tx, s.scanEmbeddedCover, album, track, trprops, trags, basename, int(stat.Size())); err != nil {
+	if err := populateTrack(tx, s.scanEmbeddedCover, album, track, trprops, trags, basename, int(stat.Size()), createTime); err != nil {
 		return fmt.Errorf("process %q: %w", basename, err)
 	}
 	if err := populateTrackGenres(tx, track, genreIDs, inheritedGenreIDs); err != nil {
@@ -598,12 +599,16 @@ func populateAlbumBasics(tx *db.DB, musicDir string, parent, album *db.Album, di
 	return nil
 }
 
-func populateTrack(tx *db.DB, scanEmbeddedCover bool, album *db.Album, track *db.Track, trprops tags.Properties, trags map[string][]string, basename string, size int) error {
+func populateTrack(tx *db.DB, scanEmbeddedCover bool, album *db.Album, track *db.Track, trprops tags.Properties, trags map[string][]string, basename string, size int, createTime time.Time) error {
 	track.Filename = basename
 	track.FilenameUDec = decoded(basename)
 	track.Size = size
 	track.AlbumID = album.ID
 	track.TagLyrics = normtag.Get(trags, normtag.Lyrics)
+
+	if track.CreatedAt.IsZero() || track.CreatedAt.After(createTime) {
+		track.CreatedAt = createTime
+	}
 
 	track.TagTitle, _ = tags.Read(trags, tags.TrackTitle)
 	track.TagTitleUDec = decoded(track.TagTitle)
