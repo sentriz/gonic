@@ -80,7 +80,7 @@ func (c *Controller) ServeCreateOrUpdatePlaylist(r *http.Request) *spec.Response
 
 	var playlist playlistp.Playlist
 	if playlistPath != "" {
-		if pl, err := c.playlistStore.Read(playlistPath); err != nil && pl != nil {
+		if pl, err := c.playlistStore.Read(playlistPath); err == nil && pl != nil {
 			playlist = *pl
 		}
 	}

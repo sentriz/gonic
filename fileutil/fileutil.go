@@ -5,12 +5,15 @@
 package fileutil
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 )
+
+var ErrEscapesBase = errors.New("path escapes base")
 
 var nonAlphaNumExpr = regexp.MustCompile("[^a-zA-Z0-9_.]+")
 
@@ -62,4 +65,12 @@ func First(path ...string) (string, error) {
 // HasPrefix checks a path has a prefix, making sure to respect path boundaries. So that /aa & /a does not match, but /a/a & /a does.
 func HasPrefix(p, prefix string) bool {
 	return p == prefix || strings.HasPrefix(p, filepath.Clean(prefix)+string(filepath.Separator))
+}
+
+func SafeJoin(base, rel string) (string, error) {
+	abs := filepath.Join(base, rel)
+	if !HasPrefix(abs, base) {
+		return "", fmt.Errorf("%w: %q", ErrEscapesBase, rel)
+	}
+	return abs, nil
 }

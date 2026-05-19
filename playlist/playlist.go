@@ -92,7 +92,10 @@ func (s *Store) Read(relPath string) (*Playlist, error) {
 		return nil, err
 	}
 
-	absPath := filepath.Join(s.basePath, relPath)
+	absPath, err := fileutil.SafeJoin(s.basePath, relPath)
+	if err != nil {
+		return nil, err
+	}
 	stat, err := os.Stat(absPath)
 	if err != nil {
 		return nil, fmt.Errorf("stat m3u: %w", err)
@@ -102,15 +105,19 @@ func (s *Store) Read(relPath string) (*Playlist, error) {
 		return nil, errors.New("path is a directory")
 	}
 
+	// derive metadata from the cleaned relative path so traversal segments
+	// can't spoof the first-segment user id check.
+	cleanRel, _ := filepath.Rel(s.basePath, absPath)
+
 	var playlist Playlist
 	playlist.UpdatedAt = stat.ModTime()
 
-	playlist.UserID, err = userIDFromPath(relPath)
+	playlist.UserID, err = userIDFromPath(cleanRel)
 	if err != nil {
 		playlist.UserID = 1
 	}
 
-	playlist.Name = strings.TrimSuffix(filepath.Base(relPath), filepath.Ext(relPath))
+	playlist.Name = strings.TrimSuffix(filepath.Base(cleanRel), filepath.Ext(cleanRel))
 
 	file, err := os.Open(absPath)
 	if err != nil {
@@ -150,8 +157,11 @@ func (s *Store) Write(relPath string, playlist *Playlist) error {
 		return err
 	}
 
-	absPath := filepath.Join(s.basePath, relPath)
-	if err := os.MkdirAll(filepath.Dir(absPath), 0o777); err != nil {
+	absPath, err := fileutil.SafeJoin(s.basePath, relPath)
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(absPath), 0o755); err != nil {
 		return fmt.Errorf("make m3u base dir: %w", err)
 	}
 	file, err := os.OpenFile(absPath, os.O_RDWR|os.O_CREATE, 0o666)
@@ -203,7 +213,11 @@ func (s *Store) Delete(relPath string) error {
 		return err
 	}
 
-	return os.Remove(filepath.Join(s.basePath, relPath))
+	absPath, err := fileutil.SafeJoin(s.basePath, relPath)
+	if err != nil {
+		return err
+	}
+	return os.Remove(absPath)
 }
 
 func firstPathEl(path string) string {
