@@ -67,6 +67,7 @@ linters:
       - linters:
           - errcheck
           - gochecknoglobals
+          - goconst
         path: _test\.go
       - linters:
           - tparallel
