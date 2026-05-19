@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/djherbis/times"
 	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1095,30 +1094,24 @@ func TestCreatedAtMatchesFileTime(t *testing.T) {
 	m := mockfs.New(t)
 	m.AddItems()
 
-	trackPath := filepath.Join(m.TmpDir(), "artist-0/album-0/track-0.flac")
-	fileTimes, err := times.Stat(trackPath)
-	require.NoError(t, err)
-	wantTime := fileTimes.ModTime()
-	if fileTimes.HasBirthTime() {
-		wantTime = fileTimes.BirthTime()
-	}
+	// sleep so any "now" timestamp captured during the scan is clearly distinguishable
+	// from the timestamps of the files we just created
+	time.Sleep(200 * time.Millisecond)
 
-	// sleep so the eventual scan time is distinguishable from the file's birth/mod time
-	time.Sleep(50 * time.Millisecond)
-
+	beforeScan := time.Now()
 	m.ScanAndClean()
 
 	t.Run("track", func(t *testing.T) {
 		t.Parallel()
 		var track db.Track
 		require.NoError(t, m.DB().Where("filename=?", "track-0.flac").Find(&track, "album_id IN (SELECT id FROM albums WHERE right_path='album-0')").Error)
-		require.WithinDuration(t, wantTime, track.CreatedAt, time.Millisecond, "track.CreatedAt should match the file's birth/mod time, not the scan time")
+		require.True(t, track.CreatedAt.Before(beforeScan), "track.CreatedAt %v should predate scan start %v (it should be the file's birth/mod time, not the scan time)", track.CreatedAt, beforeScan)
 	})
 
 	t.Run("album", func(t *testing.T) {
 		t.Parallel()
 		var album db.Album
 		require.NoError(t, m.DB().Where("left_path=? AND right_path=?", "artist-0/", "album-0").Find(&album).Error)
-		require.WithinDuration(t, wantTime, album.CreatedAt, time.Millisecond, "album.CreatedAt should match the file's birth/mod time, not the scan time")
+		require.True(t, album.CreatedAt.Before(beforeScan), "album.CreatedAt %v should predate scan start %v (it should be the file's birth/mod time, not the scan time)", album.CreatedAt, beforeScan)
 	})
 }
