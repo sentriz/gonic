@@ -19,6 +19,7 @@ import (
 	"go.senan.xyz/wrtag/coverparse"
 
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/fileutil"
 	"go.senan.xyz/gonic/infocache/artistinfocache"
 	"go.senan.xyz/gonic/playlist"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
@@ -102,7 +103,7 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 
 	if minSize != size {
 		// we down sized, check cache again
-		if _, err := os.Stat(cachePath); err == nil {
+		if _, err := os.Stat(cachePath); err == nil { //nolint:gosec // id.String() constrained, format from image.Decode
 			_ = os.Chtimes(cachePath, time.Now(), time.Now()) // touch for LRU eviction
 			serve(cachePath)
 			return nil
@@ -126,7 +127,7 @@ func coverCacheFilename(idStr string, size int, format string) string {
 func findCachedCover(cacheDir, idStr string, size int) (string, error) {
 	for _, format := range coverCacheFormats {
 		cachePath := filepath.Join(cacheDir, coverCacheFilename(idStr, size, format))
-		if _, err := os.Stat(cachePath); err == nil {
+		if _, err := os.Stat(cachePath); err == nil { //nolint:gosec // idStr constrained, format from known list
 			return cachePath, nil
 		}
 	}
@@ -181,7 +182,7 @@ func coverForArtist(artistInfoCache *artistinfocache.ArtistInfoCache, id int) (i
 	if info.ImageURL == "" {
 		return nil, fmt.Errorf("%w: cache miss", errCoverEmpty)
 	}
-	resp, err := http.Get(info.ImageURL)
+	resp, err := http.Get(info.ImageURL) //nolint:gosec // url comes from trusted lastfm artist info cache
 	if err != nil {
 		return nil, fmt.Errorf("req image from lastfm: %w", err)
 	}
@@ -242,7 +243,10 @@ func coverForTrack(dbc *db.DB, tagReader tags.Reader, id int) (io.ReadCloser, er
 
 func coverForPlaylist(playlistStore *playlist.Store, id specid.ID) (*os.File, error) {
 	playlistPath := playlistIDDecode(id)
-	playlistDir := filepath.Join(playlistStore.BasePath(), filepath.Dir(playlistPath))
+	playlistDir, err := fileutil.SafeJoin(playlistStore.BasePath(), filepath.Dir(playlistPath))
+	if err != nil {
+		return nil, err
+	}
 	playlistBase := strings.TrimSuffix(filepath.Base(playlistPath), filepath.Ext(playlistPath))
 
 	entries, err := os.ReadDir(playlistDir)
@@ -266,7 +270,7 @@ func coverForPlaylist(playlistStore *playlist.Store, id specid.ID) (*os.File, er
 		return nil, errCoverEmpty
 	}
 
-	return os.Open(filepath.Join(playlistDir, cover))
+	return os.Open(filepath.Join(playlistDir, cover)) //nolint:gosec // playlistDir validated via SafeJoin above
 }
 
 func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.Response {
@@ -293,7 +297,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	timeOffset, _ := params.GetInt("timeOffset")
 
 	if format == "raw" || urlPath == "/download" {
-		http.ServeFile(w, r, file.AbsPath())
+		http.ServeFile(w, r, file.AbsPath()) //nolint:gosec // path is from db, populated by scanner
 		return nil
 	}
 
@@ -307,13 +311,13 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 			return spec.NewError(0, "param maxBitRate requested and no user transcode preferences found for user %q and client %q. please configure transcode settings if you want to transcode", user.Name, client)
 		}
 		log.Printf("serving raw file, no user transcode preferences found for user %q and client %q", user.Name, client)
-		http.ServeFile(w, r, file.AbsPath())
+		http.ServeFile(w, r, file.AbsPath()) //nolint:gosec // path is from db, populated by scanner
 		return nil
 	}
 
 	if maxBitRate >= audioFile.AudioBitrate() {
 		log.Printf("serving raw file, requested max bitrate %d is greater or equal to %d", maxBitRate, audioFile.AudioBitrate())
-		http.ServeFile(w, r, file.AbsPath())
+		http.ServeFile(w, r, file.AbsPath()) //nolint:gosec // path is from db, populated by scanner
 		return nil
 	}
 

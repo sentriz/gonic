@@ -1,4 +1,4 @@
-//nolint:goerr113
+//nolint:err113,goconst
 package ctrladmin
 
 import (
@@ -581,7 +581,8 @@ func (c *Controller) ServeInternetRadioStationDeleteDo(r *http.Request) *Respons
 }
 
 func getAvatarFile(r *http.Request) ([]byte, error) {
-	err := r.ParseMultipartForm(10 << 20) // keep up to 10MB in memory
+	r.Body = http.MaxBytesReader(nil, r.Body, 10<<20) // cap upload at 10MB
+	err := r.ParseMultipartForm(10 << 20)             //nolint:gosec // body bounded by MaxBytesReader above
 	if err != nil {
 		return nil, err
 	}

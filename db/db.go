@@ -299,10 +299,10 @@ type User struct {
 	ID                int `gorm:"primary_key"`
 	CreatedAt         time.Time
 	Name              string `gorm:"not null; unique_index" sql:"default: null"`
-	Password          string `gorm:"not null" sql:"default: null"`
-	LastFMSession     string `sql:"default: null"`
-	ListenBrainzURL   string `sql:"default: null"`
-	ListenBrainzToken string `sql:"default: null"`
+	Password          string `gorm:"not null" sql:"default: null" json:"-"`
+	LastFMSession     string `sql:"default: null" json:"-"`
+	ListenBrainzURL   string `sql:"default: null" json:"-"`
+	ListenBrainzToken string `sql:"default: null" json:"-"`
 	IsAdmin           bool   `sql:"default: null"`
 	Avatar            []byte `sql:"default: null"`
 }

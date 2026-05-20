@@ -1,4 +1,4 @@
-//nolint:goerr113
+//nolint:err113
 package db
 
 import (

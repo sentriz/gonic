@@ -18,7 +18,7 @@ jobs:
         uses: golangci/golangci-lint-action@v9
         with:
           install-mode: goinstall
-          version: v2.6.1
+          version: v2.12.2
       - name: Test
         run: go test ./...
   release-please:

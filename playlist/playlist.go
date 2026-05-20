@@ -193,7 +193,7 @@ func (s *Store) Write(relPath string, playlist *Playlist) error {
 	}
 
 	for _, line := range existingComments {
-		fmt.Fprintln(file, line)
+		fmt.Fprintln(file, line) //nolint:gosec // writing to m3u file, not html
 	}
 	fmt.Fprintln(file, encodeAttr(attrName, playlist.Name))
 	fmt.Fprintln(file, encodeAttr(attrCommment, playlist.Comment))

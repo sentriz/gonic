@@ -24,7 +24,7 @@ linters:
     - gocritic
     - gocyclo
     - goheader
-    - gomodguard
+    - gomodguard_v2
     - goprintffuncname
     - gosec
     - gosmopolitan
@@ -82,6 +82,9 @@ linters:
       - linters:
           - gosec
         text: integer overflow conversion
+      - linters:
+          - gosec
+        text: Log injection via taint analysis
       - linters:
           - staticcheck
         text: at least one file in a package should have a package comment

@@ -1,4 +1,4 @@
-//nolint:nestif
+//nolint:nestif,goconst
 package scanner
 
 import (

@@ -75,7 +75,7 @@ func (c *Client) do(req *http.Request, dest any) error {
 		return fmt.Errorf("rate limit: %w", err)
 	}
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.HTTPClient.Do(req) //nolint:gosec // base url is admin-configured
 	if err != nil {
 		return fmt.Errorf("request: %w", err)
 	}

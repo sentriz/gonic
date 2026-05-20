@@ -27,7 +27,7 @@ func (*FFmpegTranscoder) Transcode(ctx context.Context, profile Profile, in stri
 		return fmt.Errorf("split command: %w", err)
 	}
 
-	cmd := exec.CommandContext(ctx, name, args...)
+	cmd := exec.CommandContext(ctx, name, args...) //nolint:gosec // profile commands are hardcoded, args passed separately (no shell)
 	cmd.Stdout = out
 
 	if err := cmd.Start(); err != nil {

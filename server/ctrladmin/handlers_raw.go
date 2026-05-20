@@ -13,14 +13,14 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 	if username == "" || password == "" {
 		sessAddFlashW(session, []string{"please provide username and password"})
 		sessLogSave(session, w, r)
-		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+		http.Redirect(w, r, c.resolveProxyPath("/admin/login"), http.StatusSeeOther)
 		return
 	}
 	user := c.dbc.GetUserByName(username)
 	if user == nil || password != user.Password {
 		sessAddFlashW(session, []string{"invalid username / password"})
 		sessLogSave(session, w, r)
-		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+		http.Redirect(w, r, c.resolveProxyPath("/admin/login"), http.StatusSeeOther)
 		return
 	}
 	// put the user name into the session. future endpoints after this one

@@ -94,7 +94,7 @@ func (c *Client) Scrobble(user db.User, track scrobble.Track, stamp time.Time, s
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", authHeader)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.httpClient.Do(req) //nolint:gosec // user configures their own listenbrainz instance url
 	if err != nil {
 		return fmt.Errorf("http post: %w", err)
 	}
