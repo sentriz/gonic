@@ -1,5 +1,62 @@
 # Changelog
 
+## [0.21.0](https://www.github.com/sentriz/gonic/compare/v0.20.1...v0.21.0) (2026-05-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** bump to go1.26
+
+### Features
+
+* add cache size and eject interval for cover art cache ([#687](https://www.github.com/sentriz/gonic/issues/687)) ([b25bf3c](https://www.github.com/sentriz/gonic/commit/b25bf3cf1deaeb338dc1aa161c7ae0506583ec43))
+* **ci:** update golangci-lint ([be36fb4](https://www.github.com/sentriz/gonic/commit/be36fb41ed8e2125efaa203ab8b8eff23c6eed82))
+* **db:** refactor artist and album level artist roles ([1edd175](https://www.github.com/sentriz/gonic/commit/1edd175885ebec7ed7a6279ccef78e3c0565c131))
+* **db:** update log format ([3793d48](https://www.github.com/sentriz/gonic/commit/3793d48a4f14c394e06e4159ef01e72539f031a8))
+* **docs:** add Music Assistant to list of tested applications ([#676](https://www.github.com/sentriz/gonic/issues/676)) ([f5eecae](https://www.github.com/sentriz/gonic/commit/f5eecae4ef4cf4a6491252bb9551aee5e82aecd9))
+* **gonic:** add genre-tree option to expand genre hierarchies ([be4e137](https://www.github.com/sentriz/gonic/commit/be4e137d38f06a3750601492b032cad5e814f728))
+* **gonic:** scan and return per-relationship credit names ([731c07a](https://www.github.com/sentriz/gonic/commit/731c07a045e4753001abd40bbc5359edd2f04269))
+* **gonic:** use more efficient job polling ([9b4a0e3](https://www.github.com/sentriz/gonic/commit/9b4a0e30fb7c455f5b50dec1d3903f4bb8159e79))
+* **lastfm:** retry when artist image fetch fails ([4eef4df](https://www.github.com/sentriz/gonic/commit/4eef4df26ac702def3b6109c51ae9cac57c15c34))
+* **playlist:** use relative paths in m3u playlists ([798e7f8](https://www.github.com/sentriz/gonic/commit/798e7f875a03c8579616da364802958ef7265795)), closes [#537](https://www.github.com/sentriz/gonic/issues/537) [#529](https://www.github.com/sentriz/gonic/issues/529)
+* **podcast:** ensure that any error path out of doPodcastDownload sets status ([#672](https://www.github.com/sentriz/gonic/issues/672)) ([192ee10](https://www.github.com/sentriz/gonic/commit/192ee10b3f10e45e12c419085f83be5588b06388))
+* scan and return track contributors ([f9b6e27](https://www.github.com/sentriz/gonic/commit/f9b6e272ad7e16585153c79c070411a4d955558b))
+* **scanner:** also read multi vorbis singular tags ([896b0dd](https://www.github.com/sentriz/gonic/commit/896b0dde2baa941472dd9c3f7662473f61c8f5f0)), closes [#659](https://www.github.com/sentriz/gonic/issues/659)
+* **scanner:** skip macOS resource fork files ([e2dabd2](https://www.github.com/sentriz/gonic/commit/e2dabd2519d4fa1914171601543cf370afc31ddf)), closes [#657](https://www.github.com/sentriz/gonic/issues/657)
+* **subsonic:** don't render track contributors for DSub ([3ae3177](https://www.github.com/sentriz/gonic/commit/3ae317742f9c1bb8d16829f847ce57acb8cb16b2))
+* **subsonic:** make error codes match Open Subsonic spec ([#671](https://www.github.com/sentriz/gonic/issues/671)) ([1b770c9](https://www.github.com/sentriz/gonic/commit/1b770c95d8347423585758fa3c44817dfdc4af80))
+* **subsonic:** return alternate performance name artists from getSimilarArtists ([a7bbf55](https://www.github.com/sentriz/gonic/commit/a7bbf5565de21ab615f803d3f2efd0b33ad8d2db))
+* **subsonic:** return artist roles field ([d5ef198](https://www.github.com/sentriz/gonic/commit/d5ef198e2b6fc97c5616ef75c129db12319006d2))
+* **subsonic:** return band member name artists from getSimilarArtists ([c2a11a2](https://www.github.com/sentriz/gonic/commit/c2a11a2c50bea45542dd18a5c2b7b8a247831ef6))
+* **subsonic:** return consistent shapes ([72418cd](https://www.github.com/sentriz/gonic/commit/72418cd0bd11dbe4b313374e3a7ebe0ea731d945))
+* **subsonic:** scan and return ISRCs to child data ([#688](https://www.github.com/sentriz/gonic/issues/688)) ([52e0fa1](https://www.github.com/sentriz/gonic/commit/52e0fa14a958573cfb9badae0e2631b337a1e5be))
+* **subsonic:** sort genres alphabetically by default ([bf8469c](https://www.github.com/sentriz/gonic/commit/bf8469cbf8f7bb6b9720bcd567c8b937968a9752))
+* **subsonic:** use ARTIST_CREDIT for displayArtist fields ([44c2d79](https://www.github.com/sentriz/gonic/commit/44c2d79200f98e051fccf1c64a8c341c42fc13d0))
+* support track level year tags ([#661](https://www.github.com/sentriz/gonic/issues/661)) ([5e916d0](https://www.github.com/sentriz/gonic/commit/5e916d0f4c1f9895cfcbecd479a8b686f6307b8a))
+
+
+### Bug Fixes
+
+* **lastfm:** don't replace cached artist image with empty on refresh ([ec457fb](https://www.github.com/sentriz/gonic/commit/ec457fb380c5e447dbe1556e588623bc38d87e44))
+* **listenbrainz:** disable post-quantum TLS to avoid connection reset errors ([b2674f8](https://www.github.com/sentriz/gonic/commit/b2674f8e5a13ac1a4fffc21a9b8b61507e405373))
+* **podcast:** don't try to rm the podcast directory when deleting an episode ([8a860dd](https://www.github.com/sentriz/gonic/commit/8a860dddd4b4aa26aa073de44bfb52dabc050f07))
+* **podcast:** fix crash if itunes extensions are missing ([#668](https://www.github.com/sentriz/gonic/issues/668)) ([9473ec7](https://www.github.com/sentriz/gonic/commit/9473ec7539bff08d1cba1968ed7b2a534230d400))
+* **scanner:** reduce sqlite lock contention during scans ([5daf95c](https://www.github.com/sentriz/gonic/commit/5daf95cdebd6bef1d07074ec670e176d1f75b461)), closes [#678](https://www.github.com/sentriz/gonic/issues/678)
+* **scanner:** reset batch timer on fsnotify Remove events ([65c4674](https://www.github.com/sentriz/gonic/commit/65c4674da0b42216c8a9b4642f80be60ac1fdf53)), closes [#637](https://www.github.com/sentriz/gonic/issues/637)
+* **scanner:** set track created_at from file birth/mod time ([5a5308b](https://www.github.com/sentriz/gonic/commit/5a5308b8c39cc16d4256a761ec91003bb7f68c08)), closes [#693](https://www.github.com/sentriz/gonic/issues/693)
+* **subsonic:** contain playlist paths to prevent cross-user access ([0824bed](https://www.github.com/sentriz/gonic/commit/0824bed88f6bbc490ba28bf09d28e5dfeb07b445))
+* **subsonic:** enforce playlist ownership on getPlaylist/deletePlaylist ([6dd71e6](https://www.github.com/sentriz/gonic/commit/6dd71e6a3c966867ef8c900d359a7df75789f410))
+* **subsonic:** provide uncompressed file on /download ([#679](https://www.github.com/sentriz/gonic/issues/679)) ([3e436aa](https://www.github.com/sentriz/gonic/commit/3e436aac051cde0f96f6f65ddb2847d32643ae30))
+* **subsonic:** return artist as track artist in TrackChild ([9407450](https://www.github.com/sentriz/gonic/commit/9407450660db6083639e3b5cd3cff1c35aeaa07b)), closes [#654](https://www.github.com/sentriz/gonic/issues/654)
+* **subsonic:** return averageRating as float ([0f98064](https://www.github.com/sentriz/gonic/commit/0f98064bca1bfd2b9567517f655e94175e3ae63a)), closes [#677](https://www.github.com/sentriz/gonic/issues/677)
+* **subsonic:** unambiguate all columns ([dec4000](https://www.github.com/sentriz/gonic/commit/dec400022d7b777eb7ae466af9c7904e77c87f7b))
+* **subsonic:** update homepage URL casing ([e535e78](https://www.github.com/sentriz/gonic/commit/e535e7888ce6162f234fe3ea4a67565df8d1ed57)), closes [#664](https://www.github.com/sentriz/gonic/issues/664)
+
+
+### Miscellaneous Chores
+
+* **deps:** bump to go1.26 ([f55cc3f](https://www.github.com/sentriz/gonic/commit/f55cc3fe43cab98ce22b13b3d6d00f2266dae671))
+
 ### [0.20.1](https://www.github.com/sentriz/gonic/compare/v0.20.0...v0.20.1) (2026-01-30)
 
 
