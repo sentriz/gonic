@@ -84,6 +84,12 @@ func WithSeek(p Profile, seek time.Duration) Profile {
 	return p
 }
 
+func EstimateSize(p Profile, d time.Duration) int64 {
+	const headroomPct = 2.5
+	bytesPerSec := float64(p.BitRate()) * 1000 / 8
+	return int64(d.Seconds() * bytesPerSec * (100 + headroomPct) / 100)
+}
+
 var ErrNoProfileParts = fmt.Errorf("not enough profile parts")
 
 func parseProfile(profile Profile, in string) (string, []string, error) {

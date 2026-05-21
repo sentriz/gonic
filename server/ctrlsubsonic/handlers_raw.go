@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -295,6 +296,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	maxBitRate, _ := params.GetInt("maxBitRate")
 	format, _ := params.Get("format")
 	timeOffset, _ := params.GetInt("timeOffset")
+	estimateLength := params.GetOrBool("estimateContentLength", false)
 
 	if format == "raw" || urlPath == "/download" {
 		http.ServeFile(w, r, file.AbsPath()) //nolint:gosec // path is from db, populated by scanner
@@ -317,6 +319,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		http.ServeFile(w, r, file.AbsPath()) //nolint:gosec // path is from db, populated by scanner
 		return nil
 	}
+
 	// maxBitRate is the target when the client picked the profile, otherwise a cap
 	if maxBitRate > 0 && (clientChose || int(profile.BitRate()) > maxBitRate) {
 		profile = transcode.WithBitrate(profile, transcode.BitRate(maxBitRate))
@@ -328,6 +331,14 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 	log.Printf("transcoding to %q with at bitrate %d", profile.MIME(), profile.BitRate())
 
 	w.Header().Set("Content-Type", profile.MIME())
+
+	if estimateLength {
+		if rem := audioFile.AudioLength() - timeOffset; rem > 0 {
+			size := transcode.EstimateSize(profile, time.Second*time.Duration(rem))
+			w.Header().Set("Content-Length", strconv.FormatInt(size, 10))
+		}
+	}
+
 	if err := c.transcoder.Transcode(r.Context(), profile, file.AbsPath(), w); err != nil && !errors.Is(err, transcode.ErrFFmpegKilled) {
 		return spec.NewError(0, "error transcoding: %v", err)
 	}
