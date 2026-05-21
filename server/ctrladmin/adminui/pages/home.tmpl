@@ -82,7 +82,7 @@
 {{ component "block" (props .
     "Icon" "music"
     "Name" "transcoding device profiles"
-    "Desc" "you can find your device's client name in the gonic logs. some common client names are <span class='italic text-gray-800'>DSub</span>, <span class='italic text-gray-800'>Jamstash</span>, <span class=\"italic text-gray-800\">Soundwaves</span>, or use <span class=\"italic text-gray-800\">*</span> as fallback rule for any client. see the \"transcoding profiles\" page on the wiki for more info"
+    "Desc" "you can find your device's client name in the gonic logs. some common client names are <span class='italic text-gray-800'>DSub</span>, <span class='italic text-gray-800'>Jamstash</span>, <span class=\"italic text-gray-800\">Soundwaves</span>, or use <span class=\"italic text-gray-800\">*</span> as fallback rule for any client. see the \"transcoding profiles\" page on the wiki for more info. if no profile is configured here, gonic will still transcode when a client requests it via the <span class=\"italic text-gray-800\">format</span> or <span class=\"italic text-gray-800\">maxBitRate</span> stream parameters, falling back to a default opus or mp3 profile"
 ) }}
     <div class="grid grid-cols-[1fr_1fr_auto] gap-2 items-center justify-items-end">
         {{ range $pref := .TranscodePreferences }}
