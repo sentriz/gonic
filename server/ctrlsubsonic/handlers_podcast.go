@@ -14,10 +14,7 @@ import (
 func (c *Controller) ServeGetPodcasts(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	isIncludeEpisodes := params.GetOrBool("includeEpisodes", true)
-	id, err := params.GetID("id")
-	if err != nil {
-		return spec.NewError(10, "failed get podcast(s): %s", err)
-	}
+	id := params.GetOrID("id", specid.ID{})
 	podcasts, err := c.podcasts.GetPodcastOrAll(id.Value, isIncludeEpisodes)
 	if err != nil {
 		return spec.NewError(70, "failed get podcast(s): %s", err)
