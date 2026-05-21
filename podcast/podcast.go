@@ -423,6 +423,9 @@ func (p *Podcasts) DeletePodcastEpisode(podcastEpisodeID int) error {
 	if err := p.db.Save(&podcastEpisode).Error; err != nil {
 		return fmt.Errorf("save podcast episode: %w", err)
 	}
+	if podcastEpisode.Filename == "" { // filename may be empty if its still downloading, this avoids trying to rm the root podcast directory.
+		return nil
+	}
 	if err := os.Remove(podcastEpisode.AbsPath()); err != nil {
 		return fmt.Errorf("remove episode: %w", err)
 	}
