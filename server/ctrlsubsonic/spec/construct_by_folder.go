@@ -2,6 +2,7 @@ package spec
 
 import (
 	"cmp"
+	"math"
 	"path/filepath"
 	"sort"
 
@@ -16,7 +17,8 @@ func LoadTrackByFolder(userID int) func(*gorm.DB) *gorm.DB {
 			Scopes(TrackWithArtistCredits, TrackWithUserData(userID)).
 			Preload("Album").
 			Preload("Genres").
-			Preload("ISRCs")
+			Preload("ISRCs").
+			Preload("Play", "user_id=?", userID)
 	}
 }
 
@@ -33,6 +35,7 @@ func NewAlbumByFolder(f *AlbumRow) *Album {
 		Duration:      f.Duration,
 		Created:       f.CreatedAt,
 		AverageRating: f.AverageRating,
+		PlayCount:     int(math.Ceil(f.PlayCount)),
 		ReleaseTypes:  []string{},
 		RecordLabels:  []*RecordLabel{},
 	}
@@ -124,6 +127,9 @@ func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
 	}
 	if t.TrackRating != nil {
 		trCh.UserRating = t.TrackRating.Rating
+	}
+	if t.Play != nil {
+		trCh.PlayCount = int(math.Ceil(t.Play.Count))
 	}
 	if len(t.Genres) > 0 {
 		trCh.Genre = t.Genres[0].Name

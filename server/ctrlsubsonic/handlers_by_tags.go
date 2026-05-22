@@ -117,7 +117,8 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 			return q.
 				Scopes(spec.TrackWithUserData(user.ID)).
 				Order("tracks.tag_disc_number, tracks.tag_track_number").
-				Preload("Credits.Artist")
+				Preload("Credits.Artist").
+				Preload("Play", "user_id=?", user.ID)
 		}).
 		First(album, id.Value).
 		Error
@@ -167,16 +168,13 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 		q = q.Joins("JOIN genres ON genres.id=album_genres.genre_id AND genres.name=?", genre)
 		q = q.Order("albums.tag_title")
 	case "frequent":
-		user := r.Context().Value(CtxUser).(*db.User)
-		q = q.Joins("JOIN plays ON albums.id=plays.album_id AND plays.user_id=?", user.ID)
-		q = q.Order("plays.length DESC")
+		q = q.Having("play_length > 0").Order("play_length DESC")
 	case "newest":
 		q = q.Order("albums.created_at DESC")
 	case "random":
 		q = q.Order(gorm.Expr("random()"))
 	case "recent":
-		q = q.Joins("JOIN plays ON albums.id=plays.album_id AND plays.user_id=?", user.ID)
-		q = q.Order("plays.time DESC")
+		q = q.Having("play_time IS NOT NULL").Order("play_time DESC")
 	case "starred":
 		q = q.Joins("JOIN album_stars ON albums.id=album_stars.album_id AND album_stars.user_id=?", user.ID)
 		q = q.Order("albums.tag_title")

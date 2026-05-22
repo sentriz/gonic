@@ -91,6 +91,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202605081200", migrateAddTrackIsrc),
 		construct(ctx, "202605131200", migrateAddArtistCreditDisplay),
 		construct(ctx, "202605221200", migrateAddAlbumLabel),
+		construct(ctx, "202605222200", migrateAddTrackPlays),
 	}
 
 	return gormigrate.
@@ -131,7 +132,7 @@ func migrateInitSchema(tx *gorm.DB, _ MigrationContext) error {
 		Artist{},
 		User{},
 		Setting{},
-		Play{},
+		__OldPlay{},
 		Album{},
 		PlayQueue{},
 	).
@@ -562,7 +563,7 @@ func migratePlaylistsToM3U(tx *gorm.DB, ctx MigrationContext) error {
 
 func migratePlayCountToLength(tx *gorm.DB, _ MigrationContext) error {
 	step := tx.AutoMigrate(
-		Play{},
+		__OldPlay{},
 	)
 	if err := step.Error; err != nil {
 		return fmt.Errorf("step auto migrate: %w", err)
@@ -961,4 +962,38 @@ func migrateAddArtistCreditDisplay(tx *gorm.DB, _ MigrationContext) error {
 
 func migrateAddAlbumLabel(tx *gorm.DB, _ MigrationContext) error {
 	return tx.AutoMigrate(AlbumLabel{}).Error
+}
+
+func migrateAddTrackPlays(tx *gorm.DB, _ MigrationContext) error {
+	if err := tx.AutoMigrate(TrackPlay{}).Error; err != nil {
+		return fmt.Errorf("auto migrate: %w", err)
+	}
+
+	// distribute each album's play count evenly across its tracks as a
+	// fractional count, so SUM(track count) per album == old album count.
+	// length is split the same way but kept as integer seconds. plays is
+	// aggregated first since historic races could have left duplicate
+	// (user, album) rows.
+	if err := tx.Exec(`
+		INSERT INTO track_plays (user_id, track_id, time, count, length)
+		SELECT
+			agg.user_id,
+			tracks.id,
+			agg.time,
+			CAST(agg.count AS REAL) / track_counts.n,
+			agg.length / track_counts.n
+		FROM (
+			SELECT user_id, album_id, MAX(time) AS time, SUM(count) AS count, SUM(length) AS length
+			FROM plays
+			GROUP BY user_id, album_id
+		) agg
+		JOIN tracks ON tracks.album_id = agg.album_id
+		JOIN (
+			SELECT album_id, COUNT(*) AS n FROM tracks GROUP BY album_id
+		) track_counts ON track_counts.album_id = agg.album_id;
+	`).Error; err != nil {
+		return fmt.Errorf("backfill from plays: %w", err)
+	}
+
+	return tx.Exec(`DROP TABLE plays;`).Error
 }

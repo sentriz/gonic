@@ -3,6 +3,19 @@ package db
 
 import "time"
 
+type __OldPlay struct {
+	ID      int `gorm:"primary_key"`
+	User    *User
+	UserID  int `gorm:"not null; index" sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
+	Album   *Album
+	AlbumID int       `gorm:"not null; index" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	Time    time.Time `sql:"default: null"`
+	Count   int
+	Length  int
+}
+
+func (__OldPlay) TableName() string { return "plays" }
+
 type __OldPlaylist struct {
 	ID         int `gorm:"primary_key"`
 	CreatedAt  time.Time

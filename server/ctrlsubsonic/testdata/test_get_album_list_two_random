@@ -8,70 +8,6 @@
     "albumList2": {
       "album": [
         {
-          "id": "al-12",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-18",
-          "artist": "ärtist-c",
-          "artists": [
-            {
-              "id": "ar-18",
-              "name": "ärtist-c"
-            }
-          ],
-          "displayArtist": "ärtist-c",
-          "title": "album-ca",
-          "album": "album-ca",
-          "name": "album-ca",
-          "songCount": 1,
-          "duration": 100,
-          "playCount": 0,
-          "genre": "Rock",
-          "genres": [
-            {
-              "name": "Rock"
-            }
-          ],
-          "year": 2016,
-          "isCompilation": false,
-          "releaseTypes": [
-            "Album"
-          ],
-          "recordLabels": [],
-          "discTitles": []
-        },
-        {
-          "id": "al-15",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-1",
-          "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
-          "displayArtist": "artist-a",
-          "title": "album-cross",
-          "album": "album-cross",
-          "name": "album-cross",
-          "songCount": 1,
-          "duration": 100,
-          "playCount": 0,
-          "genre": "Rock",
-          "genres": [
-            {
-              "name": "Rock"
-            }
-          ],
-          "year": 2022,
-          "isCompilation": false,
-          "releaseTypes": [
-            "Album"
-          ],
-          "recordLabels": [],
-          "discTitles": []
-        },
-        {
           "id": "al-3",
           "created": "2019-11-30T00:00:00Z",
           "artistId": "ar-1",
@@ -146,6 +82,72 @@
           "discTitles": []
         },
         {
+          "id": "al-12",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-18",
+          "artist": "ärtist-c",
+          "artists": [
+            {
+              "id": "ar-18",
+              "name": "ärtist-c"
+            }
+          ],
+          "displayArtist": "ärtist-c",
+          "title": "album-ca",
+          "album": "album-ca",
+          "name": "album-ca",
+          "songCount": 1,
+          "duration": 100,
+          "playCount": 0,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "year": 2016,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Album"
+          ],
+          "recordLabels": [],
+          "discTitles": []
+        },
+        {
+          "id": "al-17",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-19",
+          "artist": "Various Artists",
+          "artists": [
+            {
+              "id": "ar-19",
+              "name": "Various Artists"
+            }
+          ],
+          "displayArtist": "Various Artists",
+          "title": "comp",
+          "album": "comp",
+          "coverArt": "tr-11",
+          "name": "comp",
+          "songCount": 2,
+          "duration": 200,
+          "playCount": 0,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "year": 2020,
+          "isCompilation": true,
+          "releaseTypes": [
+            "Album",
+            "Compilation"
+          ],
+          "recordLabels": [],
+          "discTitles": []
+        },
+        {
           "id": "al-4",
           "created": "2019-11-30T00:00:00Z",
           "artistId": "ar-1",
@@ -199,23 +201,22 @@
           "averageRating": 5
         },
         {
-          "id": "al-17",
+          "id": "al-15",
           "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-19",
-          "artist": "Various Artists",
+          "artistId": "ar-1",
+          "artist": "artist-a",
           "artists": [
             {
-              "id": "ar-19",
-              "name": "Various Artists"
+              "id": "ar-1",
+              "name": "artist-a"
             }
           ],
-          "displayArtist": "Various Artists",
-          "title": "comp",
-          "album": "comp",
-          "coverArt": "tr-11",
-          "name": "comp",
-          "songCount": 2,
-          "duration": 200,
+          "displayArtist": "artist-a",
+          "title": "album-cross",
+          "album": "album-cross",
+          "name": "album-cross",
+          "songCount": 1,
+          "duration": 100,
           "playCount": 0,
           "genre": "Rock",
           "genres": [
@@ -223,11 +224,10 @@
               "name": "Rock"
             }
           ],
-          "year": 2020,
-          "isCompilation": true,
+          "year": 2022,
+          "isCompilation": false,
           "releaseTypes": [
-            "Album",
-            "Compilation"
+            "Album"
           ],
           "recordLabels": [],
           "discTitles": []
@@ -260,6 +260,32 @@
           "isCompilation": false,
           "releaseTypes": [
             "Single"
+          ],
+          "recordLabels": [],
+          "discTitles": []
+        },
+        {
+          "id": "al-18",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-1",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "empty-album",
+          "album": "empty-album",
+          "name": "empty-album",
+          "songCount": 0,
+          "duration": 0,
+          "playCount": 0,
+          "year": 2015,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Album"
           ],
           "recordLabels": [],
           "discTitles": []
@@ -300,32 +326,6 @@
           "recordLabels": [],
           "discTitles": [],
           "starred": "2020-06-02T12:00:00Z"
-        },
-        {
-          "id": "al-18",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-1",
-          "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
-          "displayArtist": "artist-a",
-          "title": "empty-album",
-          "album": "empty-album",
-          "name": "empty-album",
-          "songCount": 0,
-          "duration": 0,
-          "playCount": 0,
-          "year": 2015,
-          "isCompilation": false,
-          "releaseTypes": [
-            "Album"
-          ],
-          "recordLabels": [],
-          "discTitles": []
         }
       ]
     }

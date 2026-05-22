@@ -247,6 +247,8 @@ type TrackChild struct {
 
 	ReplayGain *ReplayGain `xml:"replayGain" json:"replayGain"`
 
+	PlayCount int `xml:"playCount,attr,omitempty" json:"playCount,omitempty"`
+
 	TranscodeMeta
 }
 

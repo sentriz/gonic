@@ -349,15 +349,15 @@ func newFixture(tb testing.TB) *fixture {
 	f.trackAB1.AverageRating = 3
 	dbc.Save(&f.trackAB1)
 
-	dbc.Save(&db.Play{UserID: admin.ID, AlbumID: f.albumAA.ID, Time: play1, Count: 7, Length: 600})
-	dbc.Save(&db.Play{UserID: admin.ID, AlbumID: f.albumAB.ID, Time: play2, Count: 2, Length: 200})
+	seedAlbumPlay(tb, dbc, admin.ID, f.albumAA.ID, play1, 7, 600)
+	seedAlbumPlay(tb, dbc, admin.ID, f.albumAB.ID, play2, 2, 200)
 
 	dbc.Save(&db.AlbumStar{UserID: alt.ID, AlbumID: f.albumBA.ID, StarDate: star2})
 	dbc.Save(&db.ArtistStar{UserID: alt.ID, ArtistID: f.artistC.ID, StarDate: star2})
 	dbc.Save(&db.AlbumRating{UserID: alt.ID, AlbumID: f.albumAB.ID, Rating: 5})
 	f.albumAB.AverageRating = 5
 	dbc.Save(&f.albumAB)
-	dbc.Save(&db.Play{UserID: alt.ID, AlbumID: f.albumCollab.ID, Time: play1, Count: 3, Length: 300})
+	seedAlbumPlay(tb, dbc, alt.ID, f.albumCollab.ID, play1, 3, 300)
 
 	f.trackVA0.HasEmbeddedCover = true
 	dbc.Save(&f.trackVA0)
@@ -447,6 +447,20 @@ func newFixture(tb testing.TB) *fixture {
 
 func (f *fixture) sharedPlaylistID() string {
 	return playlistIDEncode(filepath.Join("1", "shared.m3u")).String()
+}
+
+func seedAlbumPlay(tb testing.TB, dbc *db.DB, userID, albumID int, t time.Time, count, length int) {
+	tb.Helper()
+	var tracks []*db.Track
+	require.NoError(tb, dbc.Where("album_id=?", albumID).Find(&tracks).Error)
+	require.NotEmpty(tb, tracks)
+	per := float64(count) / float64(len(tracks))
+	perLen := length / len(tracks)
+	for _, tr := range tracks {
+		require.NoError(tb, dbc.Save(&db.TrackPlay{
+			UserID: userID, TrackID: tr.ID, Time: t, Count: per, Length: perLen,
+		}).Error)
+	}
 }
 
 func (f *fixture) query(t *testing.T, h handlerSubsonic, user *db.User, q url.Values) string {

@@ -55,7 +55,8 @@
             "trackPeak": 0.95,
             "albumGain": -4,
             "albumPeak": 0.99
-          }
+          },
+          "playCount": 3
         },
         {
           "id": "tr-6",

@@ -2,6 +2,7 @@ package spec
 
 import (
 	"cmp"
+	"math"
 	"path/filepath"
 	"slices"
 	"sort"
@@ -14,11 +15,10 @@ import (
 func LoadAlbumByTags(userID int) func(*gorm.DB) *gorm.DB {
 	return func(q *gorm.DB) *gorm.DB {
 		return q.
-			Scopes(AlbumWithTrackCounts, AlbumWithAlbumArtistCredits, AlbumWithUserData(userID)).
+			Scopes(AlbumWithUserPlay(userID), AlbumWithAlbumArtistCredits, AlbumWithUserData(userID)).
 			Preload("Genres").
 			Preload("Labels").
-			Preload("DiscTitles").
-			Preload("Play", "user_id=?", userID)
+			Preload("DiscTitles")
 	}
 }
 
@@ -29,7 +29,8 @@ func LoadTrackByTags(userID int) func(*gorm.DB) *gorm.DB {
 			Preload("Album").
 			Preload("Credits.Artist").
 			Preload("Genres").
-			Preload("ISRCs")
+			Preload("ISRCs").
+			Preload("Play", "user_id=?", userID)
 	}
 }
 
@@ -98,9 +99,7 @@ func NewAlbumByTags(a *AlbumRow, credits []*db.AlbumCredit) *Album {
 	for _, l := range a.Labels {
 		ret.RecordLabels = append(ret.RecordLabels, &RecordLabel{Name: l.Label})
 	}
-	if a.Play != nil {
-		ret.PlayCount = a.Play.Count
-	}
+	ret.PlayCount = int(math.Ceil(a.PlayCount))
 	if len(a.DiscTitles) > 0 {
 		sort.Slice(a.DiscTitles, func(i, j int) bool {
 			return a.DiscTitles[i].DiscNumber < a.DiscTitles[j].DiscNumber
@@ -158,6 +157,9 @@ func NewTrackByTags(client string, t *db.Track, album *db.Album) *TrackChild {
 	}
 	if t.TrackRating != nil {
 		ret.UserRating = t.TrackRating.Rating
+	}
+	if t.Play != nil {
+		ret.PlayCount = int(math.Ceil(t.Play.Count))
 	}
 
 	trackArtists := filterTrackCreditsByRole(t.Credits, db.RoleArtist)

@@ -133,21 +133,13 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 		q = q.Joins("JOIN genres ON genres.id=album_genres.genre_id AND genres.name=?", genre)
 		q = q.Order("right_path")
 	case "frequent":
-		q = q.Joins(`
-			JOIN plays
-			ON albums.id=plays.album_id AND plays.user_id=?`,
-			user.ID)
-		q = q.Order("plays.length DESC")
+		q = q.Having("play_length > 0").Order("play_length DESC")
 	case "newest":
 		q = q.Order("created_at DESC")
 	case "random":
 		q = q.Order(gorm.Expr("random()"))
 	case "recent":
-		q = q.Joins(`
-			JOIN plays
-			ON albums.id=plays.album_id AND plays.user_id=?`,
-			user.ID)
-		q = q.Order("plays.time DESC")
+		q = q.Having("play_time IS NOT NULL").Order("play_time DESC")
 	case "starred":
 		q = q.Joins("JOIN album_stars ON albums.id=album_stars.album_id AND album_stars.user_id=?", user.ID)
 		q = q.Order("right_path")
@@ -163,7 +155,7 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 	// TODO: think about removing this extra join to count number
 	// of children. it might make sense to store that in the db
 	q.
-		Scopes(spec.AlbumWithTrackCounts, spec.AlbumWithUserData(user.ID)).
+		Scopes(spec.AlbumWithUserPlay(user.ID), spec.AlbumWithUserData(user.ID)).
 		Joins("JOIN album_credits ON album_credits.album_id=albums.id AND album_credits.role=?", db.RoleAlbumArtist).
 		Offset(params.GetOrInt("offset", 0)).
 		Limit(params.GetOrInt("size", 10)).

@@ -736,19 +736,17 @@ func lyricsFromFileUnsynced(track db.Track) (*spec.StructuredLyrics, error) {
 }
 
 func scrobbleStatsUpdateTrack(dbc *db.DB, track *db.Track, userID int, playTime time.Time) error {
-	var play db.Play
-	if err := dbc.Where("album_id=? AND user_id=?", track.AlbumID, userID).First(&play).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	var play db.TrackPlay
+	if err := dbc.Where("track_id=? AND user_id=?", track.ID, userID).First(&play).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return fmt.Errorf("find stat: %w", err)
 	}
-
-	play.AlbumID = track.AlbumID
+	play.TrackID = track.ID
 	play.UserID = userID
-	play.Count++ // for getAlbumList?type=frequent
+	play.Count++
 	play.Length += track.Length
 	if playTime.After(play.Time) {
-		play.Time = playTime // for getAlbumList?type=recent
+		play.Time = playTime
 	}
-
 	if err := dbc.Save(&play).Error; err != nil {
 		return fmt.Errorf("save stat: %w", err)
 	}

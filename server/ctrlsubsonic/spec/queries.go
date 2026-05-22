@@ -53,15 +53,34 @@ type AlbumRow struct {
 	db.Album
 	ChildCount int
 	Duration   int
+	PlayCount  float64
 }
 
 func (AlbumRow) TableName() string { return "albums" }
 
-func AlbumWithTrackCounts(q *gorm.DB) *gorm.DB {
-	return q.
-		Select("albums.*, count(tracks.id) child_count, sum(tracks.length) duration").
-		Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
-		Group("albums.id")
+func AlbumWithUserPlay(userID int) func(*gorm.DB) *gorm.DB {
+	return func(q *gorm.DB) *gorm.DB {
+		albumPlayAgg := func(agg string) *gorm.SqlExpr {
+			return q.New().
+				Model(db.TrackPlay{}).
+				Select(agg).
+				Joins("JOIN tracks t ON t.id=track_plays.track_id").
+				Where("t.album_id=albums.id AND track_plays.user_id=?", userID).
+				SubQuery()
+		}
+		return q.
+			Select(`albums.*,
+				count(tracks.id) child_count,
+				sum(tracks.length) duration,
+				? play_count,
+				? play_length,
+				? play_time`,
+				albumPlayAgg("coalesce(SUM(track_plays.count), 0)"),
+				albumPlayAgg("coalesce(SUM(track_plays.length), 0)"),
+				albumPlayAgg("MAX(track_plays.time)")).
+			Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
+			Group("albums.id")
+	}
 }
 
 func AlbumWithChildAlbumCounts(q *gorm.DB) *gorm.DB {

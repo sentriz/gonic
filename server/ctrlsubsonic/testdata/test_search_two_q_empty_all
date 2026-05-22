@@ -298,7 +298,8 @@
             "trackPeak": 0.95,
             "albumGain": -4,
             "albumPeak": 0.99
-          }
+          },
+          "playCount": 3
         },
         {
           "id": "tr-2",
@@ -343,7 +344,8 @@
             "trackPeak": 0.95,
             "albumGain": -4,
             "albumPeak": 0.99
-          }
+          },
+          "playCount": 3
         },
         {
           "id": "tr-3",
@@ -388,7 +390,8 @@
             "trackPeak": 0.95,
             "albumGain": -4,
             "albumPeak": 0.99
-          }
+          },
+          "playCount": 3
         },
         {
           "id": "tr-4",
@@ -435,7 +438,8 @@
           "starred": "2020-05-01T12:00:00Z",
           "userRating": 3,
           "averageRating": 3,
-          "replayGain": null
+          "replayGain": null,
+          "playCount": 1
         },
         {
           "id": "tr-5",
@@ -476,7 +480,8 @@
           "year": 2019,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "playCount": 1
         },
         {
           "id": "tr-6",
