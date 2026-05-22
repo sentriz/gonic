@@ -509,7 +509,7 @@ func main() {
 		return nil
 	})
 
-	if err := errgrp.Wait(); err != nil {
+	if err := errgrp.Wait(); err != nil && !errors.Is(err, context.Canceled) {
 		log.Panic(err)
 	}
 
