@@ -21,5 +21,7 @@ func DBDriverOptions() url.Values {
 		"_busy_timeout": {"30000"},
 		"_journal_mode": {"WAL"},
 		"_foreign_keys": {"true"},
+		"_cache_size":   {"-32000"},
+		"_mmap_size":    {"268435456"},
 	}
 }

@@ -60,25 +60,24 @@ func (AlbumRow) TableName() string { return "albums" }
 
 func AlbumWithUserPlay(userID int) func(*gorm.DB) *gorm.DB {
 	return func(q *gorm.DB) *gorm.DB {
-		albumPlayAgg := func(agg string) *gorm.SqlExpr {
-			return q.New().
-				Model(db.TrackPlay{}).
-				Select(agg).
-				Joins("JOIN tracks t ON t.id=track_plays.track_id").
-				Where("t.album_id=albums.id AND track_plays.user_id=?", userID).
-				SubQuery()
-		}
 		return q.
 			Select(`albums.*,
 				count(tracks.id) child_count,
 				sum(tracks.length) duration,
-				? play_count,
-				? play_length,
-				? play_time`,
-				albumPlayAgg("coalesce(SUM(track_plays.count), 0)"),
-				albumPlayAgg("coalesce(SUM(track_plays.length), 0)"),
-				albumPlayAgg("MAX(track_plays.time)")).
+				coalesce(album_plays.play_count, 0) play_count,
+				album_plays.play_length play_length,
+				album_plays.play_time play_time`).
 			Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
+			Joins(`LEFT JOIN (
+				SELECT t.album_id,
+					sum(track_plays.count) play_count,
+					sum(track_plays.length) play_length,
+					max(track_plays.time) play_time
+				FROM track_plays
+				JOIN tracks t ON t.id=track_plays.track_id
+				WHERE track_plays.user_id=?
+				GROUP BY t.album_id
+			) album_plays ON album_plays.album_id=albums.id`, userID).
 			Group("albums.id")
 	}
 }
