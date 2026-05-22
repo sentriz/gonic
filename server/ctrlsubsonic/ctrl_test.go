@@ -179,6 +179,7 @@ func newFixture(tb testing.TB) *fixture {
 		normtag.Set(info.Tags, normtag.MusicBrainzReleaseID, "00000000-0000-0000-0000-0000000000ab")
 		normtag.Set(info.Tags, normtag.MusicBrainzRecordingID, "00000000-0000-0000-0000-ab00000000d1")
 		normtag.Set(info.Tags, normtag.ReleaseType, "EP")
+		normtag.Set(info.Tags, normtag.Label, "Sub Pop", "Domino")
 	})
 	// singular contributor tag forms, with and without credit-as
 	m.SetTrack("m-0/artist-a/album-ab/d2-track-0.flac", func(info *mockfs.TagInfo) {

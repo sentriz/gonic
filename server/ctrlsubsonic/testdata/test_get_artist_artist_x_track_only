@@ -44,6 +44,7 @@
             "Album",
             "Compilation"
           ],
+          "recordLabels": [],
           "discTitles": []
         }
       ]

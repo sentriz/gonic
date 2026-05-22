@@ -136,6 +136,11 @@ type DiscTitle struct {
 	Title string `xml:"title,attr" json:"title"`
 }
 
+// https://opensubsonic.netlify.app/docs/responses/recordlabel/
+type RecordLabel struct {
+	Name string `xml:"name,attr" json:"name"`
+}
+
 // https://opensubsonic.netlify.app/docs/responses/albumid3/
 type Album struct {
 	ID      *specid.ID `xml:"id,attr,omitempty"       json:"id"`
@@ -164,9 +169,10 @@ type Album struct {
 	Year       int           `xml:"year,attr,omitempty"    json:"year,omitempty"`
 	Tracks     []*TrackChild `xml:"song,omitempty"         json:"song,omitempty"`
 
-	IsCompilation bool         `xml:"isCompilation" json:"isCompilation"`
-	ReleaseTypes  []string     `xml:"releaseTypes" json:"releaseTypes"`
-	DiscTitles    []*DiscTitle `xml:"discTitles" json:"discTitles"`
+	IsCompilation bool           `xml:"isCompilation" json:"isCompilation"`
+	ReleaseTypes  []string       `xml:"releaseTypes" json:"releaseTypes"`
+	RecordLabels  []*RecordLabel `xml:"recordLabels" json:"recordLabels"`
+	DiscTitles    []*DiscTitle   `xml:"discTitles" json:"discTitles"`
 
 	// star / rating
 	Starred       *time.Time `xml:"starred,attr,omitempty"         json:"starred,omitempty"`

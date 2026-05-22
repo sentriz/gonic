@@ -16,6 +16,7 @@ func LoadAlbumByTags(userID int) func(*gorm.DB) *gorm.DB {
 		return q.
 			Scopes(AlbumWithTrackCounts, AlbumWithAlbumArtistCredits, AlbumWithUserData(userID)).
 			Preload("Genres").
+			Preload("Labels").
 			Preload("DiscTitles").
 			Preload("Play", "user_id=?", userID)
 	}
@@ -57,6 +58,7 @@ func NewAlbumByTags(a *AlbumRow, credits []*db.AlbumCredit) *Album {
 		AverageRating: a.AverageRating,
 		IsCompilation: a.TagCompilation,
 		ReleaseTypes:  formatReleaseTypes(a.TagReleaseType),
+		RecordLabels:  []*RecordLabel{},
 		DiscTitles:    []*DiscTitle{},
 	}
 	if a.Cover != "" {
@@ -92,6 +94,9 @@ func NewAlbumByTags(a *AlbumRow, credits []*db.AlbumCredit) *Album {
 	}
 	for _, g := range a.Genres {
 		ret.Genres = append(ret.Genres, &GenreRef{Name: g.Name})
+	}
+	for _, l := range a.Labels {
+		ret.RecordLabels = append(ret.RecordLabels, &RecordLabel{Name: l.Label})
 	}
 	if a.Play != nil {
 		ret.PlayCount = a.Play.Count

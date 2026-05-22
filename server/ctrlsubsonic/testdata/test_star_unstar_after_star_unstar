@@ -65,6 +65,7 @@
           "releaseTypes": [
             "Album"
           ],
+          "recordLabels": [],
           "discTitles": [],
           "starred": "2020-06-02T12:00:00Z"
         },
@@ -97,6 +98,7 @@
           "releaseTypes": [
             "Single"
           ],
+          "recordLabels": [],
           "discTitles": [],
           "starred": "2000-01-01T00:00:00Z"
         }

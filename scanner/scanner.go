@@ -472,6 +472,10 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		if err := populateAlbumGenres(tx, album, genreIDs, inheritedGenreIDs); err != nil {
 			return fmt.Errorf("populate album genres: %w", err)
 		}
+
+		if err := populateAlbumLabels(tx, album, normtag.Values(trags, normtag.Label)); err != nil {
+			return fmt.Errorf("populate album labels: %w", err)
+		}
 	}
 
 	stat, err := os.Stat(absPath)
@@ -703,6 +707,30 @@ func populateTrackISRCs(tx *db.DB, track *db.Track, isrcs []string) error {
 	return nil
 }
 
+func populateAlbumLabels(tx *db.DB, album *db.Album, labels []string) error {
+	if err := tx.Where("album_id=?", album.ID).Delete(db.AlbumLabel{}).Error; err != nil {
+		return fmt.Errorf("delete old album labels: %w", err)
+	}
+
+	seen := map[string]struct{}{}
+	var rows [][]any
+	for _, l := range labels {
+		l = strings.TrimSpace(l)
+		if l == "" {
+			continue
+		}
+		if _, ok := seen[l]; ok {
+			continue
+		}
+		seen[l] = struct{}{}
+		rows = append(rows, []any{l})
+	}
+	if err := tx.InsertBulkLeftManyRows("album_labels", []string{"album_id", "label"}, album.ID, rows); err != nil {
+		return fmt.Errorf("insert bulk album labels: %w", err)
+	}
+	return nil
+}
+
 func populateAlbumGenres(tx *db.DB, album *db.Album, directIDs, inheritedIDs []int) error {
 	if err := tx.Where("album_id=?", album.ID).Delete(db.AlbumGenre{}).Error; err != nil {
 		return fmt.Errorf("delete old album genre records: %w", err)
@@ -883,6 +911,9 @@ func (s *Scanner) cleanAlbumMetadata() error {
 		return err
 	}
 	if err := s.db.Where("album_id IN (?)", emptyAlbumIDs).Delete(db.AlbumDiscTitle{}).Error; err != nil {
+		return err
+	}
+	if err := s.db.Where("album_id IN (?)", emptyAlbumIDs).Delete(db.AlbumLabel{}).Error; err != nil {
 		return err
 	}
 

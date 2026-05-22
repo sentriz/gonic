@@ -346,6 +346,7 @@ type Album struct {
 	TagYear              int            `sql:"default: null"`
 	TagCompilation       bool           `sql:"default: null"`
 	TagReleaseType       string         `sql:"default: null"`
+	Labels               []*AlbumLabel  `gorm:"foreignkey:album_id"`
 	Tracks               []*Track
 	AlbumStar            *AlbumStar
 	AlbumRating          *AlbumRating
@@ -440,6 +441,11 @@ type TrackGenre struct {
 type TrackISRC struct {
 	ISRC    string `gorm:"not null; unique_index:idx_isrc_track" sql:"default: null;"`
 	TrackID int    `gorm:"not null unique_index:idx_isrc_track" sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
+}
+
+type AlbumLabel struct {
+	AlbumID int    `gorm:"not null; unique_index:idx_album_label" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	Label   string `gorm:"not null; unique_index:idx_album_label; index:idx_album_labels_label" sql:"default: null"`
 }
 
 type AlbumGenre struct {

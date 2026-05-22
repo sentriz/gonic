@@ -120,6 +120,7 @@
         "Album",
         "Compilation"
       ],
+      "recordLabels": [],
       "discTitles": [],
       "userRating": 5,
       "averageRating": 5

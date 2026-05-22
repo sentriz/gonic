@@ -8,49 +8,36 @@
     "albumList2": {
       "album": [
         {
-          "id": "al-4",
+          "id": "al-12",
           "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-1",
-          "artist": "artist-a",
+          "artistId": "ar-18",
+          "artist": "ärtist-c",
           "artists": [
             {
-              "id": "ar-1",
-              "name": "artist-a"
+              "id": "ar-18",
+              "name": "ärtist-c"
             }
           ],
-          "displayArtist": "artist-a",
-          "title": "album-ab",
-          "album": "album-ab",
-          "coverArt": "al-4",
-          "name": "album-ab",
-          "songCount": 2,
-          "duration": 200,
-          "playCount": 2,
+          "displayArtist": "ärtist-c",
+          "title": "album-ca",
+          "album": "album-ca",
+          "name": "album-ca",
+          "songCount": 1,
+          "duration": 100,
+          "playCount": 0,
           "genre": "Rock",
           "genres": [
             {
               "name": "Rock"
-            },
-            {
-              "name": "Pop"
             }
           ],
-          "year": 2019,
+          "year": 2016,
           "isCompilation": false,
           "releaseTypes": [
-            "EP"
+            "Album"
           ],
-          "discTitles": [
-            {
-              "disc": 1,
-              "title": "Disc One"
-            },
-            {
-              "disc": 2,
-              "title": "Disc Two"
-            }
-          ],
-          "averageRating": 5
+          "recordLabels": [],
+          "discTitles": []
         },
         {
           "id": "al-15",
@@ -81,37 +68,7 @@
           "releaseTypes": [
             "Album"
           ],
-          "discTitles": []
-        },
-        {
-          "id": "al-6",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-17",
-          "artist": "The Mighty B (LP)",
-          "artists": [
-            {
-              "id": "ar-17",
-              "name": "The Mighty B (LP)"
-            }
-          ],
-          "displayArtist": "The Mighty B (LP)",
-          "title": "album-ba",
-          "album": "album-ba",
-          "name": "album-ba",
-          "songCount": 1,
-          "duration": 100,
-          "playCount": 0,
-          "genre": "Jazz",
-          "genres": [
-            {
-              "name": "Jazz"
-            }
-          ],
-          "year": 2017,
-          "isCompilation": false,
-          "releaseTypes": [
-            "Single"
-          ],
+          "recordLabels": [],
           "discTitles": []
         },
         {
@@ -146,6 +103,7 @@
           "releaseTypes": [
             "Album"
           ],
+          "recordLabels": [],
           "discTitles": [],
           "starred": "2020-05-01T12:00:00Z",
           "userRating": 4,
@@ -184,6 +142,126 @@
           "releaseTypes": [
             "Album"
           ],
+          "recordLabels": [],
+          "discTitles": []
+        },
+        {
+          "id": "al-4",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-1",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "album-ab",
+          "album": "album-ab",
+          "coverArt": "al-4",
+          "name": "album-ab",
+          "songCount": 2,
+          "duration": 200,
+          "playCount": 2,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            },
+            {
+              "name": "Pop"
+            }
+          ],
+          "year": 2019,
+          "isCompilation": false,
+          "releaseTypes": [
+            "EP"
+          ],
+          "recordLabels": [
+            {
+              "name": "Domino"
+            },
+            {
+              "name": "Sub Pop"
+            }
+          ],
+          "discTitles": [
+            {
+              "disc": 1,
+              "title": "Disc One"
+            },
+            {
+              "disc": 2,
+              "title": "Disc Two"
+            }
+          ],
+          "averageRating": 5
+        },
+        {
+          "id": "al-17",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-19",
+          "artist": "Various Artists",
+          "artists": [
+            {
+              "id": "ar-19",
+              "name": "Various Artists"
+            }
+          ],
+          "displayArtist": "Various Artists",
+          "title": "comp",
+          "album": "comp",
+          "coverArt": "tr-11",
+          "name": "comp",
+          "songCount": 2,
+          "duration": 200,
+          "playCount": 0,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "year": 2020,
+          "isCompilation": true,
+          "releaseTypes": [
+            "Album",
+            "Compilation"
+          ],
+          "recordLabels": [],
+          "discTitles": []
+        },
+        {
+          "id": "al-6",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-17",
+          "artist": "The Mighty B (LP)",
+          "artists": [
+            {
+              "id": "ar-17",
+              "name": "The Mighty B (LP)"
+            }
+          ],
+          "displayArtist": "The Mighty B (LP)",
+          "title": "album-ba",
+          "album": "album-ba",
+          "name": "album-ba",
+          "songCount": 1,
+          "duration": 100,
+          "playCount": 0,
+          "genre": "Jazz",
+          "genres": [
+            {
+              "name": "Jazz"
+            }
+          ],
+          "year": 2017,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Single"
+          ],
+          "recordLabels": [],
           "discTitles": []
         },
         {
@@ -219,72 +297,9 @@
           "releaseTypes": [
             "Album"
           ],
+          "recordLabels": [],
           "discTitles": [],
           "starred": "2020-06-02T12:00:00Z"
-        },
-        {
-          "id": "al-12",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-18",
-          "artist": "ärtist-c",
-          "artists": [
-            {
-              "id": "ar-18",
-              "name": "ärtist-c"
-            }
-          ],
-          "displayArtist": "ärtist-c",
-          "title": "album-ca",
-          "album": "album-ca",
-          "name": "album-ca",
-          "songCount": 1,
-          "duration": 100,
-          "playCount": 0,
-          "genre": "Rock",
-          "genres": [
-            {
-              "name": "Rock"
-            }
-          ],
-          "year": 2016,
-          "isCompilation": false,
-          "releaseTypes": [
-            "Album"
-          ],
-          "discTitles": []
-        },
-        {
-          "id": "al-17",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-19",
-          "artist": "Various Artists",
-          "artists": [
-            {
-              "id": "ar-19",
-              "name": "Various Artists"
-            }
-          ],
-          "displayArtist": "Various Artists",
-          "title": "comp",
-          "album": "comp",
-          "coverArt": "tr-11",
-          "name": "comp",
-          "songCount": 2,
-          "duration": 200,
-          "playCount": 0,
-          "genre": "Rock",
-          "genres": [
-            {
-              "name": "Rock"
-            }
-          ],
-          "year": 2020,
-          "isCompilation": true,
-          "releaseTypes": [
-            "Album",
-            "Compilation"
-          ],
-          "discTitles": []
         },
         {
           "id": "al-18",
@@ -309,6 +324,7 @@
           "releaseTypes": [
             "Album"
           ],
+          "recordLabels": [],
           "discTitles": []
         }
       ]

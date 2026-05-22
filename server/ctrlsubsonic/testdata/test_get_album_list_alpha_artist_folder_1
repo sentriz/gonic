@@ -23,6 +23,7 @@
           "playCount": 0,
           "isCompilation": false,
           "releaseTypes": [],
+          "recordLabels": [],
           "discTitles": null
         },
         {
@@ -42,6 +43,7 @@
           "playCount": 0,
           "isCompilation": false,
           "releaseTypes": [],
+          "recordLabels": [],
           "discTitles": null
         }
       ]

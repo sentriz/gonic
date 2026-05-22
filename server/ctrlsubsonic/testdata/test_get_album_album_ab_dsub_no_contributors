@@ -123,6 +123,14 @@
       "releaseTypes": [
         "EP"
       ],
+      "recordLabels": [
+        {
+          "name": "Domino"
+        },
+        {
+          "name": "Sub Pop"
+        }
+      ],
       "discTitles": [
         {
           "disc": 1,

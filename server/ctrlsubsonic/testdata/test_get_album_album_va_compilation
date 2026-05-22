@@ -118,6 +118,7 @@
         "Album",
         "Compilation"
       ],
+      "recordLabels": [],
       "discTitles": []
     }
   }

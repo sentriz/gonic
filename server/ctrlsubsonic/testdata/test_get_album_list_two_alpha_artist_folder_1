@@ -38,6 +38,7 @@
             "Album",
             "Compilation"
           ],
+          "recordLabels": [],
           "discTitles": []
         },
         {
@@ -69,6 +70,7 @@
           "releaseTypes": [
             "Album"
           ],
+          "recordLabels": [],
           "discTitles": []
         }
       ]

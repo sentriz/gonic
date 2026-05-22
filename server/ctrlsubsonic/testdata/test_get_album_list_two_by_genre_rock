@@ -39,6 +39,7 @@
           "releaseTypes": [
             "Album"
           ],
+          "recordLabels": [],
           "discTitles": [],
           "starred": "2020-05-01T12:00:00Z",
           "userRating": 4,
@@ -76,6 +77,14 @@
           "isCompilation": false,
           "releaseTypes": [
             "EP"
+          ],
+          "recordLabels": [
+            {
+              "name": "Domino"
+            },
+            {
+              "name": "Sub Pop"
+            }
           ],
           "discTitles": [
             {
@@ -118,6 +127,7 @@
           "releaseTypes": [
             "Album"
           ],
+          "recordLabels": [],
           "discTitles": []
         },
         {
@@ -149,6 +159,7 @@
           "releaseTypes": [
             "Album"
           ],
+          "recordLabels": [],
           "discTitles": []
         },
         {
@@ -182,6 +193,7 @@
             "Album",
             "Compilation"
           ],
+          "recordLabels": [],
           "discTitles": []
         }
       ]

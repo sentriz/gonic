@@ -40,6 +40,14 @@
           "releaseTypes": [
             "EP"
           ],
+          "recordLabels": [
+            {
+              "name": "Domino"
+            },
+            {
+              "name": "Sub Pop"
+            }
+          ],
           "discTitles": [
             {
               "disc": 1,
@@ -84,6 +92,7 @@
           "releaseTypes": [
             "Album"
           ],
+          "recordLabels": [],
           "discTitles": [],
           "starred": "2020-05-01T12:00:00Z",
           "userRating": 4,
