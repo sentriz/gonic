@@ -81,12 +81,36 @@
 
 {{ component "block" (props .
     "Icon" "music"
-    "Name" "transcoding device profiles"
-    "Desc" "you can find your device's client name in the gonic logs. some common client names are <span class='italic text-gray-800'>DSub</span>, <span class='italic text-gray-800'>Jamstash</span>, <span class=\"italic text-gray-800\">Soundwaves</span>, or use <span class=\"italic text-gray-800\">*</span> as fallback rule for any client. see the \"transcoding profiles\" page on the wiki for more info. if no profile is configured here, gonic will still transcode when a client requests it via the <span class=\"italic text-gray-800\">format</span> or <span class=\"italic text-gray-800\">maxBitRate</span> stream parameters, falling back to a default opus or mp3 profile"
+    "Name" "transcoding"
+    "Desc" "profiles applied when streaming. clients can adjust the bitrate via the <span class=\"italic text-gray-800\">maxBitRate</span> stream param"
 ) }}
+    <div class="text-left">
+        <div class="text-gray-900 font-bold">defaults per format</div>
+        <div class="font-medium text-gray-500">picked by the client's <span class="italic text-gray-800">format</span> param. one per format. topmost is the fallback when no format is specified</div>
+    </div>
+    <div class="grid grid-cols-[1fr_auto] gap-2 items-center justify-items-end">
+        {{ range $i, $fp := .TranscodeFormatPreferences }}
+            <div>{{ $fp.Profile }} <span class="text-gray-500">(for {{ (index $.TranscodeProfiles $fp.Profile).Suffix }}{{ if eq $i 0 }}, default{{ end }})</span></div>
+            <form class="contents" action="{{ printf "/admin/delete_transcode_format_pref_do?profile=%s" $fp.Profile | path }}" method="post">
+            <input type="submit" value="delete">
+            </form>
+        {{ end }}
+        {{ if not .TranscodeFormatsExhausted }}
+            <form class="contents" action="{{ path "/admin/create_transcode_format_pref_do" }}" method="post">
+            <select name="profile">
+                {{ range $name, $_ := .TranscodeProfiles }}<option value="{{ $name }}">{{ $name }}</option>{{ end }}
+            </select>
+            <input type="submit" value="save">
+            </form>
+        {{ end }}
+    </div>
+
+    <div class="text-left pt-3">
+        <div class="text-gray-900 font-bold">per-client overrides</div>
+        <div class="font-medium text-gray-500">force a profile for a specific client (mainly for legacy clients). seeking may not work. client names are in the gonic logs. use <span class="italic text-gray-800">*</span> as a catch-all</div>
+    </div>
     <div class="grid grid-cols-[1fr_1fr_auto] gap-2 items-center justify-items-end">
         {{ range $pref := .TranscodePreferences }}
-            {{ $formSuffix := kebabcase $pref.Client }}
             <div class="ellipsis">{{ $pref.Client }}</div>
             <div>{{ $pref.Profile }}</div>
             <form class="contents" action="{{ printf "/admin/delete_transcode_pref_do?client=%s" $pref.Client | path }}" method="post">
@@ -96,7 +120,7 @@
         <form class="contents" action="{{ path "/admin/create_transcode_pref_do" }}" method="post">
         <input type="text" name="client" placeholder="client name">
         <select name="profile">
-            {{ range $profile := .TranscodeProfiles }}<option value="{{ $profile }}">{{ $profile }}</option>{{ end }}
+            {{ range $name, $_ := .TranscodeProfiles }}<option value="{{ $name }}">{{ $name }}</option>{{ end }}
         </select>
         <input type="submit" value="save">
         </form>

@@ -30,6 +30,7 @@ import (
 	"go.senan.xyz/gonic/podcast"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/server/ctrladmin/adminui"
+	"go.senan.xyz/gonic/transcode"
 )
 
 type CtxKey int
@@ -100,6 +101,8 @@ func New(dbc *db.DB, sessDB *gormstore.Store, scanner *scanner.Scanner, podcasts
 	c.Handle("/unlink_listenbrainz_do", userChain(resp(c.ServeUnlinkListenBrainzDo)))
 	c.Handle("/create_transcode_pref_do", userChain(resp(c.ServeCreateTranscodePrefDo)))
 	c.Handle("/delete_transcode_pref_do", userChain(resp(c.ServeDeleteTranscodePrefDo)))
+	c.Handle("/create_transcode_format_pref_do", userChain(resp(c.ServeCreateTranscodeFormatPrefDo)))
+	c.Handle("/delete_transcode_format_pref_do", userChain(resp(c.ServeDeleteTranscodeFormatPrefDo)))
 
 	// admin routes (if session is valid, and is admin)
 	c.Handle("/create_user", adminChain(resp(c.ServeCreateUser)))
@@ -276,14 +279,16 @@ type templateData struct {
 	Version string
 
 	// home
-	Stats                db.Stats
-	RequestRoot          string
-	RecentFolders        []*db.Album
-	AllUsers             []*db.User
-	LastScanTime         time.Time
-	IsScanning           bool
-	TranscodePreferences []*db.TranscodePreference
-	TranscodeProfiles    []string
+	Stats                      db.Stats
+	RequestRoot                string
+	RecentFolders              []*db.Album
+	AllUsers                   []*db.User
+	LastScanTime               time.Time
+	IsScanning                 bool
+	TranscodePreferences       []*db.TranscodePreference
+	TranscodeFormatPreferences []*db.TranscodeFormatPreference
+	TranscodeProfiles          map[string]transcode.Profile
+	TranscodeFormatsExhausted  bool
 
 	CurrentLastFMAPIKey    string
 	CurrentLastFMAPISecret string
