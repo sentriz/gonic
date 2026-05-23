@@ -172,8 +172,6 @@ func (c *Controller) ServeGetScanStatus(_ *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetUser(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
-	hasLastFM := user.LastFMSession != ""
-	hasListenBrainz := user.ListenBrainzToken != ""
 
 	sub := spec.NewResponse()
 	sub.User = &spec.User{
@@ -182,7 +180,7 @@ func (c *Controller) ServeGetUser(r *http.Request) *spec.Response {
 		JukeboxRole:       c.jukebox != nil,
 		PodcastRole:       c.podcasts != nil,
 		DownloadRole:      true,
-		ScrobblingEnabled: hasLastFM || hasListenBrainz,
+		ScrobblingEnabled: true,
 		Folder:            []int{1},
 	}
 	return sub
