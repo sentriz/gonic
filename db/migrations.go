@@ -92,6 +92,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202605131200", migrateAddArtistCreditDisplay),
 		construct(ctx, "202605221200", migrateAddAlbumLabel),
 		construct(ctx, "202605222200", migrateAddTrackPlays),
+		construct(ctx, "202605231200", migrateAddTranscodeFormatPreference),
 	}
 
 	return gormigrate.
@@ -996,4 +997,8 @@ func migrateAddTrackPlays(tx *gorm.DB, _ MigrationContext) error {
 	}
 
 	return tx.Exec(`DROP TABLE plays;`).Error
+}
+
+func migrateAddTranscodeFormatPreference(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(TranscodeFormatPreference{}).Error
 }

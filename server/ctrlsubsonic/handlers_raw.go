@@ -373,7 +373,7 @@ func streamBaseProfile(dbc *db.DB, userID int, client string, format string, max
 		return transcode.Profile{}, false, false, fmt.Errorf("check db: %w", err)
 	}
 
-	// admin pref wins if it matches the client's format (or no format was requested)
+	// per-client override wins if it matches the client's format (or no format was requested)
 	if pref != nil {
 		p, found := transcode.UserProfiles[pref.Profile]
 		if !found {
@@ -384,14 +384,29 @@ func streamBaseProfile(dbc *db.DB, userID int, client string, format string, max
 		}
 	}
 
-	// otherwise pick the default profile for the client's requested format
-	for _, p := range transcode.DefaultProfiles {
-		if p.Suffix() == format {
+	// user-configured format defaults. topmost matching row wins, so the first row is
+	// used when no format is requested. unconfigured formats fall through below
+	var formatPrefs []*db.TranscodeFormatPreference
+	if err := dbc.Where("user_id=?", userID).Order("created_at").Find(&formatPrefs).Error; err != nil {
+		return transcode.Profile{}, false, false, fmt.Errorf("find format prefs: %w", err)
+	}
+	for _, fp := range formatPrefs {
+		p, found := transcode.UserProfiles[fp.Profile]
+		if !found {
+			return transcode.Profile{}, false, false, fmt.Errorf("unknown transcode user profile %q", fp.Profile)
+		}
+		if format == "" || p.Suffix() == format {
 			return p, true, true, nil
 		}
 	}
 
-	// last resort: client asked to downsample, fall back to default
+	// hardcoded fallback for formats the user didn't configure
+	defaults := []transcode.Profile{transcode.MP3, transcode.Opus}
+	for _, p := range defaults {
+		if p.Suffix() == format {
+			return p, true, true, nil
+		}
+	}
 	if maxBitRate > 0 {
 		return defaultFormat, true, true, nil
 	}

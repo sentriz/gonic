@@ -65,10 +65,24 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	c.dbc.
 		Where("user_id=?", user.ID).
 		Find(&data.TranscodePreferences)
-	for profile := range transcode.UserProfiles {
-		data.TranscodeProfiles = append(data.TranscodeProfiles, profile)
+	c.dbc.
+		Where("user_id=?", user.ID).
+		Order("created_at").
+		Find(&data.TranscodeFormatPreferences)
+	takenFormats := map[string]bool{}
+	for _, fp := range data.TranscodeFormatPreferences {
+		if p, ok := transcode.UserProfiles[fp.Profile]; ok {
+			takenFormats[p.Suffix()] = true
+		}
+	}
+	for name, p := range transcode.UserProfiles {
+		data.TranscodeProfiles = append(data.TranscodeProfiles, name)
+		if !takenFormats[p.Suffix()] {
+			data.TranscodeFormatProfiles = append(data.TranscodeFormatProfiles, name)
+		}
 	}
 	sort.Strings(data.TranscodeProfiles)
+	sort.Strings(data.TranscodeFormatProfiles)
 	// podcasts box
 	c.dbc.Find(&data.Podcasts)
 
@@ -398,6 +412,52 @@ func (c *Controller) ServeDeleteTranscodePrefDo(r *http.Request) *Response {
 	c.dbc.
 		Where("user_id=? AND client=?", user.ID, client).
 		Delete(db.TranscodePreference{})
+	return &Response{
+		redirect: "/admin/home",
+	}
+}
+
+func (c *Controller) ServeCreateTranscodeFormatPrefDo(r *http.Request) *Response {
+	profileName := r.FormValue("profile")
+	profile, ok := transcode.UserProfiles[profileName]
+	if !ok {
+		return &Response{
+			redirect: "/admin/home",
+			flashW:   []string{fmt.Sprintf("unknown profile %q", profileName)},
+		}
+	}
+	user := r.Context().Value(CtxUser).(*db.User)
+
+	var existing []*db.TranscodeFormatPreference
+	c.dbc.Where("user_id=?", user.ID).Find(&existing)
+	for _, fp := range existing {
+		if p, ok := transcode.UserProfiles[fp.Profile]; ok && p.Suffix() == profile.Suffix() {
+			return &Response{
+				redirect: "/admin/home",
+				flashW:   []string{fmt.Sprintf("a default profile for format %q is already set", profile.Suffix())},
+			}
+		}
+	}
+
+	pref := db.TranscodeFormatPreference{UserID: user.ID, Profile: profileName}
+	if err := c.dbc.Create(&pref).Error; err != nil {
+		return &Response{
+			redirect: "/admin/home",
+			flashW:   []string{fmt.Sprintf("could not create preference: %v", err)},
+		}
+	}
+	return &Response{redirect: "/admin/home"}
+}
+
+func (c *Controller) ServeDeleteTranscodeFormatPrefDo(r *http.Request) *Response {
+	user := r.Context().Value(CtxUser).(*db.User)
+	profile := r.URL.Query().Get("profile")
+	if profile == "" {
+		return &Response{code: 400, err: "please provide a profile"}
+	}
+	c.dbc.
+		Where("user_id=? AND profile=?", user.ID, profile).
+		Delete(db.TranscodeFormatPreference{})
 	return &Response{
 		redirect: "/admin/home",
 	}

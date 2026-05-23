@@ -31,11 +31,6 @@ var UserProfiles = map[string]Profile{
 	"opus_192":     Opus192,
 }
 
-var DefaultProfiles = []Profile{
-	MP3,
-	Opus,
-}
-
 // Store as simple strings, since we may let the user provide their own profiles soon
 var (
 	MP3    = NewProfile("audio/mpeg", "mp3", 128, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -b:a <bitrate> -c:a libmp3lame -f mp3 -`)
