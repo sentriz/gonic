@@ -315,7 +315,7 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		return spec.NewError(0, "couldn't pick profile: %v", err)
 	}
 	if !ok {
-		log.Printf("serving raw file: no matching profile for user %q, client %q, format %q", user.Name, client, format)
+		log.Printf("serving raw file, no matching profile for user %q client %q format %q", user.Name, client, format)
 		http.ServeFile(w, r, file.AbsPath()) //nolint:gosec // path is from db, populated by scanner
 		return nil
 	}
