@@ -40,12 +40,11 @@ func (t *CachingTranscoder) Transcode(ctx context.Context, profile Profile, in s
 		return fmt.Errorf("make cache path: %w", err)
 	}
 
-	name, args, err := parseProfile(profile, in)
+	key, err := keyFor(profile, in)
 	if err != nil {
-		return fmt.Errorf("split command: %w", err)
+		return err
 	}
 
-	key := cacheKey(name, args)
 	unlock := t.locks.Lock(key)
 	defer unlock()
 
@@ -69,6 +68,55 @@ func (t *CachingTranscoder) Transcode(ctx context.Context, profile Profile, in s
 	}
 
 	return nil
+}
+
+func (t *CachingTranscoder) CachedPath(profile Profile, in string) (string, func(), error) {
+	if profile.Seek() > 0 {
+		return "", nil, nil
+	}
+
+	key, err := keyFor(profile, in)
+	if err != nil {
+		return "", nil, err
+	}
+
+	t.cache.RLock()
+	cleanup := func() {
+		t.cache.RUnlock()
+	}
+
+	var found bool
+	defer func() {
+		if !found {
+			cleanup()
+		}
+	}()
+
+	unlock := t.locks.Lock(key)
+	defer unlock()
+
+	path := filepath.Join(t.cache.Path(), key)
+
+	info, err := os.Stat(path)
+	switch {
+	case os.IsNotExist(err), err == nil && info.Size() == 0:
+		return "", nil, nil
+	case err != nil:
+		return "", nil, fmt.Errorf("stat cache file: %w", err)
+	}
+
+	_ = os.Chtimes(path, time.Now(), time.Now()) // Touch for LRU cache purposes
+
+	found = true
+	return path, cleanup, nil
+}
+
+func keyFor(profile Profile, in string) (string, error) {
+	name, args, err := parseProfile(profile, in)
+	if err != nil {
+		return "", fmt.Errorf("split command: %w", err)
+	}
+	return cacheKey(name, args), nil
 }
 
 func cacheKey(cmd string, args []string) string {

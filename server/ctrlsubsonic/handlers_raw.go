@@ -328,9 +328,22 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 		profile = transcode.WithSeek(profile, time.Second*time.Duration(timeOffset))
 	}
 
-	log.Printf("transcoding to %q with at bitrate %d", profile.MIME(), profile.BitRate())
-
 	w.Header().Set("Content-Type", profile.MIME())
+
+	if ct, ok := c.transcoder.(*transcode.CachingTranscoder); ok {
+		path, release, err := ct.CachedPath(profile, file.AbsPath())
+		if err != nil {
+			return spec.NewError(0, "check transcode cache: %v", err)
+		}
+		if path != "" {
+			defer release()
+			log.Printf("serving cached transcode at %q with bitrate %d", profile.MIME(), profile.BitRate())
+			http.ServeFile(w, r, path)
+			return nil
+		}
+	}
+
+	log.Printf("transcoding to %q at bitrate %d", profile.MIME(), profile.BitRate())
 
 	if estimateLength {
 		if rem := audioFile.AudioLength() - timeOffset; rem > 0 {
@@ -400,7 +413,7 @@ func streamBaseProfile(dbc *db.DB, userID int, client string, format string, max
 	}
 
 	// hardcoded fallback for formats the user didn't configure
-	defaults := []transcode.Profile{transcode.MP3, transcode.Opus}
+	defaults := []transcode.Profile{transcode.Opus, transcode.MP3}
 	for _, p := range defaults {
 		if p.Suffix() == format {
 			return p, true, true, nil
