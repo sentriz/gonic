@@ -42,7 +42,6 @@ var (
 	}
 	Genre = &Spec{
 		MultiKey: []string{normtag.Genres}, Key: []string{normtag.Genre},
-		Fallback: "Unknown Genre",
 	}
 	ISRC = &Spec{
 		MultiKey: []string{normtag.ISRC}, Key: []string{normtag.ISRC},

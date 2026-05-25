@@ -93,6 +93,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202605221200", migrateAddAlbumLabel),
 		construct(ctx, "202605222200", migrateAddTrackPlays),
 		construct(ctx, "202605231200", migrateAddTranscodeFormatPreference),
+		construct(ctx, "202605251200", migrateDeleteUnknownGenre),
 	}
 
 	return gormigrate.
@@ -1001,4 +1002,8 @@ func migrateAddTrackPlays(tx *gorm.DB, _ MigrationContext) error {
 
 func migrateAddTranscodeFormatPreference(tx *gorm.DB, _ MigrationContext) error {
 	return tx.AutoMigrate(TranscodeFormatPreference{}).Error
+}
+
+func migrateDeleteUnknownGenre(tx *gorm.DB, _ MigrationContext) error {
+	return tx.Exec(`DELETE FROM genres WHERE name='Unknown Genre'`).Error
 }
