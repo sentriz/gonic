@@ -94,6 +94,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202605222200", migrateAddTrackPlays),
 		construct(ctx, "202605231200", migrateAddTranscodeFormatPreference),
 		construct(ctx, "202605251200", migrateDeleteUnknownGenre),
+		construct(ctx, "202605261200", migrateDeleteLastfmPlaceholderArtistImage),
 	}
 
 	return gormigrate.
@@ -1006,4 +1007,8 @@ func migrateAddTranscodeFormatPreference(tx *gorm.DB, _ MigrationContext) error 
 
 func migrateDeleteUnknownGenre(tx *gorm.DB, _ MigrationContext) error {
 	return tx.Exec(`DELETE FROM genres WHERE name='Unknown Genre'`).Error
+}
+
+func migrateDeleteLastfmPlaceholderArtistImage(tx *gorm.DB, _ MigrationContext) error {
+	return tx.Exec(`UPDATE artist_infos SET image_url='' WHERE image_url='https://lastfm.freetls.fastly.net/i/u/ar0/2a96cbd8b46e442fc41c2b86b821562f.jpg'`).Error
 }
