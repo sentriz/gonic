@@ -397,28 +397,31 @@ func streamBaseProfile(dbc *db.DB, userID int, client string, format string, max
 		}
 	}
 
-	// user configured format defaults. first row is used when no format is requested
-	var formatPrefs []*db.TranscodeFormatPreference
-	if err := dbc.Where("user_id=?", userID).Order("created_at").Find(&formatPrefs).Error; err != nil {
-		return transcode.Profile{}, false, false, fmt.Errorf("find format prefs: %w", err)
-	}
-	for _, fp := range formatPrefs {
-		p, found := transcode.UserProfiles[fp.Profile]
-		if !found {
-			return transcode.Profile{}, false, false, fmt.Errorf("unknown transcode user profile %q", fp.Profile)
+	// user configured format defaults. only consulted when the client requested a specific format
+	if format != "" {
+		var formatPrefs []*db.TranscodeFormatPreference
+		if err := dbc.Where("user_id=?", userID).Order("created_at").Find(&formatPrefs).Error; err != nil {
+			return transcode.Profile{}, false, false, fmt.Errorf("find format prefs: %w", err)
 		}
-		if format == "" || p.Suffix() == format {
-			return p, true, true, nil
+		for _, fp := range formatPrefs {
+			p, found := transcode.UserProfiles[fp.Profile]
+			if !found {
+				return transcode.Profile{}, false, false, fmt.Errorf("unknown transcode user profile %q", fp.Profile)
+			}
+			if p.Suffix() == format {
+				return p, true, true, nil
+			}
+		}
+
+		// hardcoded fallback for formats the user didn't configure
+		defaults := []transcode.Profile{transcode.Opus, transcode.MP3}
+		for _, p := range defaults {
+			if p.Suffix() == format {
+				return p, true, true, nil
+			}
 		}
 	}
 
-	// hardcoded fallback for formats the user didn't configure
-	defaults := []transcode.Profile{transcode.Opus, transcode.MP3}
-	for _, p := range defaults {
-		if p.Suffix() == format {
-			return p, true, true, nil
-		}
-	}
 	if maxBitRate > 0 {
 		return defaultFormat, true, true, nil
 	}
