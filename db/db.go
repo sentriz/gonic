@@ -630,10 +630,10 @@ type ArtistInfo struct {
 	TopTracks      string
 }
 
-func (p *ArtistInfo) GetSimilarArtists() []string      { return strings.Split(p.SimilarArtists, ";") }
+func (p *ArtistInfo) GetSimilarArtists() []string      { return splitList(p.SimilarArtists) }
 func (p *ArtistInfo) SetSimilarArtists(items []string) { p.SimilarArtists = strings.Join(items, ";") }
 
-func (p *ArtistInfo) GetTopTracks() []string      { return strings.Split(p.TopTracks, ";") }
+func (p *ArtistInfo) GetTopTracks() []string      { return splitList(p.TopTracks) }
 func (p *ArtistInfo) SetTopTracks(items []string) { p.TopTracks = strings.Join(items, ";") }
 
 type AlbumInfo struct {
@@ -656,6 +656,13 @@ func splitIDs(in, sep string) []specid.ID {
 		ret = append(ret, id)
 	}
 	return ret
+}
+
+func splitList(s string) []string {
+	if s == "" {
+		return nil
+	}
+	return strings.Split(s, ";")
 }
 
 func join[T fmt.Stringer](in []T, sep string) string {

@@ -2,6 +2,7 @@
 package artistinfocache
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -40,7 +41,7 @@ func (a *ArtistInfoCache) GetOrLookup(ctx context.Context, artistID int) (*db.Ar
 		return nil, fmt.Errorf("find artist info in db: %w", err)
 	}
 
-	if artistInfo.ID == 0 || artistInfo.Biography == "" /* prev not found maybe */ || time.Since(artistInfo.UpdatedAt) > keepFor {
+	if artistInfo.ID == 0 || time.Since(artistInfo.UpdatedAt) > keepFor {
 		return a.Lookup(ctx, &artist)
 	}
 
@@ -55,8 +56,6 @@ func (a *ArtistInfoCache) Get(ctx context.Context, artistID int) (*db.ArtistInfo
 	return &artistInfo, nil
 }
 
-// TODO: this fails on lastfmClient.ArtistGetInfo if there no lastfm api key.
-// but once we scan mb artist IDs from tags, we can do the MB performer look up without lastfm
 func (a *ArtistInfoCache) Lookup(ctx context.Context, artist *db.Artist) (*db.ArtistInfo, error) {
 	var artistInfo db.ArtistInfo
 	artistInfo.ID = artist.ID
@@ -64,52 +63,61 @@ func (a *ArtistInfoCache) Lookup(ctx context.Context, artist *db.Artist) (*db.Ar
 	if err := a.db.FirstOrCreate(&artistInfo, "id=?", artistInfo.ID).Error; err != nil {
 		return nil, fmt.Errorf("first or create artist info: %w", err)
 	}
-	if err := a.db.Save(&artistInfo).Error; err != nil {
-		return nil, fmt.Errorf("bump updated_at time: %w", err)
-	}
 
+	// lastfm is best-effort. without an api key these calls fail, but we can still resolve
+	// similar artists from musicbrainz using the artist's tag-scanned mbid. only overwrite
+	// fields when we actually have new data, so a transient failure can't blank the cached row
 	info, err := a.lastfmClient.ArtistGetInfo(artist.Name)
 	if err != nil {
-		return nil, fmt.Errorf("get upstream info: %w", err)
+		log.Printf("error getting lastfm artist info for %q: %v", artist.Name, err)
+		// non-fatal
 	}
 
-	artistInfo.ID = artist.ID
-	artistInfo.Biography = info.Bio.Summary
-	artistInfo.MusicBrainzID = info.MBID
-	artistInfo.LastFMURL = info.URL
+	if info.Bio.Summary != "" {
+		artistInfo.Biography = info.Bio.Summary
+	}
+	if info.URL != "" {
+		artistInfo.LastFMURL = info.URL
+	}
+
+	mbid := cmp.Or(artist.MusicBrainzID, info.MBID, artistInfo.MusicBrainzID)
+	artistInfo.MusicBrainzID = mbid
 
 	var similar []string
 	for _, sim := range info.Similar.Artists {
 		similar = append(similar, sim.Name)
 	}
-	if a.mbClient != nil && info.MBID != "" {
-		if related, err := musicBrainzRelatedArtists(ctx, a.mbClient, info.MBID); err != nil {
-			log.Printf("error fetching musicbrainz artist %s: %v", info.MBID, err)
+	if a.mbClient != nil && mbid != "" {
+		if related, err := musicBrainzRelatedArtists(ctx, a.mbClient, mbid); err != nil {
+			log.Printf("error fetching musicbrainz artist %s: %v", mbid, err)
 			// non-fatal
 		} else {
 			similar = append(similar, related...)
 		}
 	}
-	artistInfo.SetSimilarArtists(dedupe(similar))
+	if len(similar) > 0 {
+		artistInfo.SetSimilarArtists(dedupe(similar))
+	}
 
-	url, err := a.lastfmClient.StealArtistImage(info.URL)
-	if err != nil {
-		log.Printf("error stealing lastfm artist image: %v", err)
+	if info.URL != "" {
+		if url, err := a.lastfmClient.StealArtistImage(info.URL); err != nil {
+			log.Printf("error stealing lastfm artist image: %v", err)
+			// non-fatal
+		} else if url != "" {
+			artistInfo.ImageURL = url
+		}
+	}
+
+	if topTracks, err := a.lastfmClient.ArtistGetTopTracks(artist.Name); err != nil {
+		log.Printf("error getting lastfm top tracks for %q: %v", artist.Name, err)
 		// non-fatal
+	} else if len(topTracks.Tracks) > 0 {
+		var names []string
+		for _, tr := range topTracks.Tracks {
+			names = append(names, tr.Name)
+		}
+		artistInfo.SetTopTracks(names)
 	}
-	if url != "" {
-		artistInfo.ImageURL = url
-	}
-
-	topTracksResponse, err := a.lastfmClient.ArtistGetTopTracks(artist.Name)
-	if err != nil {
-		return nil, fmt.Errorf("get top tracks: %w", err)
-	}
-	var topTracks []string
-	for _, tr := range topTracksResponse.Tracks {
-		topTracks = append(topTracks, tr.Name)
-	}
-	artistInfo.SetTopTracks(topTracks)
 
 	if err := a.db.Save(&artistInfo).Error; err != nil {
 		return nil, fmt.Errorf("save upstream info: %w", err)
