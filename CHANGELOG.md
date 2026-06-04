@@ -1,5 +1,14 @@
 # Changelog
 
+### [0.21.1](https://www.github.com/sentriz/gonic/compare/v0.21.0...v0.21.1) (2026-06-04)
+
+
+### Bug Fixes
+
+* **lastfm:** ignore placeholder image when stealing artist image ([e800661](https://www.github.com/sentriz/gonic/commit/e800661e7297d0c14b0c51d0858732f9ba8d2cba))
+* **subsonic:** only consult format prefs when client requests a format ([1dd97a5](https://www.github.com/sentriz/gonic/commit/1dd97a532e1f75239188d9fe1ebeb239fddfca45))
+* **subsonic:** restrict startScan to admin users ([2376c61](https://www.github.com/sentriz/gonic/commit/2376c61bf73642f39e9ee45e735423d8df82b132))
+
 ## [0.21.0](https://www.github.com/sentriz/gonic/compare/v0.20.1...v0.21.0) (2026-05-25)
 
 
