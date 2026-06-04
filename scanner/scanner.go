@@ -410,8 +410,9 @@ func (s *Scanner) scanDir(st *State, absPath string) error {
 	})
 }
 
+//nolint:gocyclo
 func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db.Album, track *db.Track, timeSpec times.Timespec, trprops tags.Properties, trags tags.Tags, basename, absPath string) error {
-	genreNames, _ := tags.ReadMulti(trags, tags.Genre, s.multiValueSettings)
+	genreNames, _, _ := tags.ReadMulti(trags, tags.Genre, s.multiValueSettings)
 	genreIDs, err := populateGenres(tx, genreNames)
 	if err != nil {
 		return fmt.Errorf("populate genres: %w", err)
@@ -446,16 +447,34 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		createTime = timeSpec.BirthTime()
 	}
 
+	albumArtistEntries := tags.PairCredits(tags.ReadMulti(trags, tags.AlbumArtist, s.multiValueSettings))
+	trackArtistEntries := tags.PairCredits(tags.ReadMulti(trags, tags.Artist, s.multiValueSettings))
+
+	contributorEntries := make([][]tags.Credited, 0, len(trackContributorRoles))
+	for _, r := range trackContributorRoles {
+		contributorEntries = append(contributorEntries, tags.PairCredits(tags.ReadMulti(trags, r.spec, nil)))
+	}
+
+	// if the same artist name appears with an MBID anywhere in this track's tags, prefer that MBID for the same name on credits where the
+	// MBID is absent. lets a remixer/composer with just a name attach to the right DB row when multiple rows share the name
+	artistMusicBrainzID := map[string]string{}
+	for _, group := range append([][]tags.Credited{albumArtistEntries, trackArtistEntries}, contributorEntries...) {
+		for _, e := range group {
+			if e.MusicBrainzID != "" && artistMusicBrainzID[e.Value] == "" {
+				artistMusicBrainzID[e.Value] = e.MusicBrainzID
+			}
+		}
+	}
+
 	// metadata for the album table comes only from the first track's tags
 	if i == 0 {
 		if err := tx.Where("album_id=?", album.ID).Delete(db.AlbumCredit{}).Error; err != nil {
 			return fmt.Errorf("delete album credits: %w", err)
 		}
 
-		albumArtistEntries := tags.PairCredits(tags.ReadMulti(trags, tags.AlbumArtist, s.multiValueSettings))
 		var albumArtists []artistRef
 		for _, e := range albumArtistEntries {
-			artist, err := populateArtist(tx, e.Value)
+			artist, err := populateArtist(tx, e.Value, cmp.Or(e.MusicBrainzID, artistMusicBrainzID[e.Value]))
 			if err != nil {
 				return fmt.Errorf("populate album artist: %w", err)
 			}
@@ -494,7 +513,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		return fmt.Errorf("populate track genres: %w", err)
 	}
 
-	isrcs, _ := tags.ReadMulti(trags, tags.ISRC, s.multiValueSettings)
+	isrcs, _, _ := tags.ReadMulti(trags, tags.ISRC, s.multiValueSettings)
 	if err := populateTrackISRCs(tx, track, isrcs); err != nil {
 		return fmt.Errorf("populate track ISRCs: %w", err)
 	}
@@ -503,10 +522,9 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		return fmt.Errorf("delete track credits: %w", err)
 	}
 
-	trackArtistEntries := tags.PairCredits(tags.ReadMulti(trags, tags.Artist, s.multiValueSettings))
 	var trackArtists []artistRef
 	for _, e := range trackArtistEntries {
-		artist, err := populateArtist(tx, e.Value)
+		artist, err := populateArtist(tx, e.Value, cmp.Or(e.MusicBrainzID, artistMusicBrainzID[e.Value]))
 		if err != nil {
 			return fmt.Errorf("populate track artist: %w", err)
 		}
@@ -516,8 +534,18 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		return fmt.Errorf("populate track credits: %w", err)
 	}
 
-	if err := populateTrackContributorCredits(tx, track, trags); err != nil {
-		return fmt.Errorf("populate track contributor credits: %w", err)
+	var contributorRows [][]any
+	for ci, r := range trackContributorRoles {
+		for _, e := range contributorEntries[ci] {
+			artist, err := populateArtist(tx, e.Value, cmp.Or(e.MusicBrainzID, artistMusicBrainzID[e.Value]))
+			if err != nil {
+				return fmt.Errorf("populate contributor artist: %w", err)
+			}
+			contributorRows = append(contributorRows, []any{artist.ID, r.role, e.ValueCredit})
+		}
+	}
+	if err := tx.InsertBulkLeftManyRows("track_credits", []string{"track_id", "artist_id", "role", "credited_as"}, track.ID, contributorRows); err != nil {
+		return fmt.Errorf("insert bulk track contributor credits: %w", err)
 	}
 
 	// possible album level embedded covers come only from the first track
@@ -646,15 +674,41 @@ func populateTrack(tx *db.DB, scanEmbeddedCover bool, album *db.Album, track *db
 	return nil
 }
 
-func populateArtist(tx *db.DB, artistName string) (*db.Artist, error) {
-	var update db.Artist
-	update.Name = artistName
-	update.NameUDec = decoded(artistName)
-	var artist db.Artist
-	if err := tx.Where("name=?", artistName).Assign(update).FirstOrCreate(&artist).Error; err != nil {
-		return nil, fmt.Errorf("find or create artist: %w", err)
+func populateArtist(tx *db.DB, artistName, musicBrainzID string) (*db.Artist, error) {
+	nameUDec := decoded(artistName)
+
+	if musicBrainzID == "" {
+		// no MBID, use any
+		var artist db.Artist
+		return &artist, tx.
+			Where(db.Artist{Name: artistName}).
+			Order("id ASC").
+			Attrs(db.Artist{NameUDec: nameUDec}).
+			FirstOrCreate(&artist).
+			Error
 	}
-	return &artist, nil
+
+	// have MBID
+
+	var artist db.Artist
+	err := tx.
+		Where(db.Artist{MusicBrainzID: musicBrainzID}).
+		First(&artist).
+		Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+	if artist.ID != 0 {
+		return &artist, nil
+	}
+
+	// adopt the name only row if one exists, else create
+	return &artist, tx.
+		Where(db.Artist{Name: artistName}).
+		Where("music_brainz_id = ''").
+		Attrs(db.Artist{NameUDec: nameUDec}).
+		Assign(db.Artist{MusicBrainzID: musicBrainzID}).
+		FirstOrCreate(&artist).Error
 }
 
 func populateGenres(tx *db.DB, names []string) ([]int, error) {
@@ -791,35 +845,6 @@ func populateAlbumCredits(tx *db.DB, album *db.Album, role string, refs []artist
 	return nil
 }
 
-func populateTrackContributorCredits(tx *db.DB, track *db.Track, trags tags.Tags) error {
-	roles := []struct {
-		role string
-		spec *tags.Spec
-	}{
-		{db.RoleRemixer, tags.Remixer},
-		{db.RoleComposer, tags.Composer},
-		{db.RoleLyricist, tags.Lyricist},
-		{db.RoleConductor, tags.Conductor},
-		{db.RoleProducer, tags.Producer},
-		{db.RoleArranger, tags.Arranger},
-	}
-
-	var rows [][]any
-	for _, rs := range roles {
-		for _, e := range tags.PairCredits(tags.ReadMulti(trags, rs.spec, nil)) {
-			artist, err := populateArtist(tx, e.Value)
-			if err != nil {
-				return fmt.Errorf("populate contributor artist: %w", err)
-			}
-			rows = append(rows, []any{artist.ID, rs.role, e.ValueCredit})
-		}
-	}
-	if err := tx.InsertBulkLeftManyRows("track_credits", []string{"track_id", "artist_id", "role", "credited_as"}, track.ID, rows); err != nil {
-		return fmt.Errorf("insert bulk track contributor credits: %w", err)
-	}
-	return nil
-}
-
 func populateTrackCredits(tx *db.DB, track *db.Track, role string, refs []artistRef) error {
 	rows := make([][]any, len(refs))
 	for i, r := range refs {
@@ -834,6 +859,19 @@ func populateTrackCredits(tx *db.DB, track *db.Track, role string, refs []artist
 type artistRef struct {
 	id     int
 	credit string
+}
+
+//nolint:gochecknoglobals
+var trackContributorRoles = []struct {
+	role string
+	spec *tags.Spec
+}{
+	{db.RoleRemixer, tags.Remixer},
+	{db.RoleComposer, tags.Composer},
+	{db.RoleLyricist, tags.Lyricist},
+	{db.RoleConductor, tags.Conductor},
+	{db.RoleProducer, tags.Producer},
+	{db.RoleArranger, tags.Arranger},
 }
 
 func (s *Scanner) cleanTracks(st *State) error {

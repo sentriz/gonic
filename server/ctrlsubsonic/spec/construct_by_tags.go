@@ -248,6 +248,7 @@ func NewArtistByTags(a *ArtistRow) *Artist {
 		ID:            a.SID(),
 		Name:          a.Name,
 		AlbumCount:    a.AlbumCount,
+		MusicBrainzID: a.MusicBrainzID,
 		Roles:         roles,
 		Albums:        []*Album{},
 		AverageRating: a.AverageRating,

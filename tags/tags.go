@@ -33,12 +33,14 @@ var (
 	Artist = &Spec{
 		MultiKey: []string{normtag.Artists}, Key: []string{normtag.Artist},
 		MultiKeyCredit: []string{normtag.ArtistsCredit}, KeyCredit: []string{normtag.ArtistCredit},
-		Fallback: "Unknown Artist",
+		KeyMusicBrainzID: []string{normtag.MusicBrainzArtistID},
+		Fallback:         "Unknown Artist",
 	}
 	AlbumArtist = &Spec{
 		MultiKey: []string{normtag.AlbumArtists}, Key: []string{normtag.AlbumArtist, normtag.Artist},
 		MultiKeyCredit: []string{normtag.AlbumArtistsCredit}, KeyCredit: []string{normtag.AlbumArtistCredit},
-		Fallback: "Unknown Artist",
+		KeyMusicBrainzID: []string{normtag.MusicBrainzAlbumArtistID, normtag.MusicBrainzArtistID},
+		Fallback:         "Unknown Artist",
 	}
 	Genre = &Spec{
 		MultiKey: []string{normtag.Genres}, Key: []string{normtag.Genre},
@@ -50,26 +52,32 @@ var (
 	Remixer = &Spec{
 		MultiKey: []string{normtag.Remixers}, Key: []string{normtag.Remixer},
 		MultiKeyCredit: []string{normtag.RemixersCredit}, KeyCredit: []string{normtag.RemixerCredit},
+		KeyMusicBrainzID: []string{normtag.MusicBrainzRemixerID},
 	}
 	Composer = &Spec{
 		MultiKey: []string{normtag.Composers}, Key: []string{normtag.Composer},
 		MultiKeyCredit: []string{normtag.ComposersCredit}, KeyCredit: []string{normtag.ComposerCredit},
+		KeyMusicBrainzID: []string{normtag.MusicBrainzComposerID},
 	}
 	Lyricist = &Spec{
 		MultiKey: []string{normtag.Lyricists}, Key: []string{normtag.Lyricist},
 		MultiKeyCredit: []string{normtag.LyricistsCredit}, KeyCredit: []string{normtag.LyricistCredit},
+		KeyMusicBrainzID: []string{normtag.MusicBrainzLyricistID},
 	}
 	Conductor = &Spec{
 		MultiKey: []string{normtag.Conductors}, Key: []string{normtag.Conductor},
 		MultiKeyCredit: []string{normtag.ConductorsCredit}, KeyCredit: []string{normtag.ConductorCredit},
+		KeyMusicBrainzID: []string{normtag.MusicBrainzConductorID},
 	}
 	Producer = &Spec{
 		MultiKey: []string{normtag.Producers}, Key: []string{normtag.Producer},
 		MultiKeyCredit: []string{normtag.ProducersCredit}, KeyCredit: []string{normtag.ProducerCredit},
+		KeyMusicBrainzID: []string{normtag.MusicBrainzProducerID},
 	}
 	Arranger = &Spec{
 		MultiKey: []string{normtag.Arrangers}, Key: []string{normtag.Arranger},
 		MultiKeyCredit: []string{normtag.ArrangersCredit}, KeyCredit: []string{normtag.ArrangerCredit},
+		KeyMusicBrainzID: []string{normtag.MusicBrainzArrangerID},
 	}
 
 	AlbumTitle = &Spec{
@@ -88,6 +96,7 @@ var (
 type Spec struct {
 	MultiKey, Key             []string
 	MultiKeyCredit, KeyCredit []string
+	KeyMusicBrainzID          []string
 	Fallback                  string
 	Valid                     func(string) bool
 }
@@ -105,7 +114,7 @@ type MultiValueSetting struct {
 	Delim string
 }
 
-func ReadMulti(t Tags, spec *Spec, settings map[*Spec]MultiValueSetting) (values, valuesCredit []string) {
+func ReadMulti(t Tags, spec *Spec, settings map[*Spec]MultiValueSetting) (values, valuesCredit, valuesMusicBrainzID []string) {
 	setting, ok := settings[spec]
 	if !ok {
 		setting = MultiValueSetting{Mode: Multi}
@@ -117,8 +126,9 @@ func ReadMulti(t Tags, spec *Spec, settings map[*Spec]MultiValueSetting) (values
 	}
 
 	valuesCredit = read(t, spec.MultiKeyCredit, spec.KeyCredit, setting, nil)
+	valuesMusicBrainzID = read(t, nil, spec.KeyMusicBrainzID, setting, nil)
 
-	return values, valuesCredit
+	return values, valuesCredit, valuesMusicBrainzID
 }
 
 func Read(t Tags, spec *Spec) (value, valueCredit string) {
@@ -184,9 +194,10 @@ func read(t Tags, multiKey, key []string, setting MultiValueSetting, valid func(
 
 type Credited struct {
 	Value, ValueCredit string
+	MusicBrainzID      string
 }
 
-func PairCredits(values, valuesCredit []string) []Credited {
+func PairCredits(values, valuesCredit, valuesMusicBrainzID []string) []Credited {
 	out := make([]Credited, 0, len(values))
 	for i, v := range values {
 		if v == "" {
@@ -195,6 +206,9 @@ func PairCredits(values, valuesCredit []string) []Credited {
 		e := Credited{Value: v}
 		if i < len(valuesCredit) && valuesCredit[i] != "" && valuesCredit[i] != v {
 			e.ValueCredit = valuesCredit[i]
+		}
+		if i < len(valuesMusicBrainzID) {
+			e.MusicBrainzID = valuesMusicBrainzID[i]
 		}
 		out = append(out, e)
 	}

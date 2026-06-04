@@ -265,6 +265,107 @@ func TestDeleteArtist(t *testing.T) {
 	assert.Equal(t, m.DB().Where("name=?", "artist-2").Find(&db.Artist{}).Error, gorm.ErrRecordNotFound)                                  // artist doesn't exist
 }
 
+func TestArtistMusicBrainzID(t *testing.T) {
+	t.Parallel()
+
+	const (
+		mbidA = "11111111-1111-1111-1111-111111111111"
+		mbidB = "22222222-2222-2222-2222-222222222222"
+	)
+
+	setArtist := func(m *mockfs.MockFS, path, name, mbid string) {
+		m.SetTrack(path, func(info *mockfs.TagInfo) {
+			normtag.Set(info.Tags, normtag.Artist, name)
+			normtag.Set(info.Tags, normtag.AlbumArtist, name)
+			normtag.Set(info.Tags, normtag.Album, filepath.Base(filepath.Dir(path)))
+			normtag.Set(info.Tags, normtag.Title, filepath.Base(path))
+			if mbid != "" {
+				normtag.Set(info.Tags, normtag.MusicBrainzArtistID, mbid)
+				normtag.Set(info.Tags, normtag.MusicBrainzAlbumArtistID, mbid)
+			}
+		})
+	}
+
+	t.Run("separation and merge", func(t *testing.T) {
+		t.Parallel()
+		m := mockfs.New(t)
+
+		setArtist(m, "a/album/track.flac", "Foo", mbidA)
+		setArtist(m, "b/album/track.flac", "Foo", mbidB)
+		setArtist(m, "c/album/track.flac", "Foo", "") // attaches to one of the above by name, no third row
+		m.ScanAndClean()
+
+		var foos []*db.Artist
+		require.NoError(t, m.DB().Where("name=?", "Foo").Find(&foos).Error)
+		require.Len(t, foos, 2)
+
+		mbids := map[string]bool{}
+		for _, a := range foos {
+			mbids[a.MusicBrainzID] = true
+		}
+		assert.True(t, mbids[mbidA])
+		assert.True(t, mbids[mbidB])
+	})
+
+	t.Run("rescan with new mbid claims the existing name-only row", func(t *testing.T) {
+		t.Parallel()
+		m := mockfs.New(t)
+
+		setArtist(m, "a/album/track.flac", "Foo", "")
+		m.ScanAndClean()
+
+		var before db.Artist
+		require.NoError(t, m.DB().Where("name=?", "Foo").First(&before).Error)
+		assert.Empty(t, before.MusicBrainzID)
+
+		setArtist(m, "a/album/track.flac", "Foo", mbidA)
+		m.ScanAndClean()
+
+		var after db.Artist
+		require.NoError(t, m.DB().Where("name=?", "Foo").First(&after).Error)
+		assert.Equal(t, before.ID, after.ID, "existing row should be adopted, not replaced")
+		assert.Equal(t, mbidA, after.MusicBrainzID)
+	})
+
+	t.Run("within-track propagation disambiguates same-name credits", func(t *testing.T) {
+		t.Parallel()
+		m := mockfs.New(t)
+
+		// seed two distinct "Foo" rows. mbidB scanned first so its row has the lowest id;
+		// a permissive name lookup for an untagged "Foo" would land there.
+		setArtist(m, "seed-a/album/track.flac", "Foo", mbidB)
+		setArtist(m, "seed-b/album/track.flac", "Foo", mbidA)
+		m.ScanAndClean()
+
+		// later track credits "Foo" as ARTIST with mbidA, and "Foo" as REMIXER without an mbid.
+		// without within-track propagation the remixer would fall back to lowest-id (mbidB).
+		// with propagation it should pick up mbidA from this track's ARTIST tag.
+		m.SetTrack("later/album/track.flac", func(info *mockfs.TagInfo) {
+			normtag.Set(info.Tags, normtag.Artist, "Foo")
+			normtag.Set(info.Tags, normtag.AlbumArtist, "Foo")
+			normtag.Set(info.Tags, normtag.Album, "album")
+			normtag.Set(info.Tags, normtag.Title, "track")
+			normtag.Set(info.Tags, normtag.MusicBrainzArtistID, mbidA)
+			normtag.Set(info.Tags, normtag.MusicBrainzAlbumArtistID, mbidA)
+			normtag.Set(info.Tags, normtag.Remixer, "Foo")
+		})
+		m.ScanAndClean()
+
+		var fooA db.Artist
+		require.NoError(t, m.DB().Where("music_brainz_id=?", mbidA).First(&fooA).Error)
+		var fooB db.Artist
+		require.NoError(t, m.DB().Where("music_brainz_id=?", mbidB).First(&fooB).Error)
+		require.Less(t, fooB.ID, fooA.ID, "test setup: mbidB row must have the lower id")
+
+		var remixerArtistIDs []int
+		require.NoError(t, m.DB().
+			Model(&db.TrackCredit{}).
+			Where("role=?", db.RoleRemixer).
+			Pluck("artist_id", &remixerArtistIDs).Error)
+		assert.Equal(t, []int{fooA.ID}, remixerArtistIDs, "remixer should attach to the mbidA row via within-track context, not lowest-id (mbidB)")
+	})
+}
+
 func TestGenres(t *testing.T) {
 	t.Parallel()
 	m := mockfs.New(t)
@@ -1084,7 +1185,7 @@ func TestReadDoubleDelim(t *testing.T) {
 		spec: {Mode: tags.Delim, Delim: `/`},
 	}
 
-	values, _ := tags.ReadMulti(trags, spec, settings)
+	values, _, _ := tags.ReadMulti(trags, spec, settings)
 	require.Equal(t, []string{`DON'T`, ``, `BE`, ``, `⚜⚜⚜`}, values)
 }
 

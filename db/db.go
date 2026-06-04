@@ -179,8 +179,9 @@ func (db *DB) SetSetting(key SettingKey, value string) error {
 
 type Artist struct {
 	ID            int    `gorm:"primary_key"`
-	Name          string `gorm:"not null; unique_index"`
+	Name          string `gorm:"not null; index"`
 	NameUDec      string `sql:"default: null"`
+	MusicBrainzID string `sql:"default: ''" gorm:"not null"`
 	ArtistStar    *ArtistStar
 	ArtistRating  *ArtistRating
 	AverageRating float64     `sql:"default: null"`

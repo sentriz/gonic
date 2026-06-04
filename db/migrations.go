@@ -95,6 +95,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202605231200", migrateAddTranscodeFormatPreference),
 		construct(ctx, "202605251200", migrateDeleteUnknownGenre),
 		construct(ctx, "202605261200", migrateDeleteLastfmPlaceholderArtistImage),
+		construct(ctx, "202606041200", migrateArtistMusicBrainzID),
 	}
 
 	return gormigrate.
@@ -1011,4 +1012,15 @@ func migrateDeleteUnknownGenre(tx *gorm.DB, _ MigrationContext) error {
 
 func migrateDeleteLastfmPlaceholderArtistImage(tx *gorm.DB, _ MigrationContext) error {
 	return tx.Exec(`UPDATE artist_infos SET image_url='' WHERE image_url='https://lastfm.freetls.fastly.net/i/u/ar0/2a96cbd8b46e442fc41c2b86b821562f.jpg'`).Error
+}
+
+func migrateArtistMusicBrainzID(tx *gorm.DB, _ MigrationContext) error {
+	if err := tx.AutoMigrate(Artist{}).Error; err != nil {
+		return fmt.Errorf("automigrate artist: %w", err)
+	}
+	return tx.Exec(`
+		DROP INDEX IF EXISTS uix_artists_name;
+		CREATE INDEX IF NOT EXISTS idx_artists_name ON artists (name);
+		CREATE UNIQUE INDEX IF NOT EXISTS uix_artists_music_brainz_id ON artists (music_brainz_id) WHERE music_brainz_id != '';
+	`).Error
 }

@@ -258,12 +258,13 @@ type Artists struct {
 }
 
 type Artist struct {
-	ID         *specid.ID `xml:"id,attr,omitempty"       json:"id"`
-	Name       string     `xml:"name,attr"               json:"name"`
-	CoverID    *specid.ID `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty"`
-	AlbumCount int        `xml:"albumCount,attr"         json:"albumCount"`
-	Roles      []string   `xml:"roles"                   json:"roles"`
-	Albums     []*Album   `xml:"album,omitempty"         json:"album,omitempty"`
+	ID            *specid.ID `xml:"id,attr,omitempty"            json:"id"`
+	Name          string     `xml:"name,attr"                    json:"name"`
+	CoverID       *specid.ID `xml:"coverArt,attr,omitempty"      json:"coverArt,omitempty"`
+	AlbumCount    int        `xml:"albumCount,attr"              json:"albumCount"`
+	MusicBrainzID string     `xml:"musicBrainzId,attr,omitempty" json:"musicBrainzId,omitempty"`
+	Roles         []string   `xml:"roles"                        json:"roles"`
+	Albums        []*Album   `xml:"album,omitempty"              json:"album,omitempty"`
 	// star / rating
 	Starred       *time.Time `xml:"starred,attr,omitempty"       json:"starred,omitempty"`
 	UserRating    int        `xml:"userRating,attr,omitempty"    json:"userRating,omitempty"`
