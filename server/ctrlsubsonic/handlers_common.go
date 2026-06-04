@@ -148,6 +148,10 @@ func (c *Controller) ServeGetMusicFolders(_ *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeStartScan(r *http.Request) *spec.Response {
+	user := r.Context().Value(CtxUser).(*db.User)
+	if !user.IsAdmin {
+		return spec.NewError(50, "user not admin")
+	}
 	go func() {
 		if _, err := c.scanner.ScanAndClean(scanner.ScanOptions{}); err != nil {
 			log.Printf("error while scanning: %v\n", err)
