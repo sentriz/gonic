@@ -1185,7 +1185,7 @@ func TestReadDoubleDelim(t *testing.T) {
 		spec: {Mode: tags.Delim, Delim: `/`},
 	}
 
-	values, _, _ := tags.ReadMulti(trags, spec, settings)
+	values := tags.ReadValues(trags, spec, settings)
 	require.Equal(t, []string{`DON'T`, ``, `BE`, ``, `⚜⚜⚜`}, values)
 }
 

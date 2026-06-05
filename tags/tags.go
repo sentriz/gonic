@@ -114,7 +114,16 @@ type MultiValueSetting struct {
 	Delim string
 }
 
-func ReadMulti(t Tags, spec *Spec, settings map[*Spec]MultiValueSetting) (values, valuesCredit, valuesMusicBrainzID []string) {
+func ReadValues(t Tags, spec *Spec, settings map[*Spec]MultiValueSetting) []string {
+	values, _, _ := readMulti(t, spec, settings)
+	return values
+}
+
+func ReadCredits(t Tags, spec *Spec, settings map[*Spec]MultiValueSetting) []Credited {
+	return pairCredits(readMulti(t, spec, settings))
+}
+
+func readMulti(t Tags, spec *Spec, settings map[*Spec]MultiValueSetting) (values, valuesCredit, valuesMusicBrainzID []string) {
 	setting, ok := settings[spec]
 	if !ok {
 		setting = MultiValueSetting{Mode: Multi}
@@ -197,7 +206,7 @@ type Credited struct {
 	MusicBrainzID      string
 }
 
-func PairCredits(values, valuesCredit, valuesMusicBrainzID []string) []Credited {
+func pairCredits(values, valuesCredit, valuesMusicBrainzID []string) []Credited {
 	out := make([]Credited, 0, len(values))
 	for i, v := range values {
 		if v == "" {
