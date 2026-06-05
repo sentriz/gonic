@@ -96,6 +96,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202605251200", migrateDeleteUnknownGenre),
 		construct(ctx, "202605261200", migrateDeleteLastfmPlaceholderArtistImage),
 		construct(ctx, "202606041200", migrateArtistMusicBrainzID),
+		construct(ctx, "202606051200", migrateDropAverageRating),
 	}
 
 	return gormigrate.
@@ -1012,6 +1013,22 @@ func migrateDeleteUnknownGenre(tx *gorm.DB, _ MigrationContext) error {
 
 func migrateDeleteLastfmPlaceholderArtistImage(tx *gorm.DB, _ MigrationContext) error {
 	return tx.Exec(`UPDATE artist_infos SET image_url='' WHERE image_url='https://lastfm.freetls.fastly.net/i/u/ar0/2a96cbd8b46e442fc41c2b86b821562f.jpg'`).Error
+}
+
+func migrateDropAverageRating(tx *gorm.DB, _ MigrationContext) error {
+	for table, column := range map[string]string{
+		"albums":  "average_rating",
+		"artists": "average_rating",
+		"tracks":  "average_rating",
+	} {
+		if !tx.Dialect().HasColumn(table, column) {
+			continue
+		}
+		if err := tx.Exec(fmt.Sprintf("ALTER TABLE %s DROP COLUMN %s", table, column)).Error; err != nil {
+			return fmt.Errorf("drop %s.%s: %w", table, column, err)
+		}
+	}
+	return nil
 }
 
 func migrateArtistMusicBrainzID(tx *gorm.DB, _ MigrationContext) error {

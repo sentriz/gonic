@@ -243,7 +243,7 @@ func playlistRender(c *Controller, params params.Params, playlist *playlistp.Pla
 		var trch *spec.TrackChild
 		switch id.Type {
 		case specid.Track:
-			var track db.Track
+			var track spec.TrackRow
 			if err := c.dbc.Scopes(spec.LoadTrackByFolder(user.ID)).Where("id=?", id.Value).Find(&track).Error; errors.Is(err, gorm.ErrRecordNotFound) {
 				return nil, fmt.Errorf("load track by id: %w", err)
 			}

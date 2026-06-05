@@ -63,14 +63,14 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	}
 	user := r.Context().Value(CtxUser).(*db.User)
 	childrenObj := []*spec.TrackChild{}
-	folder := &db.Album{}
+	folder := &spec.AlbumRow{}
 	c.dbc.
-		Scopes(spec.AlbumWithUserData(user.ID)).
+		Scopes(spec.LoadAlbumByFolder(user.ID)).
 		First(folder, id.Value)
 	// start looking for child childFolders in the current dir
-	var childFolders []*db.Album
+	var childFolders []*spec.AlbumRow
 	c.dbc.
-		Scopes(spec.AlbumWithUserData(user.ID)).
+		Scopes(spec.LoadAlbumByFolder(user.ID)).
 		Where("parent_id=?", id.Value).
 		Order("tag_year").
 		Order("albums.right_path COLLATE NOCASE").
@@ -80,7 +80,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	}
 
 	// start looking for child childTracks in the current dir
-	var childTracks []*db.Track
+	var childTracks []*spec.TrackRow
 	c.dbc.
 		Scopes(spec.LoadTrackByFolder(user.ID)).
 		Where("album_id=?", id.Value).
@@ -91,7 +91,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
 
 	for _, ch := range childTracks {
-		toAppend := spec.NewTCTrackByFolder(ch, folder)
+		toAppend := spec.NewTCTrackByFolder(ch, &folder.Album)
 		if v, _ := params.Get("c"); v == "Jamstash" {
 			// jamstash thinks it can't play flacs
 			toAppend.ContentType = "audio/mpeg"
@@ -197,9 +197,9 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 		Where("parent_id IS NULL").
 		Scopes(spec.WithAlbumRootDir(musicFolder))
 
-	var artists []*db.Album
+	var artists []*spec.AlbumRow
 	q := c.dbc.
-		Scopes(spec.AlbumWithUserData(user.ID)).
+		Scopes(spec.LoadAlbumByFolder(user.ID)).
 		Where(`parent_id IN ?`, rootQ.SubQuery())
 	switch {
 	case isUUID:
@@ -219,9 +219,9 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	}
 
 	// search "albums"
-	var albums []*db.Album
+	var albums []*spec.AlbumRow
 	q = c.dbc.
-		Scopes(spec.AlbumWithUserData(user.ID), spec.WithAlbumRootDir(musicFolder)).
+		Scopes(spec.LoadAlbumByFolder(user.ID), spec.WithAlbumRootDir(musicFolder)).
 		Joins("JOIN album_credits ON album_credits.album_id=albums.id AND album_credits.role=?", db.RoleAlbumArtist)
 	switch {
 	case isUUID:
@@ -241,7 +241,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	}
 
 	// search tracks
-	var tracks []*db.Track
+	var tracks []*spec.TrackRow
 	q = c.dbc.
 		Scopes(spec.LoadTrackByFolder(user.ID))
 	switch {
@@ -294,9 +294,9 @@ func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {
 		Where("parent_id IS NULL").
 		Scopes(spec.WithAlbumRootDir(musicFolder))
 
-	var artists []*db.Album
+	var artists []*spec.AlbumRow
 	q := c.dbc.
-		Scopes(spec.AlbumWithUserData(user.ID)).
+		Scopes(spec.LoadAlbumByFolder(user.ID)).
 		Where(`parent_id IN ?`, rootQ.SubQuery()).
 		Joins("JOIN album_stars ON albums.id=album_stars.album_id").
 		Where("album_stars.user_id=?", user.ID)
@@ -308,9 +308,9 @@ func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {
 	}
 
 	// "albums"
-	var albums []*db.Album
+	var albums []*spec.AlbumRow
 	q = c.dbc.
-		Scopes(spec.AlbumWithUserData(user.ID), spec.WithAlbumRootDir(musicFolder)).
+		Scopes(spec.LoadAlbumByFolder(user.ID), spec.WithAlbumRootDir(musicFolder)).
 		Joins("JOIN album_credits ON album_credits.album_id=albums.id AND album_credits.role=?", db.RoleAlbumArtist).
 		Joins("JOIN album_stars ON albums.id=album_stars.album_id").
 		Where("album_stars.user_id=?", user.ID)
@@ -322,7 +322,7 @@ func (c *Controller) ServeGetStarred(r *http.Request) *spec.Response {
 	}
 
 	// tracks
-	var tracks []*db.Track
+	var tracks []*spec.TrackRow
 	q = c.dbc.
 		Scopes(spec.LoadTrackByFolder(user.ID)).
 		Joins("JOIN track_stars ON tracks.id=track_stars.track_id").

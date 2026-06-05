@@ -68,6 +68,12 @@
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Pop",
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-10",

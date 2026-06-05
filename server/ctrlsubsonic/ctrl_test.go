@@ -336,18 +336,12 @@ func newFixture(tb testing.TB) *fixture {
 	dbc.Save(&db.AlbumStar{UserID: admin.ID, AlbumID: f.albumAA.ID, StarDate: star1})
 	dbc.Save(&db.AlbumStar{UserID: admin.ID, AlbumID: f.albumCollab.ID, StarDate: star2})
 	dbc.Save(&db.AlbumRating{UserID: admin.ID, AlbumID: f.albumAA.ID, Rating: 4})
-	f.albumAA.AverageRating = 4
-	dbc.Save(&f.albumAA)
 
 	dbc.Save(&db.ArtistStar{UserID: admin.ID, ArtistID: f.artistA.ID, StarDate: star1})
 	dbc.Save(&db.ArtistRating{UserID: admin.ID, ArtistID: f.artistA.ID, Rating: 5})
-	f.artistA.AverageRating = 5
-	dbc.Save(&f.artistA)
 
 	dbc.Save(&db.TrackStar{UserID: admin.ID, TrackID: f.trackAB1.ID, StarDate: star1})
 	dbc.Save(&db.TrackRating{UserID: admin.ID, TrackID: f.trackAB1.ID, Rating: 3})
-	f.trackAB1.AverageRating = 3
-	dbc.Save(&f.trackAB1)
 
 	seedAlbumPlay(tb, dbc, admin.ID, f.albumAA.ID, play1, 7, 600)
 	seedAlbumPlay(tb, dbc, admin.ID, f.albumAB.ID, play2, 2, 200)
@@ -355,8 +349,6 @@ func newFixture(tb testing.TB) *fixture {
 	dbc.Save(&db.AlbumStar{UserID: alt.ID, AlbumID: f.albumBA.ID, StarDate: star2})
 	dbc.Save(&db.ArtistStar{UserID: alt.ID, ArtistID: f.artistC.ID, StarDate: star2})
 	dbc.Save(&db.AlbumRating{UserID: alt.ID, AlbumID: f.albumAB.ID, Rating: 5})
-	f.albumAB.AverageRating = 5
-	dbc.Save(&f.albumAB)
 	seedAlbumPlay(tb, dbc, alt.ID, f.albumCollab.ID, play1, 3, 300)
 
 	f.trackVA0.HasEmbeddedCover = true

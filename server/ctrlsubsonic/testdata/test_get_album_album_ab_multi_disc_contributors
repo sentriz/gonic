@@ -125,6 +125,15 @@
           "coverArt": "al-4",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            },
+            {
+              "name": "Pop"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-4",
@@ -212,6 +221,12 @@
           "coverArt": "al-4",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Pop",
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
           "isDir": false,
           "isVideo": false,
           "parent": "al-4",

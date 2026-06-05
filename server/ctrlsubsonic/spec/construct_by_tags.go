@@ -25,7 +25,7 @@ func LoadAlbumByTags(userID int) func(*gorm.DB) *gorm.DB {
 func LoadTrackByTags(userID int) func(*gorm.DB) *gorm.DB {
 	return func(q *gorm.DB) *gorm.DB {
 		return q.
-			Scopes(TrackWithAlbumArtistCredits, TrackWithUserData(userID)).
+			Scopes(TrackWithAverageRating, TrackWithAlbumArtistCredits, TrackWithUserData(userID)).
 			Preload("Album").
 			Preload("Credits.Artist").
 			Preload("Genres").
@@ -114,7 +114,7 @@ func NewAlbumByTags(a *AlbumRow, credits []*db.AlbumCredit) *Album {
 	return ret
 }
 
-func NewTrackByTags(client string, t *db.Track, album *db.Album) *TrackChild {
+func NewTrackByTags(client string, t *TrackRow, album *db.Album) *TrackChild {
 	ret := &TrackChild{
 		ID:                 t.SID(),
 		Album:              album.TagTitle,

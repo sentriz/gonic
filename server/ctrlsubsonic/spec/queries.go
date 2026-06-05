@@ -11,15 +11,33 @@ import (
 // Warm avoids a gorm v1 race that can poison the ModelStruct cache for these
 // embedded types under concurrent first-time access.
 func Warm(dbc *gorm.DB) {
-	for _, v := range []any{&ArtistRow{}, &AlbumRow{}, &GenreRow{}} {
+	for _, v := range []any{&ArtistRow{}, &AlbumRow{}, &TrackRow{}, &GenreRow{}} {
 		dbc.NewScope(v).GetModelStruct()
 	}
 }
 
+// averageRating is the mean of all users' ratings for the row, computed live
+// rather than stored. coalesced to 0 when there are no ratings.
+const albumAverageRatingColumn = `(SELECT coalesce(avg(rating), 0) FROM album_ratings WHERE album_id=albums.id) average_rating`
+const artistAverageRatingColumn = `(SELECT coalesce(avg(rating), 0) FROM artist_ratings WHERE artist_id=artists.id) average_rating`
+const trackAverageRatingColumn = `(SELECT coalesce(avg(rating), 0) FROM track_ratings WHERE track_id=tracks.id) average_rating`
+
+// albumWithAverageRating selects average_rating for loads that don't already
+// carry their own Select(). gorm v1's Select overwrites, so it must not be
+// combined with the scopes below that fold the column into their own select.
+func albumWithAverageRating(q *gorm.DB) *gorm.DB {
+	return q.Select("albums.*, " + albumAverageRatingColumn)
+}
+
+func TrackWithAverageRating(q *gorm.DB) *gorm.DB {
+	return q.Select("tracks.*, " + trackAverageRatingColumn)
+}
+
 type ArtistRow struct {
 	db.Artist
-	AlbumCount int
-	Roles      string
+	AlbumCount    int
+	Roles         string
+	AverageRating float64
 }
 
 func (ArtistRow) TableName() string { return "artists" }
@@ -40,20 +58,21 @@ const artistRolesColumn = `(
 ) roles`
 
 func ArtistWithRoles(q *gorm.DB) *gorm.DB {
-	return q.Select("artists.*, " + artistRolesColumn)
+	return q.Select("artists.*, " + artistAverageRatingColumn + ", " + artistRolesColumn)
 }
 
 func ArtistWithRolesAndAlbumCount(q *gorm.DB) *gorm.DB {
 	return q.
-		Select("artists.*, count(album_credits.album_id) album_count, " + artistRolesColumn).
+		Select("artists.*, count(album_credits.album_id) album_count, " + artistAverageRatingColumn + ", " + artistRolesColumn).
 		Group("artists.id")
 }
 
 type AlbumRow struct {
 	db.Album
-	ChildCount int
-	Duration   int
-	PlayCount  float64
+	ChildCount    int
+	Duration      int
+	PlayCount     float64
+	AverageRating float64
 }
 
 func (AlbumRow) TableName() string { return "albums" }
@@ -66,7 +85,8 @@ func AlbumWithUserPlay(userID int) func(*gorm.DB) *gorm.DB {
 				sum(tracks.length) duration,
 				coalesce(album_plays.play_count, 0) play_count,
 				album_plays.play_length play_length,
-				album_plays.play_time play_time`).
+				album_plays.play_time play_time, ` +
+				albumAverageRatingColumn).
 			Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
 			Joins(`LEFT JOIN (
 				SELECT t.album_id,
@@ -84,10 +104,17 @@ func AlbumWithUserPlay(userID int) func(*gorm.DB) *gorm.DB {
 
 func AlbumWithChildAlbumCounts(q *gorm.DB) *gorm.DB {
 	return q.
-		Select("albums.*, count(sub.id) child_count").
+		Select("albums.*, count(sub.id) child_count, " + albumAverageRatingColumn).
 		Joins("LEFT JOIN albums sub ON albums.id=sub.parent_id").
 		Group("albums.id")
 }
+
+type TrackRow struct {
+	db.Track
+	AverageRating float64
+}
+
+func (TrackRow) TableName() string { return "tracks" }
 
 type GenreRow struct {
 	db.Genre

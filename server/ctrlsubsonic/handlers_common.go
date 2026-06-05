@@ -221,7 +221,7 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 	for _, id := range trackIDs {
 		switch id.Type {
 		case specid.Track:
-			var track db.Track
+			var track spec.TrackRow
 			err := c.dbc.
 				Scopes(spec.LoadTrackByFolder(user.ID)).
 				Where("id=?", id.Value).
@@ -288,7 +288,7 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "provide an `id` parameter")
 	}
-	var track db.Track
+	var track spec.TrackRow
 	err = c.dbc.
 		Scopes(spec.LoadTrackByTags(user.ID)).
 		Where("id=?", id.Value).
@@ -311,7 +311,7 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
-	var tracks []*db.Track
+	var tracks []*spec.TrackRow
 	q := c.dbc.DB.
 		Scopes(spec.LoadTrackByTags(user.ID)).
 		Limit(params.GetOrInt("size", 10)).
@@ -390,7 +390,7 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 			}
 			switch id.Type {
 			case specid.Track:
-				var track db.Track
+				var track spec.TrackRow
 				if err := c.dbc.
 					Scopes(spec.LoadTrackByTags(user.ID)).
 					Where("id=?", id.Value).

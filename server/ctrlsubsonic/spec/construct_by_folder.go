@@ -14,11 +14,19 @@ import (
 func LoadTrackByFolder(userID int) func(*gorm.DB) *gorm.DB {
 	return func(q *gorm.DB) *gorm.DB {
 		return q.
-			Scopes(TrackWithArtistCredits, TrackWithUserData(userID)).
+			Scopes(TrackWithAverageRating, TrackWithArtistCredits, TrackWithUserData(userID)).
 			Preload("Album").
 			Preload("Genres").
 			Preload("ISRCs").
 			Preload("Play", "user_id=?", userID)
+	}
+}
+
+// LoadAlbumByFolder loads an album row as used by the browse-by-folder
+// endpoints, where an album also stands in for a folder/artist/directory.
+func LoadAlbumByFolder(userID int) func(*gorm.DB) *gorm.DB {
+	return func(q *gorm.DB) *gorm.DB {
+		return q.Scopes(albumWithAverageRating, AlbumWithUserData(userID))
 	}
 }
 
@@ -53,7 +61,7 @@ func NewAlbumByFolder(f *AlbumRow) *Album {
 	return a
 }
 
-func NewTCAlbumByFolder(f *db.Album) *TrackChild {
+func NewTCAlbumByFolder(f *AlbumRow) *TrackChild {
 	trCh := &TrackChild{
 		ID:            f.SID(),
 		IsDir:         true,
@@ -79,7 +87,7 @@ func NewTCAlbumByFolder(f *db.Album) *TrackChild {
 	return trCh
 }
 
-func NewTCTrackByFolder(t *db.Track, parent *db.Album) *TrackChild {
+func NewTCTrackByFolder(t *TrackRow, parent *db.Album) *TrackChild {
 	trCh := &TrackChild{
 		ID:            t.SID(),
 		ContentType:   t.MIME(),
@@ -215,7 +223,7 @@ func NewArtistByFolder(f *AlbumRow) *Artist {
 	return a
 }
 
-func NewDirectoryByFolder(f *db.Album, children []*TrackChild) *Directory {
+func NewDirectoryByFolder(f *AlbumRow, children []*TrackChild) *Directory {
 	d := &Directory{
 		ID:            f.SID(),
 		Name:          f.RightPath,

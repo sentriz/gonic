@@ -4,7 +4,6 @@ package ctrlsubsonic
 import (
 	"errors"
 	"log"
-	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -113,26 +112,29 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 	album := &spec.AlbumRow{}
 	err = c.dbc.
 		Scopes(spec.LoadAlbumByTags(user.ID)).
-		Preload("Tracks", func(q *gorm.DB) *gorm.DB {
-			return q.
-				Scopes(spec.TrackWithUserData(user.ID)).
-				Order("tracks.tag_disc_number, tracks.tag_track_number").
-				Preload("Credits.Artist").
-				Preload("Play", "user_id=?", user.ID)
-		}).
 		First(album, id.Value).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewError(70, "couldn't find an album with that id")
 	}
+
+	var tracks []*spec.TrackRow
+	if err := c.dbc.
+		Scopes(spec.LoadTrackByTags(user.ID)).
+		Where("album_id=?", id.Value).
+		Order("tracks.tag_disc_number, tracks.tag_track_number").
+		Find(&tracks).Error; err != nil {
+		return spec.NewError(0, "find album tracks: %v", err)
+	}
+
 	sub := spec.NewResponse()
 	sub.Album = spec.NewAlbumByTags(album, album.Credits)
-	sub.Album.Tracks = make([]*spec.TrackChild, len(album.Tracks))
+	sub.Album.Tracks = make([]*spec.TrackChild, len(tracks))
 
 	client := params.GetOr("c", "")
 	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, client)
 
-	for i, track := range album.Tracks {
+	for i, track := range tracks {
 		sub.Album.Tracks[i] = spec.NewTrackByTags(client, track, &album.Album)
 		sub.Album.Tracks[i].TranscodeMeta = transcodeMeta
 	}
@@ -270,7 +272,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	}
 
 	// search tracks
-	var tracks []*db.Track
+	var tracks []*spec.TrackRow
 	q = c.dbc.
 		Scopes(spec.LoadTrackByTags(user.ID))
 	switch {
@@ -440,7 +442,7 @@ func (c *Controller) ServeGetSongsByGenre(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide an `genre` parameter")
 	}
-	var tracks []*db.Track
+	var tracks []*spec.TrackRow
 	q := c.dbc.
 		Scopes(spec.LoadTrackByTags(user.ID), spec.WithAlbumRootDir(getMusicFolder(c.musicPaths, params))).
 		Joins("JOIN albums ON tracks.album_id=albums.id").
@@ -506,7 +508,7 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 	}
 
 	// tracks
-	var tracks []*db.Track
+	var tracks []*spec.TrackRow
 	q = c.dbc.
 		Scopes(spec.LoadTrackByTags(user.ID)).
 		Joins("JOIN track_stars ON tracks.id=track_stars.track_id").
@@ -576,7 +578,7 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 		return sub
 	}
 
-	var tracks []*db.Track
+	var tracks []*spec.TrackRow
 	err = c.dbc.
 		Scopes(spec.LoadTrackByTags(user.ID)).
 		Where("tracks.tag_title IN (?)", topTrackNames).
@@ -686,10 +688,9 @@ func getSimilarSongsFromTrack(c *Controller, id specid.ID, params params.Params,
 		similarTrackNames[i] = t.Name
 	}
 
-	var tracks []*db.Track
+	var tracks []*spec.TrackRow
 	err = c.dbc.
 		Scopes(spec.LoadTrackByTags(user.ID)).
-		Select("tracks.*").
 		Where("tracks.tag_title IN (?)", similarTrackNames).
 		Order(gorm.Expr("random()")).
 		Limit(count).
@@ -738,7 +739,7 @@ func getSimilarSongsFromArtist(c *Controller, id specid.ID, params params.Params
 		artistNames[i] = similarArtist.Name
 	}
 
-	var tracks []*db.Track
+	var tracks []*spec.TrackRow
 	err = c.dbc.
 		Scopes(spec.LoadTrackByTags(user.ID)).
 		Joins("JOIN track_credits ON track_credits.track_id=tracks.id AND track_credits.role=?", db.RoleArtist).
@@ -803,10 +804,9 @@ func getSimilarSongsFromAlbum(c *Controller, id specid.ID, params params.Params,
 		similarTrackNames[i] = t.Name
 	}
 
-	var tracks []*db.Track
+	var tracks []*spec.TrackRow
 	err = c.dbc.
 		Scopes(spec.LoadTrackByTags(user.ID)).
-		Select("tracks.*").
 		Where("tracks.tag_title IN (?)", similarTrackNames).
 		Order(gorm.Expr("random()")).
 		Limit(count).
@@ -951,14 +951,6 @@ func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
 				return spec.NewError(0, "save album rating: %v", err)
 			}
 		}
-		var averageRating float64
-		if err := c.dbc.Model(db.AlbumRating{}).Select("coalesce(avg(rating), 0)").Where("album_id=?", id.Value).Row().Scan(&averageRating); err != nil {
-			return spec.NewError(0, "find average album rating: %v", err)
-		}
-		album.AverageRating = math.Trunc(averageRating*100) / 100
-		if err := c.dbc.Save(&album).Error; err != nil {
-			return spec.NewError(0, "save album: %v", err)
-		}
 	case specid.Artist:
 		var artist db.Artist
 		err := c.dbc.Where("id=?", id.Value).First(&artist).Error
@@ -982,14 +974,6 @@ func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
 				return spec.NewError(0, "save artist rating: %v", err)
 			}
 		}
-		var averageRating float64
-		if err := c.dbc.Model(db.ArtistRating{}).Select("coalesce(avg(rating), 0)").Where("artist_id=?", id.Value).Row().Scan(&averageRating); err != nil {
-			return spec.NewError(0, "find average artist rating: %v", err)
-		}
-		artist.AverageRating = math.Trunc(averageRating*100) / 100
-		if err := c.dbc.Save(&artist).Error; err != nil {
-			return spec.NewError(0, "save artist: %v", err)
-		}
 	case specid.Track:
 		var track db.Track
 		err := c.dbc.Where("id=?", id.Value).First(&track).Error
@@ -1012,14 +996,6 @@ func (c *Controller) ServeSetRating(r *http.Request) *spec.Response {
 			if err := c.dbc.Save(&trackRating).Error; err != nil {
 				return spec.NewError(0, "save track rating: %v", err)
 			}
-		}
-		var averageRating float64
-		if err := c.dbc.Model(db.TrackRating{}).Select("coalesce(avg(rating), 0)").Where("track_id=?", id.Value).Row().Scan(&averageRating); err != nil {
-			return spec.NewError(0, "find average track rating: %v", err)
-		}
-		track.AverageRating = math.Trunc(averageRating*100) / 100
-		if err := c.dbc.Save(&track).Error; err != nil {
-			return spec.NewError(0, "save track: %v", err)
 		}
 	default:
 		return spec.NewError(0, "non-album non-artist non-track id cannot be rated")

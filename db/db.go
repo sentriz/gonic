@@ -184,7 +184,6 @@ type Artist struct {
 	MusicBrainzID string `sql:"default: ''" gorm:"not null"`
 	ArtistStar    *ArtistStar
 	ArtistRating  *ArtistRating
-	AverageRating float64     `sql:"default: null"`
 	Info          *ArtistInfo `gorm:"foreignkey:id"`
 }
 
@@ -245,10 +244,9 @@ type Track struct {
 
 	HasEmbeddedCover bool
 
-	TrackStar     *TrackStar
-	TrackRating   *TrackRating
-	AverageRating float64 `sql:"default: null"`
-	Play          *TrackPlay
+	TrackStar   *TrackStar
+	TrackRating *TrackRating
+	Play        *TrackPlay
 }
 
 func (t *Track) AudioLength() int  { return t.Length }
@@ -352,7 +350,6 @@ type Album struct {
 	Tracks               []*Track
 	AlbumStar            *AlbumStar
 	AlbumRating          *AlbumRating
-	AverageRating        float64 `sql:"default: null"`
 	DiscTitles           []*AlbumDiscTitle
 }
 

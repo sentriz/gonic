@@ -41,7 +41,7 @@ func (c *Controller) ServeGetBookmarks(r *http.Request) *spec.Response {
 
 		switch specid.IDT(bookmark.EntryIDType) {
 		case specid.Track:
-			var track db.Track
+			var track spec.TrackRow
 			err := c.dbc.
 				Scopes(spec.LoadTrackByTags(user.ID)).
 				Find(&track, "id=?", bookmark.EntryID).
