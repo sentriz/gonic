@@ -52,7 +52,7 @@
             }
           ],
           "displayAlbumArtist": "Various Artists",
-          "contributors": null,
+          "contributors": [],
           "bitRate": 100,
           "contentType": "audio/flac",
           "coverArt": "tr-11",
@@ -100,7 +100,7 @@
             }
           ],
           "displayAlbumArtist": "Various Artists",
-          "contributors": null,
+          "contributors": [],
           "bitRate": 100,
           "contentType": "audio/flac",
           "coverArt": "tr-11",

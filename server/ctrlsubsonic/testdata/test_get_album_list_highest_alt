@@ -11,7 +11,7 @@
           "id": "al-4",
           "created": "2019-11-30T00:00:00Z",
           "artist": "artist-a",
-          "artists": null,
+          "artists": [],
           "displayArtist": "",
           "title": "album-ab",
           "album": "album-ab",
@@ -22,10 +22,11 @@
           "songCount": 2,
           "duration": 200,
           "playCount": 0,
+          "genres": [],
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
-          "discTitles": null,
+          "discTitles": [],
           "userRating": 5,
           "averageRating": 5
         }

@@ -47,8 +47,11 @@ func NewAlbumByFolder(f *AlbumRow) *Album {
 		Created:       f.CreatedAt,
 		AverageRating: f.AverageRating,
 		PlayCount:     int(math.Ceil(f.PlayCount)),
+		Artists:       []*ArtistRef{},
 		ReleaseTypes:  []string{},
 		RecordLabels:  []*RecordLabel{},
+		DiscTitles:    []*DiscTitle{},
+		Genres:        []*GenreRef{},
 	}
 	if f.AlbumStar != nil {
 		a.Starred = &f.AlbumStar.StarDate
@@ -73,6 +76,10 @@ func NewTCAlbumByFolder(f *AlbumRow) *TrackChild {
 		CreatedAt:     f.CreatedAt,
 		AverageRating: f.AverageRating,
 		Year:          f.TagYear,
+		Artists:       []*ArtistRef{},
+		AlbumArtists:  []*ArtistRef{},
+		Contributors:  []*Contributor{},
+		Genres:        []*GenreRef{},
 		ISRC:          []string{},
 	}
 	if f.AlbumStar != nil {
@@ -96,6 +103,10 @@ func NewTCTrackByFolder(t *TrackRow, parent *db.Album) *TrackChild {
 		ContentType:   t.MIME(),
 		Suffix:        formatExt(t.Ext()),
 		Size:          t.Size,
+		Artists:       []*ArtistRef{},
+		AlbumArtists:  []*ArtistRef{},
+		Contributors:  []*Contributor{},
+		Genres:        []*GenreRef{},
 		ISRC:          []string{},
 		DisplayArtist: cmp.Or(t.TagTrackArtistCredit, t.TagTrackArtist),
 		Title:         cmp.Or(t.TagTitle, t.Filename),
@@ -178,20 +189,25 @@ func NewTCTrackByFolder(t *TrackRow, parent *db.Album) *TrackChild {
 
 func NewTCPodcastEpisode(pe *db.PodcastEpisode) *TrackChild {
 	trCh := &TrackChild{
-		ID:          pe.SID(),
-		ContentType: pe.MIME(),
-		Suffix:      pe.Ext(),
-		Size:        pe.Size,
-		Title:       pe.Title,
-		ParentID:    pe.SID(),
-		Duration:    pe.Length,
-		Bitrate:     pe.Bitrate,
-		IsDir:       false,
-		Type:        "podcastepisode",
-		CreatedAt:   pe.CreatedAt,
-		Album:       pe.Album,
-		Artist:      pe.Artist,
-		CoverID:     pe.SID(),
+		ID:           pe.SID(),
+		ContentType:  pe.MIME(),
+		Suffix:       pe.Ext(),
+		Size:         pe.Size,
+		Title:        pe.Title,
+		ParentID:     pe.SID(),
+		Duration:     pe.Length,
+		Bitrate:      pe.Bitrate,
+		IsDir:        false,
+		Type:         "podcastepisode",
+		CreatedAt:    pe.CreatedAt,
+		Album:        pe.Album,
+		Artist:       pe.Artist,
+		CoverID:      pe.SID(),
+		Artists:      []*ArtistRef{},
+		AlbumArtists: []*ArtistRef{},
+		Contributors: []*Contributor{},
+		ISRC:         []string{},
+		Genres:       []*GenreRef{},
 	}
 	if pe.Podcast != nil {
 		trCh.ParentID = pe.Podcast.SID()

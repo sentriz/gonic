@@ -165,7 +165,7 @@ type Album struct {
 	Duration   int           `xml:"duration,attr"          json:"duration"`
 	PlayCount  int           `xml:"playCount,attr"          json:"playCount"`
 	Genre      string        `xml:"genre,attr,omitempty"   json:"genre,omitempty"`
-	Genres     []*GenreRef   `xml:"genres,omitempty"       json:"genres,omitempty"`
+	Genres     []*GenreRef   `xml:"genres"                 json:"genres"`
 	Year       int           `xml:"year,attr,omitempty"    json:"year,omitempty"`
 	Tracks     []*TrackChild `xml:"song,omitempty"         json:"song,omitempty"`
 
@@ -224,7 +224,7 @@ type TrackChild struct {
 	CreatedAt   time.Time   `xml:"created,attr,omitempty"     json:"created"`
 	Duration    int         `xml:"duration,attr,omitempty"    json:"duration,omitempty"`
 	Genre       string      `xml:"genre,attr,omitempty"       json:"genre,omitempty"`
-	Genres      []*GenreRef `xml:"genres,omitempty"           json:"genres,omitempty"`
+	Genres      []*GenreRef `xml:"genres"                     json:"genres"`
 	IsDir       bool        `xml:"isDir,attr"                 json:"isDir"`
 	IsVideo     bool        `xml:"isVideo,attr"               json:"isVideo"`
 	ParentID    *specid.ID  `xml:"parent,attr,omitempty"      json:"parent,omitempty"`

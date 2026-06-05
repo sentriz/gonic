@@ -60,6 +60,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "genres": [],
           "isCompilation": false,
           "releaseTypes": [
             ""
@@ -79,6 +80,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "genres": [],
           "isCompilation": false,
           "releaseTypes": [
             ""
@@ -189,6 +191,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "genres": [],
           "isCompilation": false,
           "releaseTypes": [
             ""
@@ -240,6 +243,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "genres": [],
           "isCompilation": false,
           "releaseTypes": [
             ""
@@ -296,6 +300,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "genres": [],
           "isCompilation": false,
           "releaseTypes": [
             ""
@@ -351,6 +356,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "genres": [],
           "isCompilation": false,
           "releaseTypes": [
             ""
@@ -402,6 +408,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "genres": [],
           "isCompilation": false,
           "releaseTypes": [
             ""
@@ -421,6 +428,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "genres": [],
           "isCompilation": false,
           "releaseTypes": [
             ""
@@ -472,6 +480,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "genres": [],
           "isCompilation": false,
           "releaseTypes": [
             ""
@@ -531,6 +540,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "genres": [],
           "year": 2015,
           "isCompilation": false,
           "releaseTypes": [
@@ -561,7 +571,7 @@
             }
           ],
           "displayAlbumArtist": "artist-a",
-          "contributors": null,
+          "contributors": [],
           "bitRate": 100,
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",
@@ -615,7 +625,7 @@
             }
           ],
           "displayAlbumArtist": "artist-a",
-          "contributors": null,
+          "contributors": [],
           "bitRate": 100,
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",
@@ -666,7 +676,7 @@
             }
           ],
           "displayAlbumArtist": "artist-a",
-          "contributors": null,
+          "contributors": [],
           "bitRate": 100,
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",
@@ -924,7 +934,7 @@
             }
           ],
           "displayAlbumArtist": "The Mighty B (LP)",
-          "contributors": null,
+          "contributors": [],
           "bitRate": 100,
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",
@@ -977,7 +987,7 @@
             }
           ],
           "displayAlbumArtist": "artist-a",
-          "contributors": null,
+          "contributors": [],
           "bitRate": 100,
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",
@@ -1030,7 +1040,7 @@
             }
           ],
           "displayAlbumArtist": "artist-a",
-          "contributors": null,
+          "contributors": [],
           "bitRate": 100,
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",
@@ -1075,7 +1085,7 @@
             }
           ],
           "displayAlbumArtist": "ärtist-c",
-          "contributors": null,
+          "contributors": [],
           "bitRate": 100,
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",
@@ -1120,7 +1130,7 @@
             }
           ],
           "displayAlbumArtist": "artist-a",
-          "contributors": null,
+          "contributors": [],
           "bitRate": 100,
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",
@@ -1165,7 +1175,7 @@
             }
           ],
           "displayAlbumArtist": "Various Artists",
-          "contributors": null,
+          "contributors": [],
           "bitRate": 100,
           "contentType": "audio/flac",
           "coverArt": "tr-11",
@@ -1211,7 +1221,7 @@
             }
           ],
           "displayAlbumArtist": "Various Artists",
-          "contributors": null,
+          "contributors": [],
           "bitRate": 100,
           "contentType": "audio/flac",
           "coverArt": "tr-11",

@@ -11,7 +11,7 @@
           "id": "al-15",
           "created": "2019-11-30T00:00:00Z",
           "artist": "artist-a",
-          "artists": null,
+          "artists": [],
           "displayArtist": "",
           "title": "album-cross",
           "album": "album-cross",
@@ -21,16 +21,17 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
+          "genres": [],
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
-          "discTitles": null
+          "discTitles": []
         },
         {
           "id": "al-17",
           "created": "2019-11-30T00:00:00Z",
           "artist": "various",
-          "artists": null,
+          "artists": [],
           "displayArtist": "",
           "title": "comp",
           "album": "comp",
@@ -41,10 +42,11 @@
           "songCount": 2,
           "duration": 200,
           "playCount": 0,
+          "genres": [],
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
-          "discTitles": null
+          "discTitles": []
         }
       ]
     }

@@ -82,20 +82,20 @@
           "discTitles": []
         },
         {
-          "id": "al-12",
+          "id": "al-15",
           "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-18",
-          "artist": "ärtist-c",
+          "artistId": "ar-1",
+          "artist": "artist-a",
           "artists": [
             {
-              "id": "ar-18",
-              "name": "ärtist-c"
+              "id": "ar-1",
+              "name": "artist-a"
             }
           ],
-          "displayArtist": "ärtist-c",
-          "title": "album-ca",
-          "album": "album-ca",
-          "name": "album-ca",
+          "displayArtist": "artist-a",
+          "title": "album-cross",
+          "album": "album-cross",
+          "name": "album-cross",
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
@@ -105,7 +105,7 @@
               "name": "Rock"
             }
           ],
-          "year": 2016,
+          "year": 2022,
           "isCompilation": false,
           "releaseTypes": [
             "Album"
@@ -143,6 +143,38 @@
           "releaseTypes": [
             "Album",
             "Compilation"
+          ],
+          "recordLabels": [],
+          "discTitles": []
+        },
+        {
+          "id": "al-12",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-18",
+          "artist": "ärtist-c",
+          "artists": [
+            {
+              "id": "ar-18",
+              "name": "ärtist-c"
+            }
+          ],
+          "displayArtist": "ärtist-c",
+          "title": "album-ca",
+          "album": "album-ca",
+          "name": "album-ca",
+          "songCount": 1,
+          "duration": 100,
+          "playCount": 0,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "year": 2016,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Album"
           ],
           "recordLabels": [],
           "discTitles": []
@@ -201,38 +233,6 @@
           "averageRating": 5
         },
         {
-          "id": "al-15",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-1",
-          "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
-          "displayArtist": "artist-a",
-          "title": "album-cross",
-          "album": "album-cross",
-          "name": "album-cross",
-          "songCount": 1,
-          "duration": 100,
-          "playCount": 0,
-          "genre": "Rock",
-          "genres": [
-            {
-              "name": "Rock"
-            }
-          ],
-          "year": 2022,
-          "isCompilation": false,
-          "releaseTypes": [
-            "Album"
-          ],
-          "recordLabels": [],
-          "discTitles": []
-        },
-        {
           "id": "al-6",
           "created": "2019-11-30T00:00:00Z",
           "artistId": "ar-17",
@@ -282,6 +282,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "genres": [],
           "year": 2015,
           "isCompilation": false,
           "releaseTypes": [

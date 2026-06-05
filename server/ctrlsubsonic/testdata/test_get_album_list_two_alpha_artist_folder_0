@@ -189,6 +189,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "genres": [],
           "year": 2015,
           "isCompilation": false,
           "releaseTypes": [

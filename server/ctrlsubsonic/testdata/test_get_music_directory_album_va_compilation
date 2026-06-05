@@ -23,9 +23,9 @@
             }
           ],
           "displayArtist": "artist-x",
-          "albumArtists": null,
+          "albumArtists": [],
           "displayAlbumArtist": "",
-          "contributors": null,
+          "contributors": [],
           "bitRate": 100,
           "contentType": "audio/flac",
           "coverArt": "tr-11",
@@ -64,9 +64,9 @@
             }
           ],
           "displayArtist": "artist-y",
-          "albumArtists": null,
+          "albumArtists": [],
           "displayAlbumArtist": "",
-          "contributors": null,
+          "contributors": [],
           "bitRate": 100,
           "contentType": "audio/flac",
           "coverArt": "tr-11",

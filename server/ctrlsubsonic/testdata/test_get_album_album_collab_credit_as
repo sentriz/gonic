@@ -63,7 +63,7 @@
             }
           ],
           "displayAlbumArtist": "artist-a",
-          "contributors": null,
+          "contributors": [],
           "bitRate": 100,
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",

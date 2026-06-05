@@ -11,7 +11,7 @@
           "id": "al-6",
           "created": "2019-11-30T00:00:00Z",
           "artist": "artist-b",
-          "artists": null,
+          "artists": [],
           "displayArtist": "",
           "title": "album-ba",
           "album": "album-ba",
@@ -21,10 +21,11 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
+          "genres": [],
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
-          "discTitles": null
+          "discTitles": []
         }
       ]
     }
