@@ -92,38 +92,52 @@ type Stats struct {
 
 func (db *DB) Stats() (Stats, error) {
 	var stats Stats
-	db.Model(Album{}).Count(&stats.Folders)
-	db.Model(AlbumCredit{}).Where("role=?", RoleAlbumArtist).Group("album_id").Count(&stats.Albums)
-	db.Model(TrackCredit{}).Where("role=?", RoleArtist).Group("artist_id").Count(&stats.Artists)
-	db.Model(AlbumCredit{}).Where("role=?", RoleAlbumArtist).Group("artist_id").Count(&stats.AlbumArtists)
-	db.Model(Track{}).Count(&stats.Tracks)
-	db.Model(InternetRadioStation{}).Count(&stats.InternetRadioStations)
-	db.Model(Podcast{}).Count(&stats.Podcasts)
+	for _, q := range []*gorm.DB{
+		db.Model(Album{}).Count(&stats.Folders),
+		db.Model(AlbumCredit{}).Where("role=?", RoleAlbumArtist).Group("album_id").Count(&stats.Albums),
+		db.Model(TrackCredit{}).Where("role=?", RoleArtist).Group("artist_id").Count(&stats.Artists),
+		db.Model(AlbumCredit{}).Where("role=?", RoleAlbumArtist).Group("artist_id").Count(&stats.AlbumArtists),
+		db.Model(Track{}).Count(&stats.Tracks),
+		db.Model(InternetRadioStation{}).Count(&stats.InternetRadioStations),
+		db.Model(Podcast{}).Count(&stats.Podcasts),
+	} {
+		if err := q.Error; err != nil {
+			return Stats{}, fmt.Errorf("count stats: %w", err)
+		}
+	}
 	return stats, nil
 }
 
-func (db *DB) GetUserByID(id int) *User {
+// GetUserByID returns nil if no user matches the id.
+func (db *DB) GetUserByID(id int) (*User, error) {
 	var user User
 	err := db.
 		Where("id=?", id).
 		First(&user).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil
+		return nil, nil
 	}
-	return &user
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
 
-func (db *DB) GetUserByName(name string) *User {
+// GetUserByName returns nil if no user matches the name.
+func (db *DB) GetUserByName(name string) (*User, error) {
 	var user User
 	err := db.
 		Where("name=?", name).
 		First(&user).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil
+		return nil, nil
 	}
-	return &user
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
 
 func (db *DB) Begin() *DB {

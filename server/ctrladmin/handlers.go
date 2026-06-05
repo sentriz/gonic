@@ -35,10 +35,17 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 
 	data := &templateData{}
 	// stats box
-	data.Stats, _ = c.dbc.Stats()
+	var err error
+	data.Stats, err = c.dbc.Stats()
+	if err != nil {
+		return &Response{code: 500, err: fmt.Sprintf("error getting stats: %v", err)}
+	}
 	// lastfm box
 	data.RequestRoot = handlerutil.BaseURL(r)
-	data.CurrentLastFMAPIKey, _ = c.dbc.GetSetting(db.LastFMAPIKey)
+	data.CurrentLastFMAPIKey, err = c.dbc.GetSetting(db.LastFMAPIKey)
+	if err != nil {
+		return &Response{code: 500, err: fmt.Sprintf("error getting lastfm api key: %v", err)}
+	}
 	data.DefaultListenBrainzURL = listenbrainz.BaseURL
 
 	// users box
@@ -46,28 +53,46 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	if !user.IsAdmin {
 		allUsersQ = allUsersQ.Where("name=?", user.Name)
 	}
-	allUsersQ.Find(&data.AllUsers)
+	if err := allUsersQ.Find(&data.AllUsers).Error; err != nil {
+		return &Response{code: 500, err: fmt.Sprintf("error finding users: %v", err)}
+	}
 
 	// recent folders box
-	c.dbc.
+	err = c.dbc.
 		Order("created_at DESC").
 		Limit(10).
-		Find(&data.RecentFolders)
+		Find(&data.RecentFolders).
+		Error
+	if err != nil {
+		return &Response{code: 500, err: fmt.Sprintf("error finding recent folders: %v", err)}
+	}
 
 	data.IsScanning = c.scanner.IsScanning()
-	if tStr, _ := c.dbc.GetSetting(db.LastScanTime); tStr != "" {
+	tStr, err := c.dbc.GetSetting(db.LastScanTime)
+	if err != nil {
+		return &Response{code: 500, err: fmt.Sprintf("error getting last scan time: %v", err)}
+	}
+	if tStr != "" {
 		i, _ := strconv.ParseInt(tStr, 10, 64)
 		data.LastScanTime = time.Unix(i, 0)
 	}
 
 	// transcoding box
-	c.dbc.
+	err = c.dbc.
 		Where("user_id=?", user.ID).
-		Find(&data.TranscodePreferences)
-	c.dbc.
+		Find(&data.TranscodePreferences).
+		Error
+	if err != nil {
+		return &Response{code: 500, err: fmt.Sprintf("error finding transcode preferences: %v", err)}
+	}
+	err = c.dbc.
 		Where("user_id=?", user.ID).
 		Order("created_at").
-		Find(&data.TranscodeFormatPreferences)
+		Find(&data.TranscodeFormatPreferences).
+		Error
+	if err != nil {
+		return &Response{code: 500, err: fmt.Sprintf("error finding transcode format preferences: %v", err)}
+	}
 	data.TranscodeProfiles = transcode.UserProfiles
 	formats := map[string]struct{}{}
 	for _, p := range transcode.UserProfiles {
@@ -76,10 +101,14 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 	data.TranscodeFormatsExhausted = len(data.TranscodeFormatPreferences) >= len(formats)
 
 	// podcasts box
-	c.dbc.Find(&data.Podcasts)
+	if err := c.dbc.Find(&data.Podcasts).Error; err != nil {
+		return &Response{code: 500, err: fmt.Sprintf("error finding podcasts: %v", err)}
+	}
 
 	// internet radio box
-	c.dbc.Find(&data.InternetRadioStations)
+	if err := c.dbc.Find(&data.InternetRadioStations).Error; err != nil {
+		return &Response{code: 500, err: fmt.Sprintf("error finding internet radio stations: %v", err)}
+	}
 
 	return &Response{
 		template: "home.tmpl",
@@ -401,9 +430,13 @@ func (c *Controller) ServeDeleteTranscodePrefDo(r *http.Request) *Response {
 	if client == "" {
 		return &Response{code: 400, err: "please provide a client"}
 	}
-	c.dbc.
+	err := c.dbc.
 		Where("user_id=? AND client=?", user.ID, client).
-		Delete(db.TranscodePreference{})
+		Delete(db.TranscodePreference{}).
+		Error
+	if err != nil {
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("delete preference: %v", err)}}
+	}
 	return &Response{
 		redirect: "/admin/home",
 	}
@@ -421,7 +454,9 @@ func (c *Controller) ServeCreateTranscodeFormatPrefDo(r *http.Request) *Response
 	user := r.Context().Value(CtxUser).(*db.User)
 
 	var existing []*db.TranscodeFormatPreference
-	c.dbc.Where("user_id=?", user.ID).Find(&existing)
+	if err := c.dbc.Where("user_id=?", user.ID).Find(&existing).Error; err != nil {
+		return &Response{redirect: "/admin/home", flashW: []string{fmt.Sprintf("find preferences: %v", err)}}
+	}
 	for _, fp := range existing {
 		if p, ok := transcode.UserProfiles[fp.Profile]; ok && p.Suffix() == profile.Suffix() {
 			return &Response{
@@ -447,9 +482,13 @@ func (c *Controller) ServeDeleteTranscodeFormatPrefDo(r *http.Request) *Response
 	if profile == "" {
 		return &Response{code: 400, err: "please provide a profile"}
 	}
-	c.dbc.
+	err := c.dbc.
 		Where("user_id=? AND profile=?", user.ID, profile).
-		Delete(db.TranscodeFormatPreference{})
+		Delete(db.TranscodeFormatPreference{}).
+		Error
+	if err != nil {
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("delete preference: %v", err)}}
+	}
 	return &Response{
 		redirect: "/admin/home",
 	}
@@ -663,7 +702,13 @@ func selectedUserIfAdmin(c *Controller, r *http.Request) (*db.User, error) {
 	if !user.IsAdmin && user.Name != selectedUsername {
 		return nil, fmt.Errorf("must be admin to perform actions for other users")
 	}
-	selectedUser := c.dbc.GetUserByName(selectedUsername)
+	selectedUser, err := c.dbc.GetUserByName(selectedUsername)
+	if err != nil {
+		return nil, fmt.Errorf("find user by name: %w", err)
+	}
+	if selectedUser == nil {
+		return nil, fmt.Errorf("no user with name %q", selectedUsername)
+	}
 	return selectedUser, nil
 }
 

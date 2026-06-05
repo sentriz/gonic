@@ -151,7 +151,11 @@ func withUserSession(dbc *db.DB, resolvePath func(string) string) handlerutil.Mi
 				return
 			}
 			// take username from sesion and add the user row to the context
-			user := dbc.GetUserByID(userID)
+			user, err := dbc.GetUserByID(userID)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("error getting user: %s", err), 500)
+				return
+			}
 			if user == nil {
 				// the username in the client's session no longer relates to a
 				// user in the database (maybe the user was deleted)

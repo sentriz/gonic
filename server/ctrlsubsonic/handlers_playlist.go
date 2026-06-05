@@ -2,14 +2,11 @@ package ctrlsubsonic
 
 import (
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"sort"
 	"time"
-
-	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/db"
 	playlistp "go.senan.xyz/gonic/playlist"
@@ -244,14 +241,14 @@ func playlistRender(c *Controller, params params.Params, playlist *playlistp.Pla
 		switch id.Type {
 		case specid.Track:
 			var track spec.TrackRow
-			if err := c.dbc.Scopes(spec.LoadTrackByFolder(user.ID)).Where("id=?", id.Value).Find(&track).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+			if err := c.dbc.Scopes(spec.LoadTrackByFolder(user.ID)).Where("id=?", id.Value).Find(&track).Error; err != nil {
 				return nil, fmt.Errorf("load track by id: %w", err)
 			}
 			trch = spec.NewTCTrackByFolder(&track, track.Album)
 			resp.Duration += track.Length
 		case specid.PodcastEpisode:
 			var pe db.PodcastEpisode
-			if err := c.dbc.Preload("Podcast").Where("id=?", id.Value).Find(&pe).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+			if err := c.dbc.Preload("Podcast").Where("id=?", id.Value).Find(&pe).Error; err != nil {
 				return nil, fmt.Errorf("load podcast episode by id: %w", err)
 			}
 			trch = spec.NewTCPodcastEpisode(&pe)

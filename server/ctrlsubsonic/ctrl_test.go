@@ -297,7 +297,8 @@ func newFixture(tb testing.TB) *fixture {
 
 	dbc := m.DB()
 
-	admin := dbc.GetUserByName("admin")
+	admin, err := dbc.GetUserByName("admin")
+	require.NoError(tb, err)
 	require.NotNil(tb, admin)
 
 	alt := &db.User{Name: "alt", Password: "alt"}

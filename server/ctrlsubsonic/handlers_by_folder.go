@@ -2,6 +2,7 @@
 package ctrlsubsonic
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -28,11 +29,15 @@ func (c *Controller) ServeGetIndexes(r *http.Request) *spec.Response {
 		Where("parent_id IS NULL").
 		Scopes(spec.WithAlbumRootDir(getMusicFolder(c.musicPaths, params)))
 	var folders []*spec.AlbumRow
-	c.dbc.
+	err := c.dbc.
 		Scopes(spec.AlbumWithChildAlbumCounts, spec.AlbumWithUserData(user.ID)).
 		Where("albums.parent_id IN ?", rootQ.SubQuery()).
 		Order("albums.right_path COLLATE NOCASE").
-		Find(&folders)
+		Find(&folders).
+		Error
+	if err != nil {
+		return spec.NewError(0, "error finding folders: %v", err)
+	}
 	// [a-z#] -> 27
 	indexMap := make(map[string]*spec.Index, 27)
 	resp := make([]*spec.Index, 0, 27)
@@ -64,29 +69,44 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
 	childrenObj := []*spec.TrackChild{}
 	folder := &spec.AlbumRow{}
-	c.dbc.
+	err = c.dbc.
 		Scopes(spec.LoadAlbumByFolder(user.ID)).
-		First(folder, id.Value)
+		First(folder, id.Value).
+		Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return spec.NewError(70, "couldn't find a directory with that id")
+	}
+	if err != nil {
+		return spec.NewError(0, "error finding directory: %v", err)
+	}
 	// start looking for child childFolders in the current dir
 	var childFolders []*spec.AlbumRow
-	c.dbc.
+	err = c.dbc.
 		Scopes(spec.LoadAlbumByFolder(user.ID)).
 		Where("parent_id=?", id.Value).
 		Order("tag_year").
 		Order("albums.right_path COLLATE NOCASE").
-		Find(&childFolders)
+		Find(&childFolders).
+		Error
+	if err != nil {
+		return spec.NewError(0, "error finding child folders: %v", err)
+	}
 	for _, ch := range childFolders {
 		childrenObj = append(childrenObj, spec.NewTCAlbumByFolder(ch))
 	}
 
 	// start looking for child childTracks in the current dir
 	var childTracks []*spec.TrackRow
-	c.dbc.
+	err = c.dbc.
 		Scopes(spec.LoadTrackByFolder(user.ID)).
 		Where("album_id=?", id.Value).
 		Order("tracks.tag_disc_number, tracks.tag_track_number").
 		Order("filename").
-		Find(&childTracks)
+		Find(&childTracks).
+		Error
+	if err != nil {
+		return spec.NewError(0, "error finding child tracks: %v", err)
+	}
 
 	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
 
@@ -125,8 +145,8 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 		y1, y2 := params.GetOrInt("fromYear", 1800),
 			params.GetOrInt("toYear", 2200)
 		// support some clients sending wrong order like DSub
-		q = q.Where("tag_year BETWEEN ? AND ?", min(y1, y2), max(y1, y2))
-		q = q.Order("tag_year DESC")
+		q = q.Where("albums.tag_year BETWEEN ? AND ?", min(y1, y2), max(y1, y2))
+		q = q.Order("albums.tag_year DESC")
 	case "byGenre":
 		genre, _ := params.Get("genre")
 		q = q.Joins("JOIN album_genres ON album_genres.album_id=albums.id")
@@ -154,13 +174,17 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 	var folders []*spec.AlbumRow
 	// TODO: think about removing this extra join to count number
 	// of children. it might make sense to store that in the db
-	q.
+	err := q.
 		Scopes(spec.AlbumWithUserPlay(user.ID), spec.AlbumWithUserData(user.ID)).
 		Joins("JOIN album_credits ON album_credits.album_id=albums.id AND album_credits.role=?", db.RoleAlbumArtist).
 		Offset(params.GetOrInt("offset", 0)).
 		Limit(params.GetOrInt("size", 10)).
 		Preload("Parent").
-		Find(&folders)
+		Find(&folders).
+		Error
+	if err != nil {
+		return spec.NewError(0, "error finding albums: %v", err)
+	}
 	sub := spec.NewResponse()
 	sub.Albums = &spec.Albums{
 		List: make([]*spec.Album, len(folders)),

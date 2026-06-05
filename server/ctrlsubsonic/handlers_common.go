@@ -202,6 +202,9 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 		Where("user_id=?", user.ID).
 		Find(&queue).
 		Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return spec.NewError(0, "error finding play queue: %v", err)
+	}
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewResponse()
 	}
@@ -271,13 +274,17 @@ func (c *Controller) ServeSavePlayQueue(r *http.Request) *spec.Response {
 	}
 	user := r.Context().Value(CtxUser).(*db.User)
 	var queue db.PlayQueue
-	c.dbc.Where("user_id=?", user.ID).First(&queue)
+	if err := c.dbc.Where("user_id=?", user.ID).First(&queue).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return spec.NewError(0, "error finding play queue: %v", err)
+	}
 	queue.UserID = user.ID
 	queue.Current = params.GetOrID("current", specid.ID{}).String()
 	queue.Position = params.GetOrInt("position", 0)
 	queue.ChangedBy = params.GetOr("c", "") // must exist, middleware checks
 	queue.SetItems(trackIDs)
-	c.dbc.Save(&queue)
+	if err := c.dbc.Save(&queue).Error; err != nil {
+		return spec.NewError(0, "error saving play queue: %v", err)
+	}
 	return spec.NewResponse()
 }
 
@@ -296,6 +303,9 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewError(70, "couldn't find a track with that id")
+	}
+	if err != nil {
+		return spec.NewError(0, "error finding track: %v", err)
 	}
 
 	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))

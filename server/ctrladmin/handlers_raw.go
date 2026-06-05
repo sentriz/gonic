@@ -1,6 +1,7 @@
 package ctrladmin
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/sessions"
@@ -16,7 +17,13 @@ func (c *Controller) ServeLoginDo(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, c.resolveProxyPath("/admin/login"), http.StatusSeeOther)
 		return
 	}
-	user := c.dbc.GetUserByName(username)
+	user, err := c.dbc.GetUserByName(username)
+	if err != nil {
+		sessAddFlashW(session, []string{fmt.Sprintf("error finding user: %v", err)})
+		sessLogSave(session, w, r)
+		http.Redirect(w, r, c.resolveProxyPath("/admin/login"), http.StatusSeeOther)
+		return
+	}
 	if user == nil || password != user.Password {
 		sessAddFlashW(session, []string{"invalid username / password"})
 		sessLogSave(session, w, r)

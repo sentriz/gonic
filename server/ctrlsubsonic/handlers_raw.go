@@ -369,7 +369,13 @@ func (c *Controller) ServeGetAvatar(w http.ResponseWriter, r *http.Request) *spe
 	if err != nil {
 		return spec.NewError(10, "please provide an `username` parameter")
 	}
-	reqUser := c.dbc.GetUserByName(username)
+	reqUser, err := c.dbc.GetUserByName(username)
+	if err != nil {
+		return spec.NewError(0, "error finding user: %v", err)
+	}
+	if reqUser == nil {
+		return spec.NewError(70, "couldn't find a user with that name")
+	}
 	if (user.ID != reqUser.ID) && !user.IsAdmin {
 		return spec.NewError(50, "user not admin")
 	}

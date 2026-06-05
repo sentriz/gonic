@@ -997,7 +997,7 @@ func (s *Scanner) cleanArtists(st *State) error {
 	return nil
 }
 
-func (s *Scanner) cleanGenres(st *State) error { //nolint:unparam
+func (s *Scanner) cleanGenres(st *State) error {
 	start := time.Now()
 	defer func() { log.Printf("finished clean genres in %s, %d removed", durSince(start), st.GenresMissing()) }()
 
@@ -1016,6 +1016,9 @@ func (s *Scanner) cleanGenres(st *State) error { //nolint:unparam
 	q := s.db.
 		Where("genres.id IN ? AND genres.id IN ?", subTrack, subAlbum).
 		Delete(db.Genre{})
+	if err := q.Error; err != nil {
+		return fmt.Errorf("delete unused genres: %w", err)
+	}
 	st.genresMissing += int(q.RowsAffected)
 
 	subAlbumGenresNoTracks := s.db.
@@ -1029,6 +1032,9 @@ func (s *Scanner) cleanGenres(st *State) error { //nolint:unparam
 	q = s.db.
 		Where("genres.id IN ?", subAlbumGenresNoTracks).
 		Delete(db.Genre{})
+	if err := q.Error; err != nil {
+		return fmt.Errorf("delete album-only genres without tracks: %w", err)
+	}
 	st.genresMissing += int(q.RowsAffected)
 
 	return nil
@@ -1049,6 +1055,9 @@ func (s *Scanner) cleanBookmarks(st *State) error {
 	q := s.db.
 		Where("bookmarks.id IN ?", trackBookmarks).
 		Delete(db.Bookmark{})
+	if err := q.Error; err != nil {
+		return fmt.Errorf("delete orphaned track bookmarks: %w", err)
+	}
 	st.bookmarksRemoved += int(q.RowsAffected)
 
 	podcastBookmarks := s.db.
@@ -1060,6 +1069,9 @@ func (s *Scanner) cleanBookmarks(st *State) error {
 	q = s.db.
 		Where("bookmarks.id IN ?", podcastBookmarks).
 		Delete(db.Bookmark{})
+	if err := q.Error; err != nil {
+		return fmt.Errorf("delete orphaned podcast bookmarks: %w", err)
+	}
 	st.bookmarksRemoved += int(q.RowsAffected)
 
 	return nil

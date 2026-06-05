@@ -117,6 +117,9 @@ func (c *Controller) ServeGetAlbum(r *http.Request) *spec.Response {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewError(70, "couldn't find an album with that id")
 	}
+	if err != nil {
+		return spec.NewError(0, "find album: %v", err)
+	}
 
 	var tracks []*spec.TrackRow
 	if err := c.dbc.
@@ -190,12 +193,16 @@ func (c *Controller) ServeGetAlbumListTwo(r *http.Request) *spec.Response {
 	var albums []*spec.AlbumRow
 	// TODO: think about removing this extra join to count number
 	// of children. it might make sense to store that in the db
-	q.
+	err = q.
 		Scopes(spec.LoadAlbumByTags(user.ID)).
 		Joins("JOIN album_credits ON album_credits.album_id=albums.id AND album_credits.role=?", db.RoleAlbumArtist).
 		Offset(params.GetOrInt("offset", 0)).
 		Limit(params.GetOrInt("size", 10)).
-		Find(&albums)
+		Find(&albums).
+		Error
+	if err != nil {
+		return spec.NewError(0, "error finding albums: %v", err)
+	}
 	sub := spec.NewResponse()
 	sub.AlbumsTwo = &spec.Albums{
 		List: make([]*spec.Album, len(albums)),
@@ -323,6 +330,9 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewError(70, "artist with id %q not found", id)
 	}
+	if err != nil {
+		return spec.NewError(0, "find artist: %v", err)
+	}
 
 	sub := spec.NewResponse()
 	sub.ArtistInfoTwo = &spec.ArtistInfo{}
@@ -363,11 +373,14 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 			Joins("LEFT JOIN albums ON albums.id=album_credits.album_id").
 			Find(&artist).
 			Error
-		if errors.Is(err, gorm.ErrRecordNotFound) && !inclNotPresent {
-			continue
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return spec.NewError(0, "find similar artist: %v", err)
 		}
 
 		if artist.ID == 0 {
+			if !inclNotPresent {
+				continue
+			}
 			// add a very limited artist, since we don't have everything with `inclNotPresent`
 			sub.ArtistInfoTwo.Similar = append(sub.ArtistInfoTwo.Similar, &spec.Artist{
 				ID:    &specid.ID{},
@@ -398,6 +411,9 @@ func (c *Controller) ServeGetAlbumInfoTwo(r *http.Request) *spec.Response {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewError(70, "album with id %q not found", id)
 	}
+	if err != nil {
+		return spec.NewError(0, "find album: %v", err)
+	}
 
 	sub := spec.NewResponse()
 	sub.AlbumInfo = &spec.AlbumInfo{}
@@ -421,10 +437,14 @@ func (c *Controller) ServeGetAlbumInfoTwo(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetGenres(_ *http.Request) *spec.Response {
 	var genres []*spec.GenreRow
-	c.dbc.
+	err := c.dbc.
 		Scopes(spec.GenreWithCounts).
 		Order("genres.name").
-		Find(&genres)
+		Find(&genres).
+		Error
+	if err != nil {
+		return spec.NewError(0, "error finding genres: %v", err)
+	}
 	sub := spec.NewResponse()
 	sub.Genres = &spec.Genres{
 		List: make([]*spec.Genre, len(genres)),
@@ -672,6 +692,9 @@ func getSimilarSongsFromTrack(c *Controller, id specid.ID, params params.Params,
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, spec.NewError(70, "couldn't find a track with that id")
 	}
+	if err != nil {
+		return nil, spec.NewError(0, "find track: %v", err)
+	}
 
 	similarTracks, err := c.lastFMClient.TrackGetSimilarTracks(track.TagTrackArtist, track.TagTitle)
 	if err != nil {
@@ -723,6 +746,9 @@ func getSimilarSongsFromArtist(c *Controller, id specid.ID, params params.Params
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, spec.NewError(70, "artist with id %q not found", id)
+	}
+	if err != nil {
+		return nil, spec.NewError(0, "find artist: %v", err)
 	}
 
 	similarArtists, err := c.lastFMClient.ArtistGetSimilar(artist.Name)
@@ -778,6 +804,9 @@ func getSimilarSongsFromAlbum(c *Controller, id specid.ID, params params.Params,
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, spec.NewError(70, "couldn't find an album with that id")
+	}
+	if err != nil {
+		return nil, spec.NewError(0, "find album: %v", err)
 	}
 
 	var similarTracks lastfm.SimilarTracks
@@ -854,7 +883,9 @@ func (c *Controller) ServeStar(r *http.Request) *spec.Response {
 	stardate := time.Now()
 	for _, id := range starIDsOfType(params, specid.Album) {
 		var albumstar db.AlbumStar
-		_ = c.dbc.Where("user_id=? AND album_id=?", user.ID, id).First(&albumstar).Error
+		if err := c.dbc.Where("user_id=? AND album_id=?", user.ID, id).First(&albumstar).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return spec.NewError(0, "find album star: %v", err)
+		}
 		albumstar.UserID = user.ID
 		albumstar.AlbumID = id
 		albumstar.StarDate = stardate
@@ -865,7 +896,9 @@ func (c *Controller) ServeStar(r *http.Request) *spec.Response {
 
 	for _, id := range starIDsOfType(params, specid.Artist) {
 		var artiststar db.ArtistStar
-		_ = c.dbc.Where("user_id=? AND artist_id=?", user.ID, id).First(&artiststar).Error
+		if err := c.dbc.Where("user_id=? AND artist_id=?", user.ID, id).First(&artiststar).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return spec.NewError(0, "find artist star: %v", err)
+		}
 		artiststar.UserID = user.ID
 		artiststar.ArtistID = id
 		artiststar.StarDate = stardate
@@ -876,7 +909,9 @@ func (c *Controller) ServeStar(r *http.Request) *spec.Response {
 
 	for _, id := range starIDsOfType(params, specid.Track) {
 		var trackstar db.TrackStar
-		_ = c.dbc.Where("user_id=? AND track_id=?", user.ID, id).First(&trackstar).Error
+		if err := c.dbc.Where("user_id=? AND track_id=?", user.ID, id).First(&trackstar).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return spec.NewError(0, "find track star: %v", err)
+		}
 		trackstar.UserID = user.ID
 		trackstar.TrackID = id
 		trackstar.StarDate = stardate

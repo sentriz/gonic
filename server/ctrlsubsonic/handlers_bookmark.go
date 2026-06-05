@@ -1,10 +1,7 @@
 package ctrlsubsonic
 
 import (
-	"errors"
 	"net/http"
-
-	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
@@ -16,13 +13,15 @@ func (c *Controller) ServeGetBookmarks(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
 	client := params.GetOr("c", "")
+
 	bookmarks := []*db.Bookmark{}
+
 	err := c.dbc.
 		Where("user_id=?", user.ID).
 		Find(&bookmarks).
 		Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return spec.NewResponse()
+	if err != nil {
+		return spec.NewError(0, "error finding bookmarks: %v", err)
 	}
 
 	sub := spec.NewResponse()
@@ -84,14 +83,21 @@ func (c *Controller) ServeCreateBookmark(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 	bookmark := &db.Bookmark{}
-	c.dbc.FirstOrCreate(bookmark, db.Bookmark{
-		UserID:      user.ID,
-		EntryIDType: string(id.Type),
-		EntryID:     id.Value,
-	})
+	err = c.dbc.
+		FirstOrCreate(bookmark, db.Bookmark{
+			UserID:      user.ID,
+			EntryIDType: string(id.Type),
+			EntryID:     id.Value,
+		}).
+		Error
+	if err != nil {
+		return spec.NewError(0, "error finding bookmark: %v", err)
+	}
 	bookmark.Comment = params.GetOr("comment", "")
 	bookmark.Position = params.GetOrInt("position", 0)
-	c.dbc.Save(bookmark)
+	if err := c.dbc.Save(bookmark).Error; err != nil {
+		return spec.NewError(0, "error saving bookmark: %v", err)
+	}
 	return spec.NewResponse()
 }
 
@@ -102,8 +108,12 @@ func (c *Controller) ServeDeleteBookmark(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
-	c.dbc.
+	err = c.dbc.
 		Where("user_id=? AND entry_id_type=? AND entry_id=?", user.ID, id.Type, id.Value).
-		Delete(&db.Bookmark{})
+		Delete(&db.Bookmark{}).
+		Error
+	if err != nil {
+		return spec.NewError(0, "error deleting bookmark: %v", err)
+	}
 	return spec.NewResponse()
 }

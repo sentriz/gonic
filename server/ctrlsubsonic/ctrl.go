@@ -247,7 +247,11 @@ func withUser(dbc *db.DB) handlerutil.Middleware {
 					"please provide `t` and `s`, or just `p`"))
 				return
 			}
-			user := dbc.GetUserByName(username)
+			user, err := dbc.GetUserByName(username)
+			if err != nil {
+				_ = writeResp(w, r, spec.NewError(0, "error finding user: %v", err))
+				return
+			}
 			if user == nil {
 				_ = writeResp(w, r, spec.NewError(40,
 					"invalid username %q", username))
