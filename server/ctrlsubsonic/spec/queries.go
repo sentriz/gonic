@@ -1,3 +1,4 @@
+//nolint:goconst
 package spec
 
 import (
@@ -16,22 +17,7 @@ func Warm(dbc *gorm.DB) {
 	}
 }
 
-// averageRating is the mean of all users' ratings for the row, computed live
-// rather than stored. coalesced to 0 when there are no ratings.
-const albumAverageRatingColumn = `(SELECT coalesce(avg(rating), 0) FROM album_ratings WHERE album_id=albums.id) average_rating`
-const artistAverageRatingColumn = `(SELECT coalesce(avg(rating), 0) FROM artist_ratings WHERE artist_id=artists.id) average_rating`
-const trackAverageRatingColumn = `(SELECT coalesce(avg(rating), 0) FROM track_ratings WHERE track_id=tracks.id) average_rating`
-
-// albumWithAverageRating selects average_rating for loads that don't already
-// carry their own Select(). gorm v1's Select overwrites, so it must not be
-// combined with the scopes below that fold the column into their own select.
-func albumWithAverageRating(q *gorm.DB) *gorm.DB {
-	return q.Select("albums.*, " + albumAverageRatingColumn)
-}
-
-func TrackWithAverageRating(q *gorm.DB) *gorm.DB {
-	return q.Select("tracks.*, " + trackAverageRatingColumn)
-}
+// Artist
 
 type ArtistRow struct {
 	db.Artist
@@ -49,6 +35,8 @@ func (a *ArtistRow) GetRoles() []string {
 	return strings.Split(a.Roles, ",")
 }
 
+const artistAverageRatingColumn = `(SELECT coalesce(avg(rating), 0) FROM artist_ratings WHERE artist_id=artists.id) average_rating`
+
 const artistRolesColumn = `(
 	SELECT GROUP_CONCAT(role) FROM (
 		SELECT role FROM album_credits WHERE artist_id=artists.id
@@ -58,14 +46,24 @@ const artistRolesColumn = `(
 ) roles`
 
 func ArtistWithRoles(q *gorm.DB) *gorm.DB {
-	return q.Select("artists.*, " + artistAverageRatingColumn + ", " + artistRolesColumn)
+	return q.Select([]string{"artists.*", artistAverageRatingColumn, artistRolesColumn})
 }
 
 func ArtistWithRolesAndAlbumCount(q *gorm.DB) *gorm.DB {
 	return q.
-		Select("artists.*, count(album_credits.album_id) album_count, " + artistAverageRatingColumn + ", " + artistRolesColumn).
+		Select([]string{"artists.*", "count(album_credits.album_id) album_count", artistAverageRatingColumn, artistRolesColumn}).
 		Group("artists.id")
 }
+
+func ArtistWithUserData(userID int) func(*gorm.DB) *gorm.DB {
+	return func(q *gorm.DB) *gorm.DB {
+		return q.
+			Preload("ArtistStar", "user_id=?", userID).
+			Preload("ArtistRating", "user_id=?", userID)
+	}
+}
+
+// Album
 
 type AlbumRow struct {
 	db.Album
@@ -77,16 +75,20 @@ type AlbumRow struct {
 
 func (AlbumRow) TableName() string { return "albums" }
 
+const albumAverageRatingColumn = `(SELECT coalesce(avg(rating), 0) FROM album_ratings WHERE album_id=albums.id) average_rating`
+
 func AlbumWithUserPlay(userID int) func(*gorm.DB) *gorm.DB {
 	return func(q *gorm.DB) *gorm.DB {
 		return q.
-			Select(`albums.*,
-				count(tracks.id) child_count,
-				sum(tracks.length) duration,
-				coalesce(album_plays.play_count, 0) play_count,
-				album_plays.play_length play_length,
-				album_plays.play_time play_time, ` +
-				albumAverageRatingColumn).
+			Select([]string{
+				"albums.*",
+				"count(tracks.id) child_count",
+				"sum(tracks.length) duration",
+				"coalesce(album_plays.play_count, 0) play_count",
+				"album_plays.play_length play_length",
+				"album_plays.play_time play_time",
+				albumAverageRatingColumn,
+			}).
 			Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
 			Joins(`LEFT JOIN (
 				SELECT t.album_id,
@@ -104,10 +106,26 @@ func AlbumWithUserPlay(userID int) func(*gorm.DB) *gorm.DB {
 
 func AlbumWithChildAlbumCounts(q *gorm.DB) *gorm.DB {
 	return q.
-		Select("albums.*, count(sub.id) child_count, " + albumAverageRatingColumn).
+		Select([]string{"albums.*", "count(sub.id) child_count", albumAverageRatingColumn}).
 		Joins("LEFT JOIN albums sub ON albums.id=sub.parent_id").
 		Group("albums.id")
 }
+
+func AlbumWithAlbumArtistCredits(q *gorm.DB) *gorm.DB {
+	return q.Preload("Credits", func(q *gorm.DB) *gorm.DB {
+		return q.Where("role=?", db.RoleAlbumArtist).Preload("Artist")
+	})
+}
+
+func AlbumWithUserData(userID int) func(*gorm.DB) *gorm.DB {
+	return func(q *gorm.DB) *gorm.DB {
+		return q.
+			Preload("AlbumStar", "user_id=?", userID).
+			Preload("AlbumRating", "user_id=?", userID)
+	}
+}
+
+// Track
 
 type TrackRow struct {
 	db.Track
@@ -116,25 +134,10 @@ type TrackRow struct {
 
 func (TrackRow) TableName() string { return "tracks" }
 
-type GenreRow struct {
-	db.Genre
-	AlbumCount int
-	TrackCount int
-}
+const trackAverageRatingColumn = `(SELECT coalesce(avg(rating), 0) FROM track_ratings WHERE track_id=tracks.id) average_rating`
 
-func (GenreRow) TableName() string { return "genres" }
-
-func GenreWithCounts(q *gorm.DB) *gorm.DB {
-	return q.Select(`genres.*,
-		(SELECT count(1) FROM album_genres WHERE genre_id=genres.id) album_count,
-		(SELECT count(1) FROM track_genres WHERE genre_id=genres.id) track_count`).
-		Group("genres.id")
-}
-
-func AlbumWithAlbumArtistCredits(q *gorm.DB) *gorm.DB {
-	return q.Preload("Credits", func(q *gorm.DB) *gorm.DB {
-		return q.Where("role=?", db.RoleAlbumArtist).Preload("Artist")
-	})
+func TrackWithAverageRating(q *gorm.DB) *gorm.DB {
+	return q.Select([]string{"tracks.*", trackAverageRatingColumn})
 }
 
 func TrackWithArtistCredits(q *gorm.DB) *gorm.DB {
@@ -149,22 +152,6 @@ func TrackWithAlbumArtistCredits(q *gorm.DB) *gorm.DB {
 	})
 }
 
-func AlbumWithUserData(userID int) func(*gorm.DB) *gorm.DB {
-	return func(q *gorm.DB) *gorm.DB {
-		return q.
-			Preload("AlbumStar", "user_id=?", userID).
-			Preload("AlbumRating", "user_id=?", userID)
-	}
-}
-
-func ArtistWithUserData(userID int) func(*gorm.DB) *gorm.DB {
-	return func(q *gorm.DB) *gorm.DB {
-		return q.
-			Preload("ArtistStar", "user_id=?", userID).
-			Preload("ArtistRating", "user_id=?", userID)
-	}
-}
-
 func TrackWithUserData(userID int) func(*gorm.DB) *gorm.DB {
 	return func(q *gorm.DB) *gorm.DB {
 		return q.
@@ -172,6 +159,27 @@ func TrackWithUserData(userID int) func(*gorm.DB) *gorm.DB {
 			Preload("TrackRating", "user_id=?", userID)
 	}
 }
+
+// Genre
+
+type GenreRow struct {
+	db.Genre
+	AlbumCount int
+	TrackCount int
+}
+
+func (GenreRow) TableName() string { return "genres" }
+
+func GenreWithCounts(q *gorm.DB) *gorm.DB {
+	return q.Select([]string{
+		"genres.*",
+		"(SELECT count(1) FROM album_genres WHERE genre_id=genres.id) album_count",
+		"(SELECT count(1) FROM track_genres WHERE genre_id=genres.id) track_count",
+	}).
+		Group("genres.id")
+}
+
+// Shared
 
 func WithAlbumRootDir(rootDir string) func(*gorm.DB) *gorm.DB {
 	return func(q *gorm.DB) *gorm.DB {

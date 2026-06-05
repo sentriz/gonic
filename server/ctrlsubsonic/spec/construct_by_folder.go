@@ -1,3 +1,4 @@
+//nolint:goconst
 package spec
 
 import (
@@ -26,7 +27,9 @@ func LoadTrackByFolder(userID int) func(*gorm.DB) *gorm.DB {
 // endpoints, where an album also stands in for a folder/artist/directory.
 func LoadAlbumByFolder(userID int) func(*gorm.DB) *gorm.DB {
 	return func(q *gorm.DB) *gorm.DB {
-		return q.Scopes(albumWithAverageRating, AlbumWithUserData(userID))
+		return q.
+			Select([]string{"albums.*", albumAverageRatingColumn}).
+			Scopes(AlbumWithUserData(userID))
 	}
 }
 

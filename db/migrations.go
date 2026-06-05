@@ -1,4 +1,4 @@
-//nolint:err113
+//nolint:err113,goconst
 package db
 
 import (
