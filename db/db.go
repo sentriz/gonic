@@ -602,13 +602,20 @@ func (pe *PodcastEpisode) AbsPath() string {
 	return filepath.Join(pe.Podcast.RootDir, pe.Filename)
 }
 
+type BookmarkEntry string
+
+const (
+	BookmarkEntryTrack          BookmarkEntry = "tr"
+	BookmarkEntryPodcastEpisode BookmarkEntry = "pe"
+)
+
 type Bookmark struct {
 	ID          int `gorm:"primary_key"`
 	User        *User
 	UserID      int `sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
 	Position    int
 	Comment     string
-	EntryIDType string
+	EntryIDType BookmarkEntry
 	EntryID     int
 	CreatedAt   time.Time
 	UpdatedAt   time.Time

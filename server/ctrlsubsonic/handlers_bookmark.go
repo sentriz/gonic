@@ -6,7 +6,6 @@ import (
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
-	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
 func (c *Controller) ServeGetBookmarks(r *http.Request) *spec.Response {
@@ -38,8 +37,8 @@ func (c *Controller) ServeGetBookmarks(r *http.Request) *spec.Response {
 			Changed:  bookmark.UpdatedAt,
 		}
 
-		switch specid.IDT(bookmark.EntryIDType) {
-		case specid.Track:
+		switch bookmark.EntryIDType {
+		case db.BookmarkEntryTrack:
 			var track spec.TrackRow
 			err := c.dbc.
 				Scopes(spec.LoadTrackByTags(user.ID)).
@@ -54,7 +53,7 @@ func (c *Controller) ServeGetBookmarks(r *http.Request) *spec.Response {
 				continue
 			}
 			respBookmark.Entry = spec.NewTrackByTags(client, &track, track.Album)
-		case specid.PodcastEpisode:
+		case db.BookmarkEntryPodcastEpisode:
 			var podcastEpisode db.PodcastEpisode
 			err := c.dbc.
 				Preload("Podcast").
@@ -86,7 +85,7 @@ func (c *Controller) ServeCreateBookmark(r *http.Request) *spec.Response {
 	err = c.dbc.
 		FirstOrCreate(bookmark, db.Bookmark{
 			UserID:      user.ID,
-			EntryIDType: string(id.Type),
+			EntryIDType: db.BookmarkEntry(id.Type),
 			EntryID:     id.Value,
 		}).
 		Error
@@ -109,7 +108,7 @@ func (c *Controller) ServeDeleteBookmark(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 	err = c.dbc.
-		Where("user_id=? AND entry_id_type=? AND entry_id=?", user.ID, id.Type, id.Value).
+		Where("user_id=? AND entry_id_type=? AND entry_id=?", user.ID, db.BookmarkEntry(id.Type), id.Value).
 		Delete(&db.Bookmark{}).
 		Error
 	if err != nil {

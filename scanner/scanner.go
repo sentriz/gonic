@@ -24,7 +24,6 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/fileutil"
-	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"go.senan.xyz/gonic/tags"
 	"go.senan.xyz/wrtag/coverparse"
 	"go.senan.xyz/wrtag/tags/normtag"
@@ -1050,7 +1049,7 @@ func (s *Scanner) cleanBookmarks(st *State) error {
 		Select("bookmarks.id").
 		Model(db.Bookmark{}).
 		Joins("LEFT JOIN tracks ON tracks.id=bookmarks.entry_id").
-		Where("tracks.id IS NULL AND bookmarks.entry_id_type=?", specid.Track).
+		Where("tracks.id IS NULL AND bookmarks.entry_id_type=?", db.BookmarkEntryTrack).
 		SubQuery()
 	q := s.db.
 		Where("bookmarks.id IN ?", trackBookmarks).
@@ -1064,7 +1063,7 @@ func (s *Scanner) cleanBookmarks(st *State) error {
 		Select("bookmarks.id").
 		Model(db.Bookmark{}).
 		Joins("LEFT JOIN podcast_episodes ON podcast_episodes.id=bookmarks.entry_id").
-		Where("podcast_episodes.id IS NULL AND bookmarks.entry_id_type=?", specid.PodcastEpisode).
+		Where("podcast_episodes.id IS NULL AND bookmarks.entry_id_type=?", db.BookmarkEntryPodcastEpisode).
 		SubQuery()
 	q = s.db.
 		Where("bookmarks.id IN ?", podcastBookmarks).
