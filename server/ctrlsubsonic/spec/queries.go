@@ -35,7 +35,7 @@ func (a *ArtistRow) GetRoles() []string {
 	return strings.Split(a.Roles, ",")
 }
 
-const artistAverageRatingColumn = `(SELECT coalesce(avg(rating), 0) FROM artist_ratings WHERE artist_id=artists.id) average_rating`
+const artistAverageRatingColumn = `(SELECT cast(coalesce(avg(rating), 0)*100 AS INT)/100.0 FROM artist_ratings WHERE artist_id=artists.id) average_rating`
 
 const artistRolesColumn = `(
 	SELECT GROUP_CONCAT(role) FROM (
@@ -75,7 +75,7 @@ type AlbumRow struct {
 
 func (AlbumRow) TableName() string { return "albums" }
 
-const albumAverageRatingColumn = `(SELECT coalesce(avg(rating), 0) FROM album_ratings WHERE album_id=albums.id) average_rating`
+const albumAverageRatingColumn = `(SELECT cast(coalesce(avg(rating), 0)*100 AS INT)/100.0 FROM album_ratings WHERE album_id=albums.id) average_rating`
 
 func AlbumWithUserPlay(userID int) func(*gorm.DB) *gorm.DB {
 	return func(q *gorm.DB) *gorm.DB {
@@ -134,7 +134,7 @@ type TrackRow struct {
 
 func (TrackRow) TableName() string { return "tracks" }
 
-const trackAverageRatingColumn = `(SELECT coalesce(avg(rating), 0) FROM track_ratings WHERE track_id=tracks.id) average_rating`
+const trackAverageRatingColumn = `(SELECT cast(coalesce(avg(rating), 0)*100 AS INT)/100.0 FROM track_ratings WHERE track_id=tracks.id) average_rating`
 
 func TrackWithAverageRating(q *gorm.DB) *gorm.DB {
 	return q.Select([]string{"tracks.*", trackAverageRatingColumn})

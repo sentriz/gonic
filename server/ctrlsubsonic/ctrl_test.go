@@ -344,6 +344,13 @@ func newFixture(tb testing.TB) *fixture {
 	dbc.Save(&db.TrackStar{UserID: admin.ID, TrackID: f.trackAB1.ID, StarDate: star1})
 	dbc.Save(&db.TrackRating{UserID: admin.ID, TrackID: f.trackAB1.ID, Rating: 3})
 
+	// a third user rates the same track so the average (3+5+5)/3 = 4.333... has more than two
+	// decimal places, exercising the truncation in the averageRating subqueries
+	alt2 := &db.User{Name: "alt2", Password: "alt2"}
+	require.NoError(tb, dbc.Save(alt2).Error)
+	dbc.Save(&db.TrackRating{UserID: alt.ID, TrackID: f.trackAB1.ID, Rating: 5})
+	dbc.Save(&db.TrackRating{UserID: alt2.ID, TrackID: f.trackAB1.ID, Rating: 5})
+
 	seedAlbumPlay(tb, dbc, admin.ID, f.albumAA.ID, play1, 7, 600)
 	seedAlbumPlay(tb, dbc, admin.ID, f.albumAB.ID, play2, 2, 200)
 
