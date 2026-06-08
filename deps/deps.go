@@ -23,7 +23,6 @@ func DBDriverOptions() url.Values {
 			"journal_mode(WAL)",
 			"foreign_keys(ON)",
 			"cache_size(-32000)",
-			"mmap_size(268435456)",
 		},
 	}
 }
