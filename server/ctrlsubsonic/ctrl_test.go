@@ -388,14 +388,14 @@ func newFixture(tb testing.TB) *fixture {
 
 	// pre-populated lastfm caches so getArtistInfo2/getAlbumInfo2 don't reach out
 	require.NoError(tb, dbc.Save(&db.ArtistInfo{
-		ID:             f.artistA.ID,
-		Biography:      "an artist that exists.",
-		MusicBrainzID:  "00000000-0000-0000-0000-aaaaaaaaaaaa",
-		LastFMURL:      "https://example.invalid/artist-a",
-		ImageURL:       "https://example.invalid/artist-a.jpg",
-		SimilarArtists: "artist-b;artist-not-in-db",
-		TopTracks:      "title-0;title-1",
-		UpdatedAt:      time.Now(),
+		ID:                   f.artistA.ID,
+		LastFMBiography:      "an artist that exists.",
+		MusicBrainzID:        "00000000-0000-0000-0000-aaaaaaaaaaaa",
+		LastFMURL:            "https://example.invalid/artist-a",
+		ImageURL:             "https://example.invalid/artist-a.jpg",
+		LastFMSimilarArtists: "artist-b;artist-not-in-db",
+		LastFMTopTracks:      "title-0;title-1",
+		UpdatedAt:            time.Now(),
 	}).Error)
 	require.NoError(tb, dbc.Save(&db.AlbumInfo{
 		ID:            f.albumAA.ID,

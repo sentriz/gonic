@@ -8,12 +8,14 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/andybalholm/cascadia"
+	"github.com/microcosm-cc/bluemonday"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/scrobble"
 	"golang.org/x/net/html"
@@ -386,4 +388,22 @@ func GetParamSignature(params url.Values, secret string) string {
 	toHash.WriteString(secret)
 	hash := md5.Sum([]byte(toHash.String()))
 	return hex.EncodeToString(hash[:])
+}
+
+var doublePuncExpr = regexp.MustCompile(`\.\s+\.\s+`)
+var licenceExpr = regexp.MustCompile(`(?i)\buser-contributed text.*`)
+var readMoreExpr = regexp.MustCompile(`(?i)\bread more on.*`)
+
+var bluemondayPolicy = bluemonday.StrictPolicy() //nolint:gochecknoglobals
+
+func CleanArtistBiography(text string) string {
+	text = bluemondayPolicy.Sanitize(text)
+	text = html.UnescapeString(text)
+	text = licenceExpr.ReplaceAllString(text, "")
+	text = readMoreExpr.ReplaceAllString(text, "")
+	text = doublePuncExpr.ReplaceAllString(text, ". ")
+	text = strings.ReplaceAll(text, " .", ".")
+	text = strings.Join(strings.Fields(text), " ")
+	text = strings.TrimSpace(text)
+	return text
 }

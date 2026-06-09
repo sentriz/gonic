@@ -99,7 +99,20 @@ type Artist struct {
 	Type           string     `json:"type"`
 	SortName       string     `json:"sort-name"`
 	Disambiguation string     `json:"disambiguation"`
+	Area           *Area      `json:"area"`
+	BeginArea      *Area      `json:"begin-area"`
+	LifeSpan       LifeSpan   `json:"life-span"`
 	Relations      []Relation `json:"relations"`
+}
+
+type Area struct {
+	Name string `json:"name"`
+}
+
+type LifeSpan struct {
+	Begin string `json:"begin"`
+	End   string `json:"end"`
+	Ended bool   `json:"ended"`
 }
 
 type Relation struct {

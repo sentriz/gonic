@@ -637,22 +637,39 @@ func (ir *InternetRadioStation) AbsPath() string {
 }
 
 type ArtistInfo struct {
-	ID             int `gorm:"primary_key" sql:"type:int REFERENCES artists(id) ON DELETE CASCADE"`
-	CreatedAt      time.Time
-	UpdatedAt      time.Time `gorm:"index"`
-	Biography      string
-	MusicBrainzID  string
-	LastFMURL      string
-	ImageURL       string
-	SimilarArtists string
-	TopTracks      string
+	ID                        int `gorm:"primary_key" sql:"type:int REFERENCES artists(id) ON DELETE CASCADE"`
+	CreatedAt                 time.Time
+	UpdatedAt                 time.Time `gorm:"index"`
+	LastFMURL                 string
+	LastFMSimilarArtists      string
+	LastFMTopTracks           string
+	LastFMBiography           string
+	MusicBrainzID             string
+	MusicBrainzType           string
+	MusicBrainzDisambiguation string
+	MusicBrainzArea           string
+	MusicBrainzBeginDate      string
+	MusicBrainzEndDate        string
+	MusicBrainzRelatedArtists string
+	ImageURL                  string
 }
 
-func (p *ArtistInfo) GetSimilarArtists() []string      { return splitList(p.SimilarArtists) }
-func (p *ArtistInfo) SetSimilarArtists(items []string) { p.SimilarArtists = strings.Join(items, ";") }
+func (p *ArtistInfo) GetLastFMSimilarArtists() []string { return splitList(p.LastFMSimilarArtists) }
+func (p *ArtistInfo) SetLastFMSimilarArtists(items []string) {
+	p.LastFMSimilarArtists = strings.Join(items, ";")
+}
 
-func (p *ArtistInfo) GetTopTracks() []string      { return splitList(p.TopTracks) }
-func (p *ArtistInfo) SetTopTracks(items []string) { p.TopTracks = strings.Join(items, ";") }
+func (p *ArtistInfo) GetMusicBrainzRelatedArtists() []string {
+	return splitList(p.MusicBrainzRelatedArtists)
+}
+func (p *ArtistInfo) SetMusicBrainzRelatedArtists(items []string) {
+	p.MusicBrainzRelatedArtists = strings.Join(items, ";")
+}
+
+func (p *ArtistInfo) GetLastFMTopTracks() []string { return splitList(p.LastFMTopTracks) }
+func (p *ArtistInfo) SetLastFMTopTracks(items []string) {
+	p.LastFMTopTracks = strings.Join(items, ";")
+}
 
 type AlbumInfo struct {
 	ID            int `gorm:"primary_key" sql:"type:int REFERENCES albums(id) ON DELETE CASCADE"`

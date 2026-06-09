@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -15,6 +16,7 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/handlerutil"
+	"go.senan.xyz/gonic/infocache/artistinfocache"
 	"go.senan.xyz/gonic/lastfm"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
@@ -343,7 +345,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		return sub
 	}
 
-	sub.ArtistInfoTwo.Biography = spec.CleanExternalText(info.Biography)
+	sub.ArtistInfoTwo.Biography = artistinfocache.Biography(info)
 	sub.ArtistInfoTwo.MusicBrainzID = info.MusicBrainzID
 	sub.ArtistInfoTwo.LastFMURL = info.LastFMURL
 
@@ -361,7 +363,17 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	count := params.GetOrInt("count", 20)
 	inclNotPresent := params.GetOrBool("includeNotPresent", false)
 
-	for i, similarName := range info.GetSimilarArtists() {
+	var similar []string
+	seen := map[string]struct{}{}
+	for _, name := range slices.Concat(info.GetLastFMSimilarArtists(), info.GetMusicBrainzRelatedArtists()) {
+		if _, ok := seen[name]; ok {
+			continue
+		}
+		seen[name] = struct{}{}
+		similar = append(similar, name)
+	}
+
+	for i, similarName := range similar {
 		if i == count {
 			break
 		}
@@ -593,7 +605,7 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 		Tracks: make([]*spec.TrackChild, 0),
 	}
 
-	topTrackNames := info.GetTopTracks()
+	topTrackNames := info.GetLastFMTopTracks()
 	if len(topTrackNames) == 0 {
 		return sub
 	}

@@ -7,7 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"time"
+	"unicode"
 
 	"github.com/jinzhu/gorm"
 	"go.senan.xyz/gonic/db"
@@ -74,49 +76,43 @@ func (a *ArtistInfoCache) Lookup(ctx context.Context, artist *db.Artist) (*db.Ar
 	}
 
 	if info.Bio.Summary != "" {
-		artistInfo.Biography = info.Bio.Summary
+		artistInfo.LastFMBiography = info.Bio.Summary
 	}
 	if info.URL != "" {
 		artistInfo.LastFMURL = info.URL
 	}
 
 	mbid := cmp.Or(artist.MusicBrainzID, info.MBID, artistInfo.MusicBrainzID)
+
 	artistInfo.MusicBrainzID = mbid
 
-	var similar []string
+	var lastFMSimilar []string
 	for _, sim := range info.Similar.Artists {
-		similar = append(similar, sim.Name)
+		lastFMSimilar = append(lastFMSimilar, sim.Name)
 	}
-	if a.mbClient != nil && mbid != "" {
-		if related, err := musicBrainzRelatedArtists(ctx, a.mbClient, mbid); err != nil {
-			log.Printf("error fetching musicbrainz artist %s: %v", mbid, err)
-			// non-fatal
-		} else {
-			similar = append(similar, related...)
-		}
-	}
-	if len(similar) > 0 {
-		artistInfo.SetSimilarArtists(dedupe(similar))
+	if len(lastFMSimilar) > 0 {
+		artistInfo.SetLastFMSimilarArtists(lastFMSimilar)
 	}
 
-	if info.URL != "" {
-		if url, err := a.lastfmClient.StealArtistImage(info.URL); err != nil {
-			log.Printf("error stealing lastfm artist image: %v", err)
+	if mbArtist := musicBrainzArtist(ctx, a.mbClient, mbid); mbArtist != nil {
+		setMusicBrainzInfo(&artistInfo, mbArtist)
+
+		related, err := musicBrainzRelatedArtists(ctx, a.mbClient, mbArtist)
+		if err != nil {
+			log.Printf("error fetching musicbrainz related artists for %s: %v", mbid, err)
 			// non-fatal
-		} else if url != "" {
-			artistInfo.ImageURL = url
+		}
+		if len(related) > 0 {
+			artistInfo.SetMusicBrainzRelatedArtists(related)
 		}
 	}
 
-	if topTracks, err := a.lastfmClient.ArtistGetTopTracks(artist.Name); err != nil {
-		log.Printf("error getting lastfm top tracks for %q: %v", artist.Name, err)
-		// non-fatal
-	} else if len(topTracks.Tracks) > 0 {
-		var names []string
-		for _, tr := range topTracks.Tracks {
-			names = append(names, tr.Name)
-		}
-		artistInfo.SetTopTracks(names)
+	if image := lastFMArtistImage(a.lastfmClient, info.URL); image != "" {
+		artistInfo.ImageURL = image
+	}
+
+	if tracks := lastFMTopTracks(a.lastfmClient, artist.Name); len(tracks) > 0 {
+		artistInfo.SetLastFMTopTracks(tracks)
 	}
 
 	if err := a.db.Save(&artistInfo).Error; err != nil {
@@ -151,18 +147,80 @@ func (a *ArtistInfoCache) Refresh() error {
 	}
 }
 
-func musicBrainzRelatedArtists(ctx context.Context, mbClient *musicbrainz.Client, mbid string) ([]string, error) {
-	seen := map[string]struct{}{mbid: {}}
-	return walkMusicBrainzRelatedArtists(ctx, mbClient, mbid, seen, 0)
+func Biography(info *db.ArtistInfo) string {
+	var mbParts []string
+	if d := info.MusicBrainzDisambiguation; d != "" {
+		mbParts = append(mbParts, upperFirst(d))
+	}
+	if info.MusicBrainzArea != "" {
+		mbParts = append(mbParts, "from "+info.MusicBrainzArea)
+	}
+	if span := lifeSpan(info); span != "" {
+		mbParts = append(mbParts, span)
+	}
+
+	var mbInfo string
+	if len(mbParts) > 0 {
+		mbInfo = strings.Join(mbParts, ", ") + "."
+	}
+
+	lastFMBio := lastfm.CleanArtistBiography(info.LastFMBiography)
+
+	switch {
+	case mbInfo != "" && lastFMBio != "":
+		return mbInfo + "\n\n" + lastFMBio
+	case mbInfo != "":
+		return mbInfo
+	default:
+		return lastFMBio
+	}
 }
 
-func walkMusicBrainzRelatedArtists(ctx context.Context, mbClient *musicbrainz.Client, mbid string, seen map[string]struct{}, depth int) ([]string, error) {
-	const maxDepth = 1
+func lastFMArtistImage(client *lastfm.Client, url string) string {
+	if url == "" {
+		return ""
+	}
+	image, err := client.StealArtistImage(url)
+	if err != nil {
+		log.Printf("error stealing lastfm artist image: %v", err)
+		return ""
+	}
+	return image
+}
 
+func lastFMTopTracks(client *lastfm.Client, name string) []string {
+	topTracks, err := client.ArtistGetTopTracks(name)
+	if err != nil {
+		log.Printf("error getting lastfm top tracks for %q: %v", name, err)
+		return nil
+	}
+
+	names := make([]string, 0, len(topTracks.Tracks))
+	for _, tr := range topTracks.Tracks {
+		names = append(names, tr.Name)
+	}
+	return names
+}
+
+func musicBrainzArtist(ctx context.Context, mbClient *musicbrainz.Client, mbid string) *musicbrainz.Artist {
+	if mbClient == nil || mbid == "" {
+		return nil
+	}
 	artist, err := mbClient.GetArtist(ctx, mbid, "artist-rels")
 	if err != nil {
-		return nil, fmt.Errorf("fetch %s: %w", mbid, err)
+		log.Printf("error fetching musicbrainz artist %s: %v", mbid, err)
+		return nil
 	}
+	return artist
+}
+
+func musicBrainzRelatedArtists(ctx context.Context, mbClient *musicbrainz.Client, artist *musicbrainz.Artist) ([]string, error) {
+	seen := map[string]struct{}{artist.ID: {}}
+	return walkMusicBrainzRelatedArtists(ctx, mbClient, artist, seen, 0)
+}
+
+func walkMusicBrainzRelatedArtists(ctx context.Context, mbClient *musicbrainz.Client, artist *musicbrainz.Artist, seen map[string]struct{}, depth int) ([]string, error) {
+	const maxDepth = 1
 
 	var out []string
 	for _, rel := range artist.Relations {
@@ -180,25 +238,69 @@ func walkMusicBrainzRelatedArtists(ctx context.Context, mbClient *musicbrainz.Cl
 
 		out = append(out, target.Name)
 		if rel.Direction == musicbrainz.DirectionBackward && depth < maxDepth {
-			sub, err := walkMusicBrainzRelatedArtists(ctx, mbClient, target.ID, seen, depth+1)
+			sub, err := mbClient.GetArtist(ctx, target.ID, "artist-rels")
+			if err != nil {
+				return nil, fmt.Errorf("fetch %s: %w", target.ID, err)
+			}
+			rels, err := walkMusicBrainzRelatedArtists(ctx, mbClient, sub, seen, depth+1)
 			if err != nil {
 				return nil, err
 			}
-			out = append(out, sub...)
+			out = append(out, rels...)
 		}
 	}
 	return out, nil
 }
 
-func dedupe(in []string) []string {
-	seen := make(map[string]struct{}, len(in))
-	out := in[:0]
-	for _, s := range in {
-		if _, ok := seen[s]; ok {
-			continue
-		}
-		seen[s] = struct{}{}
-		out = append(out, s)
+func setMusicBrainzInfo(info *db.ArtistInfo, artist *musicbrainz.Artist) {
+	info.MusicBrainzType = artist.Type
+	info.MusicBrainzDisambiguation = artist.Disambiguation
+	info.MusicBrainzBeginDate = artist.LifeSpan.Begin
+
+	info.MusicBrainzEndDate = ""
+	if artist.LifeSpan.Ended {
+		info.MusicBrainzEndDate = artist.LifeSpan.End
 	}
-	return out
+
+	info.MusicBrainzArea = ""
+	switch {
+	case artist.BeginArea != nil:
+		info.MusicBrainzArea = artist.BeginArea.Name
+	case artist.Area != nil:
+		info.MusicBrainzArea = artist.Area.Name
+	}
+}
+
+func lifeSpan(info *db.ArtistInfo) string {
+	begin, end := year(info.MusicBrainzBeginDate), year(info.MusicBrainzEndDate)
+	person := info.MusicBrainzType == "Person"
+	switch {
+	case person && begin != "" && end != "":
+		return "born " + begin + ", died " + end
+	case person && begin != "":
+		return "born " + begin
+	case person && end != "":
+		return "died " + end
+	case begin != "" && end != "":
+		return "active " + begin + "–" + end
+	case begin != "":
+		return "formed " + begin
+	case end != "":
+		return "disbanded " + end
+	default:
+		return ""
+	}
+}
+
+func year(date string) string {
+	if len(date) < 4 {
+		return ""
+	}
+	return date[:4]
+}
+
+func upperFirst(s string) string {
+	r := []rune(s)
+	r[0] = unicode.ToUpper(r[0])
+	return string(r)
 }

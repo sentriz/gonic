@@ -55,5 +55,5 @@ func TestInfoCache(t *testing.T) {
 	assert.NoError(m.DB().Preload("Info").Find(&artist, "id=?", artist.ID).Error)
 	assert.Greater(artist.ID, 0)
 	assert.NotNil(artist.Info)
-	assert.Equal("Summary", artist.Info.Biography)
+	assert.Equal("Summary", artist.Info.LastFMBiography)
 }

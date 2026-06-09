@@ -97,6 +97,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202605261200", migrateDeleteLastfmPlaceholderArtistImage),
 		construct(ctx, "202606041200", migrateArtistMusicBrainzID),
 		construct(ctx, "202606051200", migrateDropAverageRating),
+		construct(ctx, "202606091200", migrateArtistInfoFieldsBySource),
 	}
 
 	return gormigrate.
@@ -1040,4 +1041,22 @@ func migrateArtistMusicBrainzID(tx *gorm.DB, _ MigrationContext) error {
 		CREATE INDEX IF NOT EXISTS idx_artists_name ON artists (name);
 		CREATE UNIQUE INDEX IF NOT EXISTS uix_artists_music_brainz_id ON artists (music_brainz_id) WHERE music_brainz_id != '';
 	`).Error
+}
+
+func migrateArtistInfoFieldsBySource(tx *gorm.DB, _ MigrationContext) error {
+	// rename existing lastfm-sourced columns to be source-prefixed. must run before AutoMigrate,
+	// else AutoMigrate creates the new names empty (from the current struct) and the rename collides.
+	for _, r := range [][2]string{
+		{"biography", "last_fm_biography"},
+		{"top_tracks", "last_fm_top_tracks"},
+		{"similar_artists", "last_fm_similar_artists"},
+	} {
+		if !tx.Dialect().HasColumn("artist_infos", r[0]) {
+			continue
+		}
+		if err := tx.Exec(fmt.Sprintf("ALTER TABLE artist_infos RENAME COLUMN %q TO %q", r[0], r[1])).Error; err != nil {
+			return fmt.Errorf("rename column %s: %w", r[0], err)
+		}
+	}
+	return tx.AutoMigrate(ArtistInfo{}).Error
 }
