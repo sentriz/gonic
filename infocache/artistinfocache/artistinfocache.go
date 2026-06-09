@@ -149,7 +149,7 @@ func (a *ArtistInfoCache) Refresh() error {
 func Biography(info *db.ArtistInfo) string {
 	var mbParts []string
 	if d := info.MusicBrainzDisambiguation; d != "" {
-		mbParts = append(mbParts, upperFirst(d))
+		mbParts = append(mbParts, d)
 	}
 	if info.MusicBrainzArea != "" {
 		mbParts = append(mbParts, "from "+info.MusicBrainzArea)
@@ -160,7 +160,7 @@ func Biography(info *db.ArtistInfo) string {
 
 	var mbInfo string
 	if len(mbParts) > 0 {
-		mbInfo = strings.Join(mbParts, ", ") + "."
+		mbInfo = upperFirst(strings.Join(mbParts, ", ") + ".")
 	}
 
 	lastFMBio := lastfm.CleanText(info.LastFMBiography)
