@@ -44,6 +44,22 @@ func NewClient(userAgent string) *Client {
 }
 
 func (c *Client) GetArtist(ctx context.Context, mbid string, inc ...string) (*Artist, error) {
+	var a Artist
+	if err := c.get(ctx, "artist", mbid, inc, &a); err != nil {
+		return nil, err
+	}
+	return &a, nil
+}
+
+func (c *Client) GetRelease(ctx context.Context, mbid string, inc ...string) (*Release, error) {
+	var r Release
+	if err := c.get(ctx, "release", mbid, inc, &r); err != nil {
+		return nil, err
+	}
+	return &r, nil
+}
+
+func (c *Client) get(ctx context.Context, entity, mbid string, inc []string, dest any) error {
 	q := url.Values{}
 	q.Set("fmt", "json")
 	if len(inc) > 0 {
@@ -52,22 +68,18 @@ func (c *Client) GetArtist(ctx context.Context, mbid string, inc ...string) (*Ar
 
 	u, err := url.Parse(c.BaseURL)
 	if err != nil {
-		return nil, fmt.Errorf("parse base url: %w", err)
+		return fmt.Errorf("parse base url: %w", err)
 	}
-	u = u.JoinPath("artist", mbid)
+	u = u.JoinPath(entity, mbid)
 	u.RawQuery = q.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
-		return nil, fmt.Errorf("new request: %w", err)
+		return fmt.Errorf("new request: %w", err)
 	}
 	req.Header.Set("User-Agent", c.UserAgent)
 
-	var a Artist
-	if err := c.do(req, &a); err != nil {
-		return nil, err
-	}
-	return &a, nil
+	return c.do(req, dest)
 }
 
 func (c *Client) do(req *http.Request, dest any) error {
@@ -103,6 +115,19 @@ type Artist struct {
 	BeginArea      *Area      `json:"begin-area"`
 	LifeSpan       LifeSpan   `json:"life-span"`
 	Relations      []Relation `json:"relations"`
+}
+
+type Release struct {
+	ID             string        `json:"id"`
+	Title          string        `json:"title"`
+	Disambiguation string        `json:"disambiguation"`
+	ReleaseGroup   *ReleaseGroup `json:"release-group"`
+}
+
+type ReleaseGroup struct {
+	ID             string `json:"id"`
+	Title          string `json:"title"`
+	Disambiguation string `json:"disambiguation"`
 }
 
 type Area struct {

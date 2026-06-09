@@ -98,6 +98,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202606041200", migrateArtistMusicBrainzID),
 		construct(ctx, "202606051200", migrateDropAverageRating),
 		construct(ctx, "202606091200", migrateArtistInfoFieldsBySource),
+		construct(ctx, "202606091300", migrateAlbumInfoMusicBrainzDisambiguation),
 	}
 
 	return gormigrate.
@@ -1059,4 +1060,15 @@ func migrateArtistInfoFieldsBySource(tx *gorm.DB, _ MigrationContext) error {
 		}
 	}
 	return tx.AutoMigrate(ArtistInfo{}).Error
+}
+
+func migrateAlbumInfoMusicBrainzDisambiguation(tx *gorm.DB, _ MigrationContext) error {
+	// rename the existing lastfm-sourced column to be source-prefixed. must run before AutoMigrate,
+	// else AutoMigrate creates the new name empty (from the current struct) and the rename collides.
+	if tx.Dialect().HasColumn("album_infos", "notes") {
+		if err := tx.Exec(`ALTER TABLE album_infos RENAME COLUMN "notes" TO "last_fm_notes"`).Error; err != nil {
+			return fmt.Errorf("rename column notes: %w", err)
+		}
+	}
+	return tx.AutoMigrate(AlbumInfo{}).Error
 }

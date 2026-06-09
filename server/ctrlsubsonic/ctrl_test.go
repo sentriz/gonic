@@ -399,7 +399,7 @@ func newFixture(tb testing.TB) *fixture {
 	}).Error)
 	require.NoError(tb, dbc.Save(&db.AlbumInfo{
 		ID:            f.albumAA.ID,
-		Notes:         "an album that exists.",
+		LastFMNotes:   "an album that exists.",
 		MusicBrainzID: "00000000-0000-0000-0000-aaaaaaaaaaab",
 		LastFMURL:     "https://example.invalid/album-aa",
 		UpdatedAt:     time.Now(),
@@ -438,7 +438,7 @@ func newFixture(tb testing.TB) *fixture {
 		musicPaths:       musicPaths,
 		transcoder:       transcode.NewFFmpegTranscoder(),
 		artistInfoCache:  artistinfocache.New(dbc, nil, nil),
-		albumInfoCache:   albuminfocache.New(dbc, nil),
+		albumInfoCache:   albuminfocache.New(dbc, nil, nil),
 		playlistStore:    playlistStore,
 		resolveProxyPath: func(in string) string { return in },
 	}

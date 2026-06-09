@@ -672,12 +672,13 @@ func (p *ArtistInfo) SetLastFMTopTracks(items []string) {
 }
 
 type AlbumInfo struct {
-	ID            int `gorm:"primary_key" sql:"type:int REFERENCES albums(id) ON DELETE CASCADE"`
-	CreatedAt     time.Time
-	UpdatedAt     time.Time `gorm:"index"`
-	Notes         string
-	MusicBrainzID string
-	LastFMURL     string
+	ID                        int `gorm:"primary_key" sql:"type:int REFERENCES albums(id) ON DELETE CASCADE"`
+	CreatedAt                 time.Time
+	UpdatedAt                 time.Time `gorm:"index"`
+	LastFMNotes               string
+	LastFMURL                 string
+	MusicBrainzID             string
+	MusicBrainzDisambiguation string
 }
 
 func splitIDs(in, sep string) []specid.ID {

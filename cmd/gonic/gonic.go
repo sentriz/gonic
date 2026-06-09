@@ -263,7 +263,7 @@ func main() {
 	sessDB.SessionOpts.SameSite = http.SameSiteLaxMode
 
 	artistInfoCache := artistinfocache.New(dbc, lastfmClient, mbClient)
-	albumInfoCache := albuminfocache.New(dbc, lastfmClient)
+	albumInfoCache := albuminfocache.New(dbc, lastfmClient, mbClient)
 
 	scrobblers := []scrobble.Scrobbler{lastfmClient, listenbrainzClient}
 

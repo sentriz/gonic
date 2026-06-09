@@ -396,7 +396,7 @@ var readMoreExpr = regexp.MustCompile(`(?i)\bread more on.*`)
 
 var bluemondayPolicy = bluemonday.StrictPolicy() //nolint:gochecknoglobals
 
-func CleanArtistBiography(text string) string {
+func CleanText(text string) string {
 	text = bluemondayPolicy.Sanitize(text)
 	text = html.UnescapeString(text)
 	text = licenceExpr.ReplaceAllString(text, "")

@@ -164,7 +164,7 @@ func Biography(info *db.ArtistInfo) string {
 		mbInfo = strings.Join(mbParts, ", ") + "."
 	}
 
-	lastFMBio := lastfm.CleanArtistBiography(info.LastFMBiography)
+	lastFMBio := lastfm.CleanText(info.LastFMBiography)
 
 	switch {
 	case mbInfo != "" && lastFMBio != "":

@@ -16,6 +16,7 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/handlerutil"
+	"go.senan.xyz/gonic/infocache/albuminfocache"
 	"go.senan.xyz/gonic/infocache/artistinfocache"
 	"go.senan.xyz/gonic/lastfm"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
@@ -436,7 +437,7 @@ func (c *Controller) ServeGetAlbumInfoTwo(r *http.Request) *spec.Response {
 		return sub
 	}
 
-	sub.AlbumInfo.Notes = spec.CleanExternalText(info.Notes)
+	sub.AlbumInfo.Notes = albuminfocache.Notes(info)
 	sub.AlbumInfo.MusicBrainzID = info.MusicBrainzID
 	sub.AlbumInfo.LastFMURL = info.LastFMURL
 
