@@ -345,15 +345,23 @@ func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.R
 
 	log.Printf("transcoding to %q at bitrate %d", profile.MIME(), profile.BitRate())
 
+	var out io.Writer = w
 	if estimateLength {
 		if rem := audioFile.AudioLength() - timeOffset; rem > 0 {
 			size := transcode.EstimateSize(profile, time.Second*time.Duration(rem))
 			w.Header().Set("Content-Length", strconv.FormatInt(size, 10))
+			out = &sizedWriter{w: w, size: size}
 		}
 	}
 
-	if err := c.transcoder.Transcode(r.Context(), profile, file.AbsPath(), w); err != nil && !errors.Is(err, transcode.ErrFFmpegKilled) && !errors.Is(err, context.Canceled) {
+	if err := c.transcoder.Transcode(r.Context(), profile, file.AbsPath(), out); err != nil && !errors.Is(err, transcode.ErrFFmpegKilled) && !errors.Is(err, context.Canceled) {
 		return spec.NewError(0, "error transcoding: %v", err)
+	}
+
+	if sw, ok := out.(*sizedWriter); ok {
+		if err := sw.pad(); err != nil {
+			return spec.NewError(0, "error padding stream: %v", err)
+		}
 	}
 
 	if f, ok := w.(http.Flusher); ok {
@@ -465,4 +473,38 @@ func streamGetTranscodeMeta(dbc *db.DB, userID int, client string) spec.Transcod
 		TranscodedContentType: profile.MIME(),
 		TranscodedSuffix:      profile.Suffix(),
 	}
+}
+
+type sizedWriter struct {
+	w       io.Writer
+	size    int64
+	written int64
+}
+
+func (sw *sizedWriter) Write(p []byte) (int, error) {
+	keep := p
+	if rem := sw.size - sw.written; int64(len(keep)) > rem {
+		keep = keep[:max(rem, 0)]
+	}
+	n, err := sw.w.Write(keep)
+	sw.written += int64(n)
+	if err != nil {
+		return n, err
+	}
+	return len(p), nil
+}
+
+func (sw *sizedWriter) pad() error {
+	if sw.written >= sw.size {
+		return nil
+	}
+	_, err := io.CopyN(sw.w, zeroReader{}, sw.size-sw.written)
+	return err
+}
+
+type zeroReader struct{}
+
+func (zeroReader) Read(p []byte) (int, error) {
+	clear(p)
+	return len(p), nil
 }
