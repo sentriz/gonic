@@ -60,11 +60,10 @@ func (a *ArtistInfoCache) Get(ctx context.Context, artistID int) (*db.ArtistInfo
 
 func (a *ArtistInfoCache) Lookup(ctx context.Context, artist *db.Artist) (*db.ArtistInfo, error) {
 	var artistInfo db.ArtistInfo
-	artistInfo.ID = artist.ID
-
-	if err := a.db.FirstOrCreate(&artistInfo, "id=?", artistInfo.ID).Error; err != nil {
-		return nil, fmt.Errorf("first or create artist info: %w", err)
+	if err := a.db.Find(&artistInfo, "id=?", artist.ID).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, fmt.Errorf("find artist info: %w", err)
 	}
+	artistInfo.ID = artist.ID
 
 	// lastfm is best-effort. without an api key these calls fail, but we can still resolve
 	// similar artists from musicbrainz using the artist's tag-scanned mbid. only overwrite

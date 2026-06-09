@@ -60,11 +60,10 @@ func (a *AlbumInfoCache) Get(ctx context.Context, albumID int) (*db.AlbumInfo, e
 
 func (a *AlbumInfoCache) Lookup(ctx context.Context, album *db.Album) (*db.AlbumInfo, error) {
 	var albumInfo db.AlbumInfo
-	albumInfo.ID = album.ID
-
-	if err := a.db.FirstOrCreate(&albumInfo, "id=?", albumInfo.ID).Error; err != nil {
-		return nil, fmt.Errorf("first or create album info: %w", err)
+	if err := a.db.Find(&albumInfo, "id=?", album.ID).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, fmt.Errorf("find album info: %w", err)
 	}
+	albumInfo.ID = album.ID
 
 	// lastfm is best-effort. without an api key these calls fail, but we can still resolve
 	// musicbrainz facts from the album's tag-scanned mbid. only overwrite fields when we
