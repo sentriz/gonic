@@ -350,6 +350,10 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	sub.ArtistInfoTwo.MusicBrainzID = info.MusicBrainzID
 	sub.ArtistInfoTwo.LastFMURL = info.LastFMURL
 
+	if err := uuid.Validate(artist.MusicBrainzID); err == nil {
+		sub.ArtistInfoTwo.MusicBrainzID = artist.MusicBrainzID // prefer db musicbrainz ID over lastfm's
+	}
+
 	sub.ArtistInfoTwo.SmallImageURL = c.genArtistCoverURL(r, &artist, 64)
 	sub.ArtistInfoTwo.MediumImageURL = c.genArtistCoverURL(r, &artist, 126)
 	sub.ArtistInfoTwo.LargeImageURL = c.genArtistCoverURL(r, &artist, 256)
