@@ -170,9 +170,10 @@ func (db *DB) TransactionChunked(data []int64, cb func(*DB, []int64) error) erro
 type SettingKey string
 
 const (
-	LastFMAPIKey SettingKey = "lastfm_api_key" //nolint:gosec
-	LastFMSecret SettingKey = "lastfm_secret"
-	LastScanTime SettingKey = "last_scan_time"
+	LastFMAPIKey     SettingKey = "lastfm_api_key" //nolint:gosec
+	LastFMSecret     SettingKey = "lastfm_secret"
+	LastScanTime     SettingKey = "last_scan_time"
+	LinguisticSorting SettingKey = "linguistic_sorting"
 )
 
 func (db *DB) GetSetting(key SettingKey) (string, error) {
@@ -345,6 +346,7 @@ type Album struct {
 	LeftPath             string `gorm:"unique_index:idx_album_abs_path"`
 	RightPath            string `gorm:"not null; unique_index:idx_album_abs_path" sql:"default: null"`
 	RightPathUDec        string `sql:"default: null"`
+	RightPathSortKey     string `sql:"default: null"`
 	Parent               *Album
 	ParentID             int            `sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
 	RootDir              string         `gorm:"unique_index:idx_album_abs_path" sql:"default: null"`

@@ -73,6 +73,30 @@ type Controller struct {
 	resolveProxyPath ProxyPathResolver
 }
 
+func (c *Controller) sortRightPath() string {
+	v, err := c.dbc.GetSetting(db.LinguisticSorting)
+	if err != nil || v != "true" {
+		return "right_path COLLATE NOCASE"
+	}
+	return "right_path_sort_key"
+}
+
+func (c *Controller) sortRightPathPrefixed() string {
+	v, err := c.dbc.GetSetting(db.LinguisticSorting)
+	if err != nil || v != "true" {
+		return "albums.right_path COLLATE NOCASE"
+	}
+	return "albums.right_path_sort_key"
+}
+
+func (c *Controller) sortRightPathParentPrefixed() string {
+	v, err := c.dbc.GetSetting(db.LinguisticSorting)
+	if err != nil || v != "true" {
+		return "parent_albums.right_path"
+	}
+	return "parent_albums.right_path_sort_key"
+}
+
 func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPath string, cacheAudioPath string, coverCache *cache.DirCache, jukebox *jukebox.Jukebox, playlistStore *playlist.Store, scrobblers []scrobble.Scrobbler, podcasts *podcast.Podcasts, transcoder transcode.Transcoder, lastFMClient *lastfm.Client, artistInfoCache *artistinfocache.ArtistInfoCache, albumInfoCache *albuminfocache.AlbumInfoCache, tagReader tags.Reader, resolveProxyPath ProxyPathResolver) (*Controller, error) {
 	c := Controller{
 		ServeMux: http.NewServeMux(),

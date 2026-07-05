@@ -90,7 +90,7 @@ func (c *Controller) ServeGetArtist(r *http.Request) *spec.Response {
 				JOIN tracks ON tracks.id=track_credits.track_id
 				WHERE track_credits.artist_id=?
 		)`, artist.ID, artist.ID).
-		Order("albums.right_path").
+		Order(c.sortRightPathPrefixed()).
 		Find(&appearances).Error; err != nil {
 		return spec.NewError(0, "find artist appearances: %v", err)
 	}

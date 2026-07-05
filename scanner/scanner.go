@@ -21,6 +21,8 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/jinzhu/gorm"
 	"github.com/rainycape/unidecode"
+	"golang.org/x/text/collate"
+	"golang.org/x/text/language"
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/fileutil"
@@ -32,6 +34,8 @@ import (
 var (
 	ErrAlreadyScanning = errors.New("already scanning")
 	ErrReadingTags     = errors.New("could not read tags")
+	albumSortBuf       = &collate.Buffer{}
+	albumSortCollator  = collate.New(language.English)
 )
 
 type Scanner struct {
@@ -621,6 +625,7 @@ func populateAlbumBasics(tx *db.DB, musicDir string, parent, album *db.Album, di
 	album.RightPath = basename
 	album.Cover = cover
 	album.RightPathUDec = decoded(basename)
+	album.RightPathSortKey = string(albumSortCollator.KeyFromString(albumSortBuf, basename))
 	album.ParentID = parent.ID
 
 	if err := tx.Save(album).Error; err != nil {

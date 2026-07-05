@@ -110,6 +110,13 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 		return &Response{code: 500, err: fmt.Sprintf("error finding internet radio stations: %v", err)}
 	}
 
+	// sorting box
+	sortVal, err := c.dbc.GetSetting(db.LinguisticSorting)
+	if err != nil {
+		return &Response{code: 500, err: fmt.Sprintf("error getting sorting setting: %v", err)}
+	}
+	data.LinguisticSorting = sortVal == "true"
+
 	return &Response{
 		template: "home.tmpl",
 		data:     data,
@@ -380,6 +387,14 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(r *http.Request) *Response {
 	}
 	if err := c.dbc.SetSetting(db.LastFMSecret, secret); err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't set secret: %v", err)}}
+	}
+	return &Response{redirect: "/admin/home"}
+}
+
+func (c *Controller) ServeUpdateLinguisticSortingDo(r *http.Request) *Response {
+	val := r.FormValue("linguistic_sorting")
+	if err := c.dbc.SetSetting(db.LinguisticSorting, val); err != nil {
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't set sorting: %v", err)}}
 	}
 	return &Response{redirect: "/admin/home"}
 }
