@@ -170,9 +170,9 @@ func (db *DB) TransactionChunked(data []int64, cb func(*DB, []int64) error) erro
 type SettingKey string
 
 const (
-	LastFMAPIKey     SettingKey = "lastfm_api_key" //nolint:gosec
-	LastFMSecret     SettingKey = "lastfm_secret"
-	LastScanTime     SettingKey = "last_scan_time"
+	LastFMAPIKey      SettingKey = "lastfm_api_key" //nolint:gosec
+	LastFMSecret      SettingKey = "lastfm_secret"
+	LastScanTime      SettingKey = "last_scan_time"
 	LinguisticSorting SettingKey = "linguistic_sorting"
 )
 

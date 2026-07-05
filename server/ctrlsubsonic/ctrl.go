@@ -35,6 +35,7 @@ const (
 	CtxUser CtxKey = iota
 	CtxSession
 	CtxParams
+	linguisticSortingEnabled = "true"
 )
 
 type MusicPath struct {
@@ -75,7 +76,7 @@ type Controller struct {
 
 func (c *Controller) sortRightPath() string {
 	v, err := c.dbc.GetSetting(db.LinguisticSorting)
-	if err != nil || v != "true" {
+	if err != nil || v != linguisticSortingEnabled {
 		return "right_path COLLATE NOCASE"
 	}
 	return "right_path_sort_key"
@@ -83,7 +84,7 @@ func (c *Controller) sortRightPath() string {
 
 func (c *Controller) sortRightPathPrefixed() string {
 	v, err := c.dbc.GetSetting(db.LinguisticSorting)
-	if err != nil || v != "true" {
+	if err != nil || v != linguisticSortingEnabled {
 		return "albums.right_path COLLATE NOCASE"
 	}
 	return "albums.right_path_sort_key"
@@ -91,7 +92,7 @@ func (c *Controller) sortRightPathPrefixed() string {
 
 func (c *Controller) sortRightPathParentPrefixed() string {
 	v, err := c.dbc.GetSetting(db.LinguisticSorting)
-	if err != nil || v != "true" {
+	if err != nil || v != linguisticSortingEnabled {
 		return "parent_albums.right_path"
 	}
 	return "parent_albums.right_path_sort_key"

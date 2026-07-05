@@ -34,8 +34,6 @@ import (
 var (
 	ErrAlreadyScanning = errors.New("already scanning")
 	ErrReadingTags     = errors.New("could not read tags")
-	albumSortBuf       = &collate.Buffer{}
-	albumSortCollator  = collate.New(language.English)
 )
 
 type Scanner struct {
@@ -47,6 +45,8 @@ type Scanner struct {
 	scanEmbeddedCover  bool
 	genreTree          map[string][]string
 	scanning           *int32
+	sortBuf            *collate.Buffer
+	sortCollator       *collate.Collator
 }
 
 func New(musicDirs []string, db *db.DB, multiValueSettings map[*tags.Spec]tags.MultiValueSetting, tagReader tags.Reader, excludePattern string, scanEmbeddedCover bool, genreTree map[string][]string) *Scanner {
@@ -64,6 +64,8 @@ func New(musicDirs []string, db *db.DB, multiValueSettings map[*tags.Spec]tags.M
 		scanEmbeddedCover:  scanEmbeddedCover,
 		genreTree:          genreTree,
 		scanning:           new(int32),
+		sortBuf:            &collate.Buffer{},
+		sortCollator:       collate.New(language.English),
 	}
 }
 
@@ -318,7 +320,7 @@ func (s *Scanner) scanDir(st *State, absPath string) error {
 
 	dir, basename := filepath.Split(relPath)
 	var album db.Album
-	if err := populateAlbumBasics(s.db, musicDir, &parent, &album, dir, basename, cover); err != nil {
+	if err := s.populateAlbumBasics(s.db, musicDir, &parent, &album, dir, basename, cover); err != nil {
 		return fmt.Errorf("populate album basics: %w", err)
 	}
 
@@ -610,7 +612,7 @@ func populateAlbum(tx *db.DB, album *db.Album, trags map[string][]string, modTim
 	return nil
 }
 
-func populateAlbumBasics(tx *db.DB, musicDir string, parent, album *db.Album, dir, basename string, cover string) error {
+func (s *Scanner) populateAlbumBasics(tx *db.DB, musicDir string, parent, album *db.Album, dir, basename string, cover string) error {
 	if err := tx.Where("root_dir=? AND left_path=? AND right_path=?", musicDir, dir, basename).First(album).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return fmt.Errorf("find album: %w", err)
 	}
@@ -625,7 +627,7 @@ func populateAlbumBasics(tx *db.DB, musicDir string, parent, album *db.Album, di
 	album.RightPath = basename
 	album.Cover = cover
 	album.RightPathUDec = decoded(basename)
-	album.RightPathSortKey = string(albumSortCollator.KeyFromString(albumSortBuf, basename))
+	album.RightPathSortKey = string(s.sortCollator.KeyFromString(s.sortBuf, basename))
 	album.ParentID = parent.ID
 
 	if err := tx.Save(album).Error; err != nil {
