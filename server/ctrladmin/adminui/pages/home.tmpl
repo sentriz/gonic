@@ -82,11 +82,11 @@
 {{ component "block" (props .
     "Icon" "music"
     "Name" "transcoding"
-    "Desc" "profiles applied when streaming. clients can adjust the bitrate via the <span class=\"italic text-gray-800\">maxBitRate</span> stream param"
+    "Desc" "profiles applied when streaming, via both the <span class=\"italic text-gray-800\">stream</span> endpoint and the opensubsonic <a class='text-blue-500' href='https://opensubsonic.netlify.app/docs/extensions/transcoding/' target='_blank' rel='noopener noreferrer'>transcoding extension</a>. with stream, clients adjust the bitrate via the <span class=\"italic text-gray-800\">maxBitRate</span> param. with the extension, bitrate is negotiated from the client's capabilities"
 ) }}
     <div class="text-left">
-        <div class="text-gray-900 font-bold">defaults per format</div>
-        <div class="font-medium text-gray-500">picked by the client's <span class="italic text-gray-800">format</span> param. one per format. topmost is the fallback when no format is specified</div>
+        <div class="text-gray-900 font-bold">overwrite per format</div>
+        <div class="font-medium text-gray-500">one per format. with stream, picked by the client's <span class="italic text-gray-800">format</span> param, topmost being the fallback when no format is specified. with the extension, picked by the negotiated format</div>
     </div>
     <div class="grid grid-cols-[1fr_auto] gap-2 items-center justify-items-end">
         {{ range $i, $fp := .TranscodeFormatPreferences }}
@@ -106,8 +106,8 @@
     </div>
 
     <div class="text-left pt-3">
-        <div class="text-gray-900 font-bold">per-client overrides</div>
-        <div class="font-medium text-gray-500">force a profile for a specific client (mainly for legacy clients). seeking may not work. client names are in the gonic logs. use <span class="italic text-gray-800">*</span> as a catch-all</div>
+        <div class="text-gray-900 font-bold">overwrite per client</div>
+        <div class="font-medium text-gray-500">force a profile for a client, beating the per-format overwrites. with stream, replaces the requested format. with the extension, denies direct play. seeking may not work. client names are in the gonic logs. use <span class="italic text-gray-800">*</span> as a catch-all</div>
     </div>
     <div class="grid grid-cols-[1fr_1fr_auto] gap-2 items-center justify-items-end">
         {{ range $pref := .TranscodePreferences }}

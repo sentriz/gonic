@@ -221,11 +221,17 @@ type Genre struct {
 // AudioFile is used to avoid some duplication in handlers_raw.go
 // between Track and Podcast
 type AudioFile interface {
+	SID() *specid.ID
 	Ext() string
 	MIME() string
+	AbsPath() string
 	AudioFilename() string
 	AudioBitrate() int
 	AudioLength() int
+	AudioCodec() string
+	AudioChannels() int
+	AudioSampleRate() int
+	AudioBitDepth() int
 }
 
 type Track struct {
@@ -242,6 +248,10 @@ type Track struct {
 	Size                 int            `sql:"default: null"`
 	Length               int            `sql:"default: null"`
 	Bitrate              int            `sql:"default: null"`
+	Channels             int            `sql:"default: null"`
+	SampleRate           int            `sql:"default: null"`
+	BitDepth             int            `sql:"default: null"`
+	Codec                string         `sql:"default: null"`
 	TagTitle             string         `sql:"default: null"`
 	TagTitleUDec         string         `sql:"default: null"`
 	TagTrackArtist       string         `sql:"default: null"`
@@ -266,8 +276,12 @@ type Track struct {
 	Play        *TrackPlay
 }
 
-func (t *Track) AudioLength() int  { return t.Length }
-func (t *Track) AudioBitrate() int { return t.Bitrate }
+func (t *Track) AudioLength() int     { return t.Length }
+func (t *Track) AudioBitrate() int    { return t.Bitrate }
+func (t *Track) AudioCodec() string   { return t.Codec }
+func (t *Track) AudioChannels() int   { return t.Channels }
+func (t *Track) AudioSampleRate() int { return t.SampleRate }
+func (t *Track) AudioBitDepth() int   { return t.BitDepth }
 
 func (t *Track) SID() *specid.ID {
 	return &specid.ID{Type: specid.Track, Value: t.ID}
@@ -568,6 +582,10 @@ type PodcastEpisode struct {
 	AudioURL    string
 	Bitrate     int
 	Length      int
+	Channels    int    `sql:"default: null"`
+	SampleRate  int    `sql:"default: null"`
+	BitDepth    int    `sql:"default: null"`
+	Codec       string `sql:"default: null"`
 	Size        int
 	Filename    string
 	Status      PodcastEpisodeStatus
@@ -577,8 +595,12 @@ type PodcastEpisode struct {
 	Album       string
 }
 
-func (pe *PodcastEpisode) AudioLength() int  { return pe.Length }
-func (pe *PodcastEpisode) AudioBitrate() int { return pe.Bitrate }
+func (pe *PodcastEpisode) AudioLength() int     { return pe.Length }
+func (pe *PodcastEpisode) AudioBitrate() int    { return pe.Bitrate }
+func (pe *PodcastEpisode) AudioCodec() string   { return pe.Codec }
+func (pe *PodcastEpisode) AudioChannels() int   { return pe.Channels }
+func (pe *PodcastEpisode) AudioSampleRate() int { return pe.SampleRate }
+func (pe *PodcastEpisode) AudioBitDepth() int   { return pe.BitDepth }
 
 func (pe *PodcastEpisode) SID() *specid.ID {
 	return &specid.ID{Type: specid.PodcastEpisode, Value: pe.ID}

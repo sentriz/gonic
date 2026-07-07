@@ -20,6 +20,26 @@ type Result interface {
 	AbsPath() string
 }
 
+// LocateMedia resolves an opensubsonic mediaType + id pair (as used by the transcoding and playbackReport
+// extensions) to its db.AudioFile. only audio media -- songs and podcast episodes -- is supported.
+func LocateMedia(dbc *db.DB, mediaType string, id specid.ID) (db.AudioFile, error) {
+	switch {
+	case mediaType == "song" && id.Type == specid.Track:
+	case mediaType == "podcast" && id.Type == specid.PodcastEpisode:
+	default:
+		return nil, ErrNotFound
+	}
+	file, err := Locate(dbc, id)
+	if err != nil {
+		return nil, err
+	}
+	audio, ok := file.(db.AudioFile)
+	if !ok || audio.AbsPath() == "" {
+		return nil, ErrNotFound
+	}
+	return audio, nil
+}
+
 // Locate maps a specid to its location on the filesystem
 func Locate(dbc *db.DB, id specid.ID) (Result, error) {
 	switch id.Type {

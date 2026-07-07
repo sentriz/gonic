@@ -104,6 +104,7 @@ type Response struct {
 	InternetRadioStations *InternetRadioStations `xml:"internetRadioStations" json:"internetRadioStations,omitempty"`
 	Lyrics                *Lyrics                `xml:"lyrics"                json:"lyrics,omitempty"`
 	LyricsList            *LyricsList            `xml:"lyricsList"            json:"lyricsList,omitempty"`
+	TranscodeDecision     *TranscodeDecision     `xml:"transcodeDecision"     json:"transcodeDecision,omitempty"`
 	NowPlaying            *NowPlaying            `xml:"nowPlaying"            json:"nowPlaying,omitempty"`
 }
 
@@ -255,7 +256,7 @@ type TrackChild struct {
 	Contributors    []*Contributor `xml:"contributors"            json:"contributors"`
 	DisplayComposer string         `xml:"displayComposer,attr"    json:"displayComposer"`
 
-	Bitrate     int         `xml:"bitRate,attr,omitempty"     json:"bitRate,omitempty"`
+	BitRate     int         `xml:"bitRate,attr,omitempty"     json:"bitRate,omitempty"`
 	ContentType string      `xml:"contentType,attr,omitempty" json:"contentType,omitempty"`
 	CoverID     *specid.ID  `xml:"coverArt,attr,omitempty"    json:"coverArt,omitempty"`
 	CreatedAt   time.Time   `xml:"created,attr,omitempty"     json:"created"`
@@ -576,6 +577,84 @@ type OpenSubsonicExtension struct {
 }
 
 type OpenSubsonicExtensions []OpenSubsonicExtension
+
+// https://opensubsonic.netlify.app/docs/responses/transcodedecision/
+type TranscodeDecision struct {
+	CanDirectPlay   bool           `xml:"canDirectPlay,attr"             json:"canDirectPlay"`
+	CanTranscode    bool           `xml:"canTranscode,attr"              json:"canTranscode"`
+	TranscodeReason []string       `xml:"transcodeReason"                json:"transcodeReason,omitempty"`
+	ErrorReason     string         `xml:"errorReason,attr,omitempty"     json:"errorReason,omitempty"`
+	TranscodeParams string         `xml:"transcodeParams,attr,omitempty" json:"transcodeParams,omitempty"`
+	SourceStream    *StreamDetails `xml:"sourceStream"                   json:"sourceStream,omitempty"`
+	TranscodeStream *StreamDetails `xml:"transcodeStream"                json:"transcodeStream,omitempty"`
+}
+
+// https://opensubsonic.netlify.app/docs/responses/streamdetails/
+type StreamDetails struct {
+	Protocol        string `xml:"protocol,attr"                  json:"protocol"`
+	Container       string `xml:"container,attr"                 json:"container"`
+	Codec           string `xml:"codec,attr"                     json:"codec"`
+	AudioChannels   int    `xml:"audioChannels,attr,omitempty"   json:"audioChannels,omitempty"`
+	AudioBitRateBPS int    `xml:"audioBitrate,attr,omitempty"    json:"audioBitrate,omitempty"`
+	AudioProfile    string `xml:"audioProfile,attr,omitempty"    json:"audioProfile,omitempty"`
+	AudioSampleRate int    `xml:"audioSamplerate,attr,omitempty" json:"audioSamplerate,omitempty"`
+	AudioBitDepth   int    `xml:"audioBitdepth,attr,omitempty"   json:"audioBitdepth,omitempty"`
+}
+
+// ClientInfo is the JSON body posted to getTranscodeDecision describing the client's playback capabilities.
+// https://opensubsonic.netlify.app/docs/responses/clientinfo/
+type ClientInfo struct {
+	Name                          string               `json:"name"`
+	Platform                      string               `json:"platform"`
+	MaxAudioBitRateBPS            int                  `json:"maxAudioBitrate"`
+	MaxTranscodingAudioBitRateBPS int                  `json:"maxTranscodingAudioBitrate"`
+	DirectPlayProfiles            []DirectPlayProfile  `json:"directPlayProfiles"`
+	TranscodingProfiles           []TranscodingProfile `json:"transcodingProfiles"`
+	CodecProfiles                 []CodecProfile       `json:"codecProfiles"`
+}
+
+type DirectPlayProfile struct {
+	Containers       []string `json:"containers"`
+	AudioCodecs      []string `json:"audioCodecs"`
+	Protocols        []string `json:"protocols"`
+	MaxAudioChannels int      `json:"maxAudioChannels"`
+}
+
+type TranscodingProfile struct {
+	Container        string `json:"container"`
+	AudioCodec       string `json:"audioCodec"`
+	Protocol         string `json:"protocol"`
+	MaxAudioChannels int    `json:"maxAudioChannels"`
+}
+
+type CodecProfile struct {
+	Type        string       `json:"type"`
+	Name        string       `json:"name"`
+	Limitations []Limitation `json:"limitations"`
+}
+
+type Limitation struct {
+	Name       string   `json:"name"`
+	Comparison string   `json:"comparison"`
+	Values     []string `json:"values"`
+	Required   bool     `json:"required"`
+}
+
+// codecProfile enum values
+// https://opensubsonic.netlify.app/docs/responses/codecprofile/
+const (
+	ComparisonEquals           = "Equals"
+	ComparisonNotEquals        = "NotEquals"
+	ComparisonLessThanEqual    = "LessThanEqual"
+	ComparisonGreaterThanEqual = "GreaterThanEqual"
+
+	LimitationAudioChannels   = "audioChannels"
+	LimitationAudioBitrate    = "audioBitrate"
+	LimitationAudioSamplerate = "audioSamplerate"
+	LimitationAudioBitDepth   = "audioBitdepth"
+
+	CodecProfileTypeAudio = "AudioCodec"
+)
 
 func formatExt(ext string) string {
 	return strings.TrimPrefix(ext, ".")

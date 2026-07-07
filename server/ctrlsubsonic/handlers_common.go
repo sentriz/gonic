@@ -48,6 +48,7 @@ func (c *Controller) ServeGetOpenSubsonicExtensions(_ *http.Request) *spec.Respo
 		{Name: "formPost", Versions: []int{1}},
 		{Name: "songLyrics", Versions: []int{1}},
 		{Name: "topSongsByArtistId", Versions: []int{1}},
+		{Name: "transcoding", Versions: []int{1}},
 	}
 	return sub
 }

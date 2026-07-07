@@ -105,6 +105,28 @@ func TestTranscodeWithSeek(t *testing.T) {
 	require.Equal(t, (testFileLen-seekSecs)*bytesPerSec, buf.Len())
 }
 
+// TestTranscodeFLAC transcodes the 5s 48kHz FLAC down to 24kHz 16 bit, decodes the result back to PCM, and
+// checks the durations match -- covering the flac profile's <sampleformat> expansion end to end.
+func TestTranscodeFLAC(t *testing.T) {
+	t.Parallel()
+
+	profile := transcode.WithBitDepth(transcode.WithSampleRate(transcode.FLAC, 24_000), 16)
+
+	var buf bytes.Buffer
+	tr := transcode.NewFFmpegTranscoder()
+	require.NoError(t, tr.Transcode(context.Background(), profile, "testdata/5s.flac", &buf))
+
+	f, err := os.CreateTemp(t.TempDir(), "*.flac")
+	require.NoError(t, err)
+	_, err = f.Write(buf.Bytes())
+	require.NoError(t, err)
+	require.NoError(t, f.Close())
+
+	var pcm bytes.Buffer
+	require.NoError(t, tr.Transcode(context.Background(), transcode.PCM16le, f.Name(), &pcm))
+	require.Equal(t, 5*bytesPerSec, pcm.Len()) // PCM16le resamples to 48kHz, so 5s at the usual rate
+}
+
 func TestCachingParallelism(t *testing.T) {
 	t.Parallel()
 

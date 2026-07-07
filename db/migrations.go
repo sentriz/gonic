@@ -102,6 +102,8 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202607141400", migrateTrackComposer),
 		construct(ctx, "202607141500", migrateAlbumVersion),
 		construct(ctx, "202607171200", migrateAddPodcastEpisodeGUID),
+		construct(ctx, "202607181200", migrateAddTrackAudioProperties),
+		construct(ctx, "202607181300", migrateAddPodcastEpisodeAudioProperties),
 		construct(ctx, "202607241200", migrateClearUnknownAudioProperties),
 	}
 
@@ -1098,4 +1100,12 @@ func migrateClearUnknownAudioProperties(tx *gorm.DB, _ MigrationContext) error {
 		UPDATE podcast_episodes SET bitrate=0 WHERE bitrate=4294967295;
 		UPDATE podcast_episodes SET length=0 WHERE length=4294967;
 	`).Error
+}
+
+func migrateAddTrackAudioProperties(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(Track{}).Error
+}
+
+func migrateAddPodcastEpisodeAudioProperties(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(PodcastEpisode{}).Error
 }

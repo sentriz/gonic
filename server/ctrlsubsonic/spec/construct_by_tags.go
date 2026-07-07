@@ -128,7 +128,7 @@ func NewTrackByTags(client string, t *TrackRow, album *db.Album) *TrackChild {
 		AlbumDisplayArtist: cmp.Or(album.TagAlbumArtistCredit, album.TagAlbumArtist),
 		Contributors:       []*Contributor{},
 		DisplayComposer:    cmp.Or(t.TagComposerCredit, t.TagComposer),
-		Bitrate:            t.Bitrate,
+		BitRate:            t.Bitrate,
 		ContentType:        t.MIME(),
 		CreatedAt:          t.CreatedAt,
 		Duration:           t.Length,

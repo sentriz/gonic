@@ -584,6 +584,10 @@ func (p *Podcasts) doPodcastDownload(podcast *db.Podcast, podcastEpisode *db.Pod
 	podcastEpisode.Status = db.PodcastEpisodeStatusCompleted
 	podcastEpisode.Bitrate = int(podcastProps.Bitrate)
 	podcastEpisode.Length = int(podcastProps.Length.Seconds())
+	podcastEpisode.Channels = int(podcastProps.Channels)
+	podcastEpisode.SampleRate = int(podcastProps.SampleRate)
+	podcastEpisode.BitDepth = int(podcastProps.BitDepth)
+	podcastEpisode.Codec = podcastProps.Codec
 
 	stat, _ := file.Stat()
 	podcastEpisode.Size = int(stat.Size())
