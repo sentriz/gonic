@@ -31,7 +31,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	go.senan.xyz/flagconf v0.1.11
 	go.senan.xyz/sqlitenotify v0.0.0-20260513112327-19a2c9e09109
-	go.senan.xyz/taglib v0.14.0
+	go.senan.xyz/taglib v0.14.1-0.20260926143727-d4e55a151cb0
 	go.senan.xyz/wrtag v0.33.0
 	golang.org/x/net v0.57.0
 	golang.org/x/sync v0.22.0

@@ -134,6 +134,7 @@ func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPa
 	c.Handle("/getSimilarSongs2", chain(resp(c.ServeGetSimilarSongsTwo)))
 	c.Handle("/getLyrics", chain(resp(c.ServeGetLyrics)))
 	c.Handle("/getLyricsBySongId", chain(resp(c.ServeGetLyricsBySongID)))
+	c.Handle("/getTranscodeDecision", chain(resp(c.ServeGetTranscodeDecision)))
 	c.Handle("/getNowPlaying", chain(resp(c.ServeGetNowPlaying)))
 
 	// raw
@@ -141,6 +142,7 @@ func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPa
 	c.Handle("/stream", chainRaw(respRaw(c.ServeStream)))
 	c.Handle("/download", chainRaw(respRaw(c.ServeStream)))
 	c.Handle("/getAvatar", chainRaw(respRaw(c.ServeGetAvatar)))
+	c.Handle("/getTranscodeStream", chainRaw(respRaw(c.ServeGetTranscodeStream)))
 
 	// browse by tag
 	c.Handle("/getAlbum", chain(resp(c.ServeGetAlbum)))

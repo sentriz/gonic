@@ -664,9 +664,13 @@ func populateTrack(tx *db.DB, scanEmbeddedCover bool, album *db.Album, track *db
 		track.HasEmbeddedCover = trprops.HasCover
 	}
 
-	// these two are calculated from the file instead of tags
+	// these are calculated from the file instead of tags
 	track.Length = int(trprops.Length.Seconds())
 	track.Bitrate = int(trprops.Bitrate)
+	track.Channels = int(trprops.Channels)
+	track.SampleRate = int(trprops.SampleRate)
+	track.BitDepth = int(trprops.BitDepth)
+	track.Codec = trprops.Codec
 
 	if err := tx.Save(track).Error; err != nil {
 		return fmt.Errorf("saving track: %w", err)
