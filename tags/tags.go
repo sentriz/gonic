@@ -216,7 +216,8 @@ func pairCredits(values, valuesCredit, valuesMusicBrainzID []string) []Credited 
 		if i < len(valuesCredit) && valuesCredit[i] != "" && valuesCredit[i] != v {
 			e.ValueCredit = valuesCredit[i]
 		}
-		if i < len(valuesMusicBrainzID) {
+		// only pair MBIDs when their count matches the names, else a joined "A with B" name would wrongly adopt A's ID
+		if len(valuesMusicBrainzID) == len(values) {
 			e.MusicBrainzID = valuesMusicBrainzID[i]
 		}
 		out = append(out, e)

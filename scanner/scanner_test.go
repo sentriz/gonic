@@ -364,6 +364,38 @@ func TestArtistMusicBrainzID(t *testing.T) {
 			Pluck("artist_id", &remixerArtistIDs).Error)
 		assert.Equal(t, []int{fooA.ID}, remixerArtistIDs, "remixer should attach to the mbidA row via within-track context, not lowest-id (mbidB)")
 	})
+
+	t.Run("joined name with multiple mbids stays its own artist", func(t *testing.T) {
+		t.Parallel()
+		m := mockfs.New(t)
+
+		// a plain "John Coltrane" track establishes the mbidA row, scanned first (dirs are walked in order)
+		setArtist(m, "a-coltrane/album/track.flac", "John Coltrane", mbidA)
+
+		// a collaboration track has a single joined name but two mbids (the ARTISTS field isn't written).
+		// naively pairing name[0] with mbid[0] attaches mbidA and merges this credit into "John Coltrane"
+		m.SetTrack("b-collab/album/track.flac", func(info *mockfs.TagInfo) {
+			normtag.Set(info.Tags, normtag.Artist, "John Coltrane with Eric Dolphy")
+			normtag.Set(info.Tags, normtag.AlbumArtist, "John Coltrane with Eric Dolphy")
+			normtag.Set(info.Tags, normtag.Album, "Evenings at the Village Gate")
+			normtag.Set(info.Tags, normtag.Title, "My Favorite Things")
+			normtag.Set(info.Tags, normtag.MusicBrainzArtistID, mbidA, mbidB)
+			normtag.Set(info.Tags, normtag.MusicBrainzAlbumArtistID, mbidA, mbidB)
+		})
+		m.ScanAndClean()
+
+		var collab db.Album
+		require.NoError(t, m.DB().Where("tag_title=?", "Evenings at the Village Gate").First(&collab).Error)
+
+		var artistNames []string
+		require.NoError(t, m.DB().
+			Model(&db.Artist{}).
+			Joins("JOIN track_credits ON track_credits.artist_id = artists.id").
+			Joins("JOIN tracks ON tracks.id = track_credits.track_id").
+			Where("tracks.album_id=? AND track_credits.role=?", collab.ID, db.RoleArtist).
+			Pluck("artists.name", &artistNames).Error)
+		assert.Equal(t, []string{"John Coltrane with Eric Dolphy"}, artistNames)
+	})
 }
 
 func TestGenres(t *testing.T) {
