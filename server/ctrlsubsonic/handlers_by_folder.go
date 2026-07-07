@@ -32,7 +32,7 @@ func (c *Controller) ServeGetIndexes(r *http.Request) *spec.Response {
 	err := c.dbc.
 		Scopes(spec.AlbumWithChildAlbumCounts, spec.AlbumWithUserData(user.ID)).
 		Where("albums.parent_id IN ?", rootQ.SubQuery()).
-		Order("albums.right_path COLLATE NOCASE").
+		Order(c.sortRightPathPrefixed()).
 		Find(&folders).
 		Error
 	if err != nil {
@@ -85,7 +85,7 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 		Scopes(spec.LoadAlbumByFolder(user.ID)).
 		Where("parent_id=?", id.Value).
 		Order("tag_year").
-		Order("albums.right_path COLLATE NOCASE").
+		Order(c.sortRightPathPrefixed()).
 		Find(&childFolders).
 		Error
 	if err != nil {
@@ -138,9 +138,9 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 		q = q.Joins(`
 			JOIN albums parent_albums
 			ON albums.parent_id=parent_albums.id`)
-		q = q.Order("parent_albums.right_path")
+		q = q.Order(c.sortRightPathParentPrefixed())
 	case "alphabeticalByName":
-		q = q.Order("right_path")
+		q = q.Order(c.sortRightPath())
 	case "byYear":
 		y1, y2 := params.GetOrInt("fromYear", 1800),
 			params.GetOrInt("toYear", 2200)
@@ -151,7 +151,7 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 		genre, _ := params.Get("genre")
 		q = q.Joins("JOIN album_genres ON album_genres.album_id=albums.id")
 		q = q.Joins("JOIN genres ON genres.id=album_genres.genre_id AND genres.name=?", genre)
-		q = q.Order("right_path")
+		q = q.Order(c.sortRightPath())
 	case "frequent":
 		q = q.Having("play_length > 0").Order("play_length DESC")
 	case "newest":
@@ -162,7 +162,7 @@ func (c *Controller) ServeGetAlbumList(r *http.Request) *spec.Response {
 		q = q.Having("play_time IS NOT NULL").Order("play_time DESC")
 	case "starred":
 		q = q.Joins("JOIN album_stars ON albums.id=album_stars.album_id AND album_stars.user_id=?", user.ID)
-		q = q.Order("right_path")
+		q = q.Order(c.sortRightPath())
 	case "highest":
 		q = q.Joins("JOIN album_ratings ON album_ratings.album_id=albums.id AND album_ratings.user_id=?", user.ID)
 		q = q.Order("album_ratings.rating DESC")

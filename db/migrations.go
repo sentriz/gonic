@@ -14,6 +14,8 @@ import (
 	"go.senan.xyz/gonic/fileutil"
 	"go.senan.xyz/gonic/playlist"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
+	"golang.org/x/text/collate"
+	"golang.org/x/text/language"
 	"gopkg.in/gormigrate.v1"
 )
 
@@ -99,6 +101,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202606051200", migrateDropAverageRating),
 		construct(ctx, "202606091200", migrateArtistInfoFieldsBySource),
 		construct(ctx, "202606091300", migrateAlbumInfoMusicBrainzDisambiguation),
+		construct(ctx, "202607051200", migrateAlbumRightPathSortKey),
 	}
 
 	return gormigrate.
@@ -1060,6 +1063,28 @@ func migrateArtistInfoFieldsBySource(tx *gorm.DB, _ MigrationContext) error {
 		}
 	}
 	return tx.AutoMigrate(ArtistInfo{}).Error
+}
+
+func migrateAlbumRightPathSortKey(tx *gorm.DB, _ MigrationContext) error {
+	if err := tx.AutoMigrate(Album{}).Error; err != nil {
+		return fmt.Errorf("add column: %w", err)
+	}
+	var albums []Album
+	if err := tx.Find(&albums).Error; err != nil {
+		return fmt.Errorf("find albums: %w", err)
+	}
+	cl := collate.New(language.English)
+	buf := &collate.Buffer{}
+	for _, a := range albums {
+		if a.RightPath == "" {
+			continue
+		}
+		sortKey := string(cl.KeyFromString(buf, a.RightPath))
+		if err := tx.Model(&a).Update("right_path_sortkey", sortKey).Error; err != nil {
+			return fmt.Errorf("update album %d sort key: %w", a.ID, err)
+		}
+	}
+	return nil
 }
 
 func migrateAlbumInfoMusicBrainzDisambiguation(tx *gorm.DB, _ MigrationContext) error {

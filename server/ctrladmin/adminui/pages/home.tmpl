@@ -179,6 +179,20 @@
     </div>
 {{ end }}
 
+{{ component "block" (props .
+    "Icon" "list"
+    "Name" "sorting"
+    "Desc" "folder and album sorting order"
+) }}
+    <form class="contents" action="{{ path "/admin/update_linguistic_sorting_do" }}" method="post">
+        <select class="auto-submit" name="linguistic_sorting">
+            <option value="false" {{ if not .LinguisticSorting }}selected="selected"{{ end }}>bytewise (default)</option>
+            <option value="true" {{ if .LinguisticSorting }}selected="selected"{{ end }}>linguistic (like Finder/Explorer)</option>
+        </select>
+        <p class="text-gray-500 text-left">linguistic sorting uses Unicode Collation, matching how file explorers order files. requires a re-scan to populate sort keys for existing folders.</p>
+    </form>
+{{ end }}
+
 {{ if .User.IsAdmin }}
 {{ component "block" (props .
     "Icon" "rss"

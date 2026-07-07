@@ -109,6 +109,7 @@ func New(dbc *db.DB, sessDB *gormstore.Store, scanner *scanner.Scanner, podcasts
 	c.Handle("/create_user_do", adminChain(resp(c.ServeCreateUserDo)))
 	c.Handle("/update_lastfm_api_key", adminChain(resp(c.ServeUpdateLastFMAPIKey)))
 	c.Handle("/update_lastfm_api_key_do", adminChain(resp(c.ServeUpdateLastFMAPIKeyDo)))
+	c.Handle("/update_linguistic_sorting_do", adminChain(resp(c.ServeUpdateLinguisticSortingDo)))
 	c.Handle("/start_scan_inc_do", adminChain(resp(c.ServeStartScanIncDo)))
 	c.Handle("/start_scan_full_do", adminChain(resp(c.ServeStartScanFullDo)))
 	c.Handle("/add_podcast_do", adminChain(resp(c.ServePodcastAddDo)))
@@ -298,6 +299,7 @@ type templateData struct {
 	CurrentLastFMAPISecret string
 	DefaultListenBrainzURL string
 	SelectedUser           *db.User
+	LinguisticSorting      bool
 
 	Podcasts              []*db.Podcast
 	InternetRadioStations []*db.InternetRadioStation
