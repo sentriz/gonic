@@ -105,6 +105,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202607241200", migrateClearUnknownAudioProperties),
 		construct(ctx, "202609171200", migrateCreditsArtistRoleIndexes),
 		construct(ctx, "202609241500", migrateTrackISRCUniquePerTrack),
+		construct(ctx, "202609261400", migrateAddAudioProperties),
 	}
 
 	return gormigrate.
@@ -1118,4 +1119,8 @@ func migrateTrackISRCUniquePerTrack(tx *gorm.DB, _ MigrationContext) error {
 		DROP INDEX IF EXISTS idx_isrc_track;
 		CREATE UNIQUE INDEX IF NOT EXISTS idx_isrc_track ON "track_isrcs" (isrc, track_id);
 	`).Error
+}
+
+func migrateAddAudioProperties(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(Track{}, PodcastEpisode{}).Error
 }

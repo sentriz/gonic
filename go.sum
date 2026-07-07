@@ -142,6 +142,8 @@ go.senan.xyz/sqlitenotify v0.0.0-20260513112327-19a2c9e09109 h1:YYtVL/9UbNwXYPQJ
 go.senan.xyz/sqlitenotify v0.0.0-20260513112327-19a2c9e09109/go.mod h1:6iYUddh5viOCB1OKkwDRGxNRkLCUve9wWqfO4X7fD/U=
 go.senan.xyz/taglib v0.14.0 h1:cFgq+w7Z++4VzccYBmBt+RwkOvx5ddexy1M7kIty8+Y=
 go.senan.xyz/taglib v0.14.0/go.mod h1:+k5CamBu88xgydgNGJjugYVeafoCCswoGjpw5w5CvD4=
+go.senan.xyz/taglib v0.14.1-0.20260926143727-d4e55a151cb0 h1:QdfZawS45UW3kve1uA26O7pSOT7Y5ikd4LyL9GTGxQU=
+go.senan.xyz/taglib v0.14.1-0.20260926143727-d4e55a151cb0/go.mod h1:+k5CamBu88xgydgNGJjugYVeafoCCswoGjpw5w5CvD4=
 go.senan.xyz/wrtag v0.33.0 h1:jjGfJQmumZsgnlR+jzB/se4wElPPWUEGIt0nOkcCG0U=
 go.senan.xyz/wrtag v0.33.0/go.mod h1:aYWOEXiM/lK/zxM72mzMpeEirhGcuLxuX0h7lVsqUi8=
 golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
