@@ -25,6 +25,7 @@ import (
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"go.senan.xyz/gonic/tags"
 	"go.senan.xyz/gonic/transcode"
 )
@@ -105,6 +106,23 @@ func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPa
 		chain,
 		slow,
 	)
+
+	resp := func(h handlerSubsonic) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			response := h(r)
+			if response != nil && response.Error == nil {
+				if ids := collectCoverIDs(response); len(ids) > 0 {
+					user := r.Context().Value(CtxUser).(*db.User)
+					params := r.Context().Value(CtxParams).(params.Params)
+					client, _ := params.Get("c")
+					go c.prefetchCovers(user.ID, client, ids)
+				}
+			}
+			if err := writeResp(w, r, response); err != nil {
+				log.Printf("error writing subsonic response: %v\n", err)
+			}
+		})
+	}
 
 	c.Handle("/getLicense", chain(resp(c.ServeGetLicence)))
 	c.Handle("/ping", chain(resp(c.ServePing)))
@@ -196,6 +214,119 @@ func resp(h handlerSubsonic) http.Handler {
 			log.Printf("error writing subsonic response: %v\n", err)
 		}
 	})
+}
+
+func (c *Controller) prefetchCovers(userID int, client string, ids []*specid.ID) {
+	var pref db.ClientCoverSizePreference
+	if err := c.dbc.Where("user_id=? AND client=?", userID, client).First(&pref).Error; err != nil {
+		return
+	}
+	if pref.LastCoverSize == 0 {
+		return
+	}
+	seen := make(map[string]bool, len(ids))
+	for _, id := range ids {
+		if id == nil {
+			continue
+		}
+		key := id.String()
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		id := id
+		go func() {
+			c.coverCache.RLock()
+			defer c.coverCache.RUnlock()
+			if _, err := findCachedCover(c.coverCache.Path(), id.String(), pref.LastCoverSize); err == nil {
+				return
+			}
+			if _, err := c.ensureCoverCached(*id, pref.LastCoverSize); err != nil {
+				log.Printf("cover prefetch %s: %v", id, err)
+			}
+		}()
+	}
+}
+
+func collectCoverIDs(r *spec.Response) []*specid.ID {
+	var ids []*specid.ID
+	add := func(id *specid.ID) {
+		if id == nil || (id.Type != specid.Album && id.Type != specid.Track) {
+			return
+		}
+		ids = append(ids, id)
+	}
+	addTracks := func(tracks []*spec.TrackChild) {
+		for _, t := range tracks {
+			if t != nil {
+				add(t.CoverID)
+			}
+		}
+	}
+	addAlbums := func(albums []*spec.Album) {
+		for _, a := range albums {
+			if a != nil {
+				add(a.CoverID)
+			}
+		}
+	}
+	if r.Album != nil {
+		add(r.Album.CoverID)
+		addTracks(r.Album.Tracks)
+	}
+	if r.Albums != nil {
+		addAlbums(r.Albums.List)
+	}
+	if r.AlbumsTwo != nil {
+		addAlbums(r.AlbumsTwo.List)
+	}
+	if r.Artist != nil {
+		addAlbums(r.Artist.Albums)
+	}
+	if r.Track != nil {
+		add(r.Track.CoverID)
+	}
+	if r.RandomTracks != nil {
+		addTracks(r.RandomTracks.List)
+	}
+	if r.TracksByGenre != nil {
+		addTracks(r.TracksByGenre.List)
+	}
+	if r.SearchResultTwo != nil {
+		addTracks(r.SearchResultTwo.Albums) // folder-mode albums as TrackChild
+		addTracks(r.SearchResultTwo.Tracks)
+	}
+	if r.SearchResultThree != nil {
+		addAlbums(r.SearchResultThree.Albums)
+		addTracks(r.SearchResultThree.Tracks)
+	}
+	if r.Starred != nil {
+		addTracks(r.Starred.Albums) // folder-mode albums as TrackChild
+		addTracks(r.Starred.Tracks)
+	}
+	if r.StarredTwo != nil {
+		addAlbums(r.StarredTwo.Albums)
+		addTracks(r.StarredTwo.Tracks)
+	}
+	if r.TopSongs != nil {
+		addTracks(r.TopSongs.Tracks)
+	}
+	if r.SimilarSongs != nil {
+		addTracks(r.SimilarSongs.Tracks)
+	}
+	if r.SimilarSongsTwo != nil {
+		addTracks(r.SimilarSongsTwo.Tracks)
+	}
+	if r.PlayQueue != nil {
+		addTracks(r.PlayQueue.List)
+	}
+	if r.Playlist != nil {
+		addTracks(r.Playlist.List)
+	}
+	if r.Directory != nil {
+		addTracks(r.Directory.Children)
+	}
+	return ids
 }
 
 func respRaw(h handlerSubsonicRaw) http.Handler {
