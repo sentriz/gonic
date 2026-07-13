@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -172,7 +173,6 @@ func TestPlaylistTraversalDenied(t *testing.T) {
 	}{
 		{"get_cross_user", f.contr.ServeGetPlaylist, encode(altID, "..", "1", "private.m3u")},
 		{"delete_cross_user", f.contr.ServeDeletePlaylist, encode(altID, "..", "1", "shared.m3u")},
-		{"create_escapes_base", f.contr.ServeCreateOrUpdatePlaylist, encode("..", "injected.m3u")},
 	}
 	for _, tc := range cases {
 		body := f.query(t, tc.handler, f.alt, url.Values{"id": {tc.id}, "name": {"x"}})
@@ -188,9 +188,48 @@ func TestPlaylistTraversalDenied(t *testing.T) {
 	if _, err := f.contr.playlistStore.Read(filepath.Join("1", "shared.m3u")); err != nil {
 		t.Fatalf("shared playlist deleted via traversal: %v", err)
 	}
-	escaped := filepath.Join(f.contr.playlistStore.BasePath(), "..", "injected.m3u")
-	if _, err := os.Stat(escaped); !os.IsNotExist(err) {
-		t.Fatalf("file written outside playlists dir: stat err=%v", err)
+}
+
+func TestCreatePlaylistIgnoresForeignPath(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	altID := fmt.Sprint(f.alt.ID)
+
+	cases := []struct {
+		name string
+		path string
+	}{
+		{"cross_user", filepath.Join("1", "spoof.m3u")},              // admin's namespace
+		{"base_root", "spoof.m3u"},                                   // owner defaults to admin
+		{"non_numeric_segment", filepath.Join("evilseg", "dos.m3u")}, // would break sanityCheck
+		{"escapes_base", filepath.Join("..", "injected.m3u")},        // traversal out of base dir
+	}
+	for _, tc := range cases {
+		body := f.query(t, f.contr.ServeCreateOrUpdatePlaylist, f.alt, url.Values{
+			"id":   {playlistIDEncode(tc.path).String()},
+			"name": {"x"},
+		})
+		var sub spec.SubsonicResponse
+		if err := json.Unmarshal([]byte(body), &sub); err != nil {
+			t.Fatalf("%s: unmarshal: %v", tc.name, err)
+		}
+		if sub.Response.Status != "ok" || sub.Response.Playlist == nil {
+			t.Fatalf("%s: unexpected response: %s", tc.name, body)
+		}
+		// the client path is ignored; the new playlist must land in the caller's own namespace
+		createdPath := playlistIDDecode(sub.Response.Playlist.ID)
+		if got, _, _ := strings.Cut(createdPath, string(filepath.Separator)); got != altID {
+			t.Fatalf("%s: playlist written outside caller namespace: path %q (segment %q, want %q)", tc.name, createdPath, got, altID)
+		}
+		if _, err := os.Stat(filepath.Join(f.contr.playlistStore.BasePath(), tc.path)); !os.IsNotExist(err) {
+			t.Fatalf("%s: file written to attacker path %q: stat err=%v", tc.name, tc.path, err)
+		}
+	}
+
+	// the playlist subsystem must stay healthy for all users -- no rogue dir breaking sanityCheck
+	if _, err := f.contr.playlistStore.List(); err != nil {
+		t.Fatalf("playlist store broken after foreign-path creates: %v", err)
 	}
 }
 
