@@ -65,6 +65,17 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 		return spec.NewError(0, "invalid size")
 	}
 
+	if id.Type == specid.Playlist {
+		user := r.Context().Value(CtxUser).(*db.User)
+		pl, err := c.playlistStore.Read(playlistIDDecode(id))
+		if err != nil {
+			return spec.NewError(70, "playlist with id %s not found", id)
+		}
+		if pl.UserID != user.ID && !pl.IsPublic {
+			return spec.NewError(50, "you aren't allowed to read that user's playlist")
+		}
+	}
+
 	c.coverCache.RLock()
 	defer c.coverCache.RUnlock()
 
