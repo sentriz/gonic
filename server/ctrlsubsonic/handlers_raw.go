@@ -88,7 +88,7 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 
 	serve := func(p string) {
 		w.Header().Set("Cache-Control", "public, max-age=1209600")
-		http.ServeFile(w, r, p)
+		http.ServeFile(w, r, p) //nolint:gosec // p is contained to the cover cache dir via fileutil.SafeJoin
 	}
 
 	if cachePath != "" {
@@ -111,11 +111,14 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 	// don't upscale
 	minSize := min(size, max(img.Bounds().Dx(), img.Bounds().Dy()))
 
-	cachePath = filepath.Join(c.coverCache.Path(), coverCacheFilename(id.String(), minSize, format))
+	cachePath, err = fileutil.SafeJoin(c.coverCache.Path(), coverCacheFilename(id.String(), minSize, format))
+	if err != nil {
+		return spec.NewError(0, "bad cover id %q: %v", id, err)
+	}
 
 	if minSize != size {
 		// we down sized, check cache again
-		if _, err := os.Stat(cachePath); err == nil { //nolint:gosec // id.String() constrained, format from image.Decode
+		if _, err := os.Stat(cachePath); err == nil {
 			_ = os.Chtimes(cachePath, time.Now(), time.Now()) // touch for LRU eviction
 			serve(cachePath)
 			return nil
@@ -138,8 +141,11 @@ func coverCacheFilename(idStr string, size int, format string) string {
 
 func findCachedCover(cacheDir, idStr string, size int) (string, error) {
 	for _, format := range coverCacheFormats {
-		cachePath := filepath.Join(cacheDir, coverCacheFilename(idStr, size, format))
-		if _, err := os.Stat(cachePath); err == nil { //nolint:gosec // idStr constrained, format from known list
+		cachePath, err := fileutil.SafeJoin(cacheDir, coverCacheFilename(idStr, size, format))
+		if err != nil {
+			return "", err
+		}
+		if _, err := os.Stat(cachePath); err == nil {
 			return cachePath, nil
 		}
 	}
