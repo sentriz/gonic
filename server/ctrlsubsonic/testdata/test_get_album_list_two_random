@@ -8,6 +8,144 @@
     "albumList2": {
       "album": [
         {
+          "id": "al-8",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-1",
+          "artist": "Artist A!",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "Artist A!"
+            },
+            {
+              "id": "ar-17",
+              "name": "Artist B!"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "album-collab",
+          "album": "album-collab",
+          "name": "album-collab",
+          "songCount": 2,
+          "duration": 200,
+          "playCount": 0,
+          "genre": "Pop",
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
+          "year": 2021,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Album"
+          ],
+          "recordLabels": [],
+          "discTitles": [],
+          "musicBrainzId": "",
+          "starred": "2020-06-02T12:00:00Z"
+        },
+        {
+          "id": "al-3",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-1",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "album-aa",
+          "album": "album-aa",
+          "name": "album-aa",
+          "songCount": 3,
+          "duration": 300,
+          "playCount": 7,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            },
+            {
+              "name": "Pop"
+            }
+          ],
+          "year": 2018,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Album"
+          ],
+          "recordLabels": [],
+          "discTitles": [],
+          "musicBrainzId": "00000000-0000-0000-0000-0000000000aa",
+          "starred": "2020-05-01T12:00:00Z",
+          "userRating": 4,
+          "averageRating": 4
+        },
+        {
+          "id": "al-18",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-1",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "empty-album",
+          "album": "empty-album",
+          "name": "empty-album",
+          "songCount": 0,
+          "duration": 0,
+          "playCount": 0,
+          "genres": [],
+          "year": 2015,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Album"
+          ],
+          "recordLabels": [],
+          "discTitles": [],
+          "musicBrainzId": ""
+        },
+        {
+          "id": "al-15",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-1",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "album-cross",
+          "album": "album-cross",
+          "name": "album-cross",
+          "songCount": 1,
+          "duration": 100,
+          "playCount": 0,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "year": 2022,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Album"
+          ],
+          "recordLabels": [],
+          "discTitles": [],
+          "musicBrainzId": ""
+        },
+        {
           "id": "al-4",
           "created": "2019-11-30T00:00:00Z",
           "artistId": "ar-1",
@@ -62,111 +200,6 @@
           "averageRating": 5
         },
         {
-          "id": "al-15",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-1",
-          "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
-          "displayArtist": "artist-a",
-          "title": "album-cross",
-          "album": "album-cross",
-          "name": "album-cross",
-          "songCount": 1,
-          "duration": 100,
-          "playCount": 0,
-          "genre": "Rock",
-          "genres": [
-            {
-              "name": "Rock"
-            }
-          ],
-          "year": 2022,
-          "isCompilation": false,
-          "releaseTypes": [
-            "Album"
-          ],
-          "recordLabels": [],
-          "discTitles": [],
-          "musicBrainzId": ""
-        },
-        {
-          "id": "al-3",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-1",
-          "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
-          "displayArtist": "artist-a",
-          "title": "album-aa",
-          "album": "album-aa",
-          "name": "album-aa",
-          "songCount": 3,
-          "duration": 300,
-          "playCount": 7,
-          "genre": "Rock",
-          "genres": [
-            {
-              "name": "Rock"
-            },
-            {
-              "name": "Pop"
-            }
-          ],
-          "year": 2018,
-          "isCompilation": false,
-          "releaseTypes": [
-            "Album"
-          ],
-          "recordLabels": [],
-          "discTitles": [],
-          "musicBrainzId": "00000000-0000-0000-0000-0000000000aa",
-          "starred": "2020-05-01T12:00:00Z",
-          "userRating": 4,
-          "averageRating": 4
-        },
-        {
-          "id": "al-6",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-17",
-          "artist": "The Mighty B (LP)",
-          "artists": [
-            {
-              "id": "ar-17",
-              "name": "The Mighty B (LP)"
-            }
-          ],
-          "displayArtist": "The Mighty B (LP)",
-          "title": "album-ba",
-          "album": "album-ba",
-          "name": "album-ba",
-          "songCount": 1,
-          "duration": 100,
-          "playCount": 0,
-          "genre": "Jazz",
-          "genres": [
-            {
-              "name": "Jazz"
-            }
-          ],
-          "year": 2017,
-          "isCompilation": false,
-          "releaseTypes": [
-            "Single"
-          ],
-          "recordLabels": [],
-          "discTitles": [],
-          "musicBrainzId": "00000000-0000-0000-0000-0000000000ba"
-        },
-        {
           "id": "al-17",
           "created": "2019-11-30T00:00:00Z",
           "artistId": "ar-19",
@@ -196,34 +229,6 @@
           "releaseTypes": [
             "Album",
             "Compilation"
-          ],
-          "recordLabels": [],
-          "discTitles": [],
-          "musicBrainzId": ""
-        },
-        {
-          "id": "al-18",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-1",
-          "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
-          "displayArtist": "artist-a",
-          "title": "empty-album",
-          "album": "empty-album",
-          "name": "empty-album",
-          "songCount": 0,
-          "duration": 0,
-          "playCount": 0,
-          "genres": [],
-          "year": 2015,
-          "isCompilation": false,
-          "releaseTypes": [
-            "Album"
           ],
           "recordLabels": [],
           "discTitles": [],
@@ -263,6 +268,39 @@
           "musicBrainzId": ""
         },
         {
+          "id": "al-6",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-17",
+          "artist": "The Mighty B (LP)",
+          "artists": [
+            {
+              "id": "ar-17",
+              "name": "The Mighty B (LP)"
+            }
+          ],
+          "displayArtist": "The Mighty B (LP)",
+          "title": "album-ba",
+          "album": "album-ba",
+          "name": "album-ba",
+          "songCount": 1,
+          "duration": 100,
+          "playCount": 0,
+          "genre": "Jazz",
+          "genres": [
+            {
+              "name": "Jazz"
+            }
+          ],
+          "year": 2017,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Single"
+          ],
+          "recordLabels": [],
+          "discTitles": [],
+          "musicBrainzId": "00000000-0000-0000-0000-0000000000ba"
+        },
+        {
           "id": "al-10",
           "created": "2019-11-30T00:00:00Z",
           "artistId": "ar-1",
@@ -298,44 +336,6 @@
           "recordLabels": [],
           "discTitles": [],
           "musicBrainzId": ""
-        },
-        {
-          "id": "al-8",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-1",
-          "artist": "Artist A!",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "Artist A!"
-            },
-            {
-              "id": "ar-17",
-              "name": "Artist B!"
-            }
-          ],
-          "displayArtist": "artist-a",
-          "title": "album-collab",
-          "album": "album-collab",
-          "name": "album-collab",
-          "songCount": 2,
-          "duration": 200,
-          "playCount": 0,
-          "genre": "Pop",
-          "genres": [
-            {
-              "name": "Pop"
-            }
-          ],
-          "year": 2021,
-          "isCompilation": false,
-          "releaseTypes": [
-            "Album"
-          ],
-          "recordLabels": [],
-          "discTitles": [],
-          "musicBrainzId": "",
-          "starred": "2020-06-02T12:00:00Z"
         }
       ]
     }

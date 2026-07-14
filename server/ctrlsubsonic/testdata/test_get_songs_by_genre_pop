@@ -28,6 +28,7 @@
           ],
           "displayAlbumArtist": "artist-a",
           "contributors": [],
+          "displayComposer": "",
           "bitRate": 100,
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",
@@ -146,6 +147,7 @@
               }
             }
           ],
+          "displayComposer": "",
           "bitRate": 100,
           "contentType": "audio/flac",
           "coverArt": "al-4",
@@ -242,6 +244,7 @@
               }
             }
           ],
+          "displayComposer": "Composer C!",
           "bitRate": 100,
           "contentType": "audio/flac",
           "coverArt": "al-4",
@@ -297,6 +300,7 @@
           ],
           "displayAlbumArtist": "artist-a",
           "contributors": [],
+          "displayComposer": "",
           "bitRate": 100,
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",
@@ -350,6 +354,7 @@
           ],
           "displayAlbumArtist": "artist-a",
           "contributors": [],
+          "displayComposer": "",
           "bitRate": 100,
           "contentType": "audio/flac",
           "created": "2019-11-30T00:00:00Z",

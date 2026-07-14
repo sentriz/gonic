@@ -99,6 +99,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202606051200", migrateDropAverageRating),
 		construct(ctx, "202606091200", migrateArtistInfoFieldsBySource),
 		construct(ctx, "202606091300", migrateAlbumInfoMusicBrainzDisambiguation),
+		construct(ctx, "202607141400", migrateTrackComposer),
 	}
 
 	return gormigrate.
@@ -1071,4 +1072,8 @@ func migrateAlbumInfoMusicBrainzDisambiguation(tx *gorm.DB, _ MigrationContext) 
 		}
 	}
 	return tx.AutoMigrate(AlbumInfo{}).Error
+}
+
+func migrateTrackComposer(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(Track{}).Error
 }

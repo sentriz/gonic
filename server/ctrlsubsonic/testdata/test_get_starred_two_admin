@@ -186,6 +186,7 @@
               }
             }
           ],
+          "displayComposer": "",
           "bitRate": 100,
           "contentType": "audio/flac",
           "coverArt": "al-4",

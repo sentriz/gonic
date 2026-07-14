@@ -29,6 +29,7 @@
             ],
             "displayAlbumArtist": "Various Artists",
             "contributors": [],
+            "displayComposer": "",
             "bitRate": 100,
             "contentType": "audio/flac",
             "coverArt": "tr-11",

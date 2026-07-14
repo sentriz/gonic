@@ -644,6 +644,7 @@ func populateTrack(tx *db.DB, scanEmbeddedCover bool, album *db.Album, track *db
 	track.TagTitle, _ = tags.Read(trags, tags.TrackTitle)
 	track.TagTitleUDec = decoded(track.TagTitle)
 	track.TagTrackArtist, track.TagTrackArtistCredit = tags.Read(trags, tags.Artist)
+	track.TagComposer, track.TagComposerCredit = tags.Read(trags, tags.Composer)
 	track.TagTrackNumber = tags.ParseInt(normtag.Get(trags, normtag.TrackNumber))
 	track.TagDiscNumber = tags.ParseInt(normtag.Get(trags, normtag.DiscNumber))
 	track.TagBrainzID = normtag.Get(trags, normtag.MusicBrainzRecordingID)

@@ -217,7 +217,8 @@ type TrackChild struct {
 	AlbumArtists       []*ArtistRef `xml:"albumArtists"           json:"albumArtists"`
 	AlbumDisplayArtist string       `xml:"displayAlbumArtist,attr" json:"displayAlbumArtist"`
 
-	Contributors []*Contributor `xml:"contributors"            json:"contributors"`
+	Contributors    []*Contributor `xml:"contributors"            json:"contributors"`
+	DisplayComposer string         `xml:"displayComposer,attr" json:"displayComposer"`
 
 	Bitrate     int         `xml:"bitRate,attr,omitempty"     json:"bitRate,omitempty"`
 	ContentType string      `xml:"contentType,attr,omitempty" json:"contentType,omitempty"`

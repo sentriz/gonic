@@ -245,6 +245,8 @@ type Track struct {
 	TagTitleUDec         string         `sql:"default: null"`
 	TagTrackArtist       string         `sql:"default: null"`
 	TagTrackArtistCredit string         `sql:"default: null"` // set when ARTIST_CREDIT differs from ARTIST
+	TagComposer          string         `sql:"default: null"`
+	TagComposerCredit    string         `sql:"default: null"` // set when COMPOSER_CREDIT differs from COMPOSER
 	TagTrackNumber       int            `sql:"default: null"`
 	TagDiscNumber        int            `sql:"default: null"`
 	TagBrainzID          string         `sql:"default: null"`

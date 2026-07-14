@@ -15,6 +15,7 @@
           "albumArtists": [],
           "displayAlbumArtist": "",
           "contributors": [],
+          "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
           "genres": [],
           "isDir": true,
