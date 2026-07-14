@@ -362,6 +362,7 @@ type Album struct {
 	TagYear              int            `sql:"default: null"`
 	TagCompilation       bool           `sql:"default: null"`
 	TagReleaseType       string         `sql:"default: null"`
+	TagVersion           string         `sql:"default: null"`
 	Labels               []*AlbumLabel  `gorm:"foreignkey:album_id"`
 	Tracks               []*Track
 	AlbumStar            *AlbumStar

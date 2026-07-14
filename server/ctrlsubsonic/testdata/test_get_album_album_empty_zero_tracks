@@ -32,7 +32,8 @@
       ],
       "recordLabels": [],
       "discTitles": [],
-      "musicBrainzId": ""
+      "musicBrainzId": "",
+      "version": ""
     }
   }
 }

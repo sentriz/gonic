@@ -28,6 +28,7 @@
           "recordLabels": [],
           "discTitles": [],
           "musicBrainzId": "",
+          "version": "",
           "starred": "2020-05-01T12:00:00Z",
           "userRating": 4,
           "averageRating": 4
@@ -54,6 +55,7 @@
           "recordLabels": [],
           "discTitles": [],
           "musicBrainzId": "",
+          "version": "",
           "averageRating": 5
         },
         {
@@ -76,7 +78,8 @@
           "releaseTypes": [],
           "recordLabels": [],
           "discTitles": [],
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "version": ""
         },
         {
           "id": "al-18",
@@ -98,7 +101,8 @@
           "releaseTypes": [],
           "recordLabels": [],
           "discTitles": [],
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "version": ""
         },
         {
           "id": "al-6",
@@ -120,7 +124,8 @@
           "releaseTypes": [],
           "recordLabels": [],
           "discTitles": [],
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "version": ""
         },
         {
           "id": "al-8",
@@ -143,6 +148,7 @@
           "recordLabels": [],
           "discTitles": [],
           "musicBrainzId": "",
+          "version": "",
           "starred": "2020-06-02T12:00:00Z"
         },
         {
@@ -165,7 +171,8 @@
           "releaseTypes": [],
           "recordLabels": [],
           "discTitles": [],
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "version": ""
         },
         {
           "id": "al-17",
@@ -188,7 +195,8 @@
           "releaseTypes": [],
           "recordLabels": [],
           "discTitles": [],
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "version": ""
         },
         {
           "id": "al-12",
@@ -210,7 +218,8 @@
           "releaseTypes": [],
           "recordLabels": [],
           "discTitles": [],
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "version": ""
         }
       ]
     }

@@ -41,7 +41,8 @@
           ],
           "recordLabels": [],
           "discTitles": [],
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "version": "Deluxe Edition"
         },
         {
           "id": "al-15",
@@ -75,7 +76,8 @@
           ],
           "recordLabels": [],
           "discTitles": [],
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "version": "Deluxe Edition"
         }
       ]
     }

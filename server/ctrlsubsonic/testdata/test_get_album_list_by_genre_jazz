@@ -27,7 +27,8 @@
           "releaseTypes": [],
           "recordLabels": [],
           "discTitles": [],
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "version": ""
         }
       ]
     }

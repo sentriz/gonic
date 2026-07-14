@@ -60,6 +60,7 @@ func NewAlbumByTags(a *AlbumRow, credits []*db.AlbumCredit) *Album {
 		IsCompilation: a.TagCompilation,
 		ReleaseTypes:  formatReleaseTypes(a.TagReleaseType),
 		MusicBrainzID: a.TagBrainzID,
+		Version:       a.TagVersion,
 		RecordLabels:  []*RecordLabel{},
 		DiscTitles:    []*DiscTitle{},
 	}

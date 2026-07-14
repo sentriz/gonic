@@ -27,7 +27,8 @@
           "releaseTypes": [],
           "recordLabels": [],
           "discTitles": [],
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "version": ""
         },
         {
           "id": "al-17",
@@ -50,7 +51,8 @@
           "releaseTypes": [],
           "recordLabels": [],
           "discTitles": [],
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "version": ""
         }
       ]
     }

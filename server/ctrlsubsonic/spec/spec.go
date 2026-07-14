@@ -185,6 +185,7 @@ type Album struct {
 	RecordLabels  []*RecordLabel `xml:"recordLabels" json:"recordLabels"`
 	DiscTitles    []*DiscTitle   `xml:"discTitles" json:"discTitles"`
 	MusicBrainzID string         `xml:"musicBrainzId,attr" json:"musicBrainzId"`
+	Version       string         `xml:"version,attr" json:"version"`
 
 	// star / rating
 	Starred       *time.Time `xml:"starred,attr,omitempty"         json:"starred,omitempty"`

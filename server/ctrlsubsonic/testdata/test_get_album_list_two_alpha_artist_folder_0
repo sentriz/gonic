@@ -43,6 +43,7 @@
           "recordLabels": [],
           "discTitles": [],
           "musicBrainzId": "00000000-0000-0000-0000-0000000000aa",
+          "version": "Deluxe Edition",
           "starred": "2020-05-01T12:00:00Z",
           "userRating": 4,
           "averageRating": 4
@@ -100,6 +101,7 @@
             }
           ],
           "musicBrainzId": "00000000-0000-0000-0000-0000000000ab",
+          "version": "Deluxe Edition",
           "averageRating": 5
         },
         {
@@ -139,6 +141,7 @@
           "recordLabels": [],
           "discTitles": [],
           "musicBrainzId": "",
+          "version": "Deluxe Edition",
           "starred": "2020-06-02T12:00:00Z"
         },
         {
@@ -177,7 +180,8 @@
           ],
           "recordLabels": [],
           "discTitles": [],
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "version": "Deluxe Edition"
         },
         {
           "id": "al-18",
@@ -206,7 +210,8 @@
           ],
           "recordLabels": [],
           "discTitles": [],
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "version": ""
         },
         {
           "id": "al-6",
@@ -240,7 +245,8 @@
           ],
           "recordLabels": [],
           "discTitles": [],
-          "musicBrainzId": "00000000-0000-0000-0000-0000000000ba"
+          "musicBrainzId": "00000000-0000-0000-0000-0000000000ba",
+          "version": "Deluxe Edition"
         },
         {
           "id": "al-12",
@@ -274,7 +280,8 @@
           ],
           "recordLabels": [],
           "discTitles": [],
-          "musicBrainzId": ""
+          "musicBrainzId": "",
+          "version": "Deluxe Edition"
         }
       ]
     }

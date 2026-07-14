@@ -308,6 +308,7 @@ func newTagInfo() *TagInfo {
 	normtag.Set(info.Tags, normtag.DiscNumber, "1")
 	normtag.Set(info.Tags, normtag.Date, "2021-01-01")
 	normtag.Set(info.Tags, normtag.ReleaseType, "Album")
+	normtag.Set(info.Tags, normtag.MusicBrainzAlbumComment, "Deluxe Edition")
 
 	info.Length = 100 * time.Second
 	info.Bitrate = 100
