@@ -1,47 +1,12 @@
 {
   "subsonic-response": {
     "status": "ok",
-    "version": "1.15.0",
+    "version": "1.16.1",
     "type": "gonic",
     "serverVersion": "",
     "openSubsonic": true,
     "albumList2": {
       "album": [
-        {
-          "id": "al-6",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-17",
-          "artist": "The Mighty B (LP)",
-          "artists": [
-            {
-              "id": "ar-17",
-              "name": "The Mighty B (LP)"
-            }
-          ],
-          "displayArtist": "The Mighty B (LP)",
-          "title": "album-ba",
-          "album": "album-ba",
-          "name": "album-ba",
-          "songCount": 1,
-          "duration": 100,
-          "playCount": 0,
-          "played": null,
-          "genre": "Jazz",
-          "genres": [
-            {
-              "name": "Jazz"
-            }
-          ],
-          "year": 2017,
-          "isCompilation": false,
-          "releaseTypes": [
-            "Single"
-          ],
-          "recordLabels": [],
-          "discTitles": [],
-          "musicBrainzId": "00000000-0000-0000-0000-0000000000ba",
-          "version": "Deluxe Edition"
-        },
         {
           "id": "al-8",
           "created": "2019-11-30T00:00:00Z",
@@ -83,35 +48,31 @@
           "starred": "2020-06-02T12:00:00Z"
         },
         {
-          "id": "al-10",
+          "id": "al-12",
           "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-1",
-          "artist": "artist-a",
+          "artistId": "ar-18",
+          "artist": "ärtist-c",
           "artists": [
             {
-              "id": "ar-1",
-              "name": "artist-a"
-            },
-            {
-              "id": "ar-17",
-              "name": "artist-b"
+              "id": "ar-18",
+              "name": "ärtist-c"
             }
           ],
-          "displayArtist": "artist-a",
-          "title": "album-split",
-          "album": "album-split",
-          "name": "album-split",
-          "songCount": 2,
-          "duration": 200,
+          "displayArtist": "ärtist-c",
+          "title": "album-ca",
+          "album": "album-ca",
+          "name": "album-ca",
+          "songCount": 1,
+          "duration": 100,
           "playCount": 0,
           "played": null,
-          "genre": "Pop",
+          "genre": "Rock",
           "genres": [
             {
-              "name": "Pop"
+              "name": "Rock"
             }
           ],
-          "year": 2023,
+          "year": 2016,
           "isCompilation": false,
           "releaseTypes": [
             "Album"
@@ -159,7 +120,7 @@
           "version": "Deluxe Edition"
         },
         {
-          "id": "al-18",
+          "id": "al-10",
           "created": "2019-11-30T00:00:00Z",
           "artistId": "ar-1",
           "artist": "artist-a",
@@ -167,18 +128,27 @@
             {
               "id": "ar-1",
               "name": "artist-a"
+            },
+            {
+              "id": "ar-17",
+              "name": "artist-b"
             }
           ],
           "displayArtist": "artist-a",
-          "title": "empty-album",
-          "album": "empty-album",
-          "name": "empty-album",
-          "songCount": 0,
-          "duration": 0,
+          "title": "album-split",
+          "album": "album-split",
+          "name": "album-split",
+          "songCount": 2,
+          "duration": 200,
           "playCount": 0,
           "played": null,
-          "genres": [],
-          "year": 2015,
+          "genre": "Pop",
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
+          "year": 2023,
           "isCompilation": false,
           "releaseTypes": [
             "Album"
@@ -186,7 +156,7 @@
           "recordLabels": [],
           "discTitles": [],
           "musicBrainzId": "",
-          "version": ""
+          "version": "Deluxe Edition"
         },
         {
           "id": "al-4",
@@ -245,42 +215,7 @@
           "averageRating": 5
         },
         {
-          "id": "al-12",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-18",
-          "artist": "ärtist-c",
-          "artists": [
-            {
-              "id": "ar-18",
-              "name": "ärtist-c"
-            }
-          ],
-          "displayArtist": "ärtist-c",
-          "title": "album-ca",
-          "album": "album-ca",
-          "name": "album-ca",
-          "songCount": 1,
-          "duration": 100,
-          "playCount": 0,
-          "played": null,
-          "genre": "Rock",
-          "genres": [
-            {
-              "name": "Rock"
-            }
-          ],
-          "year": 2016,
-          "isCompilation": false,
-          "releaseTypes": [
-            "Album"
-          ],
-          "recordLabels": [],
-          "discTitles": [],
-          "musicBrainzId": "",
-          "version": "Deluxe Edition"
-        },
-        {
-          "id": "al-15",
+          "id": "al-18",
           "created": "2019-11-30T00:00:00Z",
           "artistId": "ar-1",
           "artist": "artist-a",
@@ -291,20 +226,15 @@
             }
           ],
           "displayArtist": "artist-a",
-          "title": "album-cross",
-          "album": "album-cross",
-          "name": "album-cross",
-          "songCount": 1,
-          "duration": 100,
+          "title": "empty-album",
+          "album": "empty-album",
+          "name": "empty-album",
+          "songCount": 0,
+          "duration": 0,
           "playCount": 0,
           "played": null,
-          "genre": "Rock",
-          "genres": [
-            {
-              "name": "Rock"
-            }
-          ],
-          "year": 2022,
+          "genres": [],
+          "year": 2015,
           "isCompilation": false,
           "releaseTypes": [
             "Album"
@@ -312,6 +242,41 @@
           "recordLabels": [],
           "discTitles": [],
           "musicBrainzId": "",
+          "version": ""
+        },
+        {
+          "id": "al-6",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-17",
+          "artist": "The Mighty B (LP)",
+          "artists": [
+            {
+              "id": "ar-17",
+              "name": "The Mighty B (LP)"
+            }
+          ],
+          "displayArtist": "The Mighty B (LP)",
+          "title": "album-ba",
+          "album": "album-ba",
+          "name": "album-ba",
+          "songCount": 1,
+          "duration": 100,
+          "playCount": 0,
+          "played": null,
+          "genre": "Jazz",
+          "genres": [
+            {
+              "name": "Jazz"
+            }
+          ],
+          "year": 2017,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Single"
+          ],
+          "recordLabels": [],
+          "discTitles": [],
+          "musicBrainzId": "00000000-0000-0000-0000-0000000000ba",
           "version": "Deluxe Edition"
         },
         {
@@ -354,6 +319,41 @@
           "starred": "2020-05-01T12:00:00Z",
           "userRating": 4,
           "averageRating": 4
+        },
+        {
+          "id": "al-15",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-1",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "album-cross",
+          "album": "album-cross",
+          "name": "album-cross",
+          "songCount": 1,
+          "duration": 100,
+          "playCount": 0,
+          "played": null,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "year": 2022,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Album"
+          ],
+          "recordLabels": [],
+          "discTitles": [],
+          "musicBrainzId": "",
+          "version": "Deluxe Edition"
         }
       ]
     }

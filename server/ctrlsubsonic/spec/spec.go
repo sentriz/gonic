@@ -16,7 +16,7 @@ import (
 // https://web.archive.org/web/20220707025402/https://www.subsonic.org/pages/api.jsp
 
 const (
-	apiVersion = "1.15.0"
+	apiVersion = "1.16.1"
 	xmlns      = "http://subsonic.org/restapi"
 )
 
