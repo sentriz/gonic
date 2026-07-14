@@ -8,31 +8,70 @@
     "albumList2": {
       "album": [
         {
-          "id": "al-12",
+          "id": "al-6",
           "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-18",
-          "artist": "ärtist-c",
+          "artistId": "ar-17",
+          "artist": "The Mighty B (LP)",
           "artists": [
             {
-              "id": "ar-18",
-              "name": "ärtist-c"
+              "id": "ar-17",
+              "name": "The Mighty B (LP)"
             }
           ],
-          "displayArtist": "ärtist-c",
-          "title": "album-ca",
-          "album": "album-ca",
-          "name": "album-ca",
+          "displayArtist": "The Mighty B (LP)",
+          "title": "album-ba",
+          "album": "album-ba",
+          "name": "album-ba",
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
           "played": null,
-          "genre": "Rock",
+          "genre": "Jazz",
           "genres": [
             {
-              "name": "Rock"
+              "name": "Jazz"
             }
           ],
-          "year": 2016,
+          "year": 2017,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Single"
+          ],
+          "recordLabels": [],
+          "discTitles": [],
+          "musicBrainzId": "00000000-0000-0000-0000-0000000000ba",
+          "version": "Deluxe Edition"
+        },
+        {
+          "id": "al-8",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-1",
+          "artist": "Artist A!",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "Artist A!"
+            },
+            {
+              "id": "ar-17",
+              "name": "Artist B!"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "album-collab",
+          "album": "album-collab",
+          "name": "album-collab",
+          "songCount": 2,
+          "duration": 200,
+          "playCount": 0,
+          "played": null,
+          "genre": "Pop",
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
+          "year": 2021,
           "isCompilation": false,
           "releaseTypes": [
             "Album"
@@ -40,7 +79,8 @@
           "recordLabels": [],
           "discTitles": [],
           "musicBrainzId": "",
-          "version": "Deluxe Edition"
+          "version": "Deluxe Edition",
+          "starred": "2020-06-02T12:00:00Z"
         },
         {
           "id": "al-10",
@@ -80,6 +120,73 @@
           "discTitles": [],
           "musicBrainzId": "",
           "version": "Deluxe Edition"
+        },
+        {
+          "id": "al-17",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-19",
+          "artist": "Various Artists",
+          "artists": [
+            {
+              "id": "ar-19",
+              "name": "Various Artists"
+            }
+          ],
+          "displayArtist": "Various Artists",
+          "title": "comp",
+          "album": "comp",
+          "coverArt": "tr-11",
+          "name": "comp",
+          "songCount": 2,
+          "duration": 200,
+          "playCount": 0,
+          "played": null,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "year": 2020,
+          "isCompilation": true,
+          "releaseTypes": [
+            "Album",
+            "Compilation"
+          ],
+          "recordLabels": [],
+          "discTitles": [],
+          "musicBrainzId": "",
+          "version": "Deluxe Edition"
+        },
+        {
+          "id": "al-18",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-1",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "empty-album",
+          "album": "empty-album",
+          "name": "empty-album",
+          "songCount": 0,
+          "duration": 0,
+          "playCount": 0,
+          "played": null,
+          "genres": [],
+          "year": 2015,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Album"
+          ],
+          "recordLabels": [],
+          "discTitles": [],
+          "musicBrainzId": "",
+          "version": ""
         },
         {
           "id": "al-4",
@@ -138,101 +245,31 @@
           "averageRating": 5
         },
         {
-          "id": "al-8",
+          "id": "al-12",
           "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-1",
-          "artist": "Artist A!",
+          "artistId": "ar-18",
+          "artist": "ärtist-c",
           "artists": [
             {
-              "id": "ar-1",
-              "name": "Artist A!"
-            },
-            {
-              "id": "ar-17",
-              "name": "Artist B!"
+              "id": "ar-18",
+              "name": "ärtist-c"
             }
           ],
-          "displayArtist": "artist-a",
-          "title": "album-collab",
-          "album": "album-collab",
-          "name": "album-collab",
-          "songCount": 2,
-          "duration": 200,
-          "playCount": 0,
-          "played": null,
-          "genre": "Pop",
-          "genres": [
-            {
-              "name": "Pop"
-            }
-          ],
-          "year": 2021,
-          "isCompilation": false,
-          "releaseTypes": [
-            "Album"
-          ],
-          "recordLabels": [],
-          "discTitles": [],
-          "musicBrainzId": "",
-          "version": "Deluxe Edition",
-          "starred": "2020-06-02T12:00:00Z"
-        },
-        {
-          "id": "al-6",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-17",
-          "artist": "The Mighty B (LP)",
-          "artists": [
-            {
-              "id": "ar-17",
-              "name": "The Mighty B (LP)"
-            }
-          ],
-          "displayArtist": "The Mighty B (LP)",
-          "title": "album-ba",
-          "album": "album-ba",
-          "name": "album-ba",
+          "displayArtist": "ärtist-c",
+          "title": "album-ca",
+          "album": "album-ca",
+          "name": "album-ca",
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
           "played": null,
-          "genre": "Jazz",
+          "genre": "Rock",
           "genres": [
             {
-              "name": "Jazz"
+              "name": "Rock"
             }
           ],
-          "year": 2017,
-          "isCompilation": false,
-          "releaseTypes": [
-            "Single"
-          ],
-          "recordLabels": [],
-          "discTitles": [],
-          "musicBrainzId": "00000000-0000-0000-0000-0000000000ba",
-          "version": "Deluxe Edition"
-        },
-        {
-          "id": "al-18",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-1",
-          "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
-          "displayArtist": "artist-a",
-          "title": "empty-album",
-          "album": "empty-album",
-          "name": "empty-album",
-          "songCount": 0,
-          "duration": 0,
-          "playCount": 0,
-          "played": null,
-          "genres": [],
-          "year": 2015,
+          "year": 2016,
           "isCompilation": false,
           "releaseTypes": [
             "Album"
@@ -240,7 +277,7 @@
           "recordLabels": [],
           "discTitles": [],
           "musicBrainzId": "",
-          "version": ""
+          "version": "Deluxe Edition"
         },
         {
           "id": "al-15",
@@ -271,43 +308,6 @@
           "isCompilation": false,
           "releaseTypes": [
             "Album"
-          ],
-          "recordLabels": [],
-          "discTitles": [],
-          "musicBrainzId": "",
-          "version": "Deluxe Edition"
-        },
-        {
-          "id": "al-17",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-19",
-          "artist": "Various Artists",
-          "artists": [
-            {
-              "id": "ar-19",
-              "name": "Various Artists"
-            }
-          ],
-          "displayArtist": "Various Artists",
-          "title": "comp",
-          "album": "comp",
-          "coverArt": "tr-11",
-          "name": "comp",
-          "songCount": 2,
-          "duration": 200,
-          "playCount": 0,
-          "played": null,
-          "genre": "Rock",
-          "genres": [
-            {
-              "name": "Rock"
-            }
-          ],
-          "year": 2020,
-          "isCompilation": true,
-          "releaseTypes": [
-            "Album",
-            "Compilation"
           ],
           "recordLabels": [],
           "discTitles": [],

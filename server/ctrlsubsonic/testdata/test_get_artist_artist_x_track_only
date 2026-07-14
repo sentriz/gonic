@@ -9,6 +9,7 @@
       "id": "ar-20",
       "name": "artist-x",
       "albumCount": 1,
+      "musicBrainzId": "",
       "roles": [
         "artist"
       ],

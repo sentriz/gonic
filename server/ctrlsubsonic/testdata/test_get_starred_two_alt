@@ -11,6 +11,7 @@
           "id": "ar-18",
           "name": "ärtist-c",
           "albumCount": 1,
+          "musicBrainzId": "",
           "roles": [
             "albumartist",
             "artist"

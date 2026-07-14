@@ -18,6 +18,7 @@
           "id": "ar-17",
           "name": "artist-b",
           "albumCount": 3,
+          "musicBrainzId": "",
           "roles": [
             "albumartist",
             "artist"
@@ -27,6 +28,7 @@
           "id": "-1",
           "name": "artist-not-in-db",
           "albumCount": 0,
+          "musicBrainzId": "",
           "roles": []
         }
       ]

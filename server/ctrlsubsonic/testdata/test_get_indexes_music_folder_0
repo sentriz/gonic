@@ -16,18 +16,21 @@
               "id": "al-2",
               "name": "artist-a",
               "albumCount": 3,
+              "musicBrainzId": "",
               "roles": []
             },
             {
               "id": "al-5",
               "name": "artist-b",
               "albumCount": 1,
+              "musicBrainzId": "",
               "roles": []
             },
             {
               "id": "al-11",
               "name": "ärtist-c",
               "albumCount": 1,
+              "musicBrainzId": "",
               "roles": []
             }
           ]
@@ -39,6 +42,7 @@
               "id": "al-7",
               "name": "collab-ab",
               "albumCount": 1,
+              "musicBrainzId": "",
               "roles": []
             }
           ]
@@ -50,6 +54,7 @@
               "id": "al-9",
               "name": "split-ab",
               "albumCount": 1,
+              "musicBrainzId": "",
               "roles": []
             }
           ]

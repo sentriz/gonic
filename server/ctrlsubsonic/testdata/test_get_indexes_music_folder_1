@@ -16,6 +16,7 @@
               "id": "al-14",
               "name": "artist-a",
               "albumCount": 1,
+              "musicBrainzId": "",
               "roles": []
             }
           ]
@@ -27,6 +28,7 @@
               "id": "al-16",
               "name": "various",
               "albumCount": 1,
+              "musicBrainzId": "",
               "roles": []
             }
           ]

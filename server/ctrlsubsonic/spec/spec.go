@@ -278,7 +278,7 @@ type Artist struct {
 	Name          string     `xml:"name,attr"                    json:"name"`
 	CoverID       *specid.ID `xml:"coverArt,attr,omitempty"      json:"coverArt,omitempty"`
 	AlbumCount    int        `xml:"albumCount,attr"              json:"albumCount"`
-	MusicBrainzID string     `xml:"musicBrainzId,attr,omitempty" json:"musicBrainzId,omitempty"`
+	MusicBrainzID string     `xml:"musicBrainzId,attr" json:"musicBrainzId"`
 	Roles         []string   `xml:"roles"                        json:"roles"`
 	Albums        []*Album   `xml:"album,omitempty"              json:"album,omitempty"`
 	// star / rating

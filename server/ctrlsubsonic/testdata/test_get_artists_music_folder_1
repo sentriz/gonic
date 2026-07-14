@@ -16,6 +16,7 @@
               "name": "artist-a",
               "coverArt": "ar-1",
               "albumCount": 1,
+              "musicBrainzId": "",
               "roles": [
                 "albumartist",
                 "artist"
@@ -33,6 +34,7 @@
               "id": "ar-19",
               "name": "Various Artists",
               "albumCount": 1,
+              "musicBrainzId": "",
               "roles": [
                 "albumartist"
               ]

@@ -18,6 +18,7 @@
           "id": "ar-17",
           "name": "artist-b",
           "albumCount": 3,
+          "musicBrainzId": "",
           "roles": [
             "albumartist",
             "artist"

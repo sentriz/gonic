@@ -12,6 +12,7 @@
           "name": "artist-a",
           "coverArt": "ar-1",
           "albumCount": 5,
+          "musicBrainzId": "",
           "roles": [
             "albumartist",
             "artist"
