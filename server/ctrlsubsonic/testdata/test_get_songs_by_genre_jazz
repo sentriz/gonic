@@ -58,7 +58,8 @@
             "albumGain": -4,
             "albumPeak": 0.99
           },
-          "playCount": 3
+          "playCount": 3,
+          "played": "2020-07-01T12:00:00Z"
         },
         {
           "id": "tr-6",
@@ -105,7 +106,8 @@
           "year": 2017,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         },
         {
           "id": "tr-12",
@@ -153,7 +155,8 @@
           "year": 2020,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         }
       ]
     }

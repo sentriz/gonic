@@ -53,6 +53,9 @@ func NewAlbumByFolder(f *AlbumRow) *Album {
 		DiscTitles:    []*DiscTitle{},
 		Genres:        []*GenreRef{},
 	}
+	if f.PlayTime != nil && !f.PlayTime.IsZero() {
+		a.Played = f.PlayTime
+	}
 	if f.AlbumStar != nil {
 		a.Starred = &f.AlbumStar.StarDate
 	}
@@ -155,6 +158,9 @@ func NewTCTrackByFolder(t *TrackRow, parent *db.Album) *TrackChild {
 	}
 	if t.Play != nil {
 		trCh.PlayCount = int(math.Ceil(t.Play.Count))
+		if !t.Play.Time.IsZero() {
+			trCh.Played = &t.Play.Time
+		}
 	}
 	if len(t.Genres) > 0 {
 		trCh.Genre = t.Genres[0].Name

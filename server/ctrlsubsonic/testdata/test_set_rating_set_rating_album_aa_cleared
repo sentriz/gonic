@@ -23,6 +23,7 @@
       "songCount": 3,
       "duration": 300,
       "playCount": 7,
+      "played": "2020-07-01T12:00:00Z",
       "genre": "Rock",
       "genres": [
         {
@@ -88,7 +89,8 @@
             "albumGain": -4,
             "albumPeak": 0.99
           },
-          "playCount": 3
+          "playCount": 3,
+          "played": "2020-07-01T12:00:00Z"
         },
         {
           "id": "tr-2",
@@ -141,7 +143,8 @@
             "albumGain": -4,
             "albumPeak": 0.99
           },
-          "playCount": 3
+          "playCount": 3,
+          "played": "2020-07-01T12:00:00Z"
         },
         {
           "id": "tr-3",
@@ -194,7 +197,8 @@
             "albumGain": -4,
             "albumPeak": 0.99
           },
-          "playCount": 3
+          "playCount": 3,
+          "played": "2020-07-01T12:00:00Z"
         }
       ],
       "isCompilation": false,

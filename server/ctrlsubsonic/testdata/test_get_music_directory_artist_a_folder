@@ -29,7 +29,8 @@
           "year": 2015,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         },
         {
           "id": "al-3",
@@ -53,7 +54,8 @@
           "starred": "2020-05-01T12:00:00Z",
           "userRating": 4,
           "averageRating": 4,
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         },
         {
           "id": "al-4",
@@ -76,7 +78,8 @@
           "musicBrainzId": "",
           "isrc": [],
           "averageRating": 5,
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         }
       ]
     }

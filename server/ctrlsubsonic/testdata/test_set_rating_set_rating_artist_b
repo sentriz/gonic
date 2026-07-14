@@ -32,6 +32,7 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
+          "played": null,
           "genre": "Jazz",
           "genres": [
             {
@@ -69,6 +70,7 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
+          "played": null,
           "genre": "Pop",
           "genres": [
             {
@@ -107,6 +109,7 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
+          "played": null,
           "genre": "Pop",
           "genres": [
             {

@@ -25,6 +25,7 @@
           "songCount": 3,
           "duration": 300,
           "playCount": 7,
+          "played": "2020-07-01T12:00:00Z",
           "genre": "Rock",
           "genres": [
             {

@@ -52,7 +52,8 @@
           "year": 2017,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         },
         {
           "id": "tr-7",
@@ -107,7 +108,8 @@
           "year": 2021,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         },
         {
           "id": "tr-8",
@@ -162,7 +164,8 @@
           "year": 2023,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         },
         {
           "id": "tr-9",
@@ -209,7 +212,8 @@
           "year": 2016,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         },
         {
           "id": "tr-10",
@@ -256,7 +260,8 @@
           "year": 2022,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         },
         {
           "id": "tr-11",
@@ -304,7 +309,8 @@
           "year": 2020,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         },
         {
           "id": "tr-12",
@@ -352,7 +358,8 @@
           "year": 2020,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         }
       ]
     }

@@ -24,6 +24,7 @@
       "songCount": 2,
       "duration": 200,
       "playCount": 0,
+      "played": null,
       "genre": "Rock",
       "genres": [
         {
@@ -78,7 +79,8 @@
           "year": 2020,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         },
         {
           "id": "tr-12",
@@ -126,7 +128,8 @@
           "year": 2020,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         }
       ],
       "isCompilation": true,

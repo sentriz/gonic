@@ -174,6 +174,7 @@ type Album struct {
 	TrackCount int           `xml:"songCount,attr"         json:"songCount"`
 	Duration   int           `xml:"duration,attr"          json:"duration"`
 	PlayCount  int           `xml:"playCount,attr"          json:"playCount"`
+	Played     *time.Time    `xml:"played,attr,omitempty"  json:"played"`
 	Genre      string        `xml:"genre,attr,omitempty"   json:"genre,omitempty"`
 	Genres     []*GenreRef   `xml:"genres"                 json:"genres"`
 	Year       int           `xml:"year,attr,omitempty"    json:"year,omitempty"`
@@ -260,7 +261,8 @@ type TrackChild struct {
 
 	ReplayGain *ReplayGain `xml:"replayGain" json:"replayGain"`
 
-	PlayCount int `xml:"playCount,attr,omitempty" json:"playCount,omitempty"`
+	PlayCount int        `xml:"playCount,attr,omitempty" json:"playCount,omitempty"`
+	Played    *time.Time `xml:"played,attr,omitempty"    json:"played"`
 
 	TranscodeMeta
 }

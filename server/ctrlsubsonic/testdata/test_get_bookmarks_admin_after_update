@@ -125,7 +125,8 @@
             "userRating": 3,
             "averageRating": 4.33,
             "replayGain": null,
-            "playCount": 1
+            "playCount": 1,
+            "played": "2020-08-02T12:00:00Z"
           },
           "username": "admin",
           "position": 99000,

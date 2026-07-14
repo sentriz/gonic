@@ -60,6 +60,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "played": null,
           "genres": [],
           "isCompilation": false,
           "releaseTypes": [
@@ -81,6 +82,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "played": null,
           "genres": [],
           "isCompilation": false,
           "releaseTypes": [
@@ -108,6 +110,7 @@
           "songCount": 3,
           "duration": 300,
           "playCount": 7,
+          "played": "2020-07-01T12:00:00Z",
           "genre": "Rock",
           "genres": [
             {
@@ -148,6 +151,7 @@
           "songCount": 2,
           "duration": 200,
           "playCount": 2,
+          "played": "2020-08-02T12:00:00Z",
           "genre": "Rock",
           "genres": [
             {
@@ -195,6 +199,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "played": null,
           "genres": [],
           "isCompilation": false,
           "releaseTypes": [
@@ -222,6 +227,7 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
+          "played": null,
           "genre": "Jazz",
           "genres": [
             {
@@ -249,6 +255,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "played": null,
           "genres": [],
           "isCompilation": false,
           "releaseTypes": [
@@ -280,6 +287,7 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
+          "played": null,
           "genre": "Pop",
           "genres": [
             {
@@ -308,6 +316,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "played": null,
           "genres": [],
           "isCompilation": false,
           "releaseTypes": [
@@ -339,6 +348,7 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
+          "played": null,
           "genre": "Pop",
           "genres": [
             {
@@ -366,6 +376,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "played": null,
           "genres": [],
           "isCompilation": false,
           "releaseTypes": [
@@ -393,6 +404,7 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
+          "played": null,
           "genre": "Rock",
           "genres": [
             {
@@ -420,6 +432,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "played": null,
           "genres": [],
           "isCompilation": false,
           "releaseTypes": [
@@ -441,6 +454,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "played": null,
           "genres": [],
           "isCompilation": false,
           "releaseTypes": [
@@ -468,6 +482,7 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
+          "played": null,
           "genre": "Rock",
           "genres": [
             {
@@ -495,6 +510,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "played": null,
           "genres": [],
           "isCompilation": false,
           "releaseTypes": [
@@ -523,6 +539,7 @@
           "songCount": 2,
           "duration": 200,
           "playCount": 0,
+          "played": null,
           "genre": "Rock",
           "genres": [
             {
@@ -557,6 +574,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "played": null,
           "genres": [],
           "year": 2015,
           "isCompilation": false,
@@ -623,7 +641,8 @@
             "albumGain": -4,
             "albumPeak": 0.99
           },
-          "playCount": 3
+          "playCount": 3,
+          "played": "2020-07-01T12:00:00Z"
         },
         {
           "id": "tr-2",
@@ -676,7 +695,8 @@
             "albumGain": -4,
             "albumPeak": 0.99
           },
-          "playCount": 3
+          "playCount": 3,
+          "played": "2020-07-01T12:00:00Z"
         },
         {
           "id": "tr-3",
@@ -729,7 +749,8 @@
             "albumGain": -4,
             "albumPeak": 0.99
           },
-          "playCount": 3
+          "playCount": 3,
+          "played": "2020-07-01T12:00:00Z"
         },
         {
           "id": "tr-4",
@@ -848,7 +869,8 @@
           "userRating": 3,
           "averageRating": 4.33,
           "replayGain": null,
-          "playCount": 1
+          "playCount": 1,
+          "played": "2020-08-02T12:00:00Z"
         },
         {
           "id": "tr-5",
@@ -940,7 +962,8 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "playCount": 1
+          "playCount": 1,
+          "played": "2020-08-02T12:00:00Z"
         },
         {
           "id": "tr-6",
@@ -987,7 +1010,8 @@
           "year": 2017,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         },
         {
           "id": "tr-7",
@@ -1042,7 +1066,8 @@
           "year": 2021,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         },
         {
           "id": "tr-8",
@@ -1097,7 +1122,8 @@
           "year": 2023,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         },
         {
           "id": "tr-9",
@@ -1144,7 +1170,8 @@
           "year": 2016,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         },
         {
           "id": "tr-10",
@@ -1191,7 +1218,8 @@
           "year": 2022,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         },
         {
           "id": "tr-11",
@@ -1239,7 +1267,8 @@
           "year": 2020,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         },
         {
           "id": "tr-12",
@@ -1287,7 +1316,8 @@
           "year": 2020,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         }
       ]
     }

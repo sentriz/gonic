@@ -51,7 +51,8 @@
           "year": 2020,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         },
         {
           "id": "tr-12",
@@ -94,7 +95,8 @@
           "year": 2020,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         }
       ]
     }

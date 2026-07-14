@@ -61,7 +61,8 @@
             "albumGain": -4,
             "albumPeak": 0.99
           },
-          "playCount": 3
+          "playCount": 3,
+          "played": "2020-07-01T12:00:00Z"
         },
         {
           "id": "tr-4",
@@ -180,7 +181,8 @@
           "userRating": 3,
           "averageRating": 4.33,
           "replayGain": null,
-          "playCount": 1
+          "playCount": 1,
+          "played": "2020-08-02T12:00:00Z"
         },
         {
           "id": "tr-5",
@@ -272,7 +274,8 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "playCount": 1
+          "playCount": 1,
+          "played": "2020-08-02T12:00:00Z"
         },
         {
           "id": "tr-7",
@@ -327,7 +330,8 @@
           "year": 2021,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         },
         {
           "id": "tr-8",
@@ -382,7 +386,8 @@
           "year": 2023,
           "musicBrainzId": "",
           "isrc": [],
-          "replayGain": null
+          "replayGain": null,
+          "played": null
         }
       ]
     }

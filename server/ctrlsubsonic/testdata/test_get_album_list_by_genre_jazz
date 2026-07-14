@@ -21,6 +21,7 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
+          "played": null,
           "genres": [],
           "isCompilation": false,
           "releaseTypes": [],

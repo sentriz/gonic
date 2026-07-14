@@ -24,6 +24,7 @@
       "songCount": 2,
       "duration": 200,
       "playCount": 2,
+      "played": "2020-08-02T12:00:00Z",
       "genre": "Rock",
       "genres": [
         {
@@ -152,7 +153,8 @@
           "userRating": 3,
           "averageRating": 4.33,
           "replayGain": null,
-          "playCount": 1
+          "playCount": 1,
+          "played": "2020-08-02T12:00:00Z"
         },
         {
           "id": "tr-5",
@@ -244,7 +246,8 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "playCount": 1
+          "playCount": 1,
+          "played": "2020-08-02T12:00:00Z"
         }
       ],
       "isCompilation": false,

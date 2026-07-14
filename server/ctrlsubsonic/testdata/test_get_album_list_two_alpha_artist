@@ -26,6 +26,7 @@
           "songCount": 2,
           "duration": 200,
           "playCount": 0,
+          "played": null,
           "genre": "Rock",
           "genres": [
             {
@@ -60,6 +61,7 @@
           "songCount": 3,
           "duration": 300,
           "playCount": 7,
+          "played": "2020-07-01T12:00:00Z",
           "genre": "Rock",
           "genres": [
             {
@@ -100,6 +102,7 @@
           "songCount": 2,
           "duration": 200,
           "playCount": 2,
+          "played": "2020-08-02T12:00:00Z",
           "genre": "Rock",
           "genres": [
             {
@@ -157,6 +160,7 @@
           "songCount": 2,
           "duration": 200,
           "playCount": 0,
+          "played": null,
           "genre": "Pop",
           "genres": [
             {
@@ -195,6 +199,7 @@
           "songCount": 2,
           "duration": 200,
           "playCount": 0,
+          "played": null,
           "genre": "Pop",
           "genres": [
             {
@@ -228,6 +233,7 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
+          "played": null,
           "genre": "Rock",
           "genres": [
             {
@@ -261,6 +267,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
+          "played": null,
           "genres": [],
           "year": 2015,
           "isCompilation": false,
@@ -289,6 +296,7 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
+          "played": null,
           "genre": "Jazz",
           "genres": [
             {
@@ -322,6 +330,7 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
+          "played": null,
           "genre": "Rock",
           "genres": [
             {

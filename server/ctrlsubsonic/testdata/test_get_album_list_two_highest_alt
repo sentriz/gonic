@@ -26,6 +26,7 @@
           "songCount": 2,
           "duration": 200,
           "playCount": 0,
+          "played": null,
           "genre": "Rock",
           "genres": [
             {

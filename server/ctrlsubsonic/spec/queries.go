@@ -3,6 +3,7 @@ package spec
 
 import (
 	"strings"
+	"time"
 
 	"github.com/jinzhu/gorm"
 
@@ -70,6 +71,7 @@ type AlbumRow struct {
 	ChildCount    int
 	Duration      int
 	PlayCount     float64
+	PlayTime      *time.Time
 	AverageRating float64
 }
 
