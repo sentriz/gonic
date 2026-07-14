@@ -39,7 +39,8 @@
             "Compilation"
           ],
           "recordLabels": [],
-          "discTitles": []
+          "discTitles": [],
+          "musicBrainzId": ""
         },
         {
           "id": "al-15",
@@ -71,7 +72,8 @@
             "Album"
           ],
           "recordLabels": [],
-          "discTitles": []
+          "discTitles": [],
+          "musicBrainzId": ""
         }
       ]
     }

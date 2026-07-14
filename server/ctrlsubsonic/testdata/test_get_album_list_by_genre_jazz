@@ -25,7 +25,8 @@
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
-          "discTitles": []
+          "discTitles": [],
+          "musicBrainzId": ""
         }
       ]
     }

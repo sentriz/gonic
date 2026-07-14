@@ -44,7 +44,8 @@
             "Single"
           ],
           "recordLabels": [],
-          "discTitles": []
+          "discTitles": [],
+          "musicBrainzId": "00000000-0000-0000-0000-0000000000ba"
         },
         {
           "id": "al-8",
@@ -81,6 +82,7 @@
           ],
           "recordLabels": [],
           "discTitles": [],
+          "musicBrainzId": "",
           "starred": "2020-06-02T12:00:00Z"
         },
         {
@@ -117,7 +119,8 @@
             "Album"
           ],
           "recordLabels": [],
-          "discTitles": []
+          "discTitles": [],
+          "musicBrainzId": ""
         }
       ],
       "userRating": 3,

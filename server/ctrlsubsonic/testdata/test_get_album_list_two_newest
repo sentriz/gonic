@@ -41,6 +41,7 @@
           ],
           "recordLabels": [],
           "discTitles": [],
+          "musicBrainzId": "00000000-0000-0000-0000-0000000000aa",
           "starred": "2020-05-01T12:00:00Z",
           "userRating": 4,
           "averageRating": 4
@@ -96,6 +97,7 @@
               "title": "Disc Two"
             }
           ],
+          "musicBrainzId": "00000000-0000-0000-0000-0000000000ab",
           "averageRating": 5
         },
         {
@@ -128,7 +130,8 @@
             "Single"
           ],
           "recordLabels": [],
-          "discTitles": []
+          "discTitles": [],
+          "musicBrainzId": "00000000-0000-0000-0000-0000000000ba"
         },
         {
           "id": "al-8",
@@ -165,6 +168,7 @@
           ],
           "recordLabels": [],
           "discTitles": [],
+          "musicBrainzId": "",
           "starred": "2020-06-02T12:00:00Z"
         },
         {
@@ -201,7 +205,8 @@
             "Album"
           ],
           "recordLabels": [],
-          "discTitles": []
+          "discTitles": [],
+          "musicBrainzId": ""
         },
         {
           "id": "al-12",
@@ -233,7 +238,8 @@
             "Album"
           ],
           "recordLabels": [],
-          "discTitles": []
+          "discTitles": [],
+          "musicBrainzId": ""
         },
         {
           "id": "al-15",
@@ -265,7 +271,8 @@
             "Album"
           ],
           "recordLabels": [],
-          "discTitles": []
+          "discTitles": [],
+          "musicBrainzId": ""
         },
         {
           "id": "al-17",
@@ -299,7 +306,8 @@
             "Compilation"
           ],
           "recordLabels": [],
-          "discTitles": []
+          "discTitles": [],
+          "musicBrainzId": ""
         },
         {
           "id": "al-18",
@@ -326,7 +334,8 @@
             "Album"
           ],
           "recordLabels": [],
-          "discTitles": []
+          "discTitles": [],
+          "musicBrainzId": ""
         }
       ]
     }

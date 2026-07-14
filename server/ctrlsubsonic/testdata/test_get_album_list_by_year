@@ -26,6 +26,7 @@
           "releaseTypes": [],
           "recordLabels": [],
           "discTitles": [],
+          "musicBrainzId": "",
           "starred": "2020-06-02T12:00:00Z"
         },
         {
@@ -47,7 +48,8 @@
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
-          "discTitles": []
+          "discTitles": [],
+          "musicBrainzId": ""
         },
         {
           "id": "al-4",
@@ -69,6 +71,7 @@
           "releaseTypes": [],
           "recordLabels": [],
           "discTitles": [],
+          "musicBrainzId": "",
           "averageRating": 5
         },
         {
@@ -90,6 +93,7 @@
           "releaseTypes": [],
           "recordLabels": [],
           "discTitles": [],
+          "musicBrainzId": "",
           "starred": "2020-05-01T12:00:00Z",
           "userRating": 4,
           "averageRating": 4

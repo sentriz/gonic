@@ -25,7 +25,8 @@
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
-          "discTitles": []
+          "discTitles": [],
+          "musicBrainzId": ""
         },
         {
           "id": "al-17",
@@ -46,7 +47,8 @@
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
-          "discTitles": []
+          "discTitles": [],
+          "musicBrainzId": ""
         }
       ]
     }

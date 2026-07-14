@@ -26,6 +26,7 @@
           "releaseTypes": [],
           "recordLabels": [],
           "discTitles": [],
+          "musicBrainzId": "",
           "starred": "2020-05-01T12:00:00Z",
           "userRating": 4,
           "averageRating": 4
@@ -50,6 +51,7 @@
           "releaseTypes": [],
           "recordLabels": [],
           "discTitles": [],
+          "musicBrainzId": "",
           "averageRating": 5
         },
         {
@@ -70,7 +72,8 @@
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
-          "discTitles": []
+          "discTitles": [],
+          "musicBrainzId": ""
         },
         {
           "id": "al-18",
@@ -90,7 +93,8 @@
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
-          "discTitles": []
+          "discTitles": [],
+          "musicBrainzId": ""
         },
         {
           "id": "al-6",
@@ -110,7 +114,8 @@
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
-          "discTitles": []
+          "discTitles": [],
+          "musicBrainzId": ""
         },
         {
           "id": "al-8",
@@ -131,6 +136,7 @@
           "releaseTypes": [],
           "recordLabels": [],
           "discTitles": [],
+          "musicBrainzId": "",
           "starred": "2020-06-02T12:00:00Z"
         },
         {
@@ -151,7 +157,8 @@
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
-          "discTitles": []
+          "discTitles": [],
+          "musicBrainzId": ""
         },
         {
           "id": "al-17",
@@ -172,7 +179,8 @@
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
-          "discTitles": []
+          "discTitles": [],
+          "musicBrainzId": ""
         },
         {
           "id": "al-12",
@@ -192,7 +200,8 @@
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
-          "discTitles": []
+          "discTitles": [],
+          "musicBrainzId": ""
         }
       ]
     }

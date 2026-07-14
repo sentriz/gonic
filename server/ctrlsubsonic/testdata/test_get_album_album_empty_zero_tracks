@@ -30,7 +30,8 @@
         "Album"
       ],
       "recordLabels": [],
-      "discTitles": []
+      "discTitles": [],
+      "musicBrainzId": ""
     }
   }
 }
