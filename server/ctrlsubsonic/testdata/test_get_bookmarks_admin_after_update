@@ -117,6 +117,7 @@
             "track": 1,
             "discNumber": 1,
             "type": "music",
+            "mediaType": "song",
             "year": 2019,
             "musicBrainzId": "00000000-0000-0000-0000-ab00000000d1",
             "isrc": [],

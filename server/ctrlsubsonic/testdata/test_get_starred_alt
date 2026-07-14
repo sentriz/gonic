@@ -22,6 +22,7 @@
           "isVideo": false,
           "parent": "al-5",
           "title": "album-ba",
+          "mediaType": "album",
           "year": 2017,
           "musicBrainzId": "",
           "isrc": [],

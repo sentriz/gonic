@@ -22,6 +22,7 @@
           "isVideo": false,
           "parent": "al-14",
           "title": "album-cross",
+          "mediaType": "album",
           "year": 2022,
           "musicBrainzId": "",
           "isrc": [],

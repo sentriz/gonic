@@ -22,6 +22,7 @@
           "isVideo": false,
           "parent": "al-2",
           "title": "album-aa",
+          "mediaType": "album",
           "year": 2018,
           "musicBrainzId": "",
           "isrc": [],

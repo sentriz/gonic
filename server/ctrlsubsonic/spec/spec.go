@@ -20,6 +20,16 @@ const (
 	xmlns      = "http://subsonic.org/restapi"
 )
 
+const (
+	MediaTypeSong  = "song"
+	MediaTypeAlbum = "album"
+)
+
+const (
+	TypeMusic          = "music"
+	TypePodcastEpisode = "podcastepisode"
+)
+
 type SubsonicResponse struct {
 	Response Response `xml:"subsonic-response"       json:"subsonic-response"`
 }
@@ -237,6 +247,7 @@ type TrackChild struct {
 	TrackNumber int         `xml:"track,attr,omitempty"       json:"track,omitempty"`
 	DiscNumber  int         `xml:"discNumber,attr,omitempty"  json:"discNumber,omitempty"`
 	Type        string      `xml:"type,attr,omitempty"        json:"type,omitempty"`
+	MediaType   string      `xml:"mediaType,attr"   json:"mediaType"`
 	Year        int         `xml:"year,attr,omitempty"        json:"year,omitempty"`
 
 	MusicBrainzID string   `xml:"musicBrainzId,attr"        json:"musicBrainzId"`
