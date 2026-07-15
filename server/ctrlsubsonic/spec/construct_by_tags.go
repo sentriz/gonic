@@ -102,8 +102,8 @@ func NewAlbumByTags(a *AlbumRow, credits []*db.AlbumCredit) *Album {
 		ret.RecordLabels = append(ret.RecordLabels, &RecordLabel{Name: l.Label})
 	}
 	ret.PlayCount = int(math.Ceil(a.PlayCount))
-	if a.PlayTime != nil && !a.PlayTime.IsZero() {
-		ret.Played = a.PlayTime
+	if !a.PlayTime.IsZero() {
+		ret.Played = &a.PlayTime.Time
 	}
 	if len(a.DiscTitles) > 0 {
 		sort.Slice(a.DiscTitles, func(i, j int) bool {

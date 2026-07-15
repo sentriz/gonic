@@ -53,8 +53,8 @@ func NewAlbumByFolder(f *AlbumRow) *Album {
 		DiscTitles:    []*DiscTitle{},
 		Genres:        []*GenreRef{},
 	}
-	if f.PlayTime != nil && !f.PlayTime.IsZero() {
-		a.Played = f.PlayTime
+	if !f.PlayTime.IsZero() {
+		a.Played = &f.PlayTime.Time
 	}
 	if f.AlbumStar != nil {
 		a.Starred = &f.AlbumStar.StarDate

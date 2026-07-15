@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/araddon/dateparse"
 	"github.com/jinzhu/gorm"
 
 	// TODO: remove this dep
@@ -682,6 +683,36 @@ type AlbumInfo struct {
 	LastFMURL                 string
 	MusicBrainzID             string
 	MusicBrainzDisambiguation string
+}
+
+// ScanTime scans time columns computed from SQL expressions like max(...), which have no
+// declared type, so drivers return them as raw text instead of converting to time.Time.
+type ScanTime struct {
+	time.Time
+}
+
+func (st *ScanTime) Scan(value any) error {
+	switch v := value.(type) {
+	case nil:
+		return nil
+	case time.Time:
+		st.Time = v
+	case []byte:
+		t, err := dateparse.ParseAny(string(v))
+		if err != nil {
+			return fmt.Errorf("parse time %q: %w", v, err)
+		}
+		st.Time = t
+	case string:
+		t, err := dateparse.ParseAny(v)
+		if err != nil {
+			return fmt.Errorf("parse time %q: %w", v, err)
+		}
+		st.Time = t
+	default:
+		return fmt.Errorf("unsupported time type %T", value)
+	}
+	return nil
 }
 
 func splitIDs(in, sep string) []specid.ID {
