@@ -47,6 +47,10 @@ var (
 
 	Opus192 = NewProfile("audio/ogg", "opus", 192, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -b:a <bitrate> -c:a libopus -vbr constrained -f opus -`)
 
+	Ogg    = NewProfile("audio/ogg", "ogg", 112, `ffmpeg -v 0 -i <file> -ss <seek> -vn -c:a libvorbis -b:a <bitrate> -f ogg -`)
+	Ogg192 = NewProfile("audio/ogg", "ogg", 192, `ffmpeg -v 0 -i <file> -ss <seek> -vn -c:a libvorbis -b:a <bitrate> -f ogg -`)
+	Ogg256 = NewProfile("audio/ogg", "ogg", 256, `ffmpeg -v 0 -i <file> -ss <seek> -vn -c:a libvorbis -b:a <bitrate> -f ogg -`)
+
 	PCM16le = NewProfile("audio/wav", "wav", 0, `ffmpeg -v 0 -i <file> -ss <seek> -c:a pcm_s16le -ac 2 -ar 48000 -f s16le -`)
 )
 
