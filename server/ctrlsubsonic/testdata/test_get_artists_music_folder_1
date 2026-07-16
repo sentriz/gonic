@@ -17,6 +17,7 @@
               "coverArt": "ar-1",
               "albumCount": 1,
               "musicBrainzId": "",
+              "disambiguation": "",
               "roles": [
                 "albumartist",
                 "artist"
@@ -35,6 +36,7 @@
               "name": "Various Artists",
               "albumCount": 1,
               "musicBrainzId": "",
+              "disambiguation": "",
               "roles": [
                 "albumartist"
               ]

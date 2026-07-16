@@ -17,6 +17,7 @@
               "name": "artist-a",
               "albumCount": 1,
               "musicBrainzId": "",
+              "disambiguation": "",
               "roles": []
             }
           ]
@@ -29,6 +30,7 @@
               "name": "various",
               "albumCount": 1,
               "musicBrainzId": "",
+              "disambiguation": "",
               "roles": []
             }
           ]

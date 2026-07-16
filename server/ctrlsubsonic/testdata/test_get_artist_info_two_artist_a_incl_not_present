@@ -19,6 +19,7 @@
           "name": "artist-b",
           "albumCount": 3,
           "musicBrainzId": "",
+          "disambiguation": "",
           "roles": [
             "albumartist",
             "artist"
@@ -29,6 +30,7 @@
           "name": "artist-not-in-db",
           "albumCount": 0,
           "musicBrainzId": "",
+          "disambiguation": "",
           "roles": []
         }
       ]

@@ -17,6 +17,7 @@
               "name": "artist-a",
               "albumCount": 3,
               "musicBrainzId": "",
+              "disambiguation": "",
               "roles": []
             },
             {
@@ -24,6 +25,7 @@
               "name": "artist-a",
               "albumCount": 1,
               "musicBrainzId": "",
+              "disambiguation": "",
               "roles": []
             },
             {
@@ -31,6 +33,7 @@
               "name": "artist-b",
               "albumCount": 1,
               "musicBrainzId": "",
+              "disambiguation": "",
               "roles": []
             },
             {
@@ -38,6 +41,7 @@
               "name": "ärtist-c",
               "albumCount": 1,
               "musicBrainzId": "",
+              "disambiguation": "",
               "roles": []
             }
           ]
@@ -50,6 +54,7 @@
               "name": "collab-ab",
               "albumCount": 1,
               "musicBrainzId": "",
+              "disambiguation": "",
               "roles": []
             }
           ]
@@ -62,6 +67,7 @@
               "name": "split-ab",
               "albumCount": 1,
               "musicBrainzId": "",
+              "disambiguation": "",
               "roles": []
             }
           ]
@@ -74,6 +80,7 @@
               "name": "various",
               "albumCount": 1,
               "musicBrainzId": "",
+              "disambiguation": "",
               "roles": []
             }
           ]

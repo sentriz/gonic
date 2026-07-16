@@ -10,6 +10,7 @@
       "name": "artist-x",
       "albumCount": 1,
       "musicBrainzId": "",
+      "disambiguation": "",
       "roles": [
         "artist"
       ],

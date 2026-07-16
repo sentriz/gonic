@@ -11,6 +11,7 @@
       "coverArt": "ar-1",
       "albumCount": 6,
       "musicBrainzId": "",
+      "disambiguation": "",
       "roles": [
         "albumartist",
         "artist"

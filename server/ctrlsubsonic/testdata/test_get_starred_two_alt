@@ -12,6 +12,7 @@
           "name": "ärtist-c",
           "albumCount": 1,
           "musicBrainzId": "",
+          "disambiguation": "",
           "roles": [
             "albumartist",
             "artist"

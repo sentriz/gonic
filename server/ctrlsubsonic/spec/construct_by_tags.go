@@ -260,8 +260,11 @@ func NewArtistByTags(a *ArtistRow) *Artist {
 		Albums:        []*Album{},
 		AverageRating: a.AverageRating,
 	}
-	if a.Info != nil && a.Info.ImageURL != "" {
-		r.CoverID = a.SID()
+	if a.Info != nil {
+		r.Disambiguation = a.Info.MusicBrainzDisambiguation
+		if a.Info.ImageURL != "" {
+			r.CoverID = a.SID()
+		}
 	}
 	if a.ArtistStar != nil {
 		r.Starred = &a.ArtistStar.StarDate

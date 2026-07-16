@@ -13,6 +13,7 @@
           "coverArt": "ar-1",
           "albumCount": 5,
           "musicBrainzId": "",
+          "disambiguation": "",
           "roles": [
             "albumartist",
             "artist"
