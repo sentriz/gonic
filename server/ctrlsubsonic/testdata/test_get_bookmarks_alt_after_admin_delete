@@ -55,7 +55,7 @@
             "musicBrainzId": "",
             "isrc": [],
             "replayGain": null,
-            "played": null
+            "played": ""
           },
           "username": "alt",
           "position": 5000,

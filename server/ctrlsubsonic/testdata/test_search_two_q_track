@@ -294,7 +294,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "tr-7",
@@ -341,7 +341,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "tr-8",
@@ -388,7 +388,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "tr-9",
@@ -431,7 +431,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "tr-10",
@@ -474,7 +474,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "tr-11",
@@ -518,7 +518,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "tr-12",
@@ -562,7 +562,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         }
       ]
     }

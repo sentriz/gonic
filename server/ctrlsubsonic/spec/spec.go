@@ -1,6 +1,8 @@
 package spec
 
 import (
+	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"html"
 	"regexp"
@@ -29,6 +31,26 @@ const (
 	TypeMusic          = "music"
 	TypePodcastEpisode = "podcastepisode"
 )
+
+// Time encodes as RFC 3339, or an empty string when zero, since some clients reject null.
+type Time struct {
+	time.Time
+}
+
+func (t Time) String() string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.Format(time.RFC3339)
+}
+
+func (t Time) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.String())
+}
+
+func (t Time) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
+	return xml.Attr{Name: name, Value: t.String()}, nil
+}
 
 type SubsonicResponse struct {
 	Response Response `xml:"subsonic-response"       json:"subsonic-response"`
@@ -174,7 +196,7 @@ type Album struct {
 	TrackCount int           `xml:"songCount,attr"         json:"songCount"`
 	Duration   int           `xml:"duration,attr"          json:"duration"`
 	PlayCount  int           `xml:"playCount,attr"         json:"playCount"`
-	Played     *time.Time    `xml:"played,attr,omitempty"  json:"played"`
+	Played     Time          `xml:"played,attr"            json:"played"`
 	Genre      string        `xml:"genre,attr,omitempty"   json:"genre,omitempty"`
 	Genres     []*GenreRef   `xml:"genres"                 json:"genres"`
 	Year       int           `xml:"year,attr,omitempty"    json:"year,omitempty"`
@@ -262,8 +284,8 @@ type TrackChild struct {
 
 	ReplayGain *ReplayGain `xml:"replayGain" json:"replayGain"`
 
-	PlayCount int        `xml:"playCount,attr,omitempty" json:"playCount,omitempty"`
-	Played    *time.Time `xml:"played,attr,omitempty"    json:"played"`
+	PlayCount int  `xml:"playCount,attr,omitempty" json:"playCount,omitempty"`
+	Played    Time `xml:"played,attr"              json:"played"`
 
 	TranscodeMeta
 }

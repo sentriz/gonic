@@ -47,14 +47,12 @@ func NewAlbumByFolder(f *AlbumRow) *Album {
 		Created:       f.CreatedAt,
 		AverageRating: f.AverageRating,
 		PlayCount:     int(math.Ceil(f.PlayCount)),
+		Played:        Time{f.PlayTime.Time},
 		Artists:       []*ArtistRef{},
 		ReleaseTypes:  []string{},
 		RecordLabels:  []*RecordLabel{},
 		DiscTitles:    []*DiscTitle{},
 		Genres:        []*GenreRef{},
-	}
-	if !f.PlayTime.IsZero() {
-		a.Played = &f.PlayTime.Time
 	}
 	if f.AlbumStar != nil {
 		a.Starred = &f.AlbumStar.StarDate
@@ -158,9 +156,7 @@ func NewTCTrackByFolder(t *TrackRow, parent *db.Album) *TrackChild {
 	}
 	if t.Play != nil {
 		trCh.PlayCount = int(math.Ceil(t.Play.Count))
-		if !t.Play.Time.IsZero() {
-			trCh.Played = &t.Play.Time
-		}
+		trCh.Played = Time{t.Play.Time}
 	}
 	if len(t.Genres) > 0 {
 		trCh.Genre = t.Genres[0].Name

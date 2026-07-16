@@ -107,7 +107,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "tr-12",
@@ -156,7 +156,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         }
       ]
     }

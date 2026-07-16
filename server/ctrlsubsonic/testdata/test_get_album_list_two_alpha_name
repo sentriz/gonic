@@ -122,7 +122,7 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genre": "Jazz",
           "genres": [
             {
@@ -157,7 +157,7 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genre": "Rock",
           "genres": [
             {
@@ -196,7 +196,7 @@
           "songCount": 2,
           "duration": 200,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genre": "Pop",
           "genres": [
             {
@@ -232,7 +232,7 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genre": "Rock",
           "genres": [
             {
@@ -271,7 +271,7 @@
           "songCount": 2,
           "duration": 200,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genre": "Pop",
           "genres": [
             {
@@ -307,7 +307,7 @@
           "songCount": 2,
           "duration": 200,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genre": "Rock",
           "genres": [
             {
@@ -343,7 +343,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genres": [],
           "year": 2015,
           "isCompilation": false,

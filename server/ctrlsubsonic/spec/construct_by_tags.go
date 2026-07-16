@@ -102,9 +102,7 @@ func NewAlbumByTags(a *AlbumRow, credits []*db.AlbumCredit) *Album {
 		ret.RecordLabels = append(ret.RecordLabels, &RecordLabel{Name: l.Label})
 	}
 	ret.PlayCount = int(math.Ceil(a.PlayCount))
-	if !a.PlayTime.IsZero() {
-		ret.Played = &a.PlayTime.Time
-	}
+	ret.Played = Time{a.PlayTime.Time}
 	if len(a.DiscTitles) > 0 {
 		sort.Slice(a.DiscTitles, func(i, j int) bool {
 			return a.DiscTitles[i].DiscNumber < a.DiscTitles[j].DiscNumber
@@ -168,9 +166,7 @@ func NewTrackByTags(client string, t *TrackRow, album *db.Album) *TrackChild {
 	}
 	if t.Play != nil {
 		ret.PlayCount = int(math.Ceil(t.Play.Count))
-		if !t.Play.Time.IsZero() {
-			ret.Played = &t.Play.Time
-		}
+		ret.Played = Time{t.Play.Time}
 	}
 
 	trackArtists := filterTrackCreditsByRole(t.Credits, db.RoleArtist)

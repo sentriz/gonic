@@ -67,7 +67,7 @@
           "userRating": 4,
           "averageRating": 4,
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "al-4",
@@ -91,7 +91,7 @@
           "isrc": [],
           "averageRating": 5,
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "al-6",
@@ -113,7 +113,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "al-8",
@@ -136,7 +136,7 @@
           "isrc": [],
           "starred": "2020-06-02T12:00:00Z",
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "al-8",
@@ -159,7 +159,7 @@
           "isrc": [],
           "starred": "2020-06-02T12:00:00Z",
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "al-10",
@@ -181,7 +181,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "al-10",
@@ -203,7 +203,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "al-12",
@@ -225,7 +225,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "al-15",
@@ -247,7 +247,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "al-17",
@@ -270,7 +270,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "al-18",
@@ -292,7 +292,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         }
       ],
       "song": [
@@ -583,7 +583,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "tr-7",
@@ -630,7 +630,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "tr-8",
@@ -677,7 +677,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "tr-9",
@@ -720,7 +720,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "tr-10",
@@ -763,7 +763,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "tr-11",
@@ -807,7 +807,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "tr-12",
@@ -851,7 +851,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         }
       ]
     }

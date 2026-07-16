@@ -30,7 +30,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "al-3",
@@ -55,7 +55,7 @@
           "userRating": 4,
           "averageRating": 4,
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "al-4",
@@ -79,7 +79,7 @@
           "isrc": [],
           "averageRating": 5,
           "replayGain": null,
-          "played": null
+          "played": ""
         }
       ]
     }

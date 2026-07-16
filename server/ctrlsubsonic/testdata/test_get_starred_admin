@@ -30,7 +30,7 @@
           "userRating": 4,
           "averageRating": 4,
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "al-8",
@@ -53,7 +53,7 @@
           "isrc": [],
           "starred": "2020-06-02T12:00:00Z",
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "al-8",
@@ -76,7 +76,7 @@
           "isrc": [],
           "starred": "2020-06-02T12:00:00Z",
           "replayGain": null,
-          "played": null
+          "played": ""
         }
       ],
       "song": [

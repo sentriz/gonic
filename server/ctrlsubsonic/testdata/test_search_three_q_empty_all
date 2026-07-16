@@ -64,7 +64,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genres": [],
           "isCompilation": false,
           "releaseTypes": [
@@ -87,7 +87,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genres": [],
           "isCompilation": false,
           "releaseTypes": [
@@ -207,7 +207,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genres": [],
           "isCompilation": false,
           "releaseTypes": [
@@ -236,7 +236,7 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genre": "Jazz",
           "genres": [
             {
@@ -265,7 +265,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genres": [],
           "isCompilation": false,
           "releaseTypes": [
@@ -298,7 +298,7 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genre": "Pop",
           "genres": [
             {
@@ -328,7 +328,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genres": [],
           "isCompilation": false,
           "releaseTypes": [
@@ -361,7 +361,7 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genre": "Pop",
           "genres": [
             {
@@ -390,7 +390,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genres": [],
           "isCompilation": false,
           "releaseTypes": [
@@ -419,7 +419,7 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genre": "Rock",
           "genres": [
             {
@@ -448,7 +448,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genres": [],
           "isCompilation": false,
           "releaseTypes": [
@@ -471,7 +471,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genres": [],
           "isCompilation": false,
           "releaseTypes": [
@@ -500,7 +500,7 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genre": "Rock",
           "genres": [
             {
@@ -529,7 +529,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genres": [],
           "isCompilation": false,
           "releaseTypes": [
@@ -559,7 +559,7 @@
           "songCount": 2,
           "duration": 200,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genre": "Rock",
           "genres": [
             {
@@ -595,7 +595,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genres": [],
           "year": 2015,
           "isCompilation": false,
@@ -1033,7 +1033,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "tr-7",
@@ -1089,7 +1089,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "tr-8",
@@ -1145,7 +1145,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "tr-9",
@@ -1193,7 +1193,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "tr-10",
@@ -1241,7 +1241,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "tr-11",
@@ -1290,7 +1290,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         },
         {
           "id": "tr-12",
@@ -1339,7 +1339,7 @@
           "musicBrainzId": "",
           "isrc": [],
           "replayGain": null,
-          "played": null
+          "played": ""
         }
       ]
     }

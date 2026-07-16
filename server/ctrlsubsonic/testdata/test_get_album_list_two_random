@@ -8,157 +8,6 @@
     "albumList2": {
       "album": [
         {
-          "id": "al-8",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-1",
-          "artist": "Artist A!",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "Artist A!"
-            },
-            {
-              "id": "ar-17",
-              "name": "Artist B!"
-            }
-          ],
-          "displayArtist": "artist-a",
-          "title": "album-collab",
-          "album": "album-collab",
-          "name": "album-collab",
-          "songCount": 2,
-          "duration": 200,
-          "playCount": 0,
-          "played": null,
-          "genre": "Pop",
-          "genres": [
-            {
-              "name": "Pop"
-            }
-          ],
-          "year": 2021,
-          "isCompilation": false,
-          "releaseTypes": [
-            "Album"
-          ],
-          "recordLabels": [],
-          "discTitles": [],
-          "musicBrainzId": "",
-          "version": "Deluxe Edition",
-          "starred": "2020-06-02T12:00:00Z"
-        },
-        {
-          "id": "al-12",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-18",
-          "artist": "ärtist-c",
-          "artists": [
-            {
-              "id": "ar-18",
-              "name": "ärtist-c"
-            }
-          ],
-          "displayArtist": "ärtist-c",
-          "title": "album-ca",
-          "album": "album-ca",
-          "name": "album-ca",
-          "songCount": 1,
-          "duration": 100,
-          "playCount": 0,
-          "played": null,
-          "genre": "Rock",
-          "genres": [
-            {
-              "name": "Rock"
-            }
-          ],
-          "year": 2016,
-          "isCompilation": false,
-          "releaseTypes": [
-            "Album"
-          ],
-          "recordLabels": [],
-          "discTitles": [],
-          "musicBrainzId": "",
-          "version": "Deluxe Edition"
-        },
-        {
-          "id": "al-17",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-19",
-          "artist": "Various Artists",
-          "artists": [
-            {
-              "id": "ar-19",
-              "name": "Various Artists"
-            }
-          ],
-          "displayArtist": "Various Artists",
-          "title": "comp",
-          "album": "comp",
-          "coverArt": "tr-11",
-          "name": "comp",
-          "songCount": 2,
-          "duration": 200,
-          "playCount": 0,
-          "played": null,
-          "genre": "Rock",
-          "genres": [
-            {
-              "name": "Rock"
-            }
-          ],
-          "year": 2020,
-          "isCompilation": true,
-          "releaseTypes": [
-            "Album",
-            "Compilation"
-          ],
-          "recordLabels": [],
-          "discTitles": [],
-          "musicBrainzId": "",
-          "version": "Deluxe Edition"
-        },
-        {
-          "id": "al-10",
-          "created": "2019-11-30T00:00:00Z",
-          "artistId": "ar-1",
-          "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            },
-            {
-              "id": "ar-17",
-              "name": "artist-b"
-            }
-          ],
-          "displayArtist": "artist-a",
-          "title": "album-split",
-          "album": "album-split",
-          "name": "album-split",
-          "songCount": 2,
-          "duration": 200,
-          "playCount": 0,
-          "played": null,
-          "genre": "Pop",
-          "genres": [
-            {
-              "name": "Pop"
-            }
-          ],
-          "year": 2023,
-          "isCompilation": false,
-          "releaseTypes": [
-            "Album"
-          ],
-          "recordLabels": [],
-          "discTitles": [],
-          "musicBrainzId": "",
-          "version": "Deluxe Edition"
-        },
-        {
           "id": "al-4",
           "created": "2019-11-30T00:00:00Z",
           "artistId": "ar-1",
@@ -215,6 +64,46 @@
           "averageRating": 5
         },
         {
+          "id": "al-8",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-1",
+          "artist": "Artist A!",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "Artist A!"
+            },
+            {
+              "id": "ar-17",
+              "name": "Artist B!"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "album-collab",
+          "album": "album-collab",
+          "name": "album-collab",
+          "songCount": 2,
+          "duration": 200,
+          "playCount": 0,
+          "played": "",
+          "genre": "Pop",
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
+          "year": 2021,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Album"
+          ],
+          "recordLabels": [],
+          "discTitles": [],
+          "musicBrainzId": "",
+          "version": "Deluxe Edition",
+          "starred": "2020-06-02T12:00:00Z"
+        },
+        {
           "id": "al-18",
           "created": "2019-11-30T00:00:00Z",
           "artistId": "ar-1",
@@ -232,7 +121,7 @@
           "songCount": 0,
           "duration": 0,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genres": [],
           "year": 2015,
           "isCompilation": false,
@@ -243,6 +132,76 @@
           "discTitles": [],
           "musicBrainzId": "",
           "version": ""
+        },
+        {
+          "id": "al-15",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-1",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "title": "album-cross",
+          "album": "album-cross",
+          "name": "album-cross",
+          "songCount": 1,
+          "duration": 100,
+          "playCount": 0,
+          "played": "",
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "year": 2022,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Album"
+          ],
+          "recordLabels": [],
+          "discTitles": [],
+          "musicBrainzId": "",
+          "version": "Deluxe Edition"
+        },
+        {
+          "id": "al-12",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-18",
+          "artist": "ärtist-c",
+          "artists": [
+            {
+              "id": "ar-18",
+              "name": "ärtist-c"
+            }
+          ],
+          "displayArtist": "ärtist-c",
+          "title": "album-ca",
+          "album": "album-ca",
+          "name": "album-ca",
+          "songCount": 1,
+          "duration": 100,
+          "playCount": 0,
+          "played": "",
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "year": 2016,
+          "isCompilation": false,
+          "releaseTypes": [
+            "Album"
+          ],
+          "recordLabels": [],
+          "discTitles": [],
+          "musicBrainzId": "",
+          "version": "Deluxe Edition"
         },
         {
           "id": "al-6",
@@ -262,7 +221,7 @@
           "songCount": 1,
           "duration": 100,
           "playCount": 0,
-          "played": null,
+          "played": "",
           "genre": "Jazz",
           "genres": [
             {
@@ -277,6 +236,43 @@
           "recordLabels": [],
           "discTitles": [],
           "musicBrainzId": "00000000-0000-0000-0000-0000000000ba",
+          "version": "Deluxe Edition"
+        },
+        {
+          "id": "al-17",
+          "created": "2019-11-30T00:00:00Z",
+          "artistId": "ar-19",
+          "artist": "Various Artists",
+          "artists": [
+            {
+              "id": "ar-19",
+              "name": "Various Artists"
+            }
+          ],
+          "displayArtist": "Various Artists",
+          "title": "comp",
+          "album": "comp",
+          "coverArt": "tr-11",
+          "name": "comp",
+          "songCount": 2,
+          "duration": 200,
+          "playCount": 0,
+          "played": "",
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "year": 2020,
+          "isCompilation": true,
+          "releaseTypes": [
+            "Album",
+            "Compilation"
+          ],
+          "recordLabels": [],
+          "discTitles": [],
+          "musicBrainzId": "",
           "version": "Deluxe Edition"
         },
         {
@@ -321,7 +317,7 @@
           "averageRating": 4
         },
         {
-          "id": "al-15",
+          "id": "al-10",
           "created": "2019-11-30T00:00:00Z",
           "artistId": "ar-1",
           "artist": "artist-a",
@@ -329,23 +325,27 @@
             {
               "id": "ar-1",
               "name": "artist-a"
+            },
+            {
+              "id": "ar-17",
+              "name": "artist-b"
             }
           ],
           "displayArtist": "artist-a",
-          "title": "album-cross",
-          "album": "album-cross",
-          "name": "album-cross",
-          "songCount": 1,
-          "duration": 100,
+          "title": "album-split",
+          "album": "album-split",
+          "name": "album-split",
+          "songCount": 2,
+          "duration": 200,
           "playCount": 0,
-          "played": null,
-          "genre": "Rock",
+          "played": "",
+          "genre": "Pop",
           "genres": [
             {
-              "name": "Rock"
+              "name": "Pop"
             }
           ],
-          "year": 2022,
+          "year": 2023,
           "isCompilation": false,
           "releaseTypes": [
             "Album"
