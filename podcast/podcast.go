@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -35,6 +36,8 @@ type Podcasts struct {
 	db         *db.DB
 	baseDir    string
 	tagReader  tags.Reader
+
+	refreshMu sync.Mutex
 }
 
 func New(db *db.DB, base string, tagReader tags.Reader) *Podcasts {
@@ -159,6 +162,9 @@ func getEntriesAfterDate(feed []*gofeed.Item, after time.Time) []*gofeed.Item {
 }
 
 func (p *Podcasts) RefreshPodcast(podcast *db.Podcast, items []*gofeed.Item) error {
+	p.refreshMu.Lock()
+	defer p.refreshMu.Unlock()
+
 	var lastPodcastEpisode db.PodcastEpisode
 	err := p.db.
 		Where("podcast_id=?", podcast.ID).
@@ -178,6 +184,9 @@ func (p *Podcasts) RefreshPodcast(podcast *db.Podcast, items []*gofeed.Item) err
 		podcastEpisode, err := p.addEpisode(podcast, item)
 		if err != nil {
 			episodeErrs = append(episodeErrs, err)
+			continue
+		}
+		if podcastEpisode == nil {
 			continue
 		}
 
@@ -206,19 +215,33 @@ func (p *Podcasts) addEpisode(podcast *db.Podcast, item *gofeed.Item) (*db.Podca
 	if duration == 0 && item.ITunesExt != nil {
 		duration = getSecondsFromString(item.ITunesExt.Duration)
 	}
-	if episode, ok := p.findEnclosureAudio(podcast, duration, item); ok {
-		if err := p.db.Save(episode).Error; err != nil {
-			return nil, err
-		}
-		return episode, nil
+
+	episode, ok := p.findEnclosureAudio(podcast, duration, item)
+	if !ok {
+		episode, ok = p.findMediaAudio(podcast, duration, item)
 	}
-	if episode, ok := p.findMediaAudio(podcast, duration, item); ok {
-		if err := p.db.Save(episode).Error; err != nil {
-			return nil, err
-		}
-		return episode, nil
+	if !ok {
+		return nil, ErrNoAudioInFeedItem
 	}
-	return nil, ErrNoAudioInFeedItem
+
+	q := p.db.Model(db.PodcastEpisode{}).Where("podcast_id=?", podcast.ID)
+	if episode.GUID != "" {
+		q = q.Where("guid=? OR audio_url=?", episode.GUID, episode.AudioURL)
+	} else {
+		q = q.Where("audio_url=?", episode.AudioURL)
+	}
+	var count int
+	if err := q.Count(&count).Error; err != nil {
+		return nil, fmt.Errorf("count episodes: %w", err)
+	}
+	if count > 0 {
+		return nil, nil
+	}
+
+	if err := p.db.Save(episode).Error; err != nil {
+		return nil, err
+	}
+	return episode, nil
 }
 
 func (p *Podcasts) isAudio(rawItemURL string) (bool, error) {
@@ -241,6 +264,7 @@ func itemToEpisode(podcast *db.Podcast, size, duration int, audio string, item *
 		Length:      duration,
 		Size:        size,
 		PublishDate: item.PublishedParsed,
+		GUID:        item.GUID,
 		AudioURL:    audio,
 		Status:      db.PodcastEpisodeStatusSkipped,
 		Artist:      cmp.Or(author),

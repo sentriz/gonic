@@ -101,6 +101,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202606091300", migrateAlbumInfoMusicBrainzDisambiguation),
 		construct(ctx, "202607141400", migrateTrackComposer),
 		construct(ctx, "202607141500", migrateAlbumVersion),
+		construct(ctx, "202607171200", migrateAddPodcastEpisodeGUID),
 	}
 
 	return gormigrate.
@@ -1081,4 +1082,8 @@ func migrateAlbumInfoMusicBrainzDisambiguation(tx *gorm.DB, _ MigrationContext) 
 
 func migrateTrackComposer(tx *gorm.DB, _ MigrationContext) error {
 	return tx.AutoMigrate(Track{}).Error
+}
+
+func migrateAddPodcastEpisodeGUID(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(PodcastEpisode{}).Error
 }

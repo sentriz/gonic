@@ -560,7 +560,8 @@ type PodcastEpisode struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	ModifiedAt  time.Time
-	PodcastID   int `gorm:"not null" sql:"default: null; type:int REFERENCES podcasts(id) ON DELETE CASCADE"`
+	PodcastID   int    `gorm:"not null" sql:"default: null; type:int REFERENCES podcasts(id) ON DELETE CASCADE"`
+	GUID        string `gorm:"index"`
 	Title       string
 	Description string
 	PublishDate *time.Time
