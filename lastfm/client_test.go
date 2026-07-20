@@ -172,6 +172,11 @@ func TestArtistGetTopTracks(t *testing.T) {
 				PlayCount: 1,
 				Rank:      1,
 				URL:       "https://www.last.fm/music/Artist+1/_/Track+1",
+				Artist: lastfm.TrackArtist{
+					Name: "Artist 1",
+					MBID: "366c1119-ec4f-4312-b729-a5637d148e3e",
+					URL:  "https://www.last.fm/music/Artist+1",
+				},
 			},
 			{
 				Image: []lastfm.Image{
@@ -190,6 +195,11 @@ func TestArtistGetTopTracks(t *testing.T) {
 				PlayCount: 2,
 				Rank:      2,
 				URL:       "https://www.last.fm/music/Artist+1/_/Track+2",
+				Artist: lastfm.TrackArtist{
+					Name: "Artist 1",
+					MBID: "366c1119-ec4f-4312-b729-a5637d148e3e",
+					URL:  "https://www.last.fm/music/Artist+1",
+				},
 			},
 		},
 	}, actual)
@@ -377,6 +387,11 @@ func TestTrackGetSimilarTracks(t *testing.T) {
 				Name:      "Track 1",
 				PlayCount: 1,
 				URL:       "https://www.last.fm/music/Artist+1/_/Track+1",
+				Artist: lastfm.TrackArtist{
+					Name: "Artist+1",
+					MBID: "366c1119-ec4f-4312-b729-a5637d148e3e",
+					URL:  "https://www.last.fm/music/Artist+1",
+				},
 			},
 			{
 				Image: []lastfm.Image{
@@ -393,6 +408,11 @@ func TestTrackGetSimilarTracks(t *testing.T) {
 				Name:      "Track 2",
 				PlayCount: 2,
 				URL:       "https://www.last.fm/music/Artist+2/_/Track+2",
+				Artist: lastfm.TrackArtist{
+					Name: "Artist+2",
+					MBID: "9842b07f-956b-4c36-8ce1-884b4b96254d",
+					URL:  "https://www.last.fm/music/Artist+1",
+				},
 			},
 		},
 	}, actual)

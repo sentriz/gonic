@@ -141,14 +141,21 @@ type (
 	}
 
 	Track struct {
-		Rank      int     `xml:"rank,attr"`
-		Tracks    []Track `xml:"track"`
-		Name      string  `xml:"name"`
-		MBID      string  `xml:"mbid"`
-		PlayCount int     `xml:"playcount"`
-		Listeners int     `xml:"listeners"`
-		URL       string  `xml:"url"`
-		Image     []Image `xml:"image"`
+		Rank      int         `xml:"rank,attr"`
+		Tracks    []Track     `xml:"track"`
+		Name      string      `xml:"name"`
+		MBID      string      `xml:"mbid"`
+		PlayCount int         `xml:"playcount"`
+		Listeners int         `xml:"listeners"`
+		URL       string      `xml:"url"`
+		Image     []Image     `xml:"image"`
+		Artist    TrackArtist `xml:"artist"`
+	}
+
+	TrackArtist struct {
+		Name string `xml:"name"`
+		MBID string `xml:"mbid"`
+		URL  string `xml:"url"`
 	}
 
 	LovedTracks struct {

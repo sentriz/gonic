@@ -723,15 +723,15 @@ func getSimilarSongsFromTrack(c *Controller, id specid.ID, params params.Params,
 		return nil, spec.NewError(70, "no similar songs found for track: %v", track.TagTitle)
 	}
 
-	similarTrackNames := make([]string, len(similarTracks.Tracks))
-	for i, t := range similarTracks.Tracks {
-		similarTrackNames[i] = t.Name
+	titleArtistPairs := make([][]any, 0, len(similarTracks.Tracks))
+	for _, t := range similarTracks.Tracks {
+		titleArtistPairs = append(titleArtistPairs, []any{t.Name, t.Artist.Name})
 	}
 
 	var tracks []*spec.TrackRow
 	err = c.dbc.
 		Scopes(spec.LoadTrackByTags(user.ID)).
-		Where("tracks.tag_title IN (?)", similarTrackNames).
+		Where("(tracks.tag_title, tracks.tag_track_artist) IN (?)", titleArtistPairs).
 		Order(gorm.Expr("random()")).
 		Limit(count).
 		Find(&tracks).
@@ -845,15 +845,15 @@ func getSimilarSongsFromAlbum(c *Controller, id specid.ID, params params.Params,
 		return nil, spec.NewError(0, "no similar songs found for album: %v", album.TagTitle)
 	}
 
-	similarTrackNames := make([]string, len(similarTracks.Tracks))
-	for i, t := range similarTracks.Tracks {
-		similarTrackNames[i] = t.Name
+	titleArtistPairs := make([][]any, 0, len(similarTracks.Tracks))
+	for _, t := range similarTracks.Tracks {
+		titleArtistPairs = append(titleArtistPairs, []any{t.Name, t.Artist.Name})
 	}
 
 	var tracks []*spec.TrackRow
 	err = c.dbc.
 		Scopes(spec.LoadTrackByTags(user.ID)).
-		Where("tracks.tag_title IN (?)", similarTrackNames).
+		Where("(tracks.tag_title, tracks.tag_track_artist) IN (?)", titleArtistPairs).
 		Order(gorm.Expr("random()")).
 		Limit(count).
 		Find(&tracks).
