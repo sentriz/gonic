@@ -17,8 +17,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dexterlb/mpvipc"
 	"github.com/mitchellh/mapstructure"
+	"github.com/sentriz/mpvipc" // soft fork until https://github.com/dexterlb/mpvipc/pull/10
 )
 
 var (

@@ -6,7 +6,6 @@ require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/andybalholm/cascadia v1.3.4
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
-	github.com/dexterlb/mpvipc v0.0.0-20241005113212-7cdefca0e933
 	github.com/disintegration/imaging v1.6.2
 	github.com/djherbis/times v1.6.0
 	github.com/dustin/go-humanize v1.0.1
@@ -28,6 +27,7 @@ require (
 	github.com/philippta/go-template v0.0.0-20220911145045-4556aca435e4
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
 	github.com/sentriz/gormstore v0.0.0-20220105134332-64e31f7f6981
+	github.com/sentriz/mpvipc v0.0.0-20260721165941-275957475a0f
 	github.com/stretchr/testify v1.11.1
 	go.senan.xyz/flagconf v0.1.11
 	go.senan.xyz/sqlitenotify v0.0.0-20260513112327-19a2c9e09109
