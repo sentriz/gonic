@@ -204,6 +204,10 @@ func coverForArtist(artistInfoCache *artistinfocache.ArtistInfoCache, id int) (i
 	if err != nil {
 		return nil, fmt.Errorf("req image from lastfm: %w", err)
 	}
+	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
+		return nil, fmt.Errorf("req image from lastfm: bad status %d", resp.StatusCode)
+	}
 	return resp.Body, nil
 }
 
