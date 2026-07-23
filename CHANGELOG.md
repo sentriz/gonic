@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.23.0](https://www.github.com/sentriz/gonic/compare/v0.22.0...v0.23.0) (2026-07-23)
+
+
+### Features
+
+* **infocache:** don't commit empty row before upstream lookup ([5be4aff](https://www.github.com/sentriz/gonic/commit/5be4afff55984f0b3f606b44a1a3e9c527ac8137))
+* **subsonic:** add displayComposer to track responses ([f265087](https://www.github.com/sentriz/gonic/commit/f265087ffaf865b95aaa676f7ac0f7498a593ce1))
+* **subsonic:** add mediaType to child responses ([a6973c0](https://www.github.com/sentriz/gonic/commit/a6973c0fd6882fbd7e89454aa77418ddb0c1d110))
+* **subsonic:** add musicBrainzId to album responses ([08607e2](https://www.github.com/sentriz/gonic/commit/08607e2ab8a00aa1e1f5cd22cc26b729ae9d09b1))
+* **subsonic:** add played to track and album responses ([d8cbe98](https://www.github.com/sentriz/gonic/commit/d8cbe9877fd93a4ffdf3569903a0dca37d22480a))
+* **subsonic:** add version to album responses ([3b472fe](https://www.github.com/sentriz/gonic/commit/3b472fe10993a6ea3b1e319ec6b0c77339677e36))
+* **subsonic:** pad albumInfo notes with musicbrainz disambiguation ([fe9c018](https://www.github.com/sentriz/gonic/commit/fe9c018ea38425ae6a0e285c14269d46efa76f3a))
+* **subsonic:** pad and cap transcoded bytes to estimation, with 3% headroom ([e4cf8ff](https://www.github.com/sentriz/gonic/commit/e4cf8ff5c1f1227d7bf274630553a02d977cb95f)), closes [#704](https://www.github.com/sentriz/gonic/issues/704)
+* **subsonic:** pad artistInfo biography with musicbrainz info ([db65b0d](https://www.github.com/sentriz/gonic/commit/db65b0d66392f8fc9984d44de008b5a7924f1443))
+* **subsonic:** prefer db musicbrainz ID over lastfm's in artistInfo ([60fd5d7](https://www.github.com/sentriz/gonic/commit/60fd5d736594ace30e14cb6d3665242df614ccff))
+* **subsonic:** report subsonic api version 1.16.1 ([3c517f6](https://www.github.com/sentriz/gonic/commit/3c517f6beba1f783f59c093b95322be07d197361))
+* **subsonic:** return artist disambiguation ([960a94c](https://www.github.com/sentriz/gonic/commit/960a94c7b3789e2b9a1ba70837684a4cecdefa52))
+
+
+### Bug Fixes
+
+* **jukebox:** fix large playlists over mpv IPC ([68fa6b6](https://www.github.com/sentriz/gonic/commit/68fa6b6f890d385062be708eece0ee8d77daca9e)), closes [#558](https://www.github.com/sentriz/gonic/issues/558)
+* **podcast:** dedupe by GUID ([662cdd9](https://www.github.com/sentriz/gonic/commit/662cdd974b0436753095490b785853d737982eb8))
+* **scanner:** don't pair mbids with mismatched artist name count ([5bc0b24](https://www.github.com/sentriz/gonic/commit/5bc0b24765f2d2695dd70b8f307f57d67a878e93)), closes [#709](https://www.github.com/sentriz/gonic/issues/709)
+* **subsonic:** always emit musicBrainzId on artist responses ([30fcdc0](https://www.github.com/sentriz/gonic/commit/30fcdc025afd0f62fef10a4d690e305aa6d33426))
+* **subsonic:** check playlist user in getCoverArt ([c7f6080](https://www.github.com/sentriz/gonic/commit/c7f6080c1cef325cc19a46cdec5cbffe84320f8e))
+* **subsonic:** check status code when fetching artist images from lastfm ([61ff47d](https://www.github.com/sentriz/gonic/commit/61ff47d3b7c6336e1b5b12085bf9cc23af6629e4))
+* **subsonic:** contain getCoverArt cache path with SafeJoin ([c6450d0](https://www.github.com/sentriz/gonic/commit/c6450d02e56bf8d720643c3e547e6ff68801e9f8))
+* **subsonic:** create playlist path on create when id doesn't resolve ([490c7a0](https://www.github.com/sentriz/gonic/commit/490c7a088412f73cca59ba1f5de74f05947027a0))
+* **subsonic:** emit played as empty string when never played ([09cbaf1](https://www.github.com/sentriz/gonic/commit/09cbaf165ca5414fe58899d5f2b1d9d1158a2c04))
+* **subsonic:** match similar songs by title and artist ([876dab0](https://www.github.com/sentriz/gonic/commit/876dab0b3530c2c2f19f7d2ff2828cadd4302751)), closes [#714](https://www.github.com/sentriz/gonic/issues/714)
+* **subsonic:** reject invalid song ids on playlist create/update ([9729983](https://www.github.com/sentriz/gonic/commit/9729983ed7bb74bc6ec2c75e93e59ee2a507824f))
+* **subsonic:** require admin for downloadPodcastEpisode ([87102c2](https://www.github.com/sentriz/gonic/commit/87102c256f188442798e933a5f436b80233219b1))
+* **subsonic:** scan album play time regardless of driver time format ([33c7ad3](https://www.github.com/sentriz/gonic/commit/33c7ad3428030fe2bb1d571aa31302562aca55ee))
+
 ## [0.22.0](https://www.github.com/sentriz/gonic/compare/v0.21.0...v0.22.0) (2026-06-08)
 
 
