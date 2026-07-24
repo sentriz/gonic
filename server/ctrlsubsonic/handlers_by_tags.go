@@ -590,13 +590,23 @@ func (c *Controller) ServeGetTopSongs(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
 	count := params.GetOrInt("count", 10)
-	artistName, err := params.Get("artist")
-	if err != nil {
-		return spec.NewError(10, "please provide an `artist` parameter")
-	}
+
 	var artist db.Artist
-	if err := c.dbc.Where("name=?", artistName).Find(&artist).Error; err != nil {
-		return spec.NewError(0, "finding artist by name: %v", err)
+	switch id, err := params.GetID("id"); {
+	case err == nil && id.Type != specid.Artist:
+		return spec.NewError(10, "please provide an artist `id` parameter")
+	case err == nil:
+		if err := c.dbc.Where("id=?", id.Value).Find(&artist).Error; err != nil {
+			return spec.NewError(0, "finding artist by id: %v", err)
+		}
+	default:
+		artistName, err := params.Get("artist")
+		if err != nil {
+			return spec.NewError(10, "please provide an `artist` or `id` parameter")
+		}
+		if err := c.dbc.Where("name=?", artistName).Find(&artist).Error; err != nil {
+			return spec.NewError(0, "finding artist by name: %v", err)
+		}
 	}
 
 	info, err := c.artistInfoCache.GetOrLookup(r.Context(), artist.ID)
