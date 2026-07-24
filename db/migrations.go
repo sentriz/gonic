@@ -102,6 +102,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202607141400", migrateTrackComposer),
 		construct(ctx, "202607141500", migrateAlbumVersion),
 		construct(ctx, "202607171200", migrateAddPodcastEpisodeGUID),
+		construct(ctx, "202607241200", migrateClearUnknownAudioProperties),
 	}
 
 	return gormigrate.
@@ -1086,4 +1087,15 @@ func migrateTrackComposer(tx *gorm.DB, _ MigrationContext) error {
 
 func migrateAddPodcastEpisodeGUID(tx *gorm.DB, _ MigrationContext) error {
 	return tx.AutoMigrate(PodcastEpisode{}).Error
+}
+
+func migrateClearUnknownAudioProperties(tx *gorm.DB, _ MigrationContext) error {
+	// taglib returns -1 for unknown properties, which older go-taglib versions stored as uint32 max.
+	// bitrate kept the raw value, length went through ms -> seconds first.
+	return tx.Exec(`
+		UPDATE tracks SET bitrate=0 WHERE bitrate=4294967295;
+		UPDATE tracks SET length=0 WHERE length=4294967;
+		UPDATE podcast_episodes SET bitrate=0 WHERE bitrate=4294967295;
+		UPDATE podcast_episodes SET length=0 WHERE length=4294967;
+	`).Error
 }

@@ -19,11 +19,11 @@ require (
 	github.com/gorilla/sessions v1.4.0
 	github.com/jinzhu/gorm v1.9.17-0.20211120011537-5c235b72a414
 	github.com/josephburnett/jd v1.9.2
-	github.com/mattn/go-sqlite3 v1.14.45
+	github.com/mattn/go-sqlite3 v1.14.48
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/mmcdole/gofeed v1.3.0
-	github.com/ncruces/go-sqlite3 v0.35.0
+	github.com/mmcdole/gofeed v1.4.0
+	github.com/ncruces/go-sqlite3 v0.35.2
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/philippta/go-template v0.0.0-20220911145045-4556aca435e4
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
@@ -31,10 +31,10 @@ require (
 	github.com/stretchr/testify v1.11.1
 	go.senan.xyz/flagconf v0.1.11
 	go.senan.xyz/sqlitenotify v0.0.0-20260513112327-19a2c9e09109
-	go.senan.xyz/taglib v0.12.0
-	go.senan.xyz/wrtag v0.32.0
-	golang.org/x/net v0.56.0
-	golang.org/x/sync v0.21.0
+	go.senan.xyz/taglib v0.14.0
+	go.senan.xyz/wrtag v0.33.0
+	golang.org/x/net v0.57.0
+	golang.org/x/sync v0.22.0
 	golang.org/x/time v0.15.0
 	gopkg.in/gormigrate.v1 v1.6.0
 )
@@ -42,33 +42,28 @@ require (
 require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
-	github.com/PuerkitoBio/goquery v1.12.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/go-openapi/jsonpointer v0.23.1 // indirect
-	github.com/go-openapi/swag/jsonname v0.26.0 // indirect
+	github.com/go-openapi/jsonpointer v1.0.0 // indirect
 	github.com/gorilla/context v1.1.2 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.2 // indirect
-	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/lib/pq v1.3.0 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
-	github.com/mmcdole/goxpp v1.1.1 // indirect
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/ncruces/go-sqlite3-wasm/v3 v3.1.35302 // indirect
+	github.com/mmcdole/goxpp/v2 v2.0.0 // indirect
+	github.com/ncruces/go-sqlite3-wasm/v3 v3.2.35303 // indirect
 	github.com/ncruces/julianday v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/tetratelabs/wazero v1.11.1-0.20260521072212-475a1f8f0dc3 // indirect
-	golang.org/x/crypto v0.53.0 // indirect
-	golang.org/x/image v0.41.0 // indirect
-	golang.org/x/sys v0.46.0 // indirect
-	golang.org/x/text v0.38.0 // indirect
+	github.com/tetratelabs/wazero v1.12.0 // indirect
+	golang.org/x/crypto v0.54.0 // indirect
+	golang.org/x/image v0.44.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/text v0.40.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
