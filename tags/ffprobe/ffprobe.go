@@ -49,21 +49,18 @@ func (Reader) Read(absPath string) (tags.Properties, tags.Tags, error) {
 	bitRateBitsPerSec, _ := strconv.Atoi(d.Format.BitRate)
 
 	var tgs = map[string][]string{}
-	var hasCover, tgsFound bool
+	var hasCover bool
 	for _, s := range d.Streams {
 		switch s.CodecType {
 		case "video":
 			hasCover = true
 		case "audio":
-			if !tgsFound {
-				tgsFound = true
-				for k, vs := range s.Tags {
-					tgs[k] = strings.Split(vs, ";")
-				}
+			if len(tgs) > 0 {
+				continue // first audio stream wins
 			}
-		}
-		if hasCover && tgsFound {
-			break
+			for k, vs := range s.Tags {
+				tgs[k] = strings.Split(vs, ";")
+			}
 		}
 	}
 	for k, vs := range d.Format.Tags {
