@@ -25,14 +25,15 @@ func (Reader) CanRead(absPath string) bool {
 }
 
 func (Reader) Read(absPath string) (tags.Properties, tags.Tags, error) {
-	out, err := exec.Command("ffprobe", "-hide_banner", "-v", "0", "-i", absPath, "-show_entries", "format:stream=codec_type", "-of", "json").Output()
+	out, err := exec.Command("ffprobe", "-hide_banner", "-v", "0", "-i", absPath, "-show_entries", "format:stream=codec_type:stream_tags", "-of", "json").Output()
 	if err != nil {
 		return tags.Properties{}, nil, fmt.Errorf("output: %w", err)
 	}
 
 	var d struct {
 		Streams []struct {
-			CodecType string `json:"codec_type"`
+			CodecType string            `json:"codec_type"`
+			Tags      map[string]string `json:"tags"`
 		} `json:"streams"`
 		Format struct {
 			Duration string            `json:"duration"`
@@ -48,20 +49,26 @@ func (Reader) Read(absPath string) (tags.Properties, tags.Tags, error) {
 	bitRateBitsPerSec, _ := strconv.Atoi(d.Format.BitRate)
 
 	var tgs = map[string][]string{}
+	var hasCover bool
+	for _, s := range d.Streams {
+		switch s.CodecType {
+		case "video":
+			hasCover = true
+		case "audio":
+			if len(tgs) > 0 {
+				continue // first audio stream wins
+			}
+			for k, vs := range s.Tags {
+				tgs[k] = strings.Split(vs, ";")
+			}
+		}
+	}
 	for k, vs := range d.Format.Tags {
 		switch k {
 		case "OK":
 			continue
 		}
 		tgs[k] = strings.Split(vs, ";")
-	}
-
-	var hasCover bool
-	for _, s := range d.Streams {
-		if s.CodecType == "video" {
-			hasCover = true
-			break
-		}
 	}
 
 	props := tags.Properties{
