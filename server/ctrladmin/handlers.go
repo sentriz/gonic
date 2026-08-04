@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"time"
 
@@ -94,11 +95,15 @@ func (c *Controller) ServeHome(r *http.Request) *Response {
 		return &Response{code: 500, err: fmt.Sprintf("error finding transcode format preferences: %v", err)}
 	}
 	data.TranscodeProfiles = transcode.UserProfiles
-	formats := map[string]struct{}{}
-	for _, p := range transcode.UserProfiles {
-		formats[p.Suffix()] = struct{}{}
+	data.TranscodeProfilesByEncoder = map[transcode.CodecName][]string{}
+	for name, p := range transcode.UserProfiles {
+		enc := p.Codec().Name
+		data.TranscodeProfilesByEncoder[enc] = append(data.TranscodeProfilesByEncoder[enc], name)
 	}
-	data.TranscodeFormatsExhausted = len(data.TranscodeFormatPreferences) >= len(formats)
+	for _, names := range data.TranscodeProfilesByEncoder {
+		slices.Sort(names)
+	}
+	data.TranscodeFormatsExhausted = len(data.TranscodeFormatPreferences) >= len(data.TranscodeProfilesByEncoder)
 
 	// podcasts box
 	if err := c.dbc.Find(&data.Podcasts).Error; err != nil {
@@ -458,10 +463,10 @@ func (c *Controller) ServeCreateTranscodeFormatPrefDo(r *http.Request) *Response
 		return &Response{redirect: "/admin/home", flashW: []string{fmt.Sprintf("find preferences: %v", err)}}
 	}
 	for _, fp := range existing {
-		if p, ok := transcode.UserProfiles[fp.Profile]; ok && p.Suffix() == profile.Suffix() {
+		if p, ok := transcode.UserProfiles[fp.Profile]; ok && p.Codec().Name == profile.Codec().Name {
 			return &Response{
 				redirect: "/admin/home",
-				flashW:   []string{fmt.Sprintf("a default profile for format %q is already set", profile.Suffix())},
+				flashW:   []string{fmt.Sprintf("a default profile for encoder %q is already set", profile.Codec().Name)},
 			}
 		}
 	}

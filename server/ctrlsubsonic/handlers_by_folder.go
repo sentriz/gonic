@@ -12,6 +12,7 @@ import (
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
+	"go.senan.xyz/gonic/transcode"
 )
 
 // the subsonic spec mentions "artist" a lot when talking about the
@@ -114,8 +115,8 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 		toAppend := spec.NewTCTrackByFolder(ch, &folder.Album)
 		if v, _ := params.Get("c"); v == "Jamstash" {
 			// jamstash thinks it can't play flacs
-			toAppend.ContentType = "audio/mpeg"
-			toAppend.Suffix = "mp3"
+			toAppend.ContentType = transcode.CodecMP3.MIME
+			toAppend.Suffix = transcode.CodecMP3.Suffix
 		}
 		toAppend.TranscodeMeta = transcodeMeta
 		childrenObj = append(childrenObj, toAppend)

@@ -90,7 +90,7 @@
     </div>
     <div class="grid grid-cols-[1fr_auto] gap-2 items-center justify-items-end">
         {{ range $i, $fp := .TranscodeFormatPreferences }}
-            <div>{{ $fp.Profile }} <span class="text-gray-500">(for {{ (index $.TranscodeProfiles $fp.Profile).Suffix }}{{ if eq $i 0 }}, default{{ end }})</span></div>
+            <div>{{ $fp.Profile }} <span class="text-gray-500">(for {{ (index $.TranscodeProfiles $fp.Profile).Encoder.Name }}{{ if eq $i 0 }}, default{{ end }})</span></div>
             <form class="contents" action="{{ printf "/admin/delete_transcode_format_pref_do?profile=%s" $fp.Profile | path }}" method="post">
             <input type="submit" value="delete">
             </form>
@@ -98,7 +98,7 @@
         {{ if not .TranscodeFormatsExhausted }}
             <form class="contents" action="{{ path "/admin/create_transcode_format_pref_do" }}" method="post">
             <select name="profile">
-                {{ range $name, $_ := .TranscodeProfiles }}<option value="{{ $name }}">{{ $name }}</option>{{ end }}
+                {{ range $enc, $names := .TranscodeProfilesByEncoder }}<optgroup label="{{ $enc }}">{{ range $name := $names }}<option value="{{ $name }}">{{ $name }}</option>{{ end }}</optgroup>{{ end }}
             </select>
             <input type="submit" value="save">
             </form>
@@ -120,7 +120,7 @@
         <form class="contents" action="{{ path "/admin/create_transcode_pref_do" }}" method="post">
         <input type="text" name="client" placeholder="client name">
         <select name="profile">
-            {{ range $name, $_ := .TranscodeProfiles }}<option value="{{ $name }}">{{ $name }}</option>{{ end }}
+            {{ range $enc, $names := .TranscodeProfilesByEncoder }}<optgroup label="{{ $enc }}">{{ range $name := $names }}<option value="{{ $name }}">{{ $name }}</option>{{ end }}</optgroup>{{ end }}
         </select>
         <input type="submit" value="save">
         </form>

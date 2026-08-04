@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -30,16 +31,37 @@ const (
 const bytesPerSec = sampleRate * bytesPerSample * numChannels
 
 func TestMain(m *testing.M) {
-	if _, err := exec.LookPath("ffmpeg"); err != nil {
-		return // no ffmpeg, skip these tests
-	}
 	os.Exit(m.Run())
+}
+
+func requireFFmpeg(t *testing.T) {
+	t.Helper()
+	if _, err := exec.LookPath("ffmpeg"); err != nil {
+		t.Skip("ffmpeg not installed")
+	}
+}
+
+// codecs are resolved by name, suffix and MIME, so each of those must identify exactly one codec
+func TestCodecsUnique(t *testing.T) {
+	t.Parallel()
+
+	claimed := map[string]transcode.CodecName{}
+	for name, codec := range transcode.Codecs {
+		for _, alias := range []string{string(codec.Name), codec.Suffix, codec.MIME, strings.TrimPrefix(codec.MIME, "audio/")} {
+			if prev, ok := claimed[alias]; ok {
+				require.Equal(t, name, prev, "%q identifies two codecs", alias)
+			}
+			claimed[alias] = name
+		}
+	}
 }
 
 // TestTranscode starts a web server that transcodes a 5s FLAC file to PCM audio. A client
 // consumes the result over a 5 second period.
+
 func TestTranscode(t *testing.T) {
 	t.Parallel()
+	requireFFmpeg(t)
 
 	testFile := "testdata/5s.flac"
 	testFileLen := 5
@@ -73,6 +95,7 @@ func TestTranscode(t *testing.T) {
 // A client consumes the result over a 3 second period.
 func TestTranscodeWithSeek(t *testing.T) {
 	t.Parallel()
+	requireFFmpeg(t)
 
 	testFile := "testdata/5s.flac"
 	testFileLen := 5
@@ -109,6 +132,7 @@ func TestTranscodeWithSeek(t *testing.T) {
 // checks the durations match -- covering the flac profile's <sampleformat> expansion end to end.
 func TestTranscodeFLAC(t *testing.T) {
 	t.Parallel()
+	requireFFmpeg(t)
 
 	profile := transcode.WithBitDepth(transcode.WithSampleRate(transcode.FLAC, 24_000), 16)
 
@@ -129,6 +153,7 @@ func TestTranscodeFLAC(t *testing.T) {
 
 func TestCachingParallelism(t *testing.T) {
 	t.Parallel()
+	requireFFmpeg(t)
 
 	var realTranscodeCount atomic.Uint64
 	transcoder := callbackTranscoder{

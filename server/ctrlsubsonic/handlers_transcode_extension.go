@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"mime"
 	"net/http"
@@ -46,6 +47,9 @@ func (c *Controller) ServeGetTranscodeDecision(r *http.Request) *spec.Response {
 
 	var info spec.ClientInfo
 	if err := json.NewDecoder(r.Body).Decode(&info); err != nil {
+		if errors.Is(err, io.EOF) {
+			return spec.NewError(10, "please provide a client info body")
+		}
 		return spec.NewError(0, "decode client info body: %v", err)
 	}
 
@@ -179,25 +183,25 @@ func backfillAudioProps(dbc *db.DB, tagReader tags.Reader, audio db.AudioFile) e
 	return nil
 }
 
-func formatPrefs(dbc *db.DB, userID int) (map[string]string, error) {
+func formatPrefs(dbc *db.DB, userID int) (map[transcode.CodecName]string, error) {
 	var prefs []*db.TranscodeFormatPreference
 	if err := dbc.Where("user_id=?", userID).Order("created_at").Find(&prefs).Error; err != nil {
 		return nil, fmt.Errorf("find format prefs: %w", err)
 	}
-	bySuffix := map[string]string{}
+	byEncoder := map[transcode.CodecName]string{}
 	for _, fp := range prefs {
 		p, ok := transcode.UserProfiles[fp.Profile]
 		if !ok {
 			return nil, fmt.Errorf("unknown transcode user profile %q", fp.Profile)
 		}
-		if _, ok := bySuffix[p.Suffix()]; !ok {
-			bySuffix[p.Suffix()] = fp.Profile
+		if name := p.Codec().Name; byEncoder[name] == "" {
+			byEncoder[name] = fp.Profile
 		}
 	}
-	return bySuffix, nil
+	return byEncoder, nil
 }
 
-func decideTranscode(info spec.ClientInfo, audio db.AudioFile, forced string, formatPrefs map[string]string) *spec.TranscodeDecision {
+func decideTranscode(info spec.ClientInfo, audio db.AudioFile, forced string, formatPrefs map[transcode.CodecName]string) *spec.TranscodeDecision {
 	src := spec.StreamDetails{
 		Protocol:        protocolHTTP,
 		Container:       strings.TrimPrefix(audio.Ext(), "."),
@@ -208,6 +212,38 @@ func decideTranscode(info spec.ClientInfo, audio db.AudioFile, forced string, fo
 		AudioBitDepth:   audio.AudioBitDepth(),
 	}
 
+	// a transcode pref denies direct play and narrows negotiation to its format. it's a policy, not a
+	// capability, so it must never be the reason a track won't play -- if it yields nothing, negotiate again
+	// as though it weren't set
+	if forced != "" {
+		if narrowed, ok := narrowToPref(info, transcode.UserProfiles[forced]); ok {
+			if d := negotiate(narrowed, src, audio, nil, forced); d.CanTranscode {
+				d.TranscodeReason = append([]string{reasonTranscodePreference}, d.TranscodeReason...)
+				return d
+			}
+		}
+	}
+
+	return negotiate(info, src, audio, formatPrefs, "")
+}
+
+func narrowToPref(info spec.ClientInfo, pref transcode.Profile) (spec.ClientInfo, bool) {
+	i := slices.IndexFunc(info.TranscodingProfiles, func(p spec.TranscodingProfile) bool {
+		codec, ok := codecFor(cmp.Or(p.AudioCodec, p.Container))
+		return ok && codec.Name == pref.Codec().Name
+	})
+	if i < 0 {
+		return info, false // the client can't accept the pref's format
+	}
+	info.DirectPlayProfiles = nil
+	info.TranscodingProfiles = info.TranscodingProfiles[i : i+1]
+	if bps := int(pref.BitRate()) * 1000; bps > 0 && (info.MaxTranscodingAudioBitRateBPS == 0 || bps < info.MaxTranscodingAudioBitRateBPS) {
+		info.MaxTranscodingAudioBitRateBPS = bps
+	}
+	return info, true
+}
+
+func negotiate(info spec.ClientInfo, src spec.StreamDetails, audio db.AudioFile, formatPrefs map[transcode.CodecName]string, forced string) *spec.TranscodeDecision {
 	var d spec.TranscodeDecision
 	d.SourceStream = &src
 
@@ -215,26 +251,6 @@ func decideTranscode(info spec.ClientInfo, audio db.AudioFile, forced string, fo
 	addReason := func(r string) {
 		if !slices.Contains(reasons, r) {
 			reasons = append(reasons, r)
-		}
-	}
-
-	// a per-client transcode pref denies direct play and narrows negotiation to its format, unless the client can't accept it
-	if forced != "" {
-		fp := transcode.UserProfiles[forced]
-		i := slices.IndexFunc(info.TranscodingProfiles, func(p spec.TranscodingProfile) bool {
-			c, _, ok := transcode.BaseProfileFor(cmp.Or(p.AudioCodec, p.Container))
-			return ok && c == fp.Suffix()
-		})
-		if i >= 0 {
-			info.DirectPlayProfiles = nil
-			info.TranscodingProfiles = info.TranscodingProfiles[i : i+1]
-			formatPrefs = nil
-			if bps := int(fp.BitRate()) * 1000; bps > 0 && (info.MaxTranscodingAudioBitRateBPS == 0 || bps < info.MaxTranscodingAudioBitRateBPS) {
-				info.MaxTranscodingAudioBitRateBPS = bps
-			}
-			addReason(reasonTranscodePreference)
-		} else {
-			forced = ""
 		}
 	}
 
@@ -257,9 +273,9 @@ func decideTranscode(info spec.ClientInfo, audio db.AudioFile, forced string, fo
 	d.TranscodeReason = reasons
 
 	for _, p := range info.TranscodingProfiles {
-		if ts, codec, ok := computeTranscode(src, p, info, formatPrefs); ok {
+		if ts, enc, ok := computeTranscode(src, p, info, formatPrefs); ok {
 			d.CanTranscode = true
-			tp := transcodeParams{MediaID: audio.SID().String(), Profile: cmp.Or(forced, formatPrefs[codec]), Codec: codec, BitRate: bpsToKbps(ts.AudioBitRateBPS)}
+			tp := transcodeParams{MediaID: audio.SID().String(), Profile: cmp.Or(forced, formatPrefs[enc.Name]), Codec: enc.Name, BitRate: bpsToKbps(ts.AudioBitRateBPS)}
 			if ts.AudioChannels != src.AudioChannels {
 				tp.Channels = ts.AudioChannels
 			}
@@ -304,39 +320,42 @@ func directPlayReason(src spec.StreamDetails, p spec.DirectPlayProfile, matching
 	return ""
 }
 
-func computeTranscode(src spec.StreamDetails, p spec.TranscodingProfile, info spec.ClientInfo, formatPrefs map[string]string) (spec.StreamDetails, string, bool) {
+func computeTranscode(src spec.StreamDetails, p spec.TranscodingProfile, info spec.ClientInfo, formatPrefs map[transcode.CodecName]string) (spec.StreamDetails, transcode.Codec, bool) {
 	if p.Protocol != "" && !strings.EqualFold(p.Protocol, protocolHTTP) {
-		return spec.StreamDetails{}, "", false
+		return spec.StreamDetails{}, transcode.Codec{}, false
 	}
 
-	codec, base, ok := transcode.BaseProfileFor(cmp.Or(p.AudioCodec, p.Container))
+	enc, ok := codecFor(cmp.Or(p.AudioCodec, p.Container))
 	if !ok {
-		return spec.StreamDetails{}, "", false
+		return spec.StreamDetails{}, transcode.Codec{}, false
 	}
-	enc := transcode.Encoders[codec]
+	base, ok := transcode.BaseProfiles[enc.Name]
+	if !ok {
+		return spec.StreamDetails{}, transcode.Codec{}, false // an encoder gonic never offers, e.g. pcm
+	}
 
-	if name := formatPrefs[codec]; name != "" {
+	if name := formatPrefs[enc.Name]; name != "" {
 		base = transcode.UserProfiles[name]
 	}
 
 	// a lossless target's bitrate can't be capped, and the source's is the only guess for the output's, so
 	// reject the profile when the source exceeds a client cap
-	losslessTarget := base.BitRate() == 0
+	losslessTarget := enc.Lossless
 	if losslessTarget {
 		if src.AudioBitDepth == 0 {
-			return spec.StreamDetails{}, "", false // lossy -> lossless is a pointless upscale
+			return spec.StreamDetails{}, transcode.Codec{}, false // lossy -> lossless is a pointless upscale
 		}
 		for _, capBPS := range []int{info.MaxTranscodingAudioBitRateBPS, info.MaxAudioBitRateBPS} {
 			if capBPS > 0 && src.AudioBitRateBPS > capBPS {
-				return spec.StreamDetails{}, "", false
+				return spec.StreamDetails{}, transcode.Codec{}, false
 			}
 		}
 	}
 
 	ts := spec.StreamDetails{
 		Protocol:        protocolHTTP,
-		Container:       cmp.Or(strings.ToLower(p.Container), codec),
-		Codec:           codec,
+		Container:       cmp.Or(strings.ToLower(p.Container), string(enc.Name)),
+		Codec:           string(enc.Name),
 		AudioBitRateBPS: targetBitRateBPS(src, base, info),
 		AudioChannels:   src.AudioChannels,
 		AudioSampleRate: src.AudioSampleRate,
@@ -353,33 +372,28 @@ func computeTranscode(src spec.StreamDetails, p spec.TranscodingProfile, info sp
 
 	matching := matchingProfiles(info.CodecProfiles, ts.Codec)
 	if !applyLimitations(&ts, src, matching, losslessTarget) {
-		return spec.StreamDetails{}, "", false
+		return spec.StreamDetails{}, transcode.Codec{}, false
 	}
 
 	if losslessTarget && ts.AudioBitDepth != src.AudioBitDepth {
-		// flac only stores 16 or 24 bit, so snap an adjusted depth down to what the encoder can honor,
-		// rejecting the profile if that breaks a required limitation after all
-		switch {
-		case ts.AudioBitDepth >= 24:
-			ts.AudioBitDepth = 24
-		case ts.AudioBitDepth >= 16:
-			ts.AudioBitDepth = 16
-		default:
-			return spec.StreamDetails{}, "", false
+		// an adjusted depth has to snap to one the codec stores, and may then break the limitation after all
+		ts.AudioBitDepth = enc.NearestBitDepth(ts.AudioBitDepth)
+		if ts.AudioBitDepth == 0 {
+			return spec.StreamDetails{}, transcode.Codec{}, false
 		}
 		if !requiredSatisfied(matching, spec.LimitationAudioBitDepth, ts.AudioBitDepth) {
-			return spec.StreamDetails{}, "", false
+			return spec.StreamDetails{}, transcode.Codec{}, false
 		}
 	}
 
 	rate, ok := resolveSampleRate(enc, src.AudioSampleRate, matching)
 	if !ok {
-		return spec.StreamDetails{}, "", false
+		return spec.StreamDetails{}, transcode.Codec{}, false
 	}
 	if rate != 0 {
 		ts.AudioSampleRate = rate
 	}
-	return ts, codec, true
+	return ts, enc, true
 }
 
 func applyLimitations(ts *spec.StreamDetails, src spec.StreamDetails, matching []spec.CodecProfile, losslessTarget bool) bool {
@@ -428,7 +442,7 @@ func targetBitRateBPS(src spec.StreamDetails, base transcode.Profile, info spec.
 
 // the desired rate is snapped to the encoder's discrete rates (opus can't emit 44100, so it becomes 48000),
 // re-checking required limitations against the actual output rate. 0 means keep the source's rate
-func resolveSampleRate(enc transcode.Encoder, src int, matching []spec.CodecProfile) (int, bool) {
+func resolveSampleRate(enc transcode.Codec, src int, matching []spec.CodecProfile) (int, bool) {
 	rate := src
 	for _, cp := range matching {
 		for _, lim := range cp.Limitations {
@@ -557,14 +571,14 @@ func adjust(lim spec.Limitation, v *int) bool {
 // transcodeParams is the stateless getTranscodeStream token, bound to the media it was decided for. Profile,
 // when set, names the UserProfiles entry to use instead of the base codec profile (e.g. a replaygain variant)
 type transcodeParams struct {
-	MediaID    string `json:"mid,omitempty"`
-	DirectPlay bool   `json:"dp,omitempty"`
-	Profile    string `json:"p,omitempty"`
-	Codec      string `json:"c,omitempty"`
-	BitRate    int    `json:"b,omitempty"`
-	Channels   int    `json:"ch,omitempty"`
-	SampleRate int    `json:"sr,omitempty"`
-	BitDepth   int    `json:"bd,omitempty"`
+	MediaID    string              `json:"mid,omitempty"`
+	DirectPlay bool                `json:"dp,omitempty"`
+	Profile    string              `json:"p,omitempty"`
+	Codec      transcode.CodecName `json:"c,omitempty"`
+	BitRate    int                 `json:"b,omitempty"`
+	Channels   int                 `json:"ch,omitempty"`
+	SampleRate int                 `json:"sr,omitempty"`
+	BitDepth   int                 `json:"bd,omitempty"`
 }
 
 func encodeTranscodeParams(tp transcodeParams) string {
@@ -592,7 +606,7 @@ func bpsToKbps(bps int) int {
 	if bps <= 0 {
 		return 0
 	}
-	return bps / 1000
+	return max(bps/1000, 1) // 0 would mean "the profile's default", undoing a cap rather than applying it
 }
 
 func containsFold(values []string, value string) bool {
@@ -602,6 +616,19 @@ func containsFold(values []string, value string) bool {
 		}
 	}
 	return false
+}
+
+// codecFor resolves a format as clients spell it -- codec name, file suffix, or MIME type -- to the codec
+// gonic would encode it with, so a client asking for "ogg" gets opus
+func codecFor(format string) (transcode.Codec, bool) {
+	format = strings.ToLower(format)
+	for _, c := range transcode.Codecs {
+		switch format {
+		case string(c.Name), c.Suffix, c.MIME, strings.TrimPrefix(c.MIME, "audio/"):
+			return c, true
+		}
+	}
+	return transcode.Codec{}, false
 }
 
 // matches by extension or MIME type, so a client declaring container "ogg" matches gonic's ".opus" files

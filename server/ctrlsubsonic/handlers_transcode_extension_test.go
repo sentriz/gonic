@@ -5,6 +5,7 @@ import (
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
+	"go.senan.xyz/gonic/transcode"
 )
 
 func TestTranscodeParamsRoundTrip(t *testing.T) {
@@ -446,12 +447,14 @@ func TestDecideForcedTranscode(t *testing.T) {
 func TestDecideFormatDefaultTranscode(t *testing.T) {
 	t.Parallel()
 
-	track := &db.Track{Filename: "song.flac", Codec: "flac", Channels: 2, Bitrate: 900, BitDepth: 16}
+	// 6 channels at 44100 so the negotiated stream must be downmixed and resampled, and the token must carry
+	// both -- the user profile it names has to be able to apply them
+	track := &db.Track{Filename: "song.flac", Codec: "flac", Channels: 6, SampleRate: 44100, Bitrate: 900, BitDepth: 16}
 	info := spec.ClientInfo{
-		TranscodingProfiles: []spec.TranscodingProfile{{AudioCodec: "opus"}},
+		TranscodingProfiles: []spec.TranscodingProfile{{AudioCodec: "opus", MaxAudioChannels: 2}},
 	}
 
-	d := decideTranscode(info, track, "", map[string]string{"opus": "opus_192"})
+	d := decideTranscode(info, track, "", map[transcode.CodecName]string{transcode.CodecOpus.Name: "opus_192"})
 	if !d.CanTranscode {
 		t.Fatalf("expected transcode, got %+v", d)
 	}
@@ -464,6 +467,65 @@ func TestDecideFormatDefaultTranscode(t *testing.T) {
 	}
 	if tp.Profile != "opus_192" || tp.Codec != "opus" {
 		t.Errorf("token: got %+v want profile opus_192 codec opus", tp)
+	}
+	if tp.Channels != 2 || tp.SampleRate != 48000 {
+		t.Errorf("token: got %d channels at %d want 2 at 48000", tp.Channels, tp.SampleRate)
+	}
+}
+
+func TestCodecFor(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		format string
+		want   transcode.CodecName
+	}{
+		{"mp3", "mp3"},
+		{"MP3", "mp3"},
+		{"audio/mpeg", "mp3"},
+		{"mpeg", "mp3"},
+		{"opus", "opus"},
+		{"ogg", "opus"}, // clients declare the container, gonic names the codec
+		{"audio/ogg", "opus"},
+		{"flac", "flac"},
+		{"audio/flac", "flac"},
+		{"wav", "pcm"},
+	} {
+		got, ok := codecFor(tc.format)
+		if !ok || got.Name != tc.want {
+			t.Errorf("codecFor(%q): got %q %v want %q", tc.format, got.Name, ok, tc.want)
+		}
+	}
+
+	for _, format := range []string{"", "aac", "audio/aac", "raw", "audio"} {
+		if got, ok := codecFor(format); ok {
+			t.Errorf("codecFor(%q): got %q want no match", format, got.Name)
+		}
+	}
+}
+
+// a transcode pref is policy, not capability, so when it can't produce a playable stream the negotiation
+// must fall back to what the client can actually take rather than failing outright.
+func TestDecideForcedTranscodeFallsBackWhenUnplayable(t *testing.T) {
+	t.Parallel()
+
+	// opus can't emit 44100 and the client requires it, so the pref's format is rejected after narrowing
+	track := &db.Track{Filename: "song.flac", Codec: "flac", Channels: 2, SampleRate: 44100, Bitrate: 900, BitDepth: 16}
+	info := spec.ClientInfo{
+		DirectPlayProfiles: []spec.DirectPlayProfile{{Containers: []string{"flac"}, AudioCodecs: []string{"flac"}}},
+		CodecProfiles: []spec.CodecProfile{{
+			Type: "AudioCodec", Name: "opus",
+			Limitations: []spec.Limitation{{Name: "audioSamplerate", Comparison: "LessThanEqual", Values: []string{"44100"}, Required: true}},
+		}},
+		TranscodingProfiles: []spec.TranscodingProfile{{AudioCodec: "opus"}, {AudioCodec: "mp3"}},
+	}
+
+	d := decideTranscode(info, track, "opus_192", nil)
+	if !d.CanDirectPlay && !d.CanTranscode {
+		t.Fatalf("pref made the track unplayable: %+v", d)
+	}
+	if d.ErrorReason != "" {
+		t.Errorf("error reason: got %q want none", d.ErrorReason)
 	}
 }
 

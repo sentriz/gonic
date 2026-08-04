@@ -423,13 +423,15 @@ func streamBaseProfile(dbc *db.DB, userID int, client string, format string, max
 		return transcode.Profile{}, false, false, err
 	}
 
+	requested, hasRequested := codecFor(format)
+
 	// per-client override wins if it matches the client's format (or no format was requested)
-	if prefName != "" && (format == "" || prefProfile.Suffix() == format) {
+	if prefName != "" && (format == "" || (hasRequested && prefProfile.Codec().Name == requested.Name)) {
 		return prefProfile, false, true, nil
 	}
 
 	// user configured format defaults. only consulted when the client requested a specific format
-	if format != "" {
+	if hasRequested {
 		var formatPrefs []*db.TranscodeFormatPreference
 		if err := dbc.Where("user_id=?", userID).Order("created_at").Find(&formatPrefs).Error; err != nil {
 			return transcode.Profile{}, false, false, fmt.Errorf("find format prefs: %w", err)
@@ -439,13 +441,13 @@ func streamBaseProfile(dbc *db.DB, userID int, client string, format string, max
 			if !found {
 				return transcode.Profile{}, false, false, fmt.Errorf("unknown transcode user profile %q", fp.Profile)
 			}
-			if p.Suffix() == format {
+			if p.Codec().Name == requested.Name {
 				return p, true, true, nil
 			}
 		}
 
 		// hardcoded fallback for formats the user didn't configure
-		if _, p, ok := transcode.BaseProfileFor(format); ok {
+		if p, ok := transcode.BaseProfiles[requested.Name]; ok {
 			return p, true, true, nil
 		}
 	}

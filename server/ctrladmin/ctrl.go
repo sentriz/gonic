@@ -294,6 +294,7 @@ type templateData struct {
 	TranscodePreferences       []*db.TranscodePreference
 	TranscodeFormatPreferences []*db.TranscodeFormatPreference
 	TranscodeProfiles          map[string]transcode.Profile
+	TranscodeProfilesByEncoder map[transcode.CodecName][]string
 	TranscodeFormatsExhausted  bool
 
 	CurrentLastFMAPIKey    string
