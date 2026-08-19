@@ -104,6 +104,7 @@ type Response struct {
 	InternetRadioStations *InternetRadioStations `xml:"internetRadioStations" json:"internetRadioStations,omitempty"`
 	Lyrics                *Lyrics                `xml:"lyrics"                json:"lyrics,omitempty"`
 	LyricsList            *LyricsList            `xml:"lyricsList"            json:"lyricsList,omitempty"`
+	NowPlaying            *NowPlaying            `xml:"nowPlaying"            json:"nowPlaying,omitempty"`
 }
 
 func NewResponse() *Response {
@@ -556,6 +557,17 @@ type StructuredLyrics struct {
 	DisplayArtist string  `xml:"displayArtist,attr,omitempty" json:"displayArtist,omitempty"`
 	DisplayTitle  string  `xml:"displayTitle,attr,omitempty"  json:"displayTitle,omitempty"`
 	Offset        int     `xml:"offset,attr,omitempty"        json:"offset,omitempty"`
+}
+
+type NowPlaying struct {
+	List []*NowPlayingEntry `xml:"entry" json:"entry"`
+}
+
+type NowPlayingEntry struct {
+	TrackChild
+	Username   string `xml:"username,attr"   json:"username"`
+	MinutesAgo int    `xml:"minutesAgo,attr" json:"minutesAgo"`
+	PlayerID   int    `xml:"playerId,attr"   json:"playerId"`
 }
 
 type OpenSubsonicExtension struct {

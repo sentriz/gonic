@@ -802,3 +802,47 @@ func lowerUDecOrHash(in string) string {
 	}
 	return string(lower)
 }
+
+func (c *Controller) ServeGetNowPlaying(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
+
+	var plays []*db.TrackPlay
+	err := c.dbc.
+		Preload("User").
+		Where("id IN (SELECT max(id) FROM track_plays GROUP BY user_id)").
+		Where("time > ?", time.Now().Add(-time.Hour)).
+		Order("time DESC").
+		Find(&plays).
+		Error
+	if err != nil {
+		return spec.NewError(0, "find track plays: %v", err)
+	}
+
+	client := params.GetOr("c", "")
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, client)
+
+	sub := spec.NewResponse()
+	sub.NowPlaying = &spec.NowPlaying{List: []*spec.NowPlayingEntry{}}
+	for _, play := range plays {
+		var track spec.TrackRow
+		err := c.dbc.DB.
+			Scopes(spec.LoadTrackByTags(user.ID)).
+			First(&track, play.TrackID).
+			Error
+		if err != nil {
+			return spec.NewError(0, "find track: %v", err)
+		}
+
+		child := spec.NewTrackByTags(client, &track, track.Album)
+		child.TranscodeMeta = transcodeMeta
+
+		sub.NowPlaying.List = append(sub.NowPlaying.List, &spec.NowPlayingEntry{
+			TrackChild: *child,
+			Username:   play.User.Name,
+			MinutesAgo: int(time.Since(play.Time).Minutes()),
+			PlayerID:   play.UserID,
+		})
+	}
+	return sub
+}

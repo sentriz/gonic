@@ -1,0 +1,188 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "nowPlaying": {
+      "entry": [
+        {
+          "id": "tr-11",
+          "album": "comp",
+          "albumId": "al-17",
+          "artist": "artist-x",
+          "artistId": "ar-20",
+          "artists": [
+            {
+              "id": "ar-20",
+              "name": "artist-x"
+            }
+          ],
+          "displayArtist": "artist-x",
+          "albumArtists": [
+            {
+              "id": "ar-19",
+              "name": "Various Artists"
+            }
+          ],
+          "displayAlbumArtist": "Various Artists",
+          "contributors": [],
+          "displayComposer": "",
+          "bitRate": 100,
+          "contentType": "audio/flac",
+          "coverArt": "tr-11",
+          "created": "2019-11-30T00:00:00Z",
+          "duration": 100,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "isDir": false,
+          "isVideo": false,
+          "parent": "al-17",
+          "path": "various/comp/track-0.flac",
+          "suffix": "flac",
+          "title": "comp-track-0",
+          "track": 1,
+          "discNumber": 1,
+          "type": "music",
+          "mediaType": "song",
+          "year": 2020,
+          "musicBrainzId": "",
+          "isrc": [],
+          "replayGain": null,
+          "played": "",
+          "username": "alt",
+          "minutesAgo": 5,
+          "playerId": 2
+        },
+        {
+          "id": "tr-4",
+          "album": "album-ab",
+          "albumId": "al-4",
+          "artist": "artist-a",
+          "artistId": "ar-1",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayAlbumArtist": "artist-a",
+          "contributors": [
+            {
+              "role": "arranger",
+              "artist": {
+                "id": "ar-10",
+                "name": "arr-a"
+              }
+            },
+            {
+              "role": "composer",
+              "artist": {
+                "id": "ar-4",
+                "name": "Composer A!"
+              }
+            },
+            {
+              "role": "composer",
+              "artist": {
+                "id": "ar-5",
+                "name": "Composer B!"
+              }
+            },
+            {
+              "role": "conductor",
+              "artist": {
+                "id": "ar-8",
+                "name": "cond-a"
+              }
+            },
+            {
+              "role": "lyricist",
+              "artist": {
+                "id": "ar-6",
+                "name": "lyr-a"
+              }
+            },
+            {
+              "role": "lyricist",
+              "artist": {
+                "id": "ar-7",
+                "name": "lyr-b"
+              }
+            },
+            {
+              "role": "producer",
+              "artist": {
+                "id": "ar-9",
+                "name": "prod-a"
+              }
+            },
+            {
+              "role": "remixer",
+              "artist": {
+                "id": "ar-2",
+                "name": "Remixer A!"
+              }
+            },
+            {
+              "role": "remixer",
+              "artist": {
+                "id": "ar-3",
+                "name": "Remixer B!"
+              }
+            }
+          ],
+          "displayComposer": "",
+          "bitRate": 100,
+          "contentType": "audio/flac",
+          "coverArt": "al-4",
+          "created": "2019-11-30T00:00:00Z",
+          "duration": 100,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            },
+            {
+              "name": "Pop"
+            }
+          ],
+          "isDir": false,
+          "isVideo": false,
+          "parent": "al-4",
+          "path": "artist-a/album-ab/d1-track-0.flac",
+          "suffix": "flac",
+          "title": "rich-title-d1",
+          "track": 1,
+          "discNumber": 1,
+          "type": "music",
+          "mediaType": "song",
+          "year": 2019,
+          "musicBrainzId": "00000000-0000-0000-0000-ab00000000d1",
+          "isrc": [],
+          "starred": "2020-05-01T12:00:00Z",
+          "userRating": 3,
+          "averageRating": 4.33,
+          "replayGain": null,
+          "playCount": 1,
+          "played": "2020-08-02T12:00:00Z",
+          "username": "alt2",
+          "minutesAgo": 30,
+          "playerId": 3
+        }
+      ]
+    }
+  }
+}
