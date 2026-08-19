@@ -105,7 +105,6 @@ type Response struct {
 	Lyrics                *Lyrics                `xml:"lyrics"                json:"lyrics,omitempty"`
 	LyricsList            *LyricsList            `xml:"lyricsList"            json:"lyricsList,omitempty"`
 	NowPlaying            *NowPlaying            `xml:"nowPlaying"            json:"nowPlaying,omitempty"`
-	NowPlayingEntry       *NowPlayingEntry       `xml:"nowPlayingEntry"       json:"nowPlayingEntry,omitempty"`
 }
 
 func NewResponse() *Response {
@@ -565,14 +564,10 @@ type NowPlaying struct {
 }
 
 type NowPlayingEntry struct {
-	Username   string `xml:"username,attr" json:"username"`
+	TrackChild
+	Username   string `xml:"username,attr"   json:"username"`
 	MinutesAgo int    `xml:"minutesAgo,attr" json:"minutesAgo"`
-	PlayerID   int    `xml:"playerId,attr" json:"playerId"`
-	ID         int    `xml:"id,attr" json:"id"`
-	Title      string `xml:"title,attr" json:"title"`
-	IsDir      bool   `xml:"isDir,attr" json:"isDir"`
-	Album      string `xml:"album,attr" json:"album"`
-	Artist     string `xml:"artist,attr" json:"artist"`
+	PlayerID   int    `xml:"playerId,attr"   json:"playerId"`
 }
 
 type OpenSubsonicExtension struct {

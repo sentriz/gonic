@@ -804,37 +804,45 @@ func lowerUDecOrHash(in string) string {
 }
 
 func (c *Controller) ServeGetNowPlaying(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
+
+	var plays []*db.TrackPlay
+	err := c.dbc.
+		Preload("User").
+		Where("id IN (SELECT max(id) FROM track_plays GROUP BY user_id)").
+		Where("time > ?", time.Now().Add(-time.Hour)).
+		Order("time DESC").
+		Find(&plays).
+		Error
+	if err != nil {
+		return spec.NewError(0, "find track plays: %v", err)
+	}
+
+	client := params.GetOr("c", "")
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, client)
+
 	sub := spec.NewResponse()
-	sub.NowPlaying = &spec.NowPlaying{}
-
-	type NowPlayingRecord struct {
-		Username    string
-		MinutesAgo  int
-		UserID      int
-		TrackPlayID int
-		Title       string
-		IsDir       bool
-		Album       string
-		Artist      string
-	}
-
-	var records []NowPlayingRecord
-	// use track_plays.user_id as PlayerID, and track_plays.id as ID; limit to entries within the last 60 minutes
-	c.dbc.Raw("SELECT u.name AS username, CAST(round((julianday(CURRENT_TIMESTAMP) - julianday(time)) * 1440) AS INTEGER) AS minutes_ago, tp.user_id AS player_id, tp.id AS id, t.tag_title AS title, FALSE AS is_dir, a.tag_title AS album, t.tag_track_artist AS artist FROM track_plays tp NATURAL JOIN (SELECT max(id) AS id, user_id FROM track_plays GROUP BY user_id) JOIN users u ON tp.user_id = u.id JOIN tracks t ON tp.track_id = t.id JOIN albums a ON t.album_id = a.id WHERE minutes_ago <= 60").Scan(&records)
-
-	for _, rec := range records {
-		entry := &spec.NowPlayingEntry{
-			ID:         rec.TrackPlayID,
-			Title:      rec.Title,
-			IsDir:      rec.IsDir,
-			Album:      rec.Album,
-			Artist:     rec.Artist,
-			Username:   rec.Username,
-			MinutesAgo: rec.MinutesAgo,
-			PlayerID:   rec.UserID,
+	sub.NowPlaying = &spec.NowPlaying{List: []*spec.NowPlayingEntry{}}
+	for _, play := range plays {
+		var track spec.TrackRow
+		err := c.dbc.DB.
+			Scopes(spec.LoadTrackByTags(user.ID)).
+			First(&track, play.TrackID).
+			Error
+		if err != nil {
+			return spec.NewError(0, "find track: %v", err)
 		}
-		sub.NowPlaying.List = append(sub.NowPlaying.List, entry)
-	}
 
+		child := spec.NewTrackByTags(client, &track, track.Album)
+		child.TranscodeMeta = transcodeMeta
+
+		sub.NowPlaying.List = append(sub.NowPlaying.List, &spec.NowPlayingEntry{
+			TrackChild: *child,
+			Username:   play.User.Name,
+			MinutesAgo: int(time.Since(play.Time).Minutes()),
+			PlayerID:   play.UserID,
+		})
+	}
 	return sub
 }
