@@ -12,6 +12,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/google/shlex"
@@ -45,24 +46,24 @@ func init() {
 
 // Store as simple strings, since we may let the user provide their own profiles soon
 var (
-	MP3    = NewProfile(CodecMP3, 128, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -ac <channels> -ar <samplerate> -b:a <bitrate> -c:a libmp3lame -f mp3 -`)
-	MP3320 = NewProfile(CodecMP3, 320, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -ac <channels> -ar <samplerate> -b:a <bitrate> -c:a libmp3lame -f mp3 -`)
-	MP3RG  = NewProfile(CodecMP3, 128, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -ac <channels> -ar <samplerate> -b:a <bitrate> -c:a libmp3lame -af "volume=replaygain=track:replaygain_preamp=6dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f mp3 -`)
+	MP3    = NewProfile(CodecMP3, 128, `ffmpeg -v 0 -i {{ quote .File }} {{ opt "-ss" .Seek }} -map 0:a:0 -vn {{ opt "-ac" .Channels }} {{ opt "-ar" .SampleRate }} {{ if .BitRate }} -b:a {{ .BitRate }}k {{ end }} -c:a libmp3lame -f mp3 -`)
+	MP3320 = NewProfile(CodecMP3, 320, `ffmpeg -v 0 -i {{ quote .File }} {{ opt "-ss" .Seek }} -map 0:a:0 -vn {{ opt "-ac" .Channels }} {{ opt "-ar" .SampleRate }} {{ if .BitRate }} -b:a {{ .BitRate }}k {{ end }} -c:a libmp3lame -f mp3 -`)
+	MP3RG  = NewProfile(CodecMP3, 128, `ffmpeg -v 0 -i {{ quote .File }} {{ opt "-ss" .Seek }} -map 0:a:0 -vn {{ opt "-ac" .Channels }} {{ opt "-ar" .SampleRate }} {{ if .BitRate }} -b:a {{ .BitRate }}k {{ end }} -c:a libmp3lame -af "volume=replaygain=track:replaygain_preamp=6dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f mp3 -`)
 
-	Opus       = NewProfile(CodecOpus, 96, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -ac <channels> -ar <samplerate> -b:a <bitrate> -c:a libopus -vbr constrained -f opus -`)
-	OpusRG     = NewProfile(CodecOpus, 96, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -ac <channels> -ar <samplerate> -b:a <bitrate> -c:a libopus -vbr constrained -af "volume=replaygain=track:replaygain_preamp=6dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f opus -`)
-	OpusRGLoud = NewProfile(CodecOpus, 96, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -ac <channels> -ar <samplerate> -b:a <bitrate> -c:a libopus -vbr constrained -af "aresample=96000:resampler=soxr, volume=replaygain=track:replaygain_preamp=15dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f opus -`)
+	Opus       = NewProfile(CodecOpus, 96, `ffmpeg -v 0 -i {{ quote .File }} {{ opt "-ss" .Seek }} -map 0:a:0 -vn {{ opt "-ac" .Channels }} {{ opt "-ar" .SampleRate }} {{ if .BitRate }} -b:a {{ .BitRate }}k {{ end }} -c:a libopus -vbr constrained -f opus -`)
+	OpusRG     = NewProfile(CodecOpus, 96, `ffmpeg -v 0 -i {{ quote .File }} {{ opt "-ss" .Seek }} -map 0:a:0 -vn {{ opt "-ac" .Channels }} {{ opt "-ar" .SampleRate }} {{ if .BitRate }} -b:a {{ .BitRate }}k {{ end }} -c:a libopus -vbr constrained -af "volume=replaygain=track:replaygain_preamp=6dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f opus -`)
+	OpusRGLoud = NewProfile(CodecOpus, 96, `ffmpeg -v 0 -i {{ quote .File }} {{ opt "-ss" .Seek }} -map 0:a:0 -vn {{ opt "-ac" .Channels }} {{ opt "-ar" .SampleRate }} {{ if .BitRate }} -b:a {{ .BitRate }}k {{ end }} -c:a libopus -vbr constrained -af "aresample=96000:resampler=soxr, volume=replaygain=track:replaygain_preamp=15dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f opus -`)
 
-	Opus128       = NewProfile(CodecOpus, 128, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -ac <channels> -ar <samplerate> -b:a <bitrate> -c:a libopus -vbr constrained -f opus -`)
-	Opus128RG     = NewProfile(CodecOpus, 128, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -ac <channels> -ar <samplerate> -b:a <bitrate> -c:a libopus -vbr constrained -af "volume=replaygain=track:replaygain_preamp=6dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f opus -`)
-	Opus128RGLoud = NewProfile(CodecOpus, 128, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -ac <channels> -ar <samplerate> -b:a <bitrate> -c:a libopus -vbr constrained -af "aresample=96000:resampler=soxr, volume=replaygain=track:replaygain_preamp=15dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f opus -`)
+	Opus128       = NewProfile(CodecOpus, 128, `ffmpeg -v 0 -i {{ quote .File }} {{ opt "-ss" .Seek }} -map 0:a:0 -vn {{ opt "-ac" .Channels }} {{ opt "-ar" .SampleRate }} {{ if .BitRate }} -b:a {{ .BitRate }}k {{ end }} -c:a libopus -vbr constrained -f opus -`)
+	Opus128RG     = NewProfile(CodecOpus, 128, `ffmpeg -v 0 -i {{ quote .File }} {{ opt "-ss" .Seek }} -map 0:a:0 -vn {{ opt "-ac" .Channels }} {{ opt "-ar" .SampleRate }} {{ if .BitRate }} -b:a {{ .BitRate }}k {{ end }} -c:a libopus -vbr constrained -af "volume=replaygain=track:replaygain_preamp=6dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f opus -`)
+	Opus128RGLoud = NewProfile(CodecOpus, 128, `ffmpeg -v 0 -i {{ quote .File }} {{ opt "-ss" .Seek }} -map 0:a:0 -vn {{ opt "-ac" .Channels }} {{ opt "-ar" .SampleRate }} {{ if .BitRate }} -b:a {{ .BitRate }}k {{ end }} -c:a libopus -vbr constrained -af "aresample=96000:resampler=soxr, volume=replaygain=track:replaygain_preamp=15dB:replaygain_noclip=0, alimiter=level=disabled, asidedata=mode=delete:type=REPLAYGAIN" -metadata replaygain_album_gain= -metadata replaygain_album_peak= -metadata replaygain_track_gain= -metadata replaygain_track_peak= -metadata r128_album_gain= -metadata r128_track_gain= -f opus -`)
 
-	Opus192 = NewProfile(CodecOpus, 192, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -ac <channels> -ar <samplerate> -b:a <bitrate> -c:a libopus -vbr constrained -f opus -`)
+	Opus192 = NewProfile(CodecOpus, 192, `ffmpeg -v 0 -i {{ quote .File }} {{ opt "-ss" .Seek }} -map 0:a:0 -vn {{ opt "-ac" .Channels }} {{ opt "-ar" .SampleRate }} {{ if .BitRate }} -b:a {{ .BitRate }}k {{ end }} -c:a libopus -vbr constrained -f opus -`)
 
 	// lossless, so no bitrate. for resampling or bit depth conversion when a client can't play the source as-is
-	FLAC = NewProfile(CodecFLAC, 0, `ffmpeg -v 0 -i <file> -ss <seek> -map 0:a:0 -vn -ac <channels> -ar <samplerate> <sampleformat> -c:a flac -f flac -`)
+	FLAC = NewProfile(CodecFLAC, 0, `ffmpeg -v 0 -i {{ quote .File }} {{ opt "-ss" .Seek }} -map 0:a:0 -vn {{ opt "-ac" .Channels }} {{ opt "-ar" .SampleRate }} {{ if .BitDepth }} -sample_fmt {{ if le .BitDepth 16 }}s16{{ else }}s32{{ end }} {{ end }} -c:a flac -f flac -`)
 
-	PCM16le = NewProfile(CodecPCM, 0, `ffmpeg -v 0 -i <file> -ss <seek> -c:a pcm_s16le -ac 2 -ar 48000 -f s16le -`)
+	PCM16le = NewProfile(CodecPCM, 0, `ffmpeg -v 0 -i {{ quote .File }} {{ opt "-ss" .Seek }} -c:a pcm_s16le -ac 2 -ar 48000 -f s16le -`)
 )
 
 type CodecName string
@@ -175,13 +176,27 @@ func EstimateSize(p Profile, d time.Duration) int64 {
 	return int64(d.Seconds() * bytesPerSec * (100 + headroomPct) / 100)
 }
 
-var (
-	ErrNoProfileParts = fmt.Errorf("not enough profile parts")
-	ErrNoPlaceholder  = fmt.Errorf("profile has no placeholder for a requested property")
-)
+var ErrNoProfileParts = fmt.Errorf("not enough profile parts")
 
 func parseProfile(profile Profile, in string) (string, []string, error) {
-	parts, err := shlex.Split(profile.exec)
+	templ, err := template.New("profile").Funcs(profileFuncs).Parse(profile.exec)
+	if err != nil {
+		return "", nil, fmt.Errorf("parse profile: %w", err)
+	}
+
+	var rendered strings.Builder
+	if err := templ.Execute(&rendered, profileData{
+		File:       in,
+		Seek:       profile.seek.Seconds(),
+		BitRate:    int(profile.bitrate),
+		Channels:   profile.channels,
+		SampleRate: profile.sampleRate,
+		BitDepth:   profile.bitDepth,
+	}); err != nil {
+		return "", nil, fmt.Errorf("render profile: %w", err)
+	}
+
+	parts, err := shlex.Split(rendered.String())
 	if err != nil {
 		return "", nil, fmt.Errorf("split command: %w", err)
 	}
@@ -193,51 +208,46 @@ func parseProfile(profile Profile, in string) (string, []string, error) {
 		return "", nil, fmt.Errorf("find name: %w", err)
 	}
 
-	var seen []string
-	var args []string
-	for _, p := range parts[1:] {
-		if strings.HasPrefix(p, "<") {
-			seen = append(seen, p)
-		}
-		switch p {
-		case "<file>":
-			args = append(args, in)
-		case "<seek>":
-			args = append(args, fmt.Sprintf("%dus", profile.Seek().Microseconds()))
-		case "<bitrate>":
-			args = append(args, fmt.Sprintf("%dk", profile.BitRate()))
-		case "<channels>":
-			args = append(args, strconv.Itoa(profile.channels)) // 0 -> ffmpeg keeps the source's channels
-		case "<samplerate>":
-			args = append(args, strconv.Itoa(profile.sampleRate)) // 0 -> ffmpeg keeps the source's rate
-		case "<sampleformat>":
-			// expands to a -sample_fmt pair or nothing, since -sample_fmt has no "keep the source's" sentinel
-			switch {
-			case profile.bitDepth == 0:
-			case profile.bitDepth <= 16:
-				args = append(args, "-sample_fmt", "s16")
-			default:
-				args = append(args, "-sample_fmt", "s32") // flac stores 24 bit from s32 input
-			}
-		default:
-			args = append(args, p)
-		}
-	}
+	return name, parts[1:], nil
+}
 
-	// a property with nowhere to expand would be silently dropped, serving audio that doesn't match what the
-	// caller (and the transcoding extension's decision) promised
-	for _, missing := range []struct {
-		placeholder string
-		set         bool
-	}{
-		{"<channels>", profile.channels != 0},
-		{"<samplerate>", profile.sampleRate != 0},
-		{"<sampleformat>", profile.bitDepth != 0},
-	} {
-		if missing.set && !slices.Contains(seen, missing.placeholder) {
-			return "", nil, fmt.Errorf("%w: %s", ErrNoPlaceholder, missing.placeholder)
-		}
-	}
+type profileData struct {
+	File       string  // path, needs quoting
+	Seek       float64 // seconds
+	BitRate    int     // kilobits/s
+	Channels   int
+	SampleRate int
+	BitDepth   int
+}
 
-	return name, args, nil
+var profileFuncs = template.FuncMap{
+	"opt": func(flag string, value any) string {
+		v := formatValue(value)
+		if v == "" {
+			return ""
+		}
+		return flag + " " + v
+	},
+	"quote": func(value any) string {
+		return "'" + strings.ReplaceAll(formatValue(value), "'", `'\''`) + "'"
+	},
+}
+
+func formatValue(value any) string {
+	switch v := value.(type) {
+	case string:
+		return v
+	case int:
+		if v == 0 {
+			return ""
+		}
+		return strconv.Itoa(v)
+	case float64:
+		if v == 0 {
+			return ""
+		}
+		return strconv.FormatFloat(v, 'f', -1, 64) // plain decimal, since an exponent isn't a command line argument
+	default:
+		return fmt.Sprint(v)
+	}
 }

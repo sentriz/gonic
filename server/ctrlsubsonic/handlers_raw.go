@@ -447,7 +447,7 @@ func streamBaseProfile(dbc *db.DB, userID int, client string, format string, max
 		}
 
 		// hardcoded fallback for formats the user didn't configure
-		if p, ok := transcode.BaseProfiles[requested.Name]; ok {
+		if p, ok := transcode.DefaultProfiles[requested.Name]; ok {
 			return p, true, true, nil
 		}
 	}

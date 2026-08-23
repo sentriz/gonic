@@ -115,7 +115,7 @@ func (c *Controller) ServeGetTranscodeStream(w http.ResponseWriter, r *http.Requ
 		return nil
 	}
 
-	profile, ok := transcode.BaseProfiles[tp.Codec]
+	profile, ok := transcode.DefaultProfiles[tp.Codec]
 	if tp.Profile != "" {
 		profile, ok = transcode.UserProfiles[tp.Profile]
 	}
@@ -329,7 +329,7 @@ func computeTranscode(src spec.StreamDetails, p spec.TranscodingProfile, info sp
 	if !ok {
 		return spec.StreamDetails{}, transcode.Codec{}, false
 	}
-	base, ok := transcode.BaseProfiles[enc.Name]
+	base, ok := transcode.DefaultProfiles[enc.Name]
 	if !ok {
 		return spec.StreamDetails{}, transcode.Codec{}, false // an encoder gonic never offers, e.g. pcm
 	}
