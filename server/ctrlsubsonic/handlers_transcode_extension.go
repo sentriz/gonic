@@ -377,7 +377,7 @@ func computeTranscode(src spec.StreamDetails, p spec.TranscodingProfile, info sp
 
 	if losslessTarget && ts.AudioBitDepth != src.AudioBitDepth {
 		// an adjusted depth has to snap to one the codec stores, and may then break the limitation after all
-		ts.AudioBitDepth = enc.NearestBitDepth(ts.AudioBitDepth)
+		ts.AudioBitDepth = transcode.NearestBitDepth(enc, ts.AudioBitDepth)
 		if ts.AudioBitDepth == 0 {
 			return spec.StreamDetails{}, transcode.Codec{}, false
 		}
@@ -458,7 +458,7 @@ func resolveSampleRate(enc transcode.Codec, src int, matching []spec.CodecProfil
 		return 0, true
 	}
 
-	rate = enc.NearestSampleRate(rate)
+	rate = transcode.NearestSampleRate(enc, rate)
 	if !requiredSatisfied(matching, spec.LimitationAudioSamplerate, rate) {
 		return 0, false
 	}

@@ -1,7 +1,7 @@
 // author: spijet (https://github.com/spijet/)
 // author: sentriz (https://github.com/sentriz/)
 
-//nolint:gochecknoglobals,goconst
+//nolint:gochecknoglobals,goconst,gochecknoinits
 package transcode
 
 import (
@@ -34,12 +34,12 @@ var UserProfiles = map[string]Profile{
 	"opus_192":     Opus192,
 }
 
-// BaseProfiles are the profiles the transcoding extension can offer, one per codec it can negotiate
-var BaseProfiles = map[CodecName]Profile{}
+// DefaultProfiles is the default profile per codec, used when nothing more specific was configured
+var DefaultProfiles = map[CodecName]Profile{}
 
-func init() { //nolint:gochecknoinits
+func init() {
 	for _, p := range []Profile{MP3, Opus, FLAC} {
-		BaseProfiles[p.Codec().Name] = p
+		DefaultProfiles[p.Codec().Name] = p
 	}
 }
 
@@ -88,15 +88,13 @@ var (
 
 var Codecs = map[CodecName]Codec{}
 
-func init() { //nolint:gochecknoinits
+func init() {
 	for _, c := range []Codec{CodecMP3, CodecOpus, CodecFLAC, CodecPCM} {
 		Codecs[c.Name] = c
 	}
 }
 
-// NearestSampleRate snaps a desired rate to the codec's discrete rates, preferring the smallest rate at or
-// above it so we never downsample more than needed. a codec with no listed rates resamples freely.
-func (c Codec) NearestSampleRate(rate int) int {
+func NearestSampleRate(c Codec, rate int) int {
 	if len(c.SampleRates) == 0 || slices.Contains(c.SampleRates, rate) {
 		return rate
 	}
@@ -112,9 +110,7 @@ func (c Codec) NearestSampleRate(rate int) int {
 	return best
 }
 
-// NearestBitDepth snaps a desired depth down to one the codec can store, since bits can't be invented. 0
-// means the codec has nothing to snap to, or the depth is below anything it stores.
-func (c Codec) NearestBitDepth(depth int) int {
+func NearestBitDepth(c Codec, depth int) int {
 	best := 0
 	for _, d := range c.BitDepths {
 		if d <= depth && d > best {
