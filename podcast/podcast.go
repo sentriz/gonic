@@ -33,6 +33,7 @@ const (
 
 type Podcasts struct {
 	httpClient *http.Client
+	userAgent  string
 	db         *db.DB
 	baseDir    string
 	tagReader  tags.Reader
@@ -40,13 +41,20 @@ type Podcasts struct {
 	refreshMu sync.Mutex
 }
 
-func New(db *db.DB, base string, tagReader tags.Reader) *Podcasts {
+func New(db *db.DB, base string, tagReader tags.Reader, userAgent string) *Podcasts {
 	return &Podcasts{
 		db:         db,
 		baseDir:    base,
 		tagReader:  tagReader,
+		userAgent:  userAgent,
 		httpClient: &http.Client{},
 	}
+}
+
+func (p *Podcasts) ParseFeed(rssURL string) (*gofeed.Feed, error) {
+	fp := gofeed.NewParser()
+	fp.UserAgent = p.userAgent
+	return fp.ParseURL(rssURL) //nolint:wrapcheck
 }
 
 func (p *Podcasts) GetPodcastOrAll(id int, includeEpisodes bool) ([]*db.Podcast, error) {
@@ -305,8 +313,7 @@ func (p *Podcasts) RefreshPodcasts() error {
 
 	var errs []error
 	for _, podcast := range podcasts {
-		fp := gofeed.NewParser()
-		feed, err := fp.ParseURL(podcast.URL)
+		feed, err := p.ParseFeed(podcast.URL)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("refreshing podcast with url %q: %w", podcast.URL, err))
 			continue

@@ -30,6 +30,7 @@ func TestInfoCache(t *testing.T) {
 
 	var count atomic.Int32
 	lastfmClient := lastfm.NewClientCustom(
+		"agent",
 		mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
 			switch method := r.URL.Query().Get("method"); method {
 			case "artist.getInfo":

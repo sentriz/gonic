@@ -221,7 +221,9 @@ func main() {
 		*confScanEmbeddedCover,
 		genreTree,
 	)
-	podcast := podcast.New(dbc, *confPodcastPath, tagReader)
+	userAgent := fmt.Sprintf("%s/%s", gonic.Name, gonic.Version)
+
+	podcast := podcast.New(dbc, *confPodcastPath, tagReader, userAgent)
 	transcodeCache := cache.New(cacheDirAudio, *confTranscodeCacheSize)
 	transcoder := transcode.NewCachingTranscoder(transcode.NewFFmpegTranscoder(), transcodeCache)
 
@@ -234,9 +236,9 @@ func main() {
 		return apiKey, secret, nil
 	}
 
-	listenbrainzClient := listenbrainz.NewClient()
-	lastfmClient := lastfm.NewClient(lastfmClientKeySecretFunc)
-	mbClient := musicbrainz.NewClient(fmt.Sprintf("gonic/%s", gonic.Version))
+	listenbrainzClient := listenbrainz.NewClient(userAgent)
+	lastfmClient := lastfm.NewClient(userAgent, lastfmClientKeySecretFunc)
+	mbClient := musicbrainz.NewClient(userAgent)
 
 	playlistStore, err := playlist.NewStore(*confPlaylistsPath)
 	if err != nil {

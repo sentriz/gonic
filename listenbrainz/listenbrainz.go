@@ -27,14 +27,15 @@ const (
 var ErrListenBrainz = errors.New("listenbrainz error")
 
 type Client struct {
+	userAgent  string
 	httpClient *http.Client
 }
 
-func NewClient() *Client {
+func NewClient(userAgent string) *Client {
 	// disable post-quantum key exchange (Kyber) to avoid "connection reset by peer" errors.
 	// listenbrainz's server can't handle the larger TLS ClientHello
 	// https://github.com/golang/go/issues/70139
-	return NewClientCustom(&http.Client{
+	return NewClientCustom(userAgent, &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				MinVersion:       tls.VersionTLS12,
@@ -44,8 +45,8 @@ func NewClient() *Client {
 	})
 }
 
-func NewClientCustom(httpClient *http.Client) *Client {
-	return &Client{httpClient: httpClient}
+func NewClientCustom(userAgent string, httpClient *http.Client) *Client {
+	return &Client{userAgent: userAgent, httpClient: httpClient}
 }
 
 func (c *Client) IsUserAuthenticated(user db.User) bool {
@@ -91,6 +92,7 @@ func (c *Client) Scrobble(user db.User, track scrobble.Track, stamp time.Time, s
 		return fmt.Errorf("create submit request: %w", err)
 	}
 
+	req.Header.Add("User-Agent", c.userAgent)
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", authHeader)
 

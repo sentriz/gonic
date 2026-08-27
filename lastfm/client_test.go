@@ -21,6 +21,7 @@ func TestArtistGetInfo(t *testing.T) {
 	t.Parallel()
 
 	client := lastfm.NewClientCustom(
+		"agent",
 		mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, http.MethodGet, r.Method)
 			require.Equal(t, url.Values{"method": []string{"artist.getInfo"}, "api_key": []string{"apiKey1"}, "artist": []string{"Artist 1"}, "autocorrect": []string{"1"}}, r.URL.Query())
@@ -100,6 +101,7 @@ func TestArtistGetInfoClientRequestFails(t *testing.T) {
 	t.Parallel()
 
 	client := lastfm.NewClientCustom(
+		"agent",
 		mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, http.MethodGet, r.Method)
 			require.Equal(t, url.Values{
@@ -128,6 +130,7 @@ func TestArtistGetTopTracks(t *testing.T) {
 	t.Parallel()
 
 	client := lastfm.NewClientCustom(
+		"agent",
 		mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, http.MethodGet, r.Method)
 			require.Equal(t, url.Values{
@@ -209,6 +212,7 @@ func TestArtistGetTopTracksClientRequestFails(t *testing.T) {
 	t.Parallel()
 
 	client := lastfm.NewClientCustom(
+		"agent",
 		mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, http.MethodGet, r.Method)
 			require.Equal(t, url.Values{
@@ -236,6 +240,7 @@ func TestArtistGetSimilar(t *testing.T) {
 	t.Parallel()
 
 	client := lastfm.NewClientCustom(
+		"agent",
 		mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, http.MethodGet, r.Method)
 			require.Equal(t, url.Values{
@@ -315,6 +320,7 @@ func TestArtistGetSimilarClientRequestFails(t *testing.T) {
 	t.Parallel()
 
 	client := lastfm.NewClientCustom(
+		"agent",
 		mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, http.MethodGet, r.Method)
 			require.Equal(t, url.Values{
@@ -342,6 +348,7 @@ func TestTrackGetSimilarTracks(t *testing.T) {
 	t.Parallel()
 
 	client := lastfm.NewClientCustom(
+		"agent",
 		mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, http.MethodGet, r.Method)
 			require.Equal(t, url.Values{
@@ -422,6 +429,7 @@ func TestTrackGetSimilarTracksClientRequestFails(t *testing.T) {
 	t.Parallel()
 
 	client := lastfm.NewClientCustom(
+		"agent",
 		mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, http.MethodGet, r.Method)
 			require.Equal(t, url.Values{
@@ -450,6 +458,7 @@ func TestGetSession(t *testing.T) {
 	t.Parallel()
 
 	client := lastfm.NewClientCustom(
+		"agent",
 		mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, http.MethodGet, r.Method)
 			require.Equal(t, url.Values{
@@ -479,6 +488,7 @@ func TestGetSessionClientRequestFails(t *testing.T) {
 	t.Parallel()
 
 	client := lastfm.NewClientCustom(
+		"agent",
 		mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, http.MethodGet, r.Method)
 			require.Equal(t, url.Values{
@@ -508,6 +518,7 @@ func TestScrobble(t *testing.T) {
 	t.Parallel()
 
 	client := lastfm.NewClientCustom(
+		"agent",
 		mockclient.New(t, func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, http.MethodPost, r.Method)
 			require.Equal(t, url.Values{
@@ -558,7 +569,7 @@ func TestScrobble(t *testing.T) {
 func TestScrobbleErrorsWithoutLastFMSession(t *testing.T) {
 	t.Parallel()
 
-	client := lastfm.NewClient(func() (apiKey string, secret string, err error) {
+	client := lastfm.NewClient("agent", func() (apiKey string, secret string, err error) {
 		return "", "", nil
 	})
 
@@ -573,7 +584,7 @@ func TestScrobbleFailsWithoutLastFMAPIKey(t *testing.T) {
 		LastFMSession: "lastFMSession1",
 	}
 
-	scrobbler := lastfm.NewClient(func() (string, string, error) {
+	scrobbler := lastfm.NewClient("agent", func() (string, string, error) {
 		return "", "", fmt.Errorf("no keys")
 	})
 

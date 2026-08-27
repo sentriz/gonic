@@ -12,7 +12,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mmcdole/gofeed"
 	"github.com/nfnt/resize"
 
 	"go.senan.xyz/gonic/db"
@@ -496,8 +495,7 @@ func (c *Controller) ServeDeleteTranscodeFormatPrefDo(r *http.Request) *Response
 
 func (c *Controller) ServePodcastAddDo(r *http.Request) *Response {
 	rssURL := r.FormValue("feed")
-	fp := gofeed.NewParser()
-	feed, err := fp.ParseURL(rssURL)
+	feed, err := c.podcasts.ParseFeed(rssURL)
 	if err != nil {
 		return &Response{
 			redirect: "/admin/home",

@@ -30,17 +30,19 @@ var (
 type KeySecretFunc func() (apiKey, secret string, err error)
 
 type Client struct {
+	userAgent  string
 	httpClient *http.Client
 	keySecret  KeySecretFunc
 	Limiter    *rate.Limiter
 }
 
-func NewClient(keySecret KeySecretFunc) *Client {
-	return NewClientCustom(http.DefaultClient, keySecret)
+func NewClient(userAgent string, keySecret KeySecretFunc) *Client {
+	return NewClientCustom(userAgent, http.DefaultClient, keySecret)
 }
 
-func NewClientCustom(httpClient *http.Client, keySecret KeySecretFunc) *Client {
+func NewClientCustom(userAgent string, httpClient *http.Client, keySecret KeySecretFunc) *Client {
 	return &Client{
+		userAgent:  userAgent,
 		httpClient: httpClient,
 		keySecret:  keySecret,
 		Limiter:    rate.NewLimiter(rate.Every(time.Second/5), 1),
@@ -351,6 +353,7 @@ func (c *Client) makeRequest(method string, params url.Values) (LastFM, error) {
 	}
 
 	req.URL.RawQuery = params.Encode()
+	req.Header.Set("User-Agent", c.userAgent)
 
 	if err := c.Limiter.Wait(req.Context()); err != nil {
 		return LastFM{}, fmt.Errorf("rate limit: %w", err)

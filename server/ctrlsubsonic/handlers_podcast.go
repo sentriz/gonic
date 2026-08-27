@@ -3,8 +3,6 @@ package ctrlsubsonic
 import (
 	"net/http"
 
-	"github.com/mmcdole/gofeed"
-
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
@@ -66,8 +64,7 @@ func (c *Controller) ServeCreatePodcastChannel(r *http.Request) *spec.Response {
 	}
 	params := r.Context().Value(CtxParams).(params.Params)
 	rssURL, _ := params.Get("url")
-	fp := gofeed.NewParser()
-	feed, err := fp.ParseURL(rssURL)
+	feed, err := c.podcasts.ParseFeed(rssURL)
 	if err != nil {
 		return spec.NewError(0, "failed to parse feed: %s", err)
 	}

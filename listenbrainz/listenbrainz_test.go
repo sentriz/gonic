@@ -21,6 +21,7 @@ func TestScrobble(t *testing.T) {
 	t.Parallel()
 
 	client := listenbrainz.NewClientCustom(
+		"agent",
 		newMockClient(t, func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, http.MethodPost, r.Method)
 			require.Equal(t, "/1/submit-listens", r.URL.Path)
@@ -56,6 +57,7 @@ func TestScrobbleUnauthorized(t *testing.T) {
 	t.Parallel()
 
 	client := listenbrainz.NewClientCustom(
+		"agent",
 		newMockClient(t, func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, http.MethodPost, r.Method)
 			require.Equal(t, "/1/submit-listens", r.URL.Path)
@@ -81,6 +83,7 @@ func TestScrobbleServerError(t *testing.T) {
 	t.Parallel()
 
 	client := listenbrainz.NewClientCustom(
+		"agent",
 		newMockClient(t, func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, http.MethodPost, r.Method)
 			require.Equal(t, "/1/submit-listens", r.URL.Path)
