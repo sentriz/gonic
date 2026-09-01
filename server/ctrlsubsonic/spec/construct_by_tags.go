@@ -10,6 +10,7 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
 func LoadAlbumByTags(userID int) func(*gorm.DB) *gorm.DB {
@@ -265,6 +266,9 @@ func NewArtistByTags(a *ArtistRow) *Artist {
 		if a.Info.ImageURL != "" {
 			r.CoverID = a.SID()
 		}
+	}
+	if r.CoverID == nil && a.CoverAlbumID != 0 {
+		r.CoverID = &specid.ID{Type: specid.Album, Value: a.CoverAlbumID}
 	}
 	if a.ArtistStar != nil {
 		r.Starred = &a.ArtistStar.StarDate

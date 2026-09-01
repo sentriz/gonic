@@ -208,8 +208,8 @@ func (c *Client) GetSession(token string) (string, error) {
 //nolint:gochecknoglobals
 var artistOpenGraphQuery = cascadia.MustCompile(`html > head > meta[property="og:image"]`)
 
-// the placeholder star image
-const lastfmPlaceholderImage = "https://lastfm.freetls.fastly.net/i/u/ar0/2a96cbd8b46e442fc41c2b86b821562f.jpg"
+// the placeholder star image, served from a few different hosts
+const lastfmPlaceholderImage = "2a96cbd8b46e442fc41c2b86b821562f"
 
 func (c *Client) StealArtistImage(artistURL string) (string, error) {
 	resp, err := httpGetRetry(c.httpClient, artistURL, 3) //nolint:gosec
@@ -238,7 +238,7 @@ func (c *Client) StealArtistImage(artistURL string) (string, error) {
 			break
 		}
 	}
-	if imageURL == lastfmPlaceholderImage {
+	if strings.Contains(imageURL, lastfmPlaceholderImage) {
 		return "", nil
 	}
 

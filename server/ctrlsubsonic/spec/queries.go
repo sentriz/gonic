@@ -24,6 +24,7 @@ type ArtistRow struct {
 	AlbumCount    int
 	Roles         string
 	AverageRating float64
+	CoverAlbumID  int
 }
 
 func (ArtistRow) TableName() string { return "artists" }
@@ -45,13 +46,33 @@ const artistRolesColumn = `(
 	)
 ) roles`
 
+// cover_album_id is a fallback cover for artists with no lastfm image: prefer their most recent
+// album-artist album that has a cover, else any album they're credited on. the album-artist arm
+// short-circuits the coalesce so it stays cheap for the (album-artist only) browse lists
+const artistCoverAlbumIDColumn = `coalesce(
+	(SELECT albums.id FROM albums
+		JOIN album_credits ON album_credits.album_id=albums.id
+		WHERE album_credits.artist_id=artists.id AND album_credits.role='albumartist' AND albums.cover<>''
+		ORDER BY albums.tag_year DESC, albums.id
+		LIMIT 1),
+	(SELECT albums.id FROM albums WHERE albums.cover<>'' AND albums.id IN (
+		SELECT album_id FROM album_credits WHERE artist_id=artists.id
+		UNION
+		SELECT tracks.album_id FROM track_credits
+			JOIN tracks ON tracks.id=track_credits.track_id
+			WHERE track_credits.artist_id=artists.id
+	)
+	ORDER BY albums.tag_year DESC, albums.id
+	LIMIT 1)
+) cover_album_id`
+
 func ArtistWithRoles(q *gorm.DB) *gorm.DB {
-	return q.Select([]string{"artists.*", artistAverageRatingColumn, artistRolesColumn})
+	return q.Select([]string{"artists.*", artistAverageRatingColumn, artistRolesColumn, artistCoverAlbumIDColumn})
 }
 
 func ArtistWithRolesAndAlbumCount(q *gorm.DB) *gorm.DB {
 	return q.
-		Select([]string{"artists.*", "count(album_credits.album_id) album_count", artistAverageRatingColumn, artistRolesColumn}).
+		Select([]string{"artists.*", "count(album_credits.album_id) album_count", artistAverageRatingColumn, artistRolesColumn, artistCoverAlbumIDColumn}).
 		Group("artists.id")
 }
 

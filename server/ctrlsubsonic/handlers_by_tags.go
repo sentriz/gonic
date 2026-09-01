@@ -325,9 +325,10 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide an `id` parameter")
 	}
 
-	var artist db.Artist
+	var artist spec.ArtistRow
 	err = c.dbc.
-		Where("id=?", id.Value).
+		Scopes(spec.ArtistWithRoles).
+		Where("artists.id=?", id.Value).
 		Find(&artist).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -354,9 +355,14 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 		sub.ArtistInfoTwo.MusicBrainzID = artist.MusicBrainzID // prefer db musicbrainz ID over lastfm's
 	}
 
-	sub.ArtistInfoTwo.SmallImageURL = c.genArtistCoverURL(r, &artist, 64)
-	sub.ArtistInfoTwo.MediumImageURL = c.genArtistCoverURL(r, &artist, 126)
-	sub.ArtistInfoTwo.LargeImageURL = c.genArtistCoverURL(r, &artist, 256)
+	coverID := artist.SID()
+	if info.ImageURL == "" && artist.CoverAlbumID != 0 {
+		coverID = &specid.ID{Type: specid.Album, Value: artist.CoverAlbumID}
+	}
+
+	sub.ArtistInfoTwo.SmallImageURL = c.genArtistCoverURL(r, coverID, 64)
+	sub.ArtistInfoTwo.MediumImageURL = c.genArtistCoverURL(r, coverID, 126)
+	sub.ArtistInfoTwo.LargeImageURL = c.genArtistCoverURL(r, coverID, 256)
 
 	if info.ImageURL != "" {
 		sub.ArtistInfoTwo.SmallImageURL = info.ImageURL
@@ -574,12 +580,12 @@ func (c *Controller) ServeGetStarredTwo(r *http.Request) *spec.Response {
 	return sub
 }
 
-func (c *Controller) genArtistCoverURL(r *http.Request, artist *db.Artist, size int) string {
+func (c *Controller) genArtistCoverURL(r *http.Request, id *specid.ID, size int) string {
 	coverURL, _ := url.Parse(handlerutil.BaseURL(r))
 	coverURL.Path = c.resolveProxyPath("/rest/getCoverArt")
 
 	query := r.URL.Query()
-	query.Set("id", artist.SID().String())
+	query.Set("id", id.String())
 	query.Set("size", strconv.Itoa(size))
 	coverURL.RawQuery = query.Encode()
 
