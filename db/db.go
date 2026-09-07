@@ -3,11 +3,13 @@ package db
 import (
 	"errors"
 	"fmt"
+	"iter"
 	"log"
 	"mime"
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -168,6 +170,62 @@ func (db *DB) TransactionChunked(data []int64, cb func(*DB, []int64) error) erro
 	return nil
 }
 
+// SQLVariableLimit stays well under SQLite's default 32766 bind variable
+// maximum. A query may bind a chunk more than once - the artist roles union
+// binds it twice - so leave room for that as well as the other variables in
+// the query. Anything building an IN clause from an unbounded set of ids must
+// chunk by it.
+const SQLVariableLimit = 10_000
+
+// FindIn fetches rows whose column is in ids. SQLite takes one bind variable
+// per id and refuses past 32766 of them, so the ids are fetched in chunks.
+func FindIn[T any](q *gorm.DB, column string, ids []int) ([]*T, error) {
+	var rows []*T
+	for chunk := range ChunkIDs(ids) {
+		var found []*T
+		if err := q.Where(column+" IN (?)", chunk).Find(&found).Error; err != nil {
+			return nil, err
+		}
+		rows = append(rows, found...)
+	}
+	return rows, nil
+}
+
+// FindByID is FindIn keyed by the column looked up. Ids with no matching row
+// are absent from the result. Use it where an id has at most one row.
+func FindByID[T any](q *gorm.DB, column string, ids []int, id func(*T) int) (map[int]*T, error) {
+	rows, err := FindIn[T](q, column, ids)
+	if err != nil {
+		return nil, err
+	}
+	byID := make(map[int]*T, len(rows))
+	for _, row := range rows {
+		byID[id(row)] = row
+	}
+	return byID, nil
+}
+
+// FindAllByID is FindByID for the one to many case, keeping every row an id
+// has rather than the last one seen.
+func FindAllByID[T any](q *gorm.DB, column string, ids []int, id func(*T) int) (map[int][]*T, error) {
+	rows, err := FindIn[T](q, column, ids)
+	if err != nil {
+		return nil, err
+	}
+	byID := make(map[int][]*T, len(rows))
+	for _, row := range rows {
+		byID[id(row)] = append(byID[id(row)], row)
+	}
+	return byID, nil
+}
+
+// ChunkIDs sorts and deduplicates ids into query-sized chunks without changing the input.
+func ChunkIDs(ids []int) iter.Seq[[]int] {
+	ids = slices.Clone(ids)
+	slices.Sort(ids)
+	return slices.Chunk(slices.Compact(ids), SQLVariableLimit)
+}
+
 type SettingKey string
 
 const (
@@ -197,9 +255,6 @@ type Artist struct {
 	Name          string `gorm:"not null; index"`
 	NameUDec      string `sql:"default: null"`
 	MusicBrainzID string `sql:"default: ''" gorm:"not null"`
-	ArtistStar    *ArtistStar
-	ArtistRating  *ArtistRating
-	Info          *ArtistInfo `gorm:"foreignkey:id"`
 }
 
 func (a *Artist) SID() *specid.ID {
@@ -260,10 +315,6 @@ type Track struct {
 	ReplayGainAlbumPeak float32
 
 	HasEmbeddedCover bool
-
-	TrackStar   *TrackStar
-	TrackRating *TrackRating
-	Play        *TrackPlay
 }
 
 func (t *Track) AudioLength() int  { return t.Length }
@@ -366,8 +417,6 @@ type Album struct {
 	TagVersion           string         `sql:"default: null"`
 	Labels               []*AlbumLabel  `gorm:"foreignkey:album_id"`
 	Tracks               []*Track
-	AlbumStar            *AlbumStar
-	AlbumRating          *AlbumRating
 	DiscTitles           []*AlbumDiscTitle
 }
 

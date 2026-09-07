@@ -2,10 +2,12 @@ package artistinfocache
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"sync/atomic"
 	"testing"
 
+	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.senan.xyz/gonic/db"
@@ -24,9 +26,9 @@ func TestInfoCache(t *testing.T) {
 	assert := assert.New(t)
 
 	var artist db.Artist
-	assert.NoError(m.DB().Preload("Info").Find(&artist).Error)
+	assert.NoError(m.DB().Find(&artist).Error)
 	assert.Greater(artist.ID, 0)
-	assert.Nil(artist.Info)
+	assert.True(errors.Is(m.DB().First(&db.ArtistInfo{}, "id=?", artist.ID).Error, gorm.ErrRecordNotFound))
 
 	var count atomic.Int32
 	lastfmClient := lastfm.NewClientCustom(
@@ -53,8 +55,7 @@ func TestInfoCache(t *testing.T) {
 
 	require.Equal(t, int32(1), count.Load())
 
-	assert.NoError(m.DB().Preload("Info").Find(&artist, "id=?", artist.ID).Error)
-	assert.Greater(artist.ID, 0)
-	assert.NotNil(artist.Info)
-	assert.Equal("Summary", artist.Info.LastFMBiography)
+	var info db.ArtistInfo
+	assert.NoError(m.DB().First(&info, "id=?", artist.ID).Error)
+	assert.Equal("Summary", info.LastFMBiography)
 }

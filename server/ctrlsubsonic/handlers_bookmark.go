@@ -6,12 +6,12 @@ import (
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
 func (c *Controller) ServeGetBookmarks(r *http.Request) *spec.Response {
-	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
-	client := params.GetOr("c", "")
+	rnd := render(c, r)
 
 	bookmarks := []*db.Bookmark{}
 
@@ -28,47 +28,29 @@ func (c *Controller) ServeGetBookmarks(r *http.Request) *spec.Response {
 		List: []*spec.Bookmark{},
 	}
 
+	entryIDs := make([]specid.ID, 0, len(bookmarks))
 	for _, bookmark := range bookmarks {
-		respBookmark := &spec.Bookmark{
+		entryIDs = append(entryIDs, specid.ID{Type: specid.IDT(bookmark.EntryIDType), Value: bookmark.EntryID})
+	}
+	entries, err := spec.EntriesByTags(rnd, entryIDs)
+	if err != nil {
+		return spec.NewError(0, "render bookmark entries: %v", err)
+	}
+
+	for i, bookmark := range bookmarks {
+		// a bookmark can outlive its entry, eg. when files are moved. skip those
+		// rather than failing the whole response.
+		if entries[i] == nil {
+			continue
+		}
+		sub.Bookmarks.List = append(sub.Bookmarks.List, &spec.Bookmark{
 			Username: user.Name,
 			Position: bookmark.Position,
 			Comment:  bookmark.Comment,
 			Created:  bookmark.CreatedAt,
 			Changed:  bookmark.UpdatedAt,
-		}
-
-		switch bookmark.EntryIDType {
-		case db.BookmarkEntryTrack:
-			var track spec.TrackRow
-			err := c.dbc.
-				Scopes(spec.LoadTrackByTags(user.ID)).
-				Find(&track, "id=?", bookmark.EntryID).
-				Error
-			if err != nil {
-				/*
-				 * We get here if we have a bookmark for a Track that no longer exists, this should be an
-				 * error because tracks can disappear if the files are moved etc. Just skip the not found
-				 * entry and move on.
-				 */
-				continue
-			}
-			respBookmark.Entry = spec.NewTrackByTags(client, &track, track.Album)
-		case db.BookmarkEntryPodcastEpisode:
-			var podcastEpisode db.PodcastEpisode
-			err := c.dbc.
-				Preload("Podcast").
-				Find(&podcastEpisode, "id=?", bookmark.EntryID).
-				Error
-			if err != nil {
-				/* Same as with the missing track above. */
-				continue
-			}
-			respBookmark.Entry = spec.NewTCPodcastEpisode(&podcastEpisode)
-		default:
-			continue
-		}
-
-		sub.Bookmarks.List = append(sub.Bookmarks.List, respBookmark)
+			Entry:    entries[i],
+		})
 	}
 
 	return sub

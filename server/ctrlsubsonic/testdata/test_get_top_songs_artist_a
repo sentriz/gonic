@@ -5,17 +5,8 @@
     "type": "gonic",
     "serverVersion": "",
     "openSubsonic": true,
-    "playlist": {
-      "id": "pl-MS9zaGFyZWQubTN1",
-      "name": "shared playlist",
-      "comment": "for testing",
-      "owner": "admin",
-      "songCount": 2,
-      "created": "2020-05-01T12:00:00Z",
-      "changed": "2020-05-01T12:00:00Z",
-      "duration": 200,
-      "public": true,
-      "entry": [
+    "topSongs": {
+      "song": [
         {
           "id": "tr-1",
           "album": "album-aa",
@@ -29,8 +20,13 @@
             }
           ],
           "displayArtist": "artist-a",
-          "albumArtists": [],
-          "displayAlbumArtist": "",
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayAlbumArtist": "artist-a",
           "contributors": [],
           "displayComposer": "",
           "bitRate": 100,
@@ -81,8 +77,13 @@
             }
           ],
           "displayArtist": "artist-a",
-          "albumArtists": [],
-          "displayAlbumArtist": "",
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayAlbumArtist": "artist-a",
           "contributors": [],
           "displayComposer": "",
           "bitRate": 100,

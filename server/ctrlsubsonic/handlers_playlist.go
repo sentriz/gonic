@@ -18,7 +18,7 @@ import (
 )
 
 func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
-	params := r.Context().Value(CtxParams).(paramsp.Params)
+	rnd := render(c, r)
 	user := r.Context().Value(CtxUser).(*db.User)
 	paths, err := c.playlistStore.List()
 	if err != nil {
@@ -37,7 +37,7 @@ func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
 			continue
 		}
 		playlistID := playlistIDEncode(path)
-		rendered, err := playlistRender(c, params, playlist, playlistID, false)
+		rendered, err := playlistRender(c, rnd, playlist, playlistID, false)
 		if err != nil {
 			return spec.NewError(0, "error rendering playlist %q: %v", path, err)
 		}
@@ -47,6 +47,7 @@ func (c *Controller) ServeGetPlaylists(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
+	rnd := render(c, r)
 	user := r.Context().Value(CtxUser).(*db.User)
 	params := r.Context().Value(CtxParams).(paramsp.Params)
 	playlistID, err := params.GetFirstID("id", "playlistId")
@@ -61,7 +62,7 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 		return spec.NewError(50, "you aren't allowed to read that user's playlist")
 	}
 	sub := spec.NewResponse()
-	rendered, err := playlistRender(c, params, playlist, playlistID, true)
+	rendered, err := playlistRender(c, rnd, playlist, playlistID, true)
 	if err != nil {
 		return spec.NewError(0, "error rendering playlist: %v", err)
 	}
@@ -70,6 +71,7 @@ func (c *Controller) ServeGetPlaylist(r *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeCreateOrUpdatePlaylist(r *http.Request) *spec.Response {
+	rnd := render(c, r)
 	user := r.Context().Value(CtxUser).(*db.User)
 	params := r.Context().Value(CtxParams).(paramsp.Params)
 
@@ -118,7 +120,7 @@ func (c *Controller) ServeCreateOrUpdatePlaylist(r *http.Request) *spec.Response
 	}
 
 	sub := spec.NewResponse()
-	rendered, err := playlistRender(c, params, &playlist, playlistID, true)
+	rendered, err := playlistRender(c, rnd, &playlist, playlistID, true)
 	if err != nil {
 		return spec.NewError(0, "error rendering playlist: %v", err)
 	}
@@ -215,7 +217,7 @@ func playlistIDDecode(id specid.ID) string {
 	return string(path)
 }
 
-func playlistRender(c *Controller, params paramsp.Params, playlist *playlistp.Playlist, playlistID specid.ID, withItems bool) (*spec.Playlist, error) {
+func playlistRender(c *Controller, rnd spec.Render, playlist *playlistp.Playlist, playlistID specid.ID, withItems bool) (*spec.Playlist, error) {
 	user := &db.User{}
 	if err := c.dbc.Where("id=?", playlist.UserID).Find(user).Error; err != nil {
 		return nil, fmt.Errorf("find user by id: %w", err)
@@ -235,39 +237,28 @@ func playlistRender(c *Controller, params paramsp.Params, playlist *playlistp.Pl
 		return resp, nil
 	}
 
-	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
-
+	ids := make([]specid.ID, 0, len(playlist.Items))
 	for _, path := range playlist.Items {
 		id, err := specidpaths.Lookup(c.dbc, MusicPaths(c.musicPaths), c.podcastsPath, path)
 		if err != nil {
 			log.Printf("error looking up path %q: %s", path, err)
 			continue
 		}
-
-		var trch *spec.TrackChild
-		switch id.Type {
-		case specid.Track:
-			var track spec.TrackRow
-			if err := c.dbc.Scopes(spec.LoadTrackByFolder(user.ID)).Where("id=?", id.Value).Find(&track).Error; err != nil {
-				return nil, fmt.Errorf("load track by id: %w", err)
-			}
-			trch = spec.NewTCTrackByFolder(&track, track.Album)
-			resp.Duration += track.Length
-		case specid.PodcastEpisode:
-			var pe db.PodcastEpisode
-			if err := c.dbc.Preload("Podcast").Where("id=?", id.Value).Find(&pe).Error; err != nil {
-				return nil, fmt.Errorf("load podcast episode by id: %w", err)
-			}
-			trch = spec.NewTCPodcastEpisode(&pe)
-			resp.Duration += pe.Length
-		default:
-			continue
-		}
-		trch.TranscodeMeta = transcodeMeta
-		resp.List = append(resp.List, trch)
+		ids = append(ids, *id)
 	}
 
+	entries, err := spec.EntriesByFolder(rnd, ids)
+	if err != nil {
+		return nil, fmt.Errorf("render playlist entries: %w", err)
+	}
+	for i, entry := range entries {
+		if entry == nil {
+			log.Printf("skipping missing playlist entry %s", ids[i])
+			continue
+		}
+		resp.Duration += entry.Duration
+		resp.List = append(resp.List, entry)
+	}
 	resp.SongCount = len(resp.List)
-
 	return resp, nil
 }

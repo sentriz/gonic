@@ -2,48 +2,68 @@ package spec
 
 import (
 	"cmp"
+	"fmt"
 	"math"
 	"path/filepath"
 	"slices"
 	"sort"
 
-	"github.com/jinzhu/gorm"
-
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
-func LoadAlbumByTags(userID int) func(*gorm.DB) *gorm.DB {
-	return func(q *gorm.DB) *gorm.DB {
-		return q.
-			Scopes(AlbumWithUserPlay(userID), AlbumWithAlbumArtistCredits, AlbumWithUserData(userID)).
-			Preload("Genres").
-			Preload("Labels").
-			Preload("DiscTitles")
+// AlbumsByTags renders albums for the browse-by-tags endpoints. It loads what
+// the rendering reads, so callers pass rows straight from a query.
+func AlbumsByTags(r Render, albums []*db.Album) ([]*Album, error) {
+	extras, err := loadAlbumExtras(r, albums)
+	if err != nil {
+		return nil, err
 	}
+	ret := make([]*Album, 0, len(albums))
+	for _, album := range albums {
+		ret = append(ret, newAlbumByTags(album, extras[album.ID]))
+	}
+	return ret, nil
 }
 
-func LoadTrackByTags(userID int) func(*gorm.DB) *gorm.DB {
-	return func(q *gorm.DB) *gorm.DB {
-		return q.
-			Scopes(TrackWithAverageRating, TrackWithAlbumArtistCredits, TrackWithUserData(userID)).
-			Preload("Album").
-			Preload("Credits.Artist").
-			Preload("Genres").
-			Preload("ISRCs").
-			Preload("Play", "user_id=?", userID)
+// ArtistsByTags renders artists for the browse-by-tags endpoints. The music
+// folder is the one the artists were found under, and narrows their album
+// counts to match.
+func ArtistsByTags(r Render, artists []*db.Artist) ([]*Artist, error) {
+	extras, err := loadArtistExtras(r, artists)
+	if err != nil {
+		return nil, err
 	}
+	ret := make([]*Artist, 0, len(artists))
+	for _, artist := range artists {
+		ret = append(ret, newArtistByTags(artist, extras[artist.ID]))
+	}
+	return ret, nil
 }
 
-func LoadArtistByTags(userID int) func(*gorm.DB) *gorm.DB {
-	return func(q *gorm.DB) *gorm.DB {
-		return q.
-			Scopes(ArtistWithRolesAndAlbumCount, ArtistWithUserData(userID)).
-			Preload("Info")
+// TrackChildrenByTags renders tracks for the browse-by-tags endpoints.
+func TrackChildrenByTags(r Render, tracks []*db.Track) ([]*TrackChild, error) {
+	extras, err := loadTrackExtras(r, tracks, nil)
+	if err != nil {
+		return nil, err
 	}
+	albumCredits, err := loadAlbumCredits(r.DB, ids(tracks, func(t *db.Track) int { return t.AlbumID }), db.RoleAlbumArtist)
+	if err != nil {
+		return nil, fmt.Errorf("load album credits: %w", err)
+	}
+	ret := make([]*TrackChild, 0, len(tracks))
+	for _, track := range tracks {
+		x := extras[track.ID]
+		x.albumCredits = albumCredits[track.AlbumID]
+		child := newTrackByTags(r.Client, track, x)
+		child.TranscodeMeta = r.TranscodeMeta
+		ret = append(ret, child)
+	}
+	return ret, nil
 }
 
-func NewAlbumByTags(a *AlbumRow, credits []*db.AlbumCredit) *Album {
+func newAlbumByTags(a *db.Album, x albumExtras) *Album {
+	credits := x.credits
 	ret := &Album{
 		ID:            a.SID(),
 		Created:       a.CreatedAt,
@@ -52,12 +72,12 @@ func NewAlbumByTags(a *AlbumRow, credits []*db.AlbumCredit) *Album {
 		Title:         a.TagTitle,
 		Album:         a.TagTitle,
 		Name:          a.TagTitle,
-		TrackCount:    a.ChildCount,
-		Duration:      a.Duration,
+		TrackCount:    x.trackCount,
+		Duration:      x.duration,
 		Genres:        []*GenreRef{},
 		Year:          a.TagYear,
 		Tracks:        []*TrackChild{},
-		AverageRating: a.AverageRating,
+		AverageRating: x.averageRating,
 		IsCompilation: a.TagCompilation,
 		ReleaseTypes:  formatReleaseTypes(a.TagReleaseType),
 		MusicBrainzID: a.TagBrainzID,
@@ -70,11 +90,11 @@ func NewAlbumByTags(a *AlbumRow, credits []*db.AlbumCredit) *Album {
 	} else if a.EmbeddedCoverTrackID != nil {
 		ret.CoverID = a.EmbeddedCoverTrackSID()
 	}
-	if a.AlbumStar != nil {
-		ret.Starred = &a.AlbumStar.StarDate
+	if x.star != nil {
+		ret.Starred = &x.star.StarDate
 	}
-	if a.AlbumRating != nil {
-		ret.UserRating = a.AlbumRating.Rating
+	if x.rating != nil {
+		ret.UserRating = x.rating.Rating
 	}
 
 	albumArtists := filterAlbumCreditsByRole(credits, db.RoleAlbumArtist)
@@ -93,22 +113,22 @@ func NewAlbumByTags(a *AlbumRow, credits []*db.AlbumCredit) *Album {
 			Name: cmp.Or(c.CreditedAs, c.Artist.Name),
 		})
 	}
-	if len(a.Genres) > 0 {
-		ret.Genre = a.Genres[0].Name
+	if len(x.genres) > 0 {
+		ret.Genre = x.genres[0].Name
 	}
-	for _, g := range a.Genres {
+	for _, g := range x.genres {
 		ret.Genres = append(ret.Genres, &GenreRef{Name: g.Name})
 	}
-	for _, l := range a.Labels {
+	for _, l := range x.labels {
 		ret.RecordLabels = append(ret.RecordLabels, &RecordLabel{Name: l.Label})
 	}
-	ret.PlayCount = int(math.Ceil(a.PlayCount))
-	ret.Played = Time{a.PlayTime.Time}
-	if len(a.DiscTitles) > 0 {
-		sort.Slice(a.DiscTitles, func(i, j int) bool {
-			return a.DiscTitles[i].DiscNumber < a.DiscTitles[j].DiscNumber
+	ret.PlayCount = int(math.Ceil(x.playCount))
+	ret.Played = Time{x.playTime.Time}
+	if len(x.discTitles) > 0 {
+		sort.Slice(x.discTitles, func(i, j int) bool {
+			return x.discTitles[i].DiscNumber < x.discTitles[j].DiscNumber
 		})
-		for _, dt := range a.DiscTitles {
+		for _, dt := range x.discTitles {
 			ret.DiscTitles = append(ret.DiscTitles, &DiscTitle{
 				Disc:  dt.DiscNumber,
 				Title: dt.Title,
@@ -118,7 +138,8 @@ func NewAlbumByTags(a *AlbumRow, credits []*db.AlbumCredit) *Album {
 	return ret
 }
 
-func NewTrackByTags(client string, t *TrackRow, album *db.Album) *TrackChild {
+func newTrackByTags(client string, t *db.Track, x trackExtras) *TrackChild {
+	album := x.album
 	ret := &TrackChild{
 		ID:                 t.SID(),
 		Album:              album.TagTitle,
@@ -145,7 +166,7 @@ func NewTrackByTags(client string, t *TrackRow, album *db.Album) *TrackChild {
 		Type:               TypeMusic,
 		MediaType:          MediaTypeSong,
 		MusicBrainzID:      t.TagBrainzID,
-		AverageRating:      t.AverageRating,
+		AverageRating:      x.averageRating,
 		TranscodeMeta:      TranscodeMeta{},
 		Year:               t.TagYear,
 	}
@@ -159,21 +180,21 @@ func NewTrackByTags(client string, t *TrackRow, album *db.Album) *TrackChild {
 		ret.CoverID = album.EmbeddedCoverTrackSID()
 	}
 
-	if t.TrackStar != nil {
-		ret.Starred = &t.TrackStar.StarDate
+	if x.star != nil {
+		ret.Starred = &x.star.StarDate
 	}
-	if t.TrackRating != nil {
-		ret.UserRating = t.TrackRating.Rating
+	if x.rating != nil {
+		ret.UserRating = x.rating.Rating
 	}
-	if t.Play != nil {
-		ret.PlayCount = int(math.Ceil(t.Play.Count))
-		ret.Played = Time{t.Play.Time}
+	if x.play != nil {
+		ret.PlayCount = int(math.Ceil(x.play.Count))
+		ret.Played = Time{x.play.Time}
 	}
 
-	trackArtists := filterTrackCreditsByRole(t.Credits, db.RoleArtist)
+	trackArtists := filterTrackCreditsByRole(x.credits, db.RoleArtist)
 	slices.SortFunc(trackArtists, func(a, b *db.TrackCredit) int { return cmp.Compare(a.ArtistID, b.ArtistID) })
 
-	albumArtists := filterAlbumCreditsByRole(album.Credits, db.RoleAlbumArtist)
+	albumArtists := filterAlbumCreditsByRole(x.albumCredits, db.RoleAlbumArtist)
 	slices.SortFunc(albumArtists, func(a, b *db.AlbumCredit) int { return cmp.Compare(a.ArtistID, b.ArtistID) })
 
 	switch {
@@ -190,13 +211,13 @@ func NewTrackByTags(client string, t *TrackRow, album *db.Album) *TrackChild {
 		}
 		ret.Artists = append(ret.Artists, &ArtistRef{ID: c.Artist.SID(), Name: cmp.Or(c.CreditedAs, c.Artist.Name)})
 	}
-	if len(t.Genres) > 0 {
-		ret.Genre = t.Genres[0].Name
+	if len(x.genres) > 0 {
+		ret.Genre = x.genres[0].Name
 	}
-	for _, g := range t.Genres {
+	for _, g := range x.genres {
 		ret.Genres = append(ret.Genres, &GenreRef{Name: g.Name})
 	}
-	for _, trI := range t.ISRCs {
+	for _, trI := range x.isrcs {
 		ret.ISRC = append(ret.ISRC, trI.ISRC)
 	}
 	for _, c := range albumArtists {
@@ -211,7 +232,7 @@ func NewTrackByTags(client string, t *TrackRow, album *db.Album) *TrackChild {
 	// directory header in album views.
 	if client != "DSub" {
 		var contributors []*db.TrackCredit
-		for _, c := range t.Credits {
+		for _, c := range x.credits {
 			switch c.Role {
 			case db.RoleArtist, db.RoleAlbumArtist:
 			default:
@@ -247,34 +268,34 @@ func NewTrackByTags(client string, t *TrackRow, album *db.Album) *TrackChild {
 	return ret
 }
 
-func NewArtistByTags(a *ArtistRow) *Artist {
-	roles := a.GetRoles()
+func newArtistByTags(a *db.Artist, x artistExtras) *Artist {
+	roles := x.roles
 	if roles == nil {
 		roles = []string{}
 	}
 	r := &Artist{
 		ID:            a.SID(),
 		Name:          a.Name,
-		AlbumCount:    a.AlbumCount,
+		AlbumCount:    x.albumCount,
 		MusicBrainzID: a.MusicBrainzID,
 		Roles:         roles,
 		Albums:        []*Album{},
-		AverageRating: a.AverageRating,
+		AverageRating: x.averageRating,
 	}
-	if a.Info != nil {
-		r.Disambiguation = a.Info.MusicBrainzDisambiguation
-		if a.Info.ImageURL != "" {
+	if x.info != nil {
+		r.Disambiguation = x.info.MusicBrainzDisambiguation
+		if x.info.ImageURL != "" {
 			r.CoverID = a.SID()
 		}
 	}
-	if r.CoverID == nil && a.CoverAlbumID != 0 {
-		r.CoverID = &specid.ID{Type: specid.Album, Value: a.CoverAlbumID}
+	if r.CoverID == nil && x.coverAlbumID != 0 {
+		r.CoverID = &specid.ID{Type: specid.Album, Value: x.coverAlbumID}
 	}
-	if a.ArtistStar != nil {
-		r.Starred = &a.ArtistStar.StarDate
+	if x.star != nil {
+		r.Starred = &x.star.StarDate
 	}
-	if a.ArtistRating != nil {
-		r.UserRating = a.ArtistRating.Rating
+	if x.rating != nil {
+		r.UserRating = x.rating.Rating
 	}
 	return r
 }
@@ -299,10 +320,26 @@ func filterTrackCreditsByRole(credits []*db.TrackCredit, role string) []*db.Trac
 	return out
 }
 
-func NewGenre(g *GenreRow) *Genre {
-	return &Genre{
-		Name:       g.Name,
-		AlbumCount: g.AlbumCount,
-		SongCount:  g.TrackCount,
+// GenresWithCounts renders genres along with how much each one covers.
+func GenresWithCounts(dbc *db.DB, genres []*db.Genre) ([]*Genre, error) {
+	keys := ids(genres, func(g *db.Genre) int { return g.ID })
+
+	albumCounts, err := loadGenreCounts(dbc, "album_genres", keys)
+	if err != nil {
+		return nil, fmt.Errorf("load genre album counts: %w", err)
 	}
+	trackCounts, err := loadGenreCounts(dbc, "track_genres", keys)
+	if err != nil {
+		return nil, fmt.Errorf("load genre track counts: %w", err)
+	}
+
+	ret := make([]*Genre, 0, len(genres))
+	for _, genre := range genres {
+		ret = append(ret, &Genre{
+			Name:       genre.Name,
+			AlbumCount: albumCounts[genre.ID],
+			SongCount:  trackCounts[genre.ID],
+		})
+	}
+	return ret, nil
 }

@@ -196,8 +196,8 @@ func (c *Controller) ServeNotFound(_ *http.Request) *spec.Response {
 }
 
 func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
-	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
+	rnd := render(c, r)
 	var queue db.PlayQueue
 	err := c.dbc.
 		Where("user_id=?", user.ID).
@@ -220,40 +220,15 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 	trackIDs := queue.GetItems()
 	sub.PlayQueue.List = make([]*spec.TrackChild, 0, len(trackIDs))
 
-	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
-
-	for _, id := range trackIDs {
-		switch id.Type {
-		case specid.Track:
-			var track spec.TrackRow
-			err := c.dbc.
-				Scopes(spec.LoadTrackByFolder(user.ID)).
-				Where("id=?", id.Value).
-				Find(&track).
-				Error
-			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-				return spec.NewError(0, "error finding track")
-			}
-			if track.ID != 0 {
-				tc := spec.NewTCTrackByFolder(&track, track.Album)
-				tc.TranscodeMeta = transcodeMeta
-				sub.PlayQueue.List = append(sub.PlayQueue.List, tc)
-			}
-		case specid.PodcastEpisode:
-			var pe db.PodcastEpisode
-			err := c.dbc.
-				Where("id=?", id.Value).
-				Find(&pe).
-				Error
-			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-				return spec.NewError(0, "error finding podcast episode")
-			}
-			if pe.ID != 0 {
-				tc := spec.NewTCPodcastEpisode(&pe)
-				tc.TranscodeMeta = transcodeMeta
-				sub.PlayQueue.List = append(sub.PlayQueue.List, tc)
-			}
+	entries, err := spec.EntriesByFolder(rnd, trackIDs)
+	if err != nil {
+		return spec.NewError(0, "render play queue entries: %v", err)
+	}
+	for _, entry := range entries {
+		if entry == nil {
+			continue
 		}
+		sub.PlayQueue.List = append(sub.PlayQueue.List, entry)
 	}
 	return sub
 }
@@ -291,16 +266,17 @@ func (c *Controller) ServeSavePlayQueue(r *http.Request) *spec.Response {
 
 func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	user := r.Context().Value(CtxUser).(*db.User)
+	rnd := render(c, r)
 	id, err := params.GetID("id")
 	if err != nil {
 		return spec.NewError(10, "provide an `id` parameter")
 	}
-	var track spec.TrackRow
+	track := &db.Track{}
 	err = c.dbc.
-		Scopes(spec.LoadTrackByTags(user.ID)).
-		Where("id=?", id.Value).
-		First(&track).
+		Select("tracks.*").
+		Where("tracks.id=?", id.Value).
+		Limit(1).
+		Find(track).
 		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return spec.NewError(70, "couldn't find a track with that id")
@@ -308,23 +284,22 @@ func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
 	if err != nil {
 		return spec.NewError(0, "error finding track: %v", err)
 	}
-
-	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
+	children, err := spec.TrackChildrenByTags(rnd, []*db.Track{track})
+	if err != nil {
+		return spec.NewError(0, "render track: %v", err)
+	}
 
 	sub := spec.NewResponse()
-	sub.Track = spec.NewTrackByTags(params.GetOr("c", ""), &track, track.Album)
-
-	sub.Track.TranscodeMeta = transcodeMeta
+	sub.Track = children[0]
 
 	return sub
 }
 
 func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
-	user := r.Context().Value(CtxUser).(*db.User)
-	var tracks []*spec.TrackRow
+	rnd := render(c, r)
 	q := c.dbc.DB.
-		Scopes(spec.LoadTrackByTags(user.ID)).
+		Select("tracks.*").
 		Limit(params.GetOrInt("size", 10)).
 		Joins("JOIN albums ON tracks.album_id=albums.id").
 		Order(gorm.Expr("random()"))
@@ -338,21 +313,17 @@ func (c *Controller) ServeGetRandomSongs(r *http.Request) *spec.Response {
 		q = q.Joins("JOIN track_genres ON track_genres.track_id=tracks.id")
 		q = q.Joins("JOIN genres ON genres.id=track_genres.genre_id AND genres.name=?", genre)
 	}
-	q = q.Scopes(spec.WithAlbumRootDir(getMusicFolder(c.musicPaths, params)))
+	q = q.Scopes(spec.WithAlbumRootDir(rnd.MusicFolder))
+	var tracks []*db.Track
 	if err := q.Find(&tracks).Error; err != nil {
 		return spec.NewError(10, "get random songs: %v", err)
 	}
-	sub := spec.NewResponse()
-	sub.RandomTracks = &spec.RandomTracks{}
-	sub.RandomTracks.List = make([]*spec.TrackChild, len(tracks))
-
-	client := params.GetOr("c", "")
-	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, client)
-
-	for i, track := range tracks {
-		sub.RandomTracks.List[i] = spec.NewTrackByTags(client, track, track.Album)
-		sub.RandomTracks.List[i].TranscodeMeta = transcodeMeta
+	rendered, err := spec.TrackChildrenByTags(rnd, tracks)
+	if err != nil {
+		return spec.NewError(0, "render tracks: %v", err)
 	}
+	sub := spec.NewResponse()
+	sub.RandomTracks = &spec.RandomTracks{List: rendered}
 	return sub
 }
 
@@ -364,7 +335,7 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 	}
 
 	params := r.Context().Value(CtxParams).(params.Params)
-	user := r.Context().Value(CtxUser).(*db.User)
+	rnd := render(c, r)
 	trackPaths := func(ids []specid.ID) ([]string, error) {
 		var paths []string
 		for _, id := range ids {
@@ -394,36 +365,24 @@ func (c *Controller) ServeJukebox(r *http.Request) *spec.Response { // nolint:go
 		if err != nil {
 			return nil, fmt.Errorf("get playlist: %w", err)
 		}
+		ids := make([]specid.ID, 0, len(playlist))
 		for _, path := range playlist {
 			id, err := specidpaths.Lookup(c.dbc, MusicPaths(c.musicPaths), c.podcastsPath, path)
 			if err != nil {
 				return nil, fmt.Errorf("fetch track: %w", err)
 			}
-			switch id.Type {
-			case specid.Track:
-				var track spec.TrackRow
-				if err := c.dbc.
-					Scopes(spec.LoadTrackByTags(user.ID)).
-					Where("id=?", id.Value).
-					Find(&track).Error; err != nil {
-					return nil, fmt.Errorf("load track: %w", err)
-				}
-				ret = append(ret, spec.NewTrackByTags(params.GetOr("c", ""), &track, track.Album))
-			case specid.InternetRadioStation:
-				var irs db.InternetRadioStation
-				if err := c.dbc.Where("id=?", id.Value).Find(&irs).Error; err != nil {
-					return nil, fmt.Errorf("load internet radio station: %w", err)
-				}
-				ret = append(ret, spec.NewTCInternetRadioStation(&irs))
-			case specid.PodcastEpisode:
-				var pe db.PodcastEpisode
-				if err := c.dbc.Preload("Podcast").Where("id=?", id.Value).Find(&pe).Error; err != nil {
-					return nil, fmt.Errorf("load podcast episode: %w", err)
-				}
-				ret = append(ret, spec.NewTCPodcastEpisode(&pe))
-			default:
-				return nil, fmt.Errorf("%q: %w", path, errUnknownPlaylistEntry)
+			ids = append(ids, *id)
+		}
+
+		entries, err := spec.EntriesByTags(rnd, ids)
+		if err != nil {
+			return nil, fmt.Errorf("render jukebox entries: %w", err)
+		}
+		for i, entry := range entries {
+			if entry == nil {
+				return nil, fmt.Errorf("%q: %w", playlist[i], errUnknownPlaylistEntry)
 			}
+			ret = append(ret, entry)
 		}
 		return ret, nil
 	}
@@ -804,8 +763,7 @@ func lowerUDecOrHash(in string) string {
 }
 
 func (c *Controller) ServeGetNowPlaying(r *http.Request) *spec.Response {
-	params := r.Context().Value(CtxParams).(params.Params)
-	user := r.Context().Value(CtxUser).(*db.User)
+	rnd := render(c, r)
 
 	var plays []*db.TrackPlay
 	err := c.dbc.
@@ -819,23 +777,22 @@ func (c *Controller) ServeGetNowPlaying(r *http.Request) *spec.Response {
 		return spec.NewError(0, "find track plays: %v", err)
 	}
 
-	client := params.GetOr("c", "")
-	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, client)
+	ids := make([]specid.ID, 0, len(plays))
+	for _, play := range plays {
+		ids = append(ids, specid.ID{Type: specid.Track, Value: play.TrackID})
+	}
+	children, err := spec.EntriesByTags(rnd, ids)
+	if err != nil {
+		return spec.NewError(0, "render now playing entries: %v", err)
+	}
 
 	sub := spec.NewResponse()
 	sub.NowPlaying = &spec.NowPlaying{List: []*spec.NowPlayingEntry{}}
-	for _, play := range plays {
-		var track spec.TrackRow
-		err := c.dbc.DB.
-			Scopes(spec.LoadTrackByTags(user.ID)).
-			First(&track, play.TrackID).
-			Error
-		if err != nil {
-			return spec.NewError(0, "find track: %v", err)
+	for i, play := range plays {
+		child := children[i]
+		if child == nil {
+			return spec.NewError(0, "find track: %v", gorm.ErrRecordNotFound)
 		}
-
-		child := spec.NewTrackByTags(client, &track, track.Album)
-		child.TranscodeMeta = transcodeMeta
 
 		sub.NowPlaying.List = append(sub.NowPlaying.List, &spec.NowPlayingEntry{
 			TrackChild: *child,

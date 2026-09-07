@@ -28,9 +28,12 @@ import (
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/infocache/albuminfocache"
 	"go.senan.xyz/gonic/infocache/artistinfocache"
+	"go.senan.xyz/gonic/lastfm"
+	"go.senan.xyz/gonic/lastfm/mockclient"
 	"go.senan.xyz/gonic/mockfs"
 	playlistp "go.senan.xyz/gonic/playlist"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 	"go.senan.xyz/gonic/transcode"
 )
 
@@ -122,6 +125,9 @@ type fixture struct {
 
 	trackAB1 db.Track
 	trackVA0 db.Track
+
+	podcast        db.Podcast
+	podcastEpisode db.PodcastEpisode
 }
 
 func newFixture(tb testing.TB) *fixture {
@@ -405,6 +411,52 @@ func newFixture(tb testing.TB) *fixture {
 		UpdatedAt:     time.Now(),
 	}).Error)
 
+	// a podcast episode, so the play queue covers a non-track entry. its parent
+	// must be the podcast, not itself
+	f.podcast = db.Podcast{
+		Title:       "podcast-a",
+		Description: "a podcast that exists.",
+		URL:         "https://example.invalid/podcast-a.rss",
+		RootDir:     "/podcasts/podcast-a",
+	}
+	require.NoError(tb, dbc.Save(&f.podcast).Error)
+
+	publishDate := time.Date(2021, 7, 1, 0, 0, 0, 0, time.UTC)
+	f.podcastEpisode = db.PodcastEpisode{
+		PodcastID:   f.podcast.ID,
+		GUID:        "episode-guid-0",
+		Title:       "episode-0",
+		Description: "an episode that exists.",
+		PublishDate: &publishDate,
+		AudioURL:    "https://example.invalid/podcast-a/episode-0.mp3",
+		Bitrate:     128,
+		Length:      120,
+		Size:        1920000,
+		Filename:    "episode-0.mp3",
+		Status:      db.PodcastEpisodeStatusCompleted,
+		Artist:      "podcast-a",
+		CreatedAt:   time.Date(2021, 7, 1, 0, 0, 0, 0, time.UTC),
+		UpdatedAt:   time.Date(2021, 7, 1, 0, 0, 0, 0, time.UTC),
+		ModifiedAt:  time.Date(2021, 7, 1, 0, 0, 0, 0, time.UTC),
+	}
+	require.NoError(tb, dbc.Save(&f.podcastEpisode).Error)
+
+	// a saved queue mixing a track and a podcast episode
+	playQueue := db.PlayQueue{
+		UserID:    admin.ID,
+		Current:   f.trackAB1.SID().String(),
+		Position:  30,
+		ChangedBy: mockClientName,
+		CreatedAt: time.Date(2021, 8, 1, 0, 0, 0, 0, time.UTC),
+		UpdatedAt: time.Date(2021, 8, 1, 0, 0, 0, 0, time.UTC),
+	}
+	playQueue.SetItems([]specid.ID{
+		*f.trackAB1.SID(),
+		*f.trackVA0.SID(),
+		{Type: specid.PodcastEpisode, Value: f.podcastEpisode.ID},
+	})
+	require.NoError(tb, dbc.Save(&playQueue).Error)
+
 	musicPaths := []MusicPath{
 		{Path: filepath.Join(m.TmpDir(), "m-0")},
 		{Path: filepath.Join(m.TmpDir(), "m-1")},
@@ -433,13 +485,40 @@ func newFixture(tb testing.TB) *fixture {
 		},
 	))
 
+	// canned lastfm responses naming fixture artists, so similar-song lookups
+	// resolve to real local tracks instead of reaching out
+	lastFMClient := lastfm.NewClientCustom(
+		"gonic-test",
+		mockclient.New(tb, func(w http.ResponseWriter, r *http.Request) {
+			switch r.URL.Query().Get("method") {
+			case "artist.getSimilar":
+				fmt.Fprint(w, `<?xml version="1.0" encoding="UTF-8" ?>
+<lfm status="ok">
+    <similarartists artist="artist-a">
+        <artist><name>artist-b</name><match>1</match></artist>
+        <artist><name>artist-not-in-db</name><match>0.5</match></artist>
+    </similarartists>
+</lfm>`)
+			case "artist.getInfo":
+				w.Write(mockclient.ArtistGetInfoResponse)
+			case "artist.getTopTracks":
+				w.Write(mockclient.ArtistGetTopTracksResponse)
+			default:
+				w.WriteHeader(http.StatusNotFound)
+			}
+		}),
+		func() (string, string, error) { return "", "", nil },
+	)
+
 	f.contr = &Controller{
 		dbc:              dbc,
+		lastFMClient:     lastFMClient,
 		musicPaths:       musicPaths,
 		transcoder:       transcode.NewFFmpegTranscoder(),
-		artistInfoCache:  artistinfocache.New(dbc, nil, nil),
+		artistInfoCache:  artistinfocache.New(dbc, lastFMClient, nil),
 		albumInfoCache:   albuminfocache.New(dbc, nil, nil),
 		playlistStore:    playlistStore,
+		podcastsPath:     "/podcasts",
 		resolveProxyPath: func(in string) string { return in },
 	}
 	return f

@@ -3,62 +3,139 @@ package spec
 
 import (
 	"cmp"
+	"fmt"
 	"math"
 	"path/filepath"
 	"sort"
 
-	"github.com/jinzhu/gorm"
-
 	"go.senan.xyz/gonic/db"
 )
 
-func LoadTrackByFolder(userID int) func(*gorm.DB) *gorm.DB {
-	return func(q *gorm.DB) *gorm.DB {
-		return q.
-			Scopes(TrackWithAverageRating, TrackWithArtistCredits, TrackWithUserData(userID)).
-			Preload("Album").
-			Preload("Genres").
-			Preload("ISRCs").
-			Preload("Play", "user_id=?", userID)
+// TrackChildrenByFolder renders tracks for the browse-by-folder endpoints,
+// which name only the performing artists.
+func TrackChildrenByFolder(r Render, tracks []*db.Track) ([]*TrackChild, error) {
+	extras, err := loadTrackExtras(r, tracks, []string{db.RoleArtist})
+	if err != nil {
+		return nil, err
 	}
+	ret := make([]*TrackChild, 0, len(tracks))
+	for _, track := range tracks {
+		child := newTCTrackByFolder(track, extras[track.ID])
+		child.TranscodeMeta = r.TranscodeMeta
+		ret = append(ret, child)
+	}
+	return ret, nil
 }
 
-// LoadAlbumByFolder loads an album row as used by the browse-by-folder
-// endpoints, where an album also stands in for a folder/artist/directory.
-func LoadAlbumByFolder(userID int) func(*gorm.DB) *gorm.DB {
-	return func(q *gorm.DB) *gorm.DB {
-		return q.
-			Select([]string{"albums.*", albumAverageRatingColumn}).
-			Scopes(AlbumWithUserData(userID))
+// AlbumsByFolder renders folder rows that stand for real albums, so unlike the
+// other browse-by-folder renderers these show a song count and duration.
+func AlbumsByFolder(r Render, albums []*db.Album) ([]*Album, error) {
+	keys := ids(albums, func(a *db.Album) int { return a.ID })
+
+	user, err := loadAlbumUserExtras(r, keys)
+	if err != nil {
+		return nil, err
 	}
+	trackStats, err := loadAlbumTrackStats(r.DB, keys)
+	if err != nil {
+		return nil, fmt.Errorf("load album track stats: %w", err)
+	}
+	plays, err := loadAlbumPlays(r.DB, r.UserID, keys)
+	if err != nil {
+		return nil, fmt.Errorf("load album plays: %w", err)
+	}
+	parents, err := db.FindByID(r.DB.DB, "id", ids(albums, func(a *db.Album) int { return a.ParentID }),
+		func(a *db.Album) int { return a.ID })
+	if err != nil {
+		return nil, fmt.Errorf("load album parents: %w", err)
+	}
+
+	ret := make([]*Album, 0, len(albums))
+	for _, album := range albums {
+		x := user[album.ID]
+		x.parent = parents[album.ParentID]
+		x.withTrackStats(trackStats[album.ID], plays[album.ID])
+		ret = append(ret, newAlbumByFolder(album, x))
+	}
+	return ret, nil
 }
 
-func NewAlbumByFolder(f *AlbumRow) *Album {
+// TCAlbumsByFolder renders folder rows listed as the children of a directory.
+func TCAlbumsByFolder(r Render, albums []*db.Album) ([]*TrackChild, error) {
+	user, err := loadAlbumUserExtras(r, ids(albums, func(a *db.Album) int { return a.ID }))
+	if err != nil {
+		return nil, err
+	}
+	ret := make([]*TrackChild, 0, len(albums))
+	for _, album := range albums {
+		ret = append(ret, newTCAlbumByFolder(album, user[album.ID]))
+	}
+	return ret, nil
+}
+
+// ArtistsByFolder renders the top level folders, which browse-by-folder shows
+// as artists. They count their child albums rather than their own tracks.
+func ArtistsByFolder(r Render, albums []*db.Album) ([]*Artist, error) {
+	keys := ids(albums, func(a *db.Album) int { return a.ID })
+
+	user, err := loadAlbumUserExtras(r, keys)
+	if err != nil {
+		return nil, err
+	}
+	childCounts, err := loadAlbumChildCounts(r.DB, keys)
+	if err != nil {
+		return nil, fmt.Errorf("load album child counts: %w", err)
+	}
+
+	ret := make([]*Artist, 0, len(albums))
+	for _, album := range albums {
+		x := user[album.ID]
+		x.childCount = childCounts[album.ID]
+		ret = append(ret, newArtistByFolder(album, x))
+	}
+	return ret, nil
+}
+
+// DirectoriesByFolder renders folder rows as directories. Callers that have
+// children for them fill Children in afterwards.
+func DirectoriesByFolder(r Render, albums []*db.Album) ([]*Directory, error) {
+	user, err := loadAlbumUserExtras(r, ids(albums, func(a *db.Album) int { return a.ID }))
+	if err != nil {
+		return nil, err
+	}
+	ret := make([]*Directory, 0, len(albums))
+	for _, album := range albums {
+		ret = append(ret, newDirectoryByFolder(album, user[album.ID]))
+	}
+	return ret, nil
+}
+
+func newAlbumByFolder(f *db.Album, x albumExtras) *Album {
 	a := &Album{
-		Artist:        f.Parent.RightPath,
+		Artist:        x.parent.RightPath,
 		ID:            f.SID(),
 		IsDir:         true,
 		ParentID:      f.ParentSID(),
 		Album:         f.RightPath,
 		Name:          f.RightPath,
 		Title:         f.RightPath,
-		TrackCount:    f.ChildCount,
-		Duration:      f.Duration,
+		TrackCount:    x.trackCount,
+		Duration:      x.duration,
 		Created:       f.CreatedAt,
-		AverageRating: f.AverageRating,
-		PlayCount:     int(math.Ceil(f.PlayCount)),
-		Played:        Time{f.PlayTime.Time},
+		AverageRating: x.averageRating,
+		PlayCount:     int(math.Ceil(x.playCount)),
+		Played:        Time{x.playTime.Time},
 		Artists:       []*ArtistRef{},
 		ReleaseTypes:  []string{},
 		RecordLabels:  []*RecordLabel{},
 		DiscTitles:    []*DiscTitle{},
 		Genres:        []*GenreRef{},
 	}
-	if f.AlbumStar != nil {
-		a.Starred = &f.AlbumStar.StarDate
+	if x.star != nil {
+		a.Starred = &x.star.StarDate
 	}
-	if f.AlbumRating != nil {
-		a.UserRating = f.AlbumRating.Rating
+	if x.rating != nil {
+		a.UserRating = x.rating.Rating
 	}
 	if f.Cover != "" {
 		a.CoverID = f.SID()
@@ -68,7 +145,7 @@ func NewAlbumByFolder(f *AlbumRow) *Album {
 	return a
 }
 
-func NewTCAlbumByFolder(f *AlbumRow) *TrackChild {
+func newTCAlbumByFolder(f *db.Album, x albumExtras) *TrackChild {
 	trCh := &TrackChild{
 		ID:            f.SID(),
 		IsDir:         true,
@@ -76,7 +153,7 @@ func NewTCAlbumByFolder(f *AlbumRow) *TrackChild {
 		Title:         f.RightPath,
 		ParentID:      f.ParentSID(),
 		CreatedAt:     f.CreatedAt,
-		AverageRating: f.AverageRating,
+		AverageRating: x.averageRating,
 		Year:          f.TagYear,
 		Artists:       []*ArtistRef{},
 		AlbumArtists:  []*ArtistRef{},
@@ -84,11 +161,11 @@ func NewTCAlbumByFolder(f *AlbumRow) *TrackChild {
 		Genres:        []*GenreRef{},
 		ISRC:          []string{},
 	}
-	if f.AlbumStar != nil {
-		trCh.Starred = &f.AlbumStar.StarDate
+	if x.star != nil {
+		trCh.Starred = &x.star.StarDate
 	}
-	if f.AlbumRating != nil {
-		trCh.UserRating = f.AlbumRating.Rating
+	if x.rating != nil {
+		trCh.UserRating = x.rating.Rating
 	}
 	if f.Cover != "" {
 		trCh.CoverID = f.SID()
@@ -99,7 +176,8 @@ func NewTCAlbumByFolder(f *AlbumRow) *TrackChild {
 	return trCh
 }
 
-func NewTCTrackByFolder(t *TrackRow, parent *db.Album) *TrackChild {
+func newTCTrackByFolder(t *db.Track, x trackExtras) *TrackChild {
+	parent := x.album
 	trCh := &TrackChild{
 		ID:              t.SID(),
 		ContentType:     t.MIME(),
@@ -128,7 +206,7 @@ func NewTCTrackByFolder(t *TrackRow, parent *db.Album) *TrackChild {
 		MediaType:     MediaTypeSong,
 		MusicBrainzID: t.TagBrainzID,
 		CreatedAt:     t.CreatedAt,
-		AverageRating: t.AverageRating,
+		AverageRating: x.averageRating,
 		Year:          t.TagYear,
 	}
 	if trCh.Title == "" {
@@ -144,30 +222,30 @@ func NewTCTrackByFolder(t *TrackRow, parent *db.Album) *TrackChild {
 		trCh.CoverID = parent.EmbeddedCoverTrackSID()
 	}
 
-	if t.Album != nil {
-		trCh.Album = t.Album.RightPath
-		trCh.AlbumID = t.Album.SID()
+	if x.album != nil {
+		trCh.Album = x.album.RightPath
+		trCh.AlbumID = x.album.SID()
 	}
-	if t.TrackStar != nil {
-		trCh.Starred = &t.TrackStar.StarDate
+	if x.star != nil {
+		trCh.Starred = &x.star.StarDate
 	}
-	if t.TrackRating != nil {
-		trCh.UserRating = t.TrackRating.Rating
+	if x.rating != nil {
+		trCh.UserRating = x.rating.Rating
 	}
-	if t.Play != nil {
-		trCh.PlayCount = int(math.Ceil(t.Play.Count))
-		trCh.Played = Time{t.Play.Time}
+	if x.play != nil {
+		trCh.PlayCount = int(math.Ceil(x.play.Count))
+		trCh.Played = Time{x.play.Time}
 	}
-	if len(t.Genres) > 0 {
-		trCh.Genre = t.Genres[0].Name
+	if len(x.genres) > 0 {
+		trCh.Genre = x.genres[0].Name
 	}
-	for _, g := range t.Genres {
+	for _, g := range x.genres {
 		trCh.Genres = append(trCh.Genres, &GenreRef{Name: g.Name})
 	}
-	for _, trI := range t.ISRCs {
+	for _, trI := range x.isrcs {
 		trCh.ISRC = append(trCh.ISRC, trI.ISRC)
 	}
-	trackArtists := filterTrackCreditsByRole(t.Credits, db.RoleArtist)
+	trackArtists := filterTrackCreditsByRole(x.credits, db.RoleArtist)
 	sort.Slice(trackArtists, func(i, j int) bool {
 		return trackArtists[i].ArtistID < trackArtists[j].ArtistID
 	})
@@ -222,7 +300,7 @@ func NewTCPodcastEpisode(pe *db.PodcastEpisode) *TrackChild {
 	return trCh
 }
 
-func NewArtistByFolder(f *AlbumRow) *Artist {
+func newArtistByFolder(f *db.Album, x albumExtras) *Artist {
 	// the db is structured around "browse by tags", and where
 	// an album is also a folder. so we're constructing an artist
 	// from an "album" where
@@ -230,15 +308,15 @@ func NewArtistByFolder(f *AlbumRow) *Artist {
 	a := &Artist{
 		ID:            f.SID(),
 		Name:          f.RightPath,
-		AlbumCount:    f.ChildCount,
+		AlbumCount:    x.childCount,
 		Roles:         []string{},
-		AverageRating: f.AverageRating,
+		AverageRating: x.averageRating,
 	}
-	if f.AlbumStar != nil {
-		a.Starred = &f.AlbumStar.StarDate
+	if x.star != nil {
+		a.Starred = &x.star.StarDate
 	}
-	if f.AlbumRating != nil {
-		a.UserRating = f.AlbumRating.Rating
+	if x.rating != nil {
+		a.UserRating = x.rating.Rating
 	}
 	if f.Cover != "" {
 		a.CoverID = f.SID()
@@ -248,19 +326,18 @@ func NewArtistByFolder(f *AlbumRow) *Artist {
 	return a
 }
 
-func NewDirectoryByFolder(f *AlbumRow, children []*TrackChild) *Directory {
+func newDirectoryByFolder(f *db.Album, x albumExtras) *Directory {
 	d := &Directory{
 		ID:            f.SID(),
 		Name:          f.RightPath,
-		Children:      children,
 		ParentID:      f.ParentSID(),
-		AverageRating: f.AverageRating,
+		AverageRating: x.averageRating,
 	}
-	if f.AlbumStar != nil {
-		d.Starred = &f.AlbumStar.StarDate
+	if x.star != nil {
+		d.Starred = &x.star.StarDate
 	}
-	if f.AlbumRating != nil {
-		d.UserRating = f.AlbumRating.Rating
+	if x.rating != nil {
+		d.UserRating = x.rating.Rating
 	}
 	return d
 }

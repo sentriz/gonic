@@ -1,0 +1,173 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "similarSongs2": {
+      "song": [
+        {
+          "id": "tr-8",
+          "album": "album-split",
+          "albumId": "al-10",
+          "artist": "artist-a",
+          "artistId": "ar-1",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            },
+            {
+              "id": "ar-17",
+              "name": "artist-b"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            },
+            {
+              "id": "ar-17",
+              "name": "artist-b"
+            }
+          ],
+          "displayAlbumArtist": "artist-a",
+          "contributors": [],
+          "displayComposer": "",
+          "bitRate": 100,
+          "contentType": "audio/flac",
+          "created": "2019-11-30T00:00:00Z",
+          "duration": 100,
+          "genre": "Pop",
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
+          "isDir": false,
+          "isVideo": false,
+          "parent": "al-10",
+          "path": "split-ab/album-split/track-0.flac",
+          "suffix": "flac",
+          "title": "split-track",
+          "track": 1,
+          "discNumber": 1,
+          "type": "music",
+          "mediaType": "song",
+          "year": 2023,
+          "musicBrainzId": "",
+          "isrc": [],
+          "replayGain": null,
+          "played": ""
+        },
+        {
+          "id": "tr-7",
+          "album": "album-collab",
+          "albumId": "al-8",
+          "artist": "Artist A!",
+          "artistId": "ar-1",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "Artist A!"
+            },
+            {
+              "id": "ar-17",
+              "name": "Artist B!"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "Artist A!"
+            },
+            {
+              "id": "ar-17",
+              "name": "Artist B!"
+            }
+          ],
+          "displayAlbumArtist": "artist-a",
+          "contributors": [],
+          "displayComposer": "",
+          "bitRate": 100,
+          "contentType": "audio/flac",
+          "created": "2019-11-30T00:00:00Z",
+          "duration": 100,
+          "genre": "Pop",
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
+          "isDir": false,
+          "isVideo": false,
+          "parent": "al-8",
+          "path": "collab-ab/album-collab/track-0.flac",
+          "suffix": "flac",
+          "title": "collab-track",
+          "track": 1,
+          "discNumber": 1,
+          "type": "music",
+          "mediaType": "song",
+          "year": 2021,
+          "musicBrainzId": "",
+          "isrc": [],
+          "replayGain": null,
+          "played": ""
+        },
+        {
+          "id": "tr-6",
+          "album": "album-ba",
+          "albumId": "al-6",
+          "artist": "The Mighty B",
+          "artistId": "ar-17",
+          "artists": [
+            {
+              "id": "ar-17",
+              "name": "The Mighty B"
+            }
+          ],
+          "displayArtist": "The Mighty B",
+          "albumArtists": [
+            {
+              "id": "ar-17",
+              "name": "The Mighty B (LP)"
+            }
+          ],
+          "displayAlbumArtist": "The Mighty B (LP)",
+          "contributors": [],
+          "displayComposer": "",
+          "bitRate": 100,
+          "contentType": "audio/flac",
+          "created": "2019-11-30T00:00:00Z",
+          "duration": 100,
+          "genre": "Jazz",
+          "genres": [
+            {
+              "name": "Jazz"
+            }
+          ],
+          "isDir": false,
+          "isVideo": false,
+          "parent": "al-6",
+          "path": "artist-b/album-ba/track-0.flac",
+          "suffix": "flac",
+          "title": "track-ba",
+          "track": 1,
+          "discNumber": 1,
+          "type": "music",
+          "mediaType": "song",
+          "year": 2017,
+          "musicBrainzId": "",
+          "isrc": [],
+          "replayGain": null,
+          "played": ""
+        }
+      ]
+    }
+  }
+}

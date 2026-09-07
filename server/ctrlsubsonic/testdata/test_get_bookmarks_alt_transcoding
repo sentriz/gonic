@@ -1,0 +1,109 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "bookmarks": {
+      "bookmark": [
+        {
+          "entry": {
+            "id": "tr-11",
+            "album": "comp",
+            "albumId": "al-17",
+            "artist": "artist-x",
+            "artistId": "ar-20",
+            "artists": [
+              {
+                "id": "ar-20",
+                "name": "artist-x"
+              }
+            ],
+            "displayArtist": "artist-x",
+            "albumArtists": [
+              {
+                "id": "ar-19",
+                "name": "Various Artists"
+              }
+            ],
+            "displayAlbumArtist": "Various Artists",
+            "contributors": [],
+            "displayComposer": "",
+            "bitRate": 100,
+            "contentType": "audio/flac",
+            "coverArt": "tr-11",
+            "created": "2019-11-30T00:00:00Z",
+            "duration": 100,
+            "genre": "Rock",
+            "genres": [
+              {
+                "name": "Rock"
+              }
+            ],
+            "isDir": false,
+            "isVideo": false,
+            "parent": "al-17",
+            "path": "various/comp/track-0.flac",
+            "suffix": "flac",
+            "title": "comp-track-0",
+            "track": 1,
+            "discNumber": 1,
+            "type": "music",
+            "mediaType": "song",
+            "year": 2020,
+            "musicBrainzId": "",
+            "isrc": [],
+            "replayGain": null,
+            "played": "",
+            "transcodedContentType": "audio/ogg",
+            "transcodedSuffix": "opus"
+          },
+          "username": "alt",
+          "position": 5000,
+          "comment": "",
+          "created": "2000-01-01T00:00:00Z",
+          "changed": "2000-01-01T00:00:00Z"
+        },
+        {
+          "entry": {
+            "id": "pe-1",
+            "artist": "podcast-a",
+            "artists": [],
+            "displayArtist": "",
+            "albumArtists": [],
+            "displayAlbumArtist": "",
+            "contributors": [],
+            "displayComposer": "",
+            "bitRate": 128,
+            "contentType": "audio/mpeg",
+            "coverArt": "pe-1",
+            "created": "2021-07-01T00:00:00Z",
+            "duration": 120,
+            "genres": [],
+            "isDir": false,
+            "isVideo": false,
+            "parent": "pd-1",
+            "path": "/podcasts/podcast-a/episode-0.mp3",
+            "size": 1920000,
+            "suffix": ".mp3",
+            "title": "episode-0",
+            "type": "podcastepisode",
+            "mediaType": "song",
+            "musicBrainzId": "",
+            "isrc": [],
+            "replayGain": null,
+            "played": "",
+            "transcodedContentType": "audio/ogg",
+            "transcodedSuffix": "opus"
+          },
+          "username": "alt",
+          "position": 7000,
+          "comment": "listening",
+          "created": "2000-01-01T00:00:00Z",
+          "changed": "2000-01-01T00:00:00Z"
+        }
+      ]
+    }
+  }
+}

@@ -361,3 +361,19 @@ func writeResp(w http.ResponseWriter, r *http.Request, resp *spec.Response) erro
 
 	return ew.err
 }
+
+// render gathers what the spec renderers need to describe media to the client
+// asking for it. Building it in one place is what keeps every endpoint
+// answering with the same transcode hints and the same music folder.
+func render(c *Controller, r *http.Request) spec.Render {
+	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
+	client := params.GetOr("c", "")
+	return spec.Render{
+		DB:            c.dbc,
+		UserID:        user.ID,
+		Client:        client,
+		TranscodeMeta: streamGetTranscodeMeta(c.dbc, user.ID, client),
+		MusicFolder:   getMusicFolder(c.musicPaths, params),
+	}
+}

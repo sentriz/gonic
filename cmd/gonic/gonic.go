@@ -49,7 +49,6 @@ import (
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/server/ctrladmin"
 	"go.senan.xyz/gonic/server/ctrlsubsonic"
-	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 	"go.senan.xyz/gonic/tags"
 	"go.senan.xyz/gonic/texttree"
 	"go.senan.xyz/gonic/transcode"
@@ -175,8 +174,6 @@ func main() {
 	if err != nil {
 		log.Panicf("error migrating database: %v\n", err)
 	}
-
-	spec.Warm(dbc.DB)
 
 	var musicPaths []ctrlsubsonic.MusicPath
 	for _, pa := range confMusicPaths {

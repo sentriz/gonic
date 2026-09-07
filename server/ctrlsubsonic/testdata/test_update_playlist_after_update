@@ -10,10 +10,105 @@
       "name": "updated name",
       "comment": "updated comment",
       "owner": "admin",
-      "songCount": 0,
+      "songCount": 2,
       "created": "2020-05-01T12:00:00Z",
       "changed": "2020-05-01T12:00:00Z",
-      "duration": 0
+      "duration": 200,
+      "entry": [
+        {
+          "id": "tr-2",
+          "album": "album-aa",
+          "albumId": "al-3",
+          "artist": "artist-a",
+          "artistId": "ar-1",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "albumArtists": [],
+          "displayAlbumArtist": "",
+          "contributors": [],
+          "displayComposer": "",
+          "bitRate": 100,
+          "contentType": "audio/flac",
+          "created": "2019-11-30T00:00:00Z",
+          "duration": 100,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "isDir": false,
+          "isVideo": false,
+          "parent": "al-3",
+          "path": "artist-a/album-aa/track-1.flac",
+          "suffix": "flac",
+          "title": "title-1",
+          "track": 2,
+          "discNumber": 1,
+          "type": "music",
+          "mediaType": "song",
+          "year": 2018,
+          "musicBrainzId": "00000000-0000-0000-0000-aa0000000001",
+          "isrc": [],
+          "replayGain": {
+            "trackGain": -3.5,
+            "trackPeak": 0.95,
+            "albumGain": -4,
+            "albumPeak": 0.99
+          },
+          "playCount": 3,
+          "played": "2020-07-01T12:00:00Z"
+        },
+        {
+          "id": "tr-11",
+          "album": "comp",
+          "albumId": "al-17",
+          "artist": "artist-x",
+          "artistId": "ar-20",
+          "artists": [
+            {
+              "id": "ar-20",
+              "name": "artist-x"
+            }
+          ],
+          "displayArtist": "artist-x",
+          "albumArtists": [],
+          "displayAlbumArtist": "",
+          "contributors": [],
+          "displayComposer": "",
+          "bitRate": 100,
+          "contentType": "audio/flac",
+          "coverArt": "tr-11",
+          "created": "2019-11-30T00:00:00Z",
+          "duration": 100,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "isDir": false,
+          "isVideo": false,
+          "parent": "al-17",
+          "path": "various/comp/track-0.flac",
+          "suffix": "flac",
+          "title": "comp-track-0",
+          "track": 1,
+          "discNumber": 1,
+          "type": "music",
+          "mediaType": "song",
+          "year": 2020,
+          "musicBrainzId": "",
+          "isrc": [],
+          "replayGain": null,
+          "played": ""
+        }
+      ]
     }
   }
 }

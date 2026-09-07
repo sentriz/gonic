@@ -48,6 +48,25 @@ func (t Time) MarshalJSON() ([]byte, error) {
 	return json.Marshal(t.String())
 }
 
+// UnmarshalJSON accepts the empty string that MarshalJSON writes for a zero
+// time, which time.Time itself rejects.
+func (t *Time) UnmarshalJSON(data []byte) error {
+	var str string
+	if err := json.Unmarshal(data, &str); err != nil {
+		return err
+	}
+	if str == "" {
+		t.Time = time.Time{}
+		return nil
+	}
+	parsed, err := time.Parse(time.RFC3339, str)
+	if err != nil {
+		return err
+	}
+	t.Time = parsed
+	return nil
+}
+
 func (t Time) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
 	return xml.Attr{Name: name, Value: t.String()}, nil
 }
