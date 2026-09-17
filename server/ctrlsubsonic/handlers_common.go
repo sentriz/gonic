@@ -780,6 +780,41 @@ func scrobbleStatsUpdatePodcastEpisode(dbc *db.DB, peID int) error {
 	return nil
 }
 
+// findAlbumPage finds one page of albums, ordered and filtered by q. it pages the album ids
+// first so that load - which selects the expensive per album aggregates - runs for that page
+// only, then restores the page's order.
+func findAlbumPage(q *gorm.DB, offset, limit int, load func(*gorm.DB) *gorm.DB) ([]*spec.AlbumRow, error) {
+	var ids []int
+	if err := q.
+		Model(&db.Album{}).
+		Group("albums.id").
+		Offset(offset).
+		Limit(limit).
+		Pluck("albums.id", &ids).
+		Error; err != nil {
+		return nil, fmt.Errorf("find album ids: %w", err)
+	}
+
+	var albums []*spec.AlbumRow
+	if err := q.New().
+		Scopes(load).
+		Where("albums.id IN (?)", ids).
+		Find(&albums).
+		Error; err != nil {
+		return nil, fmt.Errorf("find albums: %w", err)
+	}
+
+	positions := make(map[int]int, len(ids))
+	for i, id := range ids {
+		positions[id] = i
+	}
+	slices.SortFunc(albums, func(a, b *spec.AlbumRow) int {
+		return cmp.Compare(positions[a.ID], positions[b.ID])
+	})
+
+	return albums, nil
+}
+
 func getMusicFolder(musicPaths []MusicPath, p params.Params) string {
 	idx, err := p.GetInt("musicFolderId")
 	if err != nil {

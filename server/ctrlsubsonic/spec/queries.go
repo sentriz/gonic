@@ -99,30 +99,30 @@ func (AlbumRow) TableName() string { return "albums" }
 
 const albumAverageRatingColumn = `(SELECT cast(coalesce(avg(rating), 0)*100 AS INT)/100.0 FROM album_ratings WHERE album_id=albums.id) average_rating`
 
+const albumChildCountColumn = `(SELECT count(1) FROM tracks WHERE tracks.album_id=albums.id) child_count`
+const albumDurationColumn = `(SELECT coalesce(sum(tracks.length), 0) FROM tracks WHERE tracks.album_id=albums.id) duration`
+
+const albumPlayCountColumn = `(SELECT coalesce(sum(track_plays.count), 0) FROM track_plays
+	JOIN tracks ON tracks.id=track_plays.track_id
+	WHERE track_plays.user_id=? AND tracks.album_id=albums.id) play_count`
+const albumPlayLengthColumn = `(SELECT sum(track_plays.length) FROM track_plays
+	JOIN tracks ON tracks.id=track_plays.track_id
+	WHERE track_plays.user_id=? AND tracks.album_id=albums.id) play_length`
+const albumPlayTimeColumn = `(SELECT max(track_plays.time) FROM track_plays
+	JOIN tracks ON tracks.id=track_plays.track_id
+	WHERE track_plays.user_id=? AND tracks.album_id=albums.id) play_time`
+
 func AlbumWithUserPlay(userID int) func(*gorm.DB) *gorm.DB {
 	return func(q *gorm.DB) *gorm.DB {
-		return q.
-			Select([]string{
-				"albums.*",
-				"count(tracks.id) child_count",
-				"sum(tracks.length) duration",
-				"coalesce(album_plays.play_count, 0) play_count",
-				"album_plays.play_length play_length",
-				"album_plays.play_time play_time",
-				albumAverageRatingColumn,
-			}).
-			Joins("LEFT JOIN tracks ON tracks.album_id=albums.id").
-			Joins(`LEFT JOIN (
-				SELECT t.album_id,
-					sum(track_plays.count) play_count,
-					sum(track_plays.length) play_length,
-					max(track_plays.time) play_time
-				FROM track_plays
-				JOIN tracks t ON t.id=track_plays.track_id
-				WHERE track_plays.user_id=?
-				GROUP BY t.album_id
-			) album_plays ON album_plays.album_id=albums.id`, userID).
-			Group("albums.id")
+		return q.Select([]string{
+			"albums.*",
+			albumChildCountColumn,
+			albumDurationColumn,
+			albumPlayCountColumn,
+			albumPlayLengthColumn,
+			albumPlayTimeColumn,
+			albumAverageRatingColumn,
+		}, userID, userID, userID)
 	}
 }
 
@@ -209,5 +209,23 @@ func WithAlbumRootDir(rootDir string) func(*gorm.DB) *gorm.DB {
 			return q
 		}
 		return q.Where("albums.root_dir=?", rootDir)
+	}
+}
+
+// WithAlbumPlayStats exposes play_count, play_length, and play_time to a grouped query's HAVING
+// and ORDER BY. it restricts the query to albums the user has played, and aggregates all of them,
+// so it belongs on the paging query of FindAlbumPage and nowhere else.
+func WithAlbumPlayStats(userID int) func(*gorm.DB) *gorm.DB {
+	return func(q *gorm.DB) *gorm.DB {
+		return q.Joins(`JOIN (
+			SELECT t.album_id,
+				sum(track_plays.count) play_count,
+				sum(track_plays.length) play_length,
+				max(track_plays.time) play_time
+			FROM track_plays
+			JOIN tracks t ON t.id=track_plays.track_id
+			WHERE track_plays.user_id=?
+			GROUP BY t.album_id
+		) album_plays ON album_plays.album_id=albums.id`, userID)
 	}
 }

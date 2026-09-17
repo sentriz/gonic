@@ -33,6 +33,16 @@ func LoadAlbumByFolder(userID int) func(*gorm.DB) *gorm.DB {
 	}
 }
 
+// LoadAlbumListByFolder loads an album row as used by the browse-by-folder album lists, which
+// show the album's track count, duration, and play stats alongside its parent folder.
+func LoadAlbumListByFolder(userID int) func(*gorm.DB) *gorm.DB {
+	return func(q *gorm.DB) *gorm.DB {
+		return q.
+			Scopes(AlbumWithUserPlay(userID), AlbumWithUserData(userID)).
+			Preload("Parent")
+	}
+}
+
 func NewAlbumByFolder(f *AlbumRow) *Album {
 	a := &Album{
 		Artist:        f.Parent.RightPath,
