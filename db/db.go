@@ -429,16 +429,16 @@ type TranscodeFormatPreference struct {
 
 type AlbumCredit struct {
 	AlbumID    int    `gorm:"not null; unique_index:idx_album_credit" sql:"default: null; type:int REFERENCES albums(id) ON DELETE CASCADE"`
-	ArtistID   int    `gorm:"not null; unique_index:idx_album_credit; index:idx_album_credits_artist_id" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
-	Role       string `gorm:"not null; unique_index:idx_album_credit" sql:"default: null"`
+	ArtistID   int    `gorm:"not null; unique_index:idx_album_credit; index:idx_album_credits_artist_role" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
+	Role       string `gorm:"not null; unique_index:idx_album_credit; index:idx_album_credits_artist_role" sql:"default: null"`
 	CreditedAs string `sql:"default: null"`
 	Artist     *Artist
 }
 
 type TrackCredit struct {
 	TrackID    int    `gorm:"not null; unique_index:idx_track_credit" sql:"default: null; type:int REFERENCES tracks(id) ON DELETE CASCADE"`
-	ArtistID   int    `gorm:"not null; unique_index:idx_track_credit; index:idx_track_credits_artist_id" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
-	Role       string `gorm:"not null; unique_index:idx_track_credit" sql:"default: null"`
+	ArtistID   int    `gorm:"not null; unique_index:idx_track_credit; index:idx_track_credits_artist_role" sql:"default: null; type:int REFERENCES artists(id) ON DELETE CASCADE"`
+	Role       string `gorm:"not null; unique_index:idx_track_credit; index:idx_track_credits_artist_role" sql:"default: null"`
 	CreditedAs string `sql:"default: null"`
 	Artist     *Artist
 }

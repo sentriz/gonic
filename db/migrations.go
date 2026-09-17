@@ -103,6 +103,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202607141500", migrateAlbumVersion),
 		construct(ctx, "202607171200", migrateAddPodcastEpisodeGUID),
 		construct(ctx, "202607241200", migrateClearUnknownAudioProperties),
+		construct(ctx, "202609171200", migrateCreditsArtistRoleIndexes),
 	}
 
 	return gormigrate.
@@ -1097,5 +1098,15 @@ func migrateClearUnknownAudioProperties(tx *gorm.DB, _ MigrationContext) error {
 		UPDATE tracks SET length=0 WHERE length=4294967;
 		UPDATE podcast_episodes SET bitrate=0 WHERE bitrate=4294967295;
 		UPDATE podcast_episodes SET length=0 WHERE length=4294967;
+	`).Error
+}
+
+func migrateCreditsArtistRoleIndexes(tx *gorm.DB, _ MigrationContext) error {
+	// (artist_id, role) covers the roles subquery in getArtists, and makes the artist_id only indexes redundant
+	return tx.Exec(`
+		CREATE INDEX IF NOT EXISTS idx_album_credits_artist_role ON "album_credits" (artist_id, role);
+		CREATE INDEX IF NOT EXISTS idx_track_credits_artist_role ON "track_credits" (artist_id, role);
+		DROP INDEX IF EXISTS idx_album_credits_artist_id;
+		DROP INDEX IF EXISTS idx_track_credits_artist_id;
 	`).Error
 }
