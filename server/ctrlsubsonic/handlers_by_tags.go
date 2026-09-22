@@ -290,7 +290,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		q = q.Where(`tracks.tag_brainz_id = ?`, query)
 	case isAll:
 	default:
-		q = q.Where(`tracks.tag_title LIKE ? OR tracks.tag_title_u_dec LIKE ?`, fuzzy, fuzzy)
+		q = q.Where(`tracks.tag_title LIKE ? OR tracks.tag_title_u_dec LIKE ? OR tracks.filename LIKE ? OR tracks.filename_u_dec LIKE ?`, fuzzy, fuzzy, fuzzy, fuzzy)
 	}
 	q = q.Offset(params.GetOrInt("songOffset", 0)).
 		Limit(params.GetOrInt("songCount", 20))

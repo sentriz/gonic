@@ -2,6 +2,7 @@ package ctrlsubsonic
 
 import (
 	"net/url"
+	"strings"
 	"testing"
 )
 
@@ -85,6 +86,16 @@ func TestSearchThree(t *testing.T) {
 		query{url.Values{"query": {"00000000-0000-0000-0000-0000000000aa"}}, "q_uuid_album", false},
 		query{url.Values{"query": {"album"}, "musicFolderId": {"1"}}, "q_album_folder_1", false},
 	)
+}
+
+func TestSearchThreeMatchesFilename(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	body := f.query(t, f.contr.ServeSearchThree, f.admin, url.Values{"query": {"d1-track-0"}})
+	if !strings.Contains(body, `d1-track-0.flac`) {
+		t.Fatalf("search3 response did not contain filename: %s", body)
+	}
 }
 
 func TestGetStarredTwo(t *testing.T) {
