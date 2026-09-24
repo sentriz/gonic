@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"time"
 
@@ -38,6 +39,26 @@ func New(path string, opts url.Values, logQueries bool) (*DB, error) {
 	if logQueries {
 		db.LogMode(true)
 	}
+
+	// gorm binds a variable per parent row when preloading, so big lists hit SQLite's limit. preload in chunks instead
+	// TODO: remove once we're off gorm v1's preloading, eg. for batched loading, gorm v2, or no gorm at all
+	const chunkSize = 5000
+	preload := db.Callback().Query().Get("gorm:preload")
+	db.Callback().Query().Replace("gorm:preload", func(scope *gorm.Scope) {
+		rows := scope.IndirectValue()
+		if rows.Kind() != reflect.Slice || rows.Len() <= chunkSize {
+			preload(scope)
+			return
+		}
+		all := scope.Value
+		defer func() { scope.Value = all }()
+		for i := 0; i < rows.Len() && !scope.HasError(); i += chunkSize {
+			chunk := reflect.New(rows.Type())
+			chunk.Elem().Set(rows.Slice(i, min(i+chunkSize, rows.Len())))
+			scope.Value = chunk.Interface()
+			preload(scope)
+		}
+	})
 
 	db.DB().SetMaxOpenConns(4)
 
