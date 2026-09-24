@@ -549,6 +549,20 @@ func TestISRCs(t *testing.T) {
 	isISRCMissing("123456789B")
 }
 
+func TestISRCSharedByTracks(t *testing.T) {
+	t.Parallel()
+	m := mockfs.New(t)
+
+	m.AddItems()
+	m.SetTrack("artist-0/album-0/track-0.flac", func(tags *mockfs.TagInfo) { normtag.Set(tags.Tags, normtag.ISRC, "123456789A") })
+	m.SetTrack("artist-1/album-2/track-0.flac", func(tags *mockfs.TagInfo) { normtag.Set(tags.Tags, normtag.ISRC, "123456789A") })
+	m.ScanAndClean()
+
+	var count int
+	require.NoError(t, m.DB().Model(db.TrackISRC{}).Where("isrc=?", "123456789A").Count(&count).Error)
+	assert.Equal(t, 2, count)
+}
+
 func TestMultiFolders(t *testing.T) {
 	t.Parallel()
 	m := mockfs.NewWithDirs(t, []string{"m-1", "m-2", "m-3"})
