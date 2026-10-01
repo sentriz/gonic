@@ -102,14 +102,14 @@ const albumAverageRatingColumn = `(SELECT cast(coalesce(avg(rating), 0)*100 AS I
 const albumChildCountColumn = `(SELECT count(1) FROM tracks WHERE tracks.album_id=albums.id) child_count`
 const albumDurationColumn = `(SELECT coalesce(sum(tracks.length), 0) FROM tracks WHERE tracks.album_id=albums.id) duration`
 
-const albumPlayCountColumn = `(SELECT coalesce(sum(track_plays.count), 0) FROM track_plays
-	JOIN tracks ON tracks.id=track_plays.track_id
+const albumPlayCountColumn = `(SELECT coalesce(sum(track_plays.count), 0) FROM tracks
+	CROSS JOIN track_plays ON track_plays.track_id=tracks.id
 	WHERE track_plays.user_id=? AND tracks.album_id=albums.id) play_count`
-const albumPlayLengthColumn = `(SELECT sum(track_plays.length) FROM track_plays
-	JOIN tracks ON tracks.id=track_plays.track_id
+const albumPlayLengthColumn = `(SELECT sum(track_plays.length) FROM tracks
+	CROSS JOIN track_plays ON track_plays.track_id=tracks.id
 	WHERE track_plays.user_id=? AND tracks.album_id=albums.id) play_length`
-const albumPlayTimeColumn = `(SELECT max(track_plays.time) FROM track_plays
-	JOIN tracks ON tracks.id=track_plays.track_id
+const albumPlayTimeColumn = `(SELECT max(track_plays.time) FROM tracks
+	CROSS JOIN track_plays ON track_plays.track_id=tracks.id
 	WHERE track_plays.user_id=? AND tracks.album_id=albums.id) play_time`
 
 func AlbumWithUserPlay(userID int) func(*gorm.DB) *gorm.DB {
