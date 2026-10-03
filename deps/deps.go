@@ -1,4 +1,4 @@
-//go:build !nowasm
+//go:build !nowasm && !ffprobe
 
 package deps
 
