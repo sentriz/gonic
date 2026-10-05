@@ -84,6 +84,9 @@ func TestSearchThree(t *testing.T) {
 		// UUID query takes the tag_brainz_id branch instead of fuzzy LIKE
 		query{url.Values{"query": {"00000000-0000-0000-0000-0000000000aa"}}, "q_uuid_album", false},
 		query{url.Values{"query": {"album"}, "musicFolderId": {"1"}}, "q_album_folder_1", false},
+		// trailing * is treated as a prefix wildcard (iSub and similar clients)
+		query{url.Values{"query": {"albu*"}}, "q_prefix_albu", false},
+		query{url.Values{"query": {"artist-*"}}, "q_prefix_artist", false},
 	)
 }
 

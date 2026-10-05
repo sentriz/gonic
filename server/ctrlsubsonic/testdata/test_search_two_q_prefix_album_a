@@ -1,0 +1,62 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "gonic",
+    "serverVersion": "",
+    "openSubsonic": true,
+    "searchResult2": {
+      "album": [
+        {
+          "id": "al-3",
+          "artist": "",
+          "artists": [],
+          "displayArtist": "",
+          "albumArtists": [],
+          "displayAlbumArtist": "",
+          "contributors": [],
+          "displayComposer": "",
+          "created": "2019-11-30T00:00:00Z",
+          "genres": [],
+          "isDir": true,
+          "isVideo": false,
+          "parent": "al-2",
+          "title": "album-aa",
+          "mediaType": "album",
+          "year": 2018,
+          "musicBrainzId": "",
+          "isrc": [],
+          "starred": "2020-05-01T12:00:00Z",
+          "userRating": 4,
+          "averageRating": 4,
+          "replayGain": null,
+          "played": ""
+        },
+        {
+          "id": "al-4",
+          "artist": "",
+          "artists": [],
+          "displayArtist": "",
+          "albumArtists": [],
+          "displayAlbumArtist": "",
+          "contributors": [],
+          "displayComposer": "",
+          "coverArt": "al-4",
+          "created": "2019-11-30T00:00:00Z",
+          "genres": [],
+          "isDir": true,
+          "isVideo": false,
+          "parent": "al-2",
+          "title": "album-ab",
+          "mediaType": "album",
+          "year": 2019,
+          "musicBrainzId": "",
+          "isrc": [],
+          "averageRating": 5,
+          "replayGain": null,
+          "played": ""
+        }
+      ]
+    }
+  }
+}

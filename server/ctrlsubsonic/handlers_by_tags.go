@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"slices"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -222,10 +221,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 	var isUUID = uuid.Validate(query) == nil
 	var isAll = query == `""`
 
-	var fuzzy = query
-	fuzzy = strings.Join(strings.Fields(fuzzy), "%")
-	fuzzy = strings.ToLower(fuzzy)
-	fuzzy = "%" + fuzzy + "%"
+	fuzzy := buildFuzzy(query)
 
 	results := &spec.SearchResultThree{}
 

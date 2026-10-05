@@ -4,7 +4,6 @@ package ctrlsubsonic
 import (
 	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
@@ -200,10 +199,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 	var isUUID = uuid.Validate(query) == nil
 	var isAll = query == `""`
 
-	var fuzzy = query
-	fuzzy = strings.Join(strings.Fields(fuzzy), "%")
-	fuzzy = strings.ToLower(fuzzy)
-	fuzzy = "%" + fuzzy + "%"
+	fuzzy := buildFuzzy(query)
 
 	musicFolder := getMusicFolder(c.musicPaths, params)
 	results := &spec.SearchResultTwo{}
