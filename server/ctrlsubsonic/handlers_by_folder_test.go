@@ -84,6 +84,9 @@ func TestSearchTwo(t *testing.T) {
 		query{url.Values{"query": {"\"\""}}, "q_empty_all", false},
 		query{url.Values{"query": {"00000000-0000-0000-0000-0000000000aa"}}, "q_uuid_album", false},
 		query{url.Values{"query": {"album"}, "musicFolderId": {"1"}}, "q_album_folder_1", false},
+		// trailing * is treated as a prefix wildcard (iSub and similar clients)
+		query{url.Values{"query": {"albu*"}}, "q_prefix_albu", false},
+		query{url.Values{"query": {"album-a*"}}, "q_prefix_album_a", false},
 	)
 }
 

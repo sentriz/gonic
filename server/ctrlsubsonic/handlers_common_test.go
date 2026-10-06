@@ -11,6 +11,37 @@ import (
 	"go.senan.xyz/gonic/db"
 )
 
+func TestBuildFuzzy(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		query string
+		want  string
+	}{
+		// plain substring search — unchanged behaviour
+		{"album", "%album%"},
+		{"artist", "%artist%"},
+		{"track", "%track%"},
+		// multi-word collapses spaces into % separators
+		{"foo bar", "%foo%bar%"},
+		// trailing * → prefix wildcard (iSub and similar clients)
+		{"Abigail*", "abigail%"},
+		{"album*", "album%"},
+		{"artist*", "artist%"},
+		// multi-word with trailing * — words joined, then prefix
+		{"foo bar*", "foo%bar%"},
+		// bare * is an empty prefix (matches everything)
+		{"*", "%"},
+		// no * in the middle — treated as literal (substring match)
+		{"al*bum", "%al*bum%"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.query, func(t *testing.T) {
+			t.Parallel()
+			require.Equal(t, tt.want, buildFuzzy(tt.query))
+		})
+	}
+}
+
 func TestGetNowPlaying(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)

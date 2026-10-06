@@ -826,6 +826,23 @@ func getMusicFolder(musicPaths []MusicPath, p params.Params) string {
 	return musicPaths[idx].Path
 }
 
+// buildFuzzy converts a Subsonic search query into a SQL LIKE pattern.
+// A trailing "*" is treated as a prefix wildcard (clients such as iSub append
+// it to signal "starts with"): "Abigail*" → "abigail%". Without a trailing
+// "*", a substring pattern is returned: "foo bar" → "%foo%bar%".
+func buildFuzzy(query string) string {
+	prefix := strings.HasSuffix(query, "*")
+	if prefix {
+		query = query[:len(query)-1]
+	}
+	fuzzy := strings.Join(strings.Fields(query), "%")
+	fuzzy = strings.ToLower(fuzzy)
+	if prefix {
+		return fuzzy + "%"
+	}
+	return "%" + fuzzy + "%"
+}
+
 func lowerUDecOrHash(in string) string {
 	inRunes := []rune(in)
 	if len(inRunes) == 0 {
