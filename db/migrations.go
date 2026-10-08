@@ -105,6 +105,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202607241200", migrateClearUnknownAudioProperties),
 		construct(ctx, "202609171200", migrateCreditsArtistRoleIndexes),
 		construct(ctx, "202609241500", migrateTrackISRCUniquePerTrack),
+		construct(ctx, "202610081200", migrateClearNegativeAudioProperties),
 	}
 
 	return gormigrate.
@@ -1117,5 +1118,15 @@ func migrateTrackISRCUniquePerTrack(tx *gorm.DB, _ MigrationContext) error {
 	return tx.Exec(`
 		DROP INDEX IF EXISTS idx_isrc_track;
 		CREATE UNIQUE INDEX IF NOT EXISTS idx_isrc_track ON "track_isrcs" (isrc, track_id);
+	`).Error
+}
+
+func migrateClearNegativeAudioProperties(tx *gorm.DB, _ MigrationContext) error {
+	// taglib can return negatives other than -1, so clear anything in the uint32 wrapped negative range
+	return tx.Exec(`
+		UPDATE tracks SET bitrate=0 WHERE bitrate>=2147483648;
+		UPDATE tracks SET length=0 WHERE length>=2147483;
+		UPDATE podcast_episodes SET bitrate=0 WHERE bitrate>=2147483648;
+		UPDATE podcast_episodes SET length=0 WHERE length>=2147483;
 	`).Error
 }
