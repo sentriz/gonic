@@ -535,7 +535,7 @@ func TestBackfillAudioPropsWritesOnlyItsColumns(t *testing.T) {
 	track.TagTitle = "stale title"
 	track.Album.TagTitle = "stale album title"
 
-	reader := propsReader{Properties: tags.Properties{Codec: "flac", Container: "flac", Channels: 2, SampleRate: 44100, BitDepth: 24}}
+	reader := propsReader{Codec: "flac", Container: "flac", Channels: 2, SampleRate: 44100, BitDepth: 24}
 	require.NoError(t, backfillAudioProps(m.DB(), reader, &track))
 
 	require.Equal(t, "flac", track.Codec)
