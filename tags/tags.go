@@ -23,9 +23,14 @@ type Reader interface {
 type Tags = map[string][]string
 
 type Properties struct {
-	Length   time.Duration
-	Bitrate  uint
-	HasCover bool
+	Length     time.Duration
+	Bitrate    uint
+	Channels   uint
+	SampleRate uint
+	BitDepth   uint
+	Codec      string
+	Container  string
+	HasCover   bool
 }
 
 //nolint:gochecknoglobals

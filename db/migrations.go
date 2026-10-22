@@ -106,6 +106,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202609171200", migrateCreditsArtistRoleIndexes),
 		construct(ctx, "202609241500", migrateTrackISRCUniquePerTrack),
 		construct(ctx, "202610081200", migrateClearNegativeAudioProperties),
+		construct(ctx, "202610221200", migrateAddAudioProperties),
 	}
 
 	return gormigrate.
@@ -1129,4 +1130,8 @@ func migrateClearNegativeAudioProperties(tx *gorm.DB, _ MigrationContext) error 
 		UPDATE podcast_episodes SET bitrate=0 WHERE bitrate>=2147483648;
 		UPDATE podcast_episodes SET length=0 WHERE length>=2147483;
 	`).Error
+}
+
+func migrateAddAudioProperties(tx *gorm.DB, _ MigrationContext) error {
+	return tx.AutoMigrate(Track{}, PodcastEpisode{}).Error
 }

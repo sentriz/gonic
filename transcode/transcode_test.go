@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"os/exec"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -29,17 +30,18 @@ const (
 
 const bytesPerSec = sampleRate * bytesPerSample * numChannels
 
-func TestMain(m *testing.M) {
+func requireFFmpeg(t *testing.T) {
+	t.Helper()
 	if _, err := exec.LookPath("ffmpeg"); err != nil {
-		return // no ffmpeg, skip these tests
+		t.Skip("ffmpeg not installed")
 	}
-	os.Exit(m.Run())
 }
 
 // TestTranscode starts a web server that transcodes a 5s FLAC file to PCM audio. A client
 // consumes the result over a 5 second period.
 func TestTranscode(t *testing.T) {
 	t.Parallel()
+	requireFFmpeg(t)
 
 	testFile := "testdata/5s.flac"
 	testFileLen := 5
@@ -73,6 +75,7 @@ func TestTranscode(t *testing.T) {
 // A client consumes the result over a 3 second period.
 func TestTranscodeWithSeek(t *testing.T) {
 	t.Parallel()
+	requireFFmpeg(t)
 
 	testFile := "testdata/5s.flac"
 	testFileLen := 5
@@ -105,8 +108,32 @@ func TestTranscodeWithSeek(t *testing.T) {
 	require.Equal(t, (testFileLen-seekSecs)*bytesPerSec, buf.Len())
 }
 
+// TestTranscodeFLAC transcodes the 5s 48kHz FLAC down to 24kHz 16 bit, decodes the result back to PCM, and
+// checks the durations match.
+func TestTranscodeFLAC(t *testing.T) {
+	t.Parallel()
+	requireFFmpeg(t)
+
+	profile := transcode.WithBitDepth(transcode.WithSampleRate(transcode.FLAC, 24_000), 16)
+
+	var buf bytes.Buffer
+	tr := transcode.NewFFmpegTranscoder()
+	require.NoError(t, tr.Transcode(context.Background(), profile, "testdata/5s.flac", &buf))
+
+	f, err := os.CreateTemp(t.TempDir(), "*.flac")
+	require.NoError(t, err)
+	_, err = f.Write(buf.Bytes())
+	require.NoError(t, err)
+	require.NoError(t, f.Close())
+
+	var pcm bytes.Buffer
+	require.NoError(t, tr.Transcode(context.Background(), transcode.PCM16le, f.Name(), &pcm))
+	require.Equal(t, 5*bytesPerSec, pcm.Len()) // PCM16le resamples to 48kHz, so 5s at the usual rate
+}
+
 func TestCachingParallelism(t *testing.T) {
 	t.Parallel()
+	requireFFmpeg(t)
 
 	var realTranscodeCount atomic.Uint64
 	transcoder := callbackTranscoder{
@@ -138,4 +165,14 @@ type callbackTranscoder struct {
 func (ct callbackTranscoder) Transcode(ctx context.Context, profile transcode.Profile, in string, out io.Writer) error {
 	ct.callback()
 	return ct.transcoder.Transcode(ctx, profile, in, out)
+}
+
+func TestCodecs(t *testing.T) {
+	t.Parallel()
+
+	for name, c := range transcode.Codecs {
+		require.Positive(t, c.MaxChannels, name)
+		require.True(t, slices.IsSorted(c.SampleRates), name)
+		require.True(t, slices.IsSorted(c.BitDepths), name)
+	}
 }

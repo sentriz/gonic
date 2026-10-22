@@ -25,20 +25,26 @@ func (Reader) CanRead(absPath string) bool {
 }
 
 func (Reader) Read(absPath string) (tags.Properties, tags.Tags, error) {
-	out, err := exec.Command("ffprobe", "-hide_banner", "-v", "0", "-i", absPath, "-show_entries", "format:stream=codec_type:stream_tags", "-of", "json").Output()
+	out, err := exec.Command("ffprobe", "-hide_banner", "-v", "0", "-i", absPath, "-show_entries", "format:stream=codec_type,codec_name,channels,sample_rate,bits_per_raw_sample,bits_per_sample:stream_tags", "-of", "json").Output()
 	if err != nil {
 		return tags.Properties{}, nil, fmt.Errorf("output: %w", err)
 	}
 
 	var d struct {
 		Streams []struct {
-			CodecType string            `json:"codec_type"`
-			Tags      map[string]string `json:"tags"`
+			CodecType        string            `json:"codec_type"`
+			CodecName        string            `json:"codec_name"`
+			Channels         int               `json:"channels"`
+			SampleRate       string            `json:"sample_rate"`
+			BitsPerRawSample string            `json:"bits_per_raw_sample"`
+			BitsPerSample    int               `json:"bits_per_sample"`
+			Tags             map[string]string `json:"tags"`
 		} `json:"streams"`
 		Format struct {
-			Duration string            `json:"duration"`
-			BitRate  string            `json:"bit_rate"`
-			Tags     map[string]string `json:"tags"`
+			FormatName string            `json:"format_name"`
+			Duration   string            `json:"duration"`
+			BitRate    string            `json:"bit_rate"`
+			Tags       map[string]string `json:"tags"`
 		} `json:"format"`
 	}
 	if err := json.Unmarshal(out, &d); err != nil {
@@ -48,19 +54,32 @@ func (Reader) Read(absPath string) (tags.Properties, tags.Tags, error) {
 	durationSecs, _ := strconv.ParseFloat(d.Format.Duration, 64)
 	bitRateBitsPerSec, _ := strconv.Atoi(d.Format.BitRate)
 
+	props := tags.Properties{
+		Length:    time.Duration(durationSecs) * time.Second,
+		Bitrate:   uint(bitRateBitsPerSec / 1000),
+		Container: normContainer(d.Format.FormatName),
+	}
+
 	var tgs = map[string][]string{}
-	var hasCover bool
+	var gotAudio bool
 	for _, s := range d.Streams {
 		switch s.CodecType {
 		case "video":
-			hasCover = true
+			props.HasCover = true
 		case "audio":
-			if len(tgs) > 0 {
+			if gotAudio {
 				continue // first audio stream wins
 			}
+			gotAudio = true
 			for k, vs := range s.Tags {
 				tgs[k] = strings.Split(vs, ";")
 			}
+			props.Codec, _, _ = strings.Cut(s.CodecName, "_") // pcm_s16le, dsd_lsbf, ... -> pcm, dsd
+			props.Channels = uint(s.Channels)
+			sampleRate, _ := strconv.Atoi(s.SampleRate)
+			props.SampleRate = uint(sampleRate)
+			bitDepth, _ := strconv.Atoi(s.BitsPerRawSample) // unset (0) for lossy
+			props.BitDepth = uint(max(bitDepth, s.BitsPerSample))
 		}
 	}
 	for k, vs := range d.Format.Tags {
@@ -71,13 +90,17 @@ func (Reader) Read(absPath string) (tags.Properties, tags.Tags, error) {
 		tgs[k] = strings.Split(vs, ";")
 	}
 
-	props := tags.Properties{
-		Length:   time.Duration(durationSecs) * time.Second,
-		Bitrate:  uint(bitRateBitsPerSec / 1000),
-		HasCover: hasCover,
-	}
-
 	return props, tgs, nil
+}
+
+// normContainer picks a name from ffprobe's demuxer, which can list several. the mov demuxer reads every
+// iso media file, and m4a audio is mp4
+func normContainer(formatName string) string {
+	if formatName == "mov,mp4,m4a,3gp,3g2,mj2" {
+		return "mp4"
+	}
+	name, _, _ := strings.Cut(formatName, ",")
+	return name
 }
 
 func (Reader) ReadCover(absPath string) ([]byte, error) {
