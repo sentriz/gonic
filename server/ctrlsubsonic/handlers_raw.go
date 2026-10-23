@@ -3,6 +3,7 @@ package ctrlsubsonic
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"image"
@@ -16,6 +17,7 @@ import (
 	"time"
 
 	"github.com/disintegration/imaging"
+	"github.com/djherbis/times"
 	"github.com/jinzhu/gorm"
 	"go.senan.xyz/wrtag/coverparse"
 
@@ -76,17 +78,25 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 		}
 	}
 
+	// Resolve local artwork before locking the cache: the source may be on a slow mount.
+	source, err := c.coverSourceFor(id)
+	if err != nil {
+		return spec.NewError(70, "couldn't find cover %q: %v", id, err)
+	}
+	defer source.close()
+
 	c.coverCache.RLock()
 	defer c.coverCache.RUnlock()
 
 	// cached cover could exist for any supported format
-	cachePath, err := findCachedCover(c.coverCache.Path(), id.String(), size)
+	cachePath, err := findCachedCover(c.coverCache.Path(), source.cacheID, size)
 	if err != nil && !os.IsNotExist(err) {
 		log.Printf("error checking cache: %v", err)
 		return nil
 	}
 
 	serve := func(p string) {
+		source.close() // Do not retain the local source while a slow client reads the cached image.
 		w.Header().Set("Cache-Control", "public, max-age=1209600")
 		http.ServeFile(w, r, p) //nolint:gosec // p is contained to the cover cache dir via fileutil.SafeJoin
 	}
@@ -97,7 +107,7 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 		return nil
 	}
 
-	reader, err := coverFor(c.dbc, c.artistInfoCache, c.playlistStore, c.tagReader, id)
+	reader, err := source.reader(c, id)
 	if err != nil {
 		return spec.NewError(70, "couldn't find cover %q: %v", id, err)
 	}
@@ -107,11 +117,14 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 	if err != nil {
 		return spec.NewError(0, "decode for cover %q: %v", id, err)
 	}
+	if err := source.checkUnchanged(); err != nil {
+		return spec.NewError(70, "source changed while reading cover %q: %v", id, err)
+	}
 
 	// don't upscale
 	minSize := min(size, max(img.Bounds().Dx(), img.Bounds().Dy()))
 
-	cachePath, err = fileutil.SafeJoin(c.coverCache.Path(), coverCacheFilename(id.String(), minSize, format))
+	cachePath, err = fileutil.SafeJoin(c.coverCache.Path(), coverCacheFilename(source.cacheID, minSize, format))
 	if err != nil {
 		return spec.NewError(0, "bad cover id %q: %v", id, err)
 	}
@@ -132,6 +145,107 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 	}
 
 	serve(cachePath)
+	return nil
+}
+
+type coverSource struct {
+	cacheID string
+	file    *os.File
+	info    os.FileInfo
+}
+
+func (source *coverSource) close() {
+	if source.file != nil {
+		_ = source.file.Close()
+		source.file = nil
+	}
+}
+
+func (c *Controller) coverSourceFor(id specid.ID) (*coverSource, error) {
+	source := &coverSource{cacheID: id.String()}
+	if id.Type == specid.Artist {
+		return source, nil // Remote artist images retain their existing cache policy.
+	}
+	var err error
+	var revision int64
+	switch id.Type {
+	case specid.Track:
+		var track db.Track
+		err = c.dbc.Select("id, album_id, filename, updated_at").
+			Preload("Album", func(query *gorm.DB) *gorm.DB {
+				return query.Select("id, root_dir, left_path, right_path")
+			}).First(&track, id.Value).Error
+		if err != nil {
+			return nil, fmt.Errorf("select track: %w", err)
+		}
+		source.file, err = os.Open(track.AbsPath())
+		if !track.UpdatedAt.IsZero() {
+			revision = track.UpdatedAt.UnixNano()
+		}
+	default:
+		var reader io.ReadCloser
+		reader, err = coverFor(c.dbc, c.artistInfoCache, c.playlistStore, c.tagReader, id)
+		if err == nil {
+			var ok bool
+			source.file, ok = reader.(*os.File)
+			if !ok {
+				reader.Close()
+				return nil, errCoverNotFound
+			}
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	source.info, err = source.file.Stat()
+	if err != nil {
+		source.file.Close()
+		return nil, err
+	}
+	// Hash the entire identity so even long playlist IDs produce short filenames.
+	key := fmt.Sprintf("%s\x00%s\x00%s\x00%d", id, source.file.Name(), coverFileVersion(source.info), revision)
+	source.cacheID = fmt.Sprintf("local-%x", sha256.Sum256([]byte(key)))
+	return source, nil
+}
+
+func coverFileVersion(info os.FileInfo) string {
+	stamp := times.Get(info)
+	var changed int64
+	if stamp.HasChangeTime() {
+		changed = stamp.ChangeTime().UnixNano()
+	}
+	return fmt.Sprintf("%d:%d:%d", info.Size(), info.ModTime().UnixNano(), changed)
+}
+
+func (source *coverSource) reader(c *Controller, id specid.ID) (io.ReadCloser, error) {
+	if source.file == nil {
+		return coverFor(c.dbc, c.artistInfoCache, c.playlistStore, c.tagReader, id)
+	}
+	if id.Type != specid.Track {
+		// Keep the selected file open: a playlist's preferred cover can change meanwhile.
+		return io.NopCloser(source.file), nil
+	}
+	cover, err := c.tagReader.ReadCover(source.file.Name())
+	if err != nil {
+		return nil, fmt.Errorf("read cover: %w", err)
+	}
+	if len(cover) == 0 {
+		return nil, errCoverEmpty
+	}
+	return io.NopCloser(bytes.NewReader(cover)), nil
+}
+
+func (source *coverSource) checkUnchanged() error {
+	if source.file == nil {
+		return nil
+	}
+	info, err := os.Stat(source.file.Name()) //nolint:gosec // same DB-backed or SafeJoin-validated path opened by coverSourceFor
+	if err != nil {
+		return err
+	}
+	if !os.SameFile(source.info, info) || coverFileVersion(source.info) != coverFileVersion(info) {
+		return errors.New("cover source was replaced or modified")
+	}
 	return nil
 }
 
