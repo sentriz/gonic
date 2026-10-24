@@ -90,7 +90,7 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 			scrobbleTrack.MusicBrainzReleaseID = track.Album.TagBrainzID
 		}
 
-		if err := scrobbleStatsUpdateTrack(c.dbc, &track, user.ID, optStamp); err != nil {
+		if err := scrobbleStatsUpdateTrack(c.dbc, &track, user.ID, optStamp, optSubmission); err != nil {
 			return spec.NewError(0, "error updating stats: %v", err)
 		}
 
@@ -749,15 +749,17 @@ func lyricsFromFileUnsynced(track db.Track) (*spec.StructuredLyrics, error) {
 	return &r, nil
 }
 
-func scrobbleStatsUpdateTrack(dbc *db.DB, track *db.Track, userID int, playTime time.Time) error {
+func scrobbleStatsUpdateTrack(dbc *db.DB, track *db.Track, userID int, playTime time.Time, submission bool) error {
 	var play db.TrackPlay
 	if err := dbc.Where("track_id=? AND user_id=?", track.ID, userID).First(&play).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return fmt.Errorf("find stat: %w", err)
 	}
 	play.TrackID = track.ID
 	play.UserID = userID
-	play.Count++
-	play.Length += track.Length
+	if submission {
+		play.Count++
+		play.Length += track.Length
+	}
 	if playTime.After(play.Time) {
 		play.Time = playTime
 	}

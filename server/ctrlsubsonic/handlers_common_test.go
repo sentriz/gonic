@@ -80,3 +80,21 @@ func TestGetNowPlaying(t *testing.T) {
 		query{url.Values{}, "recent_plays", false},
 	)
 }
+
+func TestScrobbleNowPlayingNotCounted(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	f.query(t, f.contr.ServeScrobble, f.alt, url.Values{
+		"id":         {f.trackVA0.SID().String()},
+		"submission": {"false"},
+	})
+	f.query(t, f.contr.ServeScrobble, f.alt, url.Values{
+		"id": {f.trackVA0.SID().String()},
+	})
+
+	var play db.TrackPlay
+	require.NoError(t, f.dbc.Where("user_id=? AND track_id=?", f.alt.ID, f.trackVA0.ID).First(&play).Error)
+	require.Equal(t, 1.0, play.Count)
+	require.Equal(t, f.trackVA0.Length, play.Length)
+}
