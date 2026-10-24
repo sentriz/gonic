@@ -863,7 +863,7 @@ func (c *Controller) ServeGetNowPlaying(r *http.Request) *spec.Response {
 	var plays []*db.TrackPlay
 	err := c.dbc.
 		Preload("User").
-		Where("id IN (SELECT max(id) FROM track_plays GROUP BY user_id)").
+		Where("id = (SELECT tp.id FROM track_plays tp WHERE tp.user_id = track_plays.user_id ORDER BY tp.time DESC, tp.id DESC LIMIT 1)").
 		Where("time > ?", time.Now().Add(-time.Hour)).
 		Order("time DESC").
 		Find(&plays).

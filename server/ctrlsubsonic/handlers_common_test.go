@@ -59,6 +59,16 @@ func TestGetNowPlaying(t *testing.T) {
 	// "played" timestamps stamped with time.Now()
 	f.query(t, f.contr.ServeScrobble, f.alt, url.Values{
 		"id":   {f.trackVA0.SID().String()},
+		"time": {fmt.Sprint(time.Now().Add(-20 * time.Minute).UnixMilli())},
+	})
+	f.query(t, f.contr.ServeScrobble, f.alt, url.Values{
+		"id":   {f.trackAB1.SID().String()},
+		"time": {fmt.Sprint(time.Now().Add(-10 * time.Minute).UnixMilli())},
+	})
+
+	// replaying a track updates its existing play, which has a lower id than the track after it
+	f.query(t, f.contr.ServeScrobble, f.alt, url.Values{
+		"id":   {f.trackVA0.SID().String()},
 		"time": {fmt.Sprint(time.Now().Add(-5 * time.Minute).UnixMilli())},
 	})
 	f.query(t, f.contr.ServeScrobble, alt2, url.Values{
