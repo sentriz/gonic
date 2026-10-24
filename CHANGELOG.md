@@ -1,5 +1,13 @@
 # Changelog
 
+### [0.23.1](https://www.github.com/sentriz/gonic/compare/v0.23.0...v0.23.1) (2026-10-24)
+
+
+### Bug Fixes
+
+* **subsonic:** don't count now playing scrobbles as plays ([03e696e](https://www.github.com/sentriz/gonic/commit/03e696ed93a7e733996566a57aea679f92b4e636))
+* **subsonic:** return the latest play in getNowPlaying ([a755ec4](https://www.github.com/sentriz/gonic/commit/a755ec43b19d0ea5845070f50984a4fb6be81859)), closes [#735](https://www.github.com/sentriz/gonic/issues/735)
+
 ## [0.23.0](https://www.github.com/sentriz/gonic/compare/v0.22.0...v0.23.0) (2026-10-22)
 
 
