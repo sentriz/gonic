@@ -380,12 +380,11 @@ func parseID(in string) (specid.ID, error)  { return specid.New(in) }
 func parseBool(in string) (bool, error)     { return strconv.ParseBool(in) }
 
 func parseTime(in string) (time.Time, error) {
-	ms, err := strconv.Atoi(in)
+	ms, err := strconv.ParseInt(in, 10, 64)
 	if err != nil {
 		return time.Time{}, err
 	}
-	ns := int64(ms) * 1e6
-	return time.Unix(0, ns), nil
+	return time.UnixMilli(ms), nil
 }
 
 func parse(values []string, i any) error {
