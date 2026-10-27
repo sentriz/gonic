@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/disintegration/imaging"
+	"github.com/djherbis/times"
 	"github.com/jinzhu/gorm"
 	"go.senan.xyz/wrtag/coverparse"
 
@@ -76,6 +77,23 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 		}
 	}
 
+	sourcePath, openCover, err := coverFor(c.dbc, c.artistInfoCache, c.playlistStore, c.tagReader, id)
+	if err != nil {
+		return spec.NewError(70, "couldn't find cover %q: %v", id, err)
+	}
+
+	var sourceChanged time.Time
+	if sourcePath != "" {
+		ts, err := times.Stat(sourcePath)
+		if err != nil {
+			return spec.NewError(70, "couldn't find cover %q: %v", id, err)
+		}
+		sourceChanged = ts.ModTime()
+		if ts.HasChangeTime() && ts.ChangeTime().After(sourceChanged) {
+			sourceChanged = ts.ChangeTime()
+		}
+	}
+
 	c.coverCache.RLock()
 	defer c.coverCache.RUnlock()
 
@@ -92,12 +110,15 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 	}
 
 	if cachePath != "" {
-		_ = os.Chtimes(cachePath, time.Now(), time.Now()) // touch for LRU eviction
-		serve(cachePath)
-		return nil
+		if isCachedCoverFresh(cachePath, sourceChanged) {
+			_ = os.Chtimes(cachePath, time.Now(), time.Now()) // touch for LRU eviction
+			serve(cachePath)
+			return nil
+		}
+		_ = os.Remove(cachePath) //nolint:gosec // cachePath is contained to the cover cache dir via fileutil.SafeJoin
 	}
 
-	reader, err := coverFor(c.dbc, c.artistInfoCache, c.playlistStore, c.tagReader, id)
+	reader, err := openCover()
 	if err != nil {
 		return spec.NewError(70, "couldn't find cover %q: %v", id, err)
 	}
@@ -118,7 +139,7 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 
 	if minSize != size {
 		// we down sized, check cache again
-		if _, err := os.Stat(cachePath); err == nil {
+		if isCachedCoverFresh(cachePath, sourceChanged) {
 			_ = os.Chtimes(cachePath, time.Now(), time.Now()) // touch for LRU eviction
 			serve(cachePath)
 			return nil
@@ -152,44 +173,53 @@ func findCachedCover(cacheDir, idStr string, size int) (string, error) {
 	return "", os.ErrNotExist
 }
 
+func isCachedCoverFresh(cachePath string, sourceChanged time.Time) bool {
+	info, err := os.Stat(cachePath) //nolint:gosec // cachePath is contained to the cover cache dir via fileutil.SafeJoin
+	return err == nil && !info.ModTime().Before(sourceChanged)
+}
+
 var (
 	errCoverNotFound = errors.New("could not find a cover with that id")
 	errCoverEmpty    = errors.New("no cover found")
 )
 
 // TODO: can we use specidpaths.Locate here?
-func coverFor(dbc *db.DB, artistInfoCache *artistinfocache.ArtistInfoCache, playlistStore *playlist.Store, tagReader tags.Reader, id specid.ID) (io.ReadCloser, error) {
+func coverFor(dbc *db.DB, artistInfoCache *artistinfocache.ArtistInfoCache, playlistStore *playlist.Store, tagReader tags.Reader, id specid.ID) (string, func() (io.ReadCloser, error), error) {
+	var path string
+	var err error
 	switch id.Type {
-	case specid.Album:
-		return coverForAlbum(dbc, id.Value)
 	case specid.Artist:
-		return coverForArtist(artistInfoCache, id.Value)
-	case specid.Podcast:
-		return coverForPodcast(dbc, id.Value)
-	case specid.PodcastEpisode:
-		return coverForPodcastEpisode(dbc, id.Value)
+		return "", func() (io.ReadCloser, error) { return coverForArtist(artistInfoCache, id.Value) }, nil
 	case specid.Track:
-		return coverForTrack(dbc, tagReader, id.Value)
+		path, err = coverPathForTrack(dbc, id.Value)
+		return path, func() (io.ReadCloser, error) { return coverForTrack(tagReader, path) }, err
+	case specid.Album:
+		path, err = coverPathForAlbum(dbc, id.Value)
+	case specid.Podcast:
+		path, err = coverPathForPodcast(dbc, id.Value)
+	case specid.PodcastEpisode:
+		path, err = coverPathForPodcastEpisode(dbc, id.Value)
 	case specid.Playlist:
-		return coverForPlaylist(playlistStore, id)
+		path, err = coverPathForPlaylist(playlistStore, id)
 	default:
-		return nil, errCoverNotFound
+		return "", nil, errCoverNotFound
 	}
+	return path, func() (io.ReadCloser, error) { return os.Open(path) }, err //nolint:gosec // path is from db, populated by scanner, or validated via SafeJoin
 }
 
-func coverForAlbum(dbc *db.DB, id int) (*os.File, error) {
+func coverPathForAlbum(dbc *db.DB, id int) (string, error) {
 	var folder db.Album
 	err := dbc.DB.
 		Select("id, root_dir, left_path, right_path, cover").
 		First(&folder, id).
 		Error
 	if err != nil {
-		return nil, fmt.Errorf("select album: %w", err)
+		return "", fmt.Errorf("select album: %w", err)
 	}
 	if folder.Cover == "" {
-		return nil, errCoverEmpty
+		return "", errCoverEmpty
 	}
-	return os.Open(filepath.Join(folder.RootDir, folder.LeftPath, folder.RightPath, folder.Cover))
+	return filepath.Join(folder.RootDir, folder.LeftPath, folder.RightPath, folder.Cover), nil
 }
 
 func coverForArtist(artistInfoCache *artistinfocache.ArtistInfoCache, id int) (io.ReadCloser, error) {
@@ -211,47 +241,48 @@ func coverForArtist(artistInfoCache *artistinfocache.ArtistInfoCache, id int) (i
 	return resp.Body, nil
 }
 
-func coverForPodcast(dbc *db.DB, id int) (*os.File, error) {
+func coverPathForPodcast(dbc *db.DB, id int) (string, error) {
 	var podcast db.Podcast
 	err := dbc.
 		First(&podcast, id).
 		Error
 	if err != nil {
-		return nil, fmt.Errorf("select podcast: %w", err)
+		return "", fmt.Errorf("select podcast: %w", err)
 	}
 	if podcast.Image == "" {
-		return nil, errCoverEmpty
+		return "", errCoverEmpty
 	}
-	return os.Open(filepath.Join(podcast.RootDir, podcast.Image))
+	return filepath.Join(podcast.RootDir, podcast.Image), nil
 }
 
-func coverForPodcastEpisode(dbc *db.DB, id int) (*os.File, error) {
+func coverPathForPodcastEpisode(dbc *db.DB, id int) (string, error) {
 	var pe db.PodcastEpisode
 	err := dbc.
 		Preload("Podcast").
 		First(&pe, id).
 		Error
 	if err != nil {
-		return nil, fmt.Errorf("select episode: %w", err)
+		return "", fmt.Errorf("select episode: %w", err)
 	}
 	if pe.Podcast == nil || pe.Podcast.Image == "" {
-		return nil, errCoverEmpty
+		return "", errCoverEmpty
 	}
-	return os.Open(filepath.Join(pe.Podcast.RootDir, pe.Podcast.Image))
+	return filepath.Join(pe.Podcast.RootDir, pe.Podcast.Image), nil
 }
 
-func coverForTrack(dbc *db.DB, tagReader tags.Reader, id int) (io.ReadCloser, error) {
+func coverPathForTrack(dbc *db.DB, id int) (string, error) {
 	var tr db.Track
 	err := dbc.
 		Preload("Album").
 		First(&tr, id).
 		Error
 	if err != nil {
-		return nil, fmt.Errorf("select track: %w", err)
+		return "", fmt.Errorf("select track: %w", err)
 	}
+	return tr.AbsPath(), nil
+}
 
-	absPath := tr.AbsPath()
-
+func coverForTrack(tagReader tags.Reader, absPath string) (io.ReadCloser, error) {
 	cover, err := tagReader.ReadCover(absPath)
 	if err != nil {
 		return nil, fmt.Errorf("read cover: %w", err)
@@ -263,17 +294,17 @@ func coverForTrack(dbc *db.DB, tagReader tags.Reader, id int) (io.ReadCloser, er
 	return io.NopCloser(bytes.NewReader(cover)), nil
 }
 
-func coverForPlaylist(playlistStore *playlist.Store, id specid.ID) (*os.File, error) {
+func coverPathForPlaylist(playlistStore *playlist.Store, id specid.ID) (string, error) {
 	playlistPath := playlistIDDecode(id)
 	playlistDir, err := fileutil.SafeJoin(playlistStore.BasePath(), filepath.Dir(playlistPath))
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	playlistBase := strings.TrimSuffix(filepath.Base(playlistPath), filepath.Ext(playlistPath))
 
 	entries, err := os.ReadDir(playlistDir)
 	if err != nil {
-		return nil, fmt.Errorf("read playlist dir: %w", err)
+		return "", fmt.Errorf("read playlist dir: %w", err)
 	}
 
 	var cover string
@@ -289,10 +320,10 @@ func coverForPlaylist(playlistStore *playlist.Store, id specid.ID) (*os.File, er
 	}
 
 	if cover == "" {
-		return nil, errCoverEmpty
+		return "", errCoverEmpty
 	}
 
-	return os.Open(filepath.Join(playlistDir, cover)) //nolint:gosec // playlistDir validated via SafeJoin above
+	return filepath.Join(playlistDir, cover), nil
 }
 
 func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.Response {
