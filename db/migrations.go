@@ -107,6 +107,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202609241500", migrateTrackISRCUniquePerTrack),
 		construct(ctx, "202610081200", migrateClearNegativeAudioProperties),
 		construct(ctx, "202610221200", migrateAddAudioProperties),
+		construct(ctx, "202610271200", migratePlayQueueCurrentIndex),
 	}
 
 	return gormigrate.
@@ -1134,4 +1135,29 @@ func migrateClearNegativeAudioProperties(tx *gorm.DB, _ MigrationContext) error 
 
 func migrateAddAudioProperties(tx *gorm.DB, _ MigrationContext) error {
 	return tx.AutoMigrate(Track{}, PodcastEpisode{}).Error
+}
+
+func migratePlayQueueCurrentIndex(tx *gorm.DB, _ MigrationContext) error {
+	if err := tx.AutoMigrate(PlayQueue{}).Error; err != nil {
+		return err
+	}
+	var queues []PlayQueue
+	if err := tx.Find(&queues).Error; err != nil {
+		return err
+	}
+	for i := range queues {
+		q := &queues[i]
+		items := q.GetItems()
+		q.CurrentIndex = 0
+		for j, id := range items {
+			if id.String() == q.Current {
+				q.CurrentIndex = j
+				break
+			}
+		}
+		if err := tx.Save(q).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }

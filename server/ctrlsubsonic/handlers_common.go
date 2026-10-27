@@ -49,6 +49,7 @@ func (c *Controller) ServeGetOpenSubsonicExtensions(_ *http.Request) *spec.Respo
 		{Name: "songLyrics", Versions: []int{1}},
 		{Name: "topSongsByArtistId", Versions: []int{1}},
 		{Name: "transcoding", Versions: []int{1}},
+		{Name: "indexBasedQueue", Versions: []int{1}},
 	}
 	return sub
 }
@@ -199,31 +200,195 @@ func (c *Controller) ServeNotFound(_ *http.Request) *spec.Response {
 func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)
 	user := r.Context().Value(CtxUser).(*db.User)
-	var queue db.PlayQueue
-	err := c.dbc.
-		Where("user_id=?", user.ID).
-		Find(&queue).
-		Error
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	queue, err := c.findPlayQueue(user.ID)
+	if err != nil {
 		return spec.NewError(0, "error finding play queue: %v", err)
 	}
-	if errors.Is(err, gorm.ErrRecordNotFound) {
+	if queue == nil {
 		return spec.NewResponse()
 	}
+
+	list, _, err := c.playQueueEntries(user, params.GetOr("c", ""), queue.GetItems())
+	if err != nil {
+		return spec.NewError(0, "%v", err)
+	}
+
 	sub := spec.NewResponse()
-	sub.PlayQueue = &spec.PlayQueue{}
-	sub.PlayQueue.Username = user.Name
-	sub.PlayQueue.Position = queue.Position
-	sub.PlayQueue.Current = queue.CurrentSID()
-	sub.PlayQueue.Changed = queue.UpdatedAt
-	sub.PlayQueue.ChangedBy = queue.ChangedBy
+	sub.PlayQueue = &spec.PlayQueue{
+		Username:  user.Name,
+		Position:  queue.Position,
+		Current:   queue.CurrentSID(),
+		Changed:   queue.UpdatedAt,
+		ChangedBy: queue.ChangedBy,
+		List:      list,
+	}
+	return sub
+}
 
-	trackIDs := queue.GetItems()
-	sub.PlayQueue.List = make([]*spec.TrackChild, 0, len(trackIDs))
+func (c *Controller) ServeGetPlayQueueByIndex(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
+	queue, err := c.findPlayQueue(user.ID)
+	if err != nil {
+		return spec.NewError(0, "error finding play queue: %v", err)
+	}
+	if queue == nil {
+		return spec.NewResponse()
+	}
 
-	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
+	list, kept, err := c.playQueueEntries(user, params.GetOr("c", ""), queue.GetItems())
+	if err != nil {
+		return spec.NewError(0, "%v", err)
+	}
 
-	for _, id := range trackIDs {
+	sub := spec.NewResponse()
+	sub.PlayQueueByIndex = &spec.PlayQueueByIndex{
+		Username:     user.Name,
+		Position:     queue.Position,
+		CurrentIndex: remapPlayQueueIndex(queue.CurrentIndex, kept),
+		Changed:      queue.UpdatedAt,
+		ChangedBy:    queue.ChangedBy,
+		List:         list,
+	}
+	return sub
+}
+
+func (c *Controller) ServeSavePlayQueue(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
+
+	trackIDs, hasIDs, err := playQueueIDsFromParams(params)
+	if err != nil {
+		return spec.NewError(10, "%v", err)
+	}
+	if !hasIDs {
+		// OpenSubsonic: call with no id params clears the saved queue
+		if err := c.clearPlayQueue(user.ID); err != nil {
+			return spec.NewError(0, "error clearing play queue: %v", err)
+		}
+		return spec.NewResponse()
+	}
+
+	current := params.GetOrID("current", specid.ID{})
+	return c.savePlayQueue(user, trackIDs, indexOfPlayQueueID(trackIDs, current), params.GetOrInt("position", 0), params.GetOr("c", ""))
+}
+
+func (c *Controller) ServeSavePlayQueueByIndex(r *http.Request) *spec.Response {
+	params := r.Context().Value(CtxParams).(params.Params)
+	user := r.Context().Value(CtxUser).(*db.User)
+
+	trackIDs, hasIDs, err := playQueueIDsFromParams(params)
+	if err != nil {
+		return spec.NewError(10, "%v", err)
+	}
+
+	currentIndex, currentIndexErr := params.GetInt("currentIndex")
+	if !hasIDs {
+		if currentIndexErr == nil {
+			return spec.NewError(10, "`currentIndex` must not be set when clearing the play queue")
+		}
+		if err := c.clearPlayQueue(user.ID); err != nil {
+			return spec.NewError(0, "error clearing play queue: %v", err)
+		}
+		return spec.NewResponse()
+	}
+	if currentIndexErr != nil {
+		return spec.NewError(10, "please provide a `currentIndex` parameter")
+	}
+	if currentIndex < 0 || currentIndex >= len(trackIDs) {
+		return spec.NewError(10, "`currentIndex` must be between 0 and length of the queue - 1")
+	}
+
+	return c.savePlayQueue(user, trackIDs, currentIndex, params.GetOrInt("position", 0), params.GetOr("c", ""))
+}
+
+func (c *Controller) findPlayQueue(userID int) (*db.PlayQueue, error) {
+	var queue db.PlayQueue
+	err := c.dbc.Where("user_id=?", userID).First(&queue).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &queue, nil
+}
+
+func (c *Controller) clearPlayQueue(userID int) error {
+	return c.dbc.Where("user_id=?", userID).Delete(&db.PlayQueue{}).Error
+}
+
+func (c *Controller) savePlayQueue(user *db.User, trackIDs []specid.ID, currentIndex, position int, changedBy string) *spec.Response {
+	var queue db.PlayQueue
+	if err := c.dbc.Where("user_id=?", user.ID).First(&queue).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return spec.NewError(0, "error finding play queue: %v", err)
+	}
+	queue.UserID = user.ID
+	queue.CurrentIndex = currentIndex
+	if currentIndex >= 0 && currentIndex < len(trackIDs) {
+		queue.Current = trackIDs[currentIndex].String()
+	} else {
+		queue.Current = ""
+	}
+	queue.Position = position
+	queue.ChangedBy = changedBy
+	queue.SetItems(trackIDs)
+	if err := c.dbc.Save(&queue).Error; err != nil {
+		return spec.NewError(0, "error saving play queue: %v", err)
+	}
+	return spec.NewResponse()
+}
+
+func playQueueIDsFromParams(p params.Params) ([]specid.ID, bool, error) {
+	tracks, err := p.GetIDList("id")
+	if errors.Is(err, params.ErrNoValues) {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, false, fmt.Errorf("please provide valid `id` parameters")
+	}
+	trackIDs := make([]specid.ID, 0, len(tracks))
+	for _, id := range tracks {
+		if id.Type == specid.Track || id.Type == specid.PodcastEpisode {
+			trackIDs = append(trackIDs, id)
+		}
+	}
+	if len(trackIDs) == 0 {
+		return nil, false, fmt.Errorf("no track ids provided")
+	}
+	return trackIDs, true, nil
+}
+
+func indexOfPlayQueueID(ids []specid.ID, current specid.ID) int {
+	if current.Type == "" {
+		return 0
+	}
+	for i, id := range ids {
+		if id == current {
+			return i
+		}
+	}
+	return 0
+}
+
+func remapPlayQueueIndex(currentIndex int, keptOriginalIndexes []int) int {
+	if len(keptOriginalIndexes) == 0 {
+		return 0
+	}
+	for newIdx, oldIdx := range keptOriginalIndexes {
+		if oldIdx == currentIndex {
+			return newIdx
+		}
+	}
+	return 0
+}
+
+func (c *Controller) playQueueEntries(user *db.User, client string, trackIDs []specid.ID) ([]*spec.TrackChild, []int, error) {
+	list := make([]*spec.TrackChild, 0, len(trackIDs))
+	kept := make([]int, 0, len(trackIDs))
+	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, client)
+
+	for i, id := range trackIDs {
 		switch id.Type {
 		case specid.Track:
 			var track spec.TrackRow
@@ -233,13 +398,15 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 				Find(&track).
 				Error
 			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-				return spec.NewError(0, "error finding track")
+				return nil, nil, fmt.Errorf("error finding track")
 			}
-			if track.ID != 0 {
-				tc := spec.NewTCTrackByFolder(&track, track.Album)
-				tc.TranscodeMeta = transcodeMeta
-				sub.PlayQueue.List = append(sub.PlayQueue.List, tc)
+			if track.ID == 0 {
+				continue
 			}
+			tc := spec.NewTCTrackByFolder(&track, track.Album)
+			tc.TranscodeMeta = transcodeMeta
+			list = append(list, tc)
+			kept = append(kept, i)
 		case specid.PodcastEpisode:
 			var pe db.PodcastEpisode
 			err := c.dbc.
@@ -247,47 +414,18 @@ func (c *Controller) ServeGetPlayQueue(r *http.Request) *spec.Response {
 				Find(&pe).
 				Error
 			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-				return spec.NewError(0, "error finding podcast episode")
+				return nil, nil, fmt.Errorf("error finding podcast episode")
 			}
-			if pe.ID != 0 {
-				tc := spec.NewTCPodcastEpisode(&pe)
-				tc.TranscodeMeta = transcodeMeta
-				sub.PlayQueue.List = append(sub.PlayQueue.List, tc)
+			if pe.ID == 0 {
+				continue
 			}
+			tc := spec.NewTCPodcastEpisode(&pe)
+			tc.TranscodeMeta = transcodeMeta
+			list = append(list, tc)
+			kept = append(kept, i)
 		}
 	}
-	return sub
-}
-
-func (c *Controller) ServeSavePlayQueue(r *http.Request) *spec.Response {
-	params := r.Context().Value(CtxParams).(params.Params)
-	tracks, err := params.GetIDList("id")
-	if err != nil {
-		return spec.NewError(10, "please provide some `id` parameters")
-	}
-	trackIDs := make([]specid.ID, 0, len(tracks))
-	for _, id := range tracks {
-		if (id.Type == specid.Track) || (id.Type == specid.PodcastEpisode) {
-			trackIDs = append(trackIDs, id)
-		}
-	}
-	if len(trackIDs) == 0 {
-		return spec.NewError(10, "no track ids provided")
-	}
-	user := r.Context().Value(CtxUser).(*db.User)
-	var queue db.PlayQueue
-	if err := c.dbc.Where("user_id=?", user.ID).First(&queue).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return spec.NewError(0, "error finding play queue: %v", err)
-	}
-	queue.UserID = user.ID
-	queue.Current = params.GetOrID("current", specid.ID{}).String()
-	queue.Position = params.GetOrInt("position", 0)
-	queue.ChangedBy = params.GetOr("c", "") // must exist, middleware checks
-	queue.SetItems(trackIDs)
-	if err := c.dbc.Save(&queue).Error; err != nil {
-		return spec.NewError(0, "error saving play queue: %v", err)
-	}
-	return spec.NewResponse()
+	return list, kept, nil
 }
 
 func (c *Controller) ServeGetSong(r *http.Request) *spec.Response {
