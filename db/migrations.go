@@ -1143,6 +1143,8 @@ func migrateAddShares(tx *gorm.DB, _ MigrationContext) error {
 		Share{},
 		ShareEntry{},
 	).Error
+}
+
 func migratePlayQueueCurrentIndex(tx *gorm.DB, _ MigrationContext) error {
 	if err := tx.AutoMigrate(PlayQueue{}).Error; err != nil {
 		return err
