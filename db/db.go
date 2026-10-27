@@ -435,15 +435,16 @@ func (a *Album) IndexRightPath() string {
 }
 
 type PlayQueue struct {
-	ID        int `gorm:"primary_key"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	User      *User
-	UserID    int `sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
-	Current   string
-	Position  int
-	ChangedBy string
-	Items     string
+	ID           int `gorm:"primary_key"`
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	User         *User
+	UserID       int `sql:"default: null; type:int REFERENCES users(id) ON DELETE CASCADE"`
+	Current      string
+	CurrentIndex int
+	Position     int
+	ChangedBy    string
+	Items        string
 }
 
 func (p *PlayQueue) CurrentSID() *specid.ID {

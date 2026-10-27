@@ -122,6 +122,8 @@ func New(dbc *db.DB, scannr *scanner.Scanner, musicPaths []MusicPath, podcastsPa
 	c.Handle("/deletePlaylist", chain(resp(c.ServeDeletePlaylist)))
 	c.Handle("/savePlayQueue", chain(resp(c.ServeSavePlayQueue)))
 	c.Handle("/getPlayQueue", chain(resp(c.ServeGetPlayQueue)))
+	c.Handle("/savePlayQueueByIndex", chain(resp(c.ServeSavePlayQueueByIndex)))
+	c.Handle("/getPlayQueueByIndex", chain(resp(c.ServeGetPlayQueueByIndex)))
 	c.Handle("/getSong", chain(resp(c.ServeGetSong)))
 	c.Handle("/getRandomSongs", chain(resp(c.ServeGetRandomSongs)))
 	c.Handle("/getSongsByGenre", chain(resp(c.ServeGetSongsByGenre)))

@@ -108,6 +108,7 @@ func (db *DB) Migrate(ctx MigrationContext) error {
 		construct(ctx, "202610081200", migrateClearNegativeAudioProperties),
 		construct(ctx, "202610221200", migrateAddAudioProperties),
 		construct(ctx, "202610241200", migrateAddShares),
+		construct(ctx, "202610271200", migratePlayQueueCurrentIndex),
 	}
 
 	return gormigrate.
@@ -1142,4 +1143,27 @@ func migrateAddShares(tx *gorm.DB, _ MigrationContext) error {
 		Share{},
 		ShareEntry{},
 	).Error
+func migratePlayQueueCurrentIndex(tx *gorm.DB, _ MigrationContext) error {
+	if err := tx.AutoMigrate(PlayQueue{}).Error; err != nil {
+		return err
+	}
+	var queues []PlayQueue
+	if err := tx.Find(&queues).Error; err != nil {
+		return err
+	}
+	for i := range queues {
+		q := &queues[i]
+		items := q.GetItems()
+		q.CurrentIndex = 0
+		for j, id := range items {
+			if id.String() == q.Current {
+				q.CurrentIndex = j
+				break
+			}
+		}
+		if err := tx.Save(q).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }

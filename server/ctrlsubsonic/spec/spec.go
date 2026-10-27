@@ -91,6 +91,7 @@ type Response struct {
 	AlbumInfo             *AlbumInfo             `xml:"albumInfo"             json:"albumInfo,omitempty"`
 	Genres                *Genres                `xml:"genres"                json:"genres,omitempty"`
 	PlayQueue             *PlayQueue             `xml:"playQueue"             json:"playQueue,omitempty"`
+	PlayQueueByIndex      *PlayQueueByIndex      `xml:"playQueueByIndex"      json:"playQueueByIndex,omitempty"`
 	JukeboxStatus         *JukeboxStatus         `xml:"jukeboxStatus"         json:"jukeboxStatus,omitempty"`
 	JukeboxPlaylist       *JukeboxPlaylist       `xml:"jukeboxPlaylist"       json:"jukeboxPlaylist,omitempty"`
 	Podcasts              *Podcasts              `xml:"podcasts"              json:"podcasts,omitempty"`
@@ -433,6 +434,16 @@ type PlayQueue struct {
 	Changed   time.Time     `xml:"changed,attr"            json:"changed"`
 	ChangedBy string        `xml:"changedBy,attr"          json:"changedBy"`
 	List      []*TrackChild `xml:"entry,omitempty"         json:"entry,omitempty"`
+}
+
+// https://opensubsonic.netlify.app/docs/responses/playqueuebyindex/
+type PlayQueueByIndex struct {
+	CurrentIndex int           `xml:"currentIndex,attr"       json:"currentIndex"`
+	Position     int           `xml:"position,attr,omitempty" json:"position,omitempty"`
+	Username     string        `xml:"username,attr"           json:"username"`
+	Changed      time.Time     `xml:"changed,attr"            json:"changed"`
+	ChangedBy    string        `xml:"changedBy,attr"          json:"changedBy"`
+	List         []*TrackChild `xml:"entry,omitempty"         json:"entry,omitempty"`
 }
 
 type JukeboxStatus struct {
