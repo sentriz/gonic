@@ -1,5 +1,15 @@
 # Changelog
 
+### [0.23.1](https://www.github.com/sentriz/gonic/compare/v0.23.0...v0.23.1) (2026-10-27)
+
+
+### Bug Fixes
+
+* **subsonic:** don't count now playing scrobbles as plays ([03e696e](https://www.github.com/sentriz/gonic/commit/03e696ed93a7e733996566a57aea679f92b4e636))
+* **subsonic:** don't serve stale cached covers ([7dd69be](https://www.github.com/sentriz/gonic/commit/7dd69beee4e1447e53f61c10b32e2249c2f641b2)), closes [#666](https://www.github.com/sentriz/gonic/issues/666) [#734](https://www.github.com/sentriz/gonic/issues/734)
+* **subsonic:** parse millisecond timestamps as int64 on 32-bit ([45d963b](https://www.github.com/sentriz/gonic/commit/45d963b619a90f03d6d6f1268279f0cde41ae32a)), closes [#738](https://www.github.com/sentriz/gonic/issues/738)
+* **subsonic:** return the latest play in getNowPlaying ([a755ec4](https://www.github.com/sentriz/gonic/commit/a755ec43b19d0ea5845070f50984a4fb6be81859)), closes [#735](https://www.github.com/sentriz/gonic/issues/735)
+
 ## [0.23.0](https://www.github.com/sentriz/gonic/compare/v0.22.0...v0.23.0) (2026-10-22)
 
 
