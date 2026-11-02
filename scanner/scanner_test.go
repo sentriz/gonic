@@ -75,8 +75,8 @@ func TestIgnoreMarker(t *testing.T) {
 	m.AddItems()
 	m.ScanAndClean()
 
-	os.WriteFile(filepath.Join(m.TmpDir(), "artist-1", ".gncignore"), nil, 0o600)
-	os.WriteFile(filepath.Join(m.TmpDir(), "artist-0", "album-0", ".gncignore"), nil, 0o600)
+	os.WriteFile(filepath.Join(m.TmpDir(), "artist-1", ".gonicignore"), nil, 0o600)
+	os.WriteFile(filepath.Join(m.TmpDir(), "artist-0", "album-0", ".gonicignore"), nil, 0o600)
 	m.ScanAndClean()
 
 	var tracks int

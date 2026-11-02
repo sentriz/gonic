@@ -35,7 +35,7 @@ var (
 )
 
 // ignoreMarker excludes the directory where it is placed and all subdirectories from scanning
-const ignoreMarker = ".gncignore"
+const ignoreMarker = ".gonicignore"
 
 type Scanner struct {
 	db                 *db.DB

@@ -173,10 +173,10 @@ music
 
 ## ignoring folders
 
-to exclude a folder and everything beneath it from scanning, create an empty file named `.gncignore` inside it.
+to exclude a folder and everything beneath it from scanning, create an empty file named `.gonicignore` inside it.
 
 ```shell
-$ touch "/path/to/music/Alan Vega/(1980) Alan Vega [MP3]/.gncignore"
+$ touch "/path/to/music/Alan Vega/(1980) Alan Vega [MP3]/.gonicignore"
 ```
 
 for excluding by name across the whole library, see the `-exclude-pattern` option.
