@@ -151,7 +151,7 @@ func (c *Controller) ServeGetMusicFolders(_ *http.Request) *spec.Response {
 
 func (c *Controller) ServeStartScan(r *http.Request) *spec.Response {
 	user := r.Context().Value(CtxUser).(*db.User)
-	if !user.IsAdmin {
+	if !user.IsAdmin && !c.scanNonAdmin {
 		return spec.NewError(50, "user not admin")
 	}
 	go func() {

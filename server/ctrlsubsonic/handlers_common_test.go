@@ -1,6 +1,7 @@
 package ctrlsubsonic
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"testing"
@@ -9,6 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/scanner"
+	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 )
 
 func TestBuildFuzzy(t *testing.T) {
@@ -79,6 +82,47 @@ func TestGetNowPlaying(t *testing.T) {
 	f.run(t, f.contr.ServeGetNowPlaying, f.admin,
 		query{url.Values{}, "recent_plays", false},
 	)
+}
+
+func TestStartScan(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name         string
+		admin        bool
+		scanNonAdmin bool
+		wantAllowed  bool
+	}{
+		{"admin", true, false, true},
+		{"non admin", false, false, false},
+		{"non admin enabled", false, true, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			f := newFixture(t)
+			f.contr.scanNonAdmin = tt.scanNonAdmin
+			f.contr.scanner = scanner.New(nil, f.dbc, nil, nil, "", false, nil)
+			require.True(t, f.contr.scanner.StartScanning())
+
+			user := f.alt
+			if tt.admin {
+				user = f.admin
+			}
+			body := f.query(t, f.contr.ServeStartScan, user, url.Values{})
+			var sub spec.SubsonicResponse
+			require.NoError(t, json.Unmarshal([]byte(body), &sub))
+
+			if !tt.wantAllowed {
+				require.Equal(t, "failed", sub.Response.Status)
+				require.NotNil(t, sub.Response.Error)
+				require.Equal(t, 50, sub.Response.Error.Code)
+				return
+			}
+			require.Equal(t, "ok", sub.Response.Status)
+			require.NotNil(t, sub.Response.ScanStatus)
+			require.True(t, sub.Response.ScanStatus.Scanning)
+		})
+	}
 }
 
 func TestScrobbleNowPlayingNotCounted(t *testing.T) {
