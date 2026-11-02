@@ -208,20 +208,20 @@ func main() {
 
 	tagReader := deps.TagReader
 
-	scannr := scanner.New(
-		ctrlsubsonic.MusicPaths(musicPaths),
-		dbc,
-		map[*tags.Spec]tags.MultiValueSetting{
+	scannr := scanner.New(scanner.Options{
+		MusicDirs: ctrlsubsonic.MusicPaths(musicPaths),
+		DB:        dbc,
+		MultiValueSettings: map[*tags.Spec]tags.MultiValueSetting{
 			tags.Genre:       tags.MultiValueSetting(confMultiValueGenre),
 			tags.Artist:      tags.MultiValueSetting(confMultiValueArtist),
 			tags.AlbumArtist: tags.MultiValueSetting(confMultiValueAlbumArtist),
 			tags.ISRC:        tags.MultiValueSetting(confMultiValueISRC),
 		},
-		tagReader,
-		*confExcludePattern,
-		*confScanEmbeddedCover,
-		genreTree,
-	)
+		TagReader:         tagReader,
+		ExcludePattern:    *confExcludePattern,
+		ScanEmbeddedCover: *confScanEmbeddedCover,
+		GenreTree:         genreTree,
+	})
 	userAgent := fmt.Sprintf("%s/%s", gonic.Name, gonic.Version)
 
 	podcast := podcast.New(dbc, *confPodcastPath, tagReader, userAgent)
