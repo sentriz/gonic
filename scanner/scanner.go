@@ -34,6 +34,9 @@ var (
 	ErrReadingTags     = errors.New("could not read tags")
 )
 
+// ignoreMarker excludes the directory where it is placed and all subdirectories from scanning
+const ignoreMarker = ".gncignore"
+
 type Scanner struct {
 	db                 *db.DB
 	musicDirs          []string
@@ -229,6 +232,10 @@ func watchCallback(watcher *fsnotify.Watcher, absPath string, d fs.DirEntry, err
 		return nil
 	}
 
+	if hasIgnoreMarker(absPath) {
+		return fs.SkipDir
+	}
+
 	if err := watcher.Add(absPath); err != nil {
 		return fmt.Errorf("add path to watcher: %w", err)
 	}
@@ -249,6 +256,11 @@ func (s *Scanner) scanCallback(st *State, absPath string, d fs.DirEntry, err err
 		})
 	default:
 		return nil
+	}
+
+	if hasIgnoreMarker(absPath) {
+		log.Printf("ignoring folder %q, found %s", absPath, ignoreMarker)
+		return fs.SkipDir
 	}
 
 	if s.excludePattern != nil && s.excludePattern.MatchString(absPath) {
@@ -1130,6 +1142,11 @@ func musicDirRelative(musicDirs []string, absPath string) (musicDir, relPath str
 		}
 	}
 	return
+}
+
+func hasIgnoreMarker(dir string) bool {
+	_, err := os.Lstat(filepath.Join(dir, ignoreMarker))
+	return err == nil
 }
 
 func symWalk(absPath string, fn fs.WalkDirFunc) error {
