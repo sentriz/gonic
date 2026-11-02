@@ -170,3 +170,13 @@ music
             ├── 03.13 Jab Gee.flac
             └── folder.jpg
 ```
+
+## ignoring folders
+
+to exclude a folder and everything beneath it from scanning, create an empty file named `.gonicignore` inside it.
+
+```shell
+$ touch "/path/to/music/Alan Vega/(1980) Alan Vega [MP3]/.gonicignore"
+```
+
+for excluding by name across the whole library, see the `-exclude-pattern` option.

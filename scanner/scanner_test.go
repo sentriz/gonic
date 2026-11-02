@@ -68,6 +68,32 @@ func TestWithExcludePattern(t *testing.T) {
 	assert.Equal(t, artists, 2)                                         // not all artists
 }
 
+func TestIgnoreMarker(t *testing.T) {
+	t.Parallel()
+	m := mockfs.New(t)
+
+	m.AddItems()
+	m.ScanAndClean()
+
+	os.WriteFile(filepath.Join(m.TmpDir(), "artist-1", ".gonicignore"), nil, 0o600)
+	os.WriteFile(filepath.Join(m.TmpDir(), "artist-0", "album-0", ".gonicignore"), nil, 0o600)
+	m.ScanAndClean()
+
+	var tracks int
+	assert.NoError(t, m.DB().Model(&db.Track{}).Count(&tracks).Error)
+	assert.Equal(t, 15, tracks)
+
+	var albums int
+	assert.NoError(t, m.DB().Model(&db.Album{}).Count(&albums).Error)
+	assert.Equal(t, 8, albums)
+
+	var artists int
+	assert.NoError(t, m.DB().Model(&db.Artist{}).Count(&artists).Error)
+	assert.Equal(t, 2, artists)
+
+	assert.Equal(t, gorm.ErrRecordNotFound, m.DB().Where("left_path=? AND right_path=?", "artist-1/", "album-0").Find(&db.Album{}).Error) // nested folder is ignored too
+}
+
 func TestParentID(t *testing.T) {
 	t.Parallel()
 	m := mockfs.New(t)
