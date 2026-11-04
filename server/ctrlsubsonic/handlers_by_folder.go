@@ -84,7 +84,6 @@ func (c *Controller) ServeGetMusicDirectory(r *http.Request) *spec.Response {
 	err = c.dbc.
 		Scopes(spec.LoadAlbumByFolder(user.ID)).
 		Where("parent_id=?", id.Value).
-		Order("tag_year").
 		Order("albums.right_path COLLATE NOCASE").
 		Find(&childFolders).
 		Error
