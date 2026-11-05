@@ -237,33 +237,52 @@ func playlistRender(c *Controller, params paramsp.Params, playlist *playlistp.Pl
 
 	transcodeMeta := streamGetTranscodeMeta(c.dbc, user.ID, params.GetOr("c", ""))
 
+	ids := make([]specid.ID, 0, len(playlist.Items))
+	var trackIDs, podcastEpisodeIDs []int
 	for _, path := range playlist.Items {
 		id, err := specidpaths.Lookup(c.dbc, MusicPaths(c.musicPaths), c.podcastsPath, path)
 		if err != nil {
 			log.Printf("error looking up path %q: %s", path, err)
 			continue
 		}
-
-		var trch *spec.TrackChild
+		ids = append(ids, *id)
 		switch id.Type {
 		case specid.Track:
-			var track spec.TrackRow
-			if err := c.dbc.Scopes(spec.LoadTrackByFolder(user.ID)).Where("id=?", id.Value).Find(&track).Error; err != nil {
-				return nil, fmt.Errorf("load track by id: %w", err)
-			}
-			trch = spec.NewTCTrackByFolder(&track, track.Album)
-			resp.Duration += track.Length
+			trackIDs = append(trackIDs, id.Value)
 		case specid.PodcastEpisode:
-			var pe db.PodcastEpisode
-			if err := c.dbc.Preload("Podcast").Where("id=?", id.Value).Find(&pe).Error; err != nil {
-				return nil, fmt.Errorf("load podcast episode by id: %w", err)
-			}
-			trch = spec.NewTCPodcastEpisode(&pe)
-			resp.Duration += pe.Length
-		default:
+			podcastEpisodeIDs = append(podcastEpisodeIDs, id.Value)
+		}
+	}
+
+	var children = map[specid.ID]*spec.TrackChild{}
+
+	if len(trackIDs) > 0 {
+		var tracks []*spec.TrackRow
+		if err := c.dbc.Scopes(spec.LoadTrackByFolder(user.ID)).Where("tracks.id IN (?)", trackIDs).Find(&tracks).Error; err != nil {
+			return nil, fmt.Errorf("load tracks by id: %w", err)
+		}
+		for _, track := range tracks {
+			children[*track.SID()] = spec.NewTCTrackByFolder(track, track.Album)
+		}
+	}
+
+	if len(podcastEpisodeIDs) > 0 {
+		var podcastEpisodes []*db.PodcastEpisode
+		if err := c.dbc.Preload("Podcast").Where("id IN (?)", podcastEpisodeIDs).Find(&podcastEpisodes).Error; err != nil {
+			return nil, fmt.Errorf("load podcast episodes by id: %w", err)
+		}
+		for _, pe := range podcastEpisodes {
+			children[*pe.SID()] = spec.NewTCPodcastEpisode(pe)
+		}
+	}
+
+	for _, id := range ids {
+		trch, ok := children[id]
+		if !ok {
 			continue
 		}
 		trch.TranscodeMeta = transcodeMeta
+		resp.Duration += trch.Duration
 		resp.List = append(resp.List, trch)
 	}
 
