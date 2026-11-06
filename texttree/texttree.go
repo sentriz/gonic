@@ -6,6 +6,8 @@ import (
 	"io"
 	"os"
 	"strings"
+
+	"go.senan.xyz/gonic/fileutil"
 )
 
 func ParseFile(path string) (map[string][]string, error) {
@@ -22,7 +24,7 @@ func ParseReader(r io.Reader) (map[string][]string, error) {
 	seen := map[string]struct{}{}
 	parents := map[string]string{} // tracks which parent a child belongs to (for duplicate detection)
 
-	scanner := bufio.NewScanner(r)
+	scanner := bufio.NewScanner(fileutil.StripBOM(r))
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if line == "" || strings.HasPrefix(line, "#") {

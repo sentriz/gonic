@@ -5,6 +5,7 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"math"
 	"net/http"
@@ -21,6 +22,7 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/db"
+	"go.senan.xyz/gonic/fileutil"
 	"go.senan.xyz/gonic/scanner"
 	"go.senan.xyz/gonic/scrobble"
 	"go.senan.xyz/gonic/server/ctrlsubsonic/params"
@@ -683,10 +685,16 @@ func lyricsFromFile(track db.Track) (*spec.StructuredLyrics, error) {
 	fileDir := filepath.Dir(filePath)
 	fileName := strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath))
 
-	lrcContent, err := os.ReadFile(filepath.Join(fileDir, fileName+".lrc"))
+	file, err := os.Open(filepath.Join(fileDir, fileName+".lrc"))
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, nil
 	}
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	lrcContent, err := io.ReadAll(fileutil.StripBOM(file))
 	if err != nil {
 		return nil, err
 	}
@@ -721,10 +729,16 @@ func lyricsFromFileUnsynced(track db.Track) (*spec.StructuredLyrics, error) {
 	fileDir := filepath.Dir(filePath)
 	fileName := strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath))
 
-	text, err := os.ReadFile(filepath.Join(fileDir, fileName+".txt"))
+	file, err := os.Open(filepath.Join(fileDir, fileName+".txt"))
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, nil
 	}
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	text, err := io.ReadAll(fileutil.StripBOM(file))
 	if err != nil {
 		return nil, err
 	}

@@ -35,6 +35,7 @@ require (
 	go.senan.xyz/wrtag v0.34.1-0.20261016073955-84ebec69b422
 	golang.org/x/net v0.61.0
 	golang.org/x/sync v0.24.0
+	golang.org/x/text v0.43.0
 	golang.org/x/time v0.16.0
 	gopkg.in/gormigrate.v1 v1.6.0
 )
@@ -62,7 +63,6 @@ require (
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/image v0.47.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
-	golang.org/x/text v0.43.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

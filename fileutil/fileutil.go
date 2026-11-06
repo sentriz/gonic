@@ -7,10 +7,14 @@ package fileutil
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"golang.org/x/text/encoding/unicode"
+	"golang.org/x/text/transform"
 )
 
 var ErrEscapesBase = errors.New("path escapes base")
@@ -73,4 +77,8 @@ func SafeJoin(base, rel string) (string, error) {
 		return "", fmt.Errorf("%w: %q", ErrEscapesBase, rel)
 	}
 	return abs, nil
+}
+
+func StripBOM(r io.Reader) io.Reader {
+	return transform.NewReader(r, unicode.BOMOverride(transform.Nop))
 }
