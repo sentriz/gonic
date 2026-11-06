@@ -87,18 +87,18 @@ func (c *Controller) ServeCreateOrUpdatePlaylist(r *http.Request) *spec.Response
 		return spec.NewError(50, "you aren't allowed update that user's playlist")
 	}
 
+	if val, err := params.Get("name"); err == nil {
+		playlist.Name = val
+	}
+
 	// path not found, make sure we don't use caller's provided path since it might be in another user's dir
 	if playlist.UserID == 0 {
-		playlistPath = playlistp.NewPath(user.ID, fmt.Sprint(time.Now().UnixMilli()))
+		playlistPath = playlistp.NewPath(user.ID, playlist.Name)
 		playlistID = playlistIDEncode(playlistPath)
 	}
 
 	playlist.UserID = user.ID
 	playlist.UpdatedAt = time.Now()
-
-	if val, err := params.Get("name"); err == nil {
-		playlist.Name = val
-	}
 
 	playlist.Items = nil
 	ids, err := params.GetIDList("songId")
