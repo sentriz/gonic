@@ -170,10 +170,6 @@ func (s *Store) Write(relPath string, playlist *Playlist) error {
 	}
 	defer file.Close()
 
-	if err := os.Chtimes(absPath, time.Time{}, playlist.UpdatedAt); err != nil {
-		return fmt.Errorf("touch m3u: %w", err)
-	}
-
 	var existingComments []string
 	for sc := bufio.NewScanner(fileutil.StripBOM(file)); sc.Scan(); {
 		line := strings.TrimSpace(sc.Text())
