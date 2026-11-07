@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/nfnt/resize"
@@ -364,6 +365,9 @@ func (c *Controller) ServeUpdateLastFMAPIKey(r *http.Request) *Response {
 	if data.CurrentLastFMAPISecret, err = c.dbc.GetSetting(db.LastFMSecret); err != nil {
 		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't get secret: %v", err)}}
 	}
+	if data.CurrentLastFMLanguage, err = c.dbc.GetSetting(db.LastFMLanguage); err != nil {
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't get language: %v", err)}}
+	}
 	return &Response{
 		template: "update_lastfm_api_key.tmpl",
 		data:     data,
@@ -373,17 +377,40 @@ func (c *Controller) ServeUpdateLastFMAPIKey(r *http.Request) *Response {
 func (c *Controller) ServeUpdateLastFMAPIKeyDo(r *http.Request) *Response {
 	apiKey := r.FormValue("api_key")
 	secret := r.FormValue("secret")
+	language := strings.ToLower(strings.TrimSpace(r.FormValue("lang")))
 	if err := validateAPIKey(apiKey, secret); err != nil {
 		return &Response{
 			redirect: r.Referer(),
 			flashW:   []string{err.Error()},
 		}
 	}
-	if err := c.dbc.SetSetting(db.LastFMAPIKey, apiKey); err != nil {
-		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't set api key: %v", err)}}
-	}
-	if err := c.dbc.SetSetting(db.LastFMSecret, secret); err != nil {
-		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't set secret: %v", err)}}
+	err := c.dbc.Transaction(func(tx *db.DB) error {
+		previousLanguage, err := tx.GetSetting(db.LastFMLanguage)
+		if err != nil {
+			return fmt.Errorf("get language: %w", err)
+		}
+		for key, value := range map[db.SettingKey]string{
+			db.LastFMAPIKey:   apiKey,
+			db.LastFMSecret:   secret,
+			db.LastFMLanguage: language,
+		} {
+			if err := tx.SetSetting(key, value); err != nil {
+				return fmt.Errorf("set %s: %w", key, err)
+			}
+		}
+		if language == previousLanguage {
+			return nil
+		}
+		// Refresh cached descriptions in the selected language on their next lookup.
+		for _, model := range []any{&db.ArtistInfo{}, &db.AlbumInfo{}} {
+			if err := tx.Model(model).UpdateColumn("updated_at", time.Unix(0, 0)).Error; err != nil {
+				return fmt.Errorf("expire lastfm info: %w", err)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't update lastfm settings: %v", err)}}
 	}
 	return &Response{redirect: "/admin/home"}
 }
