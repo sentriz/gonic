@@ -37,7 +37,7 @@ func TestArtistGetInfo(t *testing.T) {
 		},
 	)
 
-	actual, err := client.ArtistGetInfo("Artist 1")
+	actual, err := client.ArtistGetInfo("Artist 1", "")
 	require.NoError(t, err)
 	require.Equal(t, lastfm.Artist{
 		XMLName: xml.Name{
@@ -121,7 +121,7 @@ func TestArtistGetInfoClientRequestFails(t *testing.T) {
 		},
 	)
 
-	actual, err := client.ArtistGetInfo("Artist 1")
+	actual, err := client.ArtistGetInfo("Artist 1", "")
 	require.Error(t, err)
 	require.Zero(t, actual)
 }

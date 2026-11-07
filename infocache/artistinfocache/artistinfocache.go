@@ -64,11 +64,15 @@ func (a *ArtistInfoCache) Lookup(ctx context.Context, artist *db.Artist) (*db.Ar
 		return nil, fmt.Errorf("find artist info: %w", err)
 	}
 	artistInfo.ID = artist.ID
+	language, err := a.db.GetSetting(db.LastFMLanguage)
+	if err != nil {
+		return nil, fmt.Errorf("get lastfm language: %w", err)
+	}
 
 	// lastfm is best-effort. without an api key these calls fail, but we can still resolve
 	// similar artists from musicbrainz using the artist's tag-scanned mbid. only overwrite
 	// fields when we actually have new data, so a transient failure can't blank the cached row
-	info, err := a.lastfmClient.ArtistGetInfo(artist.Name)
+	info, err := a.lastfmClient.ArtistGetInfo(artist.Name, language)
 	if err != nil {
 		log.Printf("error getting lastfm artist info for %q: %v", artist.Name, err)
 		// non-fatal

@@ -192,9 +192,10 @@ func (db *DB) TransactionChunked(data []int64, cb func(*DB, []int64) error) erro
 type SettingKey string
 
 const (
-	LastFMAPIKey SettingKey = "lastfm_api_key" //nolint:gosec
-	LastFMSecret SettingKey = "lastfm_secret"
-	LastScanTime SettingKey = "last_scan_time"
+	LastFMAPIKey   SettingKey = "lastfm_api_key" //nolint:gosec
+	LastFMSecret   SettingKey = "lastfm_secret"
+	LastFMLanguage SettingKey = "lastfm_language"
+	LastScanTime   SettingKey = "last_scan_time"
 )
 
 func (db *DB) GetSetting(key SettingKey) (string, error) {
@@ -208,7 +209,7 @@ func (db *DB) GetSetting(key SettingKey) (string, error) {
 func (db *DB) SetSetting(key SettingKey, value string) error {
 	return db.
 		Where("key=?", key).
-		Assign(Setting{Key: key, Value: value}).
+		Assign(map[string]any{"key": key, "value": value}).
 		FirstOrCreate(&Setting{}).
 		Error
 }
