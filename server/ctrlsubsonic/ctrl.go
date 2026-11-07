@@ -74,34 +74,55 @@ type Controller struct {
 	resolveProxyPath ProxyPathResolver
 }
 
-func New(dbc *db.DB, scannr *scanner.Scanner, scanNonAdmin bool, musicPaths []MusicPath, podcastsPath string, cacheAudioPath string, coverCache *cache.DirCache, jukebox *jukebox.Jukebox, playlistStore *playlist.Store, scrobblers []scrobble.Scrobbler, podcasts *podcast.Podcasts, transcoder transcode.Transcoder, lastFMClient *lastfm.Client, artistInfoCache *artistinfocache.ArtistInfoCache, albumInfoCache *albuminfocache.AlbumInfoCache, tagReader tags.Reader, resolveProxyPath ProxyPathResolver) (*Controller, error) {
+type Options struct {
+	DB              *db.DB
+	Scanner         *scanner.Scanner
+	ScanNonAdmin    bool
+	MusicPaths      []MusicPath
+	PodcastsPath    string
+	CacheAudioPath  string
+	CoverCache      *cache.DirCache
+	Jukebox         *jukebox.Jukebox
+	PlaylistStore   *playlist.Store
+	Scrobblers      []scrobble.Scrobbler
+	Podcasts        *podcast.Podcasts
+	Transcoder      transcode.Transcoder
+	LastFMClient    *lastfm.Client
+	ArtistInfoCache *artistinfocache.ArtistInfoCache
+	AlbumInfoCache  *albuminfocache.AlbumInfoCache
+	TagReader       tags.Reader
+
+	ResolveProxyPath ProxyPathResolver
+}
+
+func New(opts Options) (*Controller, error) {
 	c := Controller{
 		ServeMux: http.NewServeMux(),
 
-		dbc:             dbc,
-		scanner:         scannr,
-		scanNonAdmin:    scanNonAdmin,
-		musicPaths:      musicPaths,
-		podcastsPath:    podcastsPath,
-		cacheAudioPath:  cacheAudioPath,
-		coverCache:      coverCache,
-		jukebox:         jukebox,
-		playlistStore:   playlistStore,
-		scrobblers:      scrobblers,
-		podcasts:        podcasts,
-		transcoder:      transcoder,
-		lastFMClient:    lastFMClient,
-		artistInfoCache: artistInfoCache,
-		albumInfoCache:  albumInfoCache,
-		tagReader:       tagReader,
+		dbc:             opts.DB,
+		scanner:         opts.Scanner,
+		scanNonAdmin:    opts.ScanNonAdmin,
+		musicPaths:      opts.MusicPaths,
+		podcastsPath:    opts.PodcastsPath,
+		cacheAudioPath:  opts.CacheAudioPath,
+		coverCache:      opts.CoverCache,
+		jukebox:         opts.Jukebox,
+		playlistStore:   opts.PlaylistStore,
+		scrobblers:      opts.Scrobblers,
+		podcasts:        opts.Podcasts,
+		transcoder:      opts.Transcoder,
+		lastFMClient:    opts.LastFMClient,
+		artistInfoCache: opts.ArtistInfoCache,
+		albumInfoCache:  opts.AlbumInfoCache,
+		tagReader:       opts.TagReader,
 
-		resolveProxyPath: resolveProxyPath,
+		resolveProxyPath: opts.ResolveProxyPath,
 	}
 
 	chain := handlerutil.Chain(
 		withParams,
 		withRequiredParams,
-		withUser(dbc),
+		withUser(c.dbc),
 	)
 	chainRaw := handlerutil.Chain(
 		chain,

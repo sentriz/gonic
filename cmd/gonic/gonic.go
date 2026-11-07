@@ -208,20 +208,20 @@ func main() {
 
 	tagReader := deps.TagReader
 
-	scannr := scanner.New(
-		ctrlsubsonic.MusicPaths(musicPaths),
-		dbc,
-		map[*tags.Spec]tags.MultiValueSetting{
+	scannr := scanner.New(scanner.Options{
+		MusicDirs: ctrlsubsonic.MusicPaths(musicPaths),
+		DB:        dbc,
+		MultiValueSettings: map[*tags.Spec]tags.MultiValueSetting{
 			tags.Genre:       tags.MultiValueSetting(confMultiValueGenre),
 			tags.Artist:      tags.MultiValueSetting(confMultiValueArtist),
 			tags.AlbumArtist: tags.MultiValueSetting(confMultiValueAlbumArtist),
 			tags.ISRC:        tags.MultiValueSetting(confMultiValueISRC),
 		},
-		tagReader,
-		*confExcludePattern,
-		*confScanEmbeddedCover,
-		genreTree,
-	)
+		TagReader:         tagReader,
+		ExcludePattern:    *confExcludePattern,
+		ScanEmbeddedCover: *confScanEmbeddedCover,
+		GenreTree:         genreTree,
+	})
 	userAgent := fmt.Sprintf("%s/%s", gonic.Name, gonic.Version)
 
 	podcast := podcast.New(dbc, *confPodcastPath, tagReader, userAgent)
@@ -281,7 +281,25 @@ func main() {
 		log.Panicf("error creating admin controller: %v\n", err)
 	}
 	coverCache := cache.New(cacheDirCovers, *confCoverCacheSize)
-	ctrlSubsonic, err := ctrlsubsonic.New(dbc, scannr, *confScanNonAdmin, musicPaths, *confPodcastPath, cacheDirAudio, coverCache, jukebx, playlistStore, scrobblers, podcast, transcoder, lastfmClient, artistInfoCache, albumInfoCache, tagReader, resolveProxyPath)
+	ctrlSubsonic, err := ctrlsubsonic.New(ctrlsubsonic.Options{
+		DB:               dbc,
+		Scanner:          scannr,
+		ScanNonAdmin:     *confScanNonAdmin,
+		MusicPaths:       musicPaths,
+		PodcastsPath:     *confPodcastPath,
+		CacheAudioPath:   cacheDirAudio,
+		CoverCache:       coverCache,
+		Jukebox:          jukebx,
+		PlaylistStore:    playlistStore,
+		Scrobblers:       scrobblers,
+		Podcasts:         podcast,
+		Transcoder:       transcoder,
+		LastFMClient:     lastfmClient,
+		ArtistInfoCache:  artistInfoCache,
+		AlbumInfoCache:   albumInfoCache,
+		TagReader:        tagReader,
+		ResolveProxyPath: resolveProxyPath,
+	})
 	if err != nil {
 		log.Panicf("error creating subsonic controller: %v\n", err)
 	}
