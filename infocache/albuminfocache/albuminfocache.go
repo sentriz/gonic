@@ -64,11 +64,15 @@ func (a *AlbumInfoCache) Lookup(ctx context.Context, album *db.Album) (*db.Album
 		return nil, fmt.Errorf("find album info: %w", err)
 	}
 	albumInfo.ID = album.ID
+	language, err := a.db.GetSetting(db.LastFMLanguage)
+	if err != nil {
+		return nil, fmt.Errorf("get lastfm language: %w", err)
+	}
 
 	// lastfm is best-effort. without an api key these calls fail, but we can still resolve
 	// musicbrainz facts from the album's tag-scanned mbid. only overwrite fields when we
 	// actually have new data, so a transient failure can't blank the cached row
-	info, err := a.lastfmClient.AlbumGetInfo(album.TagAlbumArtist, album.TagTitle)
+	info, err := a.lastfmClient.AlbumGetInfo(album.TagAlbumArtist, album.TagTitle, language)
 	if err != nil {
 		log.Printf("error getting lastfm album info for %q: %v", album.TagTitle, err)
 		// non-fatal

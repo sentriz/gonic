@@ -53,7 +53,7 @@ const (
 	BaseURL = "https://ws.audioscrobbler.com/2.0/"
 )
 
-func (c *Client) ArtistGetInfo(artistName string) (Artist, error) {
+func (c *Client) ArtistGetInfo(artistName, language string) (Artist, error) {
 	apiKey, _, err := c.keySecret()
 	if err != nil {
 		return Artist{}, fmt.Errorf("get key and secret: %w", err)
@@ -64,6 +64,9 @@ func (c *Client) ArtistGetInfo(artistName string) (Artist, error) {
 	params.Add("api_key", apiKey)
 	params.Add("artist", artistName)
 	params.Add("autocorrect", "1")
+	if language != "" {
+		params.Add("lang", language)
+	}
 
 	resp, err := c.makeRequest(http.MethodGet, params)
 	if err != nil {
@@ -73,7 +76,7 @@ func (c *Client) ArtistGetInfo(artistName string) (Artist, error) {
 	return resp.Artist, nil
 }
 
-func (c *Client) AlbumGetInfo(artistName, albumName string) (Album, error) {
+func (c *Client) AlbumGetInfo(artistName, albumName, language string) (Album, error) {
 	apiKey, _, err := c.keySecret()
 	if err != nil {
 		return Album{}, fmt.Errorf("get key and secret: %w", err)
@@ -85,6 +88,9 @@ func (c *Client) AlbumGetInfo(artistName, albumName string) (Album, error) {
 	params.Add("artist", artistName)
 	params.Add("album", albumName)
 	params.Add("autocorrect", "1")
+	if language != "" {
+		params.Add("lang", language)
+	}
 
 	resp, err := c.makeRequest(http.MethodGet, params)
 	if err != nil {
