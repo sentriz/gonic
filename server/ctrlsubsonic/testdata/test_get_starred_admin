@@ -9,15 +9,34 @@
       "album": [
         {
           "id": "al-3",
-          "artist": "",
-          "artists": [],
-          "displayArtist": "",
-          "albumArtists": [],
-          "displayAlbumArtist": "",
+          "album": "album-aa",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayAlbumArtist": "artist-a",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
-          "genres": [],
+          "duration": 300,
+          "genres": [
+            {
+              "name": "Rock"
+            },
+            {
+              "name": "Pop"
+            }
+          ],
           "isDir": true,
           "isVideo": false,
           "parent": "al-2",
@@ -34,15 +53,39 @@
         },
         {
           "id": "al-8",
-          "artist": "",
-          "artists": [],
-          "displayArtist": "",
-          "albumArtists": [],
-          "displayAlbumArtist": "",
+          "album": "album-collab",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "Artist A!"
+            },
+            {
+              "id": "ar-17",
+              "name": "Artist B!"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "Artist A!"
+            },
+            {
+              "id": "ar-17",
+              "name": "Artist B!"
+            }
+          ],
+          "displayAlbumArtist": "artist-a",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
-          "genres": [],
+          "duration": 100,
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
           "isDir": true,
           "isVideo": false,
           "parent": "al-7",
@@ -57,15 +100,39 @@
         },
         {
           "id": "al-8",
-          "artist": "",
-          "artists": [],
-          "displayArtist": "",
-          "albumArtists": [],
-          "displayAlbumArtist": "",
+          "album": "album-collab",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "Artist A!"
+            },
+            {
+              "id": "ar-17",
+              "name": "Artist B!"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "Artist A!"
+            },
+            {
+              "id": "ar-17",
+              "name": "Artist B!"
+            }
+          ],
+          "displayAlbumArtist": "artist-a",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
-          "genres": [],
+          "duration": 100,
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
           "isDir": true,
           "isVideo": false,
           "parent": "al-7",

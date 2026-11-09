@@ -9,15 +9,31 @@
       "album": [
         {
           "id": "al-15",
-          "artist": "",
-          "artists": [],
-          "displayArtist": "",
-          "albumArtists": [],
-          "displayAlbumArtist": "",
+          "album": "album-cross",
+          "artist": "artist-a",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
+          "albumArtists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayAlbumArtist": "artist-a",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
-          "genres": [],
+          "duration": 100,
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
           "isDir": true,
           "isVideo": false,
           "parent": "al-14",

@@ -11,8 +11,13 @@
           "id": "al-15",
           "created": "2019-11-30T00:00:00Z",
           "artist": "artist-a",
-          "artists": [],
-          "displayArtist": "",
+          "artists": [
+            {
+              "id": "ar-1",
+              "name": "artist-a"
+            }
+          ],
+          "displayArtist": "artist-a",
           "title": "album-cross",
           "album": "album-cross",
           "parent": "al-14",
@@ -22,7 +27,12 @@
           "duration": 100,
           "playCount": 0,
           "played": "",
-          "genres": [],
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "year": 2022,
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
@@ -33,9 +43,14 @@
         {
           "id": "al-17",
           "created": "2019-11-30T00:00:00Z",
-          "artist": "various",
-          "artists": [],
-          "displayArtist": "",
+          "artist": "Various Artists",
+          "artists": [
+            {
+              "id": "ar-19",
+              "name": "Various Artists"
+            }
+          ],
+          "displayArtist": "Various Artists",
           "title": "comp",
           "album": "comp",
           "parent": "al-16",
@@ -46,7 +61,12 @@
           "duration": 200,
           "playCount": 0,
           "played": "",
-          "genres": [],
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "year": 2020,
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],

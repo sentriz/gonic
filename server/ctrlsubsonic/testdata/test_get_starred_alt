@@ -9,15 +9,31 @@
       "album": [
         {
           "id": "al-6",
-          "artist": "",
-          "artists": [],
-          "displayArtist": "",
-          "albumArtists": [],
-          "displayAlbumArtist": "",
+          "album": "album-ba",
+          "artist": "The Mighty B (LP)",
+          "artists": [
+            {
+              "id": "ar-17",
+              "name": "The Mighty B (LP)"
+            }
+          ],
+          "displayArtist": "The Mighty B (LP)",
+          "albumArtists": [
+            {
+              "id": "ar-17",
+              "name": "The Mighty B (LP)"
+            }
+          ],
+          "displayAlbumArtist": "The Mighty B (LP)",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
-          "genres": [],
+          "duration": 100,
+          "genres": [
+            {
+              "name": "Jazz"
+            }
+          ],
           "isDir": true,
           "isVideo": false,
           "parent": "al-5",
