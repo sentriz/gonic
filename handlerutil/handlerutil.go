@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"slices"
 	"strings"
 )
@@ -32,8 +33,20 @@ func Log(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sw := &statusWriter{ResponseWriter: w}
 		next.ServeHTTP(sw, r)
-		log.Printf("response %s %s %v", statusToBlock(sw.status), r.Method, r.URL)
+		log.Printf("response %s %s %v", statusToBlock(sw.status), r.Method, redactedURL(r.URL))
 	})
+}
+
+func redactedURL(u *url.URL) *url.URL {
+	query := u.Query()
+	for _, k := range []string{"p", "t", "s", "apiKey"} {
+		if query.Has(k) {
+			query.Set(k, "redacted")
+		}
+	}
+	redacted := *u
+	redacted.RawQuery = query.Encode()
+	return &redacted
 }
 
 func BasicCORS(next http.Handler) http.Handler {
