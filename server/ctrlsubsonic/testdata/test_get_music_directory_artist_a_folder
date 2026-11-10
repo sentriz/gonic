@@ -14,24 +14,15 @@
           "id": "al-3",
           "album": "album-aa",
           "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "artists": [],
           "displayArtist": "artist-a",
-          "albumArtists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "albumArtists": [],
           "displayAlbumArtist": "artist-a",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
           "duration": 300,
+          "genre": "Rock",
           "genres": [
             {
               "name": "Rock"
@@ -58,25 +49,16 @@
           "id": "al-4",
           "album": "album-ab",
           "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "artists": [],
           "displayArtist": "artist-a",
-          "albumArtists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "albumArtists": [],
           "displayAlbumArtist": "artist-a",
           "contributors": [],
           "displayComposer": "",
           "coverArt": "al-4",
           "created": "2019-11-30T00:00:00Z",
           "duration": 200,
+          "genre": "Rock",
           "genres": [
             {
               "name": "Rock"
@@ -101,19 +83,9 @@
           "id": "al-18",
           "album": "empty-album",
           "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "artists": [],
           "displayArtist": "artist-a",
-          "albumArtists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "albumArtists": [],
           "displayAlbumArtist": "artist-a",
           "contributors": [],
           "displayComposer": "",

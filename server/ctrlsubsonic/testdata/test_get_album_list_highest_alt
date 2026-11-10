@@ -11,12 +11,7 @@
           "id": "al-4",
           "created": "2019-11-30T00:00:00Z",
           "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "artists": [],
           "displayArtist": "artist-a",
           "title": "album-ab",
           "album": "album-ab",
@@ -28,6 +23,7 @@
           "duration": 200,
           "playCount": 0,
           "played": "",
+          "genre": "Rock",
           "genres": [
             {
               "name": "Rock"

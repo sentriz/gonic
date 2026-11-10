@@ -11,12 +11,7 @@
           "id": "al-3",
           "created": "2019-11-30T00:00:00Z",
           "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "artists": [],
           "displayArtist": "artist-a",
           "title": "album-aa",
           "album": "album-aa",
@@ -27,6 +22,7 @@
           "duration": 300,
           "playCount": 7,
           "played": "2020-07-01T12:00:00Z",
+          "genre": "Rock",
           "genres": [
             {
               "name": "Rock"
@@ -50,12 +46,7 @@
           "id": "al-4",
           "created": "2019-11-30T00:00:00Z",
           "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "artists": [],
           "displayArtist": "artist-a",
           "title": "album-ab",
           "album": "album-ab",
@@ -67,6 +58,7 @@
           "duration": 200,
           "playCount": 2,
           "played": "2020-08-02T12:00:00Z",
+          "genre": "Rock",
           "genres": [
             {
               "name": "Rock"

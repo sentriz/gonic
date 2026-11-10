@@ -10,14 +10,9 @@
         {
           "id": "al-6",
           "created": "2019-11-30T00:00:00Z",
-          "artist": "The Mighty B (LP)",
-          "artists": [
-            {
-              "id": "ar-17",
-              "name": "The Mighty B (LP)"
-            }
-          ],
-          "displayArtist": "The Mighty B (LP)",
+          "artist": "artist-b",
+          "artists": [],
+          "displayArtist": "artist-b",
           "title": "album-ba",
           "album": "album-ba",
           "parent": "al-5",
@@ -27,6 +22,7 @@
           "duration": 100,
           "playCount": 0,
           "played": "",
+          "genre": "Jazz",
           "genres": [
             {
               "name": "Jazz"

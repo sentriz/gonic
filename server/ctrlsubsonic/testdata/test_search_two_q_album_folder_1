@@ -11,24 +11,15 @@
           "id": "al-15",
           "album": "album-cross",
           "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "artists": [],
           "displayArtist": "artist-a",
-          "albumArtists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "albumArtists": [],
           "displayAlbumArtist": "artist-a",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Rock",
           "genres": [
             {
               "name": "Rock"

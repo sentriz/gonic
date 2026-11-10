@@ -10,14 +10,9 @@
         {
           "id": "al-17",
           "created": "2019-11-30T00:00:00Z",
-          "artist": "Various Artists",
-          "artists": [
-            {
-              "id": "ar-19",
-              "name": "Various Artists"
-            }
-          ],
-          "displayArtist": "Various Artists",
+          "artist": "various",
+          "artists": [],
+          "displayArtist": "various",
           "title": "comp",
           "album": "comp",
           "parent": "al-16",
@@ -28,6 +23,7 @@
           "duration": 200,
           "playCount": 0,
           "played": "",
+          "genre": "Rock",
           "genres": [
             {
               "name": "Rock"
@@ -44,14 +40,9 @@
         {
           "id": "al-6",
           "created": "2019-11-30T00:00:00Z",
-          "artist": "The Mighty B (LP)",
-          "artists": [
-            {
-              "id": "ar-17",
-              "name": "The Mighty B (LP)"
-            }
-          ],
-          "displayArtist": "The Mighty B (LP)",
+          "artist": "artist-b",
+          "artists": [],
+          "displayArtist": "artist-b",
           "title": "album-ba",
           "album": "album-ba",
           "parent": "al-5",
@@ -61,6 +52,7 @@
           "duration": 100,
           "playCount": 0,
           "played": "",
+          "genre": "Jazz",
           "genres": [
             {
               "name": "Jazz"
@@ -75,44 +67,10 @@
           "version": ""
         },
         {
-          "id": "al-18",
-          "created": "2019-11-30T00:00:00Z",
-          "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
-          "displayArtist": "artist-a",
-          "title": "empty-album",
-          "album": "empty-album",
-          "parent": "al-2",
-          "isDir": true,
-          "name": "empty-album",
-          "songCount": 0,
-          "duration": 0,
-          "playCount": 0,
-          "played": "",
-          "genres": [],
-          "year": 2015,
-          "isCompilation": false,
-          "releaseTypes": [],
-          "recordLabels": [],
-          "discTitles": [],
-          "musicBrainzId": "",
-          "version": ""
-        },
-        {
           "id": "al-15",
           "created": "2019-11-30T00:00:00Z",
           "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "artists": [],
           "displayArtist": "artist-a",
           "title": "album-cross",
           "album": "album-cross",
@@ -123,6 +81,7 @@
           "duration": 100,
           "playCount": 0,
           "played": "",
+          "genre": "Rock",
           "genres": [
             {
               "name": "Rock"
@@ -140,12 +99,7 @@
           "id": "al-3",
           "created": "2019-11-30T00:00:00Z",
           "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "artists": [],
           "displayArtist": "artist-a",
           "title": "album-aa",
           "album": "album-aa",
@@ -156,6 +110,7 @@
           "duration": 300,
           "playCount": 7,
           "played": "2020-07-01T12:00:00Z",
+          "genre": "Rock",
           "genres": [
             {
               "name": "Rock"
@@ -179,12 +134,7 @@
           "id": "al-4",
           "created": "2019-11-30T00:00:00Z",
           "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "artists": [],
           "displayArtist": "artist-a",
           "title": "album-ab",
           "album": "album-ab",
@@ -196,6 +146,7 @@
           "duration": 200,
           "playCount": 2,
           "played": "2020-08-02T12:00:00Z",
+          "genre": "Rock",
           "genres": [
             {
               "name": "Rock"
@@ -214,20 +165,64 @@
           "averageRating": 5
         },
         {
-          "id": "al-8",
+          "id": "al-12",
           "created": "2019-11-30T00:00:00Z",
-          "artist": "artist-a",
-          "artists": [
+          "artist": "ärtist-c",
+          "artists": [],
+          "displayArtist": "ärtist-c",
+          "title": "album-ca",
+          "album": "album-ca",
+          "parent": "al-11",
+          "isDir": true,
+          "name": "album-ca",
+          "songCount": 1,
+          "duration": 100,
+          "playCount": 0,
+          "played": "",
+          "genre": "Rock",
+          "genres": [
             {
-              "id": "ar-1",
-              "name": "Artist A!"
-            },
-            {
-              "id": "ar-17",
-              "name": "Artist B!"
+              "name": "Rock"
             }
           ],
+          "year": 2016,
+          "isCompilation": false,
+          "releaseTypes": [],
+          "recordLabels": [],
+          "discTitles": [],
+          "musicBrainzId": "",
+          "version": ""
+        },
+        {
+          "id": "al-18",
+          "created": "2019-11-30T00:00:00Z",
+          "artist": "artist-a",
+          "artists": [],
           "displayArtist": "artist-a",
+          "title": "empty-album",
+          "album": "empty-album",
+          "parent": "al-2",
+          "isDir": true,
+          "name": "empty-album",
+          "songCount": 0,
+          "duration": 0,
+          "playCount": 0,
+          "played": "",
+          "genres": [],
+          "year": 2015,
+          "isCompilation": false,
+          "releaseTypes": [],
+          "recordLabels": [],
+          "discTitles": [],
+          "musicBrainzId": "",
+          "version": ""
+        },
+        {
+          "id": "al-8",
+          "created": "2019-11-30T00:00:00Z",
+          "artist": "collab-ab",
+          "artists": [],
+          "displayArtist": "collab-ab",
           "title": "album-collab",
           "album": "album-collab",
           "parent": "al-7",
@@ -237,6 +232,7 @@
           "duration": 100,
           "playCount": 0,
           "played": "",
+          "genre": "Pop",
           "genres": [
             {
               "name": "Pop"
@@ -252,53 +248,11 @@
           "starred": "2020-06-02T12:00:00Z"
         },
         {
-          "id": "al-12",
-          "created": "2019-11-30T00:00:00Z",
-          "artist": "ärtist-c",
-          "artists": [
-            {
-              "id": "ar-18",
-              "name": "ärtist-c"
-            }
-          ],
-          "displayArtist": "ärtist-c",
-          "title": "album-ca",
-          "album": "album-ca",
-          "parent": "al-11",
-          "isDir": true,
-          "name": "album-ca",
-          "songCount": 1,
-          "duration": 100,
-          "playCount": 0,
-          "played": "",
-          "genres": [
-            {
-              "name": "Rock"
-            }
-          ],
-          "year": 2016,
-          "isCompilation": false,
-          "releaseTypes": [],
-          "recordLabels": [],
-          "discTitles": [],
-          "musicBrainzId": "",
-          "version": ""
-        },
-        {
           "id": "al-10",
           "created": "2019-11-30T00:00:00Z",
-          "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            },
-            {
-              "id": "ar-17",
-              "name": "artist-b"
-            }
-          ],
-          "displayArtist": "artist-a",
+          "artist": "split-ab",
+          "artists": [],
+          "displayArtist": "split-ab",
           "title": "album-split",
           "album": "album-split",
           "parent": "al-9",
@@ -308,6 +262,7 @@
           "duration": 100,
           "playCount": 0,
           "played": "",
+          "genre": "Pop",
           "genres": [
             {
               "name": "Pop"

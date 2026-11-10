@@ -11,24 +11,15 @@
           "id": "al-3",
           "album": "album-aa",
           "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "artists": [],
           "displayArtist": "artist-a",
-          "albumArtists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "albumArtists": [],
           "displayAlbumArtist": "artist-a",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
           "duration": 300,
+          "genre": "Rock",
           "genres": [
             {
               "name": "Rock"
@@ -54,33 +45,16 @@
         {
           "id": "al-8",
           "album": "album-collab",
-          "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "Artist A!"
-            },
-            {
-              "id": "ar-17",
-              "name": "Artist B!"
-            }
-          ],
-          "displayArtist": "artist-a",
-          "albumArtists": [
-            {
-              "id": "ar-1",
-              "name": "Artist A!"
-            },
-            {
-              "id": "ar-17",
-              "name": "Artist B!"
-            }
-          ],
-          "displayAlbumArtist": "artist-a",
+          "artist": "collab-ab",
+          "artists": [],
+          "displayArtist": "collab-ab",
+          "albumArtists": [],
+          "displayAlbumArtist": "collab-ab",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Pop",
           "genres": [
             {
               "name": "Pop"
@@ -101,33 +75,16 @@
         {
           "id": "al-8",
           "album": "album-collab",
-          "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "Artist A!"
-            },
-            {
-              "id": "ar-17",
-              "name": "Artist B!"
-            }
-          ],
-          "displayArtist": "artist-a",
-          "albumArtists": [
-            {
-              "id": "ar-1",
-              "name": "Artist A!"
-            },
-            {
-              "id": "ar-17",
-              "name": "Artist B!"
-            }
-          ],
-          "displayAlbumArtist": "artist-a",
+          "artist": "collab-ab",
+          "artists": [],
+          "displayArtist": "collab-ab",
+          "albumArtists": [],
+          "displayAlbumArtist": "collab-ab",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Pop",
           "genres": [
             {
               "name": "Pop"

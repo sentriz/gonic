@@ -11,24 +11,15 @@
           "id": "al-3",
           "album": "album-aa",
           "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "artists": [],
           "displayArtist": "artist-a",
-          "albumArtists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "albumArtists": [],
           "displayAlbumArtist": "artist-a",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
           "duration": 300,
+          "genre": "Rock",
           "genres": [
             {
               "name": "Rock"
@@ -55,25 +46,16 @@
           "id": "al-4",
           "album": "album-ab",
           "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "artists": [],
           "displayArtist": "artist-a",
-          "albumArtists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "albumArtists": [],
           "displayAlbumArtist": "artist-a",
           "contributors": [],
           "displayComposer": "",
           "coverArt": "al-4",
           "created": "2019-11-30T00:00:00Z",
           "duration": 200,
+          "genre": "Rock",
           "genres": [
             {
               "name": "Rock"
@@ -97,25 +79,16 @@
         {
           "id": "al-6",
           "album": "album-ba",
-          "artist": "The Mighty B (LP)",
-          "artists": [
-            {
-              "id": "ar-17",
-              "name": "The Mighty B (LP)"
-            }
-          ],
-          "displayArtist": "The Mighty B (LP)",
-          "albumArtists": [
-            {
-              "id": "ar-17",
-              "name": "The Mighty B (LP)"
-            }
-          ],
-          "displayAlbumArtist": "The Mighty B (LP)",
+          "artist": "artist-b",
+          "artists": [],
+          "displayArtist": "artist-b",
+          "albumArtists": [],
+          "displayAlbumArtist": "artist-b",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Jazz",
           "genres": [
             {
               "name": "Jazz"
@@ -135,33 +108,16 @@
         {
           "id": "al-8",
           "album": "album-collab",
-          "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "Artist A!"
-            },
-            {
-              "id": "ar-17",
-              "name": "Artist B!"
-            }
-          ],
-          "displayArtist": "artist-a",
-          "albumArtists": [
-            {
-              "id": "ar-1",
-              "name": "Artist A!"
-            },
-            {
-              "id": "ar-17",
-              "name": "Artist B!"
-            }
-          ],
-          "displayAlbumArtist": "artist-a",
+          "artist": "collab-ab",
+          "artists": [],
+          "displayArtist": "collab-ab",
+          "albumArtists": [],
+          "displayAlbumArtist": "collab-ab",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Pop",
           "genres": [
             {
               "name": "Pop"
@@ -182,33 +138,16 @@
         {
           "id": "al-8",
           "album": "album-collab",
-          "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "Artist A!"
-            },
-            {
-              "id": "ar-17",
-              "name": "Artist B!"
-            }
-          ],
-          "displayArtist": "artist-a",
-          "albumArtists": [
-            {
-              "id": "ar-1",
-              "name": "Artist A!"
-            },
-            {
-              "id": "ar-17",
-              "name": "Artist B!"
-            }
-          ],
-          "displayAlbumArtist": "artist-a",
+          "artist": "collab-ab",
+          "artists": [],
+          "displayArtist": "collab-ab",
+          "albumArtists": [],
+          "displayAlbumArtist": "collab-ab",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Pop",
           "genres": [
             {
               "name": "Pop"
@@ -229,33 +168,16 @@
         {
           "id": "al-10",
           "album": "album-split",
-          "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            },
-            {
-              "id": "ar-17",
-              "name": "artist-b"
-            }
-          ],
-          "displayArtist": "artist-a",
-          "albumArtists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            },
-            {
-              "id": "ar-17",
-              "name": "artist-b"
-            }
-          ],
-          "displayAlbumArtist": "artist-a",
+          "artist": "split-ab",
+          "artists": [],
+          "displayArtist": "split-ab",
+          "albumArtists": [],
+          "displayAlbumArtist": "split-ab",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Pop",
           "genres": [
             {
               "name": "Pop"
@@ -275,33 +197,16 @@
         {
           "id": "al-10",
           "album": "album-split",
-          "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            },
-            {
-              "id": "ar-17",
-              "name": "artist-b"
-            }
-          ],
-          "displayArtist": "artist-a",
-          "albumArtists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            },
-            {
-              "id": "ar-17",
-              "name": "artist-b"
-            }
-          ],
-          "displayAlbumArtist": "artist-a",
+          "artist": "split-ab",
+          "artists": [],
+          "displayArtist": "split-ab",
+          "albumArtists": [],
+          "displayAlbumArtist": "split-ab",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Pop",
           "genres": [
             {
               "name": "Pop"
@@ -322,24 +227,15 @@
           "id": "al-12",
           "album": "album-ca",
           "artist": "ärtist-c",
-          "artists": [
-            {
-              "id": "ar-18",
-              "name": "ärtist-c"
-            }
-          ],
+          "artists": [],
           "displayArtist": "ärtist-c",
-          "albumArtists": [
-            {
-              "id": "ar-18",
-              "name": "ärtist-c"
-            }
-          ],
+          "albumArtists": [],
           "displayAlbumArtist": "ärtist-c",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Rock",
           "genres": [
             {
               "name": "Rock"
@@ -360,24 +256,15 @@
           "id": "al-15",
           "album": "album-cross",
           "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "artists": [],
           "displayArtist": "artist-a",
-          "albumArtists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "albumArtists": [],
           "displayAlbumArtist": "artist-a",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
           "duration": 100,
+          "genre": "Rock",
           "genres": [
             {
               "name": "Rock"
@@ -398,19 +285,9 @@
           "id": "al-18",
           "album": "empty-album",
           "artist": "artist-a",
-          "artists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "artists": [],
           "displayArtist": "artist-a",
-          "albumArtists": [
-            {
-              "id": "ar-1",
-              "name": "artist-a"
-            }
-          ],
+          "albumArtists": [],
           "displayAlbumArtist": "artist-a",
           "contributors": [],
           "displayComposer": "",

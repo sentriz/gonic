@@ -29,7 +29,8 @@ func LoadAlbumByFolder(userID int) func(*gorm.DB) *gorm.DB {
 	return func(q *gorm.DB) *gorm.DB {
 		return q.
 			Select([]string{"albums.*", albumChildCountColumn, albumDurationColumn, albumAverageRatingColumn}).
-			Scopes(AlbumWithUserData(userID), AlbumWithAlbumArtistCredits).
+			Scopes(AlbumWithUserData(userID)).
+			Preload("Parent").
 			Preload("Genres")
 	}
 }
@@ -39,7 +40,7 @@ func LoadAlbumByFolder(userID int) func(*gorm.DB) *gorm.DB {
 func LoadAlbumListByFolder(userID int) func(*gorm.DB) *gorm.DB {
 	return func(q *gorm.DB) *gorm.DB {
 		return q.
-			Scopes(AlbumWithUserPlay(userID), AlbumWithUserData(userID), AlbumWithAlbumArtistCredits).
+			Scopes(AlbumWithUserPlay(userID), AlbumWithUserData(userID)).
 			Preload("Parent").
 			Preload("Genres")
 	}
@@ -47,7 +48,7 @@ func LoadAlbumListByFolder(userID int) func(*gorm.DB) *gorm.DB {
 
 func NewAlbumByFolder(f *AlbumRow) *Album {
 	a := &Album{
-		Artist:        cmp.Or(f.TagAlbumArtistCredit, f.TagAlbumArtist, f.Parent.RightPath),
+		Artist:        f.Parent.RightPath,
 		ID:            f.SID(),
 		IsDir:         true,
 		ParentID:      f.ParentSID(),
@@ -60,7 +61,7 @@ func NewAlbumByFolder(f *AlbumRow) *Album {
 		AverageRating: f.AverageRating,
 		PlayCount:     int(math.Ceil(f.PlayCount)),
 		Played:        Time{f.PlayTime.Time},
-		Artists:       folderAlbumArtistRefs(f.Credits),
+		Artists:       []*ArtistRef{},
 		ReleaseTypes:  []string{},
 		RecordLabels:  []*RecordLabel{},
 		DiscTitles:    []*DiscTitle{},
@@ -70,6 +71,9 @@ func NewAlbumByFolder(f *AlbumRow) *Album {
 	a.DisplayArtist = a.Artist
 	for _, g := range f.Genres {
 		a.Genres = append(a.Genres, &GenreRef{Name: g.Name})
+	}
+	if len(f.Genres) > 0 {
+		a.Genre = f.Genres[0].Name
 	}
 	if f.AlbumStar != nil {
 		a.Starred = &f.AlbumStar.StarDate
@@ -95,13 +99,16 @@ func NewTCAlbumByFolder(f *AlbumRow) *TrackChild {
 		CreatedAt:     f.CreatedAt,
 		AverageRating: f.AverageRating,
 		Year:          f.TagYear,
-		Artists:       folderAlbumArtistRefs(f.Credits),
-		AlbumArtists:  folderAlbumArtistRefs(f.Credits),
+		Artists:       []*ArtistRef{},
+		AlbumArtists:  []*ArtistRef{},
 		Contributors:  []*Contributor{},
 		Genres:        []*GenreRef{},
 		ISRC:          []string{},
-		Artist:        cmp.Or(f.TagAlbumArtistCredit, f.TagAlbumArtist),
 		Duration:      f.Duration,
+	}
+	// the root folder has no parent
+	if f.Parent != nil {
+		trCh.Artist = f.Parent.RightPath
 	}
 	trCh.DisplayArtist = trCh.Artist
 	trCh.AlbumDisplayArtist = trCh.Artist
@@ -110,6 +117,9 @@ func NewTCAlbumByFolder(f *AlbumRow) *TrackChild {
 	}
 	for _, g := range f.Genres {
 		trCh.Genres = append(trCh.Genres, &GenreRef{Name: g.Name})
+	}
+	if len(f.Genres) > 0 {
+		trCh.Genre = f.Genres[0].Name
 	}
 	if f.AlbumStar != nil {
 		trCh.Starred = &f.AlbumStar.StarDate
@@ -124,20 +134,6 @@ func NewTCAlbumByFolder(f *AlbumRow) *TrackChild {
 	}
 
 	return trCh
-}
-
-// folderAlbumArtistRefs lists an album folder's album artists the same way NewAlbumByTags does.
-func folderAlbumArtistRefs(credits []*db.AlbumCredit) []*ArtistRef {
-	albumArtists := filterAlbumCreditsByRole(credits, db.RoleAlbumArtist)
-	sort.Slice(albumArtists, func(i, j int) bool { return albumArtists[i].ArtistID < albumArtists[j].ArtistID })
-	refs := []*ArtistRef{}
-	for _, c := range albumArtists {
-		if c.Artist == nil {
-			continue
-		}
-		refs = append(refs, &ArtistRef{ID: c.Artist.SID(), Name: cmp.Or(c.CreditedAs, c.Artist.Name)})
-	}
-	return refs
 }
 
 func NewTCTrackByFolder(t *TrackRow, parent *db.Album) *TrackChild {
