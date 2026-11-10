@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"slices"
 	"strings"
 )
@@ -32,8 +33,23 @@ func Log(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sw := &statusWriter{ResponseWriter: w}
 		next.ServeHTTP(sw, r)
-		log.Printf("response %s %s %v", statusToBlock(sw.status), r.Method, r.URL.EscapedPath())
+		log.Printf("response %s %s %v", statusToBlock(sw.status), r.Method, redactURL(r.URL))
 	})
+}
+
+// redactURL redacts sensitive query parameters from the given URL.
+func redactURL(u *url.URL) string {
+	pairs := strings.Split(u.RawQuery, "&")
+	for i, pair := range pairs {
+		k, _, _ := strings.Cut(pair, "=")
+		if key, err := url.QueryUnescape(k); err == nil &&
+			slices.Contains([]string{"apiKey", "p", "s", "t"}, key) {
+			pairs[i] = k + "=***"
+		}
+	}
+	redacted := *u
+	redacted.RawQuery = strings.Join(pairs, "&")
+	return redacted.String()
 }
 
 func BasicCORS(next http.Handler) http.Handler {
