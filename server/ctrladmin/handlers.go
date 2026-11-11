@@ -685,6 +685,7 @@ func getAvatarFile(r *http.Request) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("read form file: %w", err)
 	}
+	defer file.Close()
 	cfg, _, err := image.DecodeConfig(file) // check declared dimensions before decoding to avoid OOM errors
 	if err != nil {
 		return nil, fmt.Errorf("decode image config: %w", err)
