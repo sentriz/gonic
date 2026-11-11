@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image"
 	"image/jpeg"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -683,6 +684,16 @@ func getAvatarFile(r *http.Request) ([]byte, error) {
 	file, _, err := r.FormFile("avatar")
 	if err != nil {
 		return nil, fmt.Errorf("read form file: %w", err)
+	}
+	cfg, _, err := image.DecodeConfig(file) // check declared dimensions before decoding to avoid OOM errors
+	if err != nil {
+		return nil, fmt.Errorf("decode image config: %w", err)
+	}
+	if int64(cfg.Width)*int64(cfg.Height) > 1<<24 { // allows up to something like 4096x4096
+		return nil, fmt.Errorf("image too large: %dx%d", cfg.Width, cfg.Height)
+	}
+	if _, err := file.Seek(0, io.SeekStart); err != nil {
+		return nil, fmt.Errorf("rewind: %w", err)
 	}
 	i, _, err := image.Decode(file)
 	if err != nil {
