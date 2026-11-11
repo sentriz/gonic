@@ -40,8 +40,8 @@ func TestInfoCache(t *testing.T) {
 				w.Write(mockclient.ArtistGetTopTracksResponse)
 			}
 		}),
-		func() (apiKey string, secret string, err error) {
-			return "", "", nil
+		func() (apiKey string, secret string, language string, err error) {
+			return "", "", "", nil
 		},
 	)
 

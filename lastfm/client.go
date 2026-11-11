@@ -27,7 +27,8 @@ var (
 	ErrNoUserSession = errors.New("no lastfm user session present")
 )
 
-type KeySecretFunc func() (apiKey, secret string, err error)
+// KeySecretFunc returns the api credentials and the optional language for localized info.
+type KeySecretFunc func() (apiKey, secret, language string, err error)
 
 type Client struct {
 	userAgent  string
@@ -53,8 +54,8 @@ const (
 	BaseURL = "https://ws.audioscrobbler.com/2.0/"
 )
 
-func (c *Client) ArtistGetInfo(artistName, language string) (Artist, error) {
-	apiKey, _, err := c.keySecret()
+func (c *Client) ArtistGetInfo(artistName string) (Artist, error) {
+	apiKey, _, language, err := c.keySecret()
 	if err != nil {
 		return Artist{}, fmt.Errorf("get key and secret: %w", err)
 	}
@@ -76,8 +77,8 @@ func (c *Client) ArtistGetInfo(artistName, language string) (Artist, error) {
 	return resp.Artist, nil
 }
 
-func (c *Client) AlbumGetInfo(artistName, albumName, language string) (Album, error) {
-	apiKey, _, err := c.keySecret()
+func (c *Client) AlbumGetInfo(artistName, albumName string) (Album, error) {
+	apiKey, _, language, err := c.keySecret()
 	if err != nil {
 		return Album{}, fmt.Errorf("get key and secret: %w", err)
 	}
@@ -101,7 +102,7 @@ func (c *Client) AlbumGetInfo(artistName, albumName, language string) (Album, er
 }
 
 func (c *Client) ArtistGetTopTracks(artistName string) (TopTracks, error) {
-	apiKey, _, err := c.keySecret()
+	apiKey, _, _, err := c.keySecret()
 	if err != nil {
 		return TopTracks{}, fmt.Errorf("get key and secret: %w", err)
 	}
@@ -119,7 +120,7 @@ func (c *Client) ArtistGetTopTracks(artistName string) (TopTracks, error) {
 }
 
 func (c *Client) TrackGetSimilarTracks(artistName, trackName string) (SimilarTracks, error) {
-	apiKey, _, err := c.keySecret()
+	apiKey, _, _, err := c.keySecret()
 	if err != nil {
 		return SimilarTracks{}, fmt.Errorf("get key and secret: %w", err)
 	}
@@ -138,7 +139,7 @@ func (c *Client) TrackGetSimilarTracks(artistName, trackName string) (SimilarTra
 }
 
 func (c *Client) ArtistGetSimilar(artistName string) (SimilarArtists, error) {
-	apiKey, _, err := c.keySecret()
+	apiKey, _, _, err := c.keySecret()
 	if err != nil {
 		return SimilarArtists{}, fmt.Errorf("get key and secret: %w", err)
 	}
@@ -156,7 +157,7 @@ func (c *Client) ArtistGetSimilar(artistName string) (SimilarArtists, error) {
 }
 
 func (c *Client) UserGetLovedTracks(userName string) (LovedTracks, error) {
-	apiKey, _, err := c.keySecret()
+	apiKey, _, _, err := c.keySecret()
 	if err != nil {
 		return LovedTracks{}, fmt.Errorf("get key and secret: %w", err)
 	}
@@ -193,7 +194,7 @@ func (c *Client) UserGetLovedTracks(userName string) (LovedTracks, error) {
 }
 
 func (c *Client) GetSession(token string) (string, error) {
-	apiKey, secret, err := c.keySecret()
+	apiKey, secret, _, err := c.keySecret()
 	if err != nil {
 		return "", fmt.Errorf("get key and secret: %w", err)
 	}
@@ -274,7 +275,7 @@ func (c *Client) IsUserAuthenticated(user db.User) bool {
 }
 
 func (c *Client) Scrobble(user db.User, track scrobble.Track, stamp time.Time, submission bool) error {
-	apiKey, secret, err := c.keySecret()
+	apiKey, secret, _, err := c.keySecret()
 	if err != nil {
 		return fmt.Errorf("get key and secret: %w", err)
 	}
@@ -310,7 +311,7 @@ func (c *Client) Scrobble(user db.User, track scrobble.Track, stamp time.Time, s
 }
 
 func (c *Client) LoveTrack(user *db.User, track *db.Track) error {
-	apiKey, secret, err := c.keySecret()
+	apiKey, secret, _, err := c.keySecret()
 	if err != nil {
 		return fmt.Errorf("get key and secret: %w", err)
 	}
@@ -331,7 +332,7 @@ func (c *Client) LoveTrack(user *db.User, track *db.Track) error {
 }
 
 func (c *Client) GetCurrentUser(user *db.User) (User, error) {
-	apiKey, secret, err := c.keySecret()
+	apiKey, secret, _, err := c.keySecret()
 	if err != nil {
 		return User{}, fmt.Errorf("get key and secret: %w", err)
 	}

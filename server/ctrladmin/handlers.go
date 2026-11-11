@@ -384,33 +384,28 @@ func (c *Controller) ServeUpdateLastFMAPIKeyDo(r *http.Request) *Response {
 			flashW:   []string{err.Error()},
 		}
 	}
-	err := c.dbc.Transaction(func(tx *db.DB) error {
-		previousLanguage, err := tx.GetSetting(db.LastFMLanguage)
-		if err != nil {
-			return fmt.Errorf("get language: %w", err)
-		}
-		for key, value := range map[db.SettingKey]string{
-			db.LastFMAPIKey:   apiKey,
-			db.LastFMSecret:   secret,
-			db.LastFMLanguage: language,
-		} {
-			if err := tx.SetSetting(key, value); err != nil {
-				return fmt.Errorf("set %s: %w", key, err)
-			}
-		}
-		if language == previousLanguage {
-			return nil
-		}
-		// Refresh cached descriptions in the selected language on their next lookup.
-		for _, model := range []any{&db.ArtistInfo{}, &db.AlbumInfo{}} {
-			if err := tx.Model(model).UpdateColumn("updated_at", time.Unix(0, 0)).Error; err != nil {
-				return fmt.Errorf("expire lastfm info: %w", err)
-			}
-		}
-		return nil
-	})
+	previousLanguage, err := c.dbc.GetSetting(db.LastFMLanguage)
 	if err != nil {
-		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't update lastfm settings: %v", err)}}
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't get language: %v", err)}}
+	}
+	if err := c.dbc.SetSetting(db.LastFMAPIKey, apiKey); err != nil {
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't set api key: %v", err)}}
+	}
+	if err := c.dbc.SetSetting(db.LastFMSecret, secret); err != nil {
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't set secret: %v", err)}}
+	}
+	if err := c.dbc.SetSetting(db.LastFMLanguage, language); err != nil {
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't set language: %v", err)}}
+	}
+	if language == previousLanguage {
+		return &Response{redirect: "/admin/home"}
+	}
+	// Refresh cached descriptions in the selected language on their next lookup.
+	if err := c.dbc.Model(&db.ArtistInfo{}).UpdateColumn("updated_at", time.Unix(0, 0)).Error; err != nil {
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't expire artist info: %v", err)}}
+	}
+	if err := c.dbc.Model(&db.AlbumInfo{}).UpdateColumn("updated_at", time.Unix(0, 0)).Error; err != nil {
+		return &Response{redirect: r.Referer(), flashW: []string{fmt.Sprintf("couldn't expire album info: %v", err)}}
 	}
 	return &Response{redirect: "/admin/home"}
 }

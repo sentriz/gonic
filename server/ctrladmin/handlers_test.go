@@ -82,7 +82,10 @@ func TestUpdateLastFMLanguage(t *testing.T) {
 				default:
 					fmt.Fprint(w, `<lfm></lfm>`)
 				}
-			}), func() (string, string, error) { return "key", "secret", nil })
+			}), func() (string, string, string, error) {
+				language, err := dbc.GetSetting(db.LastFMLanguage)
+				return "key", "secret", language, err
+			})
 			artistCache := artistinfocache.New(dbc, client, nil)
 			albumCache := albuminfocache.New(dbc, client, nil)
 			artistInfo, err := artistCache.GetOrLookup(context.Background(), artist.ID)

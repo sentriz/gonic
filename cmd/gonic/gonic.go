@@ -228,13 +228,14 @@ func main() {
 	transcodeCache := cache.New(cacheDirAudio, *confTranscodeCacheSize)
 	transcoder := transcode.NewCachingTranscoder(transcode.NewFFmpegTranscoder(), transcodeCache)
 
-	lastfmClientKeySecretFunc := func() (string, string, error) {
+	lastfmClientKeySecretFunc := func() (string, string, string, error) {
 		apiKey, _ := dbc.GetSetting(db.LastFMAPIKey)
 		secret, _ := dbc.GetSetting(db.LastFMSecret)
+		language, _ := dbc.GetSetting(db.LastFMLanguage)
 		if apiKey == "" || secret == "" {
-			return "", "", fmt.Errorf("not configured")
+			return "", "", "", fmt.Errorf("not configured")
 		}
-		return apiKey, secret, nil
+		return apiKey, secret, language, nil
 	}
 
 	listenbrainzClient := listenbrainz.NewClient(userAgent)
@@ -485,7 +486,7 @@ func main() {
 	})
 
 	errgrp.Go(func() error {
-		if _, _, err := lastfmClientKeySecretFunc(); err != nil {
+		if _, _, _, err := lastfmClientKeySecretFunc(); err != nil {
 			return nil
 		}
 
