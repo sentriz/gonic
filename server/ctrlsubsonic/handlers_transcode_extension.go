@@ -23,7 +23,7 @@ import (
 )
 
 // the opensubsonic "transcoding" extension
-// https://opensubsonic.netlify.app/docs/extensions/transcoding/
+// https://opensubsonic.github.io/docs/extensions/transcoding/
 
 func (c *Controller) ServeGetTranscodeDecision(r *http.Request) *spec.Response {
 	params := r.Context().Value(CtxParams).(params.Params)

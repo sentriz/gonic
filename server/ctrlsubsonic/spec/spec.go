@@ -61,7 +61,7 @@ type Response struct {
 	Version string `xml:"version,attr"          json:"version"`
 	XMLNS   string `xml:"xmlns,attr"            json:"-"`
 
-	// https://opensubsonic.netlify.app/docs/responses/subsonic-response/
+	// https://opensubsonic.github.io/docs/responses/subsonic-response/
 	Type                   string                  `xml:"type,attr"              json:"type"`
 	ServerVersion          string                  `xml:"serverVersion,attr"     json:"serverVersion"`
 	OpenSubsonic           bool                    `xml:"openSubsonic,attr"      json:"openSubsonic"`
@@ -159,7 +159,7 @@ type GenreRef struct {
 	Name string `xml:"name,attr" json:"name"`
 }
 
-// https://opensubsonic.netlify.app/docs/responses/contributor/
+// https://opensubsonic.github.io/docs/responses/contributor/
 type Contributor struct {
 	Role   string     `xml:"role,attr"    json:"role"`
 	Artist *ArtistRef `xml:"artist"       json:"artist"`
@@ -170,12 +170,12 @@ type DiscTitle struct {
 	Title string `xml:"title,attr" json:"title"`
 }
 
-// https://opensubsonic.netlify.app/docs/responses/recordlabel/
+// https://opensubsonic.github.io/docs/responses/recordlabel/
 type RecordLabel struct {
 	Name string `xml:"name,attr" json:"name"`
 }
 
-// https://opensubsonic.netlify.app/docs/responses/albumid3/
+// https://opensubsonic.github.io/docs/responses/albumid3/
 type Album struct {
 	ID      *specid.ID `xml:"id,attr,omitempty"       json:"id"`
 	Created time.Time  `xml:"created,attr,omitempty"  json:"created"`
@@ -237,7 +237,7 @@ type ReplayGain struct {
 	AlbumPeak float32 `xml:"albumPeak,attr" json:"albumPeak"`
 }
 
-// https://opensubsonic.netlify.app/docs/responses/child/
+// https://opensubsonic.github.io/docs/responses/child/
 type TrackChild struct {
 	ID      *specid.ID `xml:"id,attr,omitempty"          json:"id,omitempty"`
 	Album   string     `xml:"album,attr,omitempty"       json:"album,omitempty"`
@@ -578,7 +578,7 @@ type OpenSubsonicExtension struct {
 
 type OpenSubsonicExtensions []OpenSubsonicExtension
 
-// https://opensubsonic.netlify.app/docs/responses/transcodedecision/
+// https://opensubsonic.github.io/docs/responses/transcodedecision/
 type TranscodeDecision struct {
 	CanDirectPlay   bool           `xml:"canDirectPlay,attr"             json:"canDirectPlay"`
 	CanTranscode    bool           `xml:"canTranscode,attr"              json:"canTranscode"`
@@ -589,7 +589,7 @@ type TranscodeDecision struct {
 	TranscodeStream *StreamDetails `xml:"transcodeStream"                json:"transcodeStream,omitempty"`
 }
 
-// https://opensubsonic.netlify.app/docs/responses/streamdetails/
+// https://opensubsonic.github.io/docs/responses/streamdetails/
 type StreamDetails struct {
 	Protocol        string `xml:"protocol,attr"                  json:"protocol"`
 	Container       string `xml:"container,attr"                 json:"container"`
@@ -602,7 +602,7 @@ type StreamDetails struct {
 }
 
 // ClientInfo is the JSON body posted to getTranscodeDecision describing the client's playback capabilities.
-// https://opensubsonic.netlify.app/docs/responses/clientinfo/
+// https://opensubsonic.github.io/docs/responses/clientinfo/
 type ClientInfo struct {
 	Name                          string               `json:"name"`
 	Platform                      string               `json:"platform"`
@@ -641,7 +641,7 @@ type Limitation struct {
 }
 
 // codecProfile enum values
-// https://opensubsonic.netlify.app/docs/responses/codecprofile/
+// https://opensubsonic.github.io/docs/responses/codecprofile/
 const (
 	ComparisonEquals           = "Equals"
 	ComparisonNotEquals        = "NotEquals"
