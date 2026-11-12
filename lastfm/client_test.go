@@ -32,8 +32,8 @@ func TestArtistGetInfo(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 			w.Write(mockclient.ArtistGetInfoResponse)
 		}),
-		func() (string, string, error) {
-			return "apiKey1", "", nil
+		func() (string, string, string, error) {
+			return "apiKey1", "", "", nil
 		},
 	)
 
@@ -116,8 +116,8 @@ func TestArtistGetInfoClientRequestFails(t *testing.T) {
 
 			w.WriteHeader(http.StatusInternalServerError)
 		}),
-		func() (string, string, error) {
-			return "apiKey1", "", nil
+		func() (string, string, string, error) {
+			return "apiKey1", "", "", nil
 		},
 	)
 
@@ -145,8 +145,8 @@ func TestArtistGetTopTracks(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 			w.Write(mockclient.ArtistGetTopTracksResponse)
 		}),
-		func() (string, string, error) {
-			return "apiKey1", "", nil
+		func() (string, string, string, error) {
+			return "apiKey1", "", "", nil
 		},
 	)
 
@@ -226,8 +226,8 @@ func TestArtistGetTopTracksClientRequestFails(t *testing.T) {
 
 			w.WriteHeader(http.StatusInternalServerError)
 		}),
-		func() (string, string, error) {
-			return "apiKey1", "", nil
+		func() (string, string, string, error) {
+			return "apiKey1", "", "", nil
 		},
 	)
 
@@ -255,8 +255,8 @@ func TestArtistGetSimilar(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 			w.Write(mockclient.ArtistGetSimilarResponse)
 		}),
-		func() (string, string, error) {
-			return "apiKey1", "", nil
+		func() (string, string, string, error) {
+			return "apiKey1", "", "", nil
 		},
 	)
 
@@ -334,8 +334,8 @@ func TestArtistGetSimilarClientRequestFails(t *testing.T) {
 
 			w.WriteHeader(http.StatusInternalServerError)
 		}),
-		func() (string, string, error) {
-			return "apiKey1", "", nil
+		func() (string, string, string, error) {
+			return "apiKey1", "", "", nil
 		},
 	)
 
@@ -364,8 +364,8 @@ func TestTrackGetSimilarTracks(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 			w.Write(mockclient.TrackGetSimilarResponse)
 		}),
-		func() (string, string, error) {
-			return "apiKey1", "", nil
+		func() (string, string, string, error) {
+			return "apiKey1", "", "", nil
 		},
 	)
 
@@ -444,8 +444,8 @@ func TestTrackGetSimilarTracksClientRequestFails(t *testing.T) {
 
 			w.WriteHeader(http.StatusInternalServerError)
 		}),
-		func() (string, string, error) {
-			return "apiKey1", "", nil
+		func() (string, string, string, error) {
+			return "apiKey1", "", "", nil
 		},
 	)
 
@@ -474,8 +474,8 @@ func TestGetSession(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 			w.Write(mockclient.GetSessionResponse)
 		}),
-		func() (string, string, error) {
-			return "apiKey1", "secret1", nil
+		func() (string, string, string, error) {
+			return "apiKey1", "secret1", "", nil
 		},
 	)
 
@@ -503,8 +503,8 @@ func TestGetSessionClientRequestFails(t *testing.T) {
 
 			w.WriteHeader(http.StatusInternalServerError)
 		}),
-		func() (string, string, error) {
-			return "apiKey1", "secret1", nil
+		func() (string, string, string, error) {
+			return "apiKey1", "secret1", "", nil
 		},
 	)
 
@@ -542,8 +542,8 @@ func TestScrobble(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 			w.Write(mockclient.ArtistGetTopTracksResponse)
 		}),
-		func() (apiKey string, secret string, err error) {
-			return "apiKey1", "secret1", nil
+		func() (apiKey string, secret string, language string, err error) {
+			return "apiKey1", "secret1", "", nil
 		},
 	)
 
@@ -569,8 +569,8 @@ func TestScrobble(t *testing.T) {
 func TestScrobbleErrorsWithoutLastFMSession(t *testing.T) {
 	t.Parallel()
 
-	client := lastfm.NewClient("agent", func() (apiKey string, secret string, err error) {
-		return "", "", nil
+	client := lastfm.NewClient("agent", func() (apiKey string, secret string, language string, err error) {
+		return "", "", "", nil
 	})
 
 	err := client.Scrobble(db.User{}, scrobble.Track{}, time.Now(), false)
@@ -584,8 +584,8 @@ func TestScrobbleFailsWithoutLastFMAPIKey(t *testing.T) {
 		LastFMSession: "lastFMSession1",
 	}
 
-	scrobbler := lastfm.NewClient("agent", func() (string, string, error) {
-		return "", "", fmt.Errorf("no keys")
+	scrobbler := lastfm.NewClient("agent", func() (string, string, string, error) {
+		return "", "", "", fmt.Errorf("no keys")
 	})
 
 	err := scrobbler.Scrobble(user, scrobble.Track{}, time.Now(), false)

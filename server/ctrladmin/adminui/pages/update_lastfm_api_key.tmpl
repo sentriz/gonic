@@ -3,16 +3,21 @@
 
 {{ component "block" (props .
     "Icon" "user"
-    "Name" "update last.fm api keys"
+    "Name" "update last.fm settings"
     "Desc" "you can get an api key from last.fm here <a class='text-blue-500' href='https://www.last.fm/api/account/create' target='_blank' rel='noopener noreferrer'>here</a>. note, only the <span class='italic text-gray-800'>application name</span> field is required"
 ) }}
-    <div class="flex flex-col gap-2 items-end">
-    <p class="text-gray-500">current key <span class="font-bold text-gray-800 italic">{{ default "not set" .CurrentLastFMAPIKey }}</span></p>
-    <p class="text-gray-500">current secret <span class="font-bold text-gray-800 italic">{{ default "not set" .CurrentLastFMAPISecret }}</span></p>
-    <form class="contents" action="{{ path "/admin/update_lastfm_api_key_do" }}" method="post">
-    <input type="text" id="api_key" name="api_key" placeholder="new key">
-    <input type="text" id="secret" name="secret" placeholder="new secret">
-    <input type="submit" value="update">
+    <div class="text-left pt-3">
+    <form class="flex flex-col gap-2" action="{{ path "/admin/update_lastfm_api_key_do" }}" method="post">
+        <div class="text-gray-900 font-bold" for="api_key">api key</div>
+        <input class="text-right" type="text" id="api_key" name="api_key" value="{{ .CurrentLastFMAPIKey }}" placeholder="new key">
+        <div class="text-gray-900 font-bold" for="secret">secret</div>
+        <input class="text-right" type="text" id="secret" name="secret" value="{{ .CurrentLastFMAPISecret }}" placeholder="new secret">
+        <div class="text-gray-900 font-bold" for="lang">language</div>
+        <div class="font-medium text-gray-500">2-letter ISO 639-1 code (e.g., "en" for English), leave blank for default</div>
+        <input class="text-right" type="text" id="lang" name="lang" value="{{ .CurrentLastFMLanguage }}" placeholder="language" pattern="[a-zA-Z]{2}" maxlength="2">
+        <div class="ml-auto">
+            <input type="submit" value="update">
+        </div>
     </form>
     </div>
 {{ end }}

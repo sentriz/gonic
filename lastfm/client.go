@@ -27,24 +27,25 @@ var (
 	ErrNoUserSession = errors.New("no lastfm user session present")
 )
 
-type KeySecretFunc func() (apiKey, secret string, err error)
+// SettingsFunc returns the api credentials and the optional language for localized info.
+type SettingsFunc func() (apiKey, secret, language string, err error)
 
 type Client struct {
 	userAgent  string
 	httpClient *http.Client
-	keySecret  KeySecretFunc
+	settings   SettingsFunc
 	Limiter    *rate.Limiter
 }
 
-func NewClient(userAgent string, keySecret KeySecretFunc) *Client {
-	return NewClientCustom(userAgent, http.DefaultClient, keySecret)
+func NewClient(userAgent string, settings SettingsFunc) *Client {
+	return NewClientCustom(userAgent, http.DefaultClient, settings)
 }
 
-func NewClientCustom(userAgent string, httpClient *http.Client, keySecret KeySecretFunc) *Client {
+func NewClientCustom(userAgent string, httpClient *http.Client, settings SettingsFunc) *Client {
 	return &Client{
 		userAgent:  userAgent,
 		httpClient: httpClient,
-		keySecret:  keySecret,
+		settings:   settings,
 		Limiter:    rate.NewLimiter(rate.Every(time.Second/5), 1),
 	}
 }
@@ -54,9 +55,9 @@ const (
 )
 
 func (c *Client) ArtistGetInfo(artistName string) (Artist, error) {
-	apiKey, _, err := c.keySecret()
+	apiKey, _, language, err := c.settings()
 	if err != nil {
-		return Artist{}, fmt.Errorf("get key and secret: %w", err)
+		return Artist{}, fmt.Errorf("get settings: %w", err)
 	}
 
 	params := url.Values{}
@@ -64,6 +65,9 @@ func (c *Client) ArtistGetInfo(artistName string) (Artist, error) {
 	params.Add("api_key", apiKey)
 	params.Add("artist", artistName)
 	params.Add("autocorrect", "1")
+	if language != "" {
+		params.Add("lang", language)
+	}
 
 	resp, err := c.makeRequest(http.MethodGet, params)
 	if err != nil {
@@ -74,9 +78,9 @@ func (c *Client) ArtistGetInfo(artistName string) (Artist, error) {
 }
 
 func (c *Client) AlbumGetInfo(artistName, albumName string) (Album, error) {
-	apiKey, _, err := c.keySecret()
+	apiKey, _, language, err := c.settings()
 	if err != nil {
-		return Album{}, fmt.Errorf("get key and secret: %w", err)
+		return Album{}, fmt.Errorf("get settings: %w", err)
 	}
 
 	params := url.Values{}
@@ -85,6 +89,9 @@ func (c *Client) AlbumGetInfo(artistName, albumName string) (Album, error) {
 	params.Add("artist", artistName)
 	params.Add("album", albumName)
 	params.Add("autocorrect", "1")
+	if language != "" {
+		params.Add("lang", language)
+	}
 
 	resp, err := c.makeRequest(http.MethodGet, params)
 	if err != nil {
@@ -95,9 +102,9 @@ func (c *Client) AlbumGetInfo(artistName, albumName string) (Album, error) {
 }
 
 func (c *Client) ArtistGetTopTracks(artistName string) (TopTracks, error) {
-	apiKey, _, err := c.keySecret()
+	apiKey, _, _, err := c.settings()
 	if err != nil {
-		return TopTracks{}, fmt.Errorf("get key and secret: %w", err)
+		return TopTracks{}, fmt.Errorf("get settings: %w", err)
 	}
 
 	params := url.Values{}
@@ -113,9 +120,9 @@ func (c *Client) ArtistGetTopTracks(artistName string) (TopTracks, error) {
 }
 
 func (c *Client) TrackGetSimilarTracks(artistName, trackName string) (SimilarTracks, error) {
-	apiKey, _, err := c.keySecret()
+	apiKey, _, _, err := c.settings()
 	if err != nil {
-		return SimilarTracks{}, fmt.Errorf("get key and secret: %w", err)
+		return SimilarTracks{}, fmt.Errorf("get settings: %w", err)
 	}
 
 	params := url.Values{}
@@ -132,9 +139,9 @@ func (c *Client) TrackGetSimilarTracks(artistName, trackName string) (SimilarTra
 }
 
 func (c *Client) ArtistGetSimilar(artistName string) (SimilarArtists, error) {
-	apiKey, _, err := c.keySecret()
+	apiKey, _, _, err := c.settings()
 	if err != nil {
-		return SimilarArtists{}, fmt.Errorf("get key and secret: %w", err)
+		return SimilarArtists{}, fmt.Errorf("get settings: %w", err)
 	}
 
 	params := url.Values{}
@@ -150,9 +157,9 @@ func (c *Client) ArtistGetSimilar(artistName string) (SimilarArtists, error) {
 }
 
 func (c *Client) UserGetLovedTracks(userName string) (LovedTracks, error) {
-	apiKey, _, err := c.keySecret()
+	apiKey, _, _, err := c.settings()
 	if err != nil {
-		return LovedTracks{}, fmt.Errorf("get key and secret: %w", err)
+		return LovedTracks{}, fmt.Errorf("get settings: %w", err)
 	}
 
 	params := url.Values{}
@@ -187,9 +194,9 @@ func (c *Client) UserGetLovedTracks(userName string) (LovedTracks, error) {
 }
 
 func (c *Client) GetSession(token string) (string, error) {
-	apiKey, secret, err := c.keySecret()
+	apiKey, secret, _, err := c.settings()
 	if err != nil {
-		return "", fmt.Errorf("get key and secret: %w", err)
+		return "", fmt.Errorf("get settings: %w", err)
 	}
 
 	params := url.Values{}
@@ -268,9 +275,9 @@ func (c *Client) IsUserAuthenticated(user db.User) bool {
 }
 
 func (c *Client) Scrobble(user db.User, track scrobble.Track, stamp time.Time, submission bool) error {
-	apiKey, secret, err := c.keySecret()
+	apiKey, secret, _, err := c.settings()
 	if err != nil {
-		return fmt.Errorf("get key and secret: %w", err)
+		return fmt.Errorf("get settings: %w", err)
 	}
 	if !c.IsUserAuthenticated(user) {
 		return ErrNoUserSession
@@ -304,9 +311,9 @@ func (c *Client) Scrobble(user db.User, track scrobble.Track, stamp time.Time, s
 }
 
 func (c *Client) LoveTrack(user *db.User, track *db.Track) error {
-	apiKey, secret, err := c.keySecret()
+	apiKey, secret, _, err := c.settings()
 	if err != nil {
-		return fmt.Errorf("get key and secret: %w", err)
+		return fmt.Errorf("get settings: %w", err)
 	}
 	if !c.IsUserAuthenticated(*user) {
 		return ErrNoUserSession
@@ -325,9 +332,9 @@ func (c *Client) LoveTrack(user *db.User, track *db.Track) error {
 }
 
 func (c *Client) GetCurrentUser(user *db.User) (User, error) {
-	apiKey, secret, err := c.keySecret()
+	apiKey, secret, _, err := c.settings()
 	if err != nil {
-		return User{}, fmt.Errorf("get key and secret: %w", err)
+		return User{}, fmt.Errorf("get settings: %w", err)
 	}
 	if !c.IsUserAuthenticated(*user) {
 		return User{}, ErrNoUserSession
