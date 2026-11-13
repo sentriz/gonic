@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.24.0](https://www.github.com/sentriz/gonic/compare/v0.23.0...v0.24.0) (2026-11-12)
+
+
+### Features
+
+* **gonic:** add ability to change the language for the last.fm api ([#749](https://www.github.com/sentriz/gonic/issues/749)) ([e378801](https://www.github.com/sentriz/gonic/commit/e378801ce2e26be6c63c18470b4f8613b2ea1416))
+* **gonic:** add flag to allow normal users to start scans with subsonic ([#741](https://www.github.com/sentriz/gonic/issues/741)) ([2d400a6](https://www.github.com/sentriz/gonic/commit/2d400a65f9b7d1eb26dfcc261b9afba41123c224))
+* **scanner:** allow to skip directories with a `.gonicignore` marker file ([#740](https://www.github.com/sentriz/gonic/issues/740)) ([7784f8c](https://www.github.com/sentriz/gonic/commit/7784f8cb523f670a56b7d41830deb670d5184948))
+
+
+### Bug Fixes
+
+* **gonic:** strip leading UTF-8 BOM when reading user text files ([3ef86a4](https://www.github.com/sentriz/gonic/commit/3ef86a4252d1e632230e2c7c1b2fe4b27baf53a8)), closes [#746](https://www.github.com/sentriz/gonic/issues/746)
+* **logging:** omit query parameters from request logs ([#750](https://www.github.com/sentriz/gonic/issues/750)) ([f98b6c4](https://www.github.com/sentriz/gonic/commit/f98b6c40e6d26d3b056e33bed316dd8d411c46df))
+* **playlist:** don't chtimes m3u files on write ([755254d](https://www.github.com/sentriz/gonic/commit/755254d6556d9e1ed850903aebc1db8925a720aa)), closes [#748](https://www.github.com/sentriz/gonic/issues/748)
+* **subsonic:** cap declared dimensions of uploaded avatars before resizing ([#754](https://www.github.com/sentriz/gonic/issues/754)) ([3294de9](https://www.github.com/sentriz/gonic/commit/3294de97e583ce3254120a68911684a095322911))
+* **subsonic:** don't count now playing scrobbles as plays ([03e696e](https://www.github.com/sentriz/gonic/commit/03e696ed93a7e733996566a57aea679f92b4e636))
+* **subsonic:** don't serve stale cached covers ([7dd69be](https://www.github.com/sentriz/gonic/commit/7dd69beee4e1447e53f61c10b32e2249c2f641b2)), closes [#666](https://www.github.com/sentriz/gonic/issues/666) [#734](https://www.github.com/sentriz/gonic/issues/734)
+* **subsonic:** load playlist tracks in one query ([2780afa](https://www.github.com/sentriz/gonic/commit/2780afa2967924b3ccc2b540235a992973d6f399)), closes [#744](https://www.github.com/sentriz/gonic/issues/744)
+* **subsonic:** parse millisecond timestamps as int64 on 32-bit ([45d963b](https://www.github.com/sentriz/gonic/commit/45d963b619a90f03d6d6f1268279f0cde41ae32a)), closes [#738](https://www.github.com/sentriz/gonic/issues/738)
+* **subsonic:** return the latest play in getNowPlaying ([a755ec4](https://www.github.com/sentriz/gonic/commit/a755ec43b19d0ea5845070f50984a4fb6be81859)), closes [#735](https://www.github.com/sentriz/gonic/issues/735)
+* **subsonic:** sort folders by name in browse by folder mode ([#745](https://www.github.com/sentriz/gonic/issues/745)) ([6635f28](https://www.github.com/sentriz/gonic/commit/6635f28117508571df335f98a59ce0fe1a66d66c))
+* **subsonic:** use playlist name in new playlist filenames ([9edfc56](https://www.github.com/sentriz/gonic/commit/9edfc566e282d98bbaecf9cac00443165f12ac5c)), closes [#747](https://www.github.com/sentriz/gonic/issues/747)
+
 ## [0.23.0](https://www.github.com/sentriz/gonic/compare/v0.22.0...v0.23.0) (2026-10-22)
 
 
