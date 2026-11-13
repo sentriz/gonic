@@ -9,15 +9,25 @@
       "album": [
         {
           "id": "al-3",
-          "artist": "",
+          "album": "album-aa",
+          "artist": "artist-a",
           "artists": [],
-          "displayArtist": "",
+          "displayArtist": "artist-a",
           "albumArtists": [],
-          "displayAlbumArtist": "",
+          "displayAlbumArtist": "artist-a",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
-          "genres": [],
+          "duration": 300,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            },
+            {
+              "name": "Pop"
+            }
+          ],
           "isDir": true,
           "isVideo": false,
           "parent": "al-2",
@@ -34,16 +44,26 @@
         },
         {
           "id": "al-4",
-          "artist": "",
+          "album": "album-ab",
+          "artist": "artist-a",
           "artists": [],
-          "displayArtist": "",
+          "displayArtist": "artist-a",
           "albumArtists": [],
-          "displayAlbumArtist": "",
+          "displayAlbumArtist": "artist-a",
           "contributors": [],
           "displayComposer": "",
           "coverArt": "al-4",
           "created": "2019-11-30T00:00:00Z",
-          "genres": [],
+          "duration": 200,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            },
+            {
+              "name": "Pop"
+            }
+          ],
           "isDir": true,
           "isVideo": false,
           "parent": "al-2",

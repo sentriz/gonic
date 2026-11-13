@@ -12,7 +12,7 @@
           "created": "2019-11-30T00:00:00Z",
           "artist": "artist-a",
           "artists": [],
-          "displayArtist": "",
+          "displayArtist": "artist-a",
           "title": "album-ab",
           "album": "album-ab",
           "parent": "al-2",
@@ -23,7 +23,16 @@
           "duration": 200,
           "playCount": 0,
           "played": "",
-          "genres": [],
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            },
+            {
+              "name": "Pop"
+            }
+          ],
+          "year": 2019,
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],

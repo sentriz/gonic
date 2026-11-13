@@ -12,7 +12,7 @@
           "created": "2019-11-30T00:00:00Z",
           "artist": "artist-a",
           "artists": [],
-          "displayArtist": "",
+          "displayArtist": "artist-a",
           "title": "album-aa",
           "album": "album-aa",
           "parent": "al-2",
@@ -22,7 +22,16 @@
           "duration": 300,
           "playCount": 7,
           "played": "2020-07-01T12:00:00Z",
-          "genres": [],
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            },
+            {
+              "name": "Pop"
+            }
+          ],
+          "year": 2018,
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
@@ -38,7 +47,7 @@
           "created": "2019-11-30T00:00:00Z",
           "artist": "artist-a",
           "artists": [],
-          "displayArtist": "",
+          "displayArtist": "artist-a",
           "title": "album-ab",
           "album": "album-ab",
           "parent": "al-2",
@@ -49,7 +58,16 @@
           "duration": 200,
           "playCount": 2,
           "played": "2020-08-02T12:00:00Z",
-          "genres": [],
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            },
+            {
+              "name": "Pop"
+            }
+          ],
+          "year": 2019,
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
@@ -63,7 +81,7 @@
           "created": "2019-11-30T00:00:00Z",
           "artist": "artist-a",
           "artists": [],
-          "displayArtist": "",
+          "displayArtist": "artist-a",
           "title": "album-cross",
           "album": "album-cross",
           "parent": "al-14",
@@ -73,7 +91,13 @@
           "duration": 100,
           "playCount": 0,
           "played": "",
-          "genres": [],
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "year": 2022,
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
@@ -86,7 +110,7 @@
           "created": "2019-11-30T00:00:00Z",
           "artist": "artist-a",
           "artists": [],
-          "displayArtist": "",
+          "displayArtist": "artist-a",
           "title": "empty-album",
           "album": "empty-album",
           "parent": "al-2",
@@ -97,6 +121,7 @@
           "playCount": 0,
           "played": "",
           "genres": [],
+          "year": 2015,
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
@@ -109,7 +134,7 @@
           "created": "2019-11-30T00:00:00Z",
           "artist": "artist-b",
           "artists": [],
-          "displayArtist": "",
+          "displayArtist": "artist-b",
           "title": "album-ba",
           "album": "album-ba",
           "parent": "al-5",
@@ -119,7 +144,13 @@
           "duration": 100,
           "playCount": 0,
           "played": "",
-          "genres": [],
+          "genre": "Jazz",
+          "genres": [
+            {
+              "name": "Jazz"
+            }
+          ],
+          "year": 2017,
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
@@ -132,7 +163,7 @@
           "created": "2019-11-30T00:00:00Z",
           "artist": "collab-ab",
           "artists": [],
-          "displayArtist": "",
+          "displayArtist": "collab-ab",
           "title": "album-collab",
           "album": "album-collab",
           "parent": "al-7",
@@ -142,7 +173,13 @@
           "duration": 100,
           "playCount": 0,
           "played": "",
-          "genres": [],
+          "genre": "Pop",
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
+          "year": 2021,
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
@@ -156,7 +193,7 @@
           "created": "2019-11-30T00:00:00Z",
           "artist": "split-ab",
           "artists": [],
-          "displayArtist": "",
+          "displayArtist": "split-ab",
           "title": "album-split",
           "album": "album-split",
           "parent": "al-9",
@@ -166,7 +203,13 @@
           "duration": 100,
           "playCount": 0,
           "played": "",
-          "genres": [],
+          "genre": "Pop",
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
+          "year": 2023,
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
@@ -179,7 +222,7 @@
           "created": "2019-11-30T00:00:00Z",
           "artist": "various",
           "artists": [],
-          "displayArtist": "",
+          "displayArtist": "various",
           "title": "comp",
           "album": "comp",
           "parent": "al-16",
@@ -190,7 +233,13 @@
           "duration": 200,
           "playCount": 0,
           "played": "",
-          "genres": [],
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "year": 2020,
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],
@@ -203,7 +252,7 @@
           "created": "2019-11-30T00:00:00Z",
           "artist": "ärtist-c",
           "artists": [],
-          "displayArtist": "",
+          "displayArtist": "ärtist-c",
           "title": "album-ca",
           "album": "album-ca",
           "parent": "al-11",
@@ -213,7 +262,13 @@
           "duration": 100,
           "playCount": 0,
           "played": "",
-          "genres": [],
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "year": 2016,
           "isCompilation": false,
           "releaseTypes": [],
           "recordLabels": [],

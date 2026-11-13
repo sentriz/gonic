@@ -9,15 +9,22 @@
       "album": [
         {
           "id": "al-6",
-          "artist": "",
+          "album": "album-ba",
+          "artist": "artist-b",
           "artists": [],
-          "displayArtist": "",
+          "displayArtist": "artist-b",
           "albumArtists": [],
-          "displayAlbumArtist": "",
+          "displayAlbumArtist": "artist-b",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
-          "genres": [],
+          "duration": 100,
+          "genre": "Jazz",
+          "genres": [
+            {
+              "name": "Jazz"
+            }
+          ],
           "isDir": true,
           "isVideo": false,
           "parent": "al-5",
