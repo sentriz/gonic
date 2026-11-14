@@ -101,7 +101,7 @@ func TestStartScan(t *testing.T) {
 			t.Parallel()
 			f := newFixture(t)
 			f.contr.scanNonAdmin = tt.scanNonAdmin
-			f.contr.scanner = scanner.New(nil, f.dbc, nil, nil, "", false, nil)
+			f.contr.scanner = scanner.New(scanner.Options{DB: f.dbc})
 			require.True(t, f.contr.scanner.StartScanning())
 
 			user := f.alt
