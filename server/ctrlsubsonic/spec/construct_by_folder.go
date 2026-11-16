@@ -112,8 +112,8 @@ func NewTCAlbumByFolder(f *AlbumRow) *TrackChild {
 	}
 	trCh.DisplayArtist = trCh.Artist
 	trCh.AlbumDisplayArtist = trCh.Artist
-	if f.TagTitle != "" || f.ChildCount > 0 {
-		trCh.Album = cmp.Or(f.TagTitle, f.RightPath)
+	if f.ChildCount > 0 {
+		trCh.Album = f.RightPath
 	}
 	for _, g := range f.Genres {
 		trCh.Genres = append(trCh.Genres, &GenreRef{Name: g.Name})
