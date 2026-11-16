@@ -36,74 +36,91 @@ type Properties struct {
 //nolint:gochecknoglobals
 var (
 	Artist = &Spec{
-		MultiKey: []string{normtag.Artists}, Key: []string{normtag.Artist},
-		MultiKeyCredit: []string{normtag.ArtistsCredit}, KeyCredit: []string{normtag.ArtistCredit},
-		KeyMusicBrainzID: []string{normtag.MusicBrainzArtistID},
-		Fallback:         "Unknown Artist",
+		Sources: []Source{
+			{Multi: true, Key: normtag.Artists, KeyCredit: normtag.ArtistsCredit, KeyMusicBrainzID: normtag.MusicBrainzArtistID},
+			{Key: normtag.Artist, KeyCredit: normtag.ArtistCredit, KeyMusicBrainzID: normtag.MusicBrainzArtistID},
+		},
+		Fallback: "Unknown Artist",
 	}
 	AlbumArtist = &Spec{
-		MultiKey: []string{normtag.AlbumArtists}, Key: []string{normtag.AlbumArtist, normtag.Artist},
-		MultiKeyCredit: []string{normtag.AlbumArtistsCredit}, KeyCredit: []string{normtag.AlbumArtistCredit},
-		KeyMusicBrainzID: []string{normtag.MusicBrainzAlbumArtistID, normtag.MusicBrainzArtistID},
-		Fallback:         "Unknown Artist",
+		Sources: []Source{
+			{Multi: true, Key: normtag.AlbumArtists, KeyCredit: normtag.AlbumArtistsCredit, KeyMusicBrainzID: normtag.MusicBrainzAlbumArtistID},
+			{Key: normtag.AlbumArtist, KeyCredit: normtag.AlbumArtistCredit, KeyMusicBrainzID: normtag.MusicBrainzAlbumArtistID},
+			{Key: normtag.Artist, KeyCredit: normtag.ArtistCredit, KeyMusicBrainzID: normtag.MusicBrainzArtistID},
+		},
+		Fallback: "Unknown Artist",
 	}
 	Genre = &Spec{
-		MultiKey: []string{normtag.Genres}, Key: []string{normtag.Genre},
+		Sources: []Source{
+			{Multi: true, Key: normtag.Genres},
+			{Key: normtag.Genre},
+		},
 	}
 	ISRC = &Spec{
-		MultiKey: []string{normtag.ISRC}, Key: []string{normtag.ISRC},
+		Sources: []Source{
+			{Key: normtag.ISRC},
+		},
 	}
 
 	Remixer = &Spec{
-		MultiKey: []string{normtag.Remixers}, Key: []string{normtag.Remixer},
-		MultiKeyCredit: []string{normtag.RemixersCredit}, KeyCredit: []string{normtag.RemixerCredit},
-		KeyMusicBrainzID: []string{normtag.MusicBrainzRemixerID},
+		Sources: []Source{
+			{Multi: true, Key: normtag.Remixers, KeyCredit: normtag.RemixersCredit, KeyMusicBrainzID: normtag.MusicBrainzRemixerID},
+			{Key: normtag.Remixer, KeyCredit: normtag.RemixerCredit, KeyMusicBrainzID: normtag.MusicBrainzRemixerID},
+		},
 	}
 	Composer = &Spec{
-		MultiKey: []string{normtag.Composers}, Key: []string{normtag.Composer},
-		MultiKeyCredit: []string{normtag.ComposersCredit}, KeyCredit: []string{normtag.ComposerCredit},
-		KeyMusicBrainzID: []string{normtag.MusicBrainzComposerID},
+		Sources: []Source{
+			{Multi: true, Key: normtag.Composers, KeyCredit: normtag.ComposersCredit, KeyMusicBrainzID: normtag.MusicBrainzComposerID},
+			{Key: normtag.Composer, KeyCredit: normtag.ComposerCredit, KeyMusicBrainzID: normtag.MusicBrainzComposerID},
+		},
 	}
 	Lyricist = &Spec{
-		MultiKey: []string{normtag.Lyricists}, Key: []string{normtag.Lyricist},
-		MultiKeyCredit: []string{normtag.LyricistsCredit}, KeyCredit: []string{normtag.LyricistCredit},
-		KeyMusicBrainzID: []string{normtag.MusicBrainzLyricistID},
+		Sources: []Source{
+			{Multi: true, Key: normtag.Lyricists, KeyCredit: normtag.LyricistsCredit, KeyMusicBrainzID: normtag.MusicBrainzLyricistID},
+			{Key: normtag.Lyricist, KeyCredit: normtag.LyricistCredit, KeyMusicBrainzID: normtag.MusicBrainzLyricistID},
+		},
 	}
 	Conductor = &Spec{
-		MultiKey: []string{normtag.Conductors}, Key: []string{normtag.Conductor},
-		MultiKeyCredit: []string{normtag.ConductorsCredit}, KeyCredit: []string{normtag.ConductorCredit},
-		KeyMusicBrainzID: []string{normtag.MusicBrainzConductorID},
+		Sources: []Source{
+			{Multi: true, Key: normtag.Conductors, KeyCredit: normtag.ConductorsCredit, KeyMusicBrainzID: normtag.MusicBrainzConductorID},
+			{Key: normtag.Conductor, KeyCredit: normtag.ConductorCredit, KeyMusicBrainzID: normtag.MusicBrainzConductorID},
+		},
 	}
 	Producer = &Spec{
-		MultiKey: []string{normtag.Producers}, Key: []string{normtag.Producer},
-		MultiKeyCredit: []string{normtag.ProducersCredit}, KeyCredit: []string{normtag.ProducerCredit},
-		KeyMusicBrainzID: []string{normtag.MusicBrainzProducerID},
+		Sources: []Source{
+			{Multi: true, Key: normtag.Producers, KeyCredit: normtag.ProducersCredit, KeyMusicBrainzID: normtag.MusicBrainzProducerID},
+			{Key: normtag.Producer, KeyCredit: normtag.ProducerCredit, KeyMusicBrainzID: normtag.MusicBrainzProducerID},
+		},
 	}
 	Arranger = &Spec{
-		MultiKey: []string{normtag.Arrangers}, Key: []string{normtag.Arranger},
-		MultiKeyCredit: []string{normtag.ArrangersCredit}, KeyCredit: []string{normtag.ArrangerCredit},
-		KeyMusicBrainzID: []string{normtag.MusicBrainzArrangerID},
+		Sources: []Source{
+			{Multi: true, Key: normtag.Arrangers, KeyCredit: normtag.ArrangersCredit, KeyMusicBrainzID: normtag.MusicBrainzArrangerID},
+			{Key: normtag.Arranger, KeyCredit: normtag.ArrangerCredit, KeyMusicBrainzID: normtag.MusicBrainzArrangerID},
+		},
 	}
 
 	AlbumTitle = &Spec{
-		Key:      []string{normtag.Album},
+		Sources:  []Source{{Key: normtag.Album}},
 		Fallback: "Unknown Album",
 	}
 	TrackTitle = &Spec{
-		Key: []string{normtag.Title},
+		Sources: []Source{{Key: normtag.Title}},
 	}
 	Year = &Spec{
-		Key:   []string{normtag.OriginalDate, normtag.Date},
-		Valid: func(v string) bool { return !ParseDate(v).IsZero() },
+		Sources: []Source{{Key: normtag.OriginalDate}, {Key: normtag.Date}},
+		Valid:   func(v string) bool { return !ParseDate(v).IsZero() },
 	}
 )
 
 type Spec struct {
-	MultiKey, Key             []string
-	MultiKeyCredit, KeyCredit []string
-	KeyMusicBrainzID          []string
-	Fallback                  string
-	Valid                     func(string) bool
+	Sources  []Source
+	Fallback string
+	Valid    func(string) bool
+}
+
+type Source struct {
+	Multi                            bool
+	Key, KeyCredit, KeyMusicBrainzID string
 }
 
 type MultiValueMode uint8
@@ -119,91 +136,9 @@ type MultiValueSetting struct {
 	Delim string
 }
 
-func ReadValues(t Tags, spec *Spec, settings map[*Spec]MultiValueSetting) []string {
-	values, _, _ := readMulti(t, spec, settings)
+func ReadValues(t Tags, spec *Spec, setting MultiValueSetting) []string {
+	_, values := read(t, spec, setting)
 	return values
-}
-
-func ReadCredits(t Tags, spec *Spec, settings map[*Spec]MultiValueSetting) []Credited {
-	return pairCredits(readMulti(t, spec, settings))
-}
-
-func readMulti(t Tags, spec *Spec, settings map[*Spec]MultiValueSetting) (values, valuesCredit, valuesMusicBrainzID []string) {
-	setting, ok := settings[spec]
-	if !ok {
-		setting = MultiValueSetting{Mode: Multi}
-	}
-
-	values = read(t, spec.MultiKey, spec.Key, setting, spec.Valid)
-	if len(values) == 0 && spec.Fallback != "" {
-		values = []string{spec.Fallback}
-	}
-
-	valuesCredit = read(t, spec.MultiKeyCredit, spec.KeyCredit, setting, nil)
-	valuesMusicBrainzID = read(t, nil, spec.KeyMusicBrainzID, setting, nil)
-
-	return values, valuesCredit, valuesMusicBrainzID
-}
-
-func Read(t Tags, spec *Spec) (value, valueCredit string) {
-	if parts := read(t, spec.MultiKey, spec.Key, MultiValueSetting{}, spec.Valid); len(parts) > 0 {
-		value = parts[0]
-	}
-	if value == "" {
-		value = spec.Fallback
-	}
-	if parts := read(t, spec.MultiKeyCredit, spec.KeyCredit, MultiValueSetting{}, nil); len(parts) > 0 && parts[0] != value {
-		valueCredit = parts[0]
-	}
-	return
-}
-
-func read(t Tags, multiKey, key []string, setting MultiValueSetting, valid func(string) bool) []string {
-	if valid == nil {
-		valid = func(v string) bool { return v != "" }
-	}
-	accept := func(parts []string) bool {
-		return slices.ContainsFunc(parts, valid)
-	}
-
-	var parts []string
-	switch setting.Mode {
-	case Multi:
-		for _, k := range multiKey {
-			if v := normtag.Values(t, k); accept(v) {
-				parts = slices.Clone(v)
-				break
-			}
-		}
-		if parts == nil {
-			for _, k := range key {
-				if v := normtag.Values(t, k); accept(v) {
-					parts = slices.Clone(v)
-					break
-				}
-			}
-		}
-	case Delim:
-		for _, k := range key {
-			if v := normtag.Get(t, k); v != "" {
-				if p := strings.Split(v, setting.Delim); accept(p) {
-					parts = p
-					break
-				}
-			}
-		}
-	default:
-		for _, k := range key {
-			if v := normtag.Get(t, k); accept([]string{v}) {
-				parts = []string{v}
-				break
-			}
-		}
-	}
-	for i := range parts {
-		parts[i] = strings.TrimSpace(parts[i])
-	}
-	return parts
 }
 
 type Credited struct {
@@ -211,23 +146,78 @@ type Credited struct {
 	MusicBrainzID      string
 }
 
-func pairCredits(values, valuesCredit, valuesMusicBrainzID []string) []Credited {
+func ReadCredits(t Tags, spec *Spec, setting MultiValueSetting) []Credited {
+	source, values := read(t, spec, setting)
+	credits := readKey(t, source.KeyCredit, setting)
+	musicBrainzIDs := readKey(t, source.KeyMusicBrainzID, setting)
+
 	out := make([]Credited, 0, len(values))
 	for i, v := range values {
 		if v == "" {
 			continue
 		}
 		e := Credited{Value: v}
-		if i < len(valuesCredit) && valuesCredit[i] != "" && valuesCredit[i] != v {
-			e.ValueCredit = valuesCredit[i]
+		if len(credits) == len(values) && credits[i] != v {
+			e.ValueCredit = credits[i]
 		}
-		// only pair MBIDs when their count matches the names, else a joined "A with B" name would wrongly adopt A's ID
-		if len(valuesMusicBrainzID) == len(values) {
-			e.MusicBrainzID = valuesMusicBrainzID[i]
+		if len(musicBrainzIDs) == len(values) {
+			e.MusicBrainzID = musicBrainzIDs[i]
 		}
 		out = append(out, e)
 	}
 	return out
+}
+
+func Read(t Tags, spec *Spec) (value, valueCredit string) {
+	source, values := read(t, spec, MultiValueSetting{})
+	i := slices.IndexFunc(values, func(v string) bool { return valid(spec, v) })
+	if i < 0 {
+		return "", ""
+	}
+	value = values[i]
+	if credits := readKey(t, source.KeyCredit, MultiValueSetting{}); len(credits) > 0 && credits[0] != value {
+		valueCredit = credits[0]
+	}
+	return value, valueCredit
+}
+
+func read(t Tags, spec *Spec, setting MultiValueSetting) (Source, []string) {
+	for _, source := range spec.Sources {
+		if source.Multi && setting.Mode != Multi {
+			continue
+		}
+		if values := readKey(t, source.Key, setting); slices.ContainsFunc(values, func(v string) bool { return valid(spec, v) }) {
+			return source, values
+		}
+	}
+	if spec.Fallback != "" {
+		return Source{}, []string{spec.Fallback}
+	}
+	return Source{}, nil
+}
+
+func readKey(t Tags, key string, setting MultiValueSetting) []string {
+	if key == "" {
+		return nil
+	}
+	var values []string
+	for _, v := range normtag.Values(t, key) {
+		var parts = []string{v}
+		if setting.Mode == Delim {
+			parts = strings.Split(v, setting.Delim)
+		}
+		for _, p := range parts {
+			values = append(values, strings.TrimSpace(p))
+		}
+	}
+	return values
+}
+
+func valid(spec *Spec, v string) bool {
+	if spec.Valid == nil {
+		return v != ""
+	}
+	return spec.Valid(v)
 }
 
 func ParseFloat(in string) float32 {

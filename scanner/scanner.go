@@ -423,7 +423,7 @@ func (s *Scanner) scanDir(st *State, absPath string) error {
 
 //nolint:gocyclo
 func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db.Album, track *db.Track, timeSpec times.Timespec, trprops tags.Properties, trags tags.Tags, basename, absPath string) error {
-	genreNames := tags.ReadValues(trags, tags.Genre, s.multiValueSettings)
+	genreNames := tags.ReadValues(trags, tags.Genre, s.multiValueSettings[tags.Genre])
 	genreIDs, err := populateGenres(tx, genreNames)
 	if err != nil {
 		return fmt.Errorf("populate genres: %w", err)
@@ -458,12 +458,12 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		createTime = timeSpec.BirthTime()
 	}
 
-	albumArtistEntries := tags.ReadCredits(trags, tags.AlbumArtist, s.multiValueSettings)
-	trackArtistEntries := tags.ReadCredits(trags, tags.Artist, s.multiValueSettings)
+	albumArtistEntries := tags.ReadCredits(trags, tags.AlbumArtist, s.multiValueSettings[tags.AlbumArtist])
+	trackArtistEntries := tags.ReadCredits(trags, tags.Artist, s.multiValueSettings[tags.Artist])
 
 	contributorEntries := make([][]tags.Credited, 0, len(trackContributorRoles))
 	for _, r := range trackContributorRoles {
-		contributorEntries = append(contributorEntries, tags.ReadCredits(trags, r.spec, nil))
+		contributorEntries = append(contributorEntries, tags.ReadCredits(trags, r.spec, tags.MultiValueSetting{Mode: tags.Multi}))
 	}
 
 	// if the same artist name appears with an MBID anywhere in this track's tags, prefer that MBID for the same name on credits where the
@@ -524,7 +524,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 		return fmt.Errorf("populate track genres: %w", err)
 	}
 
-	isrcs := tags.ReadValues(trags, tags.ISRC, s.multiValueSettings)
+	isrcs := tags.ReadValues(trags, tags.ISRC, s.multiValueSettings[tags.ISRC])
 	if err := populateTrackISRCs(tx, track, isrcs); err != nil {
 		return fmt.Errorf("populate track ISRCs: %w", err)
 	}

@@ -1251,13 +1251,11 @@ func TestPrefixOverlap(t *testing.T) {
 func TestReadDoubleDelim(t *testing.T) {
 	t.Parallel()
 
-	spec := &tags.Spec{Key: []string{"X"}}
+	spec := &tags.Spec{Sources: []tags.Source{{Key: "X"}}}
 	trags := tags.Tags{"X": {`DON'T//BE//⚜⚜⚜`}}
-	settings := map[*tags.Spec]tags.MultiValueSetting{
-		spec: {Mode: tags.Delim, Delim: `/`},
-	}
+	setting := tags.MultiValueSetting{Mode: tags.Delim, Delim: `/`}
 
-	values := tags.ReadValues(trags, spec, settings)
+	values := tags.ReadValues(trags, spec, setting)
 	require.Equal(t, []string{`DON'T`, ``, `BE`, ``, `⚜⚜⚜`}, values)
 }
 
