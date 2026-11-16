@@ -9,15 +9,25 @@
       "album": [
         {
           "id": "al-3",
-          "artist": "",
+          "album": "album-aa",
+          "artist": "artist-a",
           "artists": [],
-          "displayArtist": "",
+          "displayArtist": "artist-a",
           "albumArtists": [],
-          "displayAlbumArtist": "",
+          "displayAlbumArtist": "artist-a",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
-          "genres": [],
+          "duration": 300,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            },
+            {
+              "name": "Pop"
+            }
+          ],
           "isDir": true,
           "isVideo": false,
           "parent": "al-2",
@@ -34,15 +44,22 @@
         },
         {
           "id": "al-8",
-          "artist": "",
+          "album": "album-collab",
+          "artist": "collab-ab",
           "artists": [],
-          "displayArtist": "",
+          "displayArtist": "collab-ab",
           "albumArtists": [],
-          "displayAlbumArtist": "",
+          "displayAlbumArtist": "collab-ab",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
-          "genres": [],
+          "duration": 100,
+          "genre": "Pop",
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
           "isDir": true,
           "isVideo": false,
           "parent": "al-7",
@@ -57,15 +74,22 @@
         },
         {
           "id": "al-8",
-          "artist": "",
+          "album": "album-collab",
+          "artist": "collab-ab",
           "artists": [],
-          "displayArtist": "",
+          "displayArtist": "collab-ab",
           "albumArtists": [],
-          "displayAlbumArtist": "",
+          "displayAlbumArtist": "collab-ab",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
-          "genres": [],
+          "duration": 100,
+          "genre": "Pop",
+          "genres": [
+            {
+              "name": "Pop"
+            }
+          ],
           "isDir": true,
           "isVideo": false,
           "parent": "al-7",

@@ -9,15 +9,22 @@
       "album": [
         {
           "id": "al-15",
-          "artist": "",
+          "album": "album-cross",
+          "artist": "artist-a",
           "artists": [],
-          "displayArtist": "",
+          "displayArtist": "artist-a",
           "albumArtists": [],
-          "displayAlbumArtist": "",
+          "displayAlbumArtist": "artist-a",
           "contributors": [],
           "displayComposer": "",
           "created": "2019-11-30T00:00:00Z",
-          "genres": [],
+          "duration": 100,
+          "genre": "Rock",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
           "isDir": true,
           "isVideo": false,
           "parent": "al-14",
