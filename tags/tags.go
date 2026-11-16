@@ -140,7 +140,12 @@ func readMulti(t Tags, spec *Spec, settings map[*Spec]MultiValueSetting) (values
 	}
 
 	valuesCredit = read(t, spec.MultiKeyCredit, spec.KeyCredit, setting, nil)
-	valuesMusicBrainzID = read(t, nil, spec.KeyMusicBrainzID, setting, nil)
+	// MBID fields are reliably multi valued, read them all so pairCredits can spot a joined name with several IDs
+	mbidSetting := setting
+	if mbidSetting.Mode == None {
+		mbidSetting.Mode = Multi
+	}
+	valuesMusicBrainzID = read(t, nil, spec.KeyMusicBrainzID, mbidSetting, nil)
 
 	return values, valuesCredit, valuesMusicBrainzID
 }
