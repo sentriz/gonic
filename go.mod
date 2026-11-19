@@ -4,7 +4,6 @@ go 1.27
 
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
-	github.com/andybalholm/cascadia v1.3.5
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/dexterlb/mpvipc v0.0.0-20260722094525-0cf47d745b36
 	github.com/disintegration/imaging v1.6.2
