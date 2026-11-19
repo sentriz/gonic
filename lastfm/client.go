@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/andybalholm/cascadia"
 	"github.com/microcosm-cc/bluemonday"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/scrobble"
@@ -212,9 +211,6 @@ func (c *Client) GetSession(token string) (string, error) {
 	return resp.Session.Key, nil
 }
 
-//nolint:gochecknoglobals
-var artistOpenGraphQuery = cascadia.MustCompile(`html > head > meta[property="og:image"]`)
-
 // the placeholder star image, served from a few different hosts
 const lastfmPlaceholderImage = "2a96cbd8b46e442fc41c2b86b821562f"
 
@@ -233,7 +229,7 @@ func (c *Client) StealArtistImage(artistURL string) (string, error) {
 		return "", fmt.Errorf("parse html: %w", err)
 	}
 
-	n := cascadia.Query(node, artistOpenGraphQuery)
+	n := artistOpenGraphImage(node)
 	if n == nil {
 		return "", nil
 	}
@@ -250,6 +246,32 @@ func (c *Client) StealArtistImage(artistURL string) (string, error) {
 	}
 
 	return imageURL, nil
+}
+
+func artistOpenGraphImage(node *html.Node) *html.Node {
+	for htmlNode := range node.ChildNodes() {
+		if htmlNode.Type != html.ElementNode || htmlNode.Data != "html" {
+			continue
+		}
+		for headNode := range htmlNode.ChildNodes() {
+			if headNode.Type != html.ElementNode || headNode.Data != "head" {
+				continue
+			}
+			for metaNode := range headNode.ChildNodes() {
+				if metaNode.Type != html.ElementNode || metaNode.Data != "meta" {
+					continue
+				}
+				for _, attr := range metaNode.Attr {
+					if attr.Key == "property" && attr.Val == "og:image" {
+						return metaNode
+					}
+				}
+			}
+			break
+		}
+		break
+	}
+	return nil
 }
 
 func httpGetRetry(client *http.Client, url string, attempts int) (*http.Response, error) {
