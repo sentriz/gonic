@@ -5,6 +5,7 @@ package jukebox
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -18,7 +19,6 @@ import (
 	"time"
 
 	"github.com/dexterlb/mpvipc"
-	"github.com/mitchellh/mapstructure"
 )
 
 var (
@@ -319,7 +319,19 @@ func getDecode(conn *mpvipc.Connection, dest any, property string) error {
 	if err != nil {
 		return fmt.Errorf("get property: %w", err)
 	}
-	if err := mapstructure.Decode(raw, dest); err != nil {
+	if value, ok := dest.(*int); ok {
+		number, ok := raw.(float64)
+		if !ok {
+			return fmt.Errorf("decode: expected number, got %T", raw)
+		}
+		*value = int(number)
+		return nil
+	}
+	data, err := json.Marshal(raw)
+	if err != nil {
+		return fmt.Errorf("encode: %w", err)
+	}
+	if err := json.Unmarshal(data, dest); err != nil {
 		return fmt.Errorf("decode: %w", err)
 	}
 	return nil
