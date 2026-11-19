@@ -18,7 +18,6 @@ require (
 	github.com/gorilla/securecookie v1.1.2
 	github.com/gorilla/sessions v1.4.0
 	github.com/jinzhu/gorm v1.9.17-0.20211120011537-5c235b72a414
-	github.com/josephburnett/jd v1.9.2
 	github.com/mattn/go-sqlite3 v1.14.52
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mitchellh/mapstructure v1.5.0
