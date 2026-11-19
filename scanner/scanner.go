@@ -48,20 +48,30 @@ type Scanner struct {
 	scanning           *int32
 }
 
-func New(musicDirs []string, db *db.DB, multiValueSettings map[*tags.Spec]tags.MultiValueSetting, tagReader tags.Reader, excludePattern string, scanEmbeddedCover bool, genreTree map[string][]string) *Scanner {
+type Options struct {
+	MusicDirs          []string
+	DB                 *db.DB
+	MultiValueSettings map[*tags.Spec]tags.MultiValueSetting
+	TagReader          tags.Reader
+	ExcludePattern     string
+	ScanEmbeddedCover  bool
+	GenreTree          map[string][]string
+}
+
+func New(opts Options) *Scanner {
 	var excludePatternRegExp *regexp.Regexp
-	if excludePattern != "" {
-		excludePatternRegExp = regexp.MustCompile(excludePattern)
+	if opts.ExcludePattern != "" {
+		excludePatternRegExp = regexp.MustCompile(opts.ExcludePattern)
 	}
 
 	return &Scanner{
-		db:                 db,
-		musicDirs:          musicDirs,
-		multiValueSettings: multiValueSettings,
-		tagReader:          tagReader,
+		db:                 opts.DB,
+		musicDirs:          opts.MusicDirs,
+		multiValueSettings: opts.MultiValueSettings,
+		tagReader:          opts.TagReader,
 		excludePattern:     excludePatternRegExp,
-		scanEmbeddedCover:  scanEmbeddedCover,
-		genreTree:          genreTree,
+		scanEmbeddedCover:  opts.ScanEmbeddedCover,
+		genreTree:          opts.GenreTree,
 		scanning:           new(int32),
 	}
 }

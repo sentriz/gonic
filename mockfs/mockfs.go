@@ -71,7 +71,14 @@ func newMockFS(tb testing.TB, dirs []string, excludePattern string) *MockFS {
 	}
 
 	tagReader := &tagReader{paths: map[string]*TagInfo{}}
-	scanner := scanner.New(absDirs, dbc, multiValueSettings, tagReader, excludePattern, true, nil)
+	scanner := scanner.New(scanner.Options{
+		MusicDirs:          absDirs,
+		DB:                 dbc,
+		MultiValueSettings: multiValueSettings,
+		TagReader:          tagReader,
+		ExcludePattern:     excludePattern,
+		ScanEmbeddedCover:  true,
+	})
 
 	return &MockFS{
 		t:         tb,
