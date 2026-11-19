@@ -14,11 +14,11 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"testing"
 	"time"
 
-	jd "github.com/josephburnett/jd/lib"
 	"github.com/stretchr/testify/require"
 	"go.senan.xyz/wrtag/tags/normtag"
 
@@ -502,26 +502,46 @@ func (f *fixture) run(t *testing.T, h handlerSubsonic, user *db.User, cases ...q
 				t.SkipNow()
 			}
 
-			expected, err := jd.ReadJsonFile(goldenPath)
+			expected, err := os.ReadFile(goldenPath)
 			if err != nil {
-				t.Fatalf("parsing expected: %v", err)
+				t.Fatalf("reading expected: %v", err)
 			}
-			actual, err := jd.ReadJsonString(body)
-			if err != nil {
-				t.Fatalf("parsing actual: %v", err)
-			}
-			diffOpts := []jd.Metadata{}
+			actual := []byte(body)
 			if qc.listSet {
-				diffOpts = append(diffOpts, jd.SET)
+				expected = canonicalJSON(t, expected)
+				actual = canonicalJSON(t, actual)
 			}
-			diff := expected.Diff(actual, diffOpts...)
-
-			if len(diff) > 0 {
-				t.Errorf("[31;1mhandler json differs from test json[0m")
-				t.Errorf("[33;1mif you want to regenerate it, re-run with GONIC_REGEN=%s[0m\n", t.Name())
-				t.Error(diff.Render())
-			}
+			require.JSONEq(t, string(expected), string(actual),
+				"if you want to regenerate it, re-run with GONIC_REGEN=%s", t.Name())
 		})
+	}
+}
+
+func canonicalJSON(t *testing.T, input []byte) []byte {
+	t.Helper()
+	var value any
+	require.NoError(t, json.Unmarshal(input, &value))
+	sortJSONArrays(value)
+	output, err := json.Marshal(value)
+	require.NoError(t, err)
+	return output
+}
+
+func sortJSONArrays(value any) {
+	switch value := value.(type) {
+	case []any:
+		for _, item := range value {
+			sortJSONArrays(item)
+		}
+		sort.Slice(value, func(i, j int) bool {
+			left, _ := json.Marshal(value[i])
+			right, _ := json.Marshal(value[j])
+			return bytes.Compare(left, right) < 0
+		})
+	case map[string]any:
+		for _, item := range value {
+			sortJSONArrays(item)
+		}
 	}
 }
 
