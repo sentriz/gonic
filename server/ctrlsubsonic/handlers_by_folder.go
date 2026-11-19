@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/db"
@@ -196,7 +195,7 @@ func (c *Controller) ServeSearchTwo(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide a `query` parameter")
 	}
 
-	var isUUID = uuid.Validate(query) == nil
+	var isUUID = validUUID(query)
 	var isAll = query == `""`
 
 	fuzzy := buildFuzzy(query)

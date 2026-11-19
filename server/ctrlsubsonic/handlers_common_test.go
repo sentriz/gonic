@@ -14,6 +14,26 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/spec"
 )
 
+func TestValidUUID(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		value string
+		valid bool
+	}{
+		{value: "00000000-0000-0000-0000-0000000000ab", valid: true},
+		{value: "000000000000000000000000000000ab", valid: true},
+		{value: "{00000000-0000-0000-0000-0000000000ab}", valid: true},
+		{value: "urn:uuid:00000000-0000-0000-0000-0000000000ab", valid: true},
+		{value: "00000000-0000-0000-0000-0000000000ag", valid: false},
+		{value: "000000000000000000000000000000ag", valid: false},
+		{value: "[00000000-0000-0000-0000-0000000000ab]", valid: false},
+		{value: "not-a-uuid", valid: false},
+	} {
+		require.Equal(t, tc.valid, validUUID(tc.value), tc.value)
+	}
+}
+
 func TestBuildFuzzy(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
