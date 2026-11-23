@@ -46,6 +46,7 @@ func TestAuthenticateProxyUser(t *testing.T) {
 	}
 
 	t.Run("disabled when header empty", func(t *testing.T) {
+		t.Parallel()
 		cDisabled := &Controller{dbc: dbc}
 		user, err := cDisabled.authenticateProxyUser(httptest.NewRequest(http.MethodGet, "/", nil))
 		if err != nil || user != nil {
@@ -54,6 +55,7 @@ func TestAuthenticateProxyUser(t *testing.T) {
 	})
 
 	t.Run("absent header falls through", func(t *testing.T) {
+		t.Parallel()
 		user, err := c.authenticateProxyUser(httptest.NewRequest(http.MethodGet, "/", nil))
 		if err != nil || user != nil {
 			t.Fatalf("got user=%v err=%v, want nil", user, err)
@@ -61,6 +63,7 @@ func TestAuthenticateProxyUser(t *testing.T) {
 	})
 
 	t.Run("creates user and syncs admin", func(t *testing.T) {
+		t.Parallel()
 		r := httptest.NewRequest(http.MethodGet, "/", nil)
 		r.Header.Set("Remote-User", "alice")
 		r.Header.Set("Remote-Groups", "users,gonic-admins")

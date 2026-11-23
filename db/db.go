@@ -19,17 +19,15 @@ import (
 	"go.senan.xyz/gonic/server/ctrlsubsonic/specid"
 )
 
-func init() {
-	// OS mime databases disagree (e.g. macOS audio/x-flac vs Linux audio/flac).
-	// Pin IANA types so API responses and golden tests are stable across platforms.
-	_ = mime.AddExtensionType(".flac", "audio/flac")
-}
-
 type DB struct {
 	*gorm.DB
 }
 
 func New(path string, opts url.Values, logQueries bool) (*DB, error) {
+	// OS mime databases disagree (e.g. macOS audio/x-flac vs Linux audio/flac).
+	// Pin IANA types so API responses and golden tests are stable across platforms.
+	_ = mime.AddExtensionType(".flac", "audio/flac")
+
 	u := url.URL{
 		Scheme:   "file",
 		Opaque:   path,

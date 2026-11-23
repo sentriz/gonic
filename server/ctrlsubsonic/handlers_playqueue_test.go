@@ -13,8 +13,8 @@ import (
 
 type playQueueAPIResponse struct {
 	Response struct {
-		Status  string `json:"status"`
-		Error   *struct {
+		Status string `json:"status"`
+		Error  *struct {
 			Code    int    `json:"code"`
 			Message string `json:"message"`
 		} `json:"error"`
