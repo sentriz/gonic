@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/andybalholm/cascadia"
 	"github.com/microcosm-cc/bluemonday"
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/scrobble"
@@ -212,9 +211,6 @@ func (c *Client) GetSession(token string) (string, error) {
 	return resp.Session.Key, nil
 }
 
-//nolint:gochecknoglobals
-var artistOpenGraphQuery = cascadia.MustCompile(`html > head > meta[property="og:image"]`)
-
 // the placeholder star image, served from a few different hosts
 const lastfmPlaceholderImage = "2a96cbd8b46e442fc41c2b86b821562f"
 
@@ -233,15 +229,10 @@ func (c *Client) StealArtistImage(artistURL string) (string, error) {
 		return "", fmt.Errorf("parse html: %w", err)
 	}
 
-	n := cascadia.Query(node, artistOpenGraphQuery)
-	if n == nil {
-		return "", nil
-	}
-
 	var imageURL string
-	for _, attr := range n.Attr {
-		if attr.Key == "content" {
-			imageURL = attr.Val
+	for n := range node.Descendants() {
+		if n.Type == html.ElementNode && n.Data == "meta" && htmlAttr(n, "property") == "og:image" {
+			imageURL = htmlAttr(n, "content")
 			break
 		}
 	}
@@ -250,6 +241,15 @@ func (c *Client) StealArtistImage(artistURL string) (string, error) {
 	}
 
 	return imageURL, nil
+}
+
+func htmlAttr(n *html.Node, key string) string {
+	for _, attr := range n.Attr {
+		if attr.Key == key {
+			return attr.Val
+		}
+	}
+	return ""
 }
 
 func httpGetRetry(client *http.Client, url string, attempts int) (*http.Response, error) {
