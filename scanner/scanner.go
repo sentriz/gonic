@@ -387,22 +387,31 @@ func (s *Scanner) scanDir(st *State, absPath string) error {
 	// read tags outside the transaction to avoid holding db locks during disk i/o
 	type trackTagData struct {
 		trackUpdate
+		first   bool
 		trprops tags.Properties
 		trags   tags.Tags
 	}
 	tagData := make([]trackTagData, 0, len(trackUpdates))
+	var numUnreadable int
 	for _, t := range trackUpdates {
 		trprops, trags, err := s.tagReader.Read(t.absPath)
 		if err != nil {
-			return fmt.Errorf("read %q: %w: %w", t.basename, err, ErrReadingTags)
+			// skip broken track, but continue with the rest of the directory
+			st.errs = append(st.errs, fmt.Errorf("read %q: %w: %w", t.absPath, err, ErrReadingTags))
+			numUnreadable++
+			continue
 		}
-		tagData = append(tagData, trackTagData{trackUpdate: t, trprops: trprops, trags: trags})
+		tagData = append(tagData, trackTagData{trackUpdate: t, first: t.i == numUnreadable, trprops: trprops, trags: trags})
+	}
+
+	if len(tagData) == 0 {
+		return nil
 	}
 
 	return s.db.Transaction(func(tx *db.DB) error {
 		var discTitles = map[int]string{}
 		for _, t := range tagData {
-			if err := s.populateTrackAndArtists(tx, st, t.i, &album, t.track, t.timeSpec, t.trprops, t.trags, t.basename, t.absPath); err != nil {
+			if err := s.populateTrackAndArtists(tx, st, t.first, &album, t.track, t.timeSpec, t.trprops, t.trags, t.basename, t.absPath); err != nil {
 				return fmt.Errorf("populate track %q: %w", t.basename, err)
 			}
 
@@ -422,7 +431,7 @@ func (s *Scanner) scanDir(st *State, absPath string) error {
 }
 
 //nolint:gocyclo
-func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db.Album, track *db.Track, timeSpec times.Timespec, trprops tags.Properties, trags tags.Tags, basename, absPath string) error {
+func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, first bool, album *db.Album, track *db.Track, timeSpec times.Timespec, trprops tags.Properties, trags tags.Tags, basename, absPath string) error {
 	genreNames := tags.ReadValues(trags, tags.Genre, s.multiValueSettings[tags.Genre])
 	genreIDs, err := populateGenres(tx, genreNames)
 	if err != nil {
@@ -478,7 +487,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 	}
 
 	// metadata for the album table comes only from the first track's tags
-	if i == 0 {
+	if first {
 		if err := tx.Where("album_id=?", album.ID).Delete(db.AlbumCredit{}).Error; err != nil {
 			return fmt.Errorf("delete album credits: %w", err)
 		}
@@ -560,7 +569,7 @@ func (s *Scanner) populateTrackAndArtists(tx *db.DB, st *State, i int, album *db
 	}
 
 	// possible album level embedded covers come only from the first track
-	if i == 0 {
+	if first {
 		if err := populateAlbumEmbeddedCover(tx, s.scanEmbeddedCover, album, track, trprops); err != nil {
 			return fmt.Errorf("populate embedded cover: %w", err)
 		}
