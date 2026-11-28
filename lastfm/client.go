@@ -229,15 +229,10 @@ func (c *Client) StealArtistImage(artistURL string) (string, error) {
 		return "", fmt.Errorf("parse html: %w", err)
 	}
 
-	n := artistOpenGraphImage(node)
-	if n == nil {
-		return "", nil
-	}
-
 	var imageURL string
-	for _, attr := range n.Attr {
-		if attr.Key == "content" {
-			imageURL = attr.Val
+	for n := range node.Descendants() {
+		if n.Type == html.ElementNode && n.Data == "meta" && htmlAttr(n, "property") == "og:image" {
+			imageURL = htmlAttr(n, "content")
 			break
 		}
 	}
@@ -248,30 +243,13 @@ func (c *Client) StealArtistImage(artistURL string) (string, error) {
 	return imageURL, nil
 }
 
-func artistOpenGraphImage(node *html.Node) *html.Node {
-	for htmlNode := range node.ChildNodes() {
-		if htmlNode.Type != html.ElementNode || htmlNode.Data != "html" {
-			continue
+func htmlAttr(n *html.Node, key string) string {
+	for _, attr := range n.Attr {
+		if attr.Key == key {
+			return attr.Val
 		}
-		for headNode := range htmlNode.ChildNodes() {
-			if headNode.Type != html.ElementNode || headNode.Data != "head" {
-				continue
-			}
-			for metaNode := range headNode.ChildNodes() {
-				if metaNode.Type != html.ElementNode || metaNode.Data != "meta" {
-					continue
-				}
-				for _, attr := range metaNode.Attr {
-					if attr.Key == "property" && attr.Val == "og:image" {
-						return metaNode
-					}
-				}
-			}
-			break
-		}
-		break
 	}
-	return nil
+	return ""
 }
 
 func httpGetRetry(client *http.Client, url string, attempts int) (*http.Response, error) {
