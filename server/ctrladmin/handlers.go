@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nfnt/resize"
+	"github.com/disintegration/imaging"
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/handlerutil"
@@ -722,7 +722,7 @@ func getAvatarFile(r *http.Request) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("decode image: %w", err)
 	}
-	resized := resize.Resize(64, 64, i, resize.Lanczos3)
+	resized := imaging.Resize(i, 64, 64, imaging.Lanczos)
 	var buff bytes.Buffer
 	if err := jpeg.Encode(&buff, resized, nil); err != nil {
 		return nil, err
