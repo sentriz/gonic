@@ -391,12 +391,21 @@ func (s *Scanner) scanDir(st *State, absPath string) error {
 		trags   tags.Tags
 	}
 	tagData := make([]trackTagData, 0, len(trackUpdates))
+	var numUnreadable int
 	for _, t := range trackUpdates {
 		trprops, trags, err := s.tagReader.Read(t.absPath)
 		if err != nil {
-			return fmt.Errorf("read %q: %w: %w", t.basename, err, ErrReadingTags)
+			// skip broken track, but continue with the rest of the directory
+			st.errs = append(st.errs, fmt.Errorf("read %q: %w: %w", t.absPath, err, ErrReadingTags))
+			numUnreadable++
+			continue
 		}
+		t.i -= numUnreadable
 		tagData = append(tagData, trackTagData{trackUpdate: t, trprops: trprops, trags: trags})
+	}
+
+	if len(tagData) == 0 {
+		return nil
 	}
 
 	return s.db.Transaction(func(tx *db.DB) error {
