@@ -16,9 +16,9 @@ import (
 	"sync"
 	"time"
 	"unicode"
+	"uuid"
 
 	"github.com/env25/mpdlrc/lrc"
-	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/db"
@@ -85,10 +85,10 @@ func (c *Controller) ServeScrobble(r *http.Request) *spec.Response {
 		scrobbleTrack.AlbumArtist = track.Album.TagAlbumArtist
 		scrobbleTrack.TrackNumber = uint(track.TagTrackNumber)
 		scrobbleTrack.Duration = time.Second * time.Duration(track.Length)
-		if err := uuid.Validate(track.TagBrainzID); err == nil {
+		if validUUID(track.TagBrainzID) {
 			scrobbleTrack.MusicBrainzID = track.TagBrainzID
 		}
-		if err := uuid.Validate(track.Album.TagBrainzID); err == nil {
+		if validUUID(track.Album.TagBrainzID) {
 			scrobbleTrack.MusicBrainzReleaseID = track.Album.TagBrainzID
 		}
 
@@ -858,6 +858,11 @@ func buildFuzzy(query string) string {
 		return fuzzy + "%"
 	}
 	return "%" + fuzzy + "%"
+}
+
+func validUUID(s string) bool {
+	_, err := uuid.Parse(s)
+	return err == nil
 }
 
 func lowerUDecOrHash(in string) string {

@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 
 	"go.senan.xyz/gonic/db"
@@ -218,7 +217,7 @@ func (c *Controller) ServeSearchThree(r *http.Request) *spec.Response {
 		return spec.NewError(10, "please provide a `query` parameter")
 	}
 
-	var isUUID = uuid.Validate(query) == nil
+	var isUUID = validUUID(query)
 	var isAll = query == `""`
 
 	fuzzy := buildFuzzy(query)
@@ -342,7 +341,7 @@ func (c *Controller) ServeGetArtistInfoTwo(r *http.Request) *spec.Response {
 	sub.ArtistInfoTwo.MusicBrainzID = info.MusicBrainzID
 	sub.ArtistInfoTwo.LastFMURL = info.LastFMURL
 
-	if err := uuid.Validate(artist.MusicBrainzID); err == nil {
+	if validUUID(artist.MusicBrainzID) {
 		sub.ArtistInfoTwo.MusicBrainzID = artist.MusicBrainzID // prefer db musicbrainz ID over lastfm's
 	}
 
@@ -442,7 +441,7 @@ func (c *Controller) ServeGetAlbumInfoTwo(r *http.Request) *spec.Response {
 	sub.AlbumInfo.MusicBrainzID = info.MusicBrainzID
 	sub.AlbumInfo.LastFMURL = info.LastFMURL
 
-	if err := uuid.Validate(album.TagBrainzID); err == nil {
+	if validUUID(album.TagBrainzID) {
 		sub.AlbumInfo.MusicBrainzID = album.TagBrainzID // prefer db musicbrainz ID over lastfm's
 	}
 
