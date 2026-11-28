@@ -230,7 +230,9 @@ func playlistRender(c *Controller, params paramsp.Params, playlist *playlistp.Pl
 		SongCount: len(playlist.Items),
 		Public:    playlist.IsPublic,
 		Owner:     user.Name,
-		CoverID:   &playlistID,
+	}
+	if playlist.CoverPath != "" {
+		resp.CoverID = &playlistID
 	}
 	if !withItems {
 		return resp, nil

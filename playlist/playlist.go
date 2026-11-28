@@ -12,6 +12,8 @@ import (
 	"sync"
 	"time"
 
+	"go.senan.xyz/wrtag/coverparse"
+
 	"go.senan.xyz/gonic/fileutil"
 )
 
@@ -33,6 +35,7 @@ type Playlist struct {
 	Comment   string
 	Items     []string
 	IsPublic  bool
+	CoverPath string
 }
 
 type Store struct {
@@ -118,6 +121,21 @@ func (s *Store) Read(relPath string) (*Playlist, error) {
 	}
 
 	playlist.Name = strings.TrimSuffix(filepath.Base(cleanRel), filepath.Ext(cleanRel))
+
+	entries, err := os.ReadDir(filepath.Dir(absPath))
+	if err != nil {
+		return nil, fmt.Errorf("read playlist dir: %w", err)
+	}
+	var cover string
+	for _, entry := range entries {
+		name := entry.Name()
+		if !entry.IsDir() && strings.TrimSuffix(name, filepath.Ext(name)) == playlist.Name && coverparse.IsCover(name) {
+			cover = coverparse.BestBetween(cover, name)
+		}
+	}
+	if cover != "" {
+		playlist.CoverPath = filepath.Join(filepath.Dir(absPath), cover)
+	}
 
 	file, err := os.Open(absPath)
 	if err != nil {

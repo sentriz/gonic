@@ -12,13 +12,11 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/disintegration/imaging"
 	"github.com/djherbis/times"
 	"github.com/jinzhu/gorm"
-	"go.senan.xyz/wrtag/coverparse"
 
 	"go.senan.xyz/gonic/db"
 	"go.senan.xyz/gonic/fileutil"
@@ -66,18 +64,11 @@ func (c *Controller) ServeGetCoverArt(w http.ResponseWriter, r *http.Request) *s
 		return spec.NewError(0, "invalid size")
 	}
 
-	if id.Type == specid.Playlist {
-		user := r.Context().Value(CtxUser).(*db.User)
-		pl, err := c.playlistStore.Read(playlistIDDecode(id))
-		if err != nil {
-			return spec.NewError(70, "playlist with id %s not found", id)
-		}
-		if pl.UserID != user.ID && !pl.IsPublic {
-			return spec.NewError(50, "you aren't allowed to read that user's playlist")
-		}
+	user := r.Context().Value(CtxUser).(*db.User)
+	sourcePath, openCover, err := coverFor(c.dbc, c.artistInfoCache, c.playlistStore, c.tagReader, user.ID, id)
+	if errors.Is(err, errCoverForbidden) {
+		return spec.NewError(50, "not allowed to read cover %q: %v", id, err)
 	}
-
-	sourcePath, openCover, err := coverFor(c.dbc, c.artistInfoCache, c.playlistStore, c.tagReader, id)
 	if err != nil {
 		return spec.NewError(70, "couldn't find cover %q: %v", id, err)
 	}
@@ -179,12 +170,13 @@ func isCachedCoverFresh(cachePath string, sourceChanged time.Time) bool {
 }
 
 var (
-	errCoverNotFound = errors.New("could not find a cover with that id")
-	errCoverEmpty    = errors.New("no cover found")
+	errCoverNotFound  = errors.New("could not find a cover with that id")
+	errCoverEmpty     = errors.New("no cover found")
+	errCoverForbidden = errors.New("forbidden")
 )
 
 // TODO: can we use specidpaths.Locate here?
-func coverFor(dbc *db.DB, artistInfoCache *artistinfocache.ArtistInfoCache, playlistStore *playlist.Store, tagReader tags.Reader, id specid.ID) (string, func() (io.ReadCloser, error), error) {
+func coverFor(dbc *db.DB, artistInfoCache *artistinfocache.ArtistInfoCache, playlistStore *playlist.Store, tagReader tags.Reader, userID int, id specid.ID) (string, func() (io.ReadCloser, error), error) {
 	var path string
 	var err error
 	switch id.Type {
@@ -200,7 +192,7 @@ func coverFor(dbc *db.DB, artistInfoCache *artistinfocache.ArtistInfoCache, play
 	case specid.PodcastEpisode:
 		path, err = coverPathForPodcastEpisode(dbc, id.Value)
 	case specid.Playlist:
-		path, err = coverPathForPlaylist(playlistStore, id)
+		path, err = coverPathForPlaylist(playlistStore, userID, id)
 	default:
 		return "", nil, errCoverNotFound
 	}
@@ -294,36 +286,18 @@ func coverForTrack(tagReader tags.Reader, absPath string) (io.ReadCloser, error)
 	return io.NopCloser(bytes.NewReader(cover)), nil
 }
 
-func coverPathForPlaylist(playlistStore *playlist.Store, id specid.ID) (string, error) {
-	playlistPath := playlistIDDecode(id)
-	playlistDir, err := fileutil.SafeJoin(playlistStore.BasePath(), filepath.Dir(playlistPath))
+func coverPathForPlaylist(playlistStore *playlist.Store, userID int, id specid.ID) (string, error) {
+	pl, err := playlistStore.Read(playlistIDDecode(id))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("read playlist: %w", err)
 	}
-	playlistBase := strings.TrimSuffix(filepath.Base(playlistPath), filepath.Ext(playlistPath))
-
-	entries, err := os.ReadDir(playlistDir)
-	if err != nil {
-		return "", fmt.Errorf("read playlist dir: %w", err)
+	if pl.UserID != userID && !pl.IsPublic {
+		return "", fmt.Errorf("%w: playlist belongs to another user", errCoverForbidden)
 	}
-
-	var cover string
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
-		name := entry.Name()
-		nameBase := strings.TrimSuffix(name, filepath.Ext(name))
-		if nameBase == playlistBase && coverparse.IsCover(name) {
-			cover = coverparse.BestBetween(cover, name)
-		}
-	}
-
-	if cover == "" {
+	if pl.CoverPath == "" {
 		return "", errCoverEmpty
 	}
-
-	return filepath.Join(playlistDir, cover), nil
+	return pl.CoverPath, nil
 }
 
 func (c *Controller) ServeStream(w http.ResponseWriter, r *http.Request) *spec.Response {
