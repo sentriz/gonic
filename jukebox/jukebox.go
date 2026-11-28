@@ -289,8 +289,11 @@ func (j *Jukebox) GetStatus() (*Status, error) {
 	defer lockr(&j.mu)()
 
 	var status Status
-	_ = getDecode(j.conn, &status.Position, "time-pos") // property may not always be there
-	_ = getDecode(j.conn, &status.GainPct, "volume")    // property may not always be there
+	var position, gain float64
+	_ = getDecode(j.conn, &position, "time-pos") // property may not always be there
+	_ = getDecode(j.conn, &gain, "volume")       // property may not always be there
+	status.Position = int(position)
+	status.GainPct = int(gain)
 
 	var playlist mpvPlaylist
 	_ = getDecode(j.conn, &playlist, "playlist")
@@ -318,14 +321,6 @@ func getDecode(conn *mpvipc.Connection, dest any, property string) error {
 	raw, err := conn.Get(property)
 	if err != nil {
 		return fmt.Errorf("get property: %w", err)
-	}
-	if value, ok := dest.(*int); ok {
-		number, ok := raw.(float64)
-		if !ok {
-			return fmt.Errorf("decode: expected number, got %T", raw)
-		}
-		*value = int(number)
-		return nil
 	}
 	data, err := json.Marshal(raw)
 	if err != nil {
