@@ -337,31 +337,18 @@ func funcMap() template.FuncMap {
 				k, v := fmt.Sprint(values[i]), values[i+1]
 				props[k] = v
 			}
-			merged := structMap(parent)
+			var merged = map[string]any{}
+			if v := reflect.Indirect(reflect.ValueOf(parent)); v.Kind() == reflect.Struct {
+				for f, fv := range v.Fields() {
+					if f.IsExported() {
+						merged[f.Name] = fv.Interface()
+					}
+				}
+			}
 			merged["Props"] = props
 			return merged
 		},
 	}
-}
-
-func structMap(in any) map[string]any {
-	value := reflect.ValueOf(in)
-	for value.IsValid() && (value.Kind() == reflect.Interface || value.Kind() == reflect.Pointer) {
-		value = value.Elem()
-	}
-	if !value.IsValid() || value.Kind() != reflect.Struct {
-		return map[string]any{}
-	}
-
-	typ := value.Type()
-	out := make(map[string]any, value.NumField())
-	for i := 0; i < value.NumField(); i++ {
-		field := typ.Field(i)
-		if field.IsExported() {
-			out[field.Name] = value.Field(i).Interface()
-		}
-	}
-	return out
 }
 
 //  utilities
