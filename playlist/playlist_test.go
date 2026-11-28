@@ -1,6 +1,8 @@
 package playlist_test
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -54,4 +56,38 @@ It has multiple lines 👍
 	playlistIDs, err = store.List()
 	require.NoError(t, err)
 	require.True(t, len(playlistIDs) == 1)
+}
+
+func TestPlaylistCoverPath(t *testing.T) {
+	t.Parallel()
+
+	tmp := t.TempDir()
+	store, err := playlist.NewStore(tmp)
+	require.NoError(t, err)
+
+	files := []string{
+		"1/a.m3u", "1/a.jpg",
+		"1/b.m3u", "1/b.png",
+		"1/c.m3u",
+		"1/sub/d.m3u", "1/sub/d.jpg",
+	}
+	for _, f := range files {
+		path := filepath.Join(tmp, f)
+		require.NoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
+		require.NoError(t, os.WriteFile(path, nil, 0o600))
+	}
+
+	for relPath, coverPath := range map[string]string{
+		"1/a.m3u":     "1/a.jpg",
+		"1/b.m3u":     "1/b.png",
+		"1/c.m3u":     "",
+		"1/sub/d.m3u": "1/sub/d.jpg",
+	} {
+		pl, err := store.Read(relPath)
+		require.NoError(t, err)
+		if coverPath != "" {
+			coverPath = filepath.Join(tmp, coverPath)
+		}
+		require.Equal(t, coverPath, pl.CoverPath, relPath)
+	}
 }

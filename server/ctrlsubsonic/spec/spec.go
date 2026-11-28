@@ -391,6 +391,7 @@ type Playlist struct {
 	Comment   string        `xml:"comment,attr"    json:"comment"`
 	Owner     string        `xml:"owner,attr"      json:"owner"`
 	SongCount int           `xml:"songCount,attr"  json:"songCount"`
+	CoverID   *specid.ID    `xml:"coverArt,attr"   json:"coverArt,omitempty"`
 	Created   time.Time     `xml:"created,attr"    json:"created"`
 	Changed   time.Time     `xml:"changed,attr"    json:"changed"`
 	Duration  int           `xml:"duration,attr"   json:"duration"`

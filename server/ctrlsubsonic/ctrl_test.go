@@ -432,6 +432,7 @@ func newFixture(tb testing.TB) *fixture {
 			},
 		},
 	))
+	require.NoError(tb, os.WriteFile(filepath.Join(playlistDir, "1", "shared.jpg"), nil, 0o600))
 
 	f.contr = &Controller{
 		dbc:              dbc,
