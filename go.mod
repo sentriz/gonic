@@ -20,7 +20,6 @@ require (
 	github.com/josephburnett/jd v1.9.2
 	github.com/mattn/go-sqlite3 v1.14.52
 	github.com/microcosm-cc/bluemonday v1.0.27
-	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mmcdole/gofeed v1.5.0
 	github.com/ncruces/go-sqlite3 v0.35.6
 	github.com/philippta/go-template v0.0.0-20220911145045-4556aca435e4

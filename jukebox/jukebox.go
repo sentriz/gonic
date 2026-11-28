@@ -5,6 +5,7 @@ package jukebox
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -18,7 +19,6 @@ import (
 	"time"
 
 	"github.com/dexterlb/mpvipc"
-	"github.com/mitchellh/mapstructure"
 )
 
 var (
@@ -289,8 +289,11 @@ func (j *Jukebox) GetStatus() (*Status, error) {
 	defer lockr(&j.mu)()
 
 	var status Status
-	_ = getDecode(j.conn, &status.Position, "time-pos") // property may not always be there
-	_ = getDecode(j.conn, &status.GainPct, "volume")    // property may not always be there
+	var position, gain float64
+	_ = getDecode(j.conn, &position, "time-pos") // property may not always be there
+	_ = getDecode(j.conn, &gain, "volume")       // property may not always be there
+	status.Position = int(position)
+	status.GainPct = int(gain)
 
 	var playlist mpvPlaylist
 	_ = getDecode(j.conn, &playlist, "playlist")
@@ -319,7 +322,11 @@ func getDecode(conn *mpvipc.Connection, dest any, property string) error {
 	if err != nil {
 		return fmt.Errorf("get property: %w", err)
 	}
-	if err := mapstructure.Decode(raw, dest); err != nil {
+	data, err := json.Marshal(raw)
+	if err != nil {
+		return fmt.Errorf("encode: %w", err)
+	}
+	if err := json.Unmarshal(data, dest); err != nil {
 		return fmt.Errorf("decode: %w", err)
 	}
 	return nil
