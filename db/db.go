@@ -414,6 +414,13 @@ func (a *Album) SID() *specid.ID {
 	return &specid.ID{Type: specid.Album, Value: a.ID}
 }
 
+func (a *Album) AbsPath() string {
+	if a.RootDir == "" {
+		return ""
+	}
+	return filepath.Join(a.RootDir, a.LeftPath, a.RightPath)
+}
+
 func (a *Album) ParentSID() *specid.ID {
 	return &specid.ID{Type: specid.Album, Value: a.ParentID}
 }

@@ -432,15 +432,19 @@ func (c *Controller) ServeGetAlbumInfoTwo(r *http.Request) *spec.Response {
 	sub := spec.NewResponse()
 	sub.AlbumInfo = &spec.AlbumInfo{}
 
-	info, err := c.albumInfoCache.GetOrLookup(r.Context(), album.ID)
-	if err != nil {
+	if info, err := c.albumInfoCache.GetOrLookup(r.Context(), album.ID); err != nil {
 		log.Printf("error fetching album info from lastfm: %v", err)
-		return sub
+	} else {
+		sub.AlbumInfo.Notes = albuminfocache.Notes(info)
+		sub.AlbumInfo.MusicBrainzID = info.MusicBrainzID
+		sub.AlbumInfo.LastFMURL = info.LastFMURL
 	}
 
-	sub.AlbumInfo.Notes = albuminfocache.Notes(info)
-	sub.AlbumInfo.MusicBrainzID = info.MusicBrainzID
-	sub.AlbumInfo.LastFMURL = info.LastFMURL
+	if nfoNotes, err := albumNotesFromNFO(album); err != nil {
+		log.Printf("error reading album nfo for %q: %v", album.RightPath, err)
+	} else if nfoNotes != "" {
+		sub.AlbumInfo.Notes = nfoNotes
+	}
 
 	if err := uuid.Validate(album.TagBrainzID); err == nil {
 		sub.AlbumInfo.MusicBrainzID = album.TagBrainzID // prefer db musicbrainz ID over lastfm's
