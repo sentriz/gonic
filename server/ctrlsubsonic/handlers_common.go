@@ -43,11 +43,6 @@ func (c *Controller) ServePing(_ *http.Request) *spec.Response {
 	return spec.NewResponse()
 }
 
-func validUUID(s string) bool {
-	_, err := uuid.Parse(s)
-	return err == nil
-}
-
 func (c *Controller) ServeGetOpenSubsonicExtensions(_ *http.Request) *spec.Response {
 	sub := spec.NewResponse()
 	sub.OpenSubsonicExtensions = &spec.OpenSubsonicExtensions{
@@ -863,6 +858,11 @@ func buildFuzzy(query string) string {
 		return fuzzy + "%"
 	}
 	return "%" + fuzzy + "%"
+}
+
+func validUUID(s string) bool {
+	_, err := uuid.Parse(s)
+	return err == nil
 }
 
 func lowerUDecOrHash(in string) string {
