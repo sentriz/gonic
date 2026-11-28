@@ -12,13 +12,13 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/Masterminds/sprig"
 	"github.com/dustin/go-humanize"
-	"github.com/fatih/structs"
 	"github.com/gorilla/sessions"
 	"github.com/philippta/go-template/html/template"
 	"github.com/sentriz/gormstore"
@@ -337,9 +337,13 @@ func funcMap() template.FuncMap {
 				k, v := fmt.Sprint(values[i]), values[i+1]
 				props[k] = v
 			}
-			merged := map[string]any{}
-			if structs.IsStruct(parent) {
-				merged = structs.Map(parent)
+			var merged = map[string]any{}
+			if v := reflect.Indirect(reflect.ValueOf(parent)); v.Kind() == reflect.Struct {
+				for f, fv := range v.Fields() {
+					if f.IsExported() {
+						merged[f.Name] = fv.Interface()
+					}
+				}
 			}
 			merged["Props"] = props
 			return merged
